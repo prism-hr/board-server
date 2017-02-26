@@ -2,7 +2,7 @@ package hr.prism.board.dto;
 
 import javax.validation.Valid;
 
-public class BoardWithDepartmentDTO {
+public class DepartmentBoardDTO {
 
     @Valid
     private DepartmentDTO department;

@@ -165,7 +165,7 @@
                         <configuration>
                             <jsonLibrary>jackson2</jsonLibrary>
                             <classes>
-                                <class>hr.prism.board.dto.BoardWithDepartmentDTO</class>
+                                <class>hr.prism.board.dto.DepartmentBoardDTO</class>
                             </classes>
                             <declarePropertiesAsOptional>true</declarePropertiesAsOptional>
                             <outputFile>target/board.d.ts</outputFile>

@@ -29,8 +29,8 @@ public class EntityDAO {
     }
 
     public <T> T getByProperty(Class<T> klass, String propertyName, Object propertyValue) {
-        return (T) sessionFactory.getCurrentSession().createCriteria(klass) //
-                .add(Restrictions.eq(propertyName, propertyValue)) //
+        return (T) sessionFactory.getCurrentSession().createCriteria(klass)
+                .add(Restrictions.eq(propertyName, propertyValue))
                 .uniqueResult();
     }
 
