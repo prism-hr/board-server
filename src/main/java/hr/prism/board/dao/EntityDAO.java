@@ -22,6 +22,12 @@ public class EntityDAO {
         return (Long) sessionFactory.getCurrentSession().save(entity);
     }
 
+    public <T> T getById(Class<T> klass, Object id) {
+        return (T) sessionFactory.getCurrentSession().createCriteria(klass) //
+                .add(Restrictions.eq("id", id)) //
+                .uniqueResult();
+    }
+
     public <T> T getByProperty(Class<T> klass, String propertyName, Object propertyValue) {
         return (T) sessionFactory.getCurrentSession().createCriteria(klass) //
                 .add(Restrictions.eq(propertyName, propertyValue)) //

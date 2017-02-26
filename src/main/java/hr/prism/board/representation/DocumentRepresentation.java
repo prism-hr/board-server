@@ -1,16 +1,11 @@
-package hr.prism.board.dto;
+package hr.prism.board.representation;
 
-import javax.validation.constraints.NotNull;
+public class DocumentRepresentation {
 
-public class DocumentDTO {
-
-    @NotNull
     private String cloudinaryId;
 
-    @NotNull
     private String cloudinaryUrl;
 
-    @NotNull
     private String fileName;
 
     public String getCloudinaryId() {
@@ -35,5 +30,20 @@ public class DocumentDTO {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public DocumentRepresentation withCloudinaryId(final String cloudinaryId) {
+        this.cloudinaryId = cloudinaryId;
+        return this;
+    }
+
+    public DocumentRepresentation withCloudinaryUrl(final String cloudinaryUrl) {
+        this.cloudinaryUrl = cloudinaryUrl;
+        return this;
+    }
+
+    public DocumentRepresentation withFileName(final String fileName) {
+        this.fileName = fileName;
+        return this;
     }
 }

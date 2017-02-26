@@ -31,21 +31,4 @@ public class BoardDTO {
     public void setPurpose(String purpose) {
         this.purpose = purpose;
     }
-
-    public BoardDTO withId(final Long id) {
-        this.id = id;
-        return this;
-    }
-
-    public BoardDTO withName(final String name) {
-        this.name = name;
-        return this;
-    }
-
-    public BoardDTO withPurpose(final String purpose) {
-        this.purpose = purpose;
-        return this;
-    }
-
-
 }

@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -17,9 +16,6 @@ public class DepartmentService {
 
     @Inject
     private UserService userService;
-
-    @Inject
-    private DocumentService documentService;
 
     @Inject
     private EntityDAO entityDAO;
@@ -35,13 +31,8 @@ public class DepartmentService {
         return department;
     }
 
-    public List<DepartmentDTO> getDepartments() {
-        return departmentDAO.getDepartments().stream()
-                .map(department -> new DepartmentDTO()
-                        .withId(department.getId())
-                        .withName(department.getName())
-                        .withDocumentLogo(documentService.mapDocument(department.getDocumentLogo())))
-                .collect(Collectors.toList());
+    public List<Department> getDepartments() {
+        return departmentDAO.getDepartments();
     }
 
 }

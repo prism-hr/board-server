@@ -1,9 +1,13 @@
 package hr.prism.board.dto;
 
+import javax.validation.Valid;
+
 public class BoardWithDepartmentDTO {
 
+    @Valid
     private DepartmentDTO department;
 
+    @Valid
     private BoardDTO board;
 
     public DepartmentDTO getDepartment() {

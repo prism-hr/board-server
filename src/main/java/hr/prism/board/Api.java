@@ -1,9 +1,10 @@
 package hr.prism.board;
 
-import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardWithDepartmentDTO;
-import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.mapper.BoardMapper;
+import hr.prism.board.mapper.DepartmentMapper;
+import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,9 @@ public class Api {
     @Inject
     private BoardMapper boardMapper;
 
+    @Inject
+    private DepartmentMapper departmentMapper;
+
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @RequestMapping(value = {"/register", "/login", "/forgot", "/logout"}, method = RequestMethod.GET)
     public void suppressStormpathMvcViews() {
@@ -35,8 +39,10 @@ public class Api {
     }
 
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
-    public List<DepartmentDTO> getDepartments() {
-        return departmentService.getDepartments();
+    public List<DepartmentRepresentation> getDepartments() {
+        return departmentService.getDepartments().stream()
+                .map(departmentMapper)
+                .collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
@@ -45,7 +51,7 @@ public class Api {
     }
 
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
-    public List<BoardDTO> getBoards() {
+    public List<BoardRepresentation> getBoards() {
         return boardService.getBoards().stream()
                 .map(boardMapper)
                 .collect(Collectors.toList());
