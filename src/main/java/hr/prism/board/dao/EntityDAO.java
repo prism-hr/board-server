@@ -2,6 +2,7 @@ package hr.prism.board.dao;
 
 import hr.prism.board.domain.BoardEntity;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
@@ -19,6 +20,12 @@ public class EntityDAO {
         }
         entity.setUpdatedTimestamp(LocalDateTime.now());
         return (Long) sessionFactory.getCurrentSession().save(entity);
+    }
+
+    public <T> T getByProperty(Class<T> klass, String propertyName, Object propertyValue) {
+        return (T) sessionFactory.getCurrentSession().createCriteria(klass) //
+                .add(Restrictions.eq(propertyName, propertyValue)) //
+                .uniqueResult();
     }
 
 }

@@ -16,17 +16,21 @@ import java.util.stream.Collectors;
 public class DepartmentService {
 
     @Inject
+    private UserService userService;
+
+    @Inject
+    private DocumentService documentService;
+
+    @Inject
     private EntityDAO entityDAO;
 
     @Inject
     private DepartmentDAO departmentDAO;
 
-    @Inject
-    private DocumentService documentService;
-
     public Department createDepartment(DepartmentDTO departmentDTO) {
         Department department = new Department();
         department.setName(departmentDTO.getName());
+        department.setUser(userService.getCurrentUser());
         entityDAO.save(department);
         return department;
     }

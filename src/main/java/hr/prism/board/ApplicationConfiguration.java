@@ -1,6 +1,8 @@
 package hr.prism.board;
 
+import com.stormpath.sdk.servlet.mvc.WebHandler;
 import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
+import hr.prism.board.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,6 +13,7 @@ import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.util.Properties;
 
@@ -20,6 +23,9 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
 
     @Value("${database.schema}")
     private String databaseSchema;
+
+    @Inject
+    private UserService userService;
 
     public static void main(String[] args) {
         SpringApplication.run(ApplicationConfiguration.class);
@@ -56,4 +62,11 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
         return sessionFactoryBean;
     }
 
+    @Bean
+    public WebHandler registerPostHandler() {
+        return (request, response, account) -> {
+            userService.createUser(account);
+            return true;
+        };
+    }
 }

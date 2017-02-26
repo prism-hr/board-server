@@ -3,10 +3,12 @@ CREATE TABLE user (
   given_name        VARCHAR(30)  NOT NULL,
   surname           VARCHAR(40)  NOT NULL,
   email             VARCHAR(254) NOT NULL,
+  stormpath_id       VARCHAR(30)  NOT NULL,
   created_timestamp DATETIME     NOT NULL,
   updated_timestamp DATETIME,
   PRIMARY KEY (id),
   UNIQUE INDEX (email),
+  UNIQUE INDEX (stormpath_id),
   INDEX (created_timestamp),
   INDEX (updated_timestamp)
 )
@@ -14,10 +16,10 @@ CREATE TABLE user (
   ENGINE = innodb;
 
 CREATE TABLE document (
-  id               BIGINT AUTO_INCREMENT,
-  cloudinary_id    VARCHAR(30)  NOT NULL,
-  cloudinary_url   VARCHAR(255) NOT NULL,
-  file_name        VARCHAR(500) NOT NULL,
+  id                BIGINT AUTO_INCREMENT,
+  cloudinary_id     VARCHAR(30)  NOT NULL,
+  cloudinary_url    VARCHAR(255) NOT NULL,
+  file_name         VARCHAR(500) NOT NULL,
   created_timestamp DATETIME     NOT NULL,
   updated_timestamp DATETIME,
   PRIMARY KEY (id),

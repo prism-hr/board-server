@@ -12,7 +12,7 @@ public class Board extends BoardEntity {
 
     @ManyToOne
     @JoinColumn(name = "department_id")
-    private Department departmentId;
+    private Department department;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -28,12 +28,12 @@ public class Board extends BoardEntity {
         this.user = user;
     }
 
-    public Department getDepartmentId() {
-        return departmentId;
+    public Department getDepartment() {
+        return department;
     }
 
-    public void setDepartmentId(Department departmentId) {
-        this.departmentId = departmentId;
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     public String getName() {

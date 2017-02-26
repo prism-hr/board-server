@@ -14,8 +14,11 @@ public class User extends BoardEntity {
     @Column(name = "surname", nullable = false)
     private String surname;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @Column(name = "stormpath_id", nullable = false, unique = true)
+    private String stormpathId;
 
     public String getGivenName() {
         return givenName;
@@ -39,5 +42,13 @@ public class User extends BoardEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getStormpathId() {
+        return stormpathId;
+    }
+
+    public void setStormpathId(String stormpathId) {
+        this.stormpathId = stormpathId;
     }
 }

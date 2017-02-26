@@ -20,6 +20,9 @@ public class BoardService {
     private DepartmentService departmentService;
 
     @Inject
+    private UserService userService;
+
+    @Inject
     private EntityDAO entityDAO;
 
     @Inject
@@ -34,6 +37,8 @@ public class BoardService {
         Board board = new Board();
         board.setName(boardDTO.getName());
         board.setPurpose(boardDTO.getPurpose());
+        board.setDepartment(department);
+        board.setUser(userService.getCurrentUser());
         entityDAO.save(board);
         return board;
     }
