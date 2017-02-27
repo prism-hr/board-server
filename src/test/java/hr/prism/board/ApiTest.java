@@ -37,7 +37,8 @@ public class ApiTest {
     private Flyway flyway;
     
     @Test
-    public void shouldUseTestSchema() {
+    public void shouldUseTestDatabase() {
+        Assert.assertEquals("localhost:3306", environment.getProperty("database.host"));
         Assert.assertEquals("board_test", environment.getProperty("database.schema"));
     }
     
