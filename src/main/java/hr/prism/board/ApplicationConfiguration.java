@@ -3,12 +3,15 @@ package hr.prism.board;
 import com.stormpath.sdk.servlet.mvc.WebHandler;
 import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
 import hr.prism.board.service.UserService;
+import org.flywaydb.core.Flyway;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -21,9 +24,9 @@ import java.util.Properties;
 @SpringBootApplication
 public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
 
-    @Value("${database.schema}")
-    private String databaseSchema;
-
+    @Inject
+    private Environment environment;
+    
     @Inject
     private UserService userService;
 
@@ -38,15 +41,30 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/**").permitAll()
                 .antMatchers("/api/**").fullyAuthenticated();
     }
-
+    
     @Bean
     public DataSource dataSource() {
         return DataSourceBuilder.create()
                 .driverClassName("com.mysql.jdbc.Driver")
-                .url("jdbc:mysql://localhost/" + databaseSchema)
+                .url("jdbc:mysql://" + environment.getProperty("database.host") + "/" + environment.getProperty("database.schema") +
+                        "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC")
                 .username("prism")
                 .password("pgadmissions")
                 .build();
+    }
+    
+    @Bean
+    public Flyway flyway(DataSource dataSource) {
+        Flyway flyway = new Flyway();
+        flyway.setDataSource(dataSource);
+        flyway.setLocations("classpath:db/migration");
+        
+        if (environment.getActiveProfiles()[0].equals("test")) {
+            flyway.clean();
+        }
+        
+        flyway.migrate();
+        return flyway;
     }
 
     @Bean
@@ -58,7 +76,6 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
         hibernateProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
         hibernateProperties.put("hibernate.show_sql", true);
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
-
         return sessionFactoryBean;
     }
 
@@ -69,4 +86,5 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             return true;
         };
     }
+    
 }

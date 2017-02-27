@@ -18,6 +18,7 @@ public class EntityDAO {
         if(entity.getCreatedTimestamp() == null) {
             entity.setCreatedTimestamp(LocalDateTime.now());
         }
+        
         entity.setUpdatedTimestamp(LocalDateTime.now());
         return (Long) sessionFactory.getCurrentSession().save(entity);
     }
