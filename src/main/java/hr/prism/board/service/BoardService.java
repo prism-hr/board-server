@@ -5,8 +5,6 @@ import hr.prism.board.dao.EntityDAO;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.DepartmentBoardDTO;
-import hr.prism.board.dto.DepartmentDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,18 +27,8 @@ public class BoardService {
     @Inject
     private BoardsDAO boardDAO;
 
-    public Board createBoard(DepartmentBoardDTO departmentBoardDTO) {
-        DepartmentDTO departmentDTO = departmentBoardDTO.getDepartment();
-        Department department;
-        if (departmentDTO.getId() == null) {
-            department = departmentService.createDepartment(departmentDTO);
-        } else {
-            department = entityDAO.getById(Department.class, departmentDTO.getId());
-        }
-        return createBoard(department, departmentBoardDTO.getBoard());
-    }
-
-    public Board createBoard(Department department, BoardDTO boardDTO) {
+    public Board createBoard(BoardDTO boardDTO) {
+        Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
         Board board = new Board();
         board.setName(boardDTO.getName());
         board.setPurpose(boardDTO.getPurpose());
@@ -52,6 +40,10 @@ public class BoardService {
 
     public List<Board> getBoards() {
         return boardDAO.getBoards();
+    }
+
+    public Board getBoard(Long id) {
+        return entityDAO.getById(Board.class, id);
     }
 
 }

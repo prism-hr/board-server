@@ -4,8 +4,6 @@ import com.stormpath.sdk.servlet.mvc.WebHandler;
 import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
 import hr.prism.board.service.UserService;
 import org.flywaydb.core.Flyway;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
@@ -26,7 +24,7 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
 
     @Inject
     private Environment environment;
-    
+
     @Inject
     private UserService userService;
 
@@ -41,7 +39,7 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/**").permitAll()
                 .antMatchers("/api/**").fullyAuthenticated();
     }
-    
+
     @Bean
     public DataSource dataSource() {
         return DataSourceBuilder.create()
@@ -52,17 +50,18 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
                 .password("pgadmissions")
                 .build();
     }
-    
+
     @Bean
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:db/migration");
-        
-        if (environment.getActiveProfiles()[0].equals("test")) {
+
+        String[] activeProfiles = environment.getActiveProfiles();
+        if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
             flyway.clean();
         }
-        
+
         flyway.migrate();
         return flyway;
     }
@@ -86,5 +85,5 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             return true;
         };
     }
-    
+
 }

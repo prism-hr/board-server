@@ -8,6 +8,8 @@ public class BoardDTO {
 
     private String purpose;
 
+    private DepartmentDTO department;
+
     public Long getId() {
         return id;
     }
@@ -30,5 +32,13 @@ public class BoardDTO {
 
     public void setPurpose(String purpose) {
         this.purpose = purpose;
+    }
+
+    public DepartmentDTO getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(DepartmentDTO department) {
+        this.department = department;
     }
 }

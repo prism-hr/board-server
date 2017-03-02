@@ -2,7 +2,6 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Department;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.service.DocumentService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,13 +13,13 @@ import java.util.function.Function;
 public class DepartmentMapper implements Function<Department, DepartmentRepresentation> {
 
     @Inject
-    private DocumentService documentService;
+    private DocumentMapper documentMapper;
 
     @Override
     public DepartmentRepresentation apply(Department department) {
         return new DepartmentRepresentation()
                 .withId(department.getId())
                 .withName(department.getName())
-                .withDocumentLogo(documentService.mapDocument(department.getDocumentLogo()));
+                .withDocumentLogo(documentMapper.apply(department.getDocumentLogo()));
     }
 }

@@ -1,6 +1,6 @@
 package hr.prism.board;
 
-import hr.prism.board.dto.DepartmentBoardDTO;
+import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.representation.BoardRepresentation;
@@ -46,8 +46,8 @@ public class Api {
     }
 
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
-    public void postBoard(@RequestBody DepartmentBoardDTO departmentBoardDTO) {
-        boardService.createBoard(departmentBoardDTO);
+    public void postBoard(@RequestBody BoardDTO boardDTO) {
+        boardService.createBoard(boardDTO);
     }
 
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
@@ -55,5 +55,10 @@ public class Api {
         return boardService.getBoards().stream()
                 .map(boardMapper)
                 .collect(Collectors.toList());
+    }
+
+    @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
+    public BoardRepresentation getBoard(@PathVariable Long id) {
+        return boardMapper.apply(boardService.getBoard(id));
     }
 }
