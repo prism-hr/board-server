@@ -2,6 +2,7 @@ package hr.prism.board;
 
 import com.stormpath.sdk.servlet.mvc.WebHandler;
 import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
+import hr.prism.board.repository.MyRepositoryImpl;
 import hr.prism.board.service.UserService;
 import org.flywaydb.core.Flyway;
 import org.springframework.boot.SpringApplication;
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -20,6 +22,7 @@ import java.util.Properties;
 
 @Configuration
 @SpringBootApplication
+@EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
 
     @Inject

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 public class Api {
@@ -40,7 +41,7 @@ public class Api {
 
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
-        return departmentService.getDepartments().stream()
+        return StreamSupport.stream(departmentService.getDepartments().spliterator(), false)
                 .map(departmentMapper)
                 .collect(Collectors.toList());
     }
@@ -52,7 +53,7 @@ public class Api {
 
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
-        return boardService.getBoards().stream()
+        return StreamSupport.stream(boardService.getBoards().spliterator(), false)
                 .map(boardMapper)
                 .collect(Collectors.toList());
     }
