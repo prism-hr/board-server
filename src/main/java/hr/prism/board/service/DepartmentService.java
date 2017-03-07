@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Document;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.repository.DepartmentRepository;
@@ -49,7 +50,7 @@ public class DepartmentService {
     public void updateDepartment(DepartmentDTO departmentDTO) {
         Department department = departmentRepository.findOne(departmentDTO.getId());
         department.setName(departmentDTO.getName());
-        String existingLogoId = Optional.of(department.getDocumentLogo()).map(d -> d.getCloudinaryId()).orElse(null);
+        String existingLogoId = Optional.of(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
         String newLogoId = Optional.of(departmentDTO.getDocumentLogo()).map(DocumentDTO::getCloudinaryId).orElse(null);
         if (!Objects.equals(existingLogoId, newLogoId)) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));

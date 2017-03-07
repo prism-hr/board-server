@@ -1,11 +1,15 @@
 package hr.prism.board.dto;
 
+import javax.validation.constraints.NotNull;
+
 public class BoardDTO {
 
     private Long id;
 
+    @NotNull
     private String name;
 
+    @NotNull
     private String purpose;
 
     private DepartmentDTO department;
@@ -41,4 +45,25 @@ public class BoardDTO {
     public void setDepartment(DepartmentDTO department) {
         this.department = department;
     }
+
+    public BoardDTO withId(final Long id) {
+        this.id = id;
+        return this;
+    }
+
+    public BoardDTO withName(final String name) {
+        this.name = name;
+        return this;
+    }
+
+    public BoardDTO withPurpose(final String purpose) {
+        this.purpose = purpose;
+        return this;
+    }
+
+    public BoardDTO withDepartment(final DepartmentDTO department) {
+        this.department = department;
+        return this;
+    }
+
 }

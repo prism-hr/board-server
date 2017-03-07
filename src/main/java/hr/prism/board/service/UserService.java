@@ -23,7 +23,7 @@ public class UserService {
     public User getCurrentUser() {
         org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String href = user.getUsername();
-        String stormpathId = href.substring(href.lastIndexOf('/'));
+        String stormpathId = href.substring(href.lastIndexOf('/') + 1);
         return userRepository.findByStormpathId(stormpathId);
     }
 
@@ -33,7 +33,7 @@ public class UserService {
         user.setGivenName(account.getGivenName());
         user.setSurname(account.getSurname());
         String href = account.getHref();
-        String stormpathId = href.substring(href.lastIndexOf('/'));
+        String stormpathId = href.substring(href.lastIndexOf('/') + 1);
         user.setStormpathId(stormpathId);
         return userRepository.save(user);
     }

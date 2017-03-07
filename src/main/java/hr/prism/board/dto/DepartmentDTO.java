@@ -1,11 +1,14 @@
 package hr.prism.board.dto;
 
+import org.hibernate.validator.constraints.NotEmpty;
+
 import javax.validation.Valid;
 
 public class DepartmentDTO {
 
     private Long id;
 
+    @NotEmpty
     private String name;
 
     @Valid
@@ -34,4 +37,20 @@ public class DepartmentDTO {
     public void setDocumentLogo(DocumentDTO documentLogo) {
         this.documentLogo = documentLogo;
     }
+
+    public DepartmentDTO withId(final Long id) {
+        this.id = id;
+        return this;
+    }
+
+    public DepartmentDTO withName(final String name) {
+        this.name = name;
+        return this;
+    }
+
+    public DepartmentDTO withDocumentLogo(final DocumentDTO documentLogo) {
+        this.documentLogo = documentLogo;
+        return this;
+    }
+
 }

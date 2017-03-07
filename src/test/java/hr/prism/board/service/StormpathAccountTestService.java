@@ -10,7 +10,7 @@ import com.stormpath.sdk.oauth.OAuthRequests;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AccountTestService {
+public class StormpathAccountTestService {
 
     private static int TEST_ACCOUNT_INDEX = 1;
 
@@ -18,14 +18,14 @@ public class AccountTestService {
 
     private Application application;
 
-    public AccountTestService(Client client, Application application) {
+    public StormpathAccountTestService(Client client, Application application) {
         this.client = client;
         this.application = application;
     }
 
     public AccountPassword createTestAccount() {
         Integer index;
-        synchronized (this.getClass()) {
+        synchronized (StormpathAccountTestService.class) {
             index = TEST_ACCOUNT_INDEX;
             TEST_ACCOUNT_INDEX++;
         }
