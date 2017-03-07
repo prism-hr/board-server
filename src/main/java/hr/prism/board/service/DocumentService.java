@@ -16,7 +16,11 @@ public class DocumentService {
     private DocumentRepository documentRepository;
 
 
-    public Document saveDocument(DocumentDTO documentDTO) {
+    public Document getOrCreateDocument(DocumentDTO documentDTO) {
+        Document foundDocument = documentRepository.findByCloudinaryId(documentDTO.getCloudinaryId());
+        if (foundDocument != null) {
+            return foundDocument;
+        }
         Document document = new Document();
         document.setFileName(documentDTO.getFileName());
         document.setCloudinaryId(documentDTO.getCloudinaryId());

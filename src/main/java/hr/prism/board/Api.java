@@ -1,6 +1,8 @@
 package hr.prism.board;
 
+import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.representation.BoardRepresentation;
@@ -46,20 +48,34 @@ public class Api {
                 .collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/boards", method = RequestMethod.POST)
-    public void postBoard(@RequestBody BoardDTO boardDTO) {
-        boardService.createBoard(boardDTO);
+    @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartment(@PathVariable Long id) {
+        return departmentMapper.apply(departmentService.getDepartment(id));
     }
 
-    @RequestMapping(value = "/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoards() {
-        return StreamSupport.stream(boardService.getBoards().spliterator(), false)
-                .map(boardMapper)
-                .collect(Collectors.toList());
+    @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
+    public void updateDepartment(@RequestBody DepartmentDTO departmentDTO) {
+        departmentService.updateDepartment(departmentDTO);
+    }
+
+    @RequestMapping(value = "/boards", method = RequestMethod.POST)
+    public BoardRepresentation postBoard(@RequestBody BoardDTO boardDTO) {
+        Board board = boardService.createBoard(boardDTO);
+        return boardMapper.apply(board);
+    }
+
+    @RequestMapping(value = "/groupedBoards", method = RequestMethod.GET)
+    public List<DepartmentRepresentation> getBoardsGroupedByDepartment() {
+        return boardService.getBoardsGroupedByDepartment();
     }
 
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long id) {
         return boardMapper.apply(boardService.getBoard(id));
+    }
+
+    @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)
+    public void updateBoard(@RequestBody BoardDTO boardDTO) {
+        boardService.updateBoard(boardDTO);
     }
 }

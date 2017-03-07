@@ -1,5 +1,7 @@
 package hr.prism.board.representation;
 
+import java.util.List;
+
 public class DepartmentRepresentation {
 
     private Long id;
@@ -7,6 +9,8 @@ public class DepartmentRepresentation {
     private String name;
 
     private DocumentRepresentation documentLogo;
+
+    private List<BoardRepresentation> boards;
 
     public Long getId() {
         return id;
@@ -30,6 +34,14 @@ public class DepartmentRepresentation {
 
     public void setDocumentLogo(DocumentRepresentation documentLogo) {
         this.documentLogo = documentLogo;
+    }
+
+    public List<BoardRepresentation> getBoards() {
+        return boards;
+    }
+
+    public void setBoards(List<BoardRepresentation> boards) {
+        this.boards = boards;
     }
 
     public DepartmentRepresentation withId(final Long id) {

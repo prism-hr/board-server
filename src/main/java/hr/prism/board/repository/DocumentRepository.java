@@ -4,4 +4,6 @@ import hr.prism.board.domain.Document;
 
 public interface DocumentRepository extends MyRepository<Document, Long> {
 
+    Document findByCloudinaryId(String cloudinaryId);
+
 }
