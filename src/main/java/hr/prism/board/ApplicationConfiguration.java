@@ -8,6 +8,7 @@ import org.flywaydb.core.Flyway;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import org.springframework.boot.system.ApplicationPidFileWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -33,7 +34,9 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
     private UserService userService;
 
     public static void main(String[] args) {
-        SpringApplication.run(ApplicationConfiguration.class);
+        SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
+        springApplication.addListeners(new ApplicationPidFileWriter());
+        springApplication.run(args);
     }
 
     @Override
