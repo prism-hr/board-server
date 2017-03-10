@@ -44,6 +44,7 @@ public class DepartmentService {
         if (departmentDTO.getDocumentLogo() != null) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
+        department.setMemberCategories("");
         return departmentRepository.save(department);
     }
 

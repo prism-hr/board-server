@@ -70,6 +70,7 @@ public class BoardService {
         Board board = new Board();
         board.setName(boardDTO.getName());
         board.setPurpose(boardDTO.getPurpose());
+        board.setPostCategories("");
         board.setDepartment(department);
         board.setUser(userService.getCurrentUser());
         return boardRepository.save(board);
