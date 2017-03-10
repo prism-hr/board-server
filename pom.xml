@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -9,7 +9,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-            <hibernate.version>5.0.11.Final</hibernate.version>
+        <hibernate.version>5.0.11.Final</hibernate.version>
+        <spring-security.version>4.2.2.RELEASE</spring-security.version>
     </properties>
 
 
@@ -31,25 +32,22 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
-            <version>4.3.6.RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-java8</artifactId>
-            <version>${hibernate.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>${hibernate.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
-            <version>4.2.1.RELEASE</version>
+            <version>${spring-security.version}</version>
         </dependency>
 
         <dependency>
@@ -79,13 +77,13 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.6</version>
+            <version>6.0.5</version>
         </dependency>
 
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>4.1.1</version>
+            <version>4.1.2</version>
         </dependency>
 
         <dependency>
@@ -104,7 +102,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <version>4.2.1.RELEASE</version>
+            <version>${spring-security.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -230,6 +228,7 @@
             <properties>
                 <profile.id>local</profile.id>
                 <profile.database.host>localhost:3306</profile.database.host>
+                <profile.stormpath.application>https://api.stormpath.com/v1/applications/6kpN9ZKGmZW8lA4CAOcQEm</profile.stormpath.application>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -241,6 +240,7 @@
             <properties>
                 <profile.id>uat</profile.id>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
+                <profile.stormpath.application>https://api.stormpath.com/v1/applications/e0hKW20zMgJA1eOTdT2QW</profile.stormpath.application>
             </properties>
         </profile>
 
@@ -249,6 +249,7 @@
             <properties>
                 <profile.id>prod</profile.id>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
+                <profile.stormpath.application>https://api.stormpath.com/v1/applications/2373d6FfLQr8gWBT6JYMiy</profile.stormpath.application>
             </properties>
         </profile>
     </profiles>
