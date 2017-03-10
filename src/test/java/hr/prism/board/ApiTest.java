@@ -57,6 +57,17 @@ public class ApiTest {
         Assert.assertEquals(1, departments.size());
     }
 
+    @Test
+    public void shouldUpdateDepartmentWithNoLogo() {
+        userTestService.authenticateAs("admin@prism.hr");
+        DepartmentDTO departmentDTO = new DepartmentDTO().withName("Department 1");
+        BoardDTO boardDTO = new BoardDTO().withName("Board 1").withPurpose("Purpose 1").withDepartment(departmentDTO);
+        BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
+
+        departmentDTO.setId(boardRepresentation.getDepartment().getId());
+        api.updateDepartment(departmentDTO);
+    }
+
     @PreDestroy
     private void preDestroy() {
         flyway.clean();
