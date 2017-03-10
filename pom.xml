@@ -75,6 +75,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>21.0</version>
+        </dependency>
+
+
+        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>6.0.5</version>
@@ -170,10 +177,10 @@
                         </goals>
                         <configuration>
                             <jsonLibrary>jackson2</jsonLibrary>
-                            <classes>
-                                <class>hr.prism.board.dto.BoardDTO</class>
-                                <class>hr.prism.board.representation.BoardRepresentation</class>
-                            </classes>
+                            <classPatterns>
+                                <classPattern>hr.prism.board.dto.*</classPattern>
+                                <classPattern>hr.prism.board.representation.*</classPattern>
+                            </classPatterns>
                             <declarePropertiesAsOptional>true</declarePropertiesAsOptional>
                             <outputFile>target/board.d.ts</outputFile>
                             <outputKind>global</outputKind>

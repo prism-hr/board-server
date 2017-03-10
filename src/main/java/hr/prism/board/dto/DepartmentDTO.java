@@ -3,6 +3,7 @@ package hr.prism.board.dto;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
+import java.util.List;
 
 public class DepartmentDTO {
 
@@ -13,6 +14,8 @@ public class DepartmentDTO {
 
     @Valid
     private DocumentDTO documentLogo;
+
+    private List<String> postCategories;
 
     public Long getId() {
         return id;
@@ -36,6 +39,14 @@ public class DepartmentDTO {
 
     public void setDocumentLogo(DocumentDTO documentLogo) {
         this.documentLogo = documentLogo;
+    }
+
+    public List<String> getPostCategories() {
+        return postCategories;
+    }
+
+    public void setPostCategories(List<String> postCategories) {
+        this.postCategories = postCategories;
     }
 
     public DepartmentDTO withId(final Long id) {

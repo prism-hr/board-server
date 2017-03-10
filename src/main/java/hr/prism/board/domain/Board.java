@@ -20,6 +20,9 @@ public class Board extends BoardEntity {
     @Column(name = "purpose", nullable = false)
     private String purpose;
 
+    @Column(name = "post_categories", nullable = false)
+    private String postCategories;
+
     public User getUser() {
         return user;
     }
@@ -50,5 +53,13 @@ public class Board extends BoardEntity {
 
     public void setPurpose(String purpose) {
         this.purpose = purpose;
+    }
+
+    public String getPostCategories() {
+        return postCategories;
+    }
+
+    public void setPostCategories(String postCategories) {
+        this.postCategories = postCategories;
     }
 }

@@ -2,6 +2,7 @@ package hr.prism.board;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.DepartmentMapper;
@@ -9,6 +10,7 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +33,9 @@ public class Api {
 
     @Inject
     private DepartmentMapper departmentMapper;
+
+    @Inject
+    private Environment environment;
 
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @RequestMapping(value = {"/register", "/login", "/forgot", "/logout"}, method = RequestMethod.GET)
@@ -77,5 +82,15 @@ public class Api {
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)
     public void updateBoard(@RequestBody BoardDTO boardDTO) {
         boardService.updateBoard(boardDTO);
+    }
+
+    @RequestMapping(value = "/boards/{id}/settings", method = RequestMethod.PUT)
+    public void updateBoardSettings(@PathVariable Long id, @RequestBody BoardSettingsDTO boardSettingsDTO) {
+        boardService.updateBoardSettings(id, boardSettingsDTO);
+    }
+
+    @RequestMapping(value = "/profile", method = RequestMethod.GET)
+    public String getApplicationProfile() {
+        return environment.getProperty("id");
     }
 }

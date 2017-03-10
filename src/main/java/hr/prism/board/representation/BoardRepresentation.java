@@ -1,5 +1,7 @@
 package hr.prism.board.representation;
 
+import java.util.List;
+
 public class BoardRepresentation {
 
     private Long id;
@@ -9,6 +11,8 @@ public class BoardRepresentation {
     private String purpose;
 
     private DepartmentRepresentation department;
+
+    private List<String> postCategories;
 
     public Long getId() {
         return id;
@@ -42,6 +46,14 @@ public class BoardRepresentation {
         this.department = department;
     }
 
+    public List<String> getPostCategories() {
+        return postCategories;
+    }
+
+    public void setPostCategories(List<String> postCategories) {
+        this.postCategories = postCategories;
+    }
+
     public BoardRepresentation withId(final Long id) {
         this.id = id;
         return this;
@@ -59,6 +71,11 @@ public class BoardRepresentation {
 
     public BoardRepresentation withDepartment(final DepartmentRepresentation department) {
         this.department = department;
+        return this;
+    }
+
+    public BoardRepresentation withPostCategories(final List<String> postCategories) {
+        this.postCategories = postCategories;
         return this;
     }
 }

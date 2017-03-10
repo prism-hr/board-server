@@ -12,6 +12,8 @@ public class DepartmentRepresentation {
 
     private List<BoardRepresentation> boards;
 
+    private List<String> memberCategories;
+
     public Long getId() {
         return id;
     }
@@ -44,6 +46,14 @@ public class DepartmentRepresentation {
         this.boards = boards;
     }
 
+    public List<String> getMemberCategories() {
+        return memberCategories;
+    }
+
+    public void setMemberCategories(List<String> memberCategories) {
+        this.memberCategories = memberCategories;
+    }
+
     public DepartmentRepresentation withId(final Long id) {
         this.id = id;
         return this;
@@ -56,6 +66,11 @@ public class DepartmentRepresentation {
 
     public DepartmentRepresentation withDocumentLogo(final DocumentRepresentation documentLogo) {
         this.documentLogo = documentLogo;
+        return this;
+    }
+
+    public DepartmentRepresentation withMemberCategories(final List<String> memberCategories) {
+        this.memberCategories = memberCategories;
         return this;
     }
 

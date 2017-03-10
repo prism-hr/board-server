@@ -17,6 +17,9 @@ public class Department extends BoardEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "member_categories", nullable = false)
+    private String memberCategories;
+
     public User getUser() {
         return user;
     }
@@ -39,5 +42,13 @@ public class Department extends BoardEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getMemberCategories() {
+        return memberCategories;
+    }
+
+    public void setMemberCategories(String memberCategories) {
+        this.memberCategories = memberCategories;
     }
 }

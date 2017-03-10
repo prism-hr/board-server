@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.repository.BoardRepository;
@@ -44,7 +45,7 @@ public class BoardService {
             Department department = board.getDepartment();
             Long departmentId = department.getId();
             DepartmentRepresentation departmentRepresentation;
-            if(departmentsMap.containsKey(departmentId)) {
+            if (departmentsMap.containsKey(departmentId)) {
                 departmentRepresentation = departmentsMap.get(departmentId);
             } else {
                 departmentRepresentation = departmentMapper.apply(department);
@@ -78,5 +79,10 @@ public class BoardService {
         Board board = boardRepository.findOne(boardDTO.getId());
         board.setName(boardDTO.getName());
         board.setPurpose(boardDTO.getPurpose());
+    }
+
+    public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
+        Board board = boardRepository.findOne(id);
+        board.setPostCategories(boardSettingsDTO.getPostCategories().stream().collect(Collectors.joining("|")));
     }
 }
