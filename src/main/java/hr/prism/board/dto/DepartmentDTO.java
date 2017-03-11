@@ -6,62 +6,50 @@ import javax.validation.Valid;
 import java.util.List;
 
 public class DepartmentDTO {
-
+    
     private Long id;
-
+    
     @NotEmpty
     private String name;
-
+    
     @Valid
     private DocumentDTO documentLogo;
-
+    
     private List<String> postCategories;
-
+    
     public Long getId() {
         return id;
     }
-
-    public void setId(Long id) {
+    
+    public DepartmentDTO setId(Long id) {
         this.id = id;
+        return this;
     }
-
+    
     public String getName() {
         return name;
     }
-
-    public void setName(String name) {
+    
+    public DepartmentDTO setName(String name) {
         this.name = name;
+        return this;
     }
-
+    
     public DocumentDTO getDocumentLogo() {
         return documentLogo;
     }
-
-    public void setDocumentLogo(DocumentDTO documentLogo) {
+    
+    public DepartmentDTO setDocumentLogo(DocumentDTO documentLogo) {
         this.documentLogo = documentLogo;
+        return this;
     }
-
+    
     public List<String> getPostCategories() {
         return postCategories;
     }
-
-    public void setPostCategories(List<String> postCategories) {
+    
+    public DepartmentDTO setPostCategories(List<String> postCategories) {
         this.postCategories = postCategories;
-    }
-
-    public DepartmentDTO withId(final Long id) {
-        this.id = id;
         return this;
     }
-
-    public DepartmentDTO withName(final String name) {
-        this.name = name;
-        return this;
-    }
-
-    public DepartmentDTO withDocumentLogo(final DocumentDTO documentLogo) {
-        this.documentLogo = documentLogo;
-        return this;
-    }
-
 }

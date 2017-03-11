@@ -5,7 +5,6 @@ import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.UserTestService;
-import org.flywaydb.core.Flyway;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,8 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -26,51 +23,47 @@ import java.util.List;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class ApiTest {
-
+    
     @Inject
     private Api api;
-
-    @Inject
-    private Flyway flyway;
-
+    
     @Inject
     private UserTestService userTestService;
-
-    @PostConstruct
-    public void setup() {
-        userTestService.createUser("admin@prism.hr");
-    }
-
+    
     @Test
     public void shouldCreateBoards() {
-        userTestService.authenticateAs("admin@prism.hr");
-        DepartmentDTO departmentDTO = new DepartmentDTO().withName("Department 1");
-        BoardDTO boardDTO = new BoardDTO().withName("Board 1").withPurpose("Purpose 1").withDepartment(departmentDTO);
+        userTestService.authenticateAs("admin1@prism.hr");
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("Department 1");
+        BoardDTO boardDTO = new BoardDTO().setName("Board 1").setPurpose("Purpose 1").setDepartment(departmentDTO);
         BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
-
+        Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
+        Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
+        
         Long departmentId = boardRepresentation.getDepartment().getId();
-        departmentDTO = new DepartmentDTO().withId(departmentId).withName("Elsewhat");
-        boardDTO = new BoardDTO().withName("Board 2").withPurpose("Purpose 2").withDepartment(departmentDTO);
-        api.postBoard(boardDTO);
-
+        departmentDTO = new DepartmentDTO().setId(departmentId).setName("Department 2");
+        boardDTO = new BoardDTO().setName("Board 2").setPurpose("Purpose 2").setDepartment(departmentDTO);
+        boardRepresentation = api.postBoard(boardDTO);
+        Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
+        Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
+        
         List<DepartmentRepresentation> departments = api.getBoardsGroupedByDepartment();
         Assert.assertEquals(1, departments.size());
+        Assert.assertEquals(2, departments.get(0).getBoards().size());
     }
-
+    
     @Test
     public void shouldUpdateDepartmentWithNoLogo() {
-        userTestService.authenticateAs("admin@prism.hr");
-        DepartmentDTO departmentDTO = new DepartmentDTO().withName("Department 1");
-        BoardDTO boardDTO = new BoardDTO().withName("Board 1").withPurpose("Purpose 1").withDepartment(departmentDTO);
+        userTestService.authenticateAs("admin2@prism.hr");
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("Department 3");
+        BoardDTO boardDTO = new BoardDTO().setName("Board 3").setPurpose("Purpose 3").setDepartment(departmentDTO);
         BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
-
+        Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
+        Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
+        
         departmentDTO.setId(boardRepresentation.getDepartment().getId());
         api.updateDepartment(departmentDTO);
+        Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
+        Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
     }
-
-    @PreDestroy
-    private void preDestroy() {
-        flyway.clean();
-    }
-
+    
 }

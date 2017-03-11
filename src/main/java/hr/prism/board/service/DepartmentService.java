@@ -15,29 +15,29 @@ import java.util.Optional;
 @Service
 @Transactional
 public class DepartmentService {
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private DocumentService documentService;
-
+    
     @Inject
     private DepartmentRepository departmentRepository;
-
+    
     public Iterable<Department> getDepartments() {
         return departmentRepository.findAll();
     }
-
+    
     public Department getDepartment(Long id) {
         return departmentRepository.findOne(id);
     }
-
+    
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         if (departmentDTO.getId() != null) {
             return departmentRepository.findOne(departmentDTO.getId());
         }
-
+        
         Department department = new Department();
         department.setName(departmentDTO.getName());
         department.setUser(userService.getCurrentUser());
@@ -47,7 +47,7 @@ public class DepartmentService {
         department.setMemberCategories("");
         return departmentRepository.save(department);
     }
-
+    
     public void updateDepartment(DepartmentDTO departmentDTO) {
         Department department = departmentRepository.findOne(departmentDTO.getId());
         department.setName(departmentDTO.getName());

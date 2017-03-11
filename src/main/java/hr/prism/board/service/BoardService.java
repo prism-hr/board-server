@@ -18,26 +18,26 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BoardService {
-
+    
     @Inject
     private DepartmentService departmentService;
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private BoardRepository boardRepository;
-
+    
     @Inject
     private BoardMapper boardMapper;
-
+    
     @Inject
     private DepartmentMapper departmentMapper;
-
+    
     public Iterable<Board> getBoards() {
         return boardRepository.findAll();
     }
-
+    
     public List<DepartmentRepresentation> getBoardsGroupedByDepartment() {
         Iterable<Board> boards = getBoards();
         Map<Long, DepartmentRepresentation> departmentsMap = new HashMap<>();
@@ -60,11 +60,11 @@ public class BoardService {
                 .sorted(Comparator.comparing(DepartmentRepresentation::getName))
                 .collect(Collectors.toList());
     }
-
+    
     public Board getBoard(Long id) {
         return boardRepository.findOne(id);
     }
-
+    
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
         Board board = new Board();
@@ -75,13 +75,13 @@ public class BoardService {
         board.setUser(userService.getCurrentUser());
         return boardRepository.save(board);
     }
-
+    
     public void updateBoard(BoardDTO boardDTO) {
         Board board = boardRepository.findOne(boardDTO.getId());
         board.setName(boardDTO.getName());
         board.setPurpose(boardDTO.getPurpose());
     }
-
+    
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
         board.setPostCategories(boardSettingsDTO.getPostCategories().stream().collect(Collectors.joining("|")));

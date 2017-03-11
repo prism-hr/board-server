@@ -10,15 +10,15 @@ import java.util.function.Function;
 @Service
 @Transactional
 public class DocumentMapper implements Function<Document, DocumentRepresentation> {
-
+    
     @Override
     public DocumentRepresentation apply(Document document) {
         if (document == null) {
             return null;
         }
         return new DocumentRepresentation()
-                .withCloudinaryId(document.getCloudinaryId())
-                .withCloudinaryUrl(document.getCloudinaryUrl())
-                .withFileName(document.getFileName());
+                .setCloudinaryId(document.getCloudinaryId())
+                .setCloudinaryUrl(document.getCloudinaryUrl())
+                .setFileName(document.getFileName());
     }
 }

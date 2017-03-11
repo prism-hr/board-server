@@ -11,15 +11,15 @@ import java.util.function.Function;
 @Service
 @Transactional
 public class DepartmentMapper implements Function<Department, DepartmentRepresentation> {
-
+    
     @Inject
     private DocumentMapper documentMapper;
-
+    
     @Override
     public DepartmentRepresentation apply(Department department) {
         return new DepartmentRepresentation()
-                .withId(department.getId())
-                .withName(department.getName())
-                .withDocumentLogo(documentMapper.apply(department.getDocumentLogo()));
+                .setId(department.getId())
+                .setName(department.getName())
+                .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()));
     }
 }
