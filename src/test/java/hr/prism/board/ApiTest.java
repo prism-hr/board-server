@@ -3,7 +3,6 @@ package hr.prism.board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.UserTestService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,7 +14,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.util.List;
 
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -46,9 +44,8 @@ public class ApiTest {
         Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
 
-        List<DepartmentRepresentation> departments = api.getBoardsGroupedByDepartment();
-        Assert.assertEquals(1, departments.size());
-        Assert.assertEquals(2, departments.get(0).getBoards().size());
+        Assert.assertEquals(1, api.getDepartments().size());
+        Assert.assertEquals(2, api.getBoards().size());
     }
 
     @Test

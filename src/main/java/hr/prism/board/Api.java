@@ -69,9 +69,11 @@ public class Api {
         return boardMapper.apply(board);
     }
 
-    @RequestMapping(value = "/groupedBoards", method = RequestMethod.GET)
-    public List<DepartmentRepresentation> getBoardsGroupedByDepartment() {
-        return boardService.getBoardsGroupedByDepartment();
+    @RequestMapping(value = "/boards", method = RequestMethod.GET)
+    public List<BoardRepresentation> getBoards() {
+        return StreamSupport.stream(boardService.getBoards().spliterator(), false)
+            .map(boardMapper)
+            .collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
