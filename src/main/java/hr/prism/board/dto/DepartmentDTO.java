@@ -15,7 +15,7 @@ public class DepartmentDTO {
     @Valid
     private DocumentDTO documentLogo;
 
-    private List<String> postCategories;
+    private List<String> memberCategories;
 
     public Long getId() {
         return id;
@@ -44,12 +44,12 @@ public class DepartmentDTO {
         return this;
     }
 
-    public List<String> getPostCategories() {
-        return postCategories;
+    public List<String> getMemberCategories() {
+        return memberCategories;
     }
 
-    public DepartmentDTO setPostCategories(List<String> postCategories) {
-        this.postCategories = postCategories;
+    public DepartmentDTO setMemberCategories(List<String> memberCategories) {
+        this.memberCategories = memberCategories;
         return this;
     }
 }

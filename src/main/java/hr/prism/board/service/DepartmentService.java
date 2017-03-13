@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -44,7 +45,7 @@ public class DepartmentService {
         if (departmentDTO.getDocumentLogo() != null) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
-        department.setMemberCategories("");
+        department.setMemberCategories(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
         return departmentRepository.save(department);
     }
 

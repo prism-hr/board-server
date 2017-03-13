@@ -10,7 +10,8 @@ public class BoardSettingsDTO {
         return postCategories;
     }
 
-    public void setPostCategories(List<String> postCategories) {
+    public BoardSettingsDTO setPostCategories(List<String> postCategories) {
         this.postCategories = postCategories;
+        return this;
     }
 }

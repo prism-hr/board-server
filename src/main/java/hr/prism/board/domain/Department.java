@@ -1,6 +1,8 @@
 package hr.prism.board.domain;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "department")
@@ -9,6 +11,9 @@ public class Department extends BoardEntity {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "department")
+    private Set<Board> boards = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "document_logo_id")
@@ -26,6 +31,14 @@ public class Department extends BoardEntity {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Set<Board> getBoards() {
+        return boards;
+    }
+
+    public void setBoards(Set<Board> boards) {
+        this.boards = boards;
     }
 
     public Document getDocumentLogo() {
