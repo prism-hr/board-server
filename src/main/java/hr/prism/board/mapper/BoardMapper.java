@@ -29,4 +29,5 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setPostCategories(Splitter.on("|").omitEmptyStrings().splitToList(board.getCategoryList()))
             .setDepartment(departmentMapperFactory.create().apply(departmentService.findByBoard(board)));
     }
+    
 }

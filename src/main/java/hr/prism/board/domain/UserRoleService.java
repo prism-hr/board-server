@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.repository.UserRoleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
 
@@ -22,6 +23,18 @@ public class UserRoleService {
             resource.getUserRoles().add(userRole);
             user.getUserRoles().add(userRole);
         }
+    }
+    
+    public boolean hasUserRole(Resource resource, User user, Role... roles) {
+        if (ArrayUtils.isEmpty(roles)) {
+            throw new IllegalStateException("No roles specified");
+        }
+        
+        if (userRoleRepository.findByResourceUserAndRoles(resource, user, roles).size() > 0) {
+            return true;
+        }
+        
+        return false;
     }
     
 }
