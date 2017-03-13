@@ -23,13 +23,13 @@ import java.util.List;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class ApiTest {
-    
+
     @Inject
     private Api api;
-    
+
     @Inject
     private UserTestService userTestService;
-    
+
     @Test
     public void shouldCreateBoards() {
         userTestService.authenticateAs("admin1@prism.hr");
@@ -38,19 +38,19 @@ public class ApiTest {
         BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
         Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
-        
+
         Long departmentId = boardRepresentation.getDepartment().getId();
         departmentDTO = new DepartmentDTO().setId(departmentId).setName("Department 2");
         boardDTO = new BoardDTO().setName("Board 2").setPurpose("Purpose 2").setDepartment(departmentDTO);
         boardRepresentation = api.postBoard(boardDTO);
         Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
-        
+
         List<DepartmentRepresentation> departments = api.getBoardsGroupedByDepartment();
         Assert.assertEquals(1, departments.size());
         Assert.assertEquals(2, departments.get(0).getBoards().size());
     }
-    
+
     @Test
     public void shouldUpdateDepartmentWithNoLogo() {
         userTestService.authenticateAs("admin2@prism.hr");
@@ -59,11 +59,11 @@ public class ApiTest {
         BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
         Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
-        
+
         departmentDTO.setId(boardRepresentation.getDepartment().getId());
         api.updateDepartment(departmentDTO);
         Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
     }
-    
+
 }

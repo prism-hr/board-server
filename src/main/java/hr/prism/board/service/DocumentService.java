@@ -11,11 +11,11 @@ import javax.inject.Inject;
 @Service
 @Transactional
 public class DocumentService {
-    
+
     @Inject
     private DocumentRepository documentRepository;
-    
-    
+
+
     public Document getOrCreateDocument(DocumentDTO documentDTO) {
         Document foundDocument = documentRepository.findByCloudinaryId(documentDTO.getCloudinaryId());
         if (foundDocument != null) {
@@ -27,5 +27,5 @@ public class DocumentService {
         document.setCloudinaryUrl(documentDTO.getCloudinaryUrl());
         return documentRepository.save(document);
     }
-    
+
 }

@@ -22,21 +22,21 @@ import javax.inject.Inject;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class StormpathAccountTest {
-    
+
     @Inject
     private StormpathAccountTestService stormpathAccountTestService;
-    
+
     @Test
     @Ignore
     public void shouldCreateAndAuthenticateUser() throws Exception {
         AccountPassword accountPassword = stormpathAccountTestService.createTestAccount();
         Account account = accountPassword.getAccount();
-        
+
         OAuthGrantRequestAuthenticationResult authenticationResult = stormpathAccountTestService.authenticateTestAccount(account.getEmail(), accountPassword.getPassword());
         Assert.assertNotNull(authenticationResult.getAccessToken());
         Assert.assertNotNull(authenticationResult.getRefreshToken());
-        
+
         account.delete();
     }
-    
+
 }

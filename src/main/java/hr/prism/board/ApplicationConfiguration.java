@@ -25,52 +25,52 @@ import java.util.Properties;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
-    
+
     @Inject
     private Environment environment;
-    
+
     @Inject
     private UserService userService;
-    
+
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
         springApplication.run(args);
     }
-    
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.apply(StormpathWebSecurityConfigurer.stormpath())
-                .and().authorizeRequests()
-                .antMatchers("/**").permitAll()
-                .antMatchers("/api/**").fullyAuthenticated();
+            .and().authorizeRequests()
+            .antMatchers("/**").permitAll()
+            .antMatchers("/api/**").fullyAuthenticated();
     }
-    
+
     @Bean
     public DataSource dataSource() {
         return DataSourceBuilder.create()
-                .driverClassName("com.mysql.cj.jdbc.Driver")
-                .url("jdbc:mysql://" + environment.getProperty("database.host") + "/" + environment.getProperty("database.schema") +
-                        "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
-                .username("prism")
-                .password("pgadmissions")
-                .build();
+            .driverClassName("com.mysql.cj.jdbc.Driver")
+            .url("jdbc:mysql://" + environment.getProperty("database.host") + "/" + environment.getProperty("database.schema") +
+                "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
+            .username("prism")
+            .password("pgadmissions")
+            .build();
     }
-    
+
     @Bean
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:db/migration");
-        
+
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
             flyway.clean();
         }
-        
+
         flyway.migrate();
         return flyway;
     }
-    
+
     @Bean
     public LocalSessionFactoryBean sessionFactory() {
         LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
@@ -82,7 +82,7 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
         return sessionFactoryBean;
     }
-    
+
     @Bean
     public WebHandler registerPostHandler() {
         return (request, response, account) -> {
@@ -90,7 +90,7 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             return true;
         };
     }
-    
+
     @Bean
     public Jackson2ObjectMapperBuilder objectMapperBuilder() {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();

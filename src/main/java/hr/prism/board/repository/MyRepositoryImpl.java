@@ -9,12 +9,12 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class MyRepositoryImpl<T extends BoardEntity, ID extends Serializable>
-        extends SimpleJpaRepository<T, ID> implements MyRepository<T, ID> {
-    
+    extends SimpleJpaRepository<T, ID> implements MyRepository<T, ID> {
+
     public MyRepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
     }
-    
+
     @Override
     public <S extends T> S save(S entity) {
         if (entity.getCreatedTimestamp() == null) {

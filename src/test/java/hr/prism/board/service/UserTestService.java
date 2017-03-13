@@ -12,10 +12,10 @@ import java.util.Map;
 
 @Service
 public class UserTestService {
-    
+
     @Inject
     private UserService userService;
-    
+
     public void authenticateAs(String email) {
         Map<String, Object> properties = new HashMap<>();
         properties.put("email", email);
@@ -23,10 +23,10 @@ public class UserTestService {
         properties.put("surname", email);
         properties.put("href", "https://api.stormpath.com/v1/accounts/" + email);
         userService.createUser(new DefaultAccount(null, properties));
-        
+
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(new org.springframework.security.core.userdetails.User("https://api" +
-                ".stormpath.com/v1/accounts/" + email, "", Collections.emptyList()), null);
+            ".stormpath.com/v1/accounts/" + email, "", Collections.emptyList()), null);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-    
+
 }

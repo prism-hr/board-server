@@ -3,7 +3,7 @@ CREATE TABLE user (
   given_name        VARCHAR(30)  NOT NULL,
   surname           VARCHAR(40)  NOT NULL,
   email             VARCHAR(254) NOT NULL,
-  stormpath_id       VARCHAR(30)  NOT NULL,
+  stormpath_id      VARCHAR(30)  NOT NULL,
   created_timestamp DATETIME     NOT NULL,
   updated_timestamp DATETIME,
   PRIMARY KEY (id),
