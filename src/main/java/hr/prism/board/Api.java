@@ -1,11 +1,12 @@
 package hr.prism.board;
 
+import com.google.common.collect.ImmutableSet;
 import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.mapper.BoardMapper;
-import hr.prism.board.mapper.DepartmentMapper;
+import hr.prism.board.mapper.DepartmentMapperFactory;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
@@ -32,7 +33,7 @@ public class Api {
     private BoardMapper boardMapper;
 
     @Inject
-    private DepartmentMapper departmentMapper;
+    private DepartmentMapperFactory departmentMapperFactory;
 
     @Inject
     private Environment environment;
@@ -49,13 +50,13 @@ public class Api {
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
         return StreamSupport.stream(departmentService.getDepartments().spliterator(), false)
-            .map(departmentMapper)
+            .map(departmentMapperFactory.create())
             .collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
-        return departmentMapper.apply(departmentService.getDepartment(id));
+        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.getDepartment(id));
     }
 
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)

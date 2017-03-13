@@ -1,5 +1,6 @@
 package hr.prism.board.dto;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class BoardDTO {
@@ -12,7 +13,11 @@ public class BoardDTO {
     @NotNull
     private String purpose;
 
+    @Valid
     private DepartmentDTO department;
+
+    @Valid
+    private BoardSettingsDTO settings;
 
     public Long getId() {
         return id;
@@ -50,4 +55,12 @@ public class BoardDTO {
         return this;
     }
 
+    public BoardSettingsDTO getSettings() {
+        return settings;
+    }
+
+    public BoardDTO setSettings(BoardSettingsDTO settings) {
+        this.settings = settings;
+        return this;
+    }
 }

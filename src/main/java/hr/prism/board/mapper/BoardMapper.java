@@ -14,16 +14,15 @@ import java.util.function.Function;
 public class BoardMapper implements Function<Board, BoardRepresentation> {
 
     @Inject
-    private DepartmentMapper departmentMapper;
+    private DepartmentMapperFactory departmentMapperFactory;
 
     @Override
     public BoardRepresentation apply(Board board) {
-
         return new BoardRepresentation()
             .setId(board.getId())
             .setName(board.getName())
             .setPurpose(board.getPurpose())
             .setPostCategories(Splitter.on("|").omitEmptyStrings().splitToList(board.getPostCategories()))
-            .setDepartment(departmentMapper.apply(board.getDepartment()));
+            .setDepartment(departmentMapperFactory.create().apply(board.getDepartment()));
     }
 }

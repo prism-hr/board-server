@@ -5,7 +5,7 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.mapper.BoardMapper;
-import hr.prism.board.mapper.DepartmentMapper;
+import hr.prism.board.mapper.DepartmentMapperFactory;
 import hr.prism.board.repository.BoardRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +30,7 @@ public class BoardService {
     private BoardMapper boardMapper;
 
     @Inject
-    private DepartmentMapper departmentMapper;
+    private DepartmentMapperFactory departmentMapperFactory;
 
     public Iterable<Board> getBoards() {
         return boardRepository.findAll();
@@ -48,6 +48,7 @@ public class BoardService {
         board.setPostCategories("");
         board.setDepartment(department);
         board.setUser(userService.getCurrentUser());
+        updateBoardSettings(board, boardDTO.getSettings());
         return boardRepository.save(board);
     }
 
@@ -59,6 +60,10 @@ public class BoardService {
 
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
+        updateBoardSettings(board, boardSettingsDTO);
+    }
+
+    public void updateBoardSettings(Board board, BoardSettingsDTO boardSettingsDTO) {
         board.setPostCategories(boardSettingsDTO.getPostCategories().stream().collect(Collectors.joining("|")));
     }
 }
