@@ -10,7 +10,7 @@ import java.util.function.Function;
 @Service
 @Transactional
 public class DocumentMapper implements Function<Document, DocumentRepresentation> {
-
+    
     @Override
     public DocumentRepresentation apply(Document document) {
         if (document == null) {

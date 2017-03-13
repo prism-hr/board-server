@@ -13,13 +13,13 @@ import javax.inject.Inject;
 @Service
 @Transactional
 public class UserService {
-
+    
     @Inject
     private AccountResolver accountResolver;
-
+    
     @Inject
     private UserRepository userRepository;
-
+    
     public User getCurrentUser() {
         org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication()
             .getPrincipal();
@@ -27,7 +27,7 @@ public class UserService {
         String stormpathId = href.substring(href.lastIndexOf('/') + 1);
         return userRepository.findByStormpathId(stormpathId);
     }
-
+    
     public User createUser(Account account) {
         User user = new User();
         user.setEmail(account.getEmail());
@@ -38,9 +38,5 @@ public class UserService {
         user.setStormpathId(stormpathId);
         return userRepository.save(user);
     }
-
-    public User getByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
+    
 }

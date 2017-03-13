@@ -1,7 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Document;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.repository.DepartmentRepository;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,39 +16,58 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DepartmentService {
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private DocumentService documentService;
-
+    
     @Inject
     private DepartmentRepository departmentRepository;
-
+    
+    @Inject
+    private ResourceService resourceService;
+    
+    @Inject
+    private UserRoleService userRoleService;
+    
     public Iterable<Department> getDepartments() {
         return departmentRepository.findAll();
     }
-
+    
     public Department getDepartment(Long id) {
         return departmentRepository.findOne(id);
     }
-
+    
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         if (departmentDTO.getId() != null) {
             return departmentRepository.findOne(departmentDTO.getId());
         }
-
-        Department department = new Department();
+        
+        String name = departmentDTO.getName();
+        Department department = departmentRepository.findByName(name);
+        if (department != null) {
+            throw new IllegalStateException("Department: " + name + " already exists");
+        }
+        
+        department = new Department();
         department.setName(departmentDTO.getName());
-        department.setUser(userService.getCurrentUser());
         if (departmentDTO.getDocumentLogo() != null) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
-        department.setMemberCategories(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
-        return departmentRepository.save(department);
+        
+        List<String> memberCategories = departmentDTO.getMemberCategories();
+        if (memberCategories != null) {
+            department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
+        }
+        
+        department = departmentRepository.save(department);
+        resourceService.createResourceRelation(department, department);
+        userRoleService.createUserRole(department, userService.getCurrentUser(), Role.ADMINISTRATOR);
+        return department;
     }
-
+    
     public void updateDepartment(DepartmentDTO departmentDTO) {
         Department department = departmentRepository.findOne(departmentDTO.getId());
         department.setName(departmentDTO.getName());
@@ -58,4 +77,9 @@ public class DepartmentService {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
     }
+    
+    public Department findByBoard(Board board) {
+        return departmentRepository.findByBoard(board);
+    }
+    
 }

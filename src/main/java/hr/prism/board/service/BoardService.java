@@ -2,68 +2,84 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Role;
+import hr.prism.board.domain.UserRoleService;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
-import hr.prism.board.mapper.BoardMapper;
-import hr.prism.board.mapper.DepartmentMapperFactory;
 import hr.prism.board.repository.BoardRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class BoardService {
-
+    
     @Inject
     private DepartmentService departmentService;
-
-    @Inject
-    private UserService userService;
-
+    
     @Inject
     private BoardRepository boardRepository;
-
+    
     @Inject
-    private BoardMapper boardMapper;
-
+    private ResourceService resourceService;
+    
     @Inject
-    private DepartmentMapperFactory departmentMapperFactory;
-
+    private UserRoleService userRoleService;
+    
+    @Inject
+    private UserService userService;
+    
     public Iterable<Board> getBoards() {
         return boardRepository.findAll();
     }
-
+    
     public Board getBoard(Long id) {
         return boardRepository.findOne(id);
     }
-
+    
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-        Board board = new Board();
+        Board board = boardRepository.findByNameAndDepartment(boardDTO.getName(), department);
+        if (board != null) {
+            throw new IllegalStateException("Board: " + department.getName() + " " + board.getName() + " already exists");
+        }
+        
+        board = new Board();
         board.setName(boardDTO.getName());
-        board.setPurpose(boardDTO.getPurpose());
-        board.setPostCategories("");
-        board.setDepartment(department);
-        board.setUser(userService.getCurrentUser());
+        board.setDescription(boardDTO.getPurpose());
         updateBoardSettings(board, boardDTO.getSettings());
-        return boardRepository.save(board);
+        
+        board = boardRepository.save(board);
+        resourceService.createResourceRelation(board, board);
+        resourceService.createResourceRelation(department, board);
+        userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
+        return board;
     }
-
+    
     public void updateBoard(BoardDTO boardDTO) {
         Board board = boardRepository.findOne(boardDTO.getId());
         board.setName(boardDTO.getName());
-        board.setPurpose(boardDTO.getPurpose());
+        board.setDescription(boardDTO.getPurpose());
     }
-
+    
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
         updateBoardSettings(board, boardSettingsDTO);
     }
-
+    
     public void updateBoardSettings(Board board, BoardSettingsDTO boardSettingsDTO) {
-        board.setPostCategories(boardSettingsDTO.getPostCategories().stream().collect(Collectors.joining("|")));
+        List<String> postCategories = boardSettingsDTO.getPostCategories();
+        if (postCategories != null) {
+            board.setCategoryList(postCategories.stream().collect(Collectors.joining("|")));
+        }
     }
+    
+    public List<Board> findByDepartment(Department department) {
+        return boardRepository.findByDepartment(department);
+    }
+    
 }
