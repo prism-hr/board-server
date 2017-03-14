@@ -47,7 +47,7 @@ public class ApiTest {
     }
 
     @Test
-    public void shouldCreateBoard() {
+    public void shouldCreateBoardWithAllPossibleFieldsSet() {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticate();
             DepartmentDTO departmentDTO = new DepartmentDTO().setName("shouldCreateBoard Department").setMemberCategories(ImmutableList.of("category1", "category2"));
@@ -62,16 +62,15 @@ public class ApiTest {
 
             Assert.assertEquals(departmentDTO.getName(), departmentR.getName());
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder("category1", "category2"));
-
             return null;
         });
     }
 
     @Test
-    public void shouldCreateTwoBoards() {
+    public void shouldCreateTwoBoardsWithinOneDepartment() {
+        userTestService.authenticate();
         Long createdDepartmentId = transactionTemplate.execute(transactionStatus -> {
-            userTestService.authenticate();
-            DepartmentDTO departmentDTO = new DepartmentDTO().setName("Department 1");
+            DepartmentDTO departmentDTO = new DepartmentDTO().setName("Department 1").setMemberCategories(new ArrayList<>());
             BoardSettingsDTO settingsDTO = new BoardSettingsDTO().setPostCategories(new ArrayList<>());
             BoardDTO boardDTO = new BoardDTO().setName("Board 1").setPurpose("Purpose 1").setDepartment(departmentDTO)
                 .setSettings(settingsDTO);
@@ -97,20 +96,30 @@ public class ApiTest {
     }
 
     @Test
-    public void shouldUpdateDepartmentWithNoLogo() {
+    public void shouldUpdateDepartment() {
         userTestService.authenticate();
-        DepartmentDTO departmentDTO = new DepartmentDTO().setName("Department 3");
-        BoardSettingsDTO settingsDTO = new BoardSettingsDTO().setPostCategories(new ArrayList<>());
-        BoardDTO boardDTO = new BoardDTO().setName("Board 3").setPurpose("Purpose 3").setDepartment(departmentDTO)
-            .setSettings(settingsDTO);
-        BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
-        Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
-        Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
 
-        departmentDTO.setId(boardRepresentation.getDepartment().getId());
-        api.updateDepartment(departmentDTO);
-        Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
-        Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
+        Long departmentId = transactionTemplate.execute(transactionStatus -> {
+            DepartmentDTO departmentDTO = new DepartmentDTO().setName("Department 3").setMemberCategories(ImmutableList.of("a", "b"));
+            BoardSettingsDTO settingsDTO = new BoardSettingsDTO().setPostCategories(new ArrayList<>());
+            BoardDTO boardDTO = new BoardDTO().setName("Board 3").setPurpose("Purpose 3").setDepartment(departmentDTO)
+                .setSettings(settingsDTO);
+            BoardRepresentation boardRepresentation = api.postBoard(boardDTO);
+            Assert.assertEquals(boardDTO.getName(), boardRepresentation.getName());
+            Assert.assertEquals(boardDTO.getPurpose(), boardRepresentation.getPurpose());
+
+            departmentDTO.setId(boardRepresentation.getDepartment().getId()).setName("Another name 3").setMemberCategories(ImmutableList.of("b"));
+            api.updateDepartment(departmentDTO);
+            return boardRepresentation.getDepartment().getId();
+        });
+
+        transactionTemplate.execute(transactionStatus -> {
+            DepartmentRepresentation departmentR = api.getDepartment(departmentId);
+
+            Assert.assertEquals("Another name 3", departmentR.getName());
+            Assert.assertThat(departmentR.getMemberCategories(), Matchers.contains("b"));
+            return null;
+        });
     }
 
 }
