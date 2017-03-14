@@ -1,6 +1,7 @@
 package hr.prism.board;
 
 import com.google.common.collect.ImmutableList;
+import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -22,6 +23,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -51,7 +54,7 @@ public class ApiTest {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticate();
             DepartmentDTO departmentDTO = new DepartmentDTO().setName("shouldCreateBoard Department").setMemberCategories(ImmutableList.of("category1", "category2"));
-            BoardSettingsDTO settingsDTO = new BoardSettingsDTO().setPostCategories(ImmutableList.of("category3", "category4"));
+            BoardSettingsDTO settingsDTO = new BoardSettingsDTO().setPostCategories(ImmutableList.of("category3", "category4")).setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
             BoardDTO boardDTO = new BoardDTO().setName("shouldCreateBoard Board").setPurpose("Purpose").setDepartment(departmentDTO)
                 .setSettings(settingsDTO);
             BoardRepresentation boardR = api.postBoard(boardDTO);
@@ -59,6 +62,7 @@ public class ApiTest {
             Assert.assertEquals(boardDTO.getName(), boardR.getName());
             Assert.assertEquals(boardDTO.getPurpose(), boardR.getPurpose());
             Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder("category3", "category4"));
+            Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
 
             Assert.assertEquals(departmentDTO.getName(), departmentR.getName());
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder("category1", "category2"));
@@ -120,6 +124,38 @@ public class ApiTest {
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.contains("b"));
             return null;
         });
+    }
+
+    @Test
+    public void shouldUpdateBoardSettings() {
+        userTestService.authenticate();
+
+        Long boardId = transactionTemplate.execute(transactionStatus -> {
+            DepartmentDTO departmentDTO = new DepartmentDTO().setName("shouldUpdateBoardSettings Department").setMemberCategories(new ArrayList<>());
+            BoardSettingsDTO settingsDTO = new BoardSettingsDTO().setPostCategories(ImmutableList.of("a", "b"));
+            BoardDTO boardDTO = new BoardDTO().setName("shouldUpdateBoardSettings Board").setPurpose("Purpose").setDepartment(departmentDTO)
+                .setSettings(settingsDTO);
+            BoardRepresentation boardR = api.postBoard(boardDTO);
+
+            settingsDTO.setPostCategories(ImmutableList.of("b")).setDefaultPostVisibility(PostVisibility.PUBLIC);
+            api.updateBoardSettings(boardR.getId(), settingsDTO);
+            return boardR.getId();
+        });
+
+        transactionTemplate.execute(transactionStatus -> {
+            BoardRepresentation boardR = api.getBoard(boardId);
+
+            Assert.assertThat(boardR.getPostCategories(), Matchers.contains("b"));
+            Assert.assertEquals(PostVisibility.PUBLIC, boardR.getDefaultPostVisibility());
+            return null;
+        });
+    }
+
+    @Test
+    public void shouldGetDefinitions() {
+        TreeMap<String, List<String>> definitions = api.getDefinitions();
+        List<String> postVisibility = definitions.get("postVisibility");
+        Assert.assertThat(postVisibility, Matchers.containsInAnyOrder("PART_PRIVATE", "PUBLIC", "PRIVATE"));
     }
 
 }

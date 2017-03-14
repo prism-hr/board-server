@@ -165,6 +165,7 @@
                             <outputFile>target/board.d.ts</outputFile>
                             <outputKind>global</outputKind>
                             <namespace>b</namespace>
+                            <mapEnum>asNumberBasedEnum</mapEnum>
                         </configuration>
                     </execution>
                 </executions>

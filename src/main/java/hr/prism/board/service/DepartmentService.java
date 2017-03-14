@@ -55,9 +55,7 @@ public class DepartmentService {
         }
 
         List<String> memberCategories = departmentDTO.getMemberCategories();
-        if (memberCategories != null) {
-            department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
-        }
+        department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
 
         department = departmentRepository.save(department);
         resourceService.createResourceRelation(department, department);

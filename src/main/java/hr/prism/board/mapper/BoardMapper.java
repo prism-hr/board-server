@@ -13,13 +13,13 @@ import java.util.function.Function;
 @Service
 @Transactional
 public class BoardMapper implements Function<Board, BoardRepresentation> {
-    
+
     @Inject
     private DepartmentMapperFactory departmentMapperFactory;
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Override
     public BoardRepresentation apply(Board board) {
         return new BoardRepresentation()
@@ -27,7 +27,8 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setName(board.getName())
             .setPurpose(board.getDescription())
             .setPostCategories(Splitter.on("|").omitEmptyStrings().splitToList(board.getCategoryList()))
-            .setDepartment(departmentMapperFactory.create().apply(departmentService.findByBoard(board)));
+            .setDepartment(departmentMapperFactory.create().apply(departmentService.findByBoard(board)))
+            .setDefaultPostVisibility(board.getDefaultPostVisibility());
     }
-    
+
 }

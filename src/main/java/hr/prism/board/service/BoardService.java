@@ -6,6 +6,7 @@ import hr.prism.board.domain.Role;
 import hr.prism.board.domain.UserRoleService;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
+import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
@@ -54,6 +55,7 @@ public class BoardService {
         board.setType("BOARD");
         board.setName(boardDTO.getName());
         board.setDescription(boardDTO.getPurpose());
+        board.setDefaultPostVisibility(PostVisibility.PUBLIC); // default
         updateBoardSettings(board, boardDTO.getSettings());
 
         board = boardRepository.save(board);
@@ -79,6 +81,7 @@ public class BoardService {
         if (postCategories != null) {
             board.setCategoryList(postCategories.stream().collect(Collectors.joining("|")));
         }
+        board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }
 
     public List<Board> findByDepartment(Department department) {
