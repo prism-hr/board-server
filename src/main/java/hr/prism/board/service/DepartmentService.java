@@ -72,6 +72,7 @@ public class DepartmentService {
         if (!Objects.equals(existingLogoId, newLogoId)) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
+        department.setMemberCategories(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
     }
     
     public Department findByBoard(Board board) {
