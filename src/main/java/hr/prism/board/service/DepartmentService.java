@@ -41,14 +41,10 @@ public class DepartmentService {
     }
     
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
-        if (departmentDTO.getId() != null) {
-            return departmentRepository.findOne(departmentDTO.getId());
-        }
-        
         String name = departmentDTO.getName();
-        Department department = departmentRepository.findByName(name);
+        Department department = departmentRepository.findByIdOrName(departmentDTO.getId(), name);
         if (department != null) {
-            throw new IllegalStateException("Department: " + name + " already exists");
+            return department;
         }
         
         department = new Department();

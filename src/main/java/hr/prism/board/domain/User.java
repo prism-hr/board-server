@@ -4,8 +4,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "user")
@@ -24,7 +24,7 @@ public class User extends BoardEntity {
     private String stormpathId;
     
     @OneToMany(mappedBy = "user")
-    private List<UserRole> userRoles = new ArrayList<>();
+    private Set<UserRole> userRoles = new HashSet<>();
     
     public String getGivenName() {
         return givenName;
@@ -58,7 +58,7 @@ public class User extends BoardEntity {
         this.stormpathId = stormpathId;
     }
     
-    public List<UserRole> getUserRoles() {
+    public Set<UserRole> getUserRoles() {
         return userRoles;
     }
     

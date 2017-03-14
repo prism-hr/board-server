@@ -6,6 +6,8 @@ import hr.prism.board.domain.Role;
 import hr.prism.board.domain.UserRoleService;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +47,7 @@ public class BoardService {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
         Board board = boardRepository.findByNameAndDepartment(boardDTO.getName(), department);
         if (board != null) {
-            throw new IllegalStateException("Board: " + department.getName() + " " + board.getName() + " already exists");
+            throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
         }
         
         board = new Board();

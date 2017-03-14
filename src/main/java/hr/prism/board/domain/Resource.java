@@ -1,8 +1,8 @@
 package hr.prism.board.domain;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "resource")
@@ -28,13 +28,13 @@ public class Resource extends BoardEntity {
     private String categoryList;
     
     @OneToMany(mappedBy = "resource")
-    private List<UserRole> userRoles = new ArrayList<>();
+    private Set<UserRole> userRoles = new HashSet<>();
     
     @OneToMany(mappedBy = "resource1")
-    private List<ResourceRelation> parents = new ArrayList<>();
+    private Set<ResourceRelation> parents = new HashSet<>();
     
-    @OneToMany
-    private List<ResourceRelation> children = new ArrayList<>();
+    @OneToMany(mappedBy = "resource2")
+    private Set<ResourceRelation> children = new HashSet<>();
     
     public String getType() {
         return type;
@@ -81,15 +81,15 @@ public class Resource extends BoardEntity {
         return this;
     }
     
-    public List<UserRole> getUserRoles() {
+    public Set<UserRole> getUserRoles() {
         return userRoles;
     }
     
-    public List<ResourceRelation> getParents() {
+    public Set<ResourceRelation> getParents() {
         return parents;
     }
     
-    public List<ResourceRelation> getChildren() {
+    public Set<ResourceRelation> getChildren() {
         return children;
     }
     
