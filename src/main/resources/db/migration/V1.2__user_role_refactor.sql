@@ -1,25 +1,25 @@
-create table resource (
-  id                bigint unsigned not null auto_increment,
-  type              varchar(20)     not null,
-  name              varchar(255)    not null,
-  description       text,
-  document_logo_id  bigint,
-  category_list     text,
-  created_timestamp datetime        not null,
-  updated_timestamp datetime,
-  old_id            bigint,
-  primary key (id),
-  index name (type, name),
-  index (document_logo_id),
-  index created_timestamp (type, created_timestamp),
-  index updated_timestamp (type, updated_timestamp),
-  foreign key (document_logo_id) references document (id)
+CREATE TABLE resource (
+  id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  type              VARCHAR(20)     NOT NULL,
+  name              VARCHAR(255)    NOT NULL,
+  description       TEXT,
+  document_logo_id  BIGINT,
+  category_list     TEXT,
+  created_timestamp DATETIME        NOT NULL,
+  updated_timestamp DATETIME,
+  old_id            BIGINT,
+  PRIMARY KEY (id),
+  INDEX name (type, name),
+  INDEX (document_logo_id),
+  INDEX created_timestamp (type, created_timestamp),
+  INDEX updated_timestamp (type, updated_timestamp),
+  FOREIGN KEY (document_logo_id) REFERENCES document (id)
 )
-  collate = utf8_general_ci
-  engine = innodb;
+  COLLATE = utf8_general_ci
+  ENGINE = innodb;
 
-insert into resource (type, name, document_logo_id, category_list, created_timestamp, updated_timestamp, old_id)
-  select
+INSERT INTO resource (type, name, document_logo_id, category_list, created_timestamp, updated_timestamp, old_id)
+  SELECT
     'DEPARTMENT',
     name,
     document_logo_id,
@@ -27,10 +27,10 @@ insert into resource (type, name, document_logo_id, category_list, created_times
     created_timestamp,
     updated_timestamp,
     id
-  from department;
+  FROM department;
 
-insert into resource (type, name, description, category_list, created_timestamp, updated_timestamp, old_id)
-  select
+INSERT INTO resource (type, name, description, category_list, created_timestamp, updated_timestamp, old_id)
+  SELECT
     'BOARD',
     name,
     purpose,
@@ -38,103 +38,103 @@ insert into resource (type, name, description, category_list, created_timestamp,
     created_timestamp,
     updated_timestamp,
     id
-  from board;
+  FROM board;
 
-create table resource_relation (
-  id                bigint unsigned not null auto_increment,
-  resource_id1      bigint unsigned,
-  resource_id2      bigint unsigned,
-  created_timestamp datetime        not null,
-  updated_timestamp datetime,
-  primary key (id),
-  unique index (resource_id1, resource_id2),
-  index (resource_id2),
-  index (created_timestamp),
-  index (updated_timestamp),
-  foreign key (resource_id1) references resource (id),
-  foreign key (resource_id2) references resource (id)
+CREATE TABLE resource_relation (
+  id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  resource1_id      BIGINT UNSIGNED,
+  resource2_id      BIGINT UNSIGNED,
+  created_timestamp DATETIME        NOT NULL,
+  updated_timestamp DATETIME,
+  PRIMARY KEY (id),
+  UNIQUE INDEX (resource1_id, resource2_id),
+  INDEX (resource2_id),
+  INDEX (created_timestamp),
+  INDEX (updated_timestamp),
+  FOREIGN KEY (resource1_id) REFERENCES resource (id),
+  FOREIGN KEY (resource2_id) REFERENCES resource (id)
 )
-  collate = utf8_general_ci
-  engine = innodb;
+  COLLATE = utf8_general_ci
+  ENGINE = innodb;
 
-insert into resource_relation (resource_id1, resource_id2, created_timestamp, updated_timestamp)
-  select
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp, updated_timestamp)
+  SELECT
     id,
     id,
     created_timestamp,
     updated_timestamp
-  from resource;
+  FROM resource;
 
-insert into resource_relation (resource_id1, resource_id2, created_timestamp, updated_timestamp)
-  select
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp, updated_timestamp)
+  SELECT
     resource.id,
     resource2.id,
     board.created_timestamp,
     board.updated_timestamp
-  from resource
-    inner join department
-      on resource.old_id = department.id
-         and resource.type = 'DEPARTMENT'
-    inner join board
-      on department.id = board.department_id
-    inner join resource as resource2
-      on resource2.old_id = board.id
-         and resource2.type = 'BOARD';
+  FROM resource
+    INNER JOIN department
+      ON resource.old_id = department.id
+         AND resource.type = 'DEPARTMENT'
+    INNER JOIN board
+      ON department.id = board.department_id
+    INNER JOIN resource AS resource2
+      ON resource2.old_id = board.id
+         AND resource2.type = 'BOARD';
 
-alter table board
-  drop foreign key board_ibfk_1;
+ALTER TABLE board
+  DROP FOREIGN KEY board_ibfk_1;
 
-alter table department
-  drop foreign key department_ibfk_1;
+ALTER TABLE department
+  DROP FOREIGN KEY department_ibfk_1;
 
-alter table user
-  modify column id bigint unsigned not null auto_increment;
+ALTER TABLE user
+  MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT;
 
-create table user_role (
-  id                bigint unsigned not null auto_increment,
-  resource_id       bigint unsigned not null,
-  user_id           bigint unsigned not null,
-  role              varchar(20)     not null,
-  created_timestamp datetime        not null,
-  updated_timestamp datetime,
-  primary key (id),
-  unique index (resource_id, user_id, role),
-  index (user_id),
-  index (created_timestamp),
-  index (updated_timestamp),
-  foreign key (resource_id) references resource (id),
-  foreign key (user_id) references user (id)
+CREATE TABLE user_role (
+  id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  resource_id       BIGINT UNSIGNED NOT NULL,
+  user_id           BIGINT UNSIGNED NOT NULL,
+  role              VARCHAR(20)     NOT NULL,
+  created_timestamp DATETIME        NOT NULL,
+  updated_timestamp DATETIME,
+  PRIMARY KEY (id),
+  UNIQUE INDEX (resource_id, user_id, role),
+  INDEX (user_id),
+  INDEX (created_timestamp),
+  INDEX (updated_timestamp),
+  FOREIGN KEY (resource_id) REFERENCES resource (id),
+  FOREIGN KEY (user_id) REFERENCES user (id)
 )
-  collate = utf8_general_ci
-  engine = innodb;
+  COLLATE = utf8_general_ci
+  ENGINE = innodb;
 
-insert into user_role (resource_id, user_id, role, created_timestamp, updated_timestamp)
-  select
+INSERT INTO user_role (resource_id, user_id, role, created_timestamp, updated_timestamp)
+  SELECT
     resource.id,
     department.user_id,
     'ADMINISTRATOR',
     resource.created_timestamp,
     resource.updated_timestamp
-  from resource
-    inner join department
-      on resource.old_id = department.id
-         and resource.type = 'DEPARTMENT';
+  FROM resource
+    INNER JOIN department
+      ON resource.old_id = department.id
+         AND resource.type = 'DEPARTMENT';
 
-insert into user_role (resource_id, user_id, role, created_timestamp, updated_timestamp)
-  select
+INSERT INTO user_role (resource_id, user_id, role, created_timestamp, updated_timestamp)
+  SELECT
     resource.id,
     board.user_id,
     'ADMINISTRATOR',
     resource.created_timestamp,
     resource.updated_timestamp
-  from resource
-    inner join board
-      on resource.old_id = board.id
-         and resource.type = 'BOARD';
+  FROM resource
+    INNER JOIN board
+      ON resource.old_id = board.id
+         AND resource.type = 'BOARD';
 
-alter table resource
-  drop column old_id;
+ALTER TABLE resource
+  DROP COLUMN old_id;
 
-drop table board;
+DROP TABLE board;
 
-drop table department;
+DROP TABLE department;

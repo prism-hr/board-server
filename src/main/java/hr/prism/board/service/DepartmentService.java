@@ -16,54 +16,55 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DepartmentService {
-    
+
     @Inject
     private UserService userService;
-    
+
     @Inject
     private DocumentService documentService;
-    
+
     @Inject
     private DepartmentRepository departmentRepository;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     public Iterable<Department> getDepartments() {
         return departmentRepository.findAll();
     }
-    
+
     public Department getDepartment(Long id) {
         return departmentRepository.findOne(id);
     }
-    
+
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         String name = departmentDTO.getName();
         Department department = departmentRepository.findByIdOrName(departmentDTO.getId(), name);
         if (department != null) {
             return department;
         }
-        
+
         department = new Department();
+        department.setType("DEPARTMENT");
         department.setName(departmentDTO.getName());
         if (departmentDTO.getDocumentLogo() != null) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
-        
+
         List<String> memberCategories = departmentDTO.getMemberCategories();
         if (memberCategories != null) {
             department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
         }
-        
+
         department = departmentRepository.save(department);
         resourceService.createResourceRelation(department, department);
         userRoleService.createUserRole(department, userService.getCurrentUser(), Role.ADMINISTRATOR);
         return department;
     }
-    
+
     public void updateDepartment(DepartmentDTO departmentDTO) {
         Department department = departmentRepository.findOne(departmentDTO.getId());
         department.setName(departmentDTO.getName());
@@ -72,11 +73,11 @@ public class DepartmentService {
         if (!Objects.equals(existingLogoId, newLogoId)) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
-        department.setMemberCategories(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
+        department.setCategoryList(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
     }
-    
+
     public Department findByBoard(Board board) {
         return departmentRepository.findByBoard(board);
     }
-    
+
 }
