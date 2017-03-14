@@ -29,17 +29,16 @@ insert into resource (type, name, document_logo_id, category_list, created_times
     id
   from department;
 
-insert into resource (type, name, description, document_logo_id, category_list, created_timestamp, updated_timestamp, old_id)
+insert into resource (type, name, description, category_list, created_timestamp, updated_timestamp, old_id)
   select
     'BOARD',
     name,
     purpose,
-    document_logo_id,
-    member_categories,
+    post_categories,
     created_timestamp,
     updated_timestamp,
     id
-  from department;
+  from board;
 
 create table resource_relation (
   id                bigint unsigned not null auto_increment,
@@ -82,6 +81,15 @@ insert into resource_relation (resource_id1, resource_id2, created_timestamp, up
       on resource2.old_id = board.id
          and resource2.type = 'BOARD';
 
+alter table board
+  drop foreign key board_ibfk_1;
+
+alter table department
+  drop foreign key department_ibfk_1;
+
+alter table user
+  modify column id bigint unsigned not null auto_increment;
+
 create table user_role (
   id                bigint unsigned not null auto_increment,
   resource_id       bigint unsigned not null,
@@ -115,7 +123,7 @@ insert into user_role (resource_id, user_id, role, created_timestamp, updated_ti
 insert into user_role (resource_id, user_id, role, created_timestamp, updated_timestamp)
   select
     resource.id,
-    department.user_id,
+    board.user_id,
     'ADMINISTRATOR',
     resource.created_timestamp,
     resource.updated_timestamp
