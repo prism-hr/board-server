@@ -46,18 +46,28 @@ public class BoardService {
 
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-        Board board = boardRepository.findByNameAndDepartment(boardDTO.getName(), department);
+    
+        String name = boardDTO.getName();
+        Board board = boardRepository.findByNameAndDepartment(name, department);
         if (board != null) {
             throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
         }
 
         board = new Board();
         board.setType("BOARD");
-        board.setName(boardDTO.getName());
+        board.setName(name);
         board.setDescription(boardDTO.getPurpose());
-        board.setDefaultPostVisibility(PostVisibility.PUBLIC); // default
-        updateBoardSettings(board, boardDTO.getSettings());
-
+    
+        BoardSettingsDTO settingsDTO = boardDTO.getSettings();
+        if (settingsDTO == null) {
+            settingsDTO = new BoardSettingsDTO();
+        }
+    
+        if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
+            settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
+        }
+    
+        updateBoardSettings(board, settingsDTO);
         board = boardRepository.save(board);
         resourceService.createResourceRelation(board, board);
         resourceService.createResourceRelation(department, board);
@@ -66,7 +76,17 @@ public class BoardService {
     }
 
     public void updateBoard(BoardDTO boardDTO) {
-        Board board = boardRepository.findOne(boardDTO.getId());
+        Long id = boardDTO.getId();
+        Board board = boardRepository.findOne(id);
+    
+        String newName = boardDTO.getName();
+        if (!newName.equals(board.getName())) {
+            Department department = departmentService.findByBoard(board);
+            if (boardRepository.findByNameAndDepartment(newName, department) != null) {
+                throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
+            }
+        }
+        
         board.setName(boardDTO.getName());
         board.setDescription(boardDTO.getPurpose());
     }

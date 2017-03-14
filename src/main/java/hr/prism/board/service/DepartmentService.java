@@ -3,6 +3,8 @@ package hr.prism.board.service;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,8 +66,15 @@ public class DepartmentService {
     }
 
     public void updateDepartment(DepartmentDTO departmentDTO) {
-        Department department = departmentRepository.findOne(departmentDTO.getId());
-        department.setName(departmentDTO.getName());
+        Long id = departmentDTO.getId();
+        Department department = departmentRepository.findOne(id);
+    
+        String newName = departmentDTO.getName();
+        if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {
+            throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
+        }
+    
+        department.setName(newName);
         String existingLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
         String newLogoId = Optional.ofNullable(departmentDTO.getDocumentLogo()).map(DocumentDTO::getCloudinaryId).orElse(null);
         if (!Objects.equals(existingLogoId, newLogoId)) {
