@@ -8,5 +8,6 @@ import java.io.Serializable;
 
 @NoRepositoryBean
 public interface MyRepository<T extends BoardEntity, ID extends Serializable>
+    
     extends PagingAndSortingRepository<T, ID> {
 }

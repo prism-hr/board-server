@@ -11,7 +11,7 @@ import java.util.Set;
 @DiscriminatorValue(value = "RESOURCE")
 public class Resource extends BoardEntity {
     
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", nullable = false, insertable = false, updatable = false)
     private String type;
     
     @Column(name = "name", nullable = false)
