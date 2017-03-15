@@ -10,9 +10,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface UserRoleRepository extends MyRepository<UserRole, Long> {
-
+    
     UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);
-
+    
     @Query(value =
         "select userRole " +
             "from UserRole userRole " +
@@ -22,5 +22,5 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "and userRole.role in (:roles) " +
             "and child.resource2 = :resource")
     List<UserRole> findByResourceUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") Role... roles);
-
+    
 }

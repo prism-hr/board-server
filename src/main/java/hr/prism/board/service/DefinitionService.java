@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class DefinitionService {
-
+    
     private TreeMap<String, List<String>> definitions;
-
+    
     @PostConstruct
     public TreeMap<String, List<String>> getDefinitions() {
         if (definitions == null) {
@@ -30,14 +30,14 @@ public class DefinitionService {
         }
         return this.definitions;
     }
-
+    
     @SuppressWarnings("unchecked")
     private Set<Class<? extends Enum<?>>> getDefinitionClasses() {
         Set<Class<? extends Enum<?>>> definitionClasses = Sets.newLinkedHashSet();
         try {
             ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
             scanner.addIncludeFilter(new AssignableTypeFilter(Enum.class));
-
+    
             for (BeanDefinition beanDefinition : scanner.findCandidateComponents("hr.prism.board.enums")) {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
                 if (Enum.class.isAssignableFrom(clazz)) {
@@ -47,12 +47,12 @@ public class DefinitionService {
         } catch (Exception e) {
             throw new Error(e);
         }
-
+        
         return definitionClasses;
     }
-
+    
     private String getDefinitionKey(Class<? extends Enum<?>> definitionClass) {
         return Strings.uncapitalize(definitionClass.getSimpleName());
     }
-
+    
 }

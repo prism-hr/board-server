@@ -7,15 +7,15 @@ import javax.persistence.*;
 @Entity
 @DiscriminatorValue(value = "BOARD")
 public class Board extends Resource {
-
+    
     @Column(name = "default_post_visibility")
     @Enumerated(value = EnumType.STRING)
     private PostVisibility defaultPostVisibility;
-
+    
     public PostVisibility getDefaultPostVisibility() {
         return defaultPostVisibility;
     }
-
+    
     public Board setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
         this.defaultPostVisibility = defaultPostVisibility;
         return this;

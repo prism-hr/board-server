@@ -20,22 +20,22 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BoardService {
-
+    
     @Inject
     private DepartmentService departmentService;
-
+    
     @Inject
     private BoardRepository boardRepository;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private UserService userService;
-
+    
     public Iterable<Board> getBoards() {
         return boardRepository.findAll();
     }
@@ -43,30 +43,30 @@ public class BoardService {
     public Board findOne(Long id) {
         return boardRepository.findOne(id);
     }
-
+    
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-    
+        
         String name = boardDTO.getName();
         Board board = boardRepository.findByNameAndDepartment(name, department);
         if (board != null) {
             throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
         }
-
+        
         board = new Board();
         board.setType("BOARD");
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
-    
+        
         BoardSettingsDTO settingsDTO = boardDTO.getSettings();
         if (settingsDTO == null) {
             settingsDTO = new BoardSettingsDTO();
         }
-    
+        
         if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
             settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
         }
-    
+        
         updateBoardSettings(board, settingsDTO);
         board = boardRepository.save(board);
         resourceService.createResourceRelation(board, board);
@@ -74,11 +74,11 @@ public class BoardService {
         userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
         return board;
     }
-
+    
     public void updateBoard(BoardDTO boardDTO) {
         Long id = boardDTO.getId();
         Board board = boardRepository.findOne(id);
-    
+        
         String newName = boardDTO.getName();
         if (!newName.equals(board.getName())) {
             Department department = departmentService.findByBoard(board);
@@ -90,12 +90,12 @@ public class BoardService {
         board.setName(boardDTO.getName());
         board.setDescription(boardDTO.getPurpose());
     }
-
+    
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
         updateBoardSettings(board, boardSettingsDTO);
     }
-
+    
     public void updateBoardSettings(Board board, BoardSettingsDTO boardSettingsDTO) {
         List<String> postCategories = boardSettingsDTO.getPostCategories();
         if (postCategories != null) {
@@ -103,9 +103,9 @@ public class BoardService {
         }
         board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }
-
+    
     public List<Board> findByDepartment(Department department) {
         return boardRepository.findByDepartment(department);
     }
-
+    
 }
