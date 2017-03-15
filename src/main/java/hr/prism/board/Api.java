@@ -87,7 +87,7 @@ public class Api {
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long id) {
-        return boardMapper.apply(boardService.getBoard(id));
+        return boardMapper.apply(boardService.findOne(id));
     }
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)

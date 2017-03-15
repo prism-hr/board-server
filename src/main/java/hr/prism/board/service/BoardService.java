@@ -39,8 +39,8 @@ public class BoardService {
     public Iterable<Board> getBoards() {
         return boardRepository.findAll();
     }
-
-    public Board getBoard(Long id) {
+    
+    public Board findOne(Long id) {
         return boardRepository.findOne(id);
     }
 

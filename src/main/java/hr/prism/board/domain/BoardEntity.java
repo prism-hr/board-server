@@ -2,6 +2,7 @@ package hr.prism.board.domain;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @MappedSuperclass
 public abstract class BoardEntity {
@@ -39,4 +40,21 @@ public abstract class BoardEntity {
     public void setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
         this.updatedTimestamp = updatedTimestamp;
     }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+    
+    @Override
+    public boolean equals(Object object) {
+        if (Objects.isNull(object)) {
+            return false;
+        }
+        if (!getClass().equals(object.getClass())) {
+            return false;
+        }
+        return Objects.equals(id, ((BoardEntity) object).getId());
+    }
+    
 }

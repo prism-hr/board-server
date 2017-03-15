@@ -41,28 +41,49 @@ public class DepartmentService {
     public Department getDepartment(Long id) {
         return departmentRepository.findOne(id);
     }
+    
+    public Department findOne(Long id) {
+        return departmentRepository.findOne(id);
+    }
+    
+    public Department findByBoard(Board board) {
+        return departmentRepository.findByBoard(board);
+    }
 
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
+        Long id = departmentDTO.getId();
         String name = departmentDTO.getName();
-        Department department = departmentRepository.findByIdOrName(departmentDTO.getId(), name);
-        if (department != null) {
+    
+        Department departmentById = null;
+        Department departmentByName = null;
+        for (Department department : departmentRepository.findByIdOrName(departmentDTO.getId(), name)) {
+            if (department.getId().equals(id)) {
+                departmentById = department;
+            }
+        
+            if (department.getName().equals(name)) {
+                departmentByName = department;
+            }
+        }
+    
+        if (departmentById == null && departmentByName == null) {
+            Department department = new Department();
+            department.setType("DEPARTMENT");
+            department.setName(departmentDTO.getName());
+            if (departmentDTO.getDocumentLogo() != null) {
+                department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
+            }
+        
+            List<String> memberCategories = departmentDTO.getMemberCategories();
+            department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
+        
+            department = departmentRepository.save(department);
+            resourceService.createResourceRelation(department, department);
+            userRoleService.createUserRole(department, userService.getCurrentUser(), Role.ADMINISTRATOR);
             return department;
         }
-
-        department = new Department();
-        department.setType("DEPARTMENT");
-        department.setName(departmentDTO.getName());
-        if (departmentDTO.getDocumentLogo() != null) {
-            department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
-        }
-
-        List<String> memberCategories = departmentDTO.getMemberCategories();
-        department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
-
-        department = departmentRepository.save(department);
-        resourceService.createResourceRelation(department, department);
-        userRoleService.createUserRole(department, userService.getCurrentUser(), Role.ADMINISTRATOR);
-        return department;
+    
+        return departmentByName == null ? departmentById : departmentByName;
     }
 
     public void updateDepartment(DepartmentDTO departmentDTO) {
@@ -80,11 +101,8 @@ public class DepartmentService {
         if (!Objects.equals(existingLogoId, newLogoId)) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
+    
         department.setCategoryList(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
-    }
-
-    public Department findByBoard(Board board) {
-        return departmentRepository.findByBoard(board);
     }
 
 }

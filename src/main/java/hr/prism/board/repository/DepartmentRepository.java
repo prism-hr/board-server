@@ -14,7 +14,7 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
             "from Department department " +
             "where department.id = :id " +
             "or department.name = :name")
-    Department findByIdOrName(@Param("id") Long id, @Param("name") String name);
+    Iterable<Department> findByIdOrName(@Param("id") Long id, @Param("name") String name);
     
     @Query(value =
         "select department " +
