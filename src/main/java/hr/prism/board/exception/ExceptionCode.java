@@ -3,6 +3,8 @@ package hr.prism.board.exception;
 public enum ExceptionCode {
     
     DUPLICATE_DEPARTMENT,
-    DUPLICATE_BOARD
+    DUPLICATE_DEPARTMENT_HANDLE,
+    DUPLICATE_BOARD,
+    DUPLICATE_BOARD_HANDLE
     
 }

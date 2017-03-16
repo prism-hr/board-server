@@ -63,6 +63,7 @@ public class DepartmentService {
     
             if (department.getName().equals(name)) {
                 departmentByName = department;
+                break;
             }
         }
         
@@ -73,7 +74,13 @@ public class DepartmentService {
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
-            
+    
+            String handle = departmentDTO.getHandle();
+            if (departmentRepository.findByHandle(handle) != null) {
+                throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+            }
+    
+            department.setHandle(departmentDTO.getHandle());
             List<String> memberCategories = departmentDTO.getMemberCategories();
             department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
             
@@ -101,7 +108,13 @@ public class DepartmentService {
         if (!Objects.equals(existingLogoId, newLogoId)) {
             department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
         }
-        
+    
+        String newHandle = departmentDTO.getHandle();
+        if (!newHandle.equals(department.getHandle()) && departmentRepository.findByHandle(newHandle) != null) {
+            throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+        }
+    
+        department.setHandle(departmentDTO.getHandle());
         department.setCategoryList(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
     }
     

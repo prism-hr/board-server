@@ -38,6 +38,7 @@ public class DepartmentMapperFactory {
                 .setId(department.getId())
                 .setName(department.getName())
                 .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
+                .setHandle(department.getHandle())
                 .setMemberCategories(Splitter.on("|").omitEmptyStrings().splitToList(department.getCategoryList()));
             if (options.contains("boards")) {
                 List<BoardRepresentation> boards = boardService.findByDepartment(department)

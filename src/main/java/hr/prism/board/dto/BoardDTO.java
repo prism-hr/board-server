@@ -2,16 +2,23 @@ package hr.prism.board.dto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class BoardDTO {
     
     private Long id;
     
     @NotNull
+    @Size(min = 1)
     private String name;
     
     @NotNull
+    @Size(min = 1)
     private String purpose;
+    
+    @NotNull
+    @Size(min = 1)
+    private String handle;
     
     @Valid
     private DepartmentDTO department;
@@ -43,6 +50,15 @@ public class BoardDTO {
     
     public BoardDTO setPurpose(String purpose) {
         this.purpose = purpose;
+        return this;
+    }
+    
+    public String getHandle() {
+        return handle;
+    }
+    
+    public BoardDTO setHandle(String handle) {
+        this.handle = handle;
         return this;
     }
     

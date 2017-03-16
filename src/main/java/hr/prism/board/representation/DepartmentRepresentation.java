@@ -10,6 +10,8 @@ public class DepartmentRepresentation {
     
     private DocumentRepresentation documentLogo;
     
+    private String handle;
+    
     private List<BoardRepresentation> boards;
     
     private List<String> memberCategories;
@@ -38,6 +40,15 @@ public class DepartmentRepresentation {
     
     public DepartmentRepresentation setDocumentLogo(DocumentRepresentation documentLogo) {
         this.documentLogo = documentLogo;
+        return this;
+    }
+    
+    public String getHandle() {
+        return handle;
+    }
+    
+    public DepartmentRepresentation setHandle(String handle) {
+        this.handle = handle;
         return this;
     }
     

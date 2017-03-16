@@ -12,6 +12,8 @@ public class BoardRepresentation {
     
     private String purpose;
     
+    private String handle;
+    
     private DepartmentRepresentation department;
     
     private List<String> postCategories;
@@ -45,6 +47,15 @@ public class BoardRepresentation {
         return this;
     }
     
+    public String getHandle() {
+        return handle;
+    }
+    
+    public BoardRepresentation setHandle(String handle) {
+        this.handle = handle;
+        return this;
+    }
+    
     public DepartmentRepresentation getDepartment() {
         return department;
     }
@@ -71,4 +82,5 @@ public class BoardRepresentation {
         this.defaultPostVisibility = defaultPostVisibility;
         return this;
     }
+    
 }

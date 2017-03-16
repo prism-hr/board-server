@@ -13,9 +13,10 @@ public interface BoardRepository extends MyRepository<Board, Long> {
         "select board " +
             "from Board board " +
             "inner join board.parents parent " +
-            "where board.name = :name " +
+            "where (board.name = :name " +
+            "or board.handle = :handle) " +
             "and parent.resource1 = :department")
-    Board findByNameAndDepartment(@Param("name") String name, @Param("department") Department department);
+    Iterable<Board> findByNameOrHandleAndDepartment(@Param("name") String name, @Param("handle") String handle, @Param("department") Department department);
     
     @Query(value =
         "select board " +

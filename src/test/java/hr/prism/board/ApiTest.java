@@ -71,8 +71,10 @@ public class ApiTest {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldCreateBoard Board")
                 .setPurpose("Purpose")
+                .setHandle("scb")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldCreateBoard Department")
+                    .setHandle("scb")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4"))
@@ -92,8 +94,10 @@ public class ApiTest {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldCreateBoardDefaultPostVisibility Board")
                 .setPurpose("Purpose")
+                .setHandle("scbdpv")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldCreateBoardDefaultPostVisibility Department")
+                    .setHandle("scbdpv")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
@@ -113,8 +117,10 @@ public class ApiTest {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldNotPermitCreationOf Board")
                 .setPurpose("Purpose")
+                .setHandle("snpco")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldNotPermitCreationOf Department")
+                    .setHandle("snpco")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
@@ -136,14 +142,16 @@ public class ApiTest {
     }
     
     @Test
-    public void shouldNotPermitCreationOfDuplicateBoardByUpdating() {
+    public void shouldNotPermitCreationOfDuplicateBoardByNameByUpdating() {
         User user = userTestService.authenticate();
         transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO1 = new BoardDTO()
                 .setName("shouldNotPermitCreationOfByUpdating Board 1")
                 .setPurpose("Purpose")
+                .setHandle("snpcobu1")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldNotPermitCreationOfByUpdating Department")
+                    .setHandle("snpcobu1")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
@@ -153,8 +161,10 @@ public class ApiTest {
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotPermitCreationOfByUpdating Board 2")
                 .setPurpose("Purpose")
+                .setHandle("snpcobu2")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldNotPermitCreationOfByUpdating Department")
+                    .setHandle("snpcobu2")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
@@ -165,7 +175,8 @@ public class ApiTest {
             try {
                 api.updateBoard(boardDTO1
                     .setId(boardR1.getId())
-                    .setName(boardDTO2.getName()));
+                    .setName(boardDTO2.getName())
+                    .setHandle(boardDTO2.getHandle()));
             } catch (ApiException e) {
                 apiException = e;
             }
@@ -189,8 +200,10 @@ public class ApiTest {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("Board 1")
                 .setPurpose("Purpose 1")
+                .setHandle("Handle1")
                 .setDepartment(new DepartmentDTO()
                     .setName("Department 1")
+                    .setHandle("Handle1")
                     .setMemberCategories(new ArrayList<>()))
                 .setSettings(settingsDTO);
     
@@ -201,6 +214,7 @@ public class ApiTest {
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("Board 2")
                 .setPurpose("Purpose 2")
+                .setHandle("Handle2")
                 .setDepartment(new DepartmentDTO()
                     .setId(departmentId))
                 .setSettings(settingsDTO);
@@ -208,6 +222,7 @@ public class ApiTest {
             BoardRepresentation boardR2 = api.postBoard(boardDTO2);
             boardDTO2.getDepartment()
                 .setName("Department 1")
+                .setHandle("Handle1")
                 .setMemberCategories(new ArrayList<>());
     
             verifyBoard(user, boardDTO2, boardR2, true);
@@ -231,8 +246,10 @@ public class ApiTest {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("Board 3")
                 .setPurpose("Purpose 3")
+                .setHandle("Handle3")
                 .setDepartment(new DepartmentDTO()
                     .setName("Department 3")
+                    .setHandle("Handle3")
                     .setMemberCategories(ImmutableList.of("a", "b")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(new ArrayList<>()));
@@ -243,6 +260,7 @@ public class ApiTest {
             api.updateDepartment(new DepartmentDTO()
                 .setId(boardR.getDepartment().getId())
                 .setName("Another name 3")
+                .setHandle("AnotherHandle3")
                 .setMemberCategories(ImmutableList.of("c")));
             return boardR.getDepartment().getId();
         });
@@ -250,6 +268,7 @@ public class ApiTest {
         transactionTemplate.execute(transactionStatus -> {
             DepartmentRepresentation departmentR = api.getDepartment(departmentId);
             Assert.assertEquals("Another name 3", departmentR.getName());
+            Assert.assertEquals("AnotherHandle3", departmentR.getHandle());
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.contains("c"));
             return null;
         });
@@ -262,8 +281,10 @@ public class ApiTest {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldUpdateBoardSettings Board")
                 .setPurpose("Purpose")
+                .setHandle("subs")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldUpdateBoardSettings Department")
+                    .setHandle("subs")
                     .setMemberCategories(new ArrayList<>()))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("a", "b")));
@@ -298,8 +319,10 @@ public class ApiTest {
             BoardDTO boardDTO1 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateDepartment Board 1")
                 .setPurpose("Purpose")
+                .setHandle("sncdd1")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldNotCreateDuplicateDepartment Department 1")
+                    .setHandle("sncdd1")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
@@ -309,8 +332,10 @@ public class ApiTest {
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateDepartment Board 2")
                 .setPurpose("Purpose")
+                .setHandle("sncdd2")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldNotCreateDuplicateDepartment Department 2")
+                    .setHandle("sncdd2")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
@@ -322,6 +347,7 @@ public class ApiTest {
                 api.updateDepartment(new DepartmentDTO()
                     .setId(boardR1.getDepartment().getId())
                     .setName(boardDTO2.getDepartment().getName())
+                    .setHandle(boardDTO2.getDepartment().getHandle())
                     .setMemberCategories(boardDTO1.getDepartment().getMemberCategories()));
             } catch (ApiException e) {
                 apiException = e;
@@ -336,11 +362,13 @@ public class ApiTest {
     private void verifyBoard(User user, BoardDTO boardDTO, BoardRepresentation boardR, boolean expectDepartmentAdministrator) {
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardR.getPurpose());
+        Assert.assertEquals(boardDTO.getHandle(), boardR.getHandle());
         Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getSettings().getPostCategories().stream().toArray(String[]::new)));
         Assert.assertEquals(boardDTO.getSettings().getDefaultPostVisibility(), boardR.getDefaultPostVisibility());
         
         DepartmentRepresentation departmentR = boardR.getDepartment();
         Assert.assertEquals(boardDTO.getDepartment().getName(), departmentR.getName());
+        Assert.assertEquals(boardDTO.getDepartment().getHandle(), departmentR.getHandle());
         Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().stream().toArray(String[]::new)));
         
         transactionTemplate.execute(transactionStatus -> {

@@ -48,15 +48,14 @@ public class BoardService {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
         
         String name = boardDTO.getName();
-        Board board = boardRepository.findByNameAndDepartment(name, department);
-        if (board != null) {
-            throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
-        }
-        
-        board = new Board();
+        String handle = boardDTO.getHandle();
+        validateUniqueness(name, handle, department);
+    
+        Board board = new Board();
         board.setType("BOARD");
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
+        board.setHandle(boardDTO.getHandle());
         
         BoardSettingsDTO settingsDTO = boardDTO.getSettings();
         if (settingsDTO == null) {
@@ -80,15 +79,15 @@ public class BoardService {
         Board board = boardRepository.findOne(id);
         
         String newName = boardDTO.getName();
-        if (!newName.equals(board.getName())) {
+        String newHandle = boardDTO.getHandle();
+        if (!newName.equals(board.getName()) || !newHandle.equals(board.getHandle())) {
             Department department = departmentService.findByBoard(board);
-            if (boardRepository.findByNameAndDepartment(newName, department) != null) {
-                throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
-            }
+            validateUniqueness(newName, newHandle, department);
         }
         
         board.setName(boardDTO.getName());
         board.setDescription(boardDTO.getPurpose());
+        board.setHandle(boardDTO.getHandle());
     }
     
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
@@ -106,6 +105,23 @@ public class BoardService {
     
     public List<Board> findByDepartment(Department department) {
         return boardRepository.findByDepartment(department);
+    }
+    
+    private void validateUniqueness(String name, String handle, Department department) {
+        boolean duplicateByHandle = false;
+        for (Board board : boardRepository.findByNameOrHandleAndDepartment(name, handle, department)) {
+            if (board.getName().equals(name)) {
+                throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
+            }
+            
+            if (board.getHandle().equals(handle)) {
+                duplicateByHandle = true;
+            }
+        }
+        
+        if (duplicateByHandle) {
+            throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
+        }
     }
     
 }

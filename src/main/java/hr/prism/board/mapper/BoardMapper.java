@@ -26,6 +26,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setId(board.getId())
             .setName(board.getName())
             .setPurpose(board.getDescription())
+            .setHandle(board.getHandle())
             .setPostCategories(Splitter.on("|").omitEmptyStrings().splitToList(board.getCategoryList()))
             .setDepartment(departmentMapperFactory.create().apply(departmentService.findByBoard(board)))
             .setDefaultPostVisibility(board.getDefaultPostVisibility());
