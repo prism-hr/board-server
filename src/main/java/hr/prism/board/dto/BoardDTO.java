@@ -17,7 +17,7 @@ public class BoardDTO {
     private String purpose;
     
     @NotNull
-    @Size(min = 1, max = 1)
+    @Size(min = 1, max = 15)
     private String handle;
     
     @Valid
