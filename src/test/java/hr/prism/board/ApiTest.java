@@ -164,7 +164,7 @@ public class ApiTest {
                 .setHandle("snpcobu2")
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldNotPermitCreationOfByUpdating Department")
-                    .setHandle("snpcobu2")
+                    .setHandle("snpcobu1")
                     .setMemberCategories(ImmutableList.of("category1", "category2")))
                 .setSettings(new BoardSettingsDTO()
                     .setPostCategories(ImmutableList.of("category3", "category4")));
