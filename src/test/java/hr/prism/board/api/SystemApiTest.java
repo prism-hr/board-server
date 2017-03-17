@@ -33,16 +33,20 @@ public class SystemApiTest {
     
     @Test
     public void shouldGetApplicationProfile() {
-        String profile = environment.getProperty("id");
+        String profile = environment.getProperty("app.profile");
         Assert.assertNotNull(profile);
         Assert.assertEquals(profile, systemApi.getApplicationProfile());
     }
     
     @Test
     public void shouldGetDefinitions() {
-        TreeMap<String, List<String>> definitions = systemApi.getDefinitions();
-        List<String> postVisibility = definitions.get("postVisibility");
+        TreeMap<String, Object> definitions = systemApi.getDefinitions();
+        List<String> postVisibility = (List<String>) definitions.get("postVisibility");
         Assert.assertThat(postVisibility, Matchers.containsInAnyOrder(Arrays.stream(PostVisibility.values()).map(PostVisibility::name).toArray(String[]::new)));
+    
+        String applicationUrl = environment.getProperty("app.url");
+        Assert.assertNotNull(applicationUrl);
+        Assert.assertEquals(applicationUrl, definitions.get("applicationUrl"));
     }
     
 }

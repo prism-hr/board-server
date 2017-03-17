@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.TreeMap;
 
 @RestController
@@ -21,11 +20,11 @@ public class SystemApi {
     
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
     public String getApplicationProfile() {
-        return environment.getProperty("id");
+        return environment.getProperty("app.profile");
     }
     
     @RequestMapping(value = "/definitions", method = RequestMethod.GET)
-    public TreeMap<String, List<String>> getDefinitions() {
+    public TreeMap<String, Object> getDefinitions() {
         return definitionService.getDefinitions();
     }
     
