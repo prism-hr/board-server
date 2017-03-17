@@ -214,7 +214,8 @@
         <profile>
             <id>local</id>
             <properties>
-                <profile.id>local</profile.id>
+                <profile.app.profile>local</profile.app.profile>
+                <profile.app.url>http://localhost:4200</profile.app.url>
                 <profile.database.host>localhost:3306</profile.database.host>
                 <profile.stormpath.application>https://api.stormpath.com/v1/applications/6kpN9ZKGmZW8lA4CAOcQEm
                 </profile.stormpath.application>
