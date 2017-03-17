@@ -39,6 +39,7 @@ public class SystemApiTest {
     }
     
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldGetDefinitions() {
         TreeMap<String, Object> definitions = systemApi.getDefinitions();
         List<String> postVisibility = (List<String>) definitions.get("postVisibility");
