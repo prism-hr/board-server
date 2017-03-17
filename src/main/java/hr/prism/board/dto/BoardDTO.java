@@ -3,7 +3,6 @@ package hr.prism.board.dto;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Size;
 
 public class BoardDTO {
 
@@ -14,10 +13,6 @@ public class BoardDTO {
 
     @NotEmpty
     private String purpose;
-
-    @NotEmpty
-    @Size(max = 15)
-    private String handle;
 
     @Valid
     private DepartmentDTO department;
@@ -49,15 +44,6 @@ public class BoardDTO {
 
     public BoardDTO setPurpose(String purpose) {
         this.purpose = purpose;
-        return this;
-    }
-
-    public String getHandle() {
-        return handle;
-    }
-
-    public BoardDTO setHandle(String handle) {
-        this.handle = handle;
         return this;
     }
 

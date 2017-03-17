@@ -20,108 +20,108 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BoardService {
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private BoardRepository boardRepository;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserService userService;
-    
+
     public Iterable<Board> getBoards() {
         return boardRepository.findAll();
     }
-    
+
     public Board findOne(Long id) {
         return boardRepository.findOne(id);
     }
-    
+
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-        
+
         String name = boardDTO.getName();
-        String handle = boardDTO.getHandle();
-        validateUniqueness(name, handle, department);
-    
+        validateNameUniqueness(name, department);
+
         Board board = new Board();
         board.setType("BOARD");
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
-        board.setHandle(boardDTO.getHandle());
-        
+
         BoardSettingsDTO settingsDTO = boardDTO.getSettings();
         if (settingsDTO == null) {
             settingsDTO = new BoardSettingsDTO();
         }
-        
+
         if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
             settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
         }
-        
-        updateBoardSettings(board, settingsDTO);
+
+        updateBoardSettings(board, settingsDTO, department);
         board = boardRepository.save(board);
         resourceService.createResourceRelation(board, board);
         resourceService.createResourceRelation(department, board);
         userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
         return board;
     }
-    
+
     public void updateBoard(BoardDTO boardDTO) {
         Long id = boardDTO.getId();
         Board board = boardRepository.findOne(id);
-        
+
         String newName = boardDTO.getName();
-        String newHandle = boardDTO.getHandle();
-        if (!newName.equals(board.getName()) || !newHandle.equals(board.getHandle())) {
+        if (!newName.equals(board.getName())) {
             Department department = departmentService.findByBoard(board);
-            validateUniqueness(newName, newHandle, department);
+            validateNameUniqueness(newName, department);
         }
-        
+
         board.setName(boardDTO.getName());
         board.setDescription(boardDTO.getPurpose());
-        board.setHandle(boardDTO.getHandle());
     }
-    
+
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
-        updateBoardSettings(board, boardSettingsDTO);
+        Department department = departmentService.findByBoard(board);
+        updateBoardSettings(board, boardSettingsDTO, department);
     }
-    
-    public void updateBoardSettings(Board board, BoardSettingsDTO boardSettingsDTO) {
+
+    public void updateBoardSettings(Board board, BoardSettingsDTO boardSettingsDTO, Department department) {
+        String newHandle = boardSettingsDTO.getHandle();
+        if (!newHandle.equals(board.getHandle())) {
+            validateHandleUniqueness(newHandle, department);
+        }
+        board.setHandle(boardSettingsDTO.getHandle());
+
         List<String> postCategories = boardSettingsDTO.getPostCategories();
         if (postCategories != null) {
             board.setCategoryList(postCategories.stream().collect(Collectors.joining("|")));
         }
         board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }
-    
+
     public List<Board> findByDepartment(Department department) {
         return boardRepository.findByDepartment(department);
     }
-    
-    private void validateUniqueness(String name, String handle, Department department) {
-        boolean duplicateByHandle = false;
-        for (Board board : boardRepository.findByNameOrHandleAndDepartment(name, handle, department)) {
-            if (board.getName().equals(name)) {
-                throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
-            }
-            
-            if (board.getHandle().equals(handle)) {
-                duplicateByHandle = true;
-            }
+
+    private void validateNameUniqueness(String name, Department department) {
+        Board board = boardRepository.findByNameAndDepartment(name, department);
+        if (board != null) {
+            throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
         }
-        
-        if (duplicateByHandle) {
+    }
+
+    private void validateHandleUniqueness(String handle, Department department) {
+        Board board = boardRepository.findByHandleAndDepartment(handle, department);
+        if (board != null) {
             throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
         }
     }
-    
+
 }
