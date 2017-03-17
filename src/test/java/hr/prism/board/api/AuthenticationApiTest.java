@@ -1,7 +1,8 @@
-package hr.prism.board;
+package hr.prism.board.api;
 
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.oauth.OAuthGrantRequestAuthenticationResult;
+import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.object.AccountPassword;
 import hr.prism.board.service.StormpathAccountTestService;
 import org.junit.Assert;
@@ -21,7 +22,7 @@ import javax.inject.Inject;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
-public class StormpathAccountTest {
+public class AuthenticationApiTest {
     
     @Inject
     private StormpathAccountTestService stormpathAccountTestService;

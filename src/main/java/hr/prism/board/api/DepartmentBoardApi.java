@@ -1,4 +1,4 @@
-package hr.prism.board;
+package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -21,12 +21,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
-public class Api {
+public class DepartmentBoardApi {
     
     @Inject
     private DepartmentService departmentService;
@@ -45,15 +44,6 @@ public class Api {
     
     @Inject
     private Environment environment;
-    
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    @RequestMapping(value = {"/register", "/login", "/forgot", "/logout"}, method = RequestMethod.GET)
-    public void suppressStormpathMvcViews() {
-    }
-    
-    @RequestMapping(value = "/postLogout", method = RequestMethod.POST)
-    public void postLogout() {
-    }
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
@@ -98,16 +88,6 @@ public class Api {
     @RequestMapping(value = "/boards/{id}/settings", method = RequestMethod.PUT)
     public void updateBoardSettings(@PathVariable Long id, @RequestBody BoardSettingsDTO boardSettingsDTO) {
         boardService.updateBoardSettings(id, boardSettingsDTO);
-    }
-    
-    @RequestMapping(value = "/profile", method = RequestMethod.GET)
-    public String getApplicationProfile() {
-        return environment.getProperty("id");
-    }
-    
-    @RequestMapping(value = "/definitions", method = RequestMethod.GET)
-    public TreeMap<String, List<String>> getDefinitions() {
-        return definitionService.getDefinitions();
     }
     
     @ExceptionHandler(ApiException.class)
