@@ -125,7 +125,7 @@ public class DepartmentBoardApiTest {
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
     
-            TestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
+            ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
@@ -151,7 +151,7 @@ public class DepartmentBoardApiTest {
         });
         
         transactionTemplate.execute(transactionStatus -> {
-            TestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO.setName("shouldNotCreateDuplicateBoardHandle Board 2")),
+            ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO.setName("shouldNotCreateDuplicateBoardHandle Board 2")),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
         });
@@ -189,7 +189,7 @@ public class DepartmentBoardApiTest {
     
             boardDTO1.setId(boardR1.getId()).setName(boardDTO2.getName());
             boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle());
-            TestUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
+            ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
@@ -224,7 +224,7 @@ public class DepartmentBoardApiTest {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            TestUtil.verifyApiException(() -> departmentBoardApi.updateBoardSettings(boardR1.getId(), boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle())),
+            ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoardSettings(boardR1.getId(), boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle())),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
         });
@@ -380,7 +380,7 @@ public class DepartmentBoardApiTest {
                     .setHandle("sncddh1")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
     
-            TestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO2), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
+            ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO2), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
             return null;
         });
     }
@@ -415,7 +415,7 @@ public class DepartmentBoardApiTest {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            TestUtil.verifyApiException(() ->
+            ApiTestUtil.verifyApiException(() ->
                     departmentBoardApi.updateDepartment(new DepartmentDTO()
                         .setId(boardR1.getDepartment().getId())
                         .setName(boardDTO2.getDepartment().getName())
@@ -456,7 +456,7 @@ public class DepartmentBoardApiTest {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            TestUtil.verifyApiException(() ->
+            ApiTestUtil.verifyApiException(() ->
                     departmentBoardApi.updateDepartment(new DepartmentDTO()
                         .setId(boardR1.getDepartment().getId())
                         .setName(boardDTO1.getDepartment().getName())
