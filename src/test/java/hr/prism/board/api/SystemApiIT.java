@@ -23,7 +23,7 @@ import java.util.TreeMap;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
-public class SystemApiTest {
+public class SystemApiIT {
     
     @Inject
     private Environment environment;

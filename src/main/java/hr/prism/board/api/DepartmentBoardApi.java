@@ -12,9 +12,7 @@ import hr.prism.board.mapper.DepartmentMapperFactory;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
-import hr.prism.board.service.DefinitionService;
 import hr.prism.board.service.DepartmentService;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,16 +32,10 @@ public class DepartmentBoardApi {
     private BoardService boardService;
     
     @Inject
-    private DefinitionService definitionService;
-    
-    @Inject
     private BoardMapper boardMapper;
     
     @Inject
     private DepartmentMapperFactory departmentMapperFactory;
-    
-    @Inject
-    private Environment environment;
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
@@ -92,7 +84,7 @@ public class DepartmentBoardApi {
     
     @ExceptionHandler(ApiException.class)
     @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
-    private Map<String, String> handleException(ApiException apiException) {
+    public Map<String, String> handleException(ApiException apiException) {
         return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
     }
     

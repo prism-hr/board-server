@@ -22,7 +22,7 @@ import javax.inject.Inject;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
-public class AuthenticationApiTest {
+public class AuthenticationApiIT {
     
     @Inject
     private StormpathAccountTestService stormpathAccountTestService;
@@ -36,7 +36,6 @@ public class AuthenticationApiTest {
         OAuthGrantRequestAuthenticationResult authenticationResult = stormpathAccountTestService.authenticateTestAccount(account.getEmail(), accountPassword.getPassword());
         Assert.assertNotNull(authenticationResult.getAccessToken());
         Assert.assertNotNull(authenticationResult.getRefreshToken());
-        
         account.delete();
     }
     
