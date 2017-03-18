@@ -49,6 +49,11 @@ public class DepartmentBoardApi {
         return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
     }
     
+    @RequestMapping(value = "/departments/byHandle/{handle}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartmentByHandle(@PathVariable String handle) {
+        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
+    }
+    
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
     public void updateDepartment(@RequestBody DepartmentDTO departmentDTO) {
         departmentService.updateDepartment(departmentDTO);
@@ -70,6 +75,11 @@ public class DepartmentBoardApi {
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long id) {
         return boardMapper.apply(boardService.findOne(id));
+    }
+    
+    @RequestMapping(value = "/boards/byHandle/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
+    public BoardRepresentation getBoardByHandle(@PathVariable String departmentHandle, String handle) {
+        return boardMapper.apply(boardService.findByHandleAndDepartmentHandle(handle, departmentHandle));
     }
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)

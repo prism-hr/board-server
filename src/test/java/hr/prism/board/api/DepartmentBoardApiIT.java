@@ -278,7 +278,7 @@ public class DepartmentBoardApiIT {
         });
         
         transactionTemplate.execute(transactionStatus -> {
-            DepartmentRepresentation departmentR = departmentBoardApi.getDepartment(createdDepartmentId);
+            DepartmentRepresentation departmentR = verifyGetDepartment(createdDepartmentId);
             Assert.assertEquals(2, departmentR.getBoards().size());
             
             List<String> boardNames = departmentR.getBoards().stream().map(BoardRepresentation::getName).collect(Collectors.toList());
@@ -314,7 +314,7 @@ public class DepartmentBoardApiIT {
         });
         
         transactionTemplate.execute(transactionStatus -> {
-            DepartmentRepresentation departmentR = departmentBoardApi.getDepartment(departmentId);
+            DepartmentRepresentation departmentR = verifyGetDepartment(departmentId);
             Assert.assertEquals("Another name 3", departmentR.getName());
             Assert.assertEquals("AnotherHandle3", departmentR.getHandle());
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.contains("c"));
@@ -347,7 +347,7 @@ public class DepartmentBoardApiIT {
         });
         
         transactionTemplate.execute(transactionStatus -> {
-            BoardRepresentation boardR = departmentBoardApi.getBoard(boardId);
+            BoardRepresentation boardR = verifyGetBoard(boardId);
             Assert.assertThat(boardR.getPostCategories(), Matchers.contains("c"));
             Assert.assertEquals(PostVisibility.PUBLIC, boardR.getDefaultPostVisibility());
             return null;
@@ -539,6 +539,20 @@ public class DepartmentBoardApiIT {
             
             return null;
         });
+    }
+    
+    private DepartmentRepresentation verifyGetDepartment(Long id) {
+        DepartmentRepresentation departmentRepresentation = departmentBoardApi.getDepartment(id);
+        DepartmentRepresentation departmentRepresentationByHandle = departmentBoardApi.getDepartmentByHandle(departmentRepresentation.getHandle());
+        Assert.assertEquals(departmentRepresentation.getId(), departmentRepresentationByHandle.getId());
+        return departmentRepresentationByHandle;
+    }
+    
+    private BoardRepresentation verifyGetBoard(Long id) {
+        BoardRepresentation boardRepresentation = departmentBoardApi.getBoard(id);
+        BoardRepresentation boardRepresentationByHandle = departmentBoardApi.getBoardByHandle(boardRepresentation.getDepartment().getHandle(), boardRepresentation.getHandle());
+        Assert.assertEquals(boardRepresentation.getId(), boardRepresentationByHandle.getId());
+        return boardRepresentationByHandle;
     }
     
 }

@@ -217,8 +217,7 @@
                 <profile.app.profile>local</profile.app.profile>
                 <profile.app.url>http://localhost:4200</profile.app.url>
                 <profile.database.host>localhost:3306</profile.database.host>
-                <profile.stormpath.application>https://api.stormpath.com/v1/applications/6kpN9ZKGmZW8lA4CAOcQEm
-                </profile.stormpath.application>
+                <profile.stormpath.application>https://api.stormpath.com/v1/applications/6kpN9ZKGmZW8lA4CAOcQEm</profile.stormpath.application>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -230,8 +229,7 @@
             <properties>
                 <profile.id>uat</profile.id>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.stormpath.application>https://api.stormpath.com/v1/applications/e0hKW20zMgJA1eOTdT2QW
-                </profile.stormpath.application>
+                <profile.stormpath.application>https://api.stormpath.com/v1/applications/e0hKW20zMgJA1eOTdT2QW</profile.stormpath.application>
             </properties>
         </profile>
 
@@ -240,8 +238,7 @@
             <properties>
                 <profile.id>prod</profile.id>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.stormpath.application>https://api.stormpath.com/v1/applications/2373d6FfLQr8gWBT6JYMiy
-                </profile.stormpath.application>
+                <profile.stormpath.application>https://api.stormpath.com/v1/applications/2373d6FfLQr8gWBT6JYMiy</profile.stormpath.application>
             </properties>
         </profile>
     </profiles>

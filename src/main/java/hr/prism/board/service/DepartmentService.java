@@ -43,6 +43,10 @@ public class DepartmentService {
         return departmentRepository.findOne(id);
     }
     
+    public Department findByHandle(String handle) {
+        return departmentRepository.findByHandle(handle);
+    }
+    
     public Department findByBoard(Board board) {
         return departmentRepository.findByBoard(board);
     }

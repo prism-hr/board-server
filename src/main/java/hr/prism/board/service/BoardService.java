@@ -44,6 +44,10 @@ public class BoardService {
     public Board findOne(Long id) {
         return boardRepository.findOne(id);
     }
+    
+    public Board findByHandleAndDepartmentHandle(String handle, String departmentHandle) {
+        return boardRepository.findByHandleAndDepartmentHandle(handle, departmentHandle);
+    }
 
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
