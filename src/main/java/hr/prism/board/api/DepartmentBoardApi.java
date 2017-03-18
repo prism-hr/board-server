@@ -39,14 +39,14 @@ public class DepartmentBoardApi {
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
-        return StreamSupport.stream(departmentService.getDepartments().spliterator(), false)
+        return StreamSupport.stream(departmentService.findAllByOrderByName().spliterator(), false)
             .map(departmentMapperFactory.create())
             .collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
-        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.getDepartment(id));
+        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
@@ -62,7 +62,7 @@ public class DepartmentBoardApi {
     
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
-        return StreamSupport.stream(boardService.getBoards().spliterator(), false)
+        return StreamSupport.stream(boardService.findAllByOrderByName().spliterator(), false)
             .map(boardMapper)
             .collect(Collectors.toList());
     }

@@ -21,6 +21,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
     private DepartmentService departmentService;
     
     @Override
+    // TODO: refactor, we are using it get department (SQL) for each board in a list
     public BoardRepresentation apply(Board board) {
         return new BoardRepresentation()
             .setId(board.getId())

@@ -35,9 +35,10 @@ public class BoardService {
 
     @Inject
     private UserService userService;
-
-    public Iterable<Board> getBoards() {
-        return boardRepository.findAll();
+    
+    // TODO: make it a query with the user roles
+    public Iterable<Board> findAllByOrderByName() {
+        return boardRepository.findAllByOrderByName();
     }
 
     public Board findOne(Long id) {

@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -28,6 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -463,6 +465,50 @@ public class DepartmentBoardApiIT {
                         .setHandle(boardDTO2.getDepartment().getHandle())
                         .setMemberCategories(boardDTO1.getDepartment().getMemberCategories())),
                 ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
+            return null;
+        });
+    }
+    
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    public void shouldGetDepartmentsAndBoards() {
+        User user = userTestService.authenticate();
+        transactionTemplate.execute(transactionStatus -> {
+            for (int i = 1; i < 4; i++) {
+                String departmentName = "shouldGetDepartmentsAndBoards " + i;
+                String departmentHandle = "sgdab" + i;
+                for (int j = 1; j < 4; j++) {
+                    String boardSuffix = i + " " + j;
+                    BoardDTO boardDTO = new BoardDTO()
+                        .setName("shouldGetDepartmentsAndBoards " + boardSuffix)
+                        .setPurpose("Purpose")
+                        .setDepartment(new DepartmentDTO()
+                            .setName(departmentName)
+                            .setHandle(departmentHandle)
+                            .setMemberCategories(ImmutableList.of("category1", "category2")))
+                        .setSettings(new BoardSettingsDTO()
+                            .setHandle("sgdab" + boardSuffix)
+                            .setPostCategories(ImmutableList.of("category3", "category4")));
+                    BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
+                    verifyBoard(user, boardDTO, boardR, true);
+                }
+            }
+            
+            return null;
+        });
+        
+        transactionTemplate.execute(transactionStatus -> {
+            List<DepartmentRepresentation> departmentRepresentations = departmentBoardApi.getDepartments();
+            Assert.assertEquals(Arrays.asList(
+                "shouldGetDepartmentsAndBoards 1", "shouldGetDepartmentsAndBoards 2", "shouldGetDepartmentsAndBoards 3"),
+                departmentRepresentations.stream().map(DepartmentRepresentation::getName).collect(Collectors.toList()));
+            
+            List<BoardRepresentation> boardRepresentations = departmentBoardApi.getBoards();
+            Assert.assertEquals(Arrays.asList(
+                "shouldGetDepartmentsAndBoards 1 1", "shouldGetDepartmentsAndBoards 1 2", "shouldGetDepartmentsAndBoards 1 3",
+                "shouldGetDepartmentsAndBoards 2 1", "shouldGetDepartmentsAndBoards 2 2", "shouldGetDepartmentsAndBoards 2 3",
+                "shouldGetDepartmentsAndBoards 3 1", "shouldGetDepartmentsAndBoards 3 2", "shouldGetDepartmentsAndBoards 3 3"),
+                boardRepresentations.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
             return null;
         });
     }

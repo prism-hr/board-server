@@ -32,6 +32,7 @@ public class DepartmentMapperFactory {
         return create(new HashSet<>());
     }
     
+    // TODO: refactor to make sure we never actually get boards (SQL) for each department
     public Function<Department, DepartmentRepresentation> create(Set<String> options) {
         return (Department department) -> {
             DepartmentRepresentation departmentRepresentation = new DepartmentRepresentation()
@@ -50,4 +51,5 @@ public class DepartmentMapperFactory {
             return departmentRepresentation;
         };
     }
+    
 }

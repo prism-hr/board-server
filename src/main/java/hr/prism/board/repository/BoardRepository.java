@@ -8,7 +8,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface BoardRepository extends MyRepository<Board, Long> {
-
+    
+    Iterable<Board> findAllByOrderByName();
+    
     @Query(value =
         "select board " +
             "from Board board " +

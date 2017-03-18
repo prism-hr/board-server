@@ -34,12 +34,9 @@ public class DepartmentService {
     @Inject
     private UserRoleService userRoleService;
     
-    public Iterable<Department> getDepartments() {
-        return departmentRepository.findAll();
-    }
-    
-    public Department getDepartment(Long id) {
-        return departmentRepository.findOne(id);
+    // TODO: make it a query with the user roles
+    public Iterable<Department> findAllByOrderByName() {
+        return departmentRepository.findAllByOrderByName();
     }
     
     public Department findOne(Long id) {

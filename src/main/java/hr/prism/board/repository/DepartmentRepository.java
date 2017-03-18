@@ -11,6 +11,8 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
     
     Department findByHandle(String handle);
     
+    Iterable<Department> findAllByOrderByName();
+    
     @Query(value =
         "select department " +
             "from Department department " +
