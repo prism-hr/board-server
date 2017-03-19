@@ -544,17 +544,17 @@ public class DepartmentBoardApiIT {
     }
     
     private DepartmentRepresentation verifyGetDepartment(Long id) {
-        DepartmentRepresentation departmentRepresentation = departmentBoardApi.getDepartment(id);
-        DepartmentRepresentation departmentRepresentationByHandle = departmentBoardApi.getDepartmentByHandle(departmentRepresentation.getHandle());
-        Assert.assertEquals(departmentRepresentation.getId(), departmentRepresentationByHandle.getId());
-        return departmentRepresentationByHandle;
+        DepartmentRepresentation departmentR = departmentBoardApi.getDepartment(id);
+        DepartmentRepresentation departmentRByHandle = departmentBoardApi.getDepartmentByHandle(departmentR.getHandle());
+        Assert.assertEquals(departmentR.getId(), departmentRByHandle.getId());
+        return departmentRByHandle;
     }
     
     private BoardRepresentation verifyGetBoard(Long id) {
-        BoardRepresentation boardRepresentation = departmentBoardApi.getBoard(id);
-        BoardRepresentation boardRepresentationByHandle = departmentBoardApi.getBoardByHandle(boardRepresentation.getDepartment().getHandle(), boardRepresentation.getHandle());
-        Assert.assertEquals(boardRepresentation.getId(), boardRepresentationByHandle.getId());
-        return boardRepresentationByHandle;
+        BoardRepresentation boardR = departmentBoardApi.getBoard(id);
+        BoardRepresentation boardRByHandle = departmentBoardApi.getBoardByHandle(Joiner.on("/").join(boardR.getDepartment().getHandle(), boardR.getHandle()));
+        Assert.assertEquals(boardR.getId(), boardRByHandle.getId());
+        return boardRByHandle;
     }
     
 }
