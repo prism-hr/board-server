@@ -20,7 +20,9 @@ public class MyRepositoryImpl<T extends BoardEntity, ID extends Serializable>
         if (entity.getCreatedTimestamp() == null) {
             entity.setCreatedTimestamp(LocalDateTime.now());
         }
+    
         entity.setUpdatedTimestamp(LocalDateTime.now());
         return super.save(entity);
     }
+    
 }

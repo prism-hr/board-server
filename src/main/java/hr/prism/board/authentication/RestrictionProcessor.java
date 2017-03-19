@@ -5,8 +5,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRoleService;
-import hr.prism.board.service.BoardService;
-import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -29,10 +28,7 @@ import java.util.Map;
 public class RestrictionProcessor {
     
     @Inject
-    private BoardService boardService;
-    
-    @Inject
-    private DepartmentService departmentService;
+    private ResourceService resourceService;
     
     @Inject
     private UserRoleService userRoleService;
@@ -73,17 +69,11 @@ public class RestrictionProcessor {
             
             Resource resource = null;
             boolean validRequest = false;
-            if (parameters.containsKey("boardId")) {
-                resource = boardService.findOne((Long) parameters.get("boardId"));
+            if (parameters.containsKey("id")) {
+                resource = resourceService.findOne((Long) parameters.get("id"));
                 validRequest = true;
-            } else if (parameters.containsKey("departmentId")) {
-                resource = departmentService.findOne((Long) parameters.get("departmentId"));
-                validRequest = true;
-            } else if (parameters.containsKey("boardHandle") && parameters.containsKey("departmentHandle")) {
-                resource = boardService.findByHandleAndDepartmentHandle((String) parameters.get("boardHandle"), (String) parameters.get("departmentHandle"));
-                validRequest = true;
-            } else if (parameters.containsKey("departmentHandle")) {
-                resource = departmentService.findByHandle((String) parameters.get("departmentHandle"));
+            } else if (parameters.containsKey("handle")) {
+                resource = resourceService.findByHandle((String) parameters.get("handle"));
                 validRequest = true;
             }
             

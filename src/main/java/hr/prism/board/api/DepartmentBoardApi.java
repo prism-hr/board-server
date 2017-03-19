@@ -49,21 +49,21 @@ public class DepartmentBoardApi {
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/departments/{departmentId}", method = RequestMethod.GET)
-    public DepartmentRepresentation getDepartment(@PathVariable("departmentId") Long departmentId) {
-        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(departmentId));
+    @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartment(@PathVariable("id") Long id) {
+        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/departments/byHandle/{departmentHandle}", method = RequestMethod.GET)
-    public DepartmentRepresentation getDepartmentByHandle(@PathVariable("departmentHandle") String handle) {
+    @RequestMapping(value = "/departments/byHandle/{handle}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartmentByHandle(@PathVariable("handle") String handle) {
         return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/departments/{departmentId}", method = RequestMethod.PUT)
-    public void updateDepartment(@PathVariable("departmentId") Long departmentId, @RequestBody DepartmentDTO departmentDTO) {
-        departmentService.updateDepartment(departmentId, departmentDTO);
+    @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
+    public void updateDepartment(@PathVariable("id") Long id, @RequestBody DepartmentDTO departmentDTO) {
+        departmentService.updateDepartment(id, departmentDTO);
     }
     
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
@@ -81,27 +81,27 @@ public class DepartmentBoardApi {
     }
     
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/boards/{boardId}", method = RequestMethod.GET)
-    public BoardRepresentation getBoard(@PathVariable("boardId") Long boardId) {
-        return boardMapper.apply(boardService.findOne(boardId));
+    @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
+    public BoardRepresentation getBoard(@PathVariable("id") Long id) {
+        return boardMapper.apply(boardService.findOne(id));
     }
     
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/boards/byHandle/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
-    public BoardRepresentation getBoardByHandle(@PathVariable("departmentHandle") String departmentHandle, @PathVariable("boardHandle") String boardHandle) {
-        return boardMapper.apply(boardService.findByHandleAndDepartmentHandle(boardHandle, departmentHandle));
+    @RequestMapping(value = "/boards/byHandle/{handle}", method = RequestMethod.GET)
+    public BoardRepresentation getBoardByHandle(@PathVariable("handle") String handle) {
+        return boardMapper.apply(boardService.findByHandle(handle));
     }
     
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/boards/{boardId}", method = RequestMethod.PUT)
-    public void updateBoard(@PathVariable("boardId") Long boardId, @RequestBody BoardDTO boardDTO) {
-        boardService.updateBoard(boardId, boardDTO);
+    @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)
+    public void updateBoard(@PathVariable("id") Long id, @RequestBody BoardDTO boardDTO) {
+        boardService.updateBoard(id, boardDTO);
     }
     
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
-    @RequestMapping(value = "/boards/{boardId}/settings", method = RequestMethod.PUT)
-    public void updateBoardSettings(@PathVariable("boardId") Long boardId, @RequestBody BoardSettingsDTO boardSettingsDTO) {
-        boardService.updateBoardSettings(boardId, boardSettingsDTO);
+    @RequestMapping(value = "/boards/{id}/settings", method = RequestMethod.PUT)
+    public void updateBoardSettings(@PathVariable("id") Long id, @RequestBody BoardSettingsDTO boardSettingsDTO) {
+        boardService.updateBoardSettings(id, boardSettingsDTO);
     }
     
     @ExceptionHandler(ApiException.class)

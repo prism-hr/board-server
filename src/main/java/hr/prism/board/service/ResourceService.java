@@ -4,6 +4,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.repository.ResourceRelationRepository;
+import hr.prism.board.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +15,28 @@ import javax.inject.Inject;
 public class ResourceService {
     
     @Inject
+    private ResourceRepository resourceRepository;
+    
+    @Inject
     private ResourceRelationRepository resourceRelationRepository;
+    
+    public Resource findOne(Long id) {
+        return resourceRepository.findOne(id);
+    }
+    
+    public Resource findByHandle(String handle) {
+        return resourceRepository.findByHandle(handle);
+    }
+    
+    public void updateHandle(Resource resource, String newHandle) {
+        String handle = resource.getHandle();
+        if (handle.equals(newHandle)) {
+            return;
+        }
+        
+        resource.setHandle(newHandle);
+        resourceRepository.updateHandle(handle, newHandle);
+    }
     
     public void createResourceRelation(Resource resource1, Resource resource2) {
         if (resource1.getScope() == Scope.BOARD && resource2.getScope() == Scope.DEPARTMENT) {

@@ -80,7 +80,7 @@ public class DepartmentService {
                 throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             }
     
-            department.setHandle(departmentDTO.getHandle());
+            resourceService.updateHandle(department, departmentDTO.getHandle());
             List<String> memberCategories = departmentDTO.getMemberCategories();
             department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
             
@@ -113,7 +113,7 @@ public class DepartmentService {
             throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
         }
     
-        department.setHandle(departmentDTO.getHandle());
+        resourceService.updateHandle(department, departmentDTO.getHandle());
         department.setCategoryList(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
     }
     
