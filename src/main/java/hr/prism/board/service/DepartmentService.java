@@ -109,12 +109,18 @@ public class DepartmentService {
         }
     
         String newHandle = departmentDTO.getHandle();
-        if (!newHandle.equals(department.getHandle()) && departmentRepository.findByHandle(newHandle) != null) {
-            throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+        if (!newHandle.equals(department.getHandle())) {
+            if (departmentRepository.findByHandle(newHandle) != null) {
+                throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+            }
+        
+            resourceService.updateHandle(department, departmentDTO.getHandle());
         }
     
-        resourceService.updateHandle(department, departmentDTO.getHandle());
-        department.setCategoryList(departmentDTO.getMemberCategories().stream().collect(Collectors.joining("|")));
+        List<String> memberCategories = departmentDTO.getMemberCategories();
+        if (memberCategories != null) {
+            department.setCategoryList(memberCategories.stream().collect(Collectors.joining("|")));
+        }
     }
     
 }

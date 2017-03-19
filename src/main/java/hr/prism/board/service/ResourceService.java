@@ -29,13 +29,8 @@ public class ResourceService {
     }
     
     public void updateHandle(Resource resource, String newHandle) {
-        String handle = resource.getHandle();
-        if (handle.equals(newHandle)) {
-            return;
-        }
-        
         resource.setHandle(newHandle);
-        resourceRepository.updateHandle(handle, newHandle);
+        resourceRepository.updateHandle(resource.getHandle(), newHandle);
     }
     
     public void createResourceRelation(Resource resource1, Resource resource2) {

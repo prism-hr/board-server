@@ -110,15 +110,19 @@ public class BoardService {
     
     private void updateBoardSettings(Board board, BoardSettingsDTO boardSettingsDTO, Department department) {
         String handle = Joiner.on("/").join(department.getHandle(), boardSettingsDTO.getHandle());
-        if (!handle.equals(board.getHandle()) && boardRepository.findByHandle(handle) != null) {
-            throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
+        if (!handle.equals(board.getHandle())) {
+            if (boardRepository.findByHandle(handle) != null) {
+                throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
+            }
+        
+            resourceService.updateHandle(board, handle);
         }
-        resourceService.updateHandle(board, handle);
         
         List<String> postCategories = boardSettingsDTO.getPostCategories();
         if (postCategories != null) {
             board.setCategoryList(postCategories.stream().collect(Collectors.joining("|")));
         }
+    
         board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }
     
