@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.*;
@@ -528,6 +529,7 @@ public class DepartmentBoardApiIT {
         transactionTemplate.execute(transactionStatus -> {
             Board board = boardService.findOne(boardR.getId());
             Department department = departmentService.findOne(departmentR.getId());
+            Assert.assertEquals(board.getHandle(), Joiner.on("/").join(department.getHandle(), boardR.getHandle()));
             
             Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
             Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
