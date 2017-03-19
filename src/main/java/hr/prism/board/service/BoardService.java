@@ -56,7 +56,6 @@ public class BoardService {
         validateNameUniqueness(name, department);
 
         Board board = new Board();
-        board.setType("BOARD");
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
 
@@ -76,10 +75,9 @@ public class BoardService {
         userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
         return board;
     }
-
-    public void updateBoard(BoardDTO boardDTO) {
-        Long id = boardDTO.getId();
-        Board board = boardRepository.findOne(id);
+    
+    public void updateBoard(Long boardId, BoardDTO boardDTO) {
+        Board board = boardRepository.findOne(boardId);
 
         String newName = boardDTO.getName();
         if (!newName.equals(board.getName())) {

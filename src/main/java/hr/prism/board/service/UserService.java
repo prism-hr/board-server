@@ -21,8 +21,8 @@ public class UserService {
     private UserRepository userRepository;
     
     public User getCurrentUser() {
-        org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication()
-            .getPrincipal();
+        org.springframework.security.core.userdetails.User user =
+            (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String href = user.getUsername();
         String stormpathId = href.substring(href.lastIndexOf('/') + 1);
         return userRepository.findByStormpathId(stormpathId);

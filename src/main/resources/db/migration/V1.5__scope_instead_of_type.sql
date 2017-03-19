@@ -1,0 +1,2 @@
+ALTER TABLE resource
+  CHANGE COLUMN type scope VARCHAR(20) NOT NULL;

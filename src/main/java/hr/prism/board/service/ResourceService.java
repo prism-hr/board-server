@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceRelation;
+import hr.prism.board.domain.Scope;
 import hr.prism.board.repository.ResourceRelationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,7 @@ public class ResourceService {
     private ResourceRelationRepository resourceRelationRepository;
     
     public void createResourceRelation(Resource resource1, Resource resource2) {
-        if (resource1.getType().equals("BOARD") && resource2.getType().equals("DEPARTMENT")) {
+        if (resource1.getScope() == Scope.BOARD && resource2.getScope() == Scope.DEPARTMENT) {
             throw new IllegalStateException("A board cannot be the parent of a department");
         }
         

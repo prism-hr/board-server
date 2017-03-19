@@ -7,12 +7,12 @@ import java.util.Set;
 @Entity
 @Table(name = "resource")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue(value = "RESOURCE")
+@DiscriminatorColumn(name = "scope", discriminatorType = DiscriminatorType.STRING)
 public class Resource extends BoardEntity {
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, insertable = false, updatable = false)
-    private String type;
+    private Scope scope;
     
     @Column(name = "name", nullable = false)
     private String name;
@@ -39,12 +39,12 @@ public class Resource extends BoardEntity {
     @OneToMany(mappedBy = "resource2")
     private Set<ResourceRelation> parents = new HashSet<>();
     
-    public String getType() {
-        return type;
+    public Scope getScope() {
+        return scope;
     }
     
-    public Resource setType(String type) {
-        this.type = type;
+    public Resource setScope(Scope scope) {
+        this.scope = scope;
         return this;
     }
     

@@ -5,7 +5,7 @@ import hr.prism.board.enums.PostVisibility;
 import javax.persistence.*;
 
 @Entity
-@DiscriminatorValue(value = "BOARD")
+@DiscriminatorValue(value = Scope.Value.BOARD)
 public class Board extends Resource {
     
     @Column(name = "default_post_visibility")
@@ -20,4 +20,5 @@ public class Board extends Resource {
         this.defaultPostVisibility = defaultPostVisibility;
         return this;
     }
+    
 }

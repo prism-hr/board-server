@@ -2,7 +2,10 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import hr.prism.board.authentication.Restriction;
 import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Role;
+import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -37,6 +40,7 @@ public class DepartmentBoardApi {
     @Inject
     private DepartmentMapperFactory departmentMapperFactory;
     
+    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
         return StreamSupport.stream(departmentService.findAllByOrderByName().spliterator(), false)
@@ -44,19 +48,22 @@ public class DepartmentBoardApi {
             .collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
-    public DepartmentRepresentation getDepartment(@PathVariable Long id) {
-        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
+    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/departments/{departmentId}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartment(@PathVariable("departmentId") Long departmentId) {
+        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(departmentId));
     }
     
-    @RequestMapping(value = "/departments/byHandle/{handle}", method = RequestMethod.GET)
-    public DepartmentRepresentation getDepartmentByHandle(@PathVariable String handle) {
+    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/departments/byHandle/{departmentHandle}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartmentByHandle(@PathVariable("departmentHandle") String handle) {
         return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
     }
     
-    @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
-    public void updateDepartment(@RequestBody DepartmentDTO departmentDTO) {
-        departmentService.updateDepartment(departmentDTO);
+    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/departments/{departmentId}", method = RequestMethod.PUT)
+    public void updateDepartment(@PathVariable("departmentId") Long departmentId, @RequestBody DepartmentDTO departmentDTO) {
+        departmentService.updateDepartment(departmentId, departmentDTO);
     }
     
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
@@ -65,6 +72,7 @@ public class DepartmentBoardApi {
         return boardMapper.apply(board);
     }
     
+    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
         return StreamSupport.stream(boardService.findAllByOrderByName().spliterator(), false)
@@ -72,24 +80,28 @@ public class DepartmentBoardApi {
             .collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
-    public BoardRepresentation getBoard(@PathVariable Long id) {
-        return boardMapper.apply(boardService.findOne(id));
+    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/boards/{boardId}", method = RequestMethod.GET)
+    public BoardRepresentation getBoard(@PathVariable("boardId") Long boardId) {
+        return boardMapper.apply(boardService.findOne(boardId));
     }
     
+    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards/byHandle/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
-    public BoardRepresentation getBoardByHandle(@PathVariable String departmentHandle, String handle) {
-        return boardMapper.apply(boardService.findByHandleAndDepartmentHandle(handle, departmentHandle));
+    public BoardRepresentation getBoardByHandle(@PathVariable("departmentHandle") String departmentHandle, @PathVariable("boardHandle") String boardHandle) {
+        return boardMapper.apply(boardService.findByHandleAndDepartmentHandle(boardHandle, departmentHandle));
     }
     
-    @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)
-    public void updateBoard(@RequestBody BoardDTO boardDTO) {
-        boardService.updateBoard(boardDTO);
+    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/boards/{boardId}", method = RequestMethod.PUT)
+    public void updateBoard(@PathVariable("boardId") Long boardId, @RequestBody BoardDTO boardDTO) {
+        boardService.updateBoard(boardId, boardDTO);
     }
     
-    @RequestMapping(value = "/boards/{id}/settings", method = RequestMethod.PUT)
-    public void updateBoardSettings(@PathVariable Long id, @RequestBody BoardSettingsDTO boardSettingsDTO) {
-        boardService.updateBoardSettings(id, boardSettingsDTO);
+    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/boards/{boardId}/settings", method = RequestMethod.PUT)
+    public void updateBoardSettings(@PathVariable("boardId") Long boardId, @RequestBody BoardSettingsDTO boardSettingsDTO) {
+        boardService.updateBoardSettings(boardId, boardSettingsDTO);
     }
     
     @ExceptionHandler(ApiException.class)

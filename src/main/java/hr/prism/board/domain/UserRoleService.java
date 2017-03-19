@@ -25,16 +25,16 @@ public class UserRoleService {
         }
     }
     
+    public boolean hasUserRole(Scope scope, User user) {
+        return userRoleRepository.findByScopeAndUser(scope, user).size() > 0;
+    }
+    
     public boolean hasUserRole(Resource resource, User user, Role... roles) {
         if (ArrayUtils.isEmpty(roles)) {
             throw new IllegalStateException("No roles specified");
         }
-        
-        if (userRoleRepository.findByResourceUserAndRoles(resource, user, roles).size() > 0) {
-            return true;
-        }
-        
-        return false;
+    
+        return userRoleRepository.findByResourceUserAndRoles(resource, user, roles).size() > 0;
     }
     
 }

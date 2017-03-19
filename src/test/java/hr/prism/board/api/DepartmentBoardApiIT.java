@@ -189,9 +189,9 @@ public class DepartmentBoardApiIT {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            boardDTO1.setId(boardR1.getId()).setName(boardDTO2.getName());
+            boardDTO1.setName(boardDTO2.getName());
             boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle());
-            ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
+            ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardR1.getId(), boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
@@ -305,11 +305,11 @@ public class DepartmentBoardApiIT {
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
     
-            departmentBoardApi.updateDepartment(new DepartmentDTO()
-                .setId(boardR.getDepartment().getId())
-                .setName("Another name 3")
-                .setHandle("AnotherHandle3")
-                .setMemberCategories(ImmutableList.of("c")));
+            departmentBoardApi.updateDepartment(boardR.getDepartment().getId(),
+                new DepartmentDTO()
+                    .setName("Another name 3")
+                    .setHandle("AnotherHandle3")
+                    .setMemberCategories(ImmutableList.of("c")));
             return boardR.getDepartment().getId();
         });
         
@@ -418,11 +418,11 @@ public class DepartmentBoardApiIT {
             verifyBoard(user, boardDTO2, boardR2, true);
     
             ApiTestUtil.verifyApiException(() ->
-                    departmentBoardApi.updateDepartment(new DepartmentDTO()
-                        .setId(boardR1.getDepartment().getId())
-                        .setName(boardDTO2.getDepartment().getName())
-                        .setHandle(boardDTO2.getDepartment().getHandle())
-                        .setMemberCategories(boardDTO1.getDepartment().getMemberCategories())),
+                    departmentBoardApi.updateDepartment(boardR1.getDepartment().getId(),
+                        new DepartmentDTO()
+                            .setName(boardDTO2.getDepartment().getName())
+                            .setHandle(boardDTO2.getDepartment().getHandle())
+                            .setMemberCategories(boardDTO1.getDepartment().getMemberCategories())),
                 ExceptionCode.DUPLICATE_DEPARTMENT, transactionStatus);
             return null;
         });
@@ -459,11 +459,11 @@ public class DepartmentBoardApiIT {
             verifyBoard(user, boardDTO2, boardR2, true);
     
             ApiTestUtil.verifyApiException(() ->
-                    departmentBoardApi.updateDepartment(new DepartmentDTO()
-                        .setId(boardR1.getDepartment().getId())
-                        .setName(boardDTO1.getDepartment().getName())
-                        .setHandle(boardDTO2.getDepartment().getHandle())
-                        .setMemberCategories(boardDTO1.getDepartment().getMemberCategories())),
+                    departmentBoardApi.updateDepartment(boardR1.getDepartment().getId(),
+                        new DepartmentDTO()
+                            .setName(boardDTO1.getDepartment().getName())
+                            .setHandle(boardDTO2.getDepartment().getHandle())
+                            .setMemberCategories(boardDTO1.getDepartment().getMemberCategories())),
                 ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
             return null;
         });

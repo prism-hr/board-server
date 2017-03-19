@@ -70,7 +70,6 @@ public class DepartmentService {
         
         if (departmentById == null && departmentByName == null) {
             Department department = new Department();
-            department.setType("DEPARTMENT");
             department.setName(departmentDTO.getName());
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
@@ -94,9 +93,8 @@ public class DepartmentService {
         return departmentByName == null ? departmentById : departmentByName;
     }
     
-    public void updateDepartment(DepartmentDTO departmentDTO) {
-        Long id = departmentDTO.getId();
-        Department department = departmentRepository.findOne(id);
+    public void updateDepartment(Long departmentId, DepartmentDTO departmentDTO) {
+        Department department = departmentRepository.findOne(departmentId);
         
         String newName = departmentDTO.getName();
         if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {

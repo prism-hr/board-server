@@ -1,5 +1,7 @@
 package hr.prism.board.domain;
 
+import com.google.common.base.Joiner;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
@@ -60,6 +62,11 @@ public class User extends BoardEntity {
     
     public Set<UserRole> getUserRoles() {
         return userRoles;
+    }
+    
+    @Override
+    public String toString() {
+        return Joiner.on(" ").skipNulls().join(givenName, surname, email);
     }
     
 }
