@@ -11,7 +11,7 @@ import java.util.Set;
 public class Resource extends BoardEntity {
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, insertable = false, updatable = false)
+    @Column(name = "scope", nullable = false, insertable = false, updatable = false)
     private Scope scope;
     
     @Column(name = "name", nullable = false)
