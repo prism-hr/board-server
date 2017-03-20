@@ -21,19 +21,19 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BoardService {
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private BoardRepository boardRepository;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserService userService;
     
@@ -41,7 +41,7 @@ public class BoardService {
     public Iterable<Board> findAllByOrderByName() {
         return boardRepository.findAllByOrderByName();
     }
-    
+
     public Board findOne(Long id) {
         return boardRepository.findOne(id);
     }
@@ -53,23 +53,23 @@ public class BoardService {
     // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-    
+
         String name = boardDTO.getName();
         validateNameUniqueness(name, department);
-    
+
         Board board = new Board();
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
-    
+
         BoardSettingsDTO settingsDTO = boardDTO.getSettings();
         if (settingsDTO == null) {
             settingsDTO = new BoardSettingsDTO();
         }
-    
+
         if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
             settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
         }
-    
+
         updateBoardSettings(board, settingsDTO, department);
         board = boardRepository.save(board);
         resourceService.createResourceRelation(board, board);
@@ -86,11 +86,11 @@ public class BoardService {
             Department department = departmentService.findByBoard(board);
             validateNameUniqueness(newName, department);
         }
-    
+
         board.setName(boardDTO.getName());
         board.setDescription(boardDTO.getPurpose());
     }
-    
+
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
         Department department = departmentService.findByBoard(board);
@@ -100,7 +100,7 @@ public class BoardService {
     public Iterable<Board> findByDepartment(Department department) {
         return boardRepository.findByDepartment(department);
     }
-    
+
     private void validateNameUniqueness(String name, Department department) {
         Board board = boardRepository.findByNameAndDepartment(name, department);
         if (board != null) {
@@ -125,5 +125,5 @@ public class BoardService {
     
         board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }
-    
+
 }
