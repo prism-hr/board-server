@@ -114,7 +114,7 @@ public class BoardService {
             if (boardRepository.findByHandle(handle) != null) {
                 throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
             }
-        
+    
             resourceService.updateHandle(board, handle);
         }
         

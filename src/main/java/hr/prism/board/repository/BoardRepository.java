@@ -24,7 +24,7 @@ public interface BoardRepository extends MyRepository<Board, Long> {
             "from Board board " +
             "inner join board.parents parent " +
             "where parent.resource1 = :department " +
-            "order by board.id")
+            "order by board.name")
     Iterable<Board> findByDepartment(@Param("department") Department department);
     
 }

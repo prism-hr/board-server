@@ -16,7 +16,7 @@ import java.util.function.Function;
 public class BoardMapper implements Function<Board, BoardRepresentation> {
     
     @Inject
-    private DepartmentMapperFactory departmentMapperFactory;
+    private DepartmentMapper departmentMapper;
     
     @Inject
     private DepartmentService departmentService;
@@ -31,7 +31,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setPurpose(board.getDescription())
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
             .setPostCategories(Splitter.on("|").omitEmptyStrings().splitToList(board.getCategoryList()))
-            .setDepartment(departmentMapperFactory.create().apply(department))
+            .setDepartment(departmentMapper.create().apply(department))
             .setDefaultPostVisibility(board.getDefaultPostVisibility());
     }
     

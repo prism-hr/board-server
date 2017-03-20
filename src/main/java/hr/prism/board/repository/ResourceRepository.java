@@ -13,7 +13,7 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
     @Query(value =
         "update resource " +
             "set handle = concat(:newHandle, substring(handle, length(:handle) + 1)) " +
-            "where handle like concat(:handle, '%')",
+            "where handle like concat(:handle, '/%')",
         nativeQuery = true)
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
     

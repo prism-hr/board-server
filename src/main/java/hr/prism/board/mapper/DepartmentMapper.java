@@ -16,7 +16,7 @@ import java.util.stream.StreamSupport;
 
 @Service
 @Transactional
-public class DepartmentMapperFactory {
+public class DepartmentMapper {
     
     @Inject
     private DocumentMapper documentMapper;

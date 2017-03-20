@@ -11,7 +11,7 @@ import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.mapper.BoardMapper;
-import hr.prism.board.mapper.DepartmentMapperFactory;
+import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
@@ -38,26 +38,26 @@ public class DepartmentBoardApi {
     private BoardMapper boardMapper;
     
     @Inject
-    private DepartmentMapperFactory departmentMapperFactory;
+    private DepartmentMapper departmentMapper;
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
         return StreamSupport.stream(departmentService.findAllByOrderByName().spliterator(), false)
-            .map(departmentMapperFactory.create())
+            .map(departmentMapper.create())
             .collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable("id") Long id) {
-        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
+        return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments/byHandle/{handle}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartmentByHandle(@PathVariable("handle") String handle) {
-        return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
+        return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
