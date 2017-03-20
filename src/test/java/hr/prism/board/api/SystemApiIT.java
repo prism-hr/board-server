@@ -24,23 +24,23 @@ import java.util.TreeMap;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class SystemApiIT {
-
+    
     @Inject
     private Environment environment;
-
+    
     @Inject
     private SystemApi systemApi;
-
+    
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetDefinitions() {
         TreeMap<String, Object> definitions = systemApi.getDefinitions();
         List<String> postVisibility = (List<String>) definitions.get("postVisibility");
         Assert.assertThat(postVisibility, Matchers.containsInAnyOrder(Arrays.stream(PostVisibility.values()).map(PostVisibility::name).toArray(String[]::new)));
-
+        
         String applicationUrl = environment.getProperty("app.url");
         Assert.assertNotNull(applicationUrl);
         Assert.assertEquals(applicationUrl, definitions.get("applicationUrl"));
     }
-
+    
 }

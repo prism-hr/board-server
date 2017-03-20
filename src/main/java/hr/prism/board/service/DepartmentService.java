@@ -113,7 +113,7 @@ public class DepartmentService {
             if (departmentRepository.findByHandle(newHandle) != null) {
                 throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             }
-        
+    
             resourceService.updateHandle(department, departmentDTO.getHandle());
         }
     
