@@ -234,7 +234,7 @@ public class DepartmentBoardApiIT {
     }
     
     @Test
-    public void shouldCreateTwoBoardsWithinOneDepartmentAndUpdateHandleGlobally() {
+    public void shouldCreateTwoBoardsWithinOneDepartmentAndUpdateHandlesCoherently() {
         User user = userTestService.authenticate();
         Long createdDepartmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
@@ -289,12 +289,14 @@ public class DepartmentBoardApiIT {
         });
     
         transactionTemplate.execute(transactionStatus -> {
-            DepartmentRepresentation departmentR = verifyGetDepartment(createdDepartmentId);
-            Assert.assertEquals("Handle2", departmentR.getHandle());
+            Department department = departmentService.findOne(createdDepartmentId);
+            Assert.assertEquals("Handle2", department.getHandle());
         
-            List<BoardRepresentation> boardRs = departmentR.getBoards();
-            for (int i = 0; i < 2; i++) {
-                Assert.assertEquals("Handle2/Handle" + (i + 1), boardRs.get(i).getHandle());
+            int index = 1;
+            Iterable<Board> boards = boardService.findByDepartment(department);
+            for (Board board : boards) {
+                Assert.assertEquals("Handle2/Handle" + index, board.getHandle());
+                index++;
             }
         
             return null;
@@ -565,7 +567,7 @@ public class DepartmentBoardApiIT {
     
     private BoardRepresentation verifyGetBoard(Long id) {
         BoardRepresentation boardR = departmentBoardApi.getBoard(id);
-        BoardRepresentation boardRByHandle = departmentBoardApi.getBoardByHandle(Joiner.on("|").join(boardR.getDepartment().getHandle(), boardR.getHandle()));
+        BoardRepresentation boardRByHandle = departmentBoardApi.getBoardByHandle(Joiner.on("/").join(boardR.getDepartment().getHandle(), boardR.getHandle()));
         Assert.assertEquals(boardR.getId(), boardRByHandle.getId());
         return boardRByHandle;
     }
