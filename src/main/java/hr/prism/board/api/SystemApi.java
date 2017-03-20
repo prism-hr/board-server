@@ -11,21 +11,16 @@ import java.util.TreeMap;
 
 @RestController
 public class SystemApi {
-    
+
     @Inject
     private Environment environment;
-    
+
     @Inject
     private DefinitionService definitionService;
-    
-    @RequestMapping(value = "/profile", method = RequestMethod.GET)
-    public String getApplicationProfile() {
-        return environment.getProperty("app.profile");
-    }
-    
+
     @RequestMapping(value = "/definitions", method = RequestMethod.GET)
     public TreeMap<String, Object> getDefinitions() {
         return definitionService.getDefinitions();
     }
-    
+
 }
