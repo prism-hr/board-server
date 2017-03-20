@@ -57,12 +57,13 @@ public class RestrictionProcessor {
         Object[] arguments = joinPoint.getArgs();
         Map<String, Object> parameters = new HashMap<>();
         if (parameterAnnotations.length == arguments.length) {
-            for (int i = 0; i > arguments.length; i++) {
+            for (int i = 0; i < arguments.length; i++) {
                 Annotation parameterAnnotation = parameterAnnotations[i][0];
-                if (parameterAnnotation instanceof PathVariable) {
-                    parameters.put(verifyArgumentName(((PathVariable) parameterAnnotation).name()), arguments[i]);
-                } else if (parameterAnnotation instanceof RequestParam) {
-                    parameters.put(verifyArgumentName(((RequestParam) parameterAnnotation).name()), arguments[i]);
+                Class<?> parameterAnnotationClass = parameterAnnotation.annotationType();
+                if (parameterAnnotationClass == PathVariable.class) {
+                    parameters.put(verifyArgumentName(((PathVariable) parameterAnnotation).value()), arguments[i]);
+                } else if (parameterAnnotationClass == RequestParam.class) {
+                    parameters.put(verifyArgumentName(((RequestParam) parameterAnnotation).value()), arguments[i]);
                 }
             }
             
