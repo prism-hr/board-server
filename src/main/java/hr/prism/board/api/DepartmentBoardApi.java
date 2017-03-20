@@ -24,78 +24,78 @@ import java.util.stream.StreamSupport;
 
 @RestController
 public class DepartmentBoardApi {
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private BoardService boardService;
-    
+
     @Inject
     private BoardMapper boardMapper;
-    
+
     @Inject
     private DepartmentMapperFactory departmentMapperFactory;
-    
+
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
         return StreamSupport.stream(departmentService.findAllByOrderByName().spliterator(), false)
             .map(departmentMapperFactory.create())
             .collect(Collectors.toList());
     }
-    
+
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
         return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
     }
-    
+
     @RequestMapping(value = "/departments/byHandle/{handle}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartmentByHandle(@PathVariable String handle) {
         return departmentMapperFactory.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
     }
-    
+
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
     public void updateDepartment(@RequestBody DepartmentDTO departmentDTO) {
         departmentService.updateDepartment(departmentDTO);
     }
-    
+
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
     public BoardRepresentation postBoard(@RequestBody BoardDTO boardDTO) {
         Board board = boardService.createBoard(boardDTO);
         return boardMapper.apply(board);
     }
-    
+
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
         return StreamSupport.stream(boardService.findAllByOrderByName().spliterator(), false)
             .map(boardMapper)
             .collect(Collectors.toList());
     }
-    
+
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long id) {
         return boardMapper.apply(boardService.findOne(id));
     }
-    
+
     @RequestMapping(value = "/boards/byHandle/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
     public BoardRepresentation getBoardByHandle(@PathVariable String departmentHandle, String handle) {
         return boardMapper.apply(boardService.findByHandleAndDepartmentHandle(handle, departmentHandle));
     }
-    
+
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)
-    public void updateBoard(@RequestBody BoardDTO boardDTO) {
-        boardService.updateBoard(boardDTO);
+    public void updateBoard(@PathVariable Long id, @RequestBody BoardDTO boardDTO) {
+        boardService.updateBoard(id, boardDTO);
     }
-    
+
     @RequestMapping(value = "/boards/{id}/settings", method = RequestMethod.PUT)
     public void updateBoardSettings(@PathVariable Long id, @RequestBody BoardSettingsDTO boardSettingsDTO) {
         boardService.updateBoardSettings(id, boardSettingsDTO);
     }
-    
+
     @ExceptionHandler(ApiException.class)
     @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
     public Map<String, String> handleException(ApiException apiException) {
         return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
     }
-    
+
 }

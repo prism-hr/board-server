@@ -3,6 +3,7 @@ package hr.prism.board.dto;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 
 public class BoardDTO {
 
@@ -12,6 +13,7 @@ public class BoardDTO {
     private String name;
 
     @NotEmpty
+    @Size(max = 2000)
     private String purpose;
 
     @Valid

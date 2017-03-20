@@ -35,7 +35,7 @@ public class BoardService {
 
     @Inject
     private UserService userService;
-    
+
     // TODO: make it a query with the user roles
     public Iterable<Board> findAllByOrderByName() {
         return boardRepository.findAllByOrderByName();
@@ -44,7 +44,7 @@ public class BoardService {
     public Board findOne(Long id) {
         return boardRepository.findOne(id);
     }
-    
+
     public Board findByHandleAndDepartmentHandle(String handle, String departmentHandle) {
         return boardRepository.findByHandleAndDepartmentHandle(handle, departmentHandle);
     }
@@ -77,8 +77,7 @@ public class BoardService {
         return board;
     }
 
-    public void updateBoard(BoardDTO boardDTO) {
-        Long id = boardDTO.getId();
+    public void updateBoard(Long id, BoardDTO boardDTO) {
         Board board = boardRepository.findOne(id);
 
         String newName = boardDTO.getName();
