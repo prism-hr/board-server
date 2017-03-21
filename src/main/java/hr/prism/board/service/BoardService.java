@@ -38,7 +38,7 @@ public class BoardService {
     private UserService userService;
     
     // TODO: make it a query with the user roles
-    public Iterable<Board> findAllByOrderByName() {
+    public List<Board> findAllByOrderByName() {
         return boardRepository.findAllByOrderByName();
     }
     
@@ -97,7 +97,7 @@ public class BoardService {
         updateBoardSettings(board, boardSettingsDTO, department);
     }
     
-    public Iterable<Board> findByDepartment(Department department) {
+    public List<Board> findByDepartment(Department department) {
         return boardRepository.findByDepartment(department);
     }
     

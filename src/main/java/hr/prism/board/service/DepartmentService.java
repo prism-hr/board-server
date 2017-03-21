@@ -35,7 +35,7 @@ public class DepartmentService {
     private UserRoleService userRoleService;
     
     // TODO: make it a query with the user roles
-    public Iterable<Department> findAllByOrderByName() {
+    public List<Department> findAllByOrderByName() {
         return departmentRepository.findAllByOrderByName();
     }
     

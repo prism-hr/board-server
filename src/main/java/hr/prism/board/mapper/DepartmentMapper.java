@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @Transactional
@@ -41,9 +40,7 @@ public class DepartmentMapper {
                 .setHandle(department.getHandle())
                 .setMemberCategories(Splitter.on("|").omitEmptyStrings().splitToList(department.getCategoryList()));
             if (options.contains("boards")) {
-                departmentRepresentation.setBoards(StreamSupport.stream(boardService.findByDepartment(department).spliterator(), false)
-                    .map(boardMapper)
-                    .collect(Collectors.toList()));
+                departmentRepresentation.setBoards(boardService.findByDepartment(department).stream().map(boardMapper).collect(Collectors.toList()));
             }
     
             return departmentRepresentation;

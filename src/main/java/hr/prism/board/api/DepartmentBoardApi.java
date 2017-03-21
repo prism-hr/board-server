@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @RestController
 public class DepartmentBoardApi {
@@ -43,9 +42,7 @@ public class DepartmentBoardApi {
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
-        return StreamSupport.stream(departmentService.findAllByOrderByName().spliterator(), false)
-            .map(departmentMapper.create())
-            .collect(Collectors.toList());
+        return departmentService.findAllByOrderByName().stream().map(departmentMapper.create()).collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
@@ -75,9 +72,7 @@ public class DepartmentBoardApi {
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
-        return StreamSupport.stream(boardService.findAllByOrderByName().spliterator(), false)
-            .map(boardMapper)
-            .collect(Collectors.toList());
+        return boardService.findAllByOrderByName().stream().map(boardMapper).collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)

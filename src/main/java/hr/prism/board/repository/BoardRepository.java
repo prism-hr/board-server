@@ -5,11 +5,13 @@ import hr.prism.board.domain.Department;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface BoardRepository extends MyRepository<Board, Long> {
     
     Board findByHandle(String handle);
     
-    Iterable<Board> findAllByOrderByName();
+    List<Board> findAllByOrderByName();
     
     @Query(value =
         "select board " +
@@ -25,6 +27,6 @@ public interface BoardRepository extends MyRepository<Board, Long> {
             "inner join board.parents parent " +
             "where parent.resource1 = :department " +
             "order by board.name")
-    Iterable<Board> findByDepartment(@Param("department") Department department);
+    List<Board> findByDepartment(@Param("department") Department department);
     
 }
