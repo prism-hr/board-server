@@ -2,6 +2,8 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Scope;
+import hr.prism.board.domain.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,7 +13,13 @@ public interface BoardRepository extends MyRepository<Board, Long> {
     
     Board findByHandle(String handle);
     
-    List<Board> findAllByOrderByName();
+    @Query(value =
+        "select board " +
+            "from Board board " +
+            "where board.id in (" +
+            ResourceRepository.RESOURCE_IDS_BY_USER + " = '" + Scope.Value.BOARD + "') " +
+            "order by board.name")
+    List<Board> findAllByUserByOrderByName(@Param("user") User user);
     
     @Query(value =
         "select board " +

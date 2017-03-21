@@ -34,9 +34,9 @@ public class DepartmentService {
     @Inject
     private UserRoleService userRoleService;
     
-    // TODO: make it a query with the user roles
-    public List<Department> findAllByOrderByName() {
-        return departmentRepository.findAllByOrderByName();
+    public List<Department> findAllByUserOrderByName() {
+        User currentUser = userService.getCurrentUser();
+        return departmentRepository.findAllByUserByOrderByName(currentUser);
     }
     
     public Department findOne(Long id) {

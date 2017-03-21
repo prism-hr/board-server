@@ -42,7 +42,7 @@ public class DepartmentBoardApi {
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
-        return departmentService.findAllByOrderByName().stream().map(departmentMapper.create()).collect(Collectors.toList());
+        return departmentService.findAllByUserOrderByName().stream().map(departmentMapper.create()).collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
@@ -72,7 +72,7 @@ public class DepartmentBoardApi {
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
-        return boardService.findAllByOrderByName().stream().map(boardMapper).collect(Collectors.toList());
+        return boardService.findAllByUserOrderByName().stream().map(boardMapper).collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)

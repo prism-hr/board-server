@@ -7,6 +7,15 @@ import org.springframework.data.repository.query.Param;
 
 public interface ResourceRepository extends MyRepository<Resource, Long> {
     
+    String RESOURCE_IDS_BY_USER =
+        "select distinct childResource.id " +
+            "from UserRole userRole " +
+            "inner join userRole.resource resource " +
+            "inner join resource.children child " +
+            "inner join child.resource2 childResource " +
+            "where userRole.user = :user " +
+            "and childResource.scope";
+    
     Resource findByHandle(String handle);
     
     @Modifying

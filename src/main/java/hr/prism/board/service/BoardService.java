@@ -1,10 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.UserRoleService;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.enums.PostVisibility;
@@ -37,9 +34,9 @@ public class BoardService {
     @Inject
     private UserService userService;
     
-    // TODO: make it a query with the user roles
-    public List<Board> findAllByOrderByName() {
-        return boardRepository.findAllByOrderByName();
+    public List<Board> findAllByUserOrderByName() {
+        User user = userService.getCurrentUser();
+        return boardRepository.findAllByUserByOrderByName(user);
     }
     
     public Board findOne(Long id) {

@@ -16,9 +16,11 @@ public class DocumentMapper implements Function<Document, DocumentRepresentation
         if (document == null) {
             return null;
         }
+    
         return new DocumentRepresentation()
             .setCloudinaryId(document.getCloudinaryId())
             .setCloudinaryUrl(document.getCloudinaryUrl())
             .setFileName(document.getFileName());
     }
+    
 }
