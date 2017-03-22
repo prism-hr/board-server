@@ -47,6 +47,10 @@ public class BoardService {
         return boardRepository.findByHandle(handle);
     }
 
+    public Board findByPost(Post post) {
+        return boardRepository.findByPost(post);
+    }
+
     // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());

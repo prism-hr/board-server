@@ -446,7 +446,7 @@ public class DepartmentBoardApiIT {
 
     @Test
     public void shouldUpdateCategories() {
-        User user = userTestService.authenticate();
+        userTestService.authenticate();
         BoardSettingsDTO settingsDTO = new BoardSettingsDTO()
             .setHandle("sudc")
             .setPostCategories(ImmutableList.of("b1", "b2"));
@@ -473,10 +473,6 @@ public class DepartmentBoardApiIT {
             Assert.assertThat(updatedBoard.getDepartment().getMemberCategories(), Matchers.containsInAnyOrder("d1", "d3"));
             return null;
         });
-
-//        transactionTemplate.execute(transactionStatus -> {
-//            return null;
-//        });
     }
 
     @Test
