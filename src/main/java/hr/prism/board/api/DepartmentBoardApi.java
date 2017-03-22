@@ -39,19 +39,16 @@ public class DepartmentBoardApi {
     @Inject
     private DepartmentMapper departmentMapper;
     
-    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
         return departmentService.findAllByUserOrderByName().stream().map(departmentMapper.create()).collect(Collectors.toList());
     }
     
-    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable("id") Long id) {
         return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.findOne(id));
     }
     
-    @Restriction(scope = Scope.DEPARTMENT, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/departments/byHandle/{handle}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartmentByHandle(@PathVariable("handle") String handle) {
         return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
@@ -69,19 +66,16 @@ public class DepartmentBoardApi {
         return boardMapper.apply(board);
     }
     
-    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
         return boardService.findAllByUserOrderByName().stream().map(boardMapper).collect(Collectors.toList());
     }
     
-    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable("id") Long id) {
         return boardMapper.apply(boardService.findOne(id));
     }
     
-    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/boards/byHandle/{handle}", method = RequestMethod.GET)
     public BoardRepresentation getBoardByHandle(@PathVariable("handle") String handle) {
         return boardMapper.apply(boardService.findByHandle(handle));
