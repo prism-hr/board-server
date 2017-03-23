@@ -35,7 +35,7 @@ public class BoardService {
     private UserService userService;
 
     public List<Board> findAllByUserOrderByName() {
-        User user = userService.getCurrentUser();
+        User user = userService.getCurrentUserSecured();
         return boardRepository.findAllByUserByOrderByName(user);
     }
 
@@ -74,7 +74,7 @@ public class BoardService {
         board = boardRepository.save(board);
         updateBoardSettings(board, settingsDTO, department);
         resourceService.createResourceRelation(department, board);
-        userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
+        userRoleService.createUserRole(board, userService.getCurrentUserSecured(), Role.ADMINISTRATOR);
         return board;
     }
 

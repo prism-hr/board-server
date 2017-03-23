@@ -3,7 +3,9 @@ package hr.prism.board.service;
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.servlet.account.AccountResolver;
 import hr.prism.board.domain.User;
+import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.repository.UserRepository;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +23,28 @@ public class UserService {
     private UserRepository userRepository;
     
     public User getCurrentUser() {
-        org.springframework.security.core.userdetails.User user =
-            (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String href = user.getUsername();
-        String stormpathId = href.substring(href.lastIndexOf('/') + 1);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+    
+        org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+        if (user == null) {
+            return null;
+        }
+    
+        String username = user.getUsername();
+        String stormpathId = username.substring(username.lastIndexOf('/') + 1);
         return userRepository.findByStormpathId(stormpathId);
+    }
+    
+    public User getCurrentUserSecured() {
+        User user = getCurrentUser();
+        if (user == null) {
+            throw new ApiForbiddenException("User not authenticated");
+        }
+        
+        return user;
     }
     
     public User createUser(Account account) {

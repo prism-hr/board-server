@@ -66,7 +66,7 @@ public class PostService {
         post = postRepository.save(post);
 
         resourceService.createResourceRelation(board, post);
-        userRoleService.createUserRole(post, userService.getCurrentUser(), Role.ADMINISTRATOR);
+        userRoleService.createUserRole(post, userService.getCurrentUserSecured(), Role.ADMINISTRATOR);
         return post;
     }
 

@@ -11,7 +11,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.List;
 
-public class AbstractIT {
+public abstract class AbstractIT {
     
     @PersistenceContext
     private EntityManager entityManager;

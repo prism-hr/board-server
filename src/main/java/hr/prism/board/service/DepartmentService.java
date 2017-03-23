@@ -35,7 +35,7 @@ public class DepartmentService {
     private UserRoleService userRoleService;
 
     public List<Department> findAllByUserOrderByName() {
-        User currentUser = userService.getCurrentUser();
+        User currentUser = userService.getCurrentUserSecured();
         return departmentRepository.findAllByUserByOrderByName(currentUser);
     }
 
@@ -86,7 +86,7 @@ public class DepartmentService {
             department = departmentRepository.save(department);
             resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
             resourceService.createResourceRelation(department, department);
-            userRoleService.createUserRole(department, userService.getCurrentUser(), Role.ADMINISTRATOR);
+            userRoleService.createUserRole(department, userService.getCurrentUserSecured(), Role.ADMINISTRATOR);
             return department;
         }
 

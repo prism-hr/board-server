@@ -5,17 +5,16 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRoleService;
+import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
@@ -38,11 +37,7 @@ public class RestrictionProcessor {
     
     @Before("execution(@hr.prism.board.authentication.Restriction * *(..)) && @annotation(restriction)")
     public void processRestriction(JoinPoint joinPoint, Restriction restriction) {
-        User user = userService.getCurrentUser();
-        if (user == null) {
-            throw new ForbiddenException("User not authenticated");
-        }
-        
+        User user = userService.getCurrentUserSecured();
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Annotation[][] parameterAnnotations = methodSignature.getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
@@ -50,8 +45,8 @@ public class RestrictionProcessor {
             if (userRoleService.hasUserRole(scope, user)) {
                 return;
             }
-            
-            throw new ForbiddenException("User has no " + scope.name().toLowerCase() + " roles");
+    
+            throw new ApiForbiddenException("User has no " + scope.name().toLowerCase() + " roles");
         }
         
         Object[] arguments = joinPoint.getArgs();
@@ -85,8 +80,8 @@ public class RestrictionProcessor {
                 if (userRoleService.hasUserRole(resource, user, restriction.roles())) {
                     return;
                 }
-                
-                throw new ForbiddenException("User " + user.toString() + " does not have role(s): " +
+    
+                throw new ApiForbiddenException("User " + user.toString() + " does not have role(s): " +
                     Joiner.on(", ").join(restriction.roles()).toLowerCase() + " for " + resource.getScope().name().toLowerCase() + ": " + resource.getId());
             }
             
@@ -102,15 +97,6 @@ public class RestrictionProcessor {
         }
         
         return name;
-    }
-    
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    private static class ForbiddenException extends RuntimeException {
-        
-        ForbiddenException(String message) {
-            super(message);
-        }
-        
     }
     
 }
