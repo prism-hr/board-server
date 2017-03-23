@@ -18,7 +18,7 @@ import java.util.List;
 @Service
 @Transactional
 public class BoardService {
-
+    
     @Inject
     private DepartmentService departmentService;
 

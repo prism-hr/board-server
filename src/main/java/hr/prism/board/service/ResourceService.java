@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +22,7 @@ import java.util.Set;
 @Service
 @Transactional
 public class ResourceService {
-
+    
     @Inject
     private ResourceRepository resourceRepository;
 
@@ -29,6 +31,9 @@ public class ResourceService {
 
     @Inject
     private CategoryRepository categoryRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
@@ -45,11 +50,19 @@ public class ResourceService {
     }
 
     public void createResourceRelation(Resource resource1, Resource resource2) {
-        if (resource1.getScope().ordinal() == (resource2.getScope().ordinal() - 1)) {
-            commitResourceRelation(resource2, resource2);
+        entityManager.flush();
+        entityManager.refresh(resource1);
+        entityManager.refresh(resource2);
+    
+        int resource1Ordinal = resource1.getScope().ordinal();
+        int resource2Ordinal = resource2.getScope().ordinal();
+    
+        if ((resource1Ordinal + resource2Ordinal) == 0 || resource1Ordinal == (resource2Ordinal - 1)) {
             resource1.getParents().stream().map(ResourceRelation::getResource1).forEach(parentResource -> commitResourceRelation(parentResource, resource2));
+            commitResourceRelation(resource2, resource2);
             return;
         }
+    
         throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. Arguments passed where: " +
             Joiner.on(", ").join(resource1, resource2));
     }
