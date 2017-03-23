@@ -1,5 +1,7 @@
 package hr.prism.board.representation;
 
+import java.util.List;
+
 public class PostRepresentation {
 
     private Long id;
@@ -13,6 +15,10 @@ public class PostRepresentation {
     private LocationRepresentation location;
 
     private Boolean existingRelation;
+
+    private List<String> postCategories;
+
+    private List<String> memberCategories;
 
     private String applyWebsite;
 
@@ -73,6 +79,24 @@ public class PostRepresentation {
 
     public PostRepresentation setExistingRelation(Boolean existingRelation) {
         this.existingRelation = existingRelation;
+        return this;
+    }
+
+    public List<String> getPostCategories() {
+        return postCategories;
+    }
+
+    public PostRepresentation setPostCategories(List<String> postCategories) {
+        this.postCategories = postCategories;
+        return this;
+    }
+
+    public List<String> getMemberCategories() {
+        return memberCategories;
+    }
+
+    public PostRepresentation setMemberCategories(List<String> memberCategories) {
+        this.memberCategories = memberCategories;
         return this;
     }
 

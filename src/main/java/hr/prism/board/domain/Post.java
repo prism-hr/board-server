@@ -4,6 +4,8 @@ import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.POST)
@@ -18,6 +20,10 @@ public class Post extends Resource {
 
     @Column(name = "existing_relation", nullable = false)
     private Boolean existingRelation;
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "post_category", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Category> postCategories = new HashSet<>();
 
     @URL
     @Column(name = "apply_website")
@@ -55,6 +61,10 @@ public class Post extends Resource {
         this.existingRelation = existingRelation;
     }
 
+    public Set<Category> getPostCategories() {
+        return postCategories;
+    }
+
     public String getApplyWebsite() {
         return applyWebsite;
     }
@@ -78,5 +88,5 @@ public class Post extends Resource {
     public void setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
     }
-    
+
 }

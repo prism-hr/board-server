@@ -6,7 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "category")
-public class    Category extends BoardEntity {
+public class Category extends BoardEntity {
 
     @ManyToOne
     @JoinColumn(name = "parent_resource_id", nullable = false)

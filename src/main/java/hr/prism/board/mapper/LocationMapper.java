@@ -13,6 +13,9 @@ public class LocationMapper implements Function<Location, LocationRepresentation
 
     @Override
     public LocationRepresentation apply(Location location) {
+        if(location == null) {
+            return null;
+        }
         return new LocationRepresentation()
             .setName(location.getName())
             .setDomicile(location.getDomicile())

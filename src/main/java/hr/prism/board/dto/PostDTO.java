@@ -6,6 +6,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 public class PostDTO {
 
@@ -27,6 +28,10 @@ public class PostDTO {
 
     @NotNull
     private Boolean existingRelation;
+
+    private List<String> postCategories;
+
+    private List<String> memberCategories;
 
     @Size(max = 255)
     private String applyWebsite;
@@ -88,6 +93,24 @@ public class PostDTO {
 
     public PostDTO setExistingRelation(Boolean existingRelation) {
         this.existingRelation = existingRelation;
+        return this;
+    }
+
+    public List<String> getPostCategories() {
+        return postCategories;
+    }
+
+    public PostDTO setPostCategories(List<String> postCategories) {
+        this.postCategories = postCategories;
+        return this;
+    }
+
+    public List<String> getMemberCategories() {
+        return memberCategories;
+    }
+
+    public PostDTO setMemberCategories(List<String> memberCategories) {
+        this.memberCategories = memberCategories;
         return this;
     }
 

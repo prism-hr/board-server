@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -81,10 +84,10 @@ public class PostApiIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldCreatePost Department")
                     .setHandle("scp")
-                    .setMemberCategories(new ArrayList<>()))
+                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")))
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("scp")
-                    .setPostCategories(new ArrayList<>()));
+                    .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             return departmentBoardApi.postBoard(boardDTO);
         });
 
@@ -96,6 +99,8 @@ public class PostApiIT {
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldCreatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(true)
+                .setPostCategories(ImmutableList.of("p1", "p3"))
+                .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldCreatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
 
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
@@ -116,10 +121,10 @@ public class PostApiIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldUpdatePost Department")
                     .setHandle("sup")
-                    .setMemberCategories(new ArrayList<>()))
+                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")))
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sup")
-                    .setPostCategories(new ArrayList<>()));
+                    .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
 
             PostDTO postDTO = new PostDTO()
@@ -129,6 +134,8 @@ public class PostApiIT {
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldUpdatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(true)
+                .setPostCategories(ImmutableList.of("p1", "p3"))
+                .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldUpdatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
 
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
@@ -137,6 +144,8 @@ public class PostApiIT {
                 .setLocation(new LocationDTO().setName("location2").setDomicile("NG")
                     .setGoogleId("shouldUpdatePost GoogleId2").setLatitude(BigDecimal.TEN).setLongitude(BigDecimal.TEN))
                 .setExistingRelation(false)
+                .setPostCategories(ImmutableList.of("p2", "p3"))
+                .setMemberCategories(ImmutableList.of("m2", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file2").setCloudinaryId("shouldUpdatePost CloudinaryId2").setCloudinaryUrl("http://cloudinary2.com"));
             postApi.updatePost(savedPostR.getId(), postDTO);
             PostRepresentation updatedPostR = postApi.getPost(savedPostR.getId());
@@ -158,10 +167,10 @@ public class PostApiIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("shouldGetPosts Department")
                     .setHandle("sgp")
-                    .setMemberCategories(new ArrayList<>()))
+                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")))
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sgp")
-                    .setPostCategories(new ArrayList<>()));
+                    .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
 
             PostDTO postDTO = new PostDTO()
@@ -171,56 +180,62 @@ public class PostApiIT {
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(true)
+                .setPostCategories(new ArrayList<>())
+                .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
             postApi.postPost(boardR.getId(), postDTO);
 
             PostDTO postDTO2 = new PostDTO()
                 .setName("shouldGetPosts Post2")
-                .setDescription("Desc")
+                .setDescription("Desc2")
                 .setOrganizationName("shouldGetPosts Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(true)
+                .setPostCategories(new ArrayList<>())
+                .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
             postApi.postPost(boardR.getId(), postDTO2);
 
             List<PostRepresentation> posts = postApi.getPosts(boardR.getId());
-            Assert.assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post1")),
+            assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post1")),
                 hasProperty("name", equalTo("shouldGetPosts Post2"))));
             return null;
         });
     }
 
     private void verifyPost(User user, PostDTO postDTO, PostRepresentation postR) {
-        Assert.assertEquals(postDTO.getName(), postR.getName());
-        Assert.assertEquals(postDTO.getDescription(), postR.getDescription());
-        Assert.assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
+        assertEquals(postDTO.getName(), postR.getName());
+        assertEquals(postDTO.getDescription(), postR.getDescription());
+        assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
 
         LocationRepresentation locationR = postR.getLocation();
         LocationDTO locationDTO = postDTO.getLocation();
-        Assert.assertEquals(locationDTO.getName(), locationR.getName());
-        Assert.assertEquals(locationDTO.getDomicile(), locationR.getDomicile());
-        Assert.assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
-        Assert.assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
-        Assert.assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
+        assertEquals(locationDTO.getName(), locationR.getName());
+        assertEquals(locationDTO.getDomicile(), locationR.getDomicile());
+        assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
+        assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
+        assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
 
-        Assert.assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
-        Assert.assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
+        assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
+        assertThat(postR.getPostCategories(), containsInAnyOrder(postDTO.getPostCategories().toArray()));
+        assertThat(postR.getMemberCategories(), containsInAnyOrder(postDTO.getMemberCategories().toArray()));
+        assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
 
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
-        Assert.assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
-        Assert.assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
-        Assert.assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
+        assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
+        assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
+        assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
 
-        Assert.assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
+        assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
 
         Post post = postService.findOne(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
 
         Board board = boardService.findOne(postR.getBoard().getId());
         Department department = departmentService.findOne(postR.getBoard().getDepartment().getId());
-        Assert.assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
+        assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
     }
 
 }
