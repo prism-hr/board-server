@@ -2,8 +2,7 @@ package hr.prism.board.authentication;
 
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.api.AbstractIT;
-import hr.prism.board.exception.ApiForbiddenException;
-import org.junit.Assert;
+import hr.prism.board.exception.ExceptionUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,13 +30,7 @@ public class RestrictionProcessorIT extends AbstractIT {
     @Test
     public void shouldForbidUnauthenticatedUser() {
         mockSecurityContext(null);
-        
-        try {
-            restrictionProcessor.processRestriction(null, null);
-            Assert.fail();
-        } catch (ApiForbiddenException e) {
-            Assert.assertEquals("User not authenticated", e.getMessage());
-        }
+        ExceptionUtil.verifyApiForbiddenException(() -> restrictionProcessor.processRestriction(null, null), "User not authenticated");
     }
     
     private void mockSecurityContext(org.springframework.security.core.userdetails.User user) {

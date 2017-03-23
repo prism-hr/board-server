@@ -9,6 +9,7 @@ import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
@@ -114,7 +115,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
     
-            ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
+            ExceptionUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
@@ -140,7 +141,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
         });
         
         transactionTemplate.execute(transactionStatus -> {
-            ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO.setName("shouldNotCreateDuplicateBoardHandle Board 2")),
+            ExceptionUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO.setName("shouldNotCreateDuplicateBoardHandle Board 2")),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
         });
@@ -178,7 +179,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
     
             boardDTO1.setName(boardDTO2.getName());
             boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle());
-            ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardR1.getId(), boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
+            ExceptionUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardR1.getId(), boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
@@ -213,7 +214,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoardSettings(boardR1.getId(), boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle())),
+            ExceptionUtil.verifyApiException(() -> departmentBoardApi.updateBoardSettings(boardR1.getId(), boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle())),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
         });
@@ -384,7 +385,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
                     .setHandle("sncddh1")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
     
-            ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO2), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
+            ExceptionUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO2), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
             return null;
         });
     }
@@ -419,7 +420,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            ApiTestUtil.verifyApiException(() ->
+            ExceptionUtil.verifyApiException(() ->
                     departmentBoardApi.updateDepartment(boardR1.getDepartment().getId(),
                         new DepartmentDTO()
                             .setName(boardDTO2.getDepartment().getName())
@@ -491,7 +492,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
     
-            ApiTestUtil.verifyApiException(() ->
+            ExceptionUtil.verifyApiException(() ->
                     departmentBoardApi.updateDepartment(boardR1.getDepartment().getId(),
                         new DepartmentDTO()
                             .setName(boardDTO1.getDepartment().getName())
