@@ -27,7 +27,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.hamcrest.Matchers.*;
 
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -35,42 +38,42 @@ import java.util.stream.Collectors;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class PostApiIT {
-    
+
     @Inject
     private PostApi postApi;
-    
+
     @Inject
     private DepartmentBoardApi departmentBoardApi;
-    
+
     @Inject
     private PostService postService;
-    
+
     @Inject
     private BoardService boardService;
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserTestService userTestService;
-    
+
     @Inject
     private PlatformTransactionManager platformTransactionManager;
-    
+
     private TransactionTemplate transactionTemplate;
-    
+
     @Before
     public void setUp() {
         transactionTemplate = new TransactionTemplate(platformTransactionManager);
     }
-    
+
     @Test
     public void shouldCreatePostWithAllPossibleFieldsSet() {
         User user = userTestService.authenticate();
-        
+
         BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldCreatePost Board")
@@ -84,7 +87,7 @@ public class PostApiIT {
                     .setPostCategories(new ArrayList<>()));
             return departmentBoardApi.postBoard(boardDTO);
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             PostDTO postDTO = new PostDTO()
                 .setName("shouldCreatePost Post")
@@ -94,18 +97,18 @@ public class PostApiIT {
                     .setGoogleId("shouldCreatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(true)
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldCreatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
+
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
             savedPostR = postApi.getPost(savedPostR.getId());
             verifyPost(user, postDTO, savedPostR);
             return null;
         });
     }
-    
+
     @Test
     public void shouldUpdatePost() {
         User user = userTestService.authenticate();
-        
+
         transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldUpdatePost Board")
@@ -118,7 +121,7 @@ public class PostApiIT {
                     .setHandle("sup")
                     .setPostCategories(new ArrayList<>()));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
-            
+
             PostDTO postDTO = new PostDTO()
                 .setName("shouldUpdatePost Post")
                 .setDescription("Desc")
@@ -127,7 +130,7 @@ public class PostApiIT {
                     .setGoogleId("shouldUpdatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(true)
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldUpdatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
+
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
             postDTO.setName("shouldUpdatePost Board2").setDescription("Desc")
                 .setOrganizationName("shouldUpdatePost Organization2")
@@ -138,16 +141,61 @@ public class PostApiIT {
             postApi.updatePost(savedPostR.getId(), postDTO);
             PostRepresentation updatedPostR = postApi.getPost(savedPostR.getId());
             verifyPost(user, postDTO, updatedPostR);
-            
+
             return savedPostR;
         });
     }
-    
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldGetPosts() {
+        userTestService.authenticate();
+
+        transactionTemplate.execute(transactionStatus -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("shouldGetPosts Board")
+                .setPurpose("Purpose")
+                .setDepartment(new DepartmentDTO()
+                    .setName("shouldGetPosts Department")
+                    .setHandle("sgp")
+                    .setMemberCategories(new ArrayList<>()))
+                .setSettings(new BoardSettingsDTO()
+                    .setHandle("sgp")
+                    .setPostCategories(new ArrayList<>()));
+            BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
+
+            PostDTO postDTO = new PostDTO()
+                .setName("shouldGetPosts Post1")
+                .setDescription("Desc")
+                .setOrganizationName("shouldGetPosts Organization")
+                .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
+                    .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setExistingRelation(true)
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
+            postApi.postPost(boardR.getId(), postDTO);
+
+            PostDTO postDTO2 = new PostDTO()
+                .setName("shouldGetPosts Post2")
+                .setDescription("Desc")
+                .setOrganizationName("shouldGetPosts Organization")
+                .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
+                    .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setExistingRelation(true)
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
+            postApi.postPost(boardR.getId(), postDTO2);
+
+            List<PostRepresentation> posts = postApi.getPosts(boardR.getId());
+            Assert.assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post1")),
+                hasProperty("name", equalTo("shouldGetPosts Post2"))));
+            return null;
+        });
+    }
+
     private void verifyPost(User user, PostDTO postDTO, PostRepresentation postR) {
         Assert.assertEquals(postDTO.getName(), postR.getName());
         Assert.assertEquals(postDTO.getDescription(), postR.getDescription());
         Assert.assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
-        
+
         LocationRepresentation locationR = postR.getLocation();
         LocationDTO locationDTO = postDTO.getLocation();
         Assert.assertEquals(locationDTO.getName(), locationR.getName());
@@ -155,24 +203,24 @@ public class PostApiIT {
         Assert.assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
         Assert.assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
         Assert.assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
-        
+
         Assert.assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
         Assert.assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
-        
+
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
         Assert.assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
         Assert.assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
         Assert.assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-        
+
         Assert.assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-        
+
         Post post = postService.findOne(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
-        
+
         Board board = boardService.findOne(postR.getBoard().getId());
         Department department = departmentService.findOne(postR.getBoard().getDepartment().getId());
         Assert.assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
     }
-    
+
 }
