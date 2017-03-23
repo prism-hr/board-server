@@ -16,17 +16,13 @@ import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.UserTestService;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -39,33 +35,23 @@ import java.util.stream.Collectors;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
-public class DepartmentBoardApiIT {
-
+public class DepartmentBoardApiIT extends AbstractIT {
+    
     @Inject
     private DepartmentBoardApi departmentBoardApi;
-
+    
     @Inject
     private BoardService boardService;
-
+    
     @Inject
     private DepartmentService departmentService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private UserTestService userTestService;
-
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
-
-    private TransactionTemplate transactionTemplate;
-
-    @Before
-    public void setUp() {
-        transactionTemplate = new TransactionTemplate(platformTransactionManager);
-    }
-
+    
     @Test
     public void shouldCreateBoardWithAllPossibleFieldsSet() {
         User user = userTestService.authenticate();
@@ -81,13 +67,13 @@ public class DepartmentBoardApiIT {
                     .setHandle("scb")
                     .setPostCategories(ImmutableList.of("category3", "category4"))
                     .setDefaultPostVisibility(PostVisibility.PART_PRIVATE));
-
+    
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
             return null;
         });
     }
-
+    
     @Test
     public void shouldCreateBoardWithDefaultPostVisibilityLevel() {
         User user = userTestService.authenticate();
@@ -102,14 +88,14 @@ public class DepartmentBoardApiIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("scbdpv")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
-
+    
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             boardDTO.getSettings().setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
             verifyBoard(user, boardDTO, boardR, true);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoard() {
         User user = userTestService.authenticate();
@@ -124,15 +110,15 @@ public class DepartmentBoardApiIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sncdb")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
-
+    
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
-
+    
             ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoardHandle() {
         User user = userTestService.authenticate();
@@ -146,20 +132,20 @@ public class DepartmentBoardApiIT {
             .setSettings(new BoardSettingsDTO()
                 .setHandle("sncdbh")
                 .setPostCategories(ImmutableList.of("category3", "category4")));
-
+        
         transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
             return null;
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO.setName("shouldNotCreateDuplicateBoardHandle Board 2")),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoardByUpdating() {
         User user = userTestService.authenticate();
@@ -176,7 +162,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR1 = departmentBoardApi.postBoard(boardDTO1);
             verifyBoard(user, boardDTO1, boardR1, true);
-
+    
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateBoardByUpdating Board 2")
                 .setPurpose("Purpose")
@@ -189,14 +175,14 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
-
+    
             boardDTO1.setName(boardDTO2.getName());
             boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle());
             ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoard(boardR1.getId(), boardDTO1), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoardHandleByUpdating() {
         User user = userTestService.authenticate();
@@ -213,7 +199,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR1 = departmentBoardApi.postBoard(boardDTO1);
             verifyBoard(user, boardDTO1, boardR1, true);
-
+    
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateBoardHandleByUpdating Board 2")
                 .setPurpose("Purpose")
@@ -226,13 +212,13 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
-
+    
             ApiTestUtil.verifyApiException(() -> departmentBoardApi.updateBoardSettings(boardR1.getId(), boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle())),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
         });
     }
-
+    
     @Test
     public void shouldCreateTwoBoardsWithinOneDepartmentAndUpdateHandlesCoherently() {
         User user = userTestService.authenticate();
@@ -248,10 +234,10 @@ public class DepartmentBoardApiIT {
                     .setHandle("Handle1")
                     .setPostCategories(new ArrayList<>())
                     .setDefaultPostVisibility(PostVisibility.PRIVATE));
-
+    
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
-
+    
             Long departmentId = boardR.getDepartment().getId();
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("Board 2")
@@ -262,24 +248,24 @@ public class DepartmentBoardApiIT {
                     .setHandle("Handle2")
                     .setPostCategories(new ArrayList<>())
                     .setDefaultPostVisibility(PostVisibility.PRIVATE));
-
+    
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             boardDTO2.getDepartment()
                 .setName("Department 1")
                 .setHandle("Handle1")
                 .setMemberCategories(new ArrayList<>());
-
+    
             verifyBoard(user, boardDTO2, boardR2, true);
             return boardR.getDepartment().getId();
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             DepartmentRepresentation departmentR = verifyGetDepartment(createdDepartmentId);
             Assert.assertEquals(2, departmentR.getBoards().size());
-
+            
             List<String> boardNames = departmentR.getBoards().stream().map(BoardRepresentation::getName).collect(Collectors.toList());
             Assert.assertThat(boardNames, Matchers.containsInAnyOrder("Board 1", "Board 2"));
-
+            
             departmentBoardApi.updateDepartment(departmentR.getId(),
                 new DepartmentDTO()
                     .setName(departmentR.getName())
@@ -287,22 +273,22 @@ public class DepartmentBoardApiIT {
                     .setMemberCategories(departmentR.getMemberCategories()));
             return null;
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             Department department = departmentService.findOne(createdDepartmentId);
             Assert.assertEquals("Handle2", department.getHandle());
-
+            
             int index = 1;
             Iterable<Board> boards = boardService.findByDepartment(department);
             for (Board board : boards) {
                 Assert.assertEquals("Handle2/Handle" + index, board.getHandle());
                 index++;
             }
-
+            
             return null;
         });
     }
-
+    
     @Test
     public void shouldUpdateDepartment() {
         User user = userTestService.authenticate();
@@ -317,10 +303,10 @@ public class DepartmentBoardApiIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("Handle3")
                     .setPostCategories(new ArrayList<>()));
-
+    
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
-
+    
             departmentBoardApi.updateDepartment(boardR.getDepartment().getId(),
                 new DepartmentDTO()
                     .setName("Another name 3")
@@ -328,7 +314,7 @@ public class DepartmentBoardApiIT {
                     .setMemberCategories(ImmutableList.of("c")));
             return boardR.getDepartment().getId();
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             DepartmentRepresentation departmentR = verifyGetDepartment(departmentId);
             Assert.assertEquals("Another name 3", departmentR.getName());
@@ -337,7 +323,7 @@ public class DepartmentBoardApiIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldUpdateBoardSettings() {
         User user = userTestService.authenticate();
@@ -354,14 +340,14 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("a", "b")));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
             verifyBoard(user, boardDTO, boardR, true);
-
+    
             departmentBoardApi.updateBoardSettings(boardR.getId(), new BoardSettingsDTO()
                 .setHandle("subs2")
                 .setPostCategories(ImmutableList.of("c"))
                 .setDefaultPostVisibility(PostVisibility.PUBLIC));
             return boardR.getId();
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation boardR = verifyGetBoard(boardId);
             Assert.assertThat(boardR.getPostCategories(), Matchers.contains("c"));
@@ -369,7 +355,7 @@ public class DepartmentBoardApiIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentHandle() {
         User user = userTestService.authenticate();
@@ -386,7 +372,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR1 = departmentBoardApi.postBoard(boardDTO1);
             verifyBoard(user, boardDTO1, boardR1, true);
-
+    
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateDepartmentHandle Board 2")
                 .setPurpose("Purpose")
@@ -397,12 +383,12 @@ public class DepartmentBoardApiIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sncddh1")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
-
+    
             ApiTestUtil.verifyApiException(() -> departmentBoardApi.postBoard(boardDTO2), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentsByUpdating() {
         User user = userTestService.authenticate();
@@ -419,7 +405,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR1 = departmentBoardApi.postBoard(boardDTO1);
             verifyBoard(user, boardDTO1, boardR1, true);
-
+    
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateDepartmentsByUpdating Board 2")
                 .setPurpose("Purpose")
@@ -432,7 +418,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
-
+    
             ApiTestUtil.verifyApiException(() ->
                     departmentBoardApi.updateDepartment(boardR1.getDepartment().getId(),
                         new DepartmentDTO()
@@ -443,7 +429,7 @@ public class DepartmentBoardApiIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldUpdateCategories() {
         userTestService.authenticate();
@@ -454,7 +440,7 @@ public class DepartmentBoardApiIT {
             .setName("shouldUpdateDepartmentCategories Department 1")
             .setHandle("sudc")
             .setMemberCategories(ImmutableList.of("d1", "d2"));
-
+        
         BoardRepresentation savedBoard = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO1 = new BoardDTO()
                 .setName("shouldUpdateDepartmentCategories Board 1")
@@ -466,7 +452,7 @@ public class DepartmentBoardApiIT {
             departmentBoardApi.updateDepartment(board.getDepartment().getId(), departmentDTO.setMemberCategories(ImmutableList.of("d1", "d3")));
             return board;
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation updatedBoard = departmentBoardApi.getBoard(savedBoard.getId());
             Assert.assertThat(updatedBoard.getPostCategories(), Matchers.containsInAnyOrder("b2", "b3"));
@@ -474,7 +460,7 @@ public class DepartmentBoardApiIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentHandlesByUpdating() {
         User user = userTestService.authenticate();
@@ -491,7 +477,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR1 = departmentBoardApi.postBoard(boardDTO1);
             verifyBoard(user, boardDTO1, boardR1, true);
-
+    
             BoardDTO boardDTO2 = new BoardDTO()
                 .setName("shouldNotCreateDuplicateDepartmentHandlesByUpdating Board 2")
                 .setPurpose("Purpose")
@@ -504,7 +490,7 @@ public class DepartmentBoardApiIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
             verifyBoard(user, boardDTO2, boardR2, true);
-
+    
             ApiTestUtil.verifyApiException(() ->
                     departmentBoardApi.updateDepartment(boardR1.getDepartment().getId(),
                         new DepartmentDTO()
@@ -515,9 +501,8 @@ public class DepartmentBoardApiIT {
             return null;
         });
     }
-
+    
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     public void shouldGetDepartmentsAndBoards() {
         User user = userTestService.authenticate();
         transactionTemplate.execute(transactionStatus -> {
@@ -540,16 +525,16 @@ public class DepartmentBoardApiIT {
                     verifyBoard(user, boardDTO, boardR, true);
                 }
             }
-
+    
             return null;
         });
-
+        
         transactionTemplate.execute(transactionStatus -> {
             List<DepartmentRepresentation> departmentRepresentations = departmentBoardApi.getDepartments();
             Assert.assertEquals(Arrays.asList(
                 "shouldGetDepartmentsAndBoards 1", "shouldGetDepartmentsAndBoards 2", "shouldGetDepartmentsAndBoards 3"),
                 departmentRepresentations.stream().map(DepartmentRepresentation::getName).collect(Collectors.toList()));
-
+            
             List<BoardRepresentation> boardRepresentations = departmentBoardApi.getBoards();
             Assert.assertEquals(Arrays.asList(
                 "shouldGetDepartmentsAndBoards 1 1", "shouldGetDepartmentsAndBoards 1 2", "shouldGetDepartmentsAndBoards 1 3",
@@ -559,44 +544,44 @@ public class DepartmentBoardApiIT {
             return null;
         });
     }
-
+    
     private void verifyBoard(User user, BoardDTO boardDTO, BoardRepresentation boardR, boolean expectDepartmentAdministrator) {
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardR.getPurpose());
         Assert.assertEquals(boardDTO.getSettings().getHandle(), boardR.getHandle());
         Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getSettings().getPostCategories().stream().toArray(String[]::new)));
         Assert.assertEquals(boardDTO.getSettings().getDefaultPostVisibility(), boardR.getDefaultPostVisibility());
-
+        
         DepartmentRepresentation departmentR = boardR.getDepartment();
         Assert.assertEquals(boardDTO.getDepartment().getName(), departmentR.getName());
         Assert.assertEquals(boardDTO.getDepartment().getHandle(), departmentR.getHandle());
         Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().stream().toArray(String[]::new)));
-    
+        
         Board board = boardService.findOne(boardR.getId());
         Department department = departmentService.findOne(departmentR.getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
-    
+        
         Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
         Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
-    
+        
         Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
         if (expectDepartmentAdministrator) {
             Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
         }
     }
-
+    
     private DepartmentRepresentation verifyGetDepartment(Long id) {
         DepartmentRepresentation departmentR = departmentBoardApi.getDepartment(id);
         DepartmentRepresentation departmentRByHandle = departmentBoardApi.getDepartmentByHandle(departmentR.getHandle());
         Assert.assertEquals(departmentR.getId(), departmentRByHandle.getId());
         return departmentRByHandle;
     }
-
+    
     private BoardRepresentation verifyGetBoard(Long id) {
         BoardRepresentation boardR = departmentBoardApi.getBoard(id);
         BoardRepresentation boardRByHandle = departmentBoardApi.getBoardByHandle(Joiner.on("/").join(boardR.getDepartment().getHandle(), boardR.getHandle()));
         Assert.assertEquals(boardR.getId(), boardRByHandle.getId());
         return boardRByHandle;
     }
-
+    
 }
