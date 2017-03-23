@@ -73,7 +73,6 @@ public class BoardService {
 
         board = boardRepository.save(board);
         updateBoardSettings(board, settingsDTO, department);
-        resourceService.createResourceRelation(board, board);
         resourceService.createResourceRelation(department, board);
         userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
         return board;
@@ -120,7 +119,7 @@ public class BoardService {
         }
 
         List<String> postCategories = boardSettingsDTO.getPostCategories();
-        resourceService.updateParentCategories(board, postCategories, CategoryType.POST);
+        resourceService.updateCategories(board, postCategories, CategoryType.POST);
 
         board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }

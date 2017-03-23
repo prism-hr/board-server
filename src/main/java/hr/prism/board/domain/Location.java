@@ -63,4 +63,5 @@ public class Location extends BoardEntity {
     public void setLongitude(BigDecimal longitude) {
         this.longitude = longitude;
     }
+    
 }

@@ -1,6 +1,9 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import com.google.common.base.Joiner;
+import hr.prism.board.domain.Category;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
@@ -42,20 +45,18 @@ public class ResourceService {
     }
 
     public void createResourceRelation(Resource resource1, Resource resource2) {
-        if (resource1.getScope() == Scope.BOARD && resource2.getScope() == Scope.DEPARTMENT) {
-            throw new IllegalStateException("A board cannot be the parent of a department");
+        if (resource1.getScope().ordinal() == (resource2.getScope().ordinal() - 1)) {
+            commitResourceRelation(resource2, resource2);
+            resource1.getParents().stream().map(ResourceRelation::getResource1).forEach(parentResource -> commitResourceRelation(parentResource, resource2));
+            return;
         }
-
-        ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
-        resourceRelationRepository.save(resourceRelation);
-
-        resource1.getChildren().add(resourceRelation);
-        resource2.getParents().add(resourceRelation);
+        throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. Arguments passed where: " +
+            Joiner.on(", ").join(resource1, resource2));
     }
-
-    public void updateParentCategories(Resource parentResource, List<String> categories, CategoryType type) {
+    
+    public void updateCategories(Resource resource, List<String> categories, CategoryType type) {
         HashSet<String> postedCategories = new HashSet<>(categories);
-        Set<Category> existingCategories = parentResource.getCategories();
+        Set<Category> existingCategories = resource.getCategories();
 
         // modify existing categories
         for (Category existingCategory : existingCategories) {
@@ -69,10 +70,19 @@ public class ResourceService {
 
         // add new categories
         for (String postedCategory : postedCategories) {
-            Category newCategory = new Category().setParentResource(parentResource).setName(postedCategory).setActive(true).setType(type);
+            Category newCategory = new Category().setParentResource(resource).setName(postedCategory).setActive(true).setType(type);
             newCategory.setCreatedTimestamp(LocalDateTime.now());
             categoryRepository.save(newCategory);
             existingCategories.add(newCategory);
         }
     }
+    
+    private void commitResourceRelation(Resource resource1, Resource resource2) {
+        ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
+        resourceRelationRepository.save(resourceRelation);
+        
+        resource1.getChildren().add(resourceRelation);
+        resource2.getParents().add(resourceRelation);
+    }
+    
 }

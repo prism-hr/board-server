@@ -571,22 +571,18 @@ public class DepartmentBoardApiIT {
         Assert.assertEquals(boardDTO.getDepartment().getName(), departmentR.getName());
         Assert.assertEquals(boardDTO.getDepartment().getHandle(), departmentR.getHandle());
         Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().stream().toArray(String[]::new)));
-
-        transactionTemplate.execute(transactionStatus -> {
-            Board board = boardService.findOne(boardR.getId());
-            Department department = departmentService.findOne(departmentR.getId());
-            Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
-
-            Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
-            Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
-
-            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
-            if (expectDepartmentAdministrator) {
-                Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
-            }
-
-            return null;
-        });
+    
+        Board board = boardService.findOne(boardR.getId());
+        Department department = departmentService.findOne(departmentR.getId());
+        Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
+    
+        Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
+        Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
+    
+        Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
+        if (expectDepartmentAdministrator) {
+            Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
+        }
     }
 
     private DepartmentRepresentation verifyGetDepartment(Long id) {

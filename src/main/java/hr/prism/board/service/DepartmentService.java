@@ -84,7 +84,7 @@ public class DepartmentService {
             List<String> memberCategories = departmentDTO.getMemberCategories();
 
             department = departmentRepository.save(department);
-            resourceService.updateParentCategories(department, memberCategories, CategoryType.MEMBER);
+            resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
             resourceService.createResourceRelation(department, department);
             userRoleService.createUserRole(department, userService.getCurrentUser(), Role.ADMINISTRATOR);
             return department;
@@ -118,7 +118,7 @@ public class DepartmentService {
         }
 
         List<String> memberCategories = departmentDTO.getMemberCategories();
-        resourceService.updateParentCategories(department, memberCategories, CategoryType.MEMBER);
+        resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
     }
 
 }

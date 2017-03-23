@@ -78,4 +78,5 @@ public class Post extends Resource {
     public void setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
     }
+    
 }

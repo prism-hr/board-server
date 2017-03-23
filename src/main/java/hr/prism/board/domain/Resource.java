@@ -1,5 +1,7 @@
 package hr.prism.board.domain;
 
+import com.google.common.base.Joiner;
+
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -99,5 +101,14 @@ public class Resource extends BoardEntity {
     public Set<ResourceRelation> getParents() {
         return parents;
     }
-
+    
+    @Override
+    public String toString() {
+        if (scope == null) {
+            return null;
+        }
+        
+        return Joiner.on(" ").skipNulls().join(scope.name().toLowerCase(), getId());
+    }
+    
 }

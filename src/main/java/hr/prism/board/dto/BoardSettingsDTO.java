@@ -3,6 +3,7 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.PostVisibility;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
 
@@ -10,6 +11,7 @@ public class BoardSettingsDTO {
     
     @NotEmpty
     @Size(max = 15)
+    @Pattern(regexp = "^[a-z0-9-]*$")
     private String handle;
     
     private List<String> postCategories;

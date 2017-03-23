@@ -4,8 +4,6 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
-import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +47,6 @@ public class PostService {
         Board board = boardService.findOne(boardId);
 
         Post post = new Post();
-        validateNameUniqueness(post.getName(), board);
         updateSimpleFields(post, postDTO);
 
         if (postDTO.getApplyDocument() != null) {
@@ -58,9 +55,9 @@ public class PostService {
 
         post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
         post = postRepository.save(post);
-        resourceService.createResourceRelation(post, post);
+    
         resourceService.createResourceRelation(board, post);
-        userRoleService.createUserRole(board, userService.getCurrentUser(), Role.ADMINISTRATOR);
+        userRoleService.createUserRole(post, userService.getCurrentUser(), Role.ADMINISTRATOR);
         return post;
     }
 
@@ -87,13 +84,6 @@ public class PostService {
         return postRepository.findOne(id);
     }
 
-    private void validateNameUniqueness(String name, Board board) {
-        Post post = postRepository.findByNameAndBoard(name, board);
-        if (post != null) {
-            throw new ApiException(ExceptionCode.DUPLICATE_POST);
-        }
-    }
-
     private void updateSimpleFields(Post post, PostDTO postDTO) {
         post.setName(postDTO.getName());
         post.setDescription(postDTO.getDescription());
@@ -102,4 +92,5 @@ public class PostService {
         post.setApplyWebsite(postDTO.getApplyWebsite());
         post.setApplyEmail(postDTO.getApplyEmail());
     }
+    
 }
