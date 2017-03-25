@@ -111,4 +111,5 @@ public class PostService {
         post.getPostCategories().addAll(postCategories);
         post.getPostCategories().addAll(memberCategories);
     }
+    
 }

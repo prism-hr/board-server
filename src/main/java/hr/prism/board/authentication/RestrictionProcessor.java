@@ -13,6 +13,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.thymeleaf.util.ArrayUtils;
@@ -38,8 +39,7 @@ public class RestrictionProcessor {
     @Before("execution(@hr.prism.board.authentication.Restriction * *(..)) && @annotation(restriction)")
     public void processRestriction(JoinPoint joinPoint, Restriction restriction) {
         User user = userService.getCurrentUserSecured();
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        Annotation[][] parameterAnnotations = methodSignature.getMethod().getParameterAnnotations();
+        Annotation[][] parameterAnnotations = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
             Scope scope = restriction.scope();
             if (userRoleService.hasUserRole(scope, user)) {
@@ -53,7 +53,12 @@ public class RestrictionProcessor {
         Map<String, Object> parameters = new HashMap<>();
         if (parameterAnnotations.length == arguments.length) {
             for (int i = 0; i < arguments.length; i++) {
-                Annotation parameterAnnotation = parameterAnnotations[i][0];
+                Annotation[] parameterAnnotationSet = parameterAnnotations[i];
+                if (parameterAnnotationSet.length == 0) {
+                    throw new IllegalStateException("Method declaration invalid");
+                }
+    
+                Annotation parameterAnnotation = parameterAnnotationSet[0];
                 Class<?> parameterAnnotationClass = parameterAnnotation.annotationType();
                 if (parameterAnnotationClass == PathVariable.class) {
                     parameters.put(verifyArgumentName(((PathVariable) parameterAnnotation).value()), arguments[i]);
@@ -82,18 +87,14 @@ public class RestrictionProcessor {
                 }
     
                 throw new ApiForbiddenException("User " + user.toString() + " does not have role(s): " +
-                    Joiner.on(", ").join(restriction.roles()).toLowerCase() + " for " + resource.getScope().name().toLowerCase() + ": " + resource.getId());
+                    Joiner.on(", ").join(restriction.roles()).toLowerCase() + " for: " + resource.toString());
             }
-            
-            throw new IllegalStateException("Method declaration invalid");
         }
-        
-        throw new IllegalStateException("Method declaration incomplete");
     }
     
     private String verifyArgumentName(String name) {
-        if (name == null) {
-            throw new IllegalStateException("Argument declaration incomplete");
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalStateException("Argument declaration invalid");
         }
         
         return name;

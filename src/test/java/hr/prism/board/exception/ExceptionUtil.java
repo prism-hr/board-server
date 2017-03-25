@@ -32,4 +32,16 @@ public class ExceptionUtil {
         Assert.assertEquals(expectedMessage, apiForbiddenException.getMessage());
     }
     
+    public static void verifyIllegalStateException(Runnable block, String expectedMessage) {
+        IllegalStateException apiForbiddenException = null;
+        try {
+            block.run();
+            Assert.fail("ApiForbiddenException not thrown");
+        } catch (IllegalStateException e) {
+            apiForbiddenException = e;
+        }
+        
+        Assert.assertEquals(expectedMessage, apiForbiddenException.getMessage());
+    }
+    
 }
