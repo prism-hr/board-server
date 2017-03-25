@@ -219,7 +219,69 @@ public class DepartmentBoardApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldCreateTwoBoardsWithinOneDepartmentAndUpdateHandlesCoherently() {
+    public void shouldReturnCorrectDepartmentAndBoardListsForUsers() {
+        User user = userTestService.authenticate();
+        User otherUser = userTestService.authenticate();
+        transactionTemplate.execute(transactionStatus -> {
+            userTestService.setAuthentication(user.getStormpathId());
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("Board 1")
+                .setPurpose("Purpose 1")
+                .setDepartment(new DepartmentDTO()
+                    .setName("Department 1")
+                    .setHandle("Handle1")
+                    .setMemberCategories(new ArrayList<>()))
+                .setSettings(new BoardSettingsDTO()
+                    .setHandle("Handle1")
+                    .setPostCategories(new ArrayList<>())
+                    .setDefaultPostVisibility(PostVisibility.PRIVATE));
+            
+            BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
+            verifyBoard(user, boardDTO, boardR, true);
+            
+            Long departmentId = boardR.getDepartment().getId();
+            userTestService.setAuthentication(otherUser.getStormpathId());
+            BoardDTO boardDTO2 = new BoardDTO()
+                .setName("Board 2")
+                .setPurpose("Purpose 2")
+                .setDepartment(new DepartmentDTO()
+                    .setId(departmentId))
+                .setSettings(new BoardSettingsDTO()
+                    .setHandle("Handle2")
+                    .setPostCategories(new ArrayList<>())
+                    .setDefaultPostVisibility(PostVisibility.PRIVATE));
+            
+            BoardRepresentation boardR2 = departmentBoardApi.postBoard(boardDTO2);
+            boardDTO2.getDepartment()
+                .setName("Department 1")
+                .setHandle("Handle1")
+                .setMemberCategories(new ArrayList<>());
+            
+            verifyBoard(otherUser, boardDTO2, boardR2, false);
+            return null;
+        });
+        
+        transactionTemplate.execute(TransactionStatus -> {
+            userTestService.setAuthentication(user.getStormpathId());
+            List<BoardRepresentation> boards = departmentBoardApi.getBoards();
+            List<DepartmentRepresentation> departments = departmentBoardApi.getDepartments();
+            
+            Assert.assertEquals(2, boards.size());
+            Assert.assertEquals(1, departments.size());
+            
+            userTestService.setAuthentication(otherUser.getStormpathId());
+            boards = departmentBoardApi.getBoards();
+            departments = departmentBoardApi.getDepartments();
+            
+            Assert.assertEquals(1, boards.size());
+            Assert.assertEquals("Board 2", boards.get(0).getName());
+            Assert.assertEquals(0, departments.size());
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldCreateAndUpdateTwoBoardsWithinOneDepartment() {
         User user = userTestService.authenticate();
         Long createdDepartmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
