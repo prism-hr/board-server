@@ -26,7 +26,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -255,7 +254,7 @@ public class PostApiIT extends AbstractIT {
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
         
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-        assertThat(postR.getRoles(), Matchers.containsInAnyOrder(Arrays.asList(Role.ADMINISTRATOR)));
+        assertThat(postR.getRoles(), Matchers.containsInAnyOrder(Role.ADMINISTRATOR));
         
         Post post = postService.findOne(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
