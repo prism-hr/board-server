@@ -42,6 +42,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setOrganizationName(post.getOrganizationName())
             .setLocation(locationMapper.apply(post.getLocation()))
             .setExistingRelation(post.getExistingRelation())
+            .setExistingRelationDescription(post.getExistingRelationDescription())
             .setPostCategories(postCategories)
             .setMemberCategories(memberCategories)
             .setApplyWebsite(post.getApplyWebsite())

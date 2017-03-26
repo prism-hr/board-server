@@ -15,6 +15,8 @@ public class PostRepresentation {
     private LocationRepresentation location;
 
     private Boolean existingRelation;
+    
+    private String existingRelationDescription;
 
     private List<String> postCategories;
 
@@ -81,7 +83,16 @@ public class PostRepresentation {
         this.existingRelation = existingRelation;
         return this;
     }
-
+    
+    public String getExistingRelationDescription() {
+        return existingRelationDescription;
+    }
+    
+    public PostRepresentation setExistingRelationDescription(String existingRelationDescription) {
+        this.existingRelationDescription = existingRelationDescription;
+        return this;
+    }
+    
     public List<String> getPostCategories() {
         return postCategories;
     }

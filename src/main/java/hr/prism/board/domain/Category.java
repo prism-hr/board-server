@@ -57,4 +57,5 @@ public class Category extends BoardEntity {
         this.active = active;
         return this;
     }
+    
 }

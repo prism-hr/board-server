@@ -28,6 +28,8 @@ public class PostDTO {
 
     @NotNull
     private Boolean existingRelation;
+    
+    private String existingRelationDescription;
 
     private List<String> postCategories;
 
@@ -95,7 +97,16 @@ public class PostDTO {
         this.existingRelation = existingRelation;
         return this;
     }
-
+    
+    public String getExistingRelationDescription() {
+        return existingRelationDescription;
+    }
+    
+    public PostDTO setExistingRelationDescription(String existingRelationDescription) {
+        this.existingRelationDescription = existingRelationDescription;
+        return this;
+    }
+    
     public List<String> getPostCategories() {
         return postCategories;
     }

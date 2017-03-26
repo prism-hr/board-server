@@ -5,6 +5,8 @@ import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.PostRepository;
 import org.springframework.stereotype.Service;
@@ -53,6 +55,11 @@ public class PostService {
 
     public Post createPost(Long boardId, PostDTO postDTO) {
         Board board = boardService.findOne(boardId);
+        User user = userService.getCurrentUserSecured();
+        if (postDTO.getExistingRelationDescription() == null && !userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR)) {
+            throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
+        }
+        
         Department department = departmentService.findByBoard(board);
 
         Post post = new Post();
@@ -66,7 +73,7 @@ public class PostService {
         post = postRepository.save(post);
 
         resourceService.createResourceRelation(board, post);
-        userRoleService.createUserRole(post, userService.getCurrentUserSecured(), Role.ADMINISTRATOR);
+        userRoleService.createUserRole(post, user, Role.ADMINISTRATOR);
         return post;
     }
 
@@ -101,6 +108,7 @@ public class PostService {
         post.setDescription(postDTO.getDescription());
         post.setOrganizationName(postDTO.getOrganizationName());
         post.setExistingRelation(postDTO.getExistingRelation());
+        post.setExistingRelationDescription(postDTO.getExistingRelationDescription());
         post.setApplyWebsite(postDTO.getApplyWebsite());
         post.setApplyEmail(postDTO.getApplyEmail());
 
