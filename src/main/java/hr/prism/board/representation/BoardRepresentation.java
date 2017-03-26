@@ -1,5 +1,6 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.domain.Role;
 import hr.prism.board.enums.PostVisibility;
 
 import java.util.List;
@@ -19,6 +20,8 @@ public class BoardRepresentation {
     private List<String> postCategories;
     
     private PostVisibility defaultPostVisibility;
+    
+    private List<Role> roles;
     
     public Long getId() {
         return id;
@@ -80,6 +83,15 @@ public class BoardRepresentation {
     
     public BoardRepresentation setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
         this.defaultPostVisibility = defaultPostVisibility;
+        return this;
+    }
+    
+    public List<Role> getRoles() {
+        return roles;
+    }
+    
+    public BoardRepresentation setRoles(List<Role> roles) {
+        this.roles = roles;
         return this;
     }
     

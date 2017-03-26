@@ -621,6 +621,9 @@ public class DepartmentBoardApiIT extends AbstractIT {
         Board board = boardService.findOne(boardR.getId());
         Department department = departmentService.findOne(departmentR.getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
+    
+        Assert.assertThat(boardR.getRoles(), Matchers.containsInAnyOrder(Arrays.asList(Role.ADMINISTRATOR)));
+        Assert.assertThat(boardR.getDepartment().getRoles(), Matchers.containsInAnyOrder(Arrays.asList(Role.ADMINISTRATOR)));
         
         Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
         Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));

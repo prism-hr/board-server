@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
+import java.util.List;
 
 @Service
 @Transactional
@@ -13,6 +14,10 @@ public class UserRoleService {
     
     @Inject
     private UserRoleRepository userRoleRepository;
+    
+    public List<Role> findByResourceAndUser(Resource resource, User user) {
+        return userRoleRepository.findByResourceAndUser(resource, user);
+    }
     
     public void createUserRole(Resource resource, User user, Role role) {
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
@@ -34,7 +39,7 @@ public class UserRoleService {
             throw new IllegalStateException("No roles specified");
         }
     
-        return userRoleRepository.findByResourceUserAndRoles(resource, user, roles).size() > 0;
+        return userRoleRepository.findByResourceAndUserAndRoles(resource, user, roles).size() > 0;
     }
     
 }

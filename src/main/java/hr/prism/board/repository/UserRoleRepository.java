@@ -21,6 +21,16 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
     List<UserRole> findByScopeAndUser(@Param("scope") Scope scope, @Param("user") User user);
     
     @Query(value =
+        "select userRole.role " +
+            "from UserRole userRole " +
+            "inner join userRole.resource resource " +
+            "inner join resource.children child " +
+            "where userRole.user = :user " +
+            "and child.resource2 = :resource " +
+            "group by userRole.role")
+    List<Role> findByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
+    
+    @Query(value =
         "select userRole " +
             "from UserRole userRole " +
             "inner join userRole.resource resource " +
@@ -28,6 +38,6 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "where userRole.user = :user " +
             "and userRole.role in (:roles) " +
             "and child.resource2 = :resource")
-    List<UserRole> findByResourceUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") Role... roles);
+    List<UserRole> findByResourceAndUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") Role... roles);
     
 }
