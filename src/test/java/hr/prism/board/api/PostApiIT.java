@@ -38,32 +38,32 @@ import static org.junit.Assert.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class PostApiIT extends AbstractIT {
-    
+
     @Inject
     private PostApi postApi;
-    
+
     @Inject
     private DepartmentBoardApi departmentBoardApi;
-    
+
     @Inject
     private PostService postService;
-    
+
     @Inject
     private BoardService boardService;
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserTestService userTestService;
-    
+
     @Test
     public void shouldCreatePostWithAllPossibleFieldsSet() {
         User user = userTestService.authenticate();
-        
+
         BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldCreatePost Board")
@@ -77,7 +77,7 @@ public class PostApiIT extends AbstractIT {
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             return departmentBoardApi.postBoard(boardDTO);
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             PostDTO postDTO = new PostDTO()
                 .setName("shouldCreatePost Post")
@@ -85,23 +85,22 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("shouldCreatePost Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldCreatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(true)
-                .setExistingRelationDescription("Description")
+                .setExistingRelation("Description")
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldCreatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
+
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
             savedPostR = postApi.getPost(savedPostR.getId());
             verifyPost(user, postDTO, savedPostR);
             return null;
         });
     }
-    
+
     @Test
     public void shouldUpdatePost() {
         User user = userTestService.authenticate();
-        
+
         transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldUpdatePost Board")
@@ -114,42 +113,39 @@ public class PostApiIT extends AbstractIT {
                     .setHandle("sup")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
-            
+
             PostDTO postDTO = new PostDTO()
                 .setName("shouldUpdatePost Post")
                 .setDescription("Desc")
                 .setOrganizationName("shouldUpdatePost Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldUpdatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(true)
-                .setExistingRelationDescription("Description")
+                .setExistingRelation("Description")
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldUpdatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
+
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
             postDTO.setName("shouldUpdatePost Board2").setDescription("Desc")
                 .setOrganizationName("shouldUpdatePost Organization2")
                 .setLocation(new LocationDTO().setName("location2").setDomicile("NG")
                     .setGoogleId("shouldUpdatePost GoogleId2").setLatitude(BigDecimal.TEN).setLongitude(BigDecimal.TEN))
-                .setExistingRelation(false)
-                .setExistingRelationDescription("Description")
                 .setPostCategories(ImmutableList.of("p2", "p3"))
                 .setMemberCategories(ImmutableList.of("m2", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file2").setCloudinaryId("shouldUpdatePost CloudinaryId2").setCloudinaryUrl("http://cloudinary2.com"));
             postApi.updatePost(savedPostR.getId(), postDTO);
             PostRepresentation updatedPostR = postApi.getPost(savedPostR.getId());
             verifyPost(user, postDTO, updatedPostR);
-            
+
             return savedPostR;
         });
     }
-    
+
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
         userTestService.authenticate();
-        
+
         transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("shouldGetPosts Board")
@@ -162,40 +158,38 @@ public class PostApiIT extends AbstractIT {
                     .setHandle("sgp")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
-            
+
             PostDTO postDTO = new PostDTO()
                 .setName("shouldGetPosts Post1")
                 .setDescription("Desc")
                 .setOrganizationName("shouldGetPosts Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(true)
-                .setExistingRelationDescription("Description")
+                .setExistingRelation("Description")
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
             postApi.postPost(boardR.getId(), postDTO);
-            
+
             PostDTO postDTO2 = new PostDTO()
                 .setName("shouldGetPosts Post2")
                 .setDescription("Desc2")
                 .setOrganizationName("shouldGetPosts Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(true)
-                .setExistingRelationDescription("Description")
+                .setExistingRelation("Description")
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
             postApi.postPost(boardR.getId(), postDTO2);
-            
+
             List<PostRepresentation> posts = postApi.getPosts(boardR.getId());
             assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post1")),
                 hasProperty("name", equalTo("shouldGetPosts Post2"))));
             return null;
         });
     }
-    
+
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutContributorRole() {
         transactionTemplate.execute(transactionStatus -> {
@@ -211,7 +205,7 @@ public class PostApiIT extends AbstractIT {
                     .setHandle("handle")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
             BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
-            
+
             userTestService.authenticate();
             PostDTO postDTO = new PostDTO()
                 .setName("Post")
@@ -219,7 +213,6 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("Organization")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(false)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("cloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
@@ -227,12 +220,12 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     private void verifyPost(User user, PostDTO postDTO, PostRepresentation postR) {
         assertEquals(postDTO.getName(), postR.getName());
         assertEquals(postDTO.getDescription(), postR.getDescription());
         assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
-        
+
         LocationRepresentation locationR = postR.getLocation();
         LocationDTO locationDTO = postDTO.getLocation();
         assertEquals(locationDTO.getName(), locationR.getName());
@@ -240,28 +233,27 @@ public class PostApiIT extends AbstractIT {
         assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
         assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
         assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
-        
+
         assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
-        assertEquals(postDTO.getExistingRelationDescription(), postR.getExistingRelationDescription());
         assertThat(postR.getPostCategories(), containsInAnyOrder(postDTO.getPostCategories().toArray()));
         assertThat(postR.getMemberCategories(), containsInAnyOrder(postDTO.getMemberCategories().toArray()));
         assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
-        
+
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
         assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
         assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-        
+
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
         assertThat(postR.getRoles(), Matchers.containsInAnyOrder(Role.ADMINISTRATOR));
-        
+
         Post post = postService.findOne(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
-        
+
         Board board = boardService.findOne(postR.getBoard().getId());
         Department department = departmentService.findOne(postR.getBoard().getDepartment().getId());
         assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
     }
-    
+
 }

@@ -18,11 +18,8 @@ public class Post extends Resource {
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
-    @Column(name = "existing_relation", nullable = false)
-    private Boolean existingRelation;
-    
-    @Column(name = "existing_relation_description")
-    private String existingRelationDescription;
+    @Column(name = "existing_relation")
+    private String existingRelation;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "post_category", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
@@ -56,23 +53,15 @@ public class Post extends Resource {
         this.location = location;
     }
 
-    public Boolean getExistingRelation() {
+    public String getExistingRelation() {
         return existingRelation;
     }
 
-    public void setExistingRelation(Boolean existingRelation) {
+    public Post setExistingRelation(String existingRelation) {
         this.existingRelation = existingRelation;
-    }
-    
-    public String getExistingRelationDescription() {
-        return existingRelationDescription;
-    }
-    
-    public Post setExistingRelationDescription(String existingRelationDescription) {
-        this.existingRelationDescription = existingRelationDescription;
         return this;
     }
-    
+
     public Set<Category> getPostCategories() {
         return postCategories;
     }

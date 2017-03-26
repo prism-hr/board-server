@@ -18,29 +18,29 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class PostMapper {
-    
+
     @Inject
     private LocationMapper locationMapper;
-    
+
     @Inject
     private DocumentMapper documentMapper;
-    
+
     @Inject
     private BoardService boardService;
-    
+
     @Inject
     private BoardMapper boardMapper;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserService userService;
-    
+
     public Function<Post, PostRepresentation> create() {
         return create(new HashSet<>());
     }
-    
+
     // TODO: refactor, this is getting too complicated
     public Function<Post, PostRepresentation> create(Set<String> options) {
         User user = userService.getCurrentUser();
@@ -48,7 +48,7 @@ public class PostMapper {
             Board board = boardService.findByPost(post);
             List<String> postCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.POST).map(Category::getName).collect(Collectors.toList());
             List<String> memberCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.MEMBER).map(Category::getName).collect(Collectors.toList());
-            
+
             PostRepresentation postRepresentation = new PostRepresentation()
                 .setId(post.getId())
                 .setName(post.getName())
@@ -56,20 +56,19 @@ public class PostMapper {
                 .setOrganizationName(post.getOrganizationName())
                 .setLocation(locationMapper.apply(post.getLocation()))
                 .setExistingRelation(post.getExistingRelation())
-                .setExistingRelationDescription(post.getExistingRelationDescription())
                 .setPostCategories(postCategories)
                 .setMemberCategories(memberCategories)
                 .setApplyWebsite(post.getApplyWebsite())
                 .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
                 .setApplyEmail(post.getApplyEmail())
                 .setBoard(boardMapper.create().apply(board));
-            
+
             if (options.contains("roles")) {
                 postRepresentation.setRoles(userRoleService.findByResourceAndUser(board, user));
             }
-            
+
             return postRepresentation;
         };
     }
-    
+
 }

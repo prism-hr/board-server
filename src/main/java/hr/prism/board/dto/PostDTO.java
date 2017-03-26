@@ -4,7 +4,6 @@ import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.List;
 
@@ -26,10 +25,7 @@ public class PostDTO {
     @Valid
     private LocationDTO location;
 
-    @NotNull
-    private Boolean existingRelation;
-    
-    private String existingRelationDescription;
+    private String existingRelation;
 
     private List<String> postCategories;
 
@@ -89,24 +85,15 @@ public class PostDTO {
         return this;
     }
 
-    public Boolean getExistingRelation() {
+    public String getExistingRelation() {
         return existingRelation;
     }
 
-    public PostDTO setExistingRelation(Boolean existingRelation) {
+    public PostDTO setExistingRelation(String existingRelation) {
         this.existingRelation = existingRelation;
         return this;
     }
-    
-    public String getExistingRelationDescription() {
-        return existingRelationDescription;
-    }
-    
-    public PostDTO setExistingRelationDescription(String existingRelationDescription) {
-        this.existingRelationDescription = existingRelationDescription;
-        return this;
-    }
-    
+
     public List<String> getPostCategories() {
         return postCategories;
     }

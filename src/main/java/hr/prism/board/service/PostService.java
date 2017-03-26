@@ -56,10 +56,10 @@ public class PostService {
     public Post createPost(Long boardId, PostDTO postDTO) {
         Board board = boardService.findOne(boardId);
         User user = userService.getCurrentUserSecured();
-        if (postDTO.getExistingRelationDescription() == null && !userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR)) {
+        if (postDTO.getExistingRelation() == null && !userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR)) {
             throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
-        
+
         Department department = departmentService.findByBoard(board);
 
         Post post = new Post();
@@ -108,7 +108,6 @@ public class PostService {
         post.setDescription(postDTO.getDescription());
         post.setOrganizationName(postDTO.getOrganizationName());
         post.setExistingRelation(postDTO.getExistingRelation());
-        post.setExistingRelationDescription(postDTO.getExistingRelationDescription());
         post.setApplyWebsite(postDTO.getApplyWebsite());
         post.setApplyEmail(postDTO.getApplyEmail());
 
@@ -119,5 +118,5 @@ public class PostService {
         post.getPostCategories().addAll(postCategories);
         post.getPostCategories().addAll(memberCategories);
     }
-    
+
 }
