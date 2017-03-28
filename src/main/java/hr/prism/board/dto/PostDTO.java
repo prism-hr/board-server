@@ -7,12 +7,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import java.util.List;
 
-public class PostDTO {
-
-    private Long id;
-
-    @NotEmpty
-    private String name;
+public class PostDTO extends ResourceDTO<PostDTO> {
 
     @NotEmpty
     @Size(max = 2000)
@@ -39,24 +34,6 @@ public class PostDTO {
 
     @Email
     private String applyEmail;
-
-    public Long getId() {
-        return id;
-    }
-
-    public PostDTO setId(Long id) {
-        this.id = id;
-        return this;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public PostDTO setName(String name) {
-        this.name = name;
-        return this;
-    }
 
     public String getDescription() {
         return description;

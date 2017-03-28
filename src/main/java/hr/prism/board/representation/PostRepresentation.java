@@ -1,14 +1,8 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.domain.Role;
-
 import java.util.List;
 
-public class PostRepresentation {
-
-    private Long id;
-
-    private String name;
+public class PostRepresentation extends AbstractResourceRepresentation {
 
     private String description;
 
@@ -29,26 +23,6 @@ public class PostRepresentation {
     private String applyEmail;
 
     private BoardRepresentation board;
-
-    private List<Role> roles;
-
-    public Long getId() {
-        return id;
-    }
-
-    public PostRepresentation setId(Long id) {
-        this.id = id;
-        return this;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public PostRepresentation setName(String name) {
-        this.name = name;
-        return this;
-    }
 
     public String getDescription() {
         return description;
@@ -137,15 +111,6 @@ public class PostRepresentation {
 
     public PostRepresentation setBoard(BoardRepresentation board) {
         this.board = board;
-        return this;
-    }
-
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public PostRepresentation setRoles(List<Role> roles) {
-        this.roles = roles;
         return this;
     }
 

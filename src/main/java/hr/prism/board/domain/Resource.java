@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
+import hr.prism.board.enums.State;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -16,6 +17,10 @@ public class Resource extends BoardEntity {
     @Column(name = "scope", nullable = false, insertable = false, updatable = false)
     private Scope scope;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false)
+    private State state;
+
     @Column(name = "name", nullable = false)
     private String name;
 
@@ -26,7 +31,7 @@ public class Resource extends BoardEntity {
     @JoinColumn(name = "document_logo_id")
     private Document documentLogo;
 
-    @Column(name = "handle", nullable = false)
+    @Column(name = "handle")
     private String handle;
 
     @OneToMany(mappedBy = "parentResource")
@@ -47,6 +52,15 @@ public class Resource extends BoardEntity {
 
     public Resource setScope(Scope scope) {
         this.scope = scope;
+        return this;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public Resource setState(State state) {
+        this.state = state;
         return this;
     }
 
@@ -101,14 +115,14 @@ public class Resource extends BoardEntity {
     public Set<ResourceRelation> getParents() {
         return parents;
     }
-    
+
     @Override
     public String toString() {
         if (scope == null) {
             return null;
         }
-        
+
         return Joiner.on(" ").skipNulls().join(scope.name().toLowerCase(), getId());
     }
-    
+
 }

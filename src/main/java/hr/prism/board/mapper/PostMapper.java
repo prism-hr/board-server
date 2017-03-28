@@ -35,6 +35,9 @@ public class PostMapper {
     private UserRoleService userRoleService;
 
     @Inject
+    private ActionService actionService;
+
+    @Inject
     private UserService userService;
 
     public Function<Post, PostRepresentation> create() {
@@ -49,9 +52,12 @@ public class PostMapper {
             List<String> postCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.POST).map(Category::getName).collect(Collectors.toList());
             List<String> memberCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.MEMBER).map(Category::getName).collect(Collectors.toList());
 
-            PostRepresentation postRepresentation = new PostRepresentation()
+            PostRepresentation postRepresentation = new PostRepresentation();
+            postRepresentation
                 .setId(post.getId())
                 .setName(post.getName())
+                .setState(post.getState());
+            postRepresentation
                 .setDescription(post.getDescription())
                 .setOrganizationName(post.getOrganizationName())
                 .setLocation(locationMapper.apply(post.getLocation()))
@@ -65,6 +71,7 @@ public class PostMapper {
 
             if (options.contains("roles")) {
                 postRepresentation.setRoles(userRoleService.findByResourceAndUser(board, user));
+                postRepresentation.setActions(actionService.getActions(post, user));
             }
 
             return postRepresentation;

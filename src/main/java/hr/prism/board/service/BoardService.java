@@ -6,6 +6,7 @@ import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
@@ -18,7 +19,7 @@ import java.util.List;
 @Service
 @Transactional
 public class BoardService {
-    
+
     @Inject
     private DepartmentService departmentService;
 
@@ -59,6 +60,7 @@ public class BoardService {
         validateNameUniqueness(name, department);
 
         Board board = new Board();
+        board.setState(State.ACCEPTED);
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
 

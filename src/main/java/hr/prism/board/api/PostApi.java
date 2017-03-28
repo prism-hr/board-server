@@ -7,6 +7,7 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.PostDTO;
+import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.representation.PostRepresentation;
@@ -47,7 +48,13 @@ public class PostApi {
     @Restriction(scope = Scope.POST, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.PUT)
     public void updatePost(@PathVariable("id") Long id, @RequestBody PostDTO postDTO) {
-        postService.updatePost(id, postDTO);
+        postService.executeAction(id, Action.EDIT, postDTO);
+    }
+
+    @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
+    @RequestMapping(value = "/posts/{id}/{action}", method = RequestMethod.PUT)
+    public void executeAction(@PathVariable("id") Long id, @PathVariable("action") Action action, @RequestBody PostDTO postDTO) {
+        postService.executeAction(id, action, postDTO);
     }
 
     @ExceptionHandler(ApiException.class)

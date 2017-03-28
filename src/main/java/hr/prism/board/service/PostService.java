@@ -4,7 +4,9 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.CategoryRepository;
@@ -48,6 +50,12 @@ public class PostService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private ActionService actionService;
+
+    public Post findOne(Long id) {
+        return postRepository.findOne(id);
+    }
 
     public List<Post> findByBoard(Long boardId) {
         return postRepository.findByBoard(boardId);
@@ -56,13 +64,15 @@ public class PostService {
     public Post createPost(Long boardId, PostDTO postDTO) {
         Board board = boardService.findOne(boardId);
         User user = userService.getCurrentUserSecured();
-        if (postDTO.getExistingRelation() == null && !userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR)) {
+        boolean canPostTrusted = userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR);
+        if (postDTO.getExistingRelation() == null && !canPostTrusted) {
             throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
 
         Department department = departmentService.findByBoard(board);
 
         Post post = new Post();
+        post.setState(canPostTrusted ? State.ACCEPTED : State.DRAFT);
         updateSimpleFields(post, postDTO, board, department);
 
         if (postDTO.getApplyDocument() != null) {
@@ -77,7 +87,30 @@ public class PostService {
         return post;
     }
 
-    public void updatePost(Long postId, PostDTO postDTO) {
+    public void executeAction(Long postId, Action action, PostDTO postDTO) {
+        Post post = postRepository.findOne(postId);
+        User user = userService.getCurrentUserSecured();
+        actionService.executeAction(post, user, action);
+        updatePost(postId, postDTO);
+    }
+
+    private void updateSimpleFields(Post post, PostDTO postDTO, Board board, Department department) {
+        post.setName(postDTO.getName());
+        post.setDescription(postDTO.getDescription());
+        post.setOrganizationName(postDTO.getOrganizationName());
+        post.setExistingRelation(postDTO.getExistingRelation());
+        post.setApplyWebsite(postDTO.getApplyWebsite());
+        post.setApplyEmail(postDTO.getApplyEmail());
+
+        // update categories
+        List<Category> postCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
+        List<Category> memberCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories());
+        post.getPostCategories().clear();
+        post.getPostCategories().addAll(postCategories);
+        post.getPostCategories().addAll(memberCategories);
+    }
+
+    private void updatePost(Long postId, PostDTO postDTO) {
         Post post = postRepository.findOne(postId);
         Board board = boardService.findByPost(post);
         Department department = departmentService.findByBoard(board);
@@ -98,25 +131,4 @@ public class PostService {
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
         }
     }
-
-    public Post findOne(Long id) {
-        return postRepository.findOne(id);
-    }
-
-    private void updateSimpleFields(Post post, PostDTO postDTO, Board board, Department department) {
-        post.setName(postDTO.getName());
-        post.setDescription(postDTO.getDescription());
-        post.setOrganizationName(postDTO.getOrganizationName());
-        post.setExistingRelation(postDTO.getExistingRelation());
-        post.setApplyWebsite(postDTO.getApplyWebsite());
-        post.setApplyEmail(postDTO.getApplyEmail());
-
-        // update categories
-        List<Category> postCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
-        List<Category> memberCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories());
-        post.getPostCategories().clear();
-        post.getPostCategories().addAll(postCategories);
-        post.getPostCategories().addAll(memberCategories);
-    }
-
 }

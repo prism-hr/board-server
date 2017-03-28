@@ -4,6 +4,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
@@ -70,6 +71,7 @@ public class DepartmentService {
 
         if (departmentById == null && departmentByName == null) {
             Department department = new Department();
+            department.setState(State.ACCEPTED);
             department.setName(departmentDTO.getName());
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
