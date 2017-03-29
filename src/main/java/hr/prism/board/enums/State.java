@@ -1,7 +1,7 @@
 package hr.prism.board.enums;
 
 public enum State {
-
-    DRAFT, ACCEPTED, REJECTED, CORRECTION
+    
+    DRAFT, ACCEPTED, REJECTED, SUSPENDED
 
 }

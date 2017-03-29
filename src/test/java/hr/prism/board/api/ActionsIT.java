@@ -102,7 +102,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT));
-            assertEquals(State.CORRECTION, postR.getState());
+            assertEquals(State.SUSPENDED, postR.getState());
             postApi.executeAction(samplePost.getId(), Action.CORRECT, createSamplePost(sampleBoard.getId()).setOrganizationName("Corrected name"));
             return null;
         });

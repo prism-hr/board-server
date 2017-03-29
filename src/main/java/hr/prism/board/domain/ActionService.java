@@ -60,7 +60,7 @@ public class ActionService {
         List<Action> actions = new LinkedList<>();
         actions.add(Action.EDIT);
         if (resource.getScope() == Scope.POST) {
-            if (resource.getState() == State.CORRECTION) {
+            if (resource.getState() == State.SUSPENDED) {
                 actions.add(Action.CORRECT);
             } else if (resource.getState() == State.DRAFT) {
                 actions.add(Action.APPROVE);
