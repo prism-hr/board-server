@@ -3,4 +3,4 @@ ALTER TABLE resource
   AFTER scope;
 
 UPDATE resource
-SET state = 'ACCEPTED'
+SET state = 'ACCEPTED';

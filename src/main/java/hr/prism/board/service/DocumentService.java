@@ -20,15 +20,17 @@ public class DocumentService {
         if(documentDTO == null) {
             return null;
         }
-        Document foundDocument = documentRepository.findByCloudinaryId(documentDTO.getCloudinaryId());
-        if (foundDocument != null) {
-            return foundDocument;
+    
+        Document document = documentRepository.findByCloudinaryId(documentDTO.getCloudinaryId());
+        if (document == null) {
+            document = new Document();
+            document.setFileName(documentDTO.getFileName());
+            document.setCloudinaryId(documentDTO.getCloudinaryId());
+            document.setCloudinaryUrl(documentDTO.getCloudinaryUrl());
+            document = documentRepository.save(document);
         }
-        Document document = new Document();
-        document.setFileName(documentDTO.getFileName());
-        document.setCloudinaryId(documentDTO.getCloudinaryId());
-        document.setCloudinaryUrl(documentDTO.getCloudinaryUrl());
-        return documentRepository.save(document);
+    
+        return document;
     }
 
 }

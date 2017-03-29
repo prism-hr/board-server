@@ -122,7 +122,6 @@ public class BoardService {
 
         List<String> postCategories = boardSettingsDTO.getPostCategories();
         resourceService.updateCategories(board, postCategories, CategoryType.POST);
-
         board.setDefaultPostVisibility(boardSettingsDTO.getDefaultPostVisibility());
     }
 

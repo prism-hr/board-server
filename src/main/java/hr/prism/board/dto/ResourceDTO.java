@@ -2,7 +2,7 @@ package hr.prism.board.dto;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
-public abstract class ResourceDTO<R extends ResourceDTO<?>> {
+public abstract class ResourceDTO<R extends ResourceDTO<R>> {
 
     private Long id;
 
