@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public class PostApi {
     private PostMapper postMapper;
 
     @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.POST)
-    public PostRepresentation postPost(@PathVariable Long boardId, @RequestBody PostDTO postDTO) {
+    public PostRepresentation postPost(@PathVariable Long boardId, @RequestBody @Valid PostDTO postDTO) {
         Post post = postService.createPost(boardId, postDTO);
         return postMapper.create(ImmutableSet.of("roles")).apply(post);
     }
@@ -47,13 +48,13 @@ public class PostApi {
 
     @Restriction(scope = Scope.POST, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.PUT)
-    public void updatePost(@PathVariable("id") Long id, @RequestBody PostDTO postDTO) {
+    public void updatePost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
         postService.executeAction(id, Action.EDIT, postDTO);
     }
 
     @Restriction(scope = Scope.BOARD, roles = Role.ADMINISTRATOR)
     @RequestMapping(value = "/posts/{id}/{action}", method = RequestMethod.PUT)
-    public void executeAction(@PathVariable("id") Long id, @PathVariable("action") Action action, @RequestBody PostDTO postDTO) {
+    public void executeAction(@PathVariable("id") Long id, @PathVariable("action") Action action, @RequestBody @Valid PostDTO postDTO) {
         postService.executeAction(id, action, postDTO);
     }
 
