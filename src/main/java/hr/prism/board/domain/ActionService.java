@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,9 @@ import java.util.stream.Stream;
 @Service
 @Transactional
 public class ActionService {
+    
+    @Inject
+    private ResourceService resourceService;
 
     @Inject
     private UserRoleService userRoleService;
@@ -31,9 +35,9 @@ public class ActionService {
             actions.add(Action.CORRECT);
         }
         if (parentRoles.contains(Role.ADMINISTRATOR)) {
-            actions.add(Action.APPROVE);
+            actions.add(Action.ACCEPT);
             actions.add(Action.REJECT);
-            actions.add(Action.REQUEST_CORRECTION);
+            actions.add(Action.SUSPEND);
         }
         List<Action> availableActions = getAvailableActions(resource);
         return actions.stream().filter(availableActions::contains).collect(Collectors.toList());
@@ -46,11 +50,11 @@ public class ActionService {
         }
 
         switch (action) {
-            case APPROVE:
-                resource.setState(State.ACCEPTED);
+            case ACCEPT:
+                resourceService.updateState(resource, State.ACCEPTED);
                 break;
             case REJECT:
-                resource.setState(State.REJECTED);
+                resourceService.updateState(resource, State.REJECTED);
                 break;
             default:
         }
@@ -63,9 +67,9 @@ public class ActionService {
             if (resource.getState() == State.SUSPENDED) {
                 actions.add(Action.CORRECT);
             } else if (resource.getState() == State.DRAFT) {
-                actions.add(Action.APPROVE);
+                actions.add(Action.ACCEPT);
                 actions.add(Action.REJECT);
-                actions.add(Action.REQUEST_CORRECTION);
+                actions.add(Action.SUSPEND);
             }
         }
         return actions;

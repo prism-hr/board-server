@@ -64,15 +64,15 @@ public class PostService {
     public Post createPost(Long boardId, PostDTO postDTO) {
         Board board = boardService.findOne(boardId);
         User user = userService.getCurrentUserSecured();
-        boolean canPostTrusted = userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR);
-        if (postDTO.getExistingRelation() == null && !canPostTrusted) {
+        boolean canPostWithoutReview = userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR);
+        if (postDTO.getExistingRelation() == null && !canPostWithoutReview) {
             throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
 
         Department department = departmentService.findByBoard(board);
 
         Post post = new Post();
-        post.setState(canPostTrusted ? State.ACCEPTED : State.DRAFT);
+        resourceService.updateState(post, canPostWithoutReview ? State.ACCEPTED : State.DRAFT);
         updateSimpleFields(post, postDTO, board, department);
 
         if (postDTO.getApplyDocument() != null) {

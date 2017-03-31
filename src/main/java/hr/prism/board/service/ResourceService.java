@@ -5,6 +5,7 @@ import hr.prism.board.domain.Category;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.State;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
@@ -88,6 +89,20 @@ public class ResourceService {
             categoryRepository.save(newCategory);
             existingCategories.add(newCategory);
         }
+    }
+    
+    public void updateState(Resource resource, State state) {
+        State previousState = resource.getState();
+        if (previousState == null) {
+            previousState = state;
+        }
+        
+        if (state == State.PREVIOUS) {
+            throw new IllegalStateException("Previous state is anonymous - cannot be assigned to a resource");
+        }
+        
+        resource.setState(state);
+        resource.setPreviousState(previousState);
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {

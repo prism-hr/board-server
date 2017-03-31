@@ -60,7 +60,7 @@ public class BoardService {
         validateNameUniqueness(name, department);
 
         Board board = new Board();
-        board.setState(State.ACCEPTED);
+        resourceService.updateState(board, State.ACCEPTED);
         board.setName(name);
         board.setDescription(boardDTO.getPurpose());
 

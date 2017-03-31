@@ -1,11 +1,15 @@
 package hr.prism.board.enums;
 
 public enum Action {
-
+    
+    VIEW,
     EDIT,
-    APPROVE,
+    POST_TO,
+    ACCEPT,
+    SUSPEND,
+    CORRECT,
     REJECT,
-    REQUEST_CORRECTION,
-    CORRECT
-
+    RESTORE,
+    WITHDRAW
+    
 }

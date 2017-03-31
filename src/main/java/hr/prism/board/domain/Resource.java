@@ -20,6 +20,10 @@ public class Resource extends BoardEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false)
     private State state;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "previousState", nullable = false)
+    private State previousState;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -63,7 +67,16 @@ public class Resource extends BoardEntity {
         this.state = state;
         return this;
     }
-
+    
+    public State getPreviousState() {
+        return previousState;
+    }
+    
+    public Resource setPreviousState(State previousState) {
+        this.previousState = previousState;
+        return this;
+    }
+    
     public String getName() {
         return name;
     }

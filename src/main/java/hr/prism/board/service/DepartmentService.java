@@ -71,7 +71,7 @@ public class DepartmentService {
 
         if (departmentById == null && departmentByName == null) {
             Department department = new Department();
-            department.setState(State.ACCEPTED);
+            resourceService.updateState(department, State.ACCEPTED);
             department.setName(departmentDTO.getName());
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));

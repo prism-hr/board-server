@@ -2,6 +2,6 @@ package hr.prism.board.enums;
 
 public enum State {
     
-    DRAFT, ACCEPTED, REJECTED, SUSPENDED
+    DRAFT, SUSPENDED, ACCEPTED, REJECTED, WITHDRAWN, PREVIOUS
 
 }
