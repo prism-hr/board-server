@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface CategoryRepository extends MyRepository<ResourceCategory, Long> {
     
-    List<ResourceCategory> findByParentResourceAndTypeAndNameIn(Resource resource, CategoryType type, List<String> names);
+    List<ResourceCategory> findByResourceAndTypeAndNameIn(Resource resource, CategoryType type, List<String> names);
 
 }
