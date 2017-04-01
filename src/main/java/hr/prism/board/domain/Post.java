@@ -23,7 +23,7 @@ public class Post extends Resource {
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "post_category", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-    private Set<Category> postCategories = new HashSet<>();
+    private Set<ResourceCategory> postCategories = new HashSet<>();
 
     @URL
     @Column(name = "apply_website")
@@ -61,8 +61,8 @@ public class Post extends Resource {
         this.existingRelation = existingRelation;
         return this;
     }
-
-    public Set<Category> getPostCategories() {
+    
+    public Set<ResourceCategory> getPostCategories() {
         return postCategories;
     }
 

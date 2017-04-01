@@ -49,7 +49,7 @@ public class BoardMapper {
             boardRepresentation
                 .setPurpose(board.getDescription())
                 .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
-                .setPostCategories(board.getCategories().stream().filter(Category::isActive).map(Category::getName).collect(Collectors.toList()))
+                .setPostCategories(board.getCategories().stream().filter(ResourceCategory::isActive).map(ResourceCategory::getName).collect(Collectors.toList()))
                 .setDepartment(departmentMapper.create(options).apply(department))
                 .setDefaultPostVisibility(board.getDefaultPostVisibility());
 

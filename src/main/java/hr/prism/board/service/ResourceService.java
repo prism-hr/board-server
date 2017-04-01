@@ -1,8 +1,8 @@
 package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.domain.Category;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
@@ -70,24 +70,24 @@ public class ResourceService {
     
     public void updateCategories(Resource resource, List<String> categories, CategoryType type) {
         HashSet<String> postedCategories = new HashSet<>(categories);
-        Set<Category> existingCategories = resource.getCategories();
+        Set<ResourceCategory> existingCategories = resource.getCategories();
 
         // modify existing categories
-        for (Category existingCategory : existingCategories) {
-            if (postedCategories.remove(existingCategory.getName())) {
-                existingCategory.setActive(true);
+        for (ResourceCategory existingResourceCategory : existingCategories) {
+            if (postedCategories.remove(existingResourceCategory.getName())) {
+                existingResourceCategory.setActive(true);
             } else {
-                existingCategory.setActive(false); // category was not in the posted list, make inactive
+                existingResourceCategory.setActive(false); // category was not in the posted list, make inactive
             }
-            existingCategory.setUpdatedTimestamp(LocalDateTime.now());
+            existingResourceCategory.setUpdatedTimestamp(LocalDateTime.now());
         }
 
         // add new categories
         for (String postedCategory : postedCategories) {
-            Category newCategory = new Category().setParentResource(resource).setName(postedCategory).setActive(true).setType(type);
-            newCategory.setCreatedTimestamp(LocalDateTime.now());
-            categoryRepository.save(newCategory);
-            existingCategories.add(newCategory);
+            ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(postedCategory).setActive(true).setType(type);
+            newResourceCategory.setCreatedTimestamp(LocalDateTime.now());
+            categoryRepository.save(newResourceCategory);
+            existingCategories.add(newResourceCategory);
         }
     }
     

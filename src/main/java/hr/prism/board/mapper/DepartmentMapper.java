@@ -51,7 +51,7 @@ public class DepartmentMapper {
             departmentRepresentation
                 .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
                 .setHandle(department.getHandle())
-                .setMemberCategories(department.getCategories().stream().filter(Category::isActive).map(Category::getName).collect(Collectors.toList()));
+                .setMemberCategories(department.getCategories().stream().filter(ResourceCategory::isActive).map(ResourceCategory::getName).collect(Collectors.toList()));
 
             if (options.contains("boards")) {
                 departmentRepresentation.setBoards(boardService.findByDepartment(department).stream().map(board -> boardMapper.create().apply(board)).collect(Collectors.toList()));

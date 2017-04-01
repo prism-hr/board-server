@@ -37,9 +37,9 @@ public class Resource extends BoardEntity {
 
     @Column(name = "handle")
     private String handle;
-
-    @OneToMany(mappedBy = "parentResource")
-    private Set<Category> categories = new HashSet<>();
+    
+    @OneToMany(mappedBy = "resource")
+    private Set<ResourceCategory> categories = new HashSet<>();
 
     @OneToMany(mappedBy = "resource")
     private Set<UserRole> userRoles = new HashSet<>();
@@ -112,8 +112,8 @@ public class Resource extends BoardEntity {
         this.handle = handle;
         return this;
     }
-
-    public Set<Category> getCategories() {
+    
+    public Set<ResourceCategory> getCategories() {
         return categories;
     }
 

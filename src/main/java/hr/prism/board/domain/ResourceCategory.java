@@ -5,12 +5,12 @@ import hr.prism.board.enums.CategoryType;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "category")
-public class Category extends BoardEntity {
+@Table(name = "resource_category")
+public class ResourceCategory extends BoardEntity {
 
     @ManyToOne
-    @JoinColumn(name = "parent_resource_id", nullable = false)
-    private Resource parentResource;
+    @JoinColumn(name = "resource_id", nullable = false)
+    private Resource resource;
 
     @Column(name = "name", nullable = false, length = 50)
     private String name;
@@ -21,21 +21,21 @@ public class Category extends BoardEntity {
 
     @Column(name = "active", nullable = false)
     private boolean active;
-
-    public Resource getParentResource() {
-        return parentResource;
+    
+    public Resource getResource() {
+        return resource;
     }
-
-    public Category setParentResource(Resource parentResource) {
-        this.parentResource = parentResource;
+    
+    public ResourceCategory setResource(Resource resource) {
+        this.resource = resource;
         return this;
     }
 
     public String getName() {
         return name;
     }
-
-    public Category setName(String name) {
+    
+    public ResourceCategory setName(String name) {
         this.name = name;
         return this;
     }
@@ -43,8 +43,8 @@ public class Category extends BoardEntity {
     public CategoryType getType() {
         return type;
     }
-
-    public Category setType(CategoryType type) {
+    
+    public ResourceCategory setType(CategoryType type) {
         this.type = type;
         return this;
     }
@@ -52,8 +52,8 @@ public class Category extends BoardEntity {
     public boolean isActive() {
         return active;
     }
-
-    public Category setActive(boolean active) {
+    
+    public ResourceCategory setActive(boolean active) {
         this.active = active;
         return this;
     }

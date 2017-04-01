@@ -103,8 +103,8 @@ public class PostService {
         post.setApplyEmail(postDTO.getApplyEmail());
 
         // update categories
-        List<Category> postCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
-        List<Category> memberCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories());
+        List<ResourceCategory> postCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
+        List<ResourceCategory> memberCategories = categoryRepository.findByParentResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories());
         post.getPostCategories().clear();
         post.getPostCategories().addAll(postCategories);
         post.getPostCategories().addAll(memberCategories);

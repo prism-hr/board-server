@@ -49,8 +49,10 @@ public class PostMapper {
         User user = userService.getCurrentUser();
         return (Post post) -> {
             Board board = boardService.findByPost(post);
-            List<String> postCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.POST).map(Category::getName).collect(Collectors.toList());
-            List<String> memberCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.MEMBER).map(Category::getName).collect(Collectors.toList());
+            List<String> postCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.POST).map(ResourceCategory::getName).collect(Collectors
+                .toList());
+            List<String> memberCategories = post.getPostCategories().stream().filter(c -> c.getType() == CategoryType.MEMBER).map(ResourceCategory::getName).collect(Collectors
+                .toList());
 
             PostRepresentation postRepresentation = new PostRepresentation();
             postRepresentation
