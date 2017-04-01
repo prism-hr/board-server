@@ -8,7 +8,6 @@ import hr.prism.board.enums.State;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
-import javafx.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,7 +102,15 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
-    public ResourceActions getResourceActions(Scope scope, Long id, Long userId) {
+    public ResourceActions getResourceActions(Long id, Long userId) {
+        return getResourceActions(null, id, userId);
+    }
+    
+    public ResourceActions getResourceActions(Scope scope, Long userId) {
+        return getResourceActions(scope, null, userId);
+    }
+    
+    private ResourceActions getResourceActions(Scope scope, Long id, Long userId) {
         List<Object[]> permissions = null;
         if (scope == null) {
             permissions = resourceRepository.findResourceActionsByIdAndUser(id, userId);
@@ -115,7 +122,7 @@ public class ResourceService {
             throw new IllegalStateException("Invalid request - specify resource scope or id");
         }
         
-        Map<Pair<Long, Action>, ResourceActions.ResourceAction> rowIndex = new HashMap<>();
+        Map<ResourceActionKey, ResourceActions.ResourceAction> rowIndex = new HashMap<>();
         for (Object[] row : permissions) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
@@ -131,17 +138,16 @@ public class ResourceService {
             if (column4 != null) {
                 rowState = State.valueOf(column4.toString());
             }
-            
-            Pair<Long, Action> rowKey = new Pair<>(rowId, rowAction);
+    
+            ResourceActionKey rowKey = new ResourceActionKey().setId(rowId).setAction(rowAction).setScope(rowScope);
             ResourceActions.ResourceAction rowValue = rowIndex.get(rowKey);
-            
             if (rowValue == null || rowState.compareTo(rowValue.getState()) > 0) {
                 rowIndex.put(rowKey, new ResourceActions.ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
             }
         }
         
         ResourceActions resourceActions = new ResourceActions();
-        rowIndex.keySet().stream().forEach(key -> resourceActions.putAction(key.getKey(), rowIndex.get(key)));
+        rowIndex.keySet().stream().forEach(key -> resourceActions.putAction(key.getId(), rowIndex.get(key)));
         return resourceActions;
     }
     
@@ -151,6 +157,58 @@ public class ResourceService {
         
         resource1.getChildren().add(resourceRelation);
         resource2.getParents().add(resourceRelation);
+    }
+    
+    private static class ResourceActionKey {
+        
+        private Long id;
+        
+        private Action action;
+        
+        private Scope scope;
+        
+        public Long getId() {
+            return id;
+        }
+        
+        public ResourceActionKey setId(Long id) {
+            this.id = id;
+            return this;
+        }
+        
+        public Action getAction() {
+            return action;
+        }
+        
+        public ResourceActionKey setAction(Action action) {
+            this.action = action;
+            return this;
+        }
+        
+        public Scope getScope() {
+            return scope;
+        }
+        
+        public ResourceActionKey setScope(Scope scope) {
+            this.scope = scope;
+            return this;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, action, scope);
+        }
+        
+        @Override
+        public boolean equals(Object object) {
+            if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+            
+            ResourceActionKey that = (ResourceActionKey) object;
+            return Objects.equals(id, that.getId()) && Objects.equals(action, that.getAction()) && Objects.equals(scope, that.getScope());
+        }
+        
     }
     
 }

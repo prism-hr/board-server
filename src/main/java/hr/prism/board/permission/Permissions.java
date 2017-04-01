@@ -7,6 +7,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static hr.prism.board.domain.Role.PUBLIC;
@@ -112,19 +113,10 @@ public class Permissions extends ArrayList<Permissions.Permit> {
         
         @Override
         public String toString() {
-            List<String> values = new ArrayList<>();
-            for (Enum<?> value : new Enum<?>[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State}) {
-                String valueString;
-                if (value == null) {
-                    valueString = "NULL";
-                } else {
-                    valueString = "'" + value.name() + "'";
-                }
-                
-                values.add(valueString);
-            }
-            
-            return "(" + Joiner.on(", ").join(values) + ")";
+            List<Enum<?>> values = Arrays.asList(resource1Scope, role, resource2Scope, resource2State, action);
+            values.add(resource3Scope == null ? resource2Scope : resource3Scope);
+            values.add(resource3State == null ? resource2State : resource3State);
+            return "('" + Joiner.on("', '").join(values) + "')";
         }
         
     }

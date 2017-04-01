@@ -4,7 +4,7 @@ public enum Action {
     
     VIEW,
     EDIT,
-    POST_TO,
+    AUGMENT,
     ACCEPT,
     SUSPEND,
     CORRECT,

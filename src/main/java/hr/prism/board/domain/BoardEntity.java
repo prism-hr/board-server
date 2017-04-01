@@ -48,12 +48,10 @@ public abstract class BoardEntity {
     
     @Override
     public boolean equals(Object object) {
-        if (Objects.isNull(object)) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        if (!getClass().equals(object.getClass())) {
-            return false;
-        }
+    
         return Objects.equals(id, ((BoardEntity) object).getId());
     }
     

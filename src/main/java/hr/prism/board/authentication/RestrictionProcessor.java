@@ -43,6 +43,7 @@ public class RestrictionProcessor {
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
             Scope scope = restriction.scope();
             if (userRoleService.hasUserRole(scope, user)) {
+                user.setResourceActions(resourceService.getResourceActions(scope, user.getId()));
                 return;
             }
     
@@ -83,6 +84,7 @@ public class RestrictionProcessor {
                 }
                 
                 if (userRoleService.hasUserRole(resource, user, restriction.roles())) {
+                    user.setResourceActions(resourceService.getResourceActions(resource.getId(), user.getId()));
                     return;
                 }
     

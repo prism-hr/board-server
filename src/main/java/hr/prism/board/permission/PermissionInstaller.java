@@ -35,15 +35,15 @@ public class PermissionInstaller {
         Permissions permissions = new Permissions()
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
-            .permitThatAnybody().can(POST_TO, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
+            .permitThatAnybody().can(AUGMENT, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
-            .permitThatAnybody().can(POST_TO, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
+            .permitThatAnybody().can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
-            .permitThat(BOARD, CONTRIBUTOR).can(POST_TO, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
+            .permitThat(BOARD, CONTRIBUTOR).can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
