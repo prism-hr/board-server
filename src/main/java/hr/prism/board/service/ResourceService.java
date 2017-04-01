@@ -1,14 +1,14 @@
 package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceCategory;
-import hr.prism.board.domain.ResourceRelation;
+import hr.prism.board.domain.*;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
+import javafx.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +16,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Transactional
@@ -26,44 +24,44 @@ public class ResourceService {
     
     @Inject
     private ResourceRepository resourceRepository;
-
+    
     @Inject
     private ResourceRelationRepository resourceRelationRepository;
-
+    
     @Inject
     private CategoryRepository categoryRepository;
     
     @PersistenceContext
     private EntityManager entityManager;
-
+    
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
     }
-
+    
     public Resource findByHandle(String handle) {
         return resourceRepository.findByHandle(handle);
     }
-
+    
     public void updateHandle(Resource resource, String newHandle) {
         String handle = resource.getHandle();
         resource.setHandle(newHandle);
         resourceRepository.updateHandle(handle, newHandle);
     }
-
+    
     public void createResourceRelation(Resource resource1, Resource resource2) {
         entityManager.flush();
         entityManager.refresh(resource1);
         entityManager.refresh(resource2);
-    
+        
         int resource1Ordinal = resource1.getScope().ordinal();
         int resource2Ordinal = resource2.getScope().ordinal();
-    
+        
         if ((resource1Ordinal + resource2Ordinal) == 0 || resource1Ordinal == (resource2Ordinal - 1)) {
             resource1.getParents().stream().map(ResourceRelation::getResource1).forEach(parentResource -> commitResourceRelation(parentResource, resource2));
             commitResourceRelation(resource2, resource2);
             return;
         }
-    
+        
         throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. Arguments passed where: " +
             Joiner.on(", ").join(resource1, resource2));
     }
@@ -71,7 +69,7 @@ public class ResourceService {
     public void updateCategories(Resource resource, List<String> categories, CategoryType type) {
         HashSet<String> postedCategories = new HashSet<>(categories);
         Set<ResourceCategory> existingCategories = resource.getCategories();
-
+    
         // modify existing categories
         for (ResourceCategory existingResourceCategory : existingCategories) {
             if (postedCategories.remove(existingResourceCategory.getName())) {
@@ -81,7 +79,7 @@ public class ResourceService {
             }
             existingResourceCategory.setUpdatedTimestamp(LocalDateTime.now());
         }
-
+    
         // add new categories
         for (String postedCategory : postedCategories) {
             ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(postedCategory).setActive(true).setType(type);
@@ -103,6 +101,48 @@ public class ResourceService {
         
         resource.setState(state);
         resource.setPreviousState(previousState);
+    }
+    
+    public ResourceActions getResourceActions(Scope scope, Long id, Long userId) {
+        List<Object[]> permissions = null;
+        if (scope == null) {
+            permissions = resourceRepository.findResourceActionsByIdAndUser(id, userId);
+        } else if (id == null) {
+            permissions = resourceRepository.findResourceActionsByScopeAndUser(scope, userId);
+        }
+        
+        if (permissions == null) {
+            throw new IllegalStateException("Invalid request - specify resource scope or id");
+        }
+        
+        Map<Pair<Long, Action>, ResourceActions.ResourceAction> rowIndex = new HashMap<>();
+        for (Object[] row : permissions) {
+            Long rowId = Long.parseLong(row[0].toString());
+            Action rowAction = Action.valueOf(row[1].toString());
+            
+            Scope rowScope = null;
+            Object column3 = row[2];
+            if (column3 != null) {
+                rowScope = Scope.valueOf(column3.toString());
+            }
+            
+            State rowState = null;
+            Object column4 = row[3];
+            if (column4 != null) {
+                rowState = State.valueOf(column4.toString());
+            }
+            
+            Pair<Long, Action> rowKey = new Pair<>(rowId, rowAction);
+            ResourceActions.ResourceAction rowValue = rowIndex.get(rowKey);
+            
+            if (rowValue == null || rowState.compareTo(rowValue.getState()) > 0) {
+                rowIndex.put(rowKey, new ResourceActions.ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
+            }
+        }
+        
+        ResourceActions resourceActions = new ResourceActions();
+        rowIndex.keySet().stream().forEach(key -> resourceActions.putAction(key.getKey(), rowIndex.get(key)));
+        return resourceActions;
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {
