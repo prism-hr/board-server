@@ -1,10 +1,6 @@
 package hr.prism.board.authentication;
 
-import com.google.common.base.Joiner;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.Scope;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRoleService;
+import hr.prism.board.domain.*;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
@@ -42,12 +38,13 @@ public class RestrictionProcessor {
         Annotation[][] parameterAnnotations = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
             Scope scope = restriction.scope();
-            if (userRoleService.hasUserRole(scope, user)) {
-                user.setResourceActions(resourceService.getResourceActions(scope, user.getId()));
-                return;
+            ResourceActions resourceActions = resourceService.getResourceActions(scope, user.getId());
+            if (resourceActions == null) {
+                throw new ApiForbiddenException("User cannot view any " + scope.name().toLowerCase() + "s");
             }
     
-            throw new ApiForbiddenException("User has no " + scope.name().toLowerCase() + " roles");
+            user.setResourceActions(resourceActions);
+            return;
         }
         
         Object[] arguments = joinPoint.getArgs();
@@ -82,14 +79,15 @@ public class RestrictionProcessor {
                 if (resource == null) {
                     throw new IllegalStateException("Could not find " + restriction.scope().name().toLowerCase());
                 }
-                
-                if (userRoleService.hasUserRole(resource, user, restriction.roles())) {
-                    user.setResourceActions(resourceService.getResourceActions(resource.getId(), user.getId()));
-                    return;
+    
+                // TODO: specific action case
+                ResourceActions resourceActions = resourceService.getResourceActions(resource.getId(), user.getId());
+                if (resourceActions == null) {
+                    throw new ApiForbiddenException("User " + user.toString() + " does cannot perform any actions for: " + resource.toString());
                 }
     
-                throw new ApiForbiddenException("User " + user.toString() + " does not have role(s): " +
-                    Joiner.on(", ").join(restriction.roles()).toLowerCase() + " for: " + resource.toString());
+                user.setResourceActions(resourceActions);
+                return;
             }
         }
     }

@@ -74,7 +74,8 @@ public class ResourceService {
             if (postedCategories.remove(existingResourceCategory.getName())) {
                 existingResourceCategory.setActive(true);
             } else {
-                existingResourceCategory.setActive(false); // category was not in the posted list, make inactive
+                // category was not in the posted list, make inactive
+                existingResourceCategory.setActive(false);
             }
             existingResourceCategory.setUpdatedTimestamp(LocalDateTime.now());
         }
@@ -139,11 +140,16 @@ public class ResourceService {
                 rowState = State.valueOf(column4.toString());
             }
     
+            // Make sure we use the mapping that provides the most direct state transition
             ResourceActionKey rowKey = new ResourceActionKey().setId(rowId).setAction(rowAction).setScope(rowScope);
             ResourceActions.ResourceAction rowValue = rowIndex.get(rowKey);
             if (rowValue == null || rowState.compareTo(rowValue.getState()) > 0) {
                 rowIndex.put(rowKey, new ResourceActions.ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
             }
+        }
+    
+        if (rowIndex.isEmpty()) {
+            return null;
         }
         
         ResourceActions resourceActions = new ResourceActions();
