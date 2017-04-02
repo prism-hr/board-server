@@ -23,17 +23,6 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
     @Query(value =
         "select userRole.role " +
             "from UserRole userRole " +
-            "inner join userRole.resource resource " +
-            "inner join resource.children child " +
-            "where userRole.user = :user " +
-            "and child.resource2 = :resource " +
-            "and child.resource1 <> child.resource2 " +
-            "group by userRole.role")
-    List<Role> findParentRolesByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
-
-    @Query(value =
-        "select userRole.role " +
-            "from UserRole userRole " +
             "where userRole.user = :user " +
             "and userRole.resource = :resource " +
             "group by userRole.role")

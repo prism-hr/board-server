@@ -1,5 +1,6 @@
 package hr.prism.board.authentication;
 
+import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceActions;
 import hr.prism.board.domain.User;
@@ -19,12 +20,18 @@ import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Aspect
 @Component
 public class RestrictionProcessor {
+    
+    @Inject
+    private ActionService actionService;
     
     @Inject
     private ResourceService resourceService;
@@ -87,10 +94,10 @@ public class RestrictionProcessor {
                     return;
                 }
     
-                List<Action> permittedActions = resourceActions.getActions(resourceId).stream().map(ResourceActions.ResourceAction::getAction).collect(Collectors.toList());
-                if (Collections.disjoint(permittedActions, actions)) {
-                    throw new ApiForbiddenException("User " + user.toString() + " cannot perform any of the actions: " +
-                        actions.stream().map(action -> action.name().toLowerCase()).collect(Collectors.joining(", ")) + " for: " + resource.toString());
+                List<Action> permittedActions = actionService.getActions(resource, user);
+                if (!permittedActions.containsAll(actions)) {
+                    throw new ApiForbiddenException("User " + user.toString() + " cannot perform the action(s): " +
+                        actions.stream().map(action -> action.name().toLowerCase()).sorted().collect(Collectors.joining(", ")) + " for: " + resource.toString());
                 }
     
                 user.setResourceActions(resourceActions);

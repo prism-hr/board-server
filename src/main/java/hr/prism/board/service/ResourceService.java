@@ -113,6 +113,7 @@ public class ResourceService {
     }
     
     private ResourceActions getResourceActions(Scope scope, Long id, Long userId) {
+        entityManager.flush();
         List<Object[]> permissions = null;
         if (scope == null) {
             permissions = resourceRepository.findResourceActionsByIdAndUser(id, userId);

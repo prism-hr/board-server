@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -37,7 +39,12 @@ public class BoardService {
 
     public List<Board> findAllByUserOrderByName() {
         User user = userService.getCurrentUserSecured();
-        return boardRepository.findAllByUserByOrderByName(user);
+        Collection<Long> boardIds = user.getResourceActions().getIds();
+        if (boardIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+    
+        return boardRepository.findAllByUserByOrderByName(boardIds);
     }
 
     public Board findOne(Long id) {

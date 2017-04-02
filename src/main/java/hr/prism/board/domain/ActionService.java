@@ -8,70 +8,45 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.HashSet;
-import java.util.LinkedList;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional
 public class ActionService {
     
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     @Inject
     private ResourceService resourceService;
-
-    @Inject
-    private UserRoleService userRoleService;
-
+    
     public List<Action> getActions(Resource resource, User user) {
-        List<Action> actions = new LinkedList<>();
-        HashSet<Role> parentRoles = new HashSet<>(userRoleService.findParentRolesByResourceAndUser(resource, user));
-        HashSet<Role> roles = new HashSet<>(userRoleService.findByResourceAndUser(resource, user));
-        HashSet<Role> allRoles = Stream.concat(parentRoles.stream(), roles.stream()).collect(Collectors.toCollection(HashSet::new));
-
-        if (allRoles.contains(Role.ADMINISTRATOR)) {
-            actions.add(Action.EDIT);
-            actions.add(Action.CORRECT);
-        }
-        if (parentRoles.contains(Role.ADMINISTRATOR)) {
-            actions.add(Action.ACCEPT);
-            actions.add(Action.REJECT);
-            actions.add(Action.SUSPEND);
-        }
-        List<Action> availableActions = getAvailableActions(resource);
-        return actions.stream().filter(availableActions::contains).collect(Collectors.toList());
+        return user.getResourceActions().getActions(resource.getId()).stream().map(ResourceActions.ResourceAction::getAction).sorted().collect(Collectors.toList());
     }
-
-    public void executeAction(Resource resource, User user, Action action) {
-        List<Action> actions = getActions(resource, user);
-        if (!actions.contains(action)) {
-            throw new ApiForbiddenException("Cannot perform action");
-        }
-
-        switch (action) {
-            case ACCEPT:
-                resourceService.updateState(resource, State.ACCEPTED);
-                break;
-            case REJECT:
-                resourceService.updateState(resource, State.REJECTED);
-                break;
-            default:
-        }
-    }
-
-    private List<Action> getAvailableActions(Resource resource) {
-        List<Action> actions = new LinkedList<>();
-        actions.add(Action.EDIT);
-        if (resource.getScope() == Scope.POST) {
-            if (resource.getState() == State.SUSPENDED) {
-                actions.add(Action.CORRECT);
-            } else if (resource.getState() == State.DRAFT) {
-                actions.add(Action.ACCEPT);
-                actions.add(Action.REJECT);
-                actions.add(Action.SUSPEND);
+    
+    public List<Action> executeAction(Resource resource, User user, Action action) {
+        Long resourceId = resource.getId();
+        Collection<ResourceActions.ResourceAction> resourceActions = user.getResourceActions().getActions(resource.getId());
+        for (ResourceActions.ResourceAction resourceAction : resourceActions) {
+            if (resourceAction.getAction() == action) {
+                State state = resource.getState();
+                State newState = resourceAction.getState();
+                if (!(newState == null || state == newState)) {
+                    // Update resource actions when we change state
+                    resourceService.updateState(resource, newState);
+                    user.setResourceActions(resourceService.getResourceActions(resourceId, user.getId()));
+                }
+                
+                return getActions(resource, user);
             }
         }
-        return actions;
+        
+        // We need to throw here in case we forgot to attach the restriction processor to the controller
+        throw new ApiForbiddenException(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
     }
+    
 }

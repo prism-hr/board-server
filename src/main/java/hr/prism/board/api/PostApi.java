@@ -36,10 +36,12 @@ public class PostApi {
         return postMapper.create(ImmutableSet.of("roles")).apply(post);
     }
     
+    // FIXME: User might be member of more than one board, default behaviour is to get ALL posts they can see
+    // FIXME: When we want to get posts user can see / board we need to apply a filter
     @Restriction(scope = Scope.POST)
     @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPosts(@PathVariable Long boardId) {
-        return postService.findByBoard(boardId).stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
+        return postService.findAllByUserOrderByUpdatedTimestamp().stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.POST)
@@ -54,22 +56,23 @@ public class PostApi {
         postService.executeAction(id, Action.EDIT, postDTO);
     }
     
-    @Restriction(scope = Scope.BOARD, actions = Action.ACCEPT)
+    // TODO: I am not sure about this, it would be clearer if EDIT and ACCEPT were separate calls
+    @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.ACCEPT})
     @RequestMapping(value = "/posts/{id}/accept", method = RequestMethod.PUT)
-    public void acceptPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
-        postService.executeAction(id, Action.ACCEPT, postDTO);
+    public List<Action> acceptPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+        return postService.executeAction(id, Action.ACCEPT, postDTO);
     }
     
-    @Restriction(scope = Scope.BOARD, actions = Action.SUSPEND)
+    @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.SUSPEND})
     @RequestMapping(value = "/posts/{id}/suspend", method = RequestMethod.PUT)
-    public void suspendPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
-        postService.executeAction(id, Action.SUSPEND, postDTO);
+    public List<Action> suspendPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+        return postService.executeAction(id, Action.SUSPEND, postDTO);
     }
     
-    @Restriction(scope = Scope.BOARD, actions = Action.REJECT)
+    @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.REJECT})
     @RequestMapping(value = "/posts/{id}/reject", method = RequestMethod.PUT)
-    public void rejectPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
-        postService.executeAction(id, Action.REJECT, postDTO);
+    public List<Action> rejectPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+        return postService.executeAction(id, Action.REJECT, postDTO);
     }
     
     @ExceptionHandler(ApiException.class)

@@ -15,9 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
@@ -56,9 +54,15 @@ public class PostService {
     public Post findOne(Long id) {
         return postRepository.findOne(id);
     }
-
-    public List<Post> findByBoard(Long boardId) {
-        return postRepository.findByBoard(boardId);
+    
+    public List<Post> findAllByUserOrderByUpdatedTimestamp() {
+        User user = userService.getCurrentUserSecured();
+        Collection<Long> postIds = user.getResourceActions().getIds();
+        if (postIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        return postRepository.findAllByUserByOrderByUpdatedTimestamp(postIds);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
@@ -86,12 +90,13 @@ public class PostService {
         userRoleService.createUserRole(post, user, Role.ADMINISTRATOR);
         return post;
     }
-
-    public void executeAction(Long postId, Action action, PostDTO postDTO) {
+    
+    public List<Action> executeAction(Long postId, Action action, PostDTO postDTO) {
         Post post = postRepository.findOne(postId);
         User user = userService.getCurrentUserSecured();
-        actionService.executeAction(post, user, action);
+        List<Action> actions = actionService.executeAction(post, user, action);
         updatePost(postId, postDTO);
+        return actions;
     }
 
     private void updateSimpleFields(Post post, PostDTO postDTO, Board board, Department department) {
@@ -131,4 +136,5 @@ public class PostService {
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
         }
     }
+    
 }
