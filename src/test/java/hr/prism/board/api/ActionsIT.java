@@ -40,7 +40,7 @@ public class ActionsIT extends AbstractIT {
     
     
     @Test
-    public void shouldDepartmentUserBeAbleToApprovePost() {
+    public void shouldDepartmentUserBeAbleToAcceptPost() {
         BoardRepresentation sampleBoard = postSampleBoard("department@poczta.fm");
         PostRepresentation samplePost = postSamplePost(sampleBoard.getId(), "poster@poczta.fm");
         
@@ -48,7 +48,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.acceptPost(samplePost.getId(), Action.ACCEPT, createSamplePost().setDescription("Corrected desc"));
+            postApi.acceptPost(samplePost.getId(), createSamplePost().setDescription("Corrected desc"));
             return null;
         });
         
@@ -71,7 +71,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.acceptPost(samplePost.getId(), Action.REJECT, createSamplePost());
+            postApi.rejectPost(samplePost.getId(), createSamplePost());
             return null;
         });
         
@@ -93,7 +93,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.acceptPost(samplePost.getId(), Action.SUSPEND, createSamplePost());
+            postApi.suspendPost(samplePost.getId(), createSamplePost());
             return null;
         });
         
@@ -102,7 +102,7 @@ public class ActionsIT extends AbstractIT {
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT));
             assertEquals(State.DRAFT, postR.getState());
-            postApi.acceptPost(samplePost.getId(), Action.EDIT, createSamplePost().setName("Corrected name"));
+            postApi.updatePost(samplePost.getId(), createSamplePost().setName("Corrected name"));
             return null;
         });
         
