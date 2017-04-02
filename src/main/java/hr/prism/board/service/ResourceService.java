@@ -8,6 +8,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,9 +61,9 @@ public class ResourceService {
             commitResourceRelation(resource2, resource2);
             return;
         }
-        
-        throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. Arguments passed where: " +
-            Joiner.on(", ").join(resource1, resource2));
+    
+        throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. " +
+            "Arguments passed where: " + Joiner.on(", ").join(resource1, resource2));
     }
     
     public void updateCategories(Resource resource, List<String> categories, CategoryType type) {
@@ -140,20 +141,16 @@ public class ResourceService {
                 rowState = State.valueOf(column4.toString());
             }
     
-            // Make sure we use the mapping that provides the most direct state transition
+            // Use the mapping that provides the most direct state transition, this can vary by role
             ResourceActionKey rowKey = new ResourceActionKey().setId(rowId).setAction(rowAction).setScope(rowScope);
             ResourceActions.ResourceAction rowValue = rowIndex.get(rowKey);
-            if (rowValue == null || rowState.compareTo(rowValue.getState()) > 0) {
+            if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
                 rowIndex.put(rowKey, new ResourceActions.ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
             }
         }
-    
-        if (rowIndex.isEmpty()) {
-            return null;
-        }
         
         ResourceActions resourceActions = new ResourceActions();
-        rowIndex.keySet().stream().forEach(key -> resourceActions.putAction(key.getId(), rowIndex.get(key)));
+        rowIndex.keySet().forEach(key -> resourceActions.putAction(key.getId(), rowIndex.get(key)));
         return resourceActions;
     }
     

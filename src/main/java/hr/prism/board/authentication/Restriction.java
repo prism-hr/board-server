@@ -1,7 +1,7 @@
 package hr.prism.board.authentication;
 
-import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
+import hr.prism.board.enums.Action;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -14,6 +14,6 @@ public @interface Restriction {
     
     Scope scope();
     
-    Role[] roles();
+    Action[] actions() default {};
     
 }

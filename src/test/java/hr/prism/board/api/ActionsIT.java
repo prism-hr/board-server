@@ -48,7 +48,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.executeAction(samplePost.getId(), Action.ACCEPT, createSamplePost().setDescription("Corrected desc"));
+            postApi.acceptPost(samplePost.getId(), Action.ACCEPT, createSamplePost().setDescription("Corrected desc"));
             return null;
         });
         
@@ -71,7 +71,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.executeAction(samplePost.getId(), Action.REJECT, createSamplePost());
+            postApi.acceptPost(samplePost.getId(), Action.REJECT, createSamplePost());
             return null;
         });
         
@@ -93,7 +93,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.executeAction(samplePost.getId(), Action.SUSPEND, createSamplePost());
+            postApi.acceptPost(samplePost.getId(), Action.SUSPEND, createSamplePost());
             return null;
         });
         
@@ -102,7 +102,7 @@ public class ActionsIT extends AbstractIT {
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT));
             assertEquals(State.DRAFT, postR.getState());
-            postApi.executeAction(samplePost.getId(), Action.EDIT, createSamplePost().setName("Corrected name"));
+            postApi.acceptPost(samplePost.getId(), Action.EDIT, createSamplePost().setName("Corrected name"));
             return null;
         });
         

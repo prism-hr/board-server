@@ -2,7 +2,6 @@ package hr.prism.board.authentication;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceActions;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
@@ -37,13 +36,7 @@ public class RestrictionProcessor {
         User user = userService.getCurrentUserSecured();
         Annotation[][] parameterAnnotations = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
-            Scope scope = restriction.scope();
-            ResourceActions resourceActions = resourceService.getResourceActions(scope, user.getId());
-            if (resourceActions == null) {
-                throw new ApiForbiddenException("User cannot view any " + scope.name().toLowerCase() + "s");
-            }
-    
-            user.setResourceActions(resourceActions);
+            user.setResourceActions(resourceService.getResourceActions(restriction.scope(), user.getId()));
             return;
         }
         
@@ -82,7 +75,7 @@ public class RestrictionProcessor {
     
                 // TODO: specific action case
                 ResourceActions resourceActions = resourceService.getResourceActions(resource.getId(), user.getId());
-                if (resourceActions == null) {
+                if (resourceActions.isEmpty()) {
                     throw new ApiForbiddenException("User " + user.toString() + " does cannot perform any actions for: " + resource.toString());
                 }
     

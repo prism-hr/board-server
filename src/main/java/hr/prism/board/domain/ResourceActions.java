@@ -10,12 +10,20 @@ public class ResourceActions {
     
     private HashMultimap<Long, ResourceAction> resourceActions = HashMultimap.create();
     
-    public void putAction(Long id, ResourceAction action) {
-        resourceActions.put(id, action);
+    public Collection<Long> getIds() {
+        return resourceActions.keySet();
     }
     
     public Collection<ResourceAction> getActions(Long id) {
         return resourceActions.get(id);
+    }
+    
+    public void putAction(Long id, ResourceAction action) {
+        resourceActions.put(id, action);
+    }
+    
+    public boolean isEmpty() {
+        return resourceActions.isEmpty();
     }
     
     public static class ResourceAction {
