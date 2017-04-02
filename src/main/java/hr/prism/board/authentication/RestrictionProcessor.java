@@ -3,6 +3,7 @@ package hr.prism.board.authentication;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceActions;
 import hr.prism.board.domain.User;
+import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
@@ -18,8 +19,8 @@ import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Aspect
 @Component
@@ -36,6 +37,7 @@ public class RestrictionProcessor {
         User user = userService.getCurrentUserSecured();
         Annotation[][] parameterAnnotations = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
+            // TODO: will need to support filtering, ordering, paging
             user.setResourceActions(resourceService.getResourceActions(restriction.scope(), user.getId()));
             return;
         }
@@ -73,10 +75,22 @@ public class RestrictionProcessor {
                     throw new IllegalStateException("Could not find " + restriction.scope().name().toLowerCase());
                 }
     
-                // TODO: specific action case
-                ResourceActions resourceActions = resourceService.getResourceActions(resource.getId(), user.getId());
+                Long resourceId = resource.getId();
+                List<Action> actions = Arrays.asList(restriction.actions());
+                ResourceActions resourceActions = resourceService.getResourceActions(resourceId, user.getId());
                 if (resourceActions.isEmpty()) {
-                    throw new ApiForbiddenException("User " + user.toString() + " does cannot perform any actions for: " + resource.toString());
+                    throw new ApiForbiddenException("User " + user.toString() + " cannot perform any actions for: " + resource.toString());
+                }
+    
+                if (actions.isEmpty()) {
+                    user.setResourceActions(resourceActions);
+                    return;
+                }
+    
+                List<Action> permittedActions = resourceActions.getActions(resourceId).stream().map(ResourceActions.ResourceAction::getAction).collect(Collectors.toList());
+                if (Collections.disjoint(permittedActions, actions)) {
+                    throw new ApiForbiddenException("User " + user.toString() + " cannot perform any of the actions: " +
+                        actions.stream().map(action -> action.name().toLowerCase()).collect(Collectors.joining(", ")) + " for: " + resource.toString());
                 }
     
                 user.setResourceActions(resourceActions);
