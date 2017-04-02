@@ -37,7 +37,7 @@ public class PostApi {
     }
     
     // FIXME: User might be member of more than one board, default behaviour is to get ALL posts they can see
-    // FIXME: When we want to get posts user can see / board we need to apply a filter
+    // FIXME: When we want to get posts user can see / board we need to apply a filter of boardId
     @Restriction(scope = Scope.POST)
     @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPosts(@PathVariable Long boardId) {
