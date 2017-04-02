@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,9 +15,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class ActionService {
-    
-    @PersistenceContext
-    private EntityManager entityManager;
     
     @Inject
     private ResourceService resourceService;
