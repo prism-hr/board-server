@@ -25,7 +25,13 @@ public class ActionService {
     private ResourceService resourceService;
     
     public List<Action> getActions(Resource resource, User user) {
-        return user.getResourceActions().getActions(resource.getId()).stream().map(ResourceActions.ResourceAction::getAction).sorted().collect(Collectors.toList());
+        Long resourceId = resource.getId();
+        if (user.getResourceActions() == null) {
+            // Lazily set the resource actions if not set somewhere else in the call chain
+            user.setResourceActions(resourceService.getResourceActions(resourceId, user.getId()));
+        }
+    
+        return user.getResourceActions().getActions(resourceId).stream().map(ResourceActions.ResourceAction::getAction).sorted().collect(Collectors.toList());
     }
     
     public List<Action> executeAction(Resource resource, User user, Action action) {
