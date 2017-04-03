@@ -29,7 +29,7 @@ public class User extends BoardEntity {
     private Set<UserRole> userRoles = new HashSet<>();
     
     @Transient
-    private HashMultimap<Long, ResourceAction> resourceActions;
+    private HashMultimap<Resource, ResourceAction> resourceActions;
     
     public String getGivenName() {
         return givenName;
@@ -67,18 +67,17 @@ public class User extends BoardEntity {
         return userRoles;
     }
     
-    public HashMultimap<Long, ResourceAction> getResourceActions() {
+    public HashMultimap<Resource, ResourceAction> getResourceActions() {
         return resourceActions;
     }
     
-    public void setResourceActions(HashMultimap<Long, ResourceAction> resourceActions) {
+    public void setResourceActions(HashMultimap<Resource, ResourceAction> resourceActions) {
         if (this.resourceActions == null) {
             this.resourceActions = resourceActions;
         } else {
-            resourceActions.keySet().forEach(resourceId -> {
-                // Without removeAll, we can end up with inconsistent state
-                this.resourceActions.removeAll(resourceId);
-                this.resourceActions.putAll(resourceId, resourceActions.get(resourceId));
+            resourceActions.keySet().forEach(resource -> {
+                this.resourceActions.removeAll(resource);
+                this.resourceActions.putAll(resource, resourceActions.get(resource));
             });
         }
     }

@@ -55,6 +55,14 @@ public class BoardService {
         return boardRepository.findByHandle(handle);
     }
     
+    public List<Board> findByIdIn(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        return boardRepository.findByIdIn(ids);
+    }
+    
     public Board findByPost(Post post) {
         return boardRepository.findByPost(post);
     }

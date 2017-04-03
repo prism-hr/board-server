@@ -18,6 +18,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,6 +32,15 @@ public class ResourceService {
     
     @Inject
     private CategoryRepository categoryRepository;
+    
+    @Inject
+    private DepartmentService departmentService;
+    
+    @Inject
+    private BoardService boardService;
+    
+    @Inject
+    private PostService postService;
     
     @PersistenceContext
     private EntityManager entityManager;
@@ -105,15 +115,15 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
-    public HashMultimap<Long, ResourceAction> getResourceActions(Long id, Long userId) {
+    public HashMultimap<Resource, ResourceAction> getResourceActions(Long id, Long userId) {
         return getResourceActions(null, id, userId);
     }
     
-    public HashMultimap<Long, ResourceAction> getResourceActions(Scope scope, Long userId) {
+    public HashMultimap<Resource, ResourceAction> getResourceActions(Scope scope, Long userId) {
         return getResourceActions(scope, null, userId);
     }
     
-    private HashMultimap<Long, ResourceAction> getResourceActions(Scope scope, Long id, Long userId) {
+    private HashMultimap<Resource, ResourceAction> getResourceActions(Scope scope, Long id, Long userId) {
         entityManager.flush();
         List<Object[]> permissions = null;
         if (scope == null) {
@@ -126,7 +136,7 @@ public class ResourceService {
             throw new IllegalStateException("Invalid request - specify resource scope or id");
         }
         
-        Map<ResourceActionKey, ResourceAction> rowIndex = new HashMap<>();
+        Map<List<Object>, ResourceAction> rowIndex = new HashMap<>();
         for (Object[] row : permissions) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
@@ -144,15 +154,37 @@ public class ResourceService {
             }
     
             // Use the mapping that provides the most expedient state transition, this can vary by role
-            ResourceActionKey rowKey = new ResourceActionKey().setId(rowId).setAction(rowAction).setScope(rowScope);
+            List<Object> rowKey = Arrays.asList(rowId, rowAction, rowScope);
             ResourceAction rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
                 rowIndex.put(rowKey, new ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
             }
         }
         
-        HashMultimap<Long, ResourceAction> resourceActions = HashMultimap.create();
-        rowIndex.keySet().forEach(key -> resourceActions.put(key.getId(), rowIndex.get(key)));
+        if (rowIndex.isEmpty()) {
+            return HashMultimap.create();
+        }
+        
+        Map<Long, Resource> resources = null;
+        List<Long> ids = rowIndex.keySet().stream().map(key -> (Long) key.get(0)).collect(Collectors.toList());
+        switch (scope) {
+            case DEPARTMENT:
+                resources = departmentService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
+                break;
+            case BOARD:
+                resources = boardService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
+                break;
+            case POST:
+                resources = postService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
+                break;
+        }
+        
+        HashMultimap<Resource, ResourceAction> resourceActions = HashMultimap.create();
+        for (List<Object> key : rowIndex.keySet()) {
+            ResourceAction resourceAction = rowIndex.get(key);
+            resourceActions.put(resources.get(key.get(0)), resourceAction);
+        }
+        
         return resourceActions;
     }
     
@@ -162,58 +194,6 @@ public class ResourceService {
         
         resource1.getChildren().add(resourceRelation);
         resource2.getParents().add(resourceRelation);
-    }
-    
-    private static class ResourceActionKey {
-        
-        private Long id;
-        
-        private Action action;
-        
-        private Scope scope;
-        
-        public Long getId() {
-            return id;
-        }
-        
-        public ResourceActionKey setId(Long id) {
-            this.id = id;
-            return this;
-        }
-        
-        public Action getAction() {
-            return action;
-        }
-        
-        public ResourceActionKey setAction(Action action) {
-            this.action = action;
-            return this;
-        }
-        
-        public Scope getScope() {
-            return scope;
-        }
-        
-        public ResourceActionKey setScope(Scope scope) {
-            this.scope = scope;
-            return this;
-        }
-        
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, action, scope);
-        }
-        
-        @Override
-        public boolean equals(Object object) {
-            if (object == null || getClass() != object.getClass()) {
-                return false;
-            }
-            
-            ResourceActionKey that = (ResourceActionKey) object;
-            return Objects.equals(id, that.getId()) && Objects.equals(action, that.getAction()) && Objects.equals(scope, that.getScope());
-        }
-        
     }
     
 }

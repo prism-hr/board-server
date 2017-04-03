@@ -55,6 +55,14 @@ public class PostService {
         return postRepository.findOne(id);
     }
     
+    public List<Post> findByIdIn(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        return postRepository.findByIdIn(ids);
+    }
+    
     public List<Post> findAllByUserOrderByUpdatedTimestamp() {
         User user = userService.getCurrentUserSecured();
         Collection<Long> postIds = user.getResourceActions().keySet();

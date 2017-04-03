@@ -51,6 +51,14 @@ public class DepartmentService {
         return departmentRepository.findByHandle(handle);
     }
     
+    public List<Department> findByIdIn(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        return departmentRepository.findByIdIn(ids);
+    }
+    
     public Department findByBoard(Board board) {
         return departmentRepository.findByBoard(board);
     }

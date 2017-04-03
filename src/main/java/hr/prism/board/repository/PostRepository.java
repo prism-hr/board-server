@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface PostRepository extends MyRepository<Post, Long> {
     
+    List<Post> findByIdIn(Collection<Long> ids);
+    
     @Query(value =
         "select post " +
             "from Post post " +

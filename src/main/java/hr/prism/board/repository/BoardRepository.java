@@ -12,6 +12,8 @@ import java.util.List;
 public interface BoardRepository extends MyRepository<Board, Long> {
 
     Board findByHandle(String handle);
+    
+    List<Board> findByIdIn(Collection<Long> ids);
 
     @Query(value =
         "select board " +
