@@ -2,9 +2,10 @@ package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
+import hr.prism.board.dto.ResourceFilter;
+import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
@@ -21,17 +22,16 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static hr.prism.board.domain.Resource_.scope;
 
 @Service
 @Transactional
 public class ResourceService {
     
-    private static String[] RESOURCE_ACTIONS = new String[]{
+    private static String[] resourceActionStatements = new String[]{
         "select resource.id, permission.action, " +
             "permission.resource3_scope, permission.resource3_state " +
             "from resource " +
@@ -149,27 +149,26 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
-    public HashMultimap<Resource, ResourceAction> getResourceActions(Long id, Long userId) {
-        return getResourceActions(ImmutableMap.of("resource.scope"), userId);
-    }
-    
-    public HashMultimap<Resource, ResourceAction> getResourceActions(Scope scope, Long userId) {
-        return getResourceActions(scope, null, userId);
-    }
-    
-    private HashMultimap<Resource, ResourceAction> getResourceActions(Object[][] predicates, Long userId) {
+    public HashMultimap<Resource, ResourceAction> getResourceActions(ResourceFilterDTO filter) throws IllegalAccessException {
         entityManager.flush();
+        List<String> filterStatements = new ArrayList<>();
+        Map<String, Object> filterParameters = new HashMap<>();
+        for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
+            Object value = field.get(filter);
+            if (value != null) {
+                ResourceFilter resourceFilter = field.getAnnotation(ResourceFilter.class);
+                if (resourceFilter != null) {
+                    String placeholder = resourceFilter.placeholder();
+                    filterStatements.add(resourceFilter.column() + " = " + placeholder);
+                    filterParameters.put(placeholder, value);
+                }
+            }
+        }
+        
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<String> filterStatements = new ArrayList<>();
-            Map<String, Object> filterParameters = new HashMap<>();
-            for (Object[] predicate : predicates) {
-                filterStatements.add(predicate[0] + " = " + predicate[1]);
-                filterParameters.put((String) predicate[1], predicate[2]);
-            }
-            
             List<Object[]> results = Lists.newArrayList();
-            for (String statement : RESOURCE_ACTIONS) {
+            for (String statement : resourceActionStatements) {
                 Query query = entityManager.createNativeQuery(statement + " WHERE " + Joiner.on(" AND ").join(filterStatements));
                 filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
                 query.getResultList().forEach(row -> results.add((Object[]) row));
@@ -177,10 +176,6 @@ public class ResourceService {
             
             return results;
         });
-        
-        if (rows == null) {
-            throw new IllegalStateException("Invalid request - specify resource scope or id");
-        }
         
         Map<List<Object>, ResourceAction> rowIndex = new HashMap<>();
         for (Object[] row : rows) {
@@ -213,7 +208,7 @@ public class ResourceService {
         
         Map<Long, Resource> resources = null;
         List<Long> ids = rowIndex.keySet().stream().map(key -> (Long) key.get(0)).collect(Collectors.toList());
-        switch (scope) {
+        switch (filter.getScope()) {
             case DEPARTMENT:
                 resources = departmentService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
                 break;
