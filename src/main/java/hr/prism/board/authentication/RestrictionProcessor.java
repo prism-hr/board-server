@@ -1,8 +1,9 @@
 package hr.prism.board.authentication;
 
+import com.google.common.collect.HashMultimap;
 import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceActions;
+import hr.prism.board.domain.ResourceAction;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiForbiddenException;
@@ -84,7 +85,7 @@ public class RestrictionProcessor {
     
                 Long resourceId = resource.getId();
                 List<Action> actions = Arrays.asList(restriction.actions());
-                ResourceActions resourceActions = resourceService.getResourceActions(resourceId, user.getId());
+                HashMultimap<Long, ResourceAction> resourceActions = resourceService.getResourceActions(resourceId, user.getId());
                 if (resourceActions.isEmpty()) {
                     throw new ApiForbiddenException("User " + user.toString() + " cannot perform any actions for: " + resource.toString());
                 }

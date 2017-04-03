@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import com.google.common.collect.HashMultimap;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
@@ -21,18 +22,19 @@ public class ActionService {
     
     public List<Action> getActions(Resource resource, User user) {
         Long resourceId = resource.getId();
-        if (user.getResourceActions() == null) {
+        HashMultimap<Long, ResourceAction> resourceActions = user.getResourceActions();
+        if (resourceActions == null || !resourceActions.containsKey(resourceId)) {
             // Lazily set the resource actions if not set somewhere else in the call chain
             user.setResourceActions(resourceService.getResourceActions(resourceId, user.getId()));
         }
     
-        return user.getResourceActions().getActions(resourceId).stream().map(ResourceActions.ResourceAction::getAction).sorted().collect(Collectors.toList());
+        return user.getResourceActions().get(resourceId).stream().map(ResourceAction::getAction).sorted().collect(Collectors.toList());
     }
     
     public List<Action> executeAction(Resource resource, User user, Action action) {
         Long resourceId = resource.getId();
-        Collection<ResourceActions.ResourceAction> resourceActions = user.getResourceActions().getActions(resource.getId());
-        for (ResourceActions.ResourceAction resourceAction : resourceActions) {
+        Collection<ResourceAction> resourceActions = user.getResourceActions().get(resource.getId());
+        for (ResourceAction resourceAction : resourceActions) {
             if (resourceAction.getAction() == action) {
                 State state = resource.getState();
                 State newState = resourceAction.getState();

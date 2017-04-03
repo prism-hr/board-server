@@ -35,7 +35,7 @@ public class DepartmentService {
     
     public List<Department> findAllByUserOrderByName() {
         User currentUser = userService.getCurrentUserSecured();
-        Collection<Long> departmentIds = currentUser.getResourceActions().getIds();
+        Collection<Long> departmentIds = currentUser.getResourceActions().keySet();
         if (departmentIds.isEmpty()) {
             return Collections.emptyList();
         }

@@ -57,7 +57,7 @@ public class PostService {
     
     public List<Post> findAllByUserOrderByUpdatedTimestamp() {
         User user = userService.getCurrentUserSecured();
-        Collection<Long> postIds = user.getResourceActions().getIds();
+        Collection<Long> postIds = user.getResourceActions().keySet();
         if (postIds.isEmpty()) {
             return Collections.emptyList();
         }

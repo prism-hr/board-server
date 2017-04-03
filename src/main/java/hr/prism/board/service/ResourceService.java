@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
@@ -104,15 +105,15 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
-    public ResourceActions getResourceActions(Long id, Long userId) {
+    public HashMultimap<Long, ResourceAction> getResourceActions(Long id, Long userId) {
         return getResourceActions(null, id, userId);
     }
     
-    public ResourceActions getResourceActions(Scope scope, Long userId) {
+    public HashMultimap<Long, ResourceAction> getResourceActions(Scope scope, Long userId) {
         return getResourceActions(scope, null, userId);
     }
     
-    private ResourceActions getResourceActions(Scope scope, Long id, Long userId) {
+    private HashMultimap<Long, ResourceAction> getResourceActions(Scope scope, Long id, Long userId) {
         entityManager.flush();
         List<Object[]> permissions = null;
         if (scope == null) {
@@ -125,7 +126,7 @@ public class ResourceService {
             throw new IllegalStateException("Invalid request - specify resource scope or id");
         }
         
-        Map<ResourceActionKey, ResourceActions.ResourceAction> rowIndex = new HashMap<>();
+        Map<ResourceActionKey, ResourceAction> rowIndex = new HashMap<>();
         for (Object[] row : permissions) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
@@ -142,16 +143,16 @@ public class ResourceService {
                 rowState = State.valueOf(column4.toString());
             }
     
-            // Use the mapping that provides the most direct state transition, this can vary by role
+            // Use the mapping that provides the most expedient state transition, this can vary by role
             ResourceActionKey rowKey = new ResourceActionKey().setId(rowId).setAction(rowAction).setScope(rowScope);
-            ResourceActions.ResourceAction rowValue = rowIndex.get(rowKey);
+            ResourceAction rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
-                rowIndex.put(rowKey, new ResourceActions.ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
+                rowIndex.put(rowKey, new ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
             }
         }
         
-        ResourceActions resourceActions = new ResourceActions();
-        rowIndex.keySet().forEach(key -> resourceActions.putAction(key.getId(), rowIndex.get(key)));
+        HashMultimap<Long, ResourceAction> resourceActions = HashMultimap.create();
+        rowIndex.keySet().forEach(key -> resourceActions.put(key.getId(), rowIndex.get(key)));
         return resourceActions;
     }
     

@@ -15,16 +15,16 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "permission.resource3_scope, permission.resource3_state " +
             "from resource " +
             "inner join permission " +
-            "  on resource.scope = permission.resource2_scope " +
-            "    and resource.state = permission.resource2_state " +
+            "on resource.scope = permission.resource2_scope " +
+            "and resource.state = permission.resource2_state " +
             "inner join resource_relation " +
-            "  on resource.id = resource_relation.resource2_id " +
+            "on resource.id = resource_relation.resource2_id " +
             "inner join resource as parent " +
-            "  on resource_relation.resource1_id = parent.id " +
-            "    and permission.resource1_scope = parent.scope " +
+            "on resource_relation.resource1_id = parent.id " +
+            "and permission.resource1_scope = parent.scope " +
             "left join user_role " +
-            "  on parent.id = user_role.resource_id " +
-            "    and permission.role = user_role.role ";
+            "on parent.id = user_role.resource_id " +
+            "and permission.role = user_role.role ";
     
     Resource findByHandle(String handle);
     
