@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.RelationWithDepartment;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
@@ -19,7 +20,8 @@ public class Post extends Resource {
     private Location location;
 
     @Column(name = "existing_relation")
-    private String existingRelation;
+    @Enumerated(value = EnumType.STRING)
+    private RelationWithDepartment existingRelation;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "post_category", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
@@ -53,15 +55,14 @@ public class Post extends Resource {
         this.location = location;
     }
 
-    public String getExistingRelation() {
+    public RelationWithDepartment getExistingRelation() {
         return existingRelation;
     }
 
-    public Post setExistingRelation(String existingRelation) {
+    public void setExistingRelation(RelationWithDepartment existingRelation) {
         this.existingRelation = existingRelation;
-        return this;
     }
-    
+
     public Set<ResourceCategory> getPostCategories() {
         return postCategories;
     }

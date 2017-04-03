@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
+import hr.prism.board.enums.RelationWithDepartment;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
@@ -85,7 +86,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("shouldCreatePost Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldCreatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation("Description")
+                .setExistingRelation(RelationWithDepartment.FAMILY)
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldCreatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
@@ -120,7 +121,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("shouldUpdatePost Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldUpdatePost GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation("Description")
+                .setExistingRelation(RelationWithDepartment.FAMILY)
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldUpdatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
@@ -165,7 +166,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("shouldGetPosts Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation("Description")
+                .setExistingRelation(RelationWithDepartment.FAMILY)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
@@ -177,7 +178,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("shouldGetPosts Organization")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation("Description")
+                .setExistingRelation(RelationWithDepartment.FAMILY)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));

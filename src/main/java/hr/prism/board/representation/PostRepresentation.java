@@ -1,5 +1,7 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.enums.RelationWithDepartment;
+
 import java.util.List;
 
 public class PostRepresentation extends AbstractResourceRepresentation {
@@ -10,7 +12,7 @@ public class PostRepresentation extends AbstractResourceRepresentation {
 
     private LocationRepresentation location;
 
-    private String existingRelation;
+    private RelationWithDepartment existingRelation;
 
     private List<String> postCategories;
 
@@ -51,11 +53,11 @@ public class PostRepresentation extends AbstractResourceRepresentation {
         return this;
     }
 
-    public String getExistingRelation() {
+    public RelationWithDepartment getExistingRelation() {
         return existingRelation;
     }
 
-    public PostRepresentation setExistingRelation(String existingRelation) {
+    public PostRepresentation setExistingRelation(RelationWithDepartment existingRelation) {
         this.existingRelation = existingRelation;
         return this;
     }

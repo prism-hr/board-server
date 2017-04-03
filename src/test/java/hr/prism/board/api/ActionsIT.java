@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.RelationWithDepartment;
 import hr.prism.board.enums.State;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.PostRepresentation;
@@ -28,22 +29,22 @@ import static org.junit.Assert.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class ActionsIT extends AbstractIT {
-    
+
     @Inject
     private PostApi postApi;
-    
+
     @Inject
     private DepartmentBoardApi departmentBoardApi;
-    
+
     @Inject
     private UserTestService userTestService;
-    
-    
+
+
     @Test
     public void shouldDepartmentUserBeAbleToApprovePost() {
         BoardRepresentation sampleBoard = postSampleBoard("department@poczta.fm");
         PostRepresentation samplePost = postSamplePost(sampleBoard.getId(), "poster@poczta.fm");
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -51,7 +52,7 @@ public class ActionsIT extends AbstractIT {
             postApi.executeAction(samplePost.getId(), Action.ACCEPT, createSamplePost().setDescription("Corrected desc"));
             return null;
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -61,12 +62,12 @@ public class ActionsIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void shouldDepartmentUserBeAbleToRejectPost() {
         BoardRepresentation sampleBoard = postSampleBoard("department@poczta.fm");
         PostRepresentation samplePost = postSamplePost(sampleBoard.getId(), "poster@poczta.fm");
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -74,7 +75,7 @@ public class ActionsIT extends AbstractIT {
             postApi.executeAction(samplePost.getId(), Action.REJECT, createSamplePost());
             return null;
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -83,12 +84,12 @@ public class ActionsIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void shouldPosterBeAbleToCorrectPost() {
         BoardRepresentation sampleBoard = postSampleBoard("department@poczta.fm");
         PostRepresentation samplePost = postSamplePost(sampleBoard.getId(), "poster@poczta.fm");
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -96,7 +97,7 @@ public class ActionsIT extends AbstractIT {
             postApi.executeAction(samplePost.getId(), Action.SUSPEND, createSamplePost());
             return null;
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -105,7 +106,7 @@ public class ActionsIT extends AbstractIT {
             postApi.executeAction(samplePost.getId(), Action.EDIT, createSamplePost().setName("Corrected name"));
             return null;
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -115,10 +116,10 @@ public class ActionsIT extends AbstractIT {
             return null;
         });
     }
-    
+
     private BoardRepresentation postSampleBoard(String user) {
         userTestService.authenticateAs(user);
-        
+
         return transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("ActionsIT Board")
@@ -133,17 +134,17 @@ public class ActionsIT extends AbstractIT {
             return departmentBoardApi.postBoard(boardDTO);
         });
     }
-    
+
     private PostRepresentation postSamplePost(Long parentBoardId, String user) {
         PostDTO postDTO = createSamplePost();
         userTestService.authenticateAs(user);
         return transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation boardR = departmentBoardApi.getBoard(parentBoardId);
-    
+
             return postApi.postPost(boardR.getId(), postDTO);
         });
     }
-    
+
     private PostDTO createSamplePost() {
         return new PostDTO()
             .setName("Department Post")
@@ -157,7 +158,7 @@ public class ActionsIT extends AbstractIT {
                 .setLongitude(BigDecimal.ONE))
             .setPostCategories(Collections.emptyList())
             .setMemberCategories(Collections.emptyList())
-            .setExistingRelation("Any relation");
+            .setExistingRelation(RelationWithDepartment.FAMILY);
     }
-    
+
 }

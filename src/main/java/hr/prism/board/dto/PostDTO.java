@@ -1,5 +1,6 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.enums.RelationWithDepartment;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -20,7 +21,7 @@ public class PostDTO extends ResourceDTO<PostDTO> {
     @Valid
     private LocationDTO location;
 
-    private String existingRelation;
+    private RelationWithDepartment existingRelation;
 
     private List<String> postCategories;
 
@@ -62,11 +63,11 @@ public class PostDTO extends ResourceDTO<PostDTO> {
         return this;
     }
 
-    public String getExistingRelation() {
+    public RelationWithDepartment getExistingRelation() {
         return existingRelation;
     }
 
-    public PostDTO setExistingRelation(String existingRelation) {
+    public PostDTO setExistingRelation(RelationWithDepartment existingRelation) {
         this.existingRelation = existingRelation;
         return this;
     }
