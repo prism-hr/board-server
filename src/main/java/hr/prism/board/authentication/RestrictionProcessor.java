@@ -85,7 +85,7 @@ public class RestrictionProcessor {
     
                 Long resourceId = resource.getId();
                 List<Action> actions = Arrays.asList(restriction.actions());
-                HashMultimap<Long, ResourceAction> resourceActions = resourceService.getResourceActions(resourceId, user.getId());
+                HashMultimap<Resource, ResourceAction> resourceActions = resourceService.getResourceActions(resourceId, user.getId());
                 if (resourceActions.isEmpty()) {
                     throw new ApiForbiddenException("User " + user.toString() + " cannot perform any actions for: " + resource.toString());
                 }

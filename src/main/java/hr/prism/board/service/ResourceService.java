@@ -2,6 +2,8 @@ package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
@@ -11,18 +13,47 @@ import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static hr.prism.board.domain.Resource_.scope;
+
 @Service
 @Transactional
 public class ResourceService {
+    
+    private static String[] RESOURCE_ACTIONS = new String[]{
+        "select resource.id, permission.action, " +
+            "permission.resource3_scope, permission.resource3_state " +
+            "from resource " +
+            "inner join permission " +
+            "on resource.scope = permission.resource2_scope " +
+            "and resource.state = permission.resource2_state " +
+            "inner join resource_relation " +
+            "on resource.id = resource_relation.resource2_id " +
+            "inner join resource as parent " +
+            "on resource_relation.resource1_id = parent.id " +
+            "and permission.resource1_scope = parent.scope " +
+            "inner join user_role " +
+            "on parent.id = user_role.resource_id " +
+            "and permission.role = user_role.role #" +
+            "where user_role.user_id = :userId",
+        "select resource.id, permission.action, " +
+            "permission.resource3_scope, permission.resource3_state " +
+            "from resource " +
+            "inner join permission " +
+            "on resource.scope = permission.resource2_scope " +
+            "and resource.state = permission.resource2_state " +
+            "where permission.role = 'PUBLIC'"};
     
     @Inject
     private ResourceRepository resourceRepository;
@@ -44,6 +75,9 @@ public class ResourceService {
     
     @PersistenceContext
     private EntityManager entityManager;
+    
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
     
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
@@ -116,28 +150,40 @@ public class ResourceService {
     }
     
     public HashMultimap<Resource, ResourceAction> getResourceActions(Long id, Long userId) {
-        return getResourceActions(null, id, userId);
+        return getResourceActions(ImmutableMap.of("resource.scope"), userId);
     }
     
     public HashMultimap<Resource, ResourceAction> getResourceActions(Scope scope, Long userId) {
         return getResourceActions(scope, null, userId);
     }
     
-    private HashMultimap<Resource, ResourceAction> getResourceActions(Scope scope, Long id, Long userId) {
+    private HashMultimap<Resource, ResourceAction> getResourceActions(Object[][] predicates, Long userId) {
         entityManager.flush();
-        List<Object[]> permissions = null;
-        if (scope == null) {
-            permissions = resourceRepository.findResourceActionsByIdAndUser(id, userId);
-        } else if (id == null) {
-            permissions = resourceRepository.findResourceActionsByScopeAndUser(scope, userId);
-        }
+        TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
+        List<Object[]> rows = transactionTemplate.execute(status -> {
+            List<String> filterStatements = new ArrayList<>();
+            Map<String, Object> filterParameters = new HashMap<>();
+            for (Object[] predicate : predicates) {
+                filterStatements.add(predicate[0] + " = " + predicate[1]);
+                filterParameters.put((String) predicate[1], predicate[2]);
+            }
+            
+            List<Object[]> results = Lists.newArrayList();
+            for (String statement : RESOURCE_ACTIONS) {
+                Query query = entityManager.createNativeQuery(statement + " WHERE " + Joiner.on(" AND ").join(filterStatements));
+                filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+                query.getResultList().forEach(row -> results.add((Object[]) row));
+            }
+            
+            return results;
+        });
         
-        if (permissions == null) {
+        if (rows == null) {
             throw new IllegalStateException("Invalid request - specify resource scope or id");
         }
         
         Map<List<Object>, ResourceAction> rowIndex = new HashMap<>();
-        for (Object[] row : permissions) {
+        for (Object[] row : rows) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
             
@@ -152,7 +198,7 @@ public class ResourceService {
             if (column4 != null) {
                 rowState = State.valueOf(column4.toString());
             }
-    
+            
             // Use the mapping that provides the most expedient state transition, this can vary by role
             List<Object> rowKey = Arrays.asList(rowId, rowAction, rowScope);
             ResourceAction rowValue = rowIndex.get(rowKey);
