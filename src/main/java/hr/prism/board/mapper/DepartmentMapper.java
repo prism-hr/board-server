@@ -1,6 +1,9 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.ActionService;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceCategory;
+import hr.prism.board.domain.User;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.UserService;
@@ -16,25 +19,22 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DepartmentMapper {
-
+    
     @Inject
     private DocumentMapper documentMapper;
-
+    
     @Inject
     private BoardMapper boardMapper;
-
+    
     @Inject
     private BoardService boardService;
-
-    @Inject
-    private UserRoleService userRoleService;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     @Inject
     private UserService userService;
-
+    
     public Function<Department, DepartmentRepresentation> create() {
         return create(new HashSet<>());
     }
@@ -51,7 +51,7 @@ public class DepartmentMapper {
                 .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
                 .setHandle(department.getHandle())
                 .setMemberCategories(department.getCategories().stream().filter(ResourceCategory::isActive).map(ResourceCategory::getName).collect(Collectors.toList()));
-
+    
             if (options.contains("boards")) {
                 departmentRepresentation.setBoards(boardService.findByDepartment(department).stream().map(board -> boardMapper.create().apply(board)).collect(Collectors.toList()));
             }
@@ -59,9 +59,9 @@ public class DepartmentMapper {
             if (options.contains("actions")) {
                 departmentRepresentation.setActions(actionService.getActions(department, user));
             }
-
+    
             return departmentRepresentation;
         };
     }
-
+    
 }

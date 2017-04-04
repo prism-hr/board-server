@@ -3,7 +3,6 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.PostRepresentation;
-import hr.prism.board.service.BoardService;
 import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +25,7 @@ public class PostMapper {
     private DocumentMapper documentMapper;
     
     @Inject
-    private BoardService boardService;
-    
-    @Inject
     private BoardMapper boardMapper;
-    
-    @Inject
-    private UserRoleService userRoleService;
     
     @Inject
     private ActionService actionService;
@@ -47,7 +40,7 @@ public class PostMapper {
     public Function<Post, PostRepresentation> create(Set<String> options) {
         User user = userService.getCurrentUser();
         return (Post post) -> {
-            Board board = boardService.findByPost(post);
+            Board board = (Board) post.getParent();
             List<String> postCategories = post.getPostCategories().stream()
                 .filter(c -> c.getType() == CategoryType.POST).map(ResourceCategory::getName).collect(Collectors.toList());
             List<String> memberCategories = post.getPostCategories().stream()
@@ -70,7 +63,7 @@ public class PostMapper {
                 .setApplyEmail(post.getApplyEmail())
                 .setBoard(boardMapper.create().apply(board));
     
-            if (options.contains("roles")) {
+            if (options.contains("actions")) {
                 postRepresentation.setActions(actionService.getActions(post, user));
             }
     

@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
+import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.enums.State;
@@ -55,10 +56,6 @@ public class BoardService {
         return boardRepository.findByHandle(handle);
     }
     
-    public Board findByPost(Post post) {
-        return boardRepository.findByPost(post);
-    }
-    
     // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
@@ -83,7 +80,10 @@ public class BoardService {
         board = boardRepository.save(board);
         updateBoardSettings(board, settingsDTO, department);
         resourceService.createResourceRelation(department, board);
-        userRoleService.createUserRole(board, userService.getCurrentUserSecured(), Role.ADMINISTRATOR);
+    
+        User currentUser = userService.getCurrentUserSecured();
+        userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
+        currentUser.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(Scope.BOARD).setId(board.getId())));
         return board;
     }
     

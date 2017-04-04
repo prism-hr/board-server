@@ -2,7 +2,6 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,22 +15,16 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BoardMapper {
-
+    
     @Inject
     private DepartmentMapper departmentMapper;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private UserRoleService userRoleService;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     @Inject
     private UserService userService;
-
+    
     public Function<Board, BoardRepresentation> create() {
         return create(new HashSet<>());
     }
@@ -51,14 +44,13 @@ public class BoardMapper {
                 .setPostCategories(board.getCategories().stream().filter(ResourceCategory::isActive).map(ResourceCategory::getName).collect(Collectors.toList()))
                 .setDepartment(departmentMapper.create().apply(department))
                 .setDefaultPostVisibility(board.getDefaultPostVisibility());
-
-            if (options.contains("roles")) {
-                boardRepresentation.setRoles(userRoleService.findByResourceAndUser(board, user));
+    
+            if (options.contains("actions")) {
                 boardRepresentation.setActions(actionService.getActions(board, user));
             }
-
+    
             return boardRepresentation;
         };
     }
-
+    
 }

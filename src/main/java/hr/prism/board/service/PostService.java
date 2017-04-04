@@ -4,6 +4,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
+import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
@@ -37,9 +38,6 @@ public class PostService {
     private BoardService boardService;
     
     @Inject
-    private DepartmentService departmentService;
-    
-    @Inject
     private ResourceService resourceService;
     
     @Inject
@@ -67,8 +65,8 @@ public class PostService {
     
     public Post createPost(Long boardId, PostDTO postDTO) {
         Board board = boardService.findOne(boardId);
-        User user = userService.getCurrentUserSecured();
-        boolean canPostWithoutReview = userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR, Role.CONTRIBUTOR);
+        User currentUser = userService.getCurrentUserSecured();
+        boolean canPostWithoutReview = userRoleService.hasUserRole(board, currentUser, Role.ADMINISTRATOR, Role.CONTRIBUTOR);
         if (postDTO.getExistingRelation() == null && !canPostWithoutReview) {
             throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
@@ -85,7 +83,8 @@ public class PostService {
         post = postRepository.save(post);
         
         resourceService.createResourceRelation(board, post);
-        userRoleService.createUserRole(post, user, Role.ADMINISTRATOR);
+        userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
+        currentUser.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(Scope.POST).setId(post.getId())));
         return post;
     }
     
@@ -115,7 +114,7 @@ public class PostService {
     
     private void updatePost(Long postId, PostDTO postDTO) {
         Post post = postRepository.findOne(postId);
-        Board board = boardService.findByPost(post);
+        Board board = (Board) post.getParent();
         updateSimpleFields(post, postDTO, board, (Department) board.getParent());
         
         // update applyDocument
