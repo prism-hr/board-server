@@ -1,10 +1,9 @@
 package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.ResourceFilter;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
@@ -13,12 +12,15 @@ import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import org.apache.commons.lang3.ObjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
+import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class ResourceService {
     
-    private static String[] resourceActionStatements = new String[]{
+    private static final String SECURE_RESOURCE_ACTION =
         "select resource.id, permission.action, " +
             "permission.resource3_scope, permission.resource3_state " +
             "from resource " +
@@ -45,15 +47,18 @@ public class ResourceService {
             "and permission.resource1_scope = parent.scope " +
             "inner join user_role " +
             "on parent.id = user_role.resource_id " +
-            "and permission.role = user_role.role #" +
-            "where user_role.user_id = :userId",
+            "and permission.role = user_role.role";
+    
+    private static final String PUBLIC_RESOURCE_ACTION =
         "select resource.id, permission.action, " +
             "permission.resource3_scope, permission.resource3_state " +
             "from resource " +
             "inner join permission " +
             "on resource.scope = permission.resource2_scope " +
             "and resource.state = permission.resource2_state " +
-            "where permission.role = 'PUBLIC'"};
+            "where permission.role = 'PUBLIC'";
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
     
     @Inject
     private ResourceRepository resourceRepository;
@@ -102,6 +107,7 @@ public class ResourceService {
         int resource2Ordinal = resource2.getScope().ordinal();
         
         if ((resource1Ordinal + resource2Ordinal) == 0 || resource1Ordinal == (resource2Ordinal - 1)) {
+            resource2.setParent(resource1);
             resource1.getParents().stream().map(ResourceRelation::getResource1).forEach(parentResource -> commitResourceRelation(parentResource, resource2));
             commitResourceRelation(resource2, resource2);
             return;
@@ -149,34 +155,46 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
-    public HashMultimap<Resource, ResourceAction> getResourceActions(ResourceFilterDTO filter) throws IllegalAccessException {
+    public Map<Long, Resource> getResources(ResourceFilterDTO filter) {
         entityManager.flush();
-        List<String> filterStatements = new ArrayList<>();
-        Map<String, Object> filterParameters = new HashMap<>();
+        
+        List<String> secureFilterStatements = new ArrayList<>();
+        Map<String, Object> secureFilterParameters = new HashMap<>();
+        List<String> publicFilterStatements = new ArrayList<>();
+        Map<String, Object> publicFilterParameters = new HashMap<>();
+        
+        // Unwrap the filter definitions
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
-            Object value = field.get(filter);
-            if (value != null) {
-                ResourceFilter resourceFilter = field.getAnnotation(ResourceFilter.class);
-                if (resourceFilter != null) {
-                    String placeholder = resourceFilter.placeholder();
-                    filterStatements.add(resourceFilter.column() + " = " + placeholder);
-                    filterParameters.put(placeholder, value);
+            try {
+                Object value = field.get(filter);
+                if (value != null) {
+                    ResourceFilterDTO.ResourceFilter resourceFilter = field.getAnnotation(ResourceFilterDTO.ResourceFilter.class);
+                    if (resourceFilter != null) {
+                        String statement = resourceFilter.statement();
+                        String parameter = resourceFilter.parameter();
+                
+                        secureFilterStatements.add(statement);
+                        secureFilterParameters.put(parameter, value);
+                        if (!resourceFilter.secured()) {
+                            publicFilterStatements.add(statement);
+                            publicFilterParameters.put(parameter, value);
+                        }
+                    }
                 }
+            } catch (IllegalAccessException e) {
+                LOGGER.error("Cannot access filter property: " + field.getName(), e);
             }
         }
         
+        // Retrieve the mappings
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<Object[]> results = Lists.newArrayList();
-            for (String statement : resourceActionStatements) {
-                Query query = entityManager.createNativeQuery(statement + " WHERE " + Joiner.on(" AND ").join(filterStatements));
-                filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-                query.getResultList().forEach(row -> results.add((Object[]) row));
-            }
-            
+            List<Object[]> results = getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
+            results.addAll(getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters));
             return results;
         });
         
+        // Remove duplicate mappings
         Map<List<Object>, ResourceAction> rowIndex = new HashMap<>();
         for (Object[] row : rows) {
             Long rowId = Long.parseLong(row[0].toString());
@@ -193,8 +211,8 @@ public class ResourceService {
             if (column4 != null) {
                 rowState = State.valueOf(column4.toString());
             }
-            
-            // Use the mapping that provides the most expedient state transition, this can vary by role
+    
+            // Find the mapping that provides the most direct state transition, varies by role
             List<Object> rowKey = Arrays.asList(rowId, rowAction, rowScope);
             ResourceAction rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
@@ -203,30 +221,41 @@ public class ResourceService {
         }
         
         if (rowIndex.isEmpty()) {
-            return HashMultimap.create();
+            return new LinkedHashMap<>();
         }
         
-        Map<Long, Resource> resources = null;
-        List<Long> ids = rowIndex.keySet().stream().map(key -> (Long) key.get(0)).collect(Collectors.toList());
-        switch (filter.getScope()) {
-            case DEPARTMENT:
-                resources = departmentService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
-                break;
-            case BOARD:
-                resources = boardService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
-                break;
-            case POST:
-                resources = postService.findByIdIn(ids).stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
-                break;
+        // Squash the mappings
+        LinkedHashMultimap<Long, ResourceAction> resourceActionIndex = LinkedHashMultimap.create();
+        rowIndex.keySet().forEach(key -> resourceActionIndex.put((Long) key.get(0), rowIndex.get(key)));
+        
+        Scope scope = filter.getScope();
+        Class<? extends Resource> resourceClass = scope.resourceClass;
+        EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
+        
+        // Get the resource data
+        Map<Long, Resource> resourceIndex = new HashMap<>();
+        transactionTemplate.execute(status -> {
+            entityManager.createQuery(
+                "select resource " +
+                    "from " + resourceClass.getSimpleName() + " resource " +
+                    "where resource.id in (:ids)", resourceClass)
+                .setParameter("ids", resourceActionIndex.keySet())
+                .setHint("javax.persistence.loadgraph", entityGraph)
+                .getResultList().stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
+            return null;
+        });
+        
+        // Merge the output
+        LinkedHashMap<Long, Resource> resources = new LinkedHashMap<>();
+        for (Long key : resourceIndex.keySet()) {
+            Resource resource = resourceIndex.get(key);
+            TreeSet<ResourceAction> resourceActions = new TreeSet<>();
+            resourceActions.addAll(resourceActionIndex.get(key));
+            resource.setResourceActions(resourceActions);
+            resources.put(key, resource);
         }
         
-        HashMultimap<Resource, ResourceAction> resourceActions = HashMultimap.create();
-        for (List<Object> key : rowIndex.keySet()) {
-            ResourceAction resourceAction = rowIndex.get(key);
-            resourceActions.put(resources.get(key.get(0)), resourceAction);
-        }
-        
-        return resourceActions;
+        return resources;
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {
@@ -235,6 +264,14 @@ public class ResourceService {
         
         resource1.getChildren().add(resourceRelation);
         resource2.getParents().add(resourceRelation);
+    }
+    
+    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
+        List<Object[]> results = Lists.newArrayList();
+        Query query = entityManager.createNativeQuery(statement + " WHERE " + Joiner.on(" AND ").join(filterStatements));
+        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+        query.getResultList().forEach(row -> results.add((Object[]) row));
+        return results;
     }
     
 }

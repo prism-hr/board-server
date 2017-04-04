@@ -39,7 +39,7 @@ public class BoardService {
     
     public List<Board> findAllByUserOrderByName() {
         User user = userService.getCurrentUserSecured();
-        Collection<Long> boardIds = user.getResourceActions().keySet();
+        Collection<Long> boardIds = user.getResources().keySet();
         if (boardIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -53,14 +53,6 @@ public class BoardService {
     
     public Board findByHandle(String handle) {
         return boardRepository.findByHandle(handle);
-    }
-    
-    public List<Board> findByIdIn(Collection<Long> ids) {
-        if (ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        return boardRepository.findByIdIn(ids);
     }
     
     public Board findByPost(Post post) {

@@ -2,16 +2,33 @@ package hr.prism.board.dto;
 
 import hr.prism.board.domain.Scope;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 public class ResourceFilterDTO {
     
-    @ResourceFilter(column = "resource.scope", placeholder = ":scope")
+    @ResourceFilter(
+        parameter = ":scope",
+        statement = "resource.scope = :scope")
     private Scope scope;
     
-    @ResourceFilter(column = "resource.id", placeholder = ":id")
+    @ResourceFilter(
+        parameter = ":id",
+        statement = "resource.id = :id")
     private Long id;
     
-    @ResourceFilter(column = "parent.id", placeholder = ":parentId")
-    private Long parentId;
+    @ResourceFilter(
+        parameter = ":userId",
+        statement = "user_role.user_id = :userId",
+        secured = true)
+    private Long userId;
+    
+    @ResourceFilter(
+        parameter = ":boardId",
+        statement = "resource.id in (select resource2_id from resource_relation where resource1_id = :boardId)")
+    private Long boardId;
     
     public Scope getScope() {
         return scope;
@@ -31,13 +48,34 @@ public class ResourceFilterDTO {
         return this;
     }
     
-    public Long getParentId() {
-        return parentId;
+    public Long getUserId() {
+        return userId;
     }
     
-    public ResourceFilterDTO setParentId(Long parentId) {
-        this.parentId = parentId;
+    public ResourceFilterDTO setUserId(Long userId) {
+        this.userId = userId;
         return this;
+    }
+    
+    public Long getBoardId() {
+        return boardId;
+    }
+    
+    public ResourceFilterDTO setBoardId(Long boardId) {
+        this.boardId = boardId;
+        return this;
+    }
+    
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface ResourceFilter {
+        
+        String parameter();
+        
+        String statement();
+        
+        boolean secured() default false;
+        
     }
     
 }

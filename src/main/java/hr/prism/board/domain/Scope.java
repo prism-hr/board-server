@@ -1,15 +1,18 @@
 package hr.prism.board.domain;
 
 public enum Scope {
-
-    DEPARTMENT(Value.DEPARTMENT),
-    BOARD(Value.BOARD),
-    POST(Value.POST);
+    
+    DEPARTMENT(Value.DEPARTMENT, Department.class),
+    BOARD(Value.BOARD, Board.class),
+    POST(Value.POST, Post.class);
 
     public String value;
-
-    Scope(String value) {
+    
+    public Class<? extends Resource> resourceClass;
+    
+    Scope(String value, Class<? extends Resource> resourceClass) {
         this.value = value;
+        this.resourceClass = resourceClass;
     }
 
     public static class Value {

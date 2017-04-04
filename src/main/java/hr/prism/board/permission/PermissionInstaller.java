@@ -22,7 +22,7 @@ import static hr.prism.board.enums.State.*;
 @Transactional
 public class PermissionInstaller {
     
-    private static final Logger logger = LoggerFactory.getLogger(PermissionInstaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionInstaller.class);
     
     @PersistenceContext
     private EntityManager entityManager;
@@ -109,10 +109,10 @@ public class PermissionInstaller {
         
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         transactionTemplate.execute(transactionStatus -> {
-            logger.info("Deleting old permission definitions");
+            LOGGER.info("Deleting old permission definitions");
             entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
-            
-            logger.info("Inserting new permission definitions");
+    
+            LOGGER.info("Inserting new permission definitions");
             entityManager.createNativeQuery("INSERT INTO permission(resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state) " +
                 "VALUES" + permissions.toString()).executeUpdate();
             

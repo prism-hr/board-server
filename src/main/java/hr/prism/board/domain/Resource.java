@@ -6,12 +6,17 @@ import hr.prism.board.enums.State;
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "resource")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "scope", discriminatorType = DiscriminatorType.STRING)
 public class Resource extends BoardEntity {
+    
+    @ManyToOne
+    @JoinColumn(name = "parent_id", nullable = false)
+    private Resource parent;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "scope", nullable = false, insertable = false, updatable = false)
@@ -49,11 +54,23 @@ public class Resource extends BoardEntity {
 
     @OneToMany(mappedBy = "resource2")
     private Set<ResourceRelation> parents = new HashSet<>();
+    
+    @Transient
+    private TreeSet<ResourceAction> resourceActions;
 
     public Scope getScope() {
         return scope;
     }
-
+    
+    public Resource getParent() {
+        return parent;
+    }
+    
+    public Resource setParent(Resource parent) {
+        this.parent = parent;
+        return this;
+    }
+    
     public Resource setScope(Scope scope) {
         this.scope = scope;
         return this;
@@ -128,7 +145,16 @@ public class Resource extends BoardEntity {
     public Set<ResourceRelation> getParents() {
         return parents;
     }
-
+    
+    public TreeSet<ResourceAction> getResourceActions() {
+        return resourceActions;
+    }
+    
+    public Resource setResourceActions(TreeSet<ResourceAction> resourceActions) {
+        this.resourceActions = resourceActions;
+        return this;
+    }
+    
     @Override
     public String toString() {
         if (scope == null) {

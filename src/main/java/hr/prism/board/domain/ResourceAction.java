@@ -2,8 +2,9 @@ package hr.prism.board.domain;
 
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
+import org.apache.commons.lang3.ObjectUtils;
 
-public class ResourceAction {
+public class ResourceAction implements Comparable<ResourceAction> {
     
     private Action action;
     
@@ -36,6 +37,12 @@ public class ResourceAction {
     public ResourceAction setState(State state) {
         this.state = state;
         return this;
+    }
+    
+    @Override
+    public int compareTo(ResourceAction o) {
+        int compare = ObjectUtils.compare(action, o.getAction());
+        return compare == 0 ? ObjectUtils.compare(scope, o.getScope()) : compare;
     }
     
 }

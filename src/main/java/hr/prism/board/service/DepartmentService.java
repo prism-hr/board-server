@@ -35,7 +35,7 @@ public class DepartmentService {
     
     public List<Department> findAllByUserOrderByName() {
         User currentUser = userService.getCurrentUserSecured();
-        Collection<Long> departmentIds = currentUser.getResourceActions().keySet();
+        Collection<Long> departmentIds = currentUser.getResources().keySet();
         if (departmentIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -49,14 +49,6 @@ public class DepartmentService {
     
     public Department findByHandle(String handle) {
         return departmentRepository.findByHandle(handle);
-    }
-    
-    public List<Department> findByIdIn(Collection<Long> ids) {
-        if (ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        return departmentRepository.findByIdIn(ids);
     }
     
     public Department findByBoard(Board board) {

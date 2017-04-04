@@ -1,10 +1,9 @@
 package hr.prism.board.authentication;
 
-import com.google.common.collect.HashMultimap;
 import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceAction;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
@@ -45,8 +44,8 @@ public class RestrictionProcessor {
         User user = userService.getCurrentUserSecured();
         Annotation[][] parameterAnnotations = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
-            // TODO: will need to support filtering, ordering, paging
-            user.setResourceActions(resourceService.getResourceActions(restriction.scope(), user.getId()));
+            // TODO: support filtering, ordering, paging
+            user.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(restriction.scope()).setUserId(user.getId())));
             return;
         }
         
@@ -85,13 +84,13 @@ public class RestrictionProcessor {
     
                 Long resourceId = resource.getId();
                 List<Action> actions = Arrays.asList(restriction.actions());
-                HashMultimap<Resource, ResourceAction> resourceActions = resourceService.getResourceActions(resourceId, user.getId());
-                if (resourceActions.isEmpty()) {
+                Map<Long, Resource> resources = resourceService.getResources(new ResourceFilterDTO().setScope(restriction.scope()).setId(resourceId).setUserId(user.getId()));
+                if (resources.isEmpty()) {
                     throw new ApiForbiddenException("User " + user.toString() + " cannot perform any actions for: " + resource.toString());
                 }
     
                 if (actions.isEmpty()) {
-                    user.setResourceActions(resourceActions);
+                    user.setResources(resources);
                     return;
                 }
     
@@ -101,7 +100,7 @@ public class RestrictionProcessor {
                         actions.stream().map(action -> action.name().toLowerCase()).sorted().collect(Collectors.joining(", ")) + " for: " + resource.toString());
                 }
     
-                user.setResourceActions(resourceActions);
+                user.setResources(resources);
                 return;
             }
         }

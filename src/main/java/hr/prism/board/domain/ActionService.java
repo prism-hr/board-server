@@ -22,18 +22,18 @@ public class ActionService {
     
     public List<Action> getActions(Resource resource, User user) {
         Long resourceId = resource.getId();
-        HashMultimap<Long, ResourceAction> resourceActions = user.getResourceActions();
+        HashMultimap<Long, ResourceAction> resourceActions = user.getResources();
         if (resourceActions == null || !resourceActions.containsKey(resourceId)) {
             // Lazily set the resource actions if not set somewhere else in the call chain
-            user.setResourceActions(resourceService.getResourceActions(resourceId, user.getId()));
+            user.setResources(resourceService.getResources(resourceId, user.getId()));
         }
     
-        return user.getResourceActions().get(resourceId).stream().map(ResourceAction::getAction).sorted().collect(Collectors.toList());
+        return user.getResources().get(resourceId).stream().map(ResourceAction::getAction).sorted().collect(Collectors.toList());
     }
     
     public List<Action> executeAction(Resource resource, User user, Action action) {
         Long resourceId = resource.getId();
-        Collection<ResourceAction> resourceActions = user.getResourceActions().get(resource.getId());
+        Collection<ResourceAction> resourceActions = user.getResources().get(resource.getId());
         for (ResourceAction resourceAction : resourceActions) {
             if (resourceAction.getAction() == action) {
                 State state = resource.getState();
@@ -41,7 +41,7 @@ public class ActionService {
                 if (!(newState == null || state == newState)) {
                     // Update resource actions when we change state
                     resourceService.updateState(resource, newState);
-                    user.setResourceActions(resourceService.getResourceActions(resourceId, user.getId()));
+                    user.setResources(resourceService.getResources(resourceId, user.getId()));
                 }
                 
                 return getActions(resource, user);

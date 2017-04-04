@@ -1,11 +1,11 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -29,7 +29,7 @@ public class User extends BoardEntity {
     private Set<UserRole> userRoles = new HashSet<>();
     
     @Transient
-    private HashMultimap<Resource, ResourceAction> resourceActions;
+    private Map<Long, Resource> resources;
     
     public String getGivenName() {
         return givenName;
@@ -67,19 +67,12 @@ public class User extends BoardEntity {
         return userRoles;
     }
     
-    public HashMultimap<Resource, ResourceAction> getResourceActions() {
-        return resourceActions;
+    public Map<Long, Resource> getResources() {
+        return resources;
     }
     
-    public void setResourceActions(HashMultimap<Resource, ResourceAction> resourceActions) {
-        if (this.resourceActions == null) {
-            this.resourceActions = resourceActions;
-        } else {
-            resourceActions.keySet().forEach(resource -> {
-                this.resourceActions.removeAll(resource);
-                this.resourceActions.putAll(resource, resourceActions.get(resource));
-            });
-        }
+    public void setResources(Map<Long, Resource> resources) {
+        this.resources = resources;
     }
     
     @Override

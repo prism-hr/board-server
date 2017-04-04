@@ -14,8 +14,6 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
     
     Department findByHandle(String handle);
     
-    List<Department> findByIdIn(Collection<Long> ids);
-    
     @Query(value =
         "select department " +
             "from Department department " +
