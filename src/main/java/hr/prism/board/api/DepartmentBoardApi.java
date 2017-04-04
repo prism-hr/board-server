@@ -67,7 +67,7 @@ public class DepartmentBoardApi {
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
     public BoardRepresentation postBoard(@RequestBody @Valid BoardDTO boardDTO) {
         Board board = boardService.createBoard(boardDTO);
-        return boardMapper.create(ImmutableSet.of("roles")).apply(board);
+        return boardMapper.create(ImmutableSet.of("actions")).apply(board);
     }
     
     @Restriction(scope = Scope.BOARD)
@@ -79,13 +79,13 @@ public class DepartmentBoardApi {
     @Restriction(scope = Scope.BOARD)
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable("id") Long id) {
-        return boardMapper.create(ImmutableSet.of("roles")).apply(boardService.findOne(id));
+        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.findOne(id));
     }
     
     @Restriction(scope = Scope.BOARD)
     @RequestMapping(value = "/boards", method = RequestMethod.GET, params = "handle")
     public BoardRepresentation getBoardByHandle(@RequestParam("handle") String handle) {
-        return boardMapper.create(ImmutableSet.of("roles")).apply(boardService.findByHandle(handle));
+        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.findByHandle(handle));
     }
     
     @Restriction(scope = Scope.BOARD, actions = Action.EDIT)

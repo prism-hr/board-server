@@ -10,25 +10,30 @@ import java.lang.annotation.Target;
 public class ResourceFilterDTO {
     
     @ResourceFilter(
-        parameter = ":scope",
+        parameter = "scope",
         statement = "resource.scope = :scope")
     private Scope scope;
     
     @ResourceFilter(
-        parameter = ":id",
+        parameter = "id",
         statement = "resource.id = :id")
     private Long id;
     
     @ResourceFilter(
-        parameter = ":userId",
+        parameter = "handle",
+        statement = "resource.handle = :handle")
+    private String handle;
+    
+    @ResourceFilter(
+        parameter = "userId",
         statement = "user_role.user_id = :userId",
         secured = true)
     private Long userId;
     
     @ResourceFilter(
-        parameter = ":boardId",
-        statement = "resource.id in (select resource2_id from resource_relation where resource1_id = :boardId)")
-    private Long boardId;
+        parameter = "parentId",
+        statement = "resource.parent_id = :parentId")
+    private Long parentId;
     
     public Scope getScope() {
         return scope;
@@ -57,12 +62,21 @@ public class ResourceFilterDTO {
         return this;
     }
     
-    public Long getBoardId() {
-        return boardId;
+    public String getHandle() {
+        return handle;
     }
     
-    public ResourceFilterDTO setBoardId(Long boardId) {
-        this.boardId = boardId;
+    public ResourceFilterDTO setHandle(String handle) {
+        this.handle = handle;
+        return this;
+    }
+    
+    public Long getParentId() {
+        return parentId;
+    }
+    
+    public ResourceFilterDTO setParentId(Long parentId) {
+        this.parentId = parentId;
         return this;
     }
     

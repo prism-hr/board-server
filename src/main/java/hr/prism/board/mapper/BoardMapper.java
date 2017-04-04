@@ -35,12 +35,11 @@ public class BoardMapper {
     public Function<Board, BoardRepresentation> create() {
         return create(new HashSet<>());
     }
-
-    // TODO: refactor, we are using it get department (SQL) for each board in a list
+    
     public Function<Board, BoardRepresentation> create(Set<String> options) {
         User user = userService.getCurrentUser();
         return (Board board) -> {
-            Department department = departmentService.findByBoard(board);
+            Department department = (Department) board.getParent();
             BoardRepresentation boardRepresentation = new BoardRepresentation();
             boardRepresentation
                 .setId(board.getId())
@@ -50,7 +49,7 @@ public class BoardMapper {
                 .setPurpose(board.getDescription())
                 .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
                 .setPostCategories(board.getCategories().stream().filter(ResourceCategory::isActive).map(ResourceCategory::getName).collect(Collectors.toList()))
-                .setDepartment(departmentMapper.create(options).apply(department))
+                .setDepartment(departmentMapper.create().apply(department))
                 .setDefaultPostVisibility(board.getDefaultPostVisibility());
 
             if (options.contains("roles")) {

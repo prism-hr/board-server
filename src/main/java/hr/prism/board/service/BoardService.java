@@ -92,7 +92,7 @@ public class BoardService {
         
         String newName = boardDTO.getName();
         if (!newName.equals(board.getName())) {
-            Department department = departmentService.findByBoard(board);
+            Department department = (Department) board.getParent();
             validateNameUniqueness(newName, department);
         }
         
@@ -102,7 +102,7 @@ public class BoardService {
     
     public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
         Board board = boardRepository.findOne(id);
-        Department department = departmentService.findByBoard(board);
+        Department department = (Department) board.getParent();
         updateBoardSettings(board, boardSettingsDTO, department);
     }
     

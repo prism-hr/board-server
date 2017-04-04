@@ -38,8 +38,7 @@ public class DepartmentMapper {
     public Function<Department, DepartmentRepresentation> create() {
         return create(new HashSet<>());
     }
-
-    // TODO: refactor to make sure we never actually get boards (SQL) for each department
+    
     public Function<Department, DepartmentRepresentation> create(Set<String> options) {
         User user = userService.getCurrentUser();
         return (Department department) -> {
@@ -56,9 +55,8 @@ public class DepartmentMapper {
             if (options.contains("boards")) {
                 departmentRepresentation.setBoards(boardService.findByDepartment(department).stream().map(board -> boardMapper.create().apply(board)).collect(Collectors.toList()));
             }
-
-            if (options.contains("roles")) {
-                departmentRepresentation.setRoles(userRoleService.findByResourceAndUser(department, user));
+    
+            if (options.contains("actions")) {
                 departmentRepresentation.setActions(actionService.getActions(department, user));
             }
 

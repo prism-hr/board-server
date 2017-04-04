@@ -33,21 +33,19 @@ public class PostApi {
     @RequestMapping(value = "/boards/{id}/posts", method = RequestMethod.POST)
     public PostRepresentation postPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         Post post = postService.createPost(id, postDTO);
-        return postMapper.create(ImmutableSet.of("roles")).apply(post);
+        return postMapper.create(ImmutableSet.of("actions")).apply(post);
     }
     
-    // FIXME: User might be member of more than one board, default behaviour is to get ALL posts they can see
-    // FIXME: When we want to get posts user can see / board we need to apply a filter of boardId
     @Restriction(scope = Scope.POST)
-    @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPosts(@PathVariable Long boardId) {
+    @RequestMapping(value = "/boards/{parentId}/posts", method = RequestMethod.GET)
+    public List<PostRepresentation> getPosts(@PathVariable("parentId") Long parentId) {
         return postService.findAllByUserOrderByUpdatedTimestamp().stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
     }
     
     @Restriction(scope = Scope.POST)
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)
     public PostRepresentation getPost(@PathVariable("id") Long id) {
-        return postMapper.create(ImmutableSet.of("roles")).apply(postService.findOne(id));
+        return postMapper.create(ImmutableSet.of("actions")).apply(postService.findOne(id));
     }
     
     @Restriction(scope = Scope.POST, actions = Action.EDIT)
@@ -56,7 +54,6 @@ public class PostApi {
         postService.executeAction(id, Action.EDIT, postDTO);
     }
     
-    // TODO: I am not sure about this, it would be clearer if EDIT and ACCEPT were separate calls
     @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.ACCEPT})
     @RequestMapping(value = "/posts/{id}/accept", method = RequestMethod.PUT)
     public List<Action> acceptPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {

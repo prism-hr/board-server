@@ -73,11 +73,9 @@ public class PostService {
             throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
         
-        Department department = departmentService.findByBoard(board);
-        
         Post post = new Post();
         resourceService.updateState(post, canPostWithoutReview ? State.ACCEPTED : State.DRAFT);
-        updateSimpleFields(post, postDTO, board, department);
+        updateSimpleFields(post, postDTO, board, (Department) board.getParent());
         
         if (postDTO.getApplyDocument() != null) {
             post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
@@ -92,8 +90,8 @@ public class PostService {
     }
     
     public List<Action> executeAction(Long postId, Action action, PostDTO postDTO) {
-        Post post = postRepository.findOne(postId);
         User user = userService.getCurrentUserSecured();
+        Post post = (Post) user.getResources().get(postId);
         List<Action> actions = actionService.executeAction(post, user, action);
         updatePost(postId, postDTO);
         return actions;
@@ -118,9 +116,7 @@ public class PostService {
     private void updatePost(Long postId, PostDTO postDTO) {
         Post post = postRepository.findOne(postId);
         Board board = boardService.findByPost(post);
-        Department department = departmentService.findByBoard(board);
-        
-        updateSimpleFields(post, postDTO, board, department);
+        updateSimpleFields(post, postDTO, board, (Department) board.getParent());
         
         // update applyDocument
         String existingApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);

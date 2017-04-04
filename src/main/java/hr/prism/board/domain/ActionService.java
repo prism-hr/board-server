@@ -1,6 +1,6 @@
 package hr.prism.board.domain;
 
-import com.google.common.collect.HashMultimap;
+import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
@@ -21,19 +21,11 @@ public class ActionService {
     private ResourceService resourceService;
     
     public List<Action> getActions(Resource resource, User user) {
-        Long resourceId = resource.getId();
-        HashMultimap<Long, ResourceAction> resourceActions = user.getResources();
-        if (resourceActions == null || !resourceActions.containsKey(resourceId)) {
-            // Lazily set the resource actions if not set somewhere else in the call chain
-            user.setResources(resourceService.getResources(resourceId, user.getId()));
-        }
-    
-        return user.getResources().get(resourceId).stream().map(ResourceAction::getAction).sorted().collect(Collectors.toList());
+        return user.getResources().get(resource.getId()).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
     public List<Action> executeAction(Resource resource, User user, Action action) {
-        Long resourceId = resource.getId();
-        Collection<ResourceAction> resourceActions = user.getResources().get(resource.getId());
+        Collection<ResourceAction> resourceActions = resource.getResourceActions();
         for (ResourceAction resourceAction : resourceActions) {
             if (resourceAction.getAction() == action) {
                 State state = resource.getState();
@@ -41,7 +33,7 @@ public class ActionService {
                 if (!(newState == null || state == newState)) {
                     // Update resource actions when we change state
                     resourceService.updateState(resource, newState);
-                    user.setResources(resourceService.getResources(resourceId, user.getId()));
+                    user.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(resource.getScope()).setId(resource.getId()).setUserId(user.getId())));
                 }
                 
                 return getActions(resource, user);

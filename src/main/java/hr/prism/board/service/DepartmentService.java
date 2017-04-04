@@ -51,10 +51,6 @@ public class DepartmentService {
         return departmentRepository.findByHandle(handle);
     }
     
-    public Department findByBoard(Board board) {
-        return departmentRepository.findByBoard(board);
-    }
-    
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
         String name = departmentDTO.getName();

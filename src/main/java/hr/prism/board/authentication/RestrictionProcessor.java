@@ -8,11 +8,13 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,8 +22,8 @@ import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,17 +42,15 @@ public class RestrictionProcessor {
     private UserService userService;
     
     @Before("execution(@hr.prism.board.authentication.Restriction * *(..)) && @annotation(restriction)")
-    public void processRestriction(JoinPoint joinPoint, Restriction restriction) {
+    public void processRestriction(JoinPoint joinPoint, Restriction restriction) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         User user = userService.getCurrentUserSecured();
         Annotation[][] parameterAnnotations = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameterAnnotations();
         if (ArrayUtils.isEmpty(parameterAnnotations)) {
-            // TODO: support filtering, ordering, paging
-            user.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(restriction.scope()).setUserId(user.getId())));
-            return;
+            parameterAnnotations = new Annotation[][]{};
         }
-        
+    
         Object[] arguments = joinPoint.getArgs();
-        Map<String, Object> parameters = new HashMap<>();
+        ResourceFilterDTO resourceFilterDTO = new ResourceFilterDTO().setUserId(user.getId());
         if (parameterAnnotations.length == arguments.length) {
             for (int i = 0; i < arguments.length; i++) {
                 Annotation[] parameterAnnotationSet = parameterAnnotations[i];
@@ -61,49 +61,35 @@ public class RestrictionProcessor {
                 Annotation parameterAnnotation = parameterAnnotationSet[0];
                 Class<?> parameterAnnotationClass = parameterAnnotation.annotationType();
                 if (parameterAnnotationClass == PathVariable.class) {
-                    parameters.put(verifyArgumentName(((PathVariable) parameterAnnotation).value()), arguments[i]);
+                    PropertyUtils.setProperty(resourceFilterDTO, verifyArgumentName(((PathVariable) parameterAnnotation).value()), arguments[i]);
                 } else if (parameterAnnotationClass == RequestParam.class) {
-                    parameters.put(verifyArgumentName(((RequestParam) parameterAnnotation).value()), arguments[i]);
+                    PropertyUtils.setProperty(resourceFilterDTO, verifyArgumentName(((RequestParam) parameterAnnotation).value()), arguments[i]);
                 }
             }
-            
-            Resource resource = null;
-            boolean validRequest = false;
-            if (parameters.containsKey("id")) {
-                resource = resourceService.findOne((Long) parameters.get("id"));
-                validRequest = true;
-            } else if (parameters.containsKey("handle")) {
-                resource = resourceService.findByHandle((String) parameters.get("handle"));
-                validRequest = true;
-            }
-            
-            if (validRequest) {
-                if (resource == null) {
-                    throw new IllegalStateException("Could not find " + restriction.scope().name().toLowerCase());
-                }
     
-                Long resourceId = resource.getId();
-                List<Action> actions = Arrays.asList(restriction.actions());
-                Map<Long, Resource> resources = resourceService.getResources(new ResourceFilterDTO().setScope(restriction.scope()).setId(resourceId).setUserId(user.getId()));
-                if (resources.isEmpty()) {
-                    throw new ApiForbiddenException("User " + user.toString() + " cannot perform any actions for: " + resource.toString());
-                }
-    
-                if (actions.isEmpty()) {
-                    user.setResources(resources);
-                    return;
-                }
-    
-                List<Action> permittedActions = actionService.getActions(resource, user);
-                if (!permittedActions.containsAll(actions)) {
-                    throw new ApiForbiddenException("User " + user.toString() + " cannot perform the action(s): " +
-                        actions.stream().map(action -> action.name().toLowerCase()).sorted().collect(Collectors.joining(", ")) + " for: " + resource.toString());
-                }
-    
+            List<Action> actions = Arrays.asList(restriction.actions());
+            Map<Long, Resource> resources = resourceService.getResources(resourceFilterDTO);
+            if (CollectionUtils.isEmpty(actions)) {
                 user.setResources(resources);
                 return;
             }
+    
+            Resource resource = resources.get(resourceFilterDTO.getId());
+            if (resource == null) {
+                throw new ApiForbiddenException("User " + user.toString() + " cannot perform any actions for: " + resource.toString());
+            }
+    
+            List<Action> permittedActions = actionService.getActions(resource, user);
+            if (!permittedActions.containsAll(actions)) {
+                throw new ApiForbiddenException("User " + user.toString() + " cannot perform the action(s): " +
+                    actions.stream().map(action -> action.name().toLowerCase()).sorted().collect(Collectors.joining(", ")) + " for: " + resource.toString());
+            }
+    
+            user.setResources(resources);
+            return;
         }
+    
+        throw new IllegalStateException("Method declaration invalid");
     }
     
     private String verifyArgumentName(String name) {
