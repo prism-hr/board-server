@@ -69,14 +69,14 @@ public class PostService {
         Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.AUGMENT, () -> {
             Post post = new Post();
             updateSimpleFields(post, postDTO, board, (Department) board.getParent());
-        
+    
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
             }
-        
+    
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
             post = postRepository.save(post);
-        
+    
             resourceService.createResourceRelation(board, post);
             userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
             return post;
