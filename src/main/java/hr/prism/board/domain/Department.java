@@ -7,8 +7,11 @@ import javax.persistence.NamedEntityGraph;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.DEPARTMENT)
-@NamedEntityGraph(name = "department.extended",
-    attributeNodes = @NamedAttributeNode(value = "categories"))
+@NamedEntityGraph(
+    name = "department.extended",
+    attributeNodes = {
+        @NamedAttributeNode(value = "categories"),
+        @NamedAttributeNode(value = "documentLogo")})
 public class Department extends Resource {
     
 }

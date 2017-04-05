@@ -69,28 +69,11 @@ public class ResourceService {
     @Inject
     private CategoryRepository categoryRepository;
     
-    @Inject
-    private DepartmentService departmentService;
-    
-    @Inject
-    private BoardService boardService;
-    
-    @Inject
-    private PostService postService;
-    
     @PersistenceContext
     private EntityManager entityManager;
     
     @Inject
     private PlatformTransactionManager platformTransactionManager;
-    
-    public Resource findOne(Long id) {
-        return resourceRepository.findOne(id);
-    }
-    
-    public Resource findByHandle(String handle) {
-        return resourceRepository.findByHandle(handle);
-    }
     
     public void updateHandle(Resource resource, String newHandle) {
         String handle = resource.getHandle();
@@ -129,6 +112,7 @@ public class ResourceService {
                 // category was not in the posted list, make inactive
                 existingResourceCategory.setActive(false);
             }
+    
             existingResourceCategory.setUpdatedTimestamp(LocalDateTime.now());
         }
     
@@ -157,6 +141,11 @@ public class ResourceService {
     
     public Resource getResource(User user, Scope scope, Long id) {
         List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id));
+        return resources.isEmpty() ? null : resources.get(0);
+    }
+    
+    public Resource getResource(User user, Scope scope, String handle) {
+        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle));
         return resources.isEmpty() ? null : resources.get(0);
     }
     

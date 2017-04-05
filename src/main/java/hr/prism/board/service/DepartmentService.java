@@ -41,18 +41,22 @@ public class DepartmentService {
     @Inject
     private ActionService actionService;
     
-    public List<Department> findAllByUserOrderByName() {
+    public List<Department> getDepartments() {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.DEPARTMENT).setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
     
-    public Department findOne(Long id) {
-        return departmentRepository.findOne(id);
+    public Department getDepartment(Long id) {
+        User currentUser = userService.getCurrentUser();
+        Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
+        return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
     
-    public Department findByHandle(String handle) {
-        return departmentRepository.findByHandle(handle);
+    public Department getDepartment(String handle) {
+        User currentUser = userService.getCurrentUser();
+        Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, handle);
+        return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
     
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
@@ -71,9 +75,15 @@ public class DepartmentService {
                 break;
             }
         }
-        
-        if (departmentById == null && departmentByName == null) {
-            Department department = new Department();
+    
+        Department department;
+        User currentUser = userService.getCurrentUserSecured();
+        if (departmentById != null) {
+            department = departmentById;
+        } else if (departmentByName != null) {
+            department = departmentByName;
+        } else {
+            department = new Department();
             resourceService.updateState(department, State.ACCEPTED);
             department.setName(departmentDTO.getName());
             if (departmentDTO.getDocumentLogo() != null) {
@@ -91,41 +101,43 @@ public class DepartmentService {
             department = departmentRepository.save(department);
             resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
             resourceService.createResourceRelation(department, department);
-            userRoleService.createUserRole(department, userService.getCurrentUserSecured(), Role.ADMINISTRATOR);
-            return department;
+            userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
         }
-        
-        return departmentByName == null ? departmentById : departmentByName;
+    
+        return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
     }
     
-    public void updateDepartment(Long departmentId, DepartmentDTO departmentDTO) {
+    public Department updateDepartment(Long departmentId, DepartmentDTO departmentDTO) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
-        actionService.executeAction(department, Action.EDIT, () -> {
+        Department updatedDepartment = (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             String newName = departmentDTO.getName();
             if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {
                 throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
             }
-        
+            
             department.setName(newName);
             String existingLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
             String newLogoId = Optional.ofNullable(departmentDTO.getDocumentLogo()).map(DocumentDTO::getCloudinaryId).orElse(null);
             if (!Objects.equals(existingLogoId, newLogoId)) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
-        
+            
             String newHandle = departmentDTO.getHandle();
             if (!newHandle.equals(department.getHandle())) {
                 if (departmentRepository.findByHandle(newHandle) != null) {
                     throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
                 }
-            
+    
                 resourceService.updateHandle(department, departmentDTO.getHandle());
             }
-        
+            
             List<String> memberCategories = departmentDTO.getMemberCategories();
             resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
+            return department;
         });
+        
+        return updatedDepartment;
     }
     
 }

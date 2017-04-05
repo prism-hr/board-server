@@ -4,14 +4,19 @@ import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.POST)
-@NamedEntityGraph(name = "post.extended",
-    attributeNodes = {@NamedAttributeNode(value = "parent", subgraph = "board"), @NamedAttributeNode(value = "categories")},
-    subgraphs = @NamedSubgraph(name = "board", attributeNodes = @NamedAttributeNode("parent")))
+@NamedEntityGraph(
+    name = "post.extended",
+    attributeNodes = {
+        @NamedAttributeNode(value = "parent", subgraph = "board"),
+        @NamedAttributeNode(value = "location"),
+        @NamedAttributeNode(value = "categories"),
+        @NamedAttributeNode(value = "applyDocument")},
+    subgraphs = @NamedSubgraph(
+        name = "board",
+        attributeNodes = @NamedAttributeNode("parent")))
 public class Post extends Resource {
     
     @Column(name = "organization_name", nullable = false)
@@ -23,10 +28,6 @@ public class Post extends Resource {
     
     @Column(name = "existing_relation")
     private String existingRelation;
-    
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "post_category", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-    private Set<ResourceCategory> postCategories = new HashSet<>();
     
     @URL
     @Column(name = "apply_website")
@@ -60,13 +61,8 @@ public class Post extends Resource {
         return existingRelation;
     }
     
-    public Post setExistingRelation(String existingRelation) {
+    public void setExistingRelation(String existingRelation) {
         this.existingRelation = existingRelation;
-        return this;
-    }
-    
-    public Set<ResourceCategory> getPostCategories() {
-        return postCategories;
     }
     
     public String getApplyWebsite() {

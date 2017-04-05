@@ -3,6 +3,7 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import hr.prism.board.domain.Post;
+import hr.prism.board.domain.ResourceAction;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiException;
@@ -35,12 +36,12 @@ public class PostApi {
     
     @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPosts(@PathVariable Long boardId) {
-        return postService.findAllByUserOrderByUpdatedTimestamp().stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
+        return postService.getPosts().stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)
     public PostRepresentation getPost(@PathVariable Long id) {
-        return postMapper.create(ImmutableSet.of("actions")).apply(postService.findOne(id));
+        return postMapper.create(ImmutableSet.of("actions")).apply(postService.getPost(id));
     }
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.PUT)
@@ -50,17 +51,17 @@ public class PostApi {
     
     @RequestMapping(value = "/posts/{id}/accept", method = RequestMethod.PUT)
     public List<Action> acceptPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
-        return postService.executeAction(id, Action.ACCEPT, postDTO);
+        return postService.executeAction(id, Action.ACCEPT, postDTO).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/posts/{id}/suspend", method = RequestMethod.PUT)
     public List<Action> suspendPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
-        return postService.executeAction(id, Action.SUSPEND, postDTO);
+        return postService.executeAction(id, Action.SUSPEND, postDTO).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/posts/{id}/reject", method = RequestMethod.PUT)
     public List<Action> rejectPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
-        return postService.executeAction(id, Action.REJECT, postDTO);
+        return postService.executeAction(id, Action.REJECT, postDTO).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
     @ExceptionHandler(ApiException.class)

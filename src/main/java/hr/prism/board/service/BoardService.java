@@ -5,9 +5,9 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
-import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
@@ -23,10 +23,13 @@ import java.util.stream.Collectors;
 public class BoardService {
     
     @Inject
-    private DepartmentService departmentService;
+    private BoardRepository boardRepository;
     
     @Inject
-    private BoardRepository boardRepository;
+    private ActionService actionService;
+    
+    @Inject
+    private DepartmentService departmentService;
     
     @Inject
     private ResourceService resourceService;
@@ -37,67 +40,84 @@ public class BoardService {
     @Inject
     private UserService userService;
     
-    public List<Board> findAllByUserOrderByName() {
+    public List<Board> getBoards() {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.BOARD).setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
     
-    public Board findOne(Long id) {
-        return boardRepository.findOne(id);
+    public Board getBoard(Long id) {
+        User currentUser = userService.getCurrentUser();
+        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
+        return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
     }
     
-    public Board findByHandle(String handle) {
-        return boardRepository.findByHandle(handle);
+    public Board getBoard(String handle) {
+        User currentUser = userService.getCurrentUser();
+        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, handle);
+        return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
     }
     
     // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
-        Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-    
-        String name = boardDTO.getName();
-        validateNameUniqueness(name, department);
-    
-        Board board = new Board();
-        resourceService.updateState(board, State.ACCEPTED);
-        board.setName(name);
-        board.setDescription(boardDTO.getPurpose());
-    
-        BoardSettingsDTO settingsDTO = boardDTO.getSettings();
-        if (settingsDTO == null) {
-            settingsDTO = new BoardSettingsDTO();
-        }
-    
-        if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
-            settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
-        }
-    
-        board = boardRepository.save(board);
-        updateBoardSettings(board, settingsDTO, department);
-        resourceService.createResourceRelation(department, board);
-    
         User currentUser = userService.getCurrentUserSecured();
-        userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
-        return (Board) resourceService.getResource(currentUser, Scope.BOARD, board.getId());
+        Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
+        Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.AUGMENT, () -> {
+            String name = boardDTO.getName();
+            validateNameUniqueness(name, department);
+        
+            Board board = new Board();
+            board.setName(name);
+            board.setDescription(boardDTO.getPurpose());
+        
+            BoardSettingsDTO settingsDTO = boardDTO.getSettings();
+            if (settingsDTO == null) {
+                settingsDTO = new BoardSettingsDTO();
+            }
+        
+            if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
+                settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
+            }
+        
+            board = boardRepository.save(board);
+            updateBoardSettings(board, settingsDTO, department);
+            resourceService.createResourceRelation(department, board);
+        
+            userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
+            return board;
+        });
+    
+        return createdBoard;
     }
     
-    public void updateBoard(Long boardId, BoardDTO boardDTO) {
-        Board board = boardRepository.findOne(boardId);
+    public Board updateBoard(Long id, BoardDTO boardDTO) {
+        User currentUser = userService.getCurrentUser();
+        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
+        Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
+            String newName = boardDTO.getName();
+            if (!newName.equals(board.getName())) {
+                Department department = (Department) board.getParent();
+                validateNameUniqueness(newName, department);
+            }
+            
+            board.setName(boardDTO.getName());
+            board.setDescription(boardDTO.getPurpose());
+            return board;
+        });
         
-        String newName = boardDTO.getName();
-        if (!newName.equals(board.getName())) {
+        return updatedBoard;
+    }
+    
+    public Board updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
+        User currentUser = userService.getCurrentUser();
+        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
+        Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
             Department department = (Department) board.getParent();
-            validateNameUniqueness(newName, department);
-        }
+            updateBoardSettings(board, boardSettingsDTO, department);
+            return board;
+        });
         
-        board.setName(boardDTO.getName());
-        board.setDescription(boardDTO.getPurpose());
-    }
-    
-    public void updateBoardSettings(Long id, BoardSettingsDTO boardSettingsDTO) {
-        Board board = boardRepository.findOne(id);
-        Department department = (Department) board.getParent();
-        updateBoardSettings(board, boardSettingsDTO, department);
+        return updatedBoard;
     }
     
     public List<Board> findByDepartment(Department department) {

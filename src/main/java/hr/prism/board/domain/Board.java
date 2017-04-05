@@ -6,8 +6,12 @@ import javax.persistence.*;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.BOARD)
-@NamedEntityGraph(name = "board.extended",
-    attributeNodes = {@NamedAttributeNode(value = "parent"), @NamedAttributeNode(value = "categories")})
+@NamedEntityGraph(
+    name = "board.extended",
+    attributeNodes = {
+        @NamedAttributeNode(value = "parent"),
+        @NamedAttributeNode(value = "categories"),
+        @NamedAttributeNode(value = "documentLogo")})
 public class Board extends Resource {
     
     @Column(name = "default_post_visibility")

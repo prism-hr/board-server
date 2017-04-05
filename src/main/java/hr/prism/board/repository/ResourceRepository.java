@@ -7,8 +7,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ResourceRepository extends MyRepository<Resource, Long> {
     
-    Resource findByHandle(String handle);
-    
     @Modifying
     @Query(value =
         "update resource " +

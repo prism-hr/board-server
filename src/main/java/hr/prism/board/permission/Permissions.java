@@ -120,7 +120,7 @@ public class Permissions extends ArrayList<Permissions.Permit> {
                 } else {
                     valueString = "'" + value.name() + "'";
                 }
-        
+    
                 values.add(valueString);
             }
     

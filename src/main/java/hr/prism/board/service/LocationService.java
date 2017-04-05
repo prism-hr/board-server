@@ -11,10 +11,10 @@ import javax.inject.Inject;
 @Service
 @Transactional
 public class LocationService {
-
+    
     @Inject
     private LocationRepository locationRepository;
-
+    
     public Location getOrCreateLocation(LocationDTO locationDTO) {
         Location foundLocation = locationRepository.findByGoogleId(locationDTO.getGoogleId());
         if (foundLocation != null) {
@@ -28,5 +28,5 @@ public class LocationService {
         location.setLongitude(locationDTO.getLongitude());
         return locationRepository.save(location);
     }
-
+    
 }

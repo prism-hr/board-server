@@ -9,7 +9,6 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.PostRepository;
@@ -17,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,9 +40,6 @@ public class PostService {
     private LocationService locationService;
     
     @Inject
-    private BoardService boardService;
-    
-    @Inject
     private ResourceService resourceService;
     
     @Inject
@@ -53,11 +51,13 @@ public class PostService {
     @Inject
     private ActionService actionService;
     
-    public Post findOne(Long id) {
-        return postRepository.findOne(id);
+    public Post getPost(Long id) {
+        User currentUser = userService.getCurrentUser();
+        Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
+        return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
     
-    public List<Post> findAllByUserOrderByUpdatedTimestamp() {
+    public List<Post> getPosts() {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.POST).setOrderStatement("order by resource.updatedTimestamp desc"))
             .stream().map(resource -> (Post) resource).collect(Collectors.toList());
@@ -66,15 +66,8 @@ public class PostService {
     public Post createPost(Long boardId, PostDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
-        Optional<ResourceAction> augmentActionOptional = board.getResourceActions().stream().filter(resourceAction -> resourceAction.getAction() == Action.AUGMENT).findFirst();
-        if (augmentActionOptional.isPresent()) {
-            State state = augmentActionOptional.get().getState();
-            if (state == State.DRAFT && postDTO.getExistingRelation() == null) {
-                throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
-            }
-        
+        Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.AUGMENT, () -> {
             Post post = new Post();
-            resourceService.updateState(post, state);
             updateSimpleFields(post, postDTO, board, (Department) board.getParent());
         
             if (postDTO.getApplyDocument() != null) {
@@ -86,18 +79,29 @@ public class PostService {
         
             resourceService.createResourceRelation(board, post);
             userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
-            return (Post) resourceService.getResource(currentUser, Scope.POST, post.getId());
+            return post;
+        });
+    
+        if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
+            throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
     
-        throw new ApiForbiddenException("User cannot augment " + board.toString());
+        return createdPost;
     }
     
-    public List<Action> executeAction(Long postId, Action action, PostDTO postDTO) {
+    public Post executeAction(Long id, Action action, PostDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
-        Post post = (Post) resourceService.getResource(currentUser, Scope.POST, postId);
-        List<Action> actions = actionService.executeAction(post, action);
-        updatePost(postId, postDTO);
-        return actions;
+        Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
+        return (Post) actionService.executeAction(currentUser, post, action, () -> {
+            if (action != Action.EDIT) {
+                actionService.executeAction(currentUser, post, Action.EDIT, () -> {
+                    updatePost(post, postDTO);
+                    return post;
+                });
+            }
+            
+            return post;
+        });
     }
     
     private void updateSimpleFields(Post post, PostDTO postDTO, Board board, Department department) {
@@ -107,17 +111,20 @@ public class PostService {
         post.setExistingRelation(postDTO.getExistingRelation());
         post.setApplyWebsite(postDTO.getApplyWebsite());
         post.setApplyEmail(postDTO.getApplyEmail());
-        
-        // update categories
-        List<ResourceCategory> postCategories = categoryRepository.findByResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
-        List<ResourceCategory> memberCategories = categoryRepository.findByResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories());
-        post.getPostCategories().clear();
-        post.getPostCategories().addAll(postCategories);
-        post.getPostCategories().addAll(memberCategories);
+    
+        categoryRepository.deleteByResource(post);
+        Set<ResourceCategory> categories = post.getCategories();
+        List<ResourceCategory> newCategories = categoryRepository.findByResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
+        newCategories.addAll(categoryRepository.findByResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories()));
+        newCategories.forEach(category -> {
+            ResourceCategory insertCategory = new ResourceCategory().setResource(post).setName(category.getName()).setActive(true).setType(category.getType());
+            insertCategory.setCreatedTimestamp(LocalDateTime.now());
+            insertCategory = categoryRepository.save(insertCategory);
+            categories.add(insertCategory);
+        });
     }
     
-    private void updatePost(Long postId, PostDTO postDTO) {
-        Post post = postRepository.findOne(postId);
+    private void updatePost(Post post, PostDTO postDTO) {
         Board board = (Board) post.getParent();
         updateSimpleFields(post, postDTO, board, (Department) board.getParent());
         

@@ -39,10 +39,10 @@ public class PostMapper {
     public Function<Post, PostRepresentation> create(Set<String> options) {
         return (Post post) -> {
             Board board = (Board) post.getParent();
-            List<String> postCategories = post.getPostCategories().stream()
-                .filter(c -> c.getType() == CategoryType.POST).map(ResourceCategory::getName).collect(Collectors.toList());
-            List<String> memberCategories = post.getPostCategories().stream()
-                .filter(c -> c.getType() == CategoryType.MEMBER).map(ResourceCategory::getName).collect(Collectors.toList());
+            List<String> postCategories = post.getCategories().stream().filter(category -> category.getType() == CategoryType.POST)
+                .map(ResourceCategory::getName).collect(Collectors.toList());
+            List<String> memberCategories = post.getCategories().stream().filter(category -> category.getType() == CategoryType.MEMBER)
+                .map(ResourceCategory::getName).collect(Collectors.toList());
             
             PostRepresentation postRepresentation = new PostRepresentation();
             postRepresentation

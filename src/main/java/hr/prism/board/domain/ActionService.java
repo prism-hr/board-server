@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.permission.ActionExecutionTemplate;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
@@ -27,25 +28,20 @@ public class ActionService {
         return resource.getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
-    public List<Action> executeAction(Resource resource, Action action) {
-        return executeAction(resource, action, null);
-    }
-    
-    public List<Action> executeAction(Resource resource, Action action, Runnable operation) {
+    public Resource executeAction(User user, Resource resource, Action action, ActionExecutionTemplate executionTemplate) {
         Collection<ResourceAction> resourceActions = resource.getResourceActions();
         for (ResourceAction resourceAction : resourceActions) {
             if (resourceAction.getAction() == action) {
-                if (operation != null) {
-                    operation.run();
-                }
+                resource = executionTemplate.executeWithAction();
                 
                 State state = resource.getState();
                 State newState = resourceAction.getState();
                 if (!(newState == null || state == newState)) {
                     resourceService.updateState(resource, newState);
+                    return resourceService.getResource(user, resource.getScope(), resource.getId());
                 }
     
-                return getActions(resource);
+                return resource;
             }
         }
         

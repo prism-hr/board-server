@@ -336,7 +336,7 @@ public class DepartmentBoardApiIT extends AbstractIT {
         });
         
         transactionTemplate.execute(transactionStatus -> {
-            Department department = departmentService.findOne(createdDepartmentId);
+            Department department = departmentService.getDepartment(createdDepartmentId);
             Assert.assertEquals("Handle2", department.getHandle());
             
             int index = 1;
@@ -617,9 +617,9 @@ public class DepartmentBoardApiIT extends AbstractIT {
         Assert.assertEquals(boardDTO.getDepartment().getName(), departmentR.getName());
         Assert.assertEquals(boardDTO.getDepartment().getHandle(), departmentR.getHandle());
         Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().stream().toArray(String[]::new)));
-        
-        Board board = boardService.findOne(boardR.getId());
-        Department department = departmentService.findOne(departmentR.getId());
+    
+        Board board = boardService.getBoard(boardR.getId());
+        Department department = departmentService.getDepartment(departmentR.getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
         Assert.assertThat(boardR.getRoles(), Matchers.containsInAnyOrder(Role.ADMINISTRATOR));
         

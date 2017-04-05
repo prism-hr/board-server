@@ -39,17 +39,17 @@ public class DepartmentBoardApi {
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments() {
-        return departmentService.findAllByUserOrderByName().stream().map(departmentMapper.create()).collect(Collectors.toList());
+        return departmentService.getDepartments().stream().map(departmentMapper.create()).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
-        return departmentMapper.create(ImmutableSet.of("boards", "roles")).apply(departmentService.findOne(id));
+        return departmentMapper.create(ImmutableSet.of("boards", "roles")).apply(departmentService.getDepartment(id));
     }
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET, params = "handle")
     public DepartmentRepresentation getDepartmentByHandle(@RequestParam String handle) {
-        return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.findByHandle(handle));
+        return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.getDepartment(handle));
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
@@ -65,17 +65,17 @@ public class DepartmentBoardApi {
     
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards() {
-        return boardService.findAllByUserOrderByName().stream().map(board -> boardMapper.create().apply(board)).collect(Collectors.toList());
+        return boardService.getBoards().stream().map(board -> boardMapper.create().apply(board)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long id) {
-        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.findOne(id));
+        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.getBoard(id));
     }
     
     @RequestMapping(value = "/boards", method = RequestMethod.GET, params = "handle")
     public BoardRepresentation getBoardByHandle(@RequestParam String handle) {
-        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.findByHandle(handle));
+        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.getBoard(handle));
     }
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)

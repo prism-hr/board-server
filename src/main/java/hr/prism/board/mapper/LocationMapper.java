@@ -10,10 +10,10 @@ import java.util.function.Function;
 @Service
 @Transactional
 public class LocationMapper implements Function<Location, LocationRepresentation> {
-
+    
     @Override
     public LocationRepresentation apply(Location location) {
-        if(location == null) {
+        if (location == null) {
             return null;
         }
         return new LocationRepresentation()
@@ -23,5 +23,5 @@ public class LocationMapper implements Function<Location, LocationRepresentation
             .setLatitude(location.getLatitude())
             .setLongitude(location.getLongitude());
     }
-
+    
 }
