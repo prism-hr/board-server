@@ -4,6 +4,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
@@ -36,6 +37,9 @@ public class DepartmentService {
     
     @Inject
     private UserRoleService userRoleService;
+    
+    @Inject
+    private ActionService actionService;
     
     public List<Department> findAllByUserOrderByName() {
         User currentUser = userService.getCurrentUser();
@@ -95,31 +99,33 @@ public class DepartmentService {
     }
     
     public void updateDepartment(Long departmentId, DepartmentDTO departmentDTO) {
-        Department department = departmentRepository.findOne(departmentId);
-        
-        String newName = departmentDTO.getName();
-        if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {
-            throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
-        }
-        
-        department.setName(newName);
-        String existingLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
-        String newLogoId = Optional.ofNullable(departmentDTO.getDocumentLogo()).map(DocumentDTO::getCloudinaryId).orElse(null);
-        if (!Objects.equals(existingLogoId, newLogoId)) {
-            department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
-        }
-        
-        String newHandle = departmentDTO.getHandle();
-        if (!newHandle.equals(department.getHandle())) {
-            if (departmentRepository.findByHandle(newHandle) != null) {
-                throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+        User currentUser = userService.getCurrentUser();
+        Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(department, Action.EDIT, () -> {
+            String newName = departmentDTO.getName();
+            if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {
+                throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
             }
-    
-            resourceService.updateHandle(department, departmentDTO.getHandle());
-        }
         
-        List<String> memberCategories = departmentDTO.getMemberCategories();
-        resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
+            department.setName(newName);
+            String existingLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
+            String newLogoId = Optional.ofNullable(departmentDTO.getDocumentLogo()).map(DocumentDTO::getCloudinaryId).orElse(null);
+            if (!Objects.equals(existingLogoId, newLogoId)) {
+                department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
+            }
+        
+            String newHandle = departmentDTO.getHandle();
+            if (!newHandle.equals(department.getHandle())) {
+                if (departmentRepository.findByHandle(newHandle) != null) {
+                    throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+                }
+            
+                resourceService.updateHandle(department, departmentDTO.getHandle());
+            }
+        
+            List<String> memberCategories = departmentDTO.getMemberCategories();
+            resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
+        });
     }
     
 }

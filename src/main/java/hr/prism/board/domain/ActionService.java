@@ -31,12 +31,12 @@ public class ActionService {
         return executeAction(resource, action, null);
     }
     
-    public List<Action> executeAction(Resource resource, Action action, Runnable changes) {
+    public List<Action> executeAction(Resource resource, Action action, Runnable operation) {
         Collection<ResourceAction> resourceActions = resource.getResourceActions();
         for (ResourceAction resourceAction : resourceActions) {
             if (resourceAction.getAction() == action) {
-                if (changes != null) {
-                    changes.run();
+                if (operation != null) {
+                    operation.run();
                 }
                 
                 State state = resource.getState();
