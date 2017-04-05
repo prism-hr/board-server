@@ -3,10 +3,8 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceCategory;
-import hr.prism.board.domain.User;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
-import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,15 +30,11 @@ public class DepartmentMapper {
     @Inject
     private ActionService actionService;
     
-    @Inject
-    private UserService userService;
-    
     public Function<Department, DepartmentRepresentation> create() {
         return create(new HashSet<>());
     }
     
     public Function<Department, DepartmentRepresentation> create(Set<String> options) {
-        User user = userService.getCurrentUser();
         return (Department department) -> {
             DepartmentRepresentation departmentRepresentation = new DepartmentRepresentation();
             departmentRepresentation
@@ -57,7 +51,7 @@ public class DepartmentMapper {
             }
     
             if (options.contains("actions")) {
-                departmentRepresentation.setActions(actionService.getActions(department, user));
+                departmentRepresentation.setActions(actionService.getActions(department));
             }
     
             return departmentRepresentation;

@@ -13,7 +13,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
 import static hr.prism.board.domain.Role.ADMINISTRATOR;
-import static hr.prism.board.domain.Role.CONTRIBUTOR;
+import static hr.prism.board.domain.Role.AUTHOR;
 import static hr.prism.board.domain.Scope.*;
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.State.*;
@@ -43,7 +43,7 @@ public class PermissionInstaller {
             .permitThatAnybody().can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
-            .permitThat(BOARD, CONTRIBUTOR).can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
+            .permitThat(BOARD, AUTHOR).can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)

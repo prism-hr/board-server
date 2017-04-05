@@ -2,9 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import hr.prism.board.authentication.Restriction;
 import hr.prism.board.domain.Post;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiException;
@@ -29,46 +27,39 @@ public class PostApi {
     @Inject
     private PostMapper postMapper;
     
-    @Restriction(scope = Scope.BOARD, actions = Action.AUGMENT)
     @RequestMapping(value = "/boards/{id}/posts", method = RequestMethod.POST)
     public PostRepresentation postPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         Post post = postService.createPost(id, postDTO);
         return postMapper.create(ImmutableSet.of("actions")).apply(post);
     }
     
-    @Restriction(scope = Scope.POST)
-    @RequestMapping(value = "/boards/{parentId}/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPosts(@PathVariable("parentId") Long parentId) {
+    @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
+    public List<PostRepresentation> getPosts(@PathVariable Long boardId) {
         return postService.findAllByUserOrderByUpdatedTimestamp().stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
     }
     
-    @Restriction(scope = Scope.POST)
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)
-    public PostRepresentation getPost(@PathVariable("id") Long id) {
+    public PostRepresentation getPost(@PathVariable Long id) {
         return postMapper.create(ImmutableSet.of("actions")).apply(postService.findOne(id));
     }
     
-    @Restriction(scope = Scope.POST, actions = Action.EDIT)
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.PUT)
-    public void updatePost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+    public void updatePost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         postService.executeAction(id, Action.EDIT, postDTO);
     }
     
-    @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.ACCEPT})
     @RequestMapping(value = "/posts/{id}/accept", method = RequestMethod.PUT)
-    public List<Action> acceptPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+    public List<Action> acceptPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         return postService.executeAction(id, Action.ACCEPT, postDTO);
     }
     
-    @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.SUSPEND})
     @RequestMapping(value = "/posts/{id}/suspend", method = RequestMethod.PUT)
-    public List<Action> suspendPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+    public List<Action> suspendPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         return postService.executeAction(id, Action.SUSPEND, postDTO);
     }
     
-    @Restriction(scope = Scope.BOARD, actions = {Action.EDIT, Action.REJECT})
     @RequestMapping(value = "/posts/{id}/reject", method = RequestMethod.PUT)
-    public List<Action> rejectPost(@PathVariable("id") Long id, @RequestBody @Valid PostDTO postDTO) {
+    public List<Action> rejectPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         return postService.executeAction(id, Action.REJECT, postDTO);
     }
     

@@ -1,8 +1,10 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.ActionService;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +24,11 @@ public class BoardMapper {
     @Inject
     private ActionService actionService;
     
-    @Inject
-    private UserService userService;
-    
     public Function<Board, BoardRepresentation> create() {
         return create(new HashSet<>());
     }
     
     public Function<Board, BoardRepresentation> create(Set<String> options) {
-        User user = userService.getCurrentUser();
         return (Board board) -> {
             Department department = (Department) board.getParent();
             BoardRepresentation boardRepresentation = new BoardRepresentation();
@@ -46,7 +44,7 @@ public class BoardMapper {
                 .setDefaultPostVisibility(board.getDefaultPostVisibility());
     
             if (options.contains("actions")) {
-                boardRepresentation.setActions(actionService.getActions(board, user));
+                boardRepresentation.setActions(actionService.getActions(board));
             }
     
             return boardRepresentation;

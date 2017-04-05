@@ -1,9 +1,11 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.ActionService;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Post;
+import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.PostRepresentation;
-import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +32,11 @@ public class PostMapper {
     @Inject
     private ActionService actionService;
     
-    @Inject
-    private UserService userService;
-    
     public Function<Post, PostRepresentation> create() {
         return create(new HashSet<>());
     }
     
     public Function<Post, PostRepresentation> create(Set<String> options) {
-        User user = userService.getCurrentUser();
         return (Post post) -> {
             Board board = (Board) post.getParent();
             List<String> postCategories = post.getPostCategories().stream()
@@ -64,7 +62,7 @@ public class PostMapper {
                 .setBoard(boardMapper.create().apply(board));
     
             if (options.contains("actions")) {
-                postRepresentation.setActions(actionService.getActions(post, user));
+                postRepresentation.setActions(actionService.getActions(post));
             }
     
             return postRepresentation;

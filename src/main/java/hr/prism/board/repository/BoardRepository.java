@@ -5,19 +5,11 @@ import hr.prism.board.domain.Department;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface BoardRepository extends MyRepository<Board, Long> {
 
     Board findByHandle(String handle);
-
-    @Query(value =
-        "select board " +
-            "from Board board " +
-            "where board.id in (:ids) " +
-            "order by board.name")
-    List<Board> findAllByUserByOrderByName(@Param("ids") Collection<Long> ids);
 
     @Query(value =
         "select board " +

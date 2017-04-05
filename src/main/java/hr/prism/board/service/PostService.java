@@ -9,6 +9,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.PostRepository;
@@ -16,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -54,44 +58,44 @@ public class PostService {
     }
     
     public List<Post> findAllByUserOrderByUpdatedTimestamp() {
-        User user = userService.getCurrentUserSecured();
-        Collection<Long> postIds = user.getResources().keySet();
-        if (postIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        return postRepository.findAllByUserByOrderByUpdatedTimestamp(postIds);
+        User currentUser = userService.getCurrentUser();
+        return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.POST).setOrderStatement("order by resource.updatedTimestamp desc"))
+            .stream().map(resource -> (Post) resource).collect(Collectors.toList());
     }
     
     public Post createPost(Long boardId, PostDTO postDTO) {
-        Board board = boardService.findOne(boardId);
         User currentUser = userService.getCurrentUserSecured();
-        boolean canPostWithoutReview = userRoleService.hasUserRole(board, currentUser, Role.ADMINISTRATOR, Role.CONTRIBUTOR);
-        if (postDTO.getExistingRelation() == null && !canPostWithoutReview) {
-            throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
+        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
+        Optional<ResourceAction> augmentActionOptional = board.getResourceActions().stream().filter(resourceAction -> resourceAction.getAction() == Action.AUGMENT).findFirst();
+        if (augmentActionOptional.isPresent()) {
+            State state = augmentActionOptional.get().getState();
+            if (state == State.DRAFT && postDTO.getExistingRelation() == null) {
+                throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
+            }
+        
+            Post post = new Post();
+            resourceService.updateState(post, state);
+            updateSimpleFields(post, postDTO, board, (Department) board.getParent());
+        
+            if (postDTO.getApplyDocument() != null) {
+                post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
+            }
+        
+            post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
+            post = postRepository.save(post);
+        
+            resourceService.createResourceRelation(board, post);
+            userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
+            return (Post) resourceService.getResource(currentUser, Scope.POST, post.getId());
         }
-        
-        Post post = new Post();
-        resourceService.updateState(post, canPostWithoutReview ? State.ACCEPTED : State.DRAFT);
-        updateSimpleFields(post, postDTO, board, (Department) board.getParent());
-        
-        if (postDTO.getApplyDocument() != null) {
-            post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
-        }
-        
-        post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
-        post = postRepository.save(post);
-        
-        resourceService.createResourceRelation(board, post);
-        userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
-        currentUser.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(Scope.POST).setId(post.getId())));
-        return post;
+    
+        throw new ApiForbiddenException("User cannot augment " + board.toString());
     }
     
     public List<Action> executeAction(Long postId, Action action, PostDTO postDTO) {
-        User user = userService.getCurrentUserSecured();
-        Post post = (Post) user.getResources().get(postId);
-        List<Action> actions = actionService.executeAction(post, user, action);
+        User currentUser = userService.getCurrentUserSecured();
+        Post post = (Post) resourceService.getResource(currentUser, Scope.POST, postId);
+        List<Action> actions = actionService.executeAction(post, action);
         updatePost(postId, postDTO);
         return actions;
     }

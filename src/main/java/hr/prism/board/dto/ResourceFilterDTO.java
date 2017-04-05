@@ -35,6 +35,8 @@ public class ResourceFilterDTO {
         statement = "resource.parent_id = :parentId")
     private Long parentId;
     
+    private String orderStatement;
+    
     public Scope getScope() {
         return scope;
     }
@@ -77,6 +79,15 @@ public class ResourceFilterDTO {
     
     public ResourceFilterDTO setParentId(Long parentId) {
         this.parentId = parentId;
+        return this;
+    }
+    
+    public String getOrderStatement() {
+        return orderStatement;
+    }
+    
+    public ResourceFilterDTO setOrderStatement(String orderStatement) {
+        this.orderStatement = orderStatement;
         return this;
     }
     

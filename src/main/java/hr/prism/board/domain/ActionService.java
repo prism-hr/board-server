@@ -1,10 +1,10 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,28 +20,37 @@ public class ActionService {
     @Inject
     private ResourceService resourceService;
     
-    public List<Action> getActions(Resource resource, User user) {
-        return user.getResources().get(resource.getId()).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
+    @Inject
+    private UserService userService;
+    
+    public List<Action> getActions(Resource resource) {
+        return resource.getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
-    public List<Action> executeAction(Resource resource, User user, Action action) {
+    public List<Action> executeAction(Resource resource, Action action) {
+        return executeAction(resource, action, null);
+    }
+    
+    public List<Action> executeAction(Resource resource, Action action, Runnable changes) {
         Collection<ResourceAction> resourceActions = resource.getResourceActions();
         for (ResourceAction resourceAction : resourceActions) {
             if (resourceAction.getAction() == action) {
+                if (changes != null) {
+                    changes.run();
+                }
+                
                 State state = resource.getState();
                 State newState = resourceAction.getState();
                 if (!(newState == null || state == newState)) {
-                    // Update resource actions when we change state
                     resourceService.updateState(resource, newState);
-                    user.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(resource.getScope()).setId(resource.getId()).setUserId(user.getId())));
                 }
-                
-                return getActions(resource, user);
+    
+                return getActions(resource);
             }
         }
         
-        // We need to throw here in case we forgot to attach the restriction processor to the controller
-        throw new ApiForbiddenException(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+        User currentUser = userService.getCurrentUser();
+        throw new ApiForbiddenException(currentUser.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
     }
     
 }

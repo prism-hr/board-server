@@ -3,9 +3,11 @@ package hr.prism.board.domain;
 import com.google.common.base.Joiner;
 import org.hibernate.validator.constraints.Email;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -27,9 +29,6 @@ public class User extends BoardEntity {
     
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
-    
-    @Transient
-    private Map<Long, Resource> resources;
     
     public String getGivenName() {
         return givenName;
@@ -65,14 +64,6 @@ public class User extends BoardEntity {
     
     public Set<UserRole> getUserRoles() {
         return userRoles;
-    }
-    
-    public Map<Long, Resource> getResources() {
-        return resources;
-    }
-    
-    public void setResources(Map<Long, Resource> resources) {
-        this.resources = resources;
     }
     
     @Override

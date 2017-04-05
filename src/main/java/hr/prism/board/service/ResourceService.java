@@ -155,15 +155,21 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
-    public Map<Long, Resource> getResources(ResourceFilterDTO filter) {
+    public Resource getResource(User user, Scope scope, Long id) {
+        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id));
+        return resources.isEmpty() ? null : resources.get(0);
+    }
+    
+    public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         entityManager.flush();
+        filter.setUserId(user.getId());
         
         List<String> secureFilterStatements = new ArrayList<>();
         Map<String, Object> secureFilterParameters = new HashMap<>();
         List<String> publicFilterStatements = new ArrayList<>();
         Map<String, Object> publicFilterParameters = new HashMap<>();
         
-        // Unwrap the filter definitions
+        // Unwrap the filters
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
             try {
                 Object value = field.get(filter);
@@ -172,7 +178,7 @@ public class ResourceService {
                     if (resourceFilter != null) {
                         String statement = resourceFilter.statement();
                         String parameter = resourceFilter.parameter();
-                
+    
                         secureFilterStatements.add(statement);
                         secureFilterParameters.put(parameter, value);
                         if (!resourceFilter.secured()) {
@@ -186,7 +192,7 @@ public class ResourceService {
             }
         }
         
-        // Retrieve the mappings
+        // Get the mappings
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
             List<Object[]> results = getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
@@ -221,7 +227,7 @@ public class ResourceService {
         }
         
         if (rowIndex.isEmpty()) {
-            return new LinkedHashMap<>();
+            return Collections.emptyList();
         }
         
         // Squash the mappings
@@ -233,26 +239,21 @@ public class ResourceService {
         EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
         
         // Get the resource data
-        Map<Long, Resource> resourceIndex = new HashMap<>();
-        transactionTemplate.execute(status -> {
-            entityManager.createQuery(
-                "select resource " +
-                    "from " + resourceClass.getSimpleName() + " resource " +
-                    "where resource.id in (:ids)", resourceClass)
+        List<Resource> resources = transactionTemplate.execute(status -> {
+            String statement = Joiner.on(" ").skipNulls().join(
+                "select resource from " + resourceClass.getSimpleName() + " resource where resource.id in (:ids)", filter.getOrderStatement());
+            
+            return entityManager.createQuery(statement, resourceClass)
                 .setParameter("ids", resourceActionIndex.keySet())
                 .setHint("javax.persistence.loadgraph", entityGraph)
-                .getResultList().stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
-            return null;
+                .getResultList().stream().collect(Collectors.toList());
         });
         
         // Merge the output
-        LinkedHashMap<Long, Resource> resources = new LinkedHashMap<>();
-        for (Long key : resourceIndex.keySet()) {
-            Resource resource = resourceIndex.get(key);
+        for (Resource resource : resources) {
             TreeSet<ResourceAction> resourceActions = new TreeSet<>();
-            resourceActions.addAll(resourceActionIndex.get(key));
+            resourceActions.addAll(resourceActionIndex.get(resource.getId()));
             resource.setResourceActions(resourceActions);
-            resources.put(key, resource);
         }
         
         return resources;

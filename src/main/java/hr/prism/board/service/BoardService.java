@@ -15,9 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -39,13 +38,9 @@ public class BoardService {
     private UserService userService;
     
     public List<Board> findAllByUserOrderByName() {
-        User user = userService.getCurrentUserSecured();
-        Collection<Long> boardIds = user.getResources().keySet();
-        if (boardIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        return boardRepository.findAllByUserByOrderByName(boardIds);
+        User currentUser = userService.getCurrentUser();
+        return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.BOARD).setOrderStatement("order by resource.name"))
+            .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
     
     public Board findOne(Long id) {
@@ -83,8 +78,7 @@ public class BoardService {
     
         User currentUser = userService.getCurrentUserSecured();
         userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
-        currentUser.setResources(resourceService.getResources(new ResourceFilterDTO().setScope(Scope.BOARD).setId(board.getId())));
-        return board;
+        return (Board) resourceService.getResource(currentUser, Scope.BOARD, board.getId());
     }
     
     public void updateBoard(Long boardId, BoardDTO boardDTO) {

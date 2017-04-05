@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
@@ -12,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -34,13 +38,9 @@ public class DepartmentService {
     private UserRoleService userRoleService;
     
     public List<Department> findAllByUserOrderByName() {
-        User currentUser = userService.getCurrentUserSecured();
-        Collection<Long> departmentIds = currentUser.getResources().keySet();
-        if (departmentIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        return departmentRepository.findAllByUserByOrderByName(departmentIds);
+        User currentUser = userService.getCurrentUser();
+        return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.DEPARTMENT).setOrderStatement("order by resource.name"))
+            .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
     
     public Department findOne(Long id) {
