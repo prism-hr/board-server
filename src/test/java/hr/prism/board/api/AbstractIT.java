@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractIT {
@@ -33,7 +34,7 @@ public abstract class AbstractIT {
             removeForeignKeyChecks.executeUpdate();
             
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
-            tablesNames.stream().filter(tableName -> !tableName.equals("schema_version")).forEach(tableName -> {
+            tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "permission").contains(tableName)).forEach(tableName -> {
                 Query truncateTable = entityManager.createNativeQuery("TRUNCATE TABLE " + tableName);
                 truncateTable.executeUpdate();
             });
