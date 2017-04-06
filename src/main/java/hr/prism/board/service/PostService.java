@@ -99,7 +99,9 @@ public class PostService {
         User currentUser = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
         return (Post) actionService.executeAction(currentUser, post, action, () -> {
-            if (action != Action.EDIT) {
+            if (action == Action.EDIT) {
+                updatePost(post, postDTO);
+            } else {
                 actionService.executeAction(currentUser, post, Action.EDIT, () -> {
                     updatePost(post, postDTO);
                     return post;

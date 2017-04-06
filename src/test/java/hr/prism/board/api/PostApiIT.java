@@ -125,8 +125,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldUpdatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
-            PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
+    
+            PostRepresentation postR = postApi.postPost(boardR.getId(), postDTO);
             postDTO.setName("shouldUpdatePost Board2")
                 .setDescription("Desc")
                 .setOrganizationName("shouldUpdatePost Organization2")
@@ -135,11 +135,11 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p2", "p3"))
                 .setMemberCategories(ImmutableList.of("m2", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file2").setCloudinaryId("shouldUpdatePost CloudinaryId2").setCloudinaryUrl("http://cloudinary2.com"));
-            postApi.updatePost(savedPostR.getId(), postDTO);
-            PostRepresentation updatedPostR = postApi.getPost(savedPostR.getId());
-            verifyPost(user, postDTO, updatedPostR);
-            
-            return savedPostR;
+            postApi.updatePost(postR.getId(), postDTO);
+            postR = postApi.getPost(postR.getId());
+            verifyPost(user, postDTO, postR);
+    
+            return postR;
         });
     }
     
