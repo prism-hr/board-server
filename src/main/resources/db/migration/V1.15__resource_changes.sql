@@ -53,3 +53,6 @@ INSERT INTO resource_category (resource_id, name, type, active, created_timestam
       ON post_category.category_id = reference_category.id;
 
 DROP TABLE post_category;
+
+ALTER TABLE resource
+  MODIFY COLUMN parent_id BIGINT UNSIGNED;
