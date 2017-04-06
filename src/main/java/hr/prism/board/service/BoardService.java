@@ -86,7 +86,6 @@ public class BoardService {
             board = boardRepository.save(board);
             updateBoardSettings(board, settingsDTO, department);
             resourceService.createResourceRelation(department, board);
-    
             userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
         });
