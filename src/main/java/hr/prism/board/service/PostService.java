@@ -72,7 +72,8 @@ public class PostService {
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.AUGMENT, () -> {
             Post post = new Post();
-            updateSimpleFields(post, postDTO, board, (Department) board.getParent());
+            Department department = (Department) board.getParent();
+            updateProperties(post, postDTO, board, department);
     
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
@@ -81,6 +82,7 @@ public class PostService {
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
             post = postRepository.save(post);
     
+            updateCategories(post, postDTO, board, department);
             resourceService.createResourceRelation(board, post);
             userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
             return post;
@@ -108,7 +110,7 @@ public class PostService {
         });
     }
     
-    private void updateSimpleFields(Post post, PostDTO postDTO, Board board, Department department) {
+    private void updateProperties(Post post, PostDTO postDTO, Board board, Department department) {
         post.setName(postDTO.getName());
         post.setDescription(postDTO.getDescription());
         post.setOrganizationName(postDTO.getOrganizationName());
@@ -116,7 +118,9 @@ public class PostService {
         post.setExistingRelationExplanation(postDTO.getExistingRelationExplanation());
         post.setApplyWebsite(postDTO.getApplyWebsite());
         post.setApplyEmail(postDTO.getApplyEmail());
+    }
     
+    private void updateCategories(Post post, PostDTO postDTO, Board board, Department department) {
         categoryRepository.deleteByResource(post);
         Set<ResourceCategory> categories = post.getCategories();
         categories.clear();
@@ -133,7 +137,9 @@ public class PostService {
     
     private void updatePost(Post post, PostDTO postDTO) {
         Board board = (Board) post.getParent();
-        updateSimpleFields(post, postDTO, board, (Department) board.getParent());
+        Department department = (Department) board.getParent();
+        updateProperties(post, postDTO, board, department);
+        updateCategories(post, postDTO, board, department);
         
         // update applyDocument
         String existingApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
