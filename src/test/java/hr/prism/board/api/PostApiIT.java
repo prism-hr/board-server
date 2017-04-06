@@ -90,10 +90,10 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldCreatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
-            PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
-            savedPostR = postApi.getPost(savedPostR.getId());
-            verifyPost(user, postDTO, savedPostR);
+    
+            PostRepresentation postR = postApi.postPost(boardR.getId(), postDTO);
+            postR = postApi.getPost(postR.getId());
+            verifyPost(user, postDTO, postR);
             return null;
         });
     }
@@ -127,7 +127,8 @@ public class PostApiIT extends AbstractIT {
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldUpdatePost CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
             
             PostRepresentation savedPostR = postApi.postPost(boardR.getId(), postDTO);
-            postDTO.setName("shouldUpdatePost Board2").setDescription("Desc")
+            postDTO.setName("shouldUpdatePost Board2")
+                .setDescription("Desc")
                 .setOrganizationName("shouldUpdatePost Organization2")
                 .setLocation(new LocationDTO().setName("location2").setDomicile("NG")
                     .setGoogleId("shouldUpdatePost GoogleId2").setLatitude(BigDecimal.TEN).setLongitude(BigDecimal.TEN))

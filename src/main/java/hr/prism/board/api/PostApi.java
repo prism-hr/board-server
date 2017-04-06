@@ -63,6 +63,11 @@ public class PostApi {
         return postService.executeAction(id, Action.SUSPEND, postDTO).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
+    @RequestMapping(value = "/posts/{id}/correct", method = RequestMethod.PUT)
+    public List<Action> correctPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
+        return postService.executeAction(id, Action.CORRECT, postDTO).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
+    }
+    
     @RequestMapping(value = "/posts/{id}/reject", method = RequestMethod.PUT)
     public List<Action> rejectPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         return postService.executeAction(id, Action.REJECT, postDTO).getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());

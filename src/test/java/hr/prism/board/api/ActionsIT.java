@@ -47,7 +47,7 @@ public class ActionsIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
             postApi.acceptPost(samplePost.getId(), createSamplePost().setDescription("Corrected desc"));
             return null;
         });
@@ -55,7 +55,7 @@ public class ActionsIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW));
             assertEquals(State.ACCEPTED, postR.getState());
             assertEquals("Corrected desc", postR.getDescription());
             return null;
@@ -70,7 +70,7 @@ public class ActionsIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
             postApi.rejectPost(samplePost.getId(), createSamplePost());
             return null;
         });
@@ -78,7 +78,7 @@ public class ActionsIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.VIEW, Action.WITHDRAW));
             assertEquals(State.REJECTED, postR.getState());
             return null;
         });
@@ -92,7 +92,7 @@ public class ActionsIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
             postApi.suspendPost(samplePost.getId(), createSamplePost());
             return null;
         });
@@ -100,16 +100,16 @@ public class ActionsIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("poster@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT));
-            assertEquals(State.DRAFT, postR.getState());
-            postApi.updatePost(samplePost.getId(), createSamplePost().setName("Corrected name"));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.VIEW, Action.CORRECT, Action.WITHDRAW));
+            assertEquals(State.SUSPENDED, postR.getState());
+            postApi.correctPost(samplePost.getId(), createSamplePost().setName("Corrected name"));
             return null;
         });
         
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
-            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+            assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
             assertEquals(State.DRAFT, postR.getState());
             assertEquals("Corrected name", postR.getName());
             return null;

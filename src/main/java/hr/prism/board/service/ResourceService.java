@@ -195,7 +195,7 @@ public class ResourceService {
         });
         
         // Remove duplicate mappings
-        Map<List<Object>, ResourceAction> rowIndex = new HashMap<>();
+        Map<ResourceActionKey, ResourceAction> rowIndex = new HashMap<>();
         for (Object[] row : rows) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
@@ -213,7 +213,7 @@ public class ResourceService {
             }
     
             // Find the mapping that provides the most direct state transition, varies by role
-            List<Object> rowKey = Arrays.asList(rowId, rowAction, rowScope);
+            ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
             ResourceAction rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
                 rowIndex.put(rowKey, new ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
@@ -226,7 +226,7 @@ public class ResourceService {
         
         // Squash the mappings
         LinkedHashMultimap<Long, ResourceAction> resourceActionIndex = LinkedHashMultimap.create();
-        rowIndex.keySet().forEach(key -> resourceActionIndex.put((Long) key.get(0), rowIndex.get(key)));
+        rowIndex.keySet().forEach(key -> resourceActionIndex.put((Long) key.id, rowIndex.get(key)));
         
         Scope scope = filter.getScope();
         Class<? extends Resource> resourceClass = scope.resourceClass;
@@ -267,6 +267,37 @@ public class ResourceService {
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         query.getResultList().forEach(row -> results.add((Object[]) row));
         return results;
+    }
+    
+    private static class ResourceActionKey {
+        
+        private Long id;
+        
+        private Action action;
+        
+        private Scope scope;
+        
+        public ResourceActionKey(Long id, Action action, Scope scope) {
+            this.id = id;
+            this.action = action;
+            this.scope = scope;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, action, scope);
+        }
+        
+        @Override
+        public boolean equals(Object object) {
+            if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+            
+            ResourceActionKey other = (ResourceActionKey) object;
+            return Objects.equals(id, other.id) && Objects.equals(action, other.action) && Objects.equals(scope, other.scope);
+        }
+        
     }
     
 }

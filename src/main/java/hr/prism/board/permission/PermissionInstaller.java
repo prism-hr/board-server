@@ -43,6 +43,8 @@ public class PermissionInstaller {
             .permitThatAnybody().can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, AUTHOR).can(AUGMENT, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             
             // Post draft state
@@ -96,7 +98,7 @@ public class PermissionInstaller {
             .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(REJECTED).transitioningTo(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
-            .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
+            .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(REJECTED).transitioningTo(WITHDRAWN)
             
             // Post withdrawn state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
