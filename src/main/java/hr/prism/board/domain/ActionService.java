@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +27,11 @@ public class ActionService {
     private UserService userService;
     
     public List<Action> getActions(Resource resource) {
+        Set<ResourceAction> resourceActions = resource.getResourceActions();
+        if (resourceActions == null) {
+            return Collections.emptyList();
+        }
+        
         return resource.getResourceActions().stream().map(ResourceAction::getAction).collect(Collectors.toList());
     }
     
@@ -44,9 +51,8 @@ public class ActionService {
                 return resource;
             }
         }
-        
-        User currentUser = userService.getCurrentUser();
-        throw new ApiForbiddenException(currentUser.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+    
+        throw new ApiForbiddenException(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
     }
     
 }

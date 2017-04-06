@@ -1,7 +1,6 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
@@ -30,7 +29,7 @@ public class BoardApi {
     @RequestMapping(value = "/boards", method = RequestMethod.POST)
     public BoardRepresentation postBoard(@RequestBody @Valid BoardDTO boardDTO) {
         Board board = boardService.createBoard(boardDTO);
-        return boardMapper.create(ImmutableSet.of("actions")).apply(board);
+        return boardMapper.create().apply(board);
     }
     
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
@@ -45,12 +44,12 @@ public class BoardApi {
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long id) {
-        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.getBoard(id));
+        return boardMapper.create().apply(boardService.getBoard(id));
     }
     
     @RequestMapping(value = "/boards", method = RequestMethod.GET, params = "handle")
     public BoardRepresentation getBoardByHandle(@RequestParam String handle) {
-        return boardMapper.create(ImmutableSet.of("actions")).apply(boardService.getBoard(handle));
+        return boardMapper.create().apply(boardService.getBoard(handle));
     }
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PUT)

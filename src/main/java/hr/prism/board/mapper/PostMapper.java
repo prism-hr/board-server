@@ -10,9 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 @Service
@@ -32,10 +30,6 @@ public class PostMapper {
     private ActionService actionService;
     
     public Function<Post, PostRepresentation> create() {
-        return create(new HashSet<>());
-    }
-    
-    public Function<Post, PostRepresentation> create(Set<String> options) {
         return (Post post) -> {
             Board board = (Board) post.getParent();
     
@@ -67,10 +61,7 @@ public class PostMapper {
                 .setApplyEmail(post.getApplyEmail())
                 .setBoard(boardMapper.create().apply(board));
     
-            if (options.contains("actions")) {
-                postRepresentation.setActions(actionService.getActions(post));
-            }
-    
+            postRepresentation.setActions(actionService.getActions(post));
             return postRepresentation;
         };
     }

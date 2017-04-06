@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,10 +23,6 @@ public class BoardMapper {
     private ActionService actionService;
     
     public Function<Board, BoardRepresentation> create() {
-        return create(new HashSet<>());
-    }
-    
-    public Function<Board, BoardRepresentation> create(Set<String> options) {
         return (Board board) -> {
             Department department = (Department) board.getParent();
             BoardRepresentation boardRepresentation = new BoardRepresentation();
@@ -43,10 +37,7 @@ public class BoardMapper {
                 .setDepartment(departmentMapper.create().apply(department))
                 .setDefaultPostVisibility(board.getDefaultPostVisibility());
     
-            if (options.contains("actions")) {
-                boardRepresentation.setActions(actionService.getActions(board));
-            }
-    
+            boardRepresentation.setActions(actionService.getActions(board));
             return boardRepresentation;
         };
     }

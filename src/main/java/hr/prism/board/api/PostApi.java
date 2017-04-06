@@ -1,7 +1,6 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.ResourceAction;
 import hr.prism.board.dto.PostDTO;
@@ -31,7 +30,7 @@ public class PostApi {
     @RequestMapping(value = "/boards/{id}/posts", method = RequestMethod.POST)
     public PostRepresentation postPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         Post post = postService.createPost(id, postDTO);
-        return postMapper.create(ImmutableSet.of("actions")).apply(post);
+        return postMapper.create().apply(post);
     }
     
     @RequestMapping(value = "posts", method = RequestMethod.GET)
@@ -46,7 +45,7 @@ public class PostApi {
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)
     public PostRepresentation getPost(@PathVariable Long id) {
-        return postMapper.create(ImmutableSet.of("actions")).apply(postService.getPost(id));
+        return postMapper.create().apply(postService.getPost(id));
     }
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.PUT)

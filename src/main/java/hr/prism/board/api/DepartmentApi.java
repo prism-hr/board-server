@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.ImmutableSet;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.representation.DepartmentRepresentation;
@@ -28,12 +27,12 @@ public class DepartmentApi {
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
-        return departmentMapper.create(ImmutableSet.of("boards", "roles")).apply(departmentService.getDepartment(id));
+        return departmentMapper.create().apply(departmentService.getDepartment(id));
     }
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET, params = "handle")
     public DepartmentRepresentation getDepartmentByHandle(@RequestParam String handle) {
-        return departmentMapper.create(ImmutableSet.of("boards")).apply(departmentService.getDepartment(handle));
+        return departmentMapper.create().apply(departmentService.getDepartment(handle));
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PUT)
