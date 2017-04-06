@@ -55,8 +55,7 @@ public class ResourceService {
             "from resource " +
             "inner join permission " +
             "on resource.scope = permission.resource2_scope " +
-            "and resource.state = permission.resource2_state " +
-            "where permission.role = 'PUBLIC'";
+            "and resource.state = permission.resource2_state";
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
     
@@ -151,12 +150,16 @@ public class ResourceService {
     
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         entityManager.flush();
-        filter.setUserId(user.getId());
         
         List<String> secureFilterStatements = new ArrayList<>();
-        Map<String, Object> secureFilterParameters = new HashMap<>();
+        secureFilterStatements.add("user_role.user_id = :userId");
+        Map<String, String> secureFilterParameters = new HashMap<>();
+        secureFilterParameters.put("userId", user.getId().toString());
+        
         List<String> publicFilterStatements = new ArrayList<>();
-        Map<String, Object> publicFilterParameters = new HashMap<>();
+        publicFilterStatements.add("permission.role = :role");
+        Map<String, String> publicFilterParameters = new HashMap<>();
+        publicFilterParameters.put("role", Role.PUBLIC.name());
         
         // Unwrap the filters
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
@@ -170,10 +173,11 @@ public class ResourceService {
                         String parameter = resourceFilter.parameter();
     
                         secureFilterStatements.add(statement);
-                        secureFilterParameters.put(parameter, value);
+                        secureFilterParameters.put(parameter, value.toString()
+                        );
                         if (!resourceFilter.secured()) {
                             publicFilterStatements.add(statement);
-                            publicFilterParameters.put(parameter, value);
+                            publicFilterParameters.put(parameter, value.toString());
                         }
                     }
                 }
@@ -257,9 +261,9 @@ public class ResourceService {
         resource2.getParents().add(resourceRelation);
     }
     
-    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
+    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
         List<Object[]> results = Lists.newArrayList();
-        Query query = entityManager.createNativeQuery(Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
+        Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         query.getResultList().forEach(row -> results.add((Object[]) row));
         return results;

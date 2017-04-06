@@ -25,12 +25,6 @@ public class ResourceFilterDTO {
     private String handle;
     
     @ResourceFilter(
-        parameter = "userId",
-        statement = "user_role.user_id = :userId",
-        secured = true)
-    private Long userId;
-    
-    @ResourceFilter(
         parameter = "parentId",
         statement = "resource.parent_id = :parentId")
     private Long parentId;
@@ -52,15 +46,6 @@ public class ResourceFilterDTO {
     
     public ResourceFilterDTO setId(Long id) {
         this.id = id;
-        return this;
-    }
-    
-    public Long getUserId() {
-        return userId;
-    }
-    
-    public ResourceFilterDTO setUserId(Long userId) {
-        this.userId = userId;
         return this;
     }
     
