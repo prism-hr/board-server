@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
+import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
@@ -18,6 +19,11 @@ import hr.prism.board.service.UserTestService;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -25,6 +31,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@ActiveProfiles("test")
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
+@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class BoardApiIT extends AbstractIT {
     
     @Inject
@@ -60,7 +70,7 @@ public class BoardApiIT extends AbstractIT {
                     .setHandle("scb")
                     .setPostCategories(ImmutableList.of("category3", "category4"))
                     .setDefaultPostVisibility(PostVisibility.PART_PRIVATE));
-    
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             return null;
@@ -81,7 +91,7 @@ public class BoardApiIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("scbdpv")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
-    
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             boardDTO.getSettings().setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
@@ -103,10 +113,10 @@ public class BoardApiIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sncdb")
                     .setPostCategories(ImmutableList.of("category3", "category4")));
-    
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
-    
+            
             ExceptionUtil.verifyApiException(() -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, transactionStatus);
             return null;
         });
@@ -205,7 +215,7 @@ public class BoardApiIT extends AbstractIT {
                     .setPostCategories(ImmutableList.of("category3", "category4")));
             BoardRepresentation boardR2 = boardApi.postBoard(boardDTO2);
             departmentBoardHelper.verifyBoard(user, boardDTO2, boardR2, true);
-    
+            
             ExceptionUtil.verifyApiException(() -> boardApi.updateBoardSettings(boardR1.getId(), boardDTO1.getSettings().setHandle(boardDTO2.getSettings().getHandle())),
                 ExceptionCode.DUPLICATE_BOARD_HANDLE, transactionStatus);
             return null;
@@ -229,7 +239,7 @@ public class BoardApiIT extends AbstractIT {
                     .setHandle("Handle1")
                     .setPostCategories(new ArrayList<>())
                     .setDefaultPostVisibility(PostVisibility.PRIVATE));
-    
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             
@@ -244,13 +254,13 @@ public class BoardApiIT extends AbstractIT {
                     .setHandle("Handle2")
                     .setPostCategories(new ArrayList<>())
                     .setDefaultPostVisibility(PostVisibility.PRIVATE));
-    
+            
             BoardRepresentation boardR2 = boardApi.postBoard(boardDTO2);
             boardDTO2.getDepartment()
                 .setName("Department 1")
                 .setHandle("Handle1")
                 .setMemberCategories(new ArrayList<>());
-    
+            
             departmentBoardHelper.verifyBoard(otherUser, boardDTO2, boardR2, false);
             return null;
         });
@@ -289,7 +299,7 @@ public class BoardApiIT extends AbstractIT {
                     .setHandle("Handle1")
                     .setPostCategories(new ArrayList<>())
                     .setDefaultPostVisibility(PostVisibility.PRIVATE));
-    
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             
@@ -303,13 +313,13 @@ public class BoardApiIT extends AbstractIT {
                     .setHandle("Handle2")
                     .setPostCategories(new ArrayList<>())
                     .setDefaultPostVisibility(PostVisibility.PRIVATE));
-    
+            
             BoardRepresentation boardR2 = boardApi.postBoard(boardDTO2);
             boardDTO2.getDepartment()
                 .setName("Department 1")
                 .setHandle("Handle1")
                 .setMemberCategories(new ArrayList<>());
-    
+            
             departmentBoardHelper.verifyBoard(user, boardDTO2, boardR2, true);
             return boardR.getDepartment().getId();
         });
@@ -320,7 +330,7 @@ public class BoardApiIT extends AbstractIT {
             
             List<String> boardNames = departmentR.getBoards().stream().map(BoardRepresentation::getName).collect(Collectors.toList());
             Assert.assertThat(boardNames, Matchers.containsInAnyOrder("Board 1", "Board 2"));
-    
+            
             departmentApi.updateDepartment(departmentR.getId(),
                 new DepartmentDTO()
                     .setName(departmentR.getName())
@@ -360,7 +370,7 @@ public class BoardApiIT extends AbstractIT {
                     .setPostCategories(ImmutableList.of("a", "b")));
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
-    
+            
             boardApi.updateBoardSettings(boardR.getId(), new BoardSettingsDTO()
                 .setHandle("subs2")
                 .setPostCategories(ImmutableList.of("c"))
@@ -430,7 +440,7 @@ public class BoardApiIT extends AbstractIT {
                     departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
                 }
             }
-    
+            
             return null;
         });
         
@@ -440,7 +450,7 @@ public class BoardApiIT extends AbstractIT {
                 "shouldCreateMultipleBoardsAndGetCorrectResourceListsForUser 1", "shouldCreateMultipleBoardsAndGetCorrectResourceListsForUser 2",
                 "shouldCreateMultipleBoardsAndGetCorrectResourceListsForUser 3"),
                 departmentRepresentations.stream().map(DepartmentRepresentation::getName).collect(Collectors.toList()));
-    
+            
             List<BoardRepresentation> boardRepresentations = boardApi.getBoards();
             Assert.assertEquals(Arrays.asList(
                 "shouldCreateMultipleBoardsAndGetCorrectResourceListsForUser 1 1", "shouldCreateMultipleBoardsAndGetCorrectResourceListsForUser 1 2",
