@@ -161,6 +161,7 @@ public class ResourceService {
         // Unwrap the filters
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
             try {
+                field.setAccessible(true);
                 Object value = field.get(filter);
                 if (value != null) {
                     ResourceFilterDTO.ResourceFilter resourceFilter = field.getAnnotation(ResourceFilterDTO.ResourceFilter.class);
@@ -258,7 +259,7 @@ public class ResourceService {
     
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
         List<Object[]> results = Lists.newArrayList();
-        Query query = entityManager.createNativeQuery(statement + " WHERE " + Joiner.on(" AND ").join(filterStatements));
+        Query query = entityManager.createNativeQuery(Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         query.getResultList().forEach(row -> results.add((Object[]) row));
         return results;
