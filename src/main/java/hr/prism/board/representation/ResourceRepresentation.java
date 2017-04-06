@@ -1,12 +1,11 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.domain.Role;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 
 import java.util.List;
 
-public class AbstractResourceRepresentation {
+public class ResourceRepresentation {
     
     private Long id;
     
@@ -14,15 +13,13 @@ public class AbstractResourceRepresentation {
     
     private State state;
     
-    private List<Role> roles;
-    
     private List<Action> actions;
     
     public Long getId() {
         return id;
     }
     
-    public AbstractResourceRepresentation setId(Long id) {
+    public ResourceRepresentation setId(Long id) {
         this.id = id;
         return this;
     }
@@ -31,7 +28,7 @@ public class AbstractResourceRepresentation {
         return name;
     }
     
-    public AbstractResourceRepresentation setName(String name) {
+    public ResourceRepresentation setName(String name) {
         this.name = name;
         return this;
     }
@@ -44,20 +41,11 @@ public class AbstractResourceRepresentation {
         this.state = state;
     }
     
-    public List<Role> getRoles() {
-        return roles;
-    }
-    
-    public AbstractResourceRepresentation setRoles(List<Role> roles) {
-        this.roles = roles;
-        return this;
-    }
-    
     public List<Action> getActions() {
         return actions;
     }
     
-    public AbstractResourceRepresentation setActions(List<Action> actions) {
+    public ResourceRepresentation setActions(List<Action> actions) {
         this.actions = actions;
         return this;
     }

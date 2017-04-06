@@ -39,7 +39,7 @@ ALTER TABLE resource
   MODIFY COLUMN state VARCHAR(20),
   MODIFY COLUMN previous_state VARCHAR(20);
 
-# We need to be able to change board categories without deleting post categories
+# Keen the schema simple, so that fetching is fast
 INSERT INTO resource_category (resource_id, name, type, active, created_timestamp, updated_timestamp)
   SELECT
     post_category.post_id,

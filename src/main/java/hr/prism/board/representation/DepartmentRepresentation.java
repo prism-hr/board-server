@@ -2,7 +2,7 @@ package hr.prism.board.representation;
 
 import java.util.List;
 
-public class DepartmentRepresentation extends AbstractResourceRepresentation {
+public class DepartmentRepresentation extends ResourceRepresentation {
     
     private DocumentRepresentation documentLogo;
     

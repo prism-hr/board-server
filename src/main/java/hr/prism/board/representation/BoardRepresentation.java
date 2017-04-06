@@ -4,7 +4,7 @@ import hr.prism.board.enums.PostVisibility;
 
 import java.util.List;
 
-public class BoardRepresentation extends AbstractResourceRepresentation {
+public class BoardRepresentation extends ResourceRepresentation {
     
     private String purpose;
     

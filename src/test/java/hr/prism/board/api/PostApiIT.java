@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
+import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
@@ -246,7 +247,7 @@ public class PostApiIT extends AbstractIT {
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
         
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-        assertThat(postR.getRoles(), Matchers.containsInAnyOrder(Role.ADMINISTRATOR));
+        assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW));
         
         Post post = postService.getPost(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));

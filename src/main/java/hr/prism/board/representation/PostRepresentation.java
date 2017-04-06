@@ -2,7 +2,7 @@ package hr.prism.board.representation;
 
 import java.util.List;
 
-public class PostRepresentation extends AbstractResourceRepresentation {
+public class PostRepresentation extends ResourceRepresentation {
     
     private String description;
     
