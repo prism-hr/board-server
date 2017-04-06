@@ -29,6 +29,9 @@ public class Post extends Resource {
     @Column(name = "existing_relation")
     private String existingRelation;
     
+    @Column(name = "existing_relation_explanation")
+    private String existingRelationExplanation;
+    
     @URL
     @Column(name = "apply_website")
     private String applyWebsite;
@@ -63,6 +66,14 @@ public class Post extends Resource {
     
     public void setExistingRelation(String existingRelation) {
         this.existingRelation = existingRelation;
+    }
+    
+    public String getExistingRelationExplanation() {
+        return existingRelationExplanation;
+    }
+    
+    public void setExistingRelationExplanation(String existingRelationExplanation) {
+        this.existingRelationExplanation = existingRelationExplanation;
     }
     
     public String getApplyWebsite() {

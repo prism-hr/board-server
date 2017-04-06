@@ -22,6 +22,8 @@ public class PostDTO extends ResourceDTO<PostDTO> {
     
     private String existingRelation;
     
+    private String existingRelationExplanation;
+    
     private List<String> postCategories;
     
     private List<String> memberCategories;
@@ -68,6 +70,15 @@ public class PostDTO extends ResourceDTO<PostDTO> {
     
     public PostDTO setExistingRelation(String existingRelation) {
         this.existingRelation = existingRelation;
+        return this;
+    }
+    
+    public String getExistingRelationExplanation() {
+        return existingRelationExplanation;
+    }
+    
+    public PostDTO setExistingRelationExplanation(String existingRelationExplanation) {
+        this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }
     

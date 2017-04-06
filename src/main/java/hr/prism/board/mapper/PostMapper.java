@@ -3,18 +3,17 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
-import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.PostRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -39,10 +38,16 @@ public class PostMapper {
     public Function<Post, PostRepresentation> create(Set<String> options) {
         return (Post post) -> {
             Board board = (Board) post.getParent();
-            List<String> postCategories = post.getCategories().stream().filter(category -> category.getType() == CategoryType.POST)
-                .map(ResourceCategory::getName).collect(Collectors.toList());
-            List<String> memberCategories = post.getCategories().stream().filter(category -> category.getType() == CategoryType.MEMBER)
-                .map(ResourceCategory::getName).collect(Collectors.toList());
+    
+            List<String> postCategories = new ArrayList<>();
+            List<String> memberCategories = new ArrayList<>();
+            post.getCategories().forEach(category -> {
+                if (category.getType() == CategoryType.POST) {
+                    postCategories.add(category.getName());
+                } else {
+                    memberCategories.add(category.getName());
+                }
+            });
             
             PostRepresentation postRepresentation = new PostRepresentation();
             postRepresentation
@@ -54,6 +59,7 @@ public class PostMapper {
                 .setOrganizationName(post.getOrganizationName())
                 .setLocation(locationMapper.apply(post.getLocation()))
                 .setExistingRelation(post.getExistingRelation())
+                .setExistingRelationExplanation(post.getExistingRelationExplanation())
                 .setPostCategories(postCategories)
                 .setMemberCategories(memberCategories)
                 .setApplyWebsite(post.getApplyWebsite())

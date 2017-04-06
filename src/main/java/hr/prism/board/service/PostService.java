@@ -57,9 +57,13 @@ public class PostService {
         return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
     
-    public List<Post> getPosts() {
+    public List<Post> getPosts(Long boardId) {
         User currentUser = userService.getCurrentUser();
-        return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.POST).setOrderStatement("order by resource.updatedTimestamp desc"))
+        return resourceService.getResources(currentUser,
+            new ResourceFilterDTO()
+                .setScope(Scope.POST)
+                .setParentId(boardId)
+                .setOrderStatement("order by resource.updatedTimestamp desc"))
             .stream().map(resource -> (Post) resource).collect(Collectors.toList());
     }
     
@@ -109,11 +113,14 @@ public class PostService {
         post.setDescription(postDTO.getDescription());
         post.setOrganizationName(postDTO.getOrganizationName());
         post.setExistingRelation(postDTO.getExistingRelation());
+        post.setExistingRelationExplanation(postDTO.getExistingRelationExplanation());
         post.setApplyWebsite(postDTO.getApplyWebsite());
         post.setApplyEmail(postDTO.getApplyEmail());
     
         categoryRepository.deleteByResource(post);
         Set<ResourceCategory> categories = post.getCategories();
+        categories.clear();
+        
         List<ResourceCategory> newCategories = categoryRepository.findByResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
         newCategories.addAll(categoryRepository.findByResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories()));
         newCategories.forEach(category -> {

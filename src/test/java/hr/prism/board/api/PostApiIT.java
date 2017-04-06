@@ -43,7 +43,7 @@ public class PostApiIT extends AbstractIT {
     private PostApi postApi;
     
     @Inject
-    private DepartmentBoardApi departmentBoardApi;
+    private BoardApi boardApi;
     
     @Inject
     private PostService postService;
@@ -75,7 +75,7 @@ public class PostApiIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("scp")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
-            return departmentBoardApi.postBoard(boardDTO);
+            return boardApi.postBoard(boardDTO);
         });
         
         transactionTemplate.execute(transactionStatus -> {
@@ -112,7 +112,7 @@ public class PostApiIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sup")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
-            BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             
             PostDTO postDTO = new PostDTO()
                 .setName("shouldUpdatePost Post")
@@ -157,7 +157,7 @@ public class PostApiIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("sgp")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
-            BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             
             PostDTO postDTO = new PostDTO()
                 .setName("shouldGetPosts Post1")
@@ -182,8 +182,8 @@ public class PostApiIT extends AbstractIT {
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("shouldGetPosts CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
             postApi.postPost(boardR.getId(), postDTO2);
-            
-            List<PostRepresentation> posts = postApi.getPosts(boardR.getId());
+    
+            List<PostRepresentation> posts = postApi.getPostsByBoard(boardR.getId());
             assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post1")),
                 hasProperty("name", equalTo("shouldGetPosts Post2"))));
             return null;
@@ -204,7 +204,7 @@ public class PostApiIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("handle")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
-            BoardRepresentation boardR = departmentBoardApi.postBoard(boardDTO);
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
     
             userTestService.authenticate();
             PostDTO postDTO = new PostDTO()

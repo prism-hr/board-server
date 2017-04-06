@@ -40,12 +40,6 @@ public class BoardService {
     @Inject
     private UserService userService;
     
-    public List<Board> getBoards() {
-        User currentUser = userService.getCurrentUser();
-        return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.BOARD).setOrderStatement("order by resource.name"))
-            .stream().map(resource -> (Board) resource).collect(Collectors.toList());
-    }
-    
     public Board getBoard(Long id) {
         User currentUser = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
@@ -58,6 +52,16 @@ public class BoardService {
         return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
     }
     
+    public List<Board> getBoards(Long departmentId) {
+        User currentUser = userService.getCurrentUser();
+        return resourceService.getResources(currentUser,
+            new ResourceFilterDTO()
+                .setScope(Scope.BOARD)
+                .setParentId(departmentId)
+                .setOrderStatement("order by resource.name"))
+            .stream().map(resource -> (Board) resource).collect(Collectors.toList());
+    }
+    
     // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
@@ -65,24 +69,24 @@ public class BoardService {
         Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.AUGMENT, () -> {
             String name = boardDTO.getName();
             validateNameUniqueness(name, department);
-        
+    
             Board board = new Board();
             board.setName(name);
             board.setDescription(boardDTO.getPurpose());
-        
+    
             BoardSettingsDTO settingsDTO = boardDTO.getSettings();
             if (settingsDTO == null) {
                 settingsDTO = new BoardSettingsDTO();
             }
-        
+    
             if (boardDTO.getSettings().getDefaultPostVisibility() == null) {
                 settingsDTO.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
             }
-        
+    
             board = boardRepository.save(board);
             updateBoardSettings(board, settingsDTO, department);
             resourceService.createResourceRelation(department, board);
-        
+    
             userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
         });

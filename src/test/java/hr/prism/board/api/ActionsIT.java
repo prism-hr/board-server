@@ -33,7 +33,7 @@ public class ActionsIT extends AbstractIT {
     private PostApi postApi;
     
     @Inject
-    private DepartmentBoardApi departmentBoardApi;
+    private BoardApi boardApi;
     
     @Inject
     private UserTestService userTestService;
@@ -130,7 +130,7 @@ public class ActionsIT extends AbstractIT {
                 .setSettings(new BoardSettingsDTO()
                     .setHandle("scp")
                     .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
-            return departmentBoardApi.postBoard(boardDTO);
+            return boardApi.postBoard(boardDTO);
         });
     }
     
@@ -138,7 +138,7 @@ public class ActionsIT extends AbstractIT {
         PostDTO postDTO = createSamplePost();
         userTestService.authenticateAs(user);
         return transactionTemplate.execute(transactionStatus -> {
-            BoardRepresentation boardR = departmentBoardApi.getBoard(parentBoardId);
+            BoardRepresentation boardR = boardApi.getBoard(parentBoardId);
     
             return postApi.postPost(boardR.getId(), postDTO);
         });

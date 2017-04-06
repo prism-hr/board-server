@@ -12,6 +12,8 @@ public class PostRepresentation extends AbstractResourceRepresentation {
     
     private String existingRelation;
     
+    private String existingRelationExplanation;
+    
     private List<String> postCategories;
     
     private List<String> memberCategories;
@@ -57,6 +59,15 @@ public class PostRepresentation extends AbstractResourceRepresentation {
     
     public PostRepresentation setExistingRelation(String existingRelation) {
         this.existingRelation = existingRelation;
+        return this;
+    }
+    
+    public String getExistingRelationExplanation() {
+        return existingRelationExplanation;
+    }
+    
+    public PostRepresentation setExistingRelationExplanation(String existingRelationExplanation) {
+        this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }
     

@@ -41,12 +41,6 @@ public class DepartmentService {
     @Inject
     private ActionService actionService;
     
-    public List<Department> getDepartments() {
-        User currentUser = userService.getCurrentUser();
-        return resourceService.getResources(currentUser, new ResourceFilterDTO().setScope(Scope.DEPARTMENT).setOrderStatement("order by resource.name"))
-            .stream().map(resource -> (Department) resource).collect(Collectors.toList());
-    }
-    
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
@@ -57,6 +51,15 @@ public class DepartmentService {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, handle);
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
+    }
+    
+    public List<Department> getDepartments() {
+        User currentUser = userService.getCurrentUser();
+        return resourceService.getResources(currentUser,
+            new ResourceFilterDTO()
+                .setScope(Scope.DEPARTMENT)
+                .setOrderStatement("order by resource.name"))
+            .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
     
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {

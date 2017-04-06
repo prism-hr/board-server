@@ -34,9 +34,14 @@ public class PostApi {
         return postMapper.create(ImmutableSet.of("actions")).apply(post);
     }
     
+    @RequestMapping(value = "posts", method = RequestMethod.GET)
+    public List<PostRepresentation> getPosts() {
+        return postService.getPosts(null).stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
+    }
+    
     @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPosts(@PathVariable Long boardId) {
-        return postService.getPosts().stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
+    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId) {
+        return postService.getPosts(boardId).stream().map(post -> postMapper.create().apply(post)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)

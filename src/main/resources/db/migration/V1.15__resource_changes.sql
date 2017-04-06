@@ -1,5 +1,7 @@
 ALTER TABLE resource
-  ADD COLUMN existing_relation VARCHAR(20),
+  MODIFY COLUMN existing_relation VARCHAR(20),
+  ADD COLUMN existing_relation_explanation TEXT
+  AFTER existing_relation,
   ADD COLUMN parent_id BIGINT UNSIGNED
   AFTER id,
   ADD INDEX (parent_id),
