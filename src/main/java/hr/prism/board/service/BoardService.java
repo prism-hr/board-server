@@ -123,10 +123,6 @@ public class BoardService {
         return updatedBoard;
     }
     
-    public List<Board> findByDepartment(Department department) {
-        return boardRepository.findByDepartment(department);
-    }
-    
     private void validateNameUniqueness(String name, Department department) {
         Board board = boardRepository.findByNameAndDepartment(name, department);
         if (board != null) {

@@ -2,7 +2,6 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
-import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
@@ -326,9 +325,10 @@ public class BoardApiIT extends AbstractIT {
         
         transactionTemplate.execute(transactionStatus -> {
             DepartmentRepresentation departmentR = departmentBoardHelper.verifyGetDepartment(createdDepartmentId);
-            Assert.assertEquals(2, departmentR.getBoards().size());
-            
-            List<String> boardNames = departmentR.getBoards().stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentR.getId());
+            Assert.assertEquals(2, boardRs.size());
+    
+            List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
             Assert.assertThat(boardNames, Matchers.containsInAnyOrder("Board 1", "Board 2"));
             
             departmentApi.updateDepartment(departmentR.getId(),
@@ -344,9 +344,9 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals("Handle2", department.getHandle());
             
             int index = 1;
-            Iterable<Board> boards = boardService.findByDepartment(department);
-            for (Board board : boards) {
-                Assert.assertEquals("Handle2/Handle" + index, board.getHandle());
+            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId());
+            for (BoardRepresentation boardR : boardRs) {
+                Assert.assertEquals("Handle2/Handle" + index, boardR.getHandle());
                 index++;
             }
             
