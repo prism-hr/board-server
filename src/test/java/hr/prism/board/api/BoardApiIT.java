@@ -7,6 +7,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardSettingsDTO;
 import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
@@ -266,19 +267,28 @@ public class BoardApiIT extends AbstractIT {
         
         transactionTemplate.execute(TransactionStatus -> {
             userTestService.setAuthentication(user.getStormpathId());
-            List<BoardRepresentation> boards = boardApi.getBoards();
-            List<DepartmentRepresentation> departments = departmentApi.getDepartments();
-            
-            Assert.assertEquals(2, boards.size());
-            Assert.assertEquals(1, departments.size());
+            List<BoardRepresentation> boardRs = boardApi.getBoards();
+            List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments();
+    
+            Assert.assertEquals(2, boardRs.size());
+            Assert.assertEquals(1, departmentRs.size());
+    
+            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUGMENT)));
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUGMENT)));
             
             userTestService.setAuthentication(otherUser.getStormpathId());
-            boards = boardApi.getBoards();
-            departments = departmentApi.getDepartments();
+            boardRs = boardApi.getBoards();
+            departmentRs = departmentApi.getDepartments();
+    
+            Assert.assertEquals(2, boardRs.size());
+            Assert.assertEquals(1, departmentRs.size());
+    
+            boardRs.stream().filter(boardR -> boardR.getName().equals("Board 1"))
+                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.AUGMENT)));
+            boardRs.stream().filter(boardR -> boardR.getName().equals("Board 2"))
+                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUGMENT)));
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.AUGMENT)));
             
-            Assert.assertEquals(1, boards.size());
-            Assert.assertEquals("Board 2", boards.get(0).getName());
-            Assert.assertEquals(0, departments.size());
             return null;
         });
     }
