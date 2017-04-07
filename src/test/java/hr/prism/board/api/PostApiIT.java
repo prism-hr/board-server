@@ -186,8 +186,8 @@ public class PostApiIT extends AbstractIT {
             postApi.postPost(boardR.getId(), postDTO2);
     
             List<PostRepresentation> posts = postApi.getPostsByBoard(boardR.getId());
-            assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post1")),
-                hasProperty("name", equalTo("shouldGetPosts Post2"))));
+            assertThat(posts, contains(hasProperty("name", equalTo("shouldGetPosts Post2")),
+                hasProperty("name", equalTo("shouldGetPosts Post1"))));
             return null;
         });
     }
