@@ -235,7 +235,11 @@ public class ResourceService {
         // Get the resource data
         List<Resource> resources = transactionTemplate.execute(status -> {
             String statement = Joiner.on(" ").skipNulls().join(
-                "select resource from " + resourceClass.getSimpleName() + " resource where resource.id in (:ids)", filter.getOrderStatement());
+                "select resource #" +
+                    "from " + resourceClass.getSimpleName() + " resource " +
+                    "where resource.id in (:ids) " +
+                    "group by resource.id",
+                filter.getOrderStatement());
             
             return entityManager.createQuery(statement, resourceClass)
                 .setParameter("ids", resourceActionIndex.keySet())
