@@ -346,7 +346,7 @@ public class BoardApiIT extends AbstractIT {
             int index = 1;
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId());
             for (BoardRepresentation boardR : boardRs) {
-                Assert.assertEquals("Handle2/Handle" + index, boardR.getHandle());
+                Assert.assertEquals("Handle2/Handle" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
             
