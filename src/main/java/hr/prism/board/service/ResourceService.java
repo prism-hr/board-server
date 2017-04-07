@@ -235,7 +235,7 @@ public class ResourceService {
         // Get the resource data
         List<Resource> resources = transactionTemplate.execute(status -> {
             String statement = Joiner.on(" ").skipNulls().join(
-                "select resource #" +
+                "select resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
                     "where resource.id in (:ids) " +
                     "group by resource.id",
