@@ -21,15 +21,15 @@ import static hr.prism.board.enums.State.*;
 @Service
 @Transactional
 public class PermissionInstaller {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionInstaller.class);
-    
+
     @PersistenceContext
     private EntityManager entityManager;
-    
+
     @Inject
     private PlatformTransactionManager platformTransactionManager;
-    
+
     @PostConstruct
     public void install() {
         Permissions permissions = new Permissions()
@@ -37,7 +37,7 @@ public class PermissionInstaller {
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
-            
+
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
@@ -46,7 +46,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
-            
+
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
@@ -85,7 +85,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
-            
+
             // Post suspended state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
@@ -125,7 +125,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(REJECTED).transitioningTo(WITHDRAWN)
-            
+
             // Post withdrawn state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
@@ -134,18 +134,18 @@ public class PermissionInstaller {
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS);
-        
+
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         transactionTemplate.execute(transactionStatus -> {
             LOGGER.info("Deleting old permission definitions");
             entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
-    
+
             LOGGER.info("Inserting new permission definitions");
             entityManager.createNativeQuery("INSERT INTO permission(resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state) " +
                 "VALUES" + permissions.toString()).executeUpdate();
-            
+
             return null;
         });
     }
-    
+
 }

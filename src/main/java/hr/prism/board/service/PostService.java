@@ -1,10 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.LocationDTO;
-import hr.prism.board.dto.PostDTO;
-import hr.prism.board.dto.ResourceFilterDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
@@ -26,37 +23,37 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class PostService {
-    
+
     @Inject
     private PostRepository postRepository;
-    
+
     @Inject
     private CategoryRepository categoryRepository;
-    
+
     @Inject
     private DocumentService documentService;
-    
+
     @Inject
     private LocationService locationService;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserService userService;
-    
+
     @Inject
     private ActionService actionService;
-    
+
     public Post getPost(Long id) {
         User currentUser = userService.getCurrentUser();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
         return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
-    
+
     public List<Post> getPosts(Long boardId) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -66,36 +63,44 @@ public class PostService {
                 .setOrderStatement("order by resource.updatedTimestamp desc"))
             .stream().map(resource -> (Post) resource).collect(Collectors.toList());
     }
-    
+
     public Post createPost(Long boardId, PostDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.EXTEND, () -> {
             Post post = new Post();
             Department department = (Department) board.getParent();
-            updateProperties(post, postDTO, board, department);
-    
+
+            post.setName(postDTO.getName());
+            post.setDescription(postDTO.getDescription());
+            post.setOrganizationName(postDTO.getOrganizationName());
+            post.setExistingRelation(postDTO.getExistingRelation());
+            post.setExistingRelationExplanation(postDTO.getExistingRelationExplanation());
+            post.setApplyWebsite(postDTO.getApplyWebsite());
+            post.setApplyEmail(postDTO.getApplyEmail());
+
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
             }
-    
+
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
             post = postRepository.save(post);
-    
-            updateCategories(post, postDTO, board, department);
+
+            updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
+            updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories(), department);
             resourceService.createResourceRelation(board, post);
             userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
             return post;
         });
-    
+
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
             throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
         }
-    
+
         return createdPost;
     }
-    
-    public Post executeAction(Long id, Action action, PostDTO postDTO) {
+
+    public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
         return (Post) actionService.executeAction(currentUser, post, action, () -> {
@@ -107,55 +112,68 @@ public class PostService {
                     return post;
                 });
             }
-            
+
             return post;
         });
     }
-    
-    private void updateProperties(Post post, PostDTO postDTO, Board board, Department department) {
-        post.setName(postDTO.getName());
-        post.setDescription(postDTO.getDescription());
-        post.setOrganizationName(postDTO.getOrganizationName());
-        post.setExistingRelation(postDTO.getExistingRelation());
-        post.setExistingRelationExplanation(postDTO.getExistingRelationExplanation());
-        post.setApplyWebsite(postDTO.getApplyWebsite());
-        post.setApplyEmail(postDTO.getApplyEmail());
-    }
-    
-    private void updateCategories(Post post, PostDTO postDTO, Board board, Department department) {
-        categoryRepository.deleteByResource(post);
-        Set<ResourceCategory> categories = post.getCategories();
-        categories.clear();
-        
-        List<ResourceCategory> newCategories = categoryRepository.findByResourceAndTypeAndNameIn(board, CategoryType.POST, postDTO.getPostCategories());
-        newCategories.addAll(categoryRepository.findByResourceAndTypeAndNameIn(department, CategoryType.MEMBER, postDTO.getMemberCategories()));
+
+    private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource parentResource) {
+        categoryRepository.deleteByResourceAndType(post, categoryType);
+        Set<ResourceCategory> savedCategories = post.getCategories();
+        savedCategories.removeIf(next -> next.getType() == categoryType);
+
+        List<ResourceCategory> newCategories = categoryRepository.findByResourceAndTypeAndNameIn(parentResource, categoryType, categories);
         newCategories.forEach(category -> {
             ResourceCategory insertCategory = new ResourceCategory().setResource(post).setName(category.getName()).setActive(true).setType(category.getType());
             insertCategory.setCreatedTimestamp(LocalDateTime.now());
             insertCategory = categoryRepository.save(insertCategory);
-            categories.add(insertCategory);
+            savedCategories.add(insertCategory);
         });
     }
-    
-    private void updatePost(Post post, PostDTO postDTO) {
+
+    private void updatePost(Post post, PostPatchDTO postDTO) {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
-        updateProperties(post, postDTO, board, department);
-        updateCategories(post, postDTO, board, department);
-        
-        // update applyDocument
-        String existingApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
-        String newApplyDocumentId = Optional.ofNullable(postDTO.getApplyDocument()).map(DocumentDTO::getCloudinaryId).orElse(null);
-        if (!Objects.equals(existingApplyDocumentId, newApplyDocumentId)) {
-            post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
+
+        if (postDTO.getName() != null) {
+            post.setName(postDTO.getName().orElse(null));
         }
-        
+        if (postDTO.getDescription() != null) {
+            post.setDescription(postDTO.getDescription().orElse(null));
+        }
+        if (postDTO.getOrganizationName() != null) {
+            post.setOrganizationName(postDTO.getOrganizationName().orElse(null));
+        }
+        if (postDTO.getApplyWebsite() != null) {
+            post.setApplyWebsite(postDTO.getApplyWebsite().orElse(null));
+        }
+        if (postDTO.getApplyEmail() != null) {
+            post.setApplyEmail(postDTO.getApplyEmail().orElse(null));
+        }
+        if (postDTO.getPostCategories() != null) {
+            updateCategories(post, CategoryType.POST, postDTO.getPostCategories().orElse(null), board);
+        }
+        if (postDTO.getMemberCategories() != null) {
+            updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories().orElse(null), department);
+        }
+
+        // update applyDocument
+        if (postDTO.getApplyDocument() != null) {
+            String existingApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
+            String newApplyDocumentId = postDTO.getApplyDocument().map(DocumentDTO::getCloudinaryId).orElse(null);
+            if (!Objects.equals(existingApplyDocumentId, newApplyDocumentId)) {
+                post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument().orElse(null)));
+            }
+        }
+
         // update location
-        String existingLocationId = Optional.ofNullable(post.getLocation()).map(Location::getGoogleId).orElse(null);
-        String newLocationId = Optional.ofNullable(postDTO.getLocation()).map(LocationDTO::getGoogleId).orElse(null);
-        if (!Objects.equals(existingLocationId, newLocationId)) {
-            post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
+        if (postDTO.getLocation() != null) {
+            String existingLocationId = Optional.ofNullable(post.getLocation()).map(Location::getGoogleId).orElse(null);
+            String newLocationId = postDTO.getLocation().map(LocationDTO::getGoogleId).orElse(null);
+            if (!Objects.equals(existingLocationId, newLocationId)) {
+                post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation().orElse(null)));
+            }
         }
     }
-    
+
 }
