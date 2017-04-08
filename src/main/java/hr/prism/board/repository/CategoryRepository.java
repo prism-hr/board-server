@@ -10,13 +10,14 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface CategoryRepository extends MyRepository<ResourceCategory, Long> {
-    
+
     List<ResourceCategory> findByResourceAndTypeAndNameIn(Resource resource, CategoryType type, List<String> names);
-    
+
     @Modifying
     @Query(value =
         "delete from ResourceCategory resourceCategory " +
-            "where resourceCategory.resource = :resource")
-    void deleteByResource(@Param("resource") Resource resource);
-    
+            "where resourceCategory.resource = :resource " +
+            "and resourceCategory.type = :type")
+    void deleteByResourceAndType(@Param("resource") Resource resource, @Param("type") CategoryType type);
+
 }

@@ -8,7 +8,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import java.util.List;
 
-public class PostDTO extends ResourceDTO<PostDTO> {
+public class PostDTO {
+
+    @NotEmpty
+    @Size(max = 255)
+    private String name;
 
     @NotEmpty
     @Size(max = 2000)
@@ -22,9 +26,9 @@ public class PostDTO extends ResourceDTO<PostDTO> {
     private LocationDTO location;
 
     private RelationWithDepartment existingRelation;
-    
+
     private String existingRelationExplanation;
-    
+
     private List<String> postCategories;
 
     private List<String> memberCategories;
@@ -37,6 +41,15 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     @Email
     private String applyEmail;
+
+    public String getName() {
+        return name;
+    }
+
+    public PostDTO setName(String name) {
+        this.name = name;
+        return this;
+    }
 
     public String getDescription() {
         return description;
@@ -73,16 +86,16 @@ public class PostDTO extends ResourceDTO<PostDTO> {
         this.existingRelation = existingRelation;
         return this;
     }
-    
+
     public String getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
-    
+
     public PostDTO setExistingRelationExplanation(String existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }
-    
+
     public List<String> getPostCategories() {
         return postCategories;
     }

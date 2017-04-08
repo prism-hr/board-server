@@ -20,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -35,7 +36,7 @@ public class ActionsIT extends AbstractIT {
 
     @Inject
     private BoardApi boardApi;
-    
+
     @Inject
     private UserTestService userTestService;
 
@@ -49,7 +50,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.acceptPost(samplePost.getId(), createSamplePost().setDescription("Corrected desc"));
+            postApi.acceptPost(samplePost.getId(), new PostPatchDTO().setDescription(Optional.of("Corrected desc")));
             return null;
         });
 
@@ -72,7 +73,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.rejectPost(samplePost.getId(), createSamplePost());
+            postApi.rejectPost(samplePost.getId(), new PostPatchDTO());
             return null;
         });
 
@@ -94,7 +95,7 @@ public class ActionsIT extends AbstractIT {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-            postApi.suspendPost(samplePost.getId(), createSamplePost());
+            postApi.suspendPost(samplePost.getId(), new PostPatchDTO());
             return null;
         });
 
@@ -103,10 +104,10 @@ public class ActionsIT extends AbstractIT {
             PostRepresentation postR = postApi.getPost(samplePost.getId());
             assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.EDIT, Action.VIEW, Action.CORRECT, Action.WITHDRAW));
             assertEquals(State.SUSPENDED, postR.getState());
-            postApi.correctPost(samplePost.getId(), createSamplePost().setName("Corrected name"));
+            postApi.correctPost(samplePost.getId(), new PostPatchDTO().setName(Optional.of("Corrected name")));
             return null;
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             userTestService.authenticateAs("department@poczta.fm");
             PostRepresentation postR = postApi.getPost(samplePost.getId());
@@ -124,13 +125,12 @@ public class ActionsIT extends AbstractIT {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("ActionsIT Board")
                 .setPurpose("Purpose")
+                .setHandle("scp")
+                .setPostCategories(ImmutableList.of("p1", "p2", "p3"))
                 .setDepartment(new DepartmentDTO()
                     .setName("ActionsIT Department")
                     .setHandle("scp")
-                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")))
-                .setSettings(new BoardSettingsDTO()
-                    .setHandle("scp")
-                    .setPostCategories(ImmutableList.of("p1", "p2", "p3")));
+                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")));
             return boardApi.postBoard(boardDTO);
         });
     }
@@ -140,7 +140,7 @@ public class ActionsIT extends AbstractIT {
         userTestService.authenticateAs(user);
         return transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation boardR = boardApi.getBoard(parentBoardId);
-    
+
             return postApi.postPost(boardR.getId(), postDTO);
         });
     }
@@ -160,5 +160,6 @@ public class ActionsIT extends AbstractIT {
             .setMemberCategories(Collections.emptyList())
             .setExistingRelation(RelationWithDepartment.FAMILY);
     }
-    
+
+
 }
