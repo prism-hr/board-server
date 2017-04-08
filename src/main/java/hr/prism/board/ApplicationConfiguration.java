@@ -5,6 +5,8 @@ import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
 import hr.prism.board.repository.MyRepositoryImpl;
 import hr.prism.board.service.UserService;
 import org.flywaydb.core.Flyway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
@@ -25,6 +27,8 @@ import java.util.Properties;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
     
     @Inject
     private Environment environment;
@@ -47,9 +51,12 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
     
     @Bean
     public DataSource dataSource() {
+        String host = environment.getProperty("database.host");
+        LOGGER.info("Creating datasource using: " + host);
+        
         return DataSourceBuilder.create()
             .driverClassName("com.mysql.cj.jdbc.Driver")
-            .url("jdbc:mysql://" + environment.getProperty("database.host") + "/" + environment.getProperty("database.schema") +
+            .url("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
                 "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
             .username("prism")
             .password("pgadmissions")
@@ -97,4 +104,5 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
         builder.indentOutput(true);
         return builder;
     }
+    
 }

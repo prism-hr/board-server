@@ -70,7 +70,7 @@ public class PostService {
     public Post createPost(Long boardId, PostDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
-        Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.AUGMENT, () -> {
+        Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.EXTEND, () -> {
             Post post = new Post();
             Department department = (Department) board.getParent();
             updateProperties(post, postDTO, board, department);

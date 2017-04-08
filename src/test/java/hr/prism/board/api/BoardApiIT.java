@@ -273,8 +273,8 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
     
-            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUGMENT)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUGMENT)));
+            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             
             userTestService.setAuthentication(otherUser.getStormpathId());
             boardRs = boardApi.getBoards();
@@ -284,10 +284,10 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(1, departmentRs.size());
     
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 1"))
-                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.AUGMENT)));
+                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 2"))
-                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUGMENT)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.AUGMENT)));
+                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
             
             return null;
         });

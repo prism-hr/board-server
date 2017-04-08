@@ -66,7 +66,7 @@ public class BoardService {
     public Board createBoard(BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-        Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.AUGMENT, () -> {
+        Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
             String name = boardDTO.getName();
             validateNameUniqueness(name, department);
     
