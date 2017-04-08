@@ -71,4 +71,5 @@ public class BoardDTO {
         this.department = department;
         return this;
     }
+    
 }

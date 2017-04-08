@@ -61,7 +61,20 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(DRAFT).transitioningTo(WITHDRAWN)
-
+    
+            // Post pending state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
+            .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(PENDING)
+            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(PENDING)
+            .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(PENDING)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(PENDING).transitioningTo(SUSPENDED)
+            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(PENDING).transitioningTo(SUSPENDED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
+            .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
+            
             // Post accepted state
             .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
@@ -86,7 +99,20 @@ public class PermissionInstaller {
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(CORRECT, POST).inState(SUSPENDED).transitioningTo(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(SUSPENDED).transitioningTo(WITHDRAWN)
-
+    
+            // Post expired state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
+            .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(EXPIRED)
+            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(EXPIRED)
+            .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(EXPIRED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(EXPIRED).transitioningTo(SUSPENDED)
+            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(EXPIRED).transitioningTo(SUSPENDED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
+            .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(EXPIRED).transitioningTo(WITHDRAWN)
+            
             // Post rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)

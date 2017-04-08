@@ -120,6 +120,7 @@ public class DepartmentService {
                 if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {
                     throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
                 }
+    
                 department.setName(newName);
             }
 
@@ -145,6 +146,7 @@ public class DepartmentService {
             if (departmentDTO.getMemberCategories() != null) {
                 resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(null), CategoryType.MEMBER);
             }
+    
             return department;
         });
 

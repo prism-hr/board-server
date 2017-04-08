@@ -351,7 +351,7 @@ public class BoardApiIT extends AbstractIT {
                     .setMemberCategories(new ArrayList<>()));
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
-
+    
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO()
                 .setName(Optional.of("sub newName"))
                 .setPurpose(Optional.of("Purpose2"))
@@ -373,7 +373,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldCreateMultipleBoardsAndGetCorrectResourceListsForUser() {
         User user = userTestService.authenticate();
