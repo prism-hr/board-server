@@ -258,6 +258,15 @@ public class BoardApiIT extends AbstractIT {
                 .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
 
+            userTestService.setAuthentication(null);
+            boardRs = boardApi.getBoards();
+            departmentRs = departmentApi.getDepartments();
+
+            Assert.assertEquals(2, boardRs.size());
+            Assert.assertEquals(1, departmentRs.size());
+
+            Assert.assertThat(boardRs, Matchers.everyItem(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW))));
+            Assert.assertThat(departmentRs, Matchers.contains(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW))));
             return null;
         });
     }

@@ -15,42 +15,43 @@ import javax.inject.Inject;
 @Service
 @Transactional
 public class UserService {
-    
+
     @Inject
     private AccountResolver accountResolver;
-    
+
     @Inject
     private UserRepository userRepository;
-    
+
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
         }
-        
-        org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-        if (user == null) {
+
+        Object principal =  authentication.getPrincipal();
+        if (principal == null || !(principal instanceof org.springframework.security.core.userdetails.User)) {
             return null;
         }
-        
+
+        org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) principal;
         String username = user.getUsername();
         String stormpathId = username.substring(username.lastIndexOf('/') + 1);
         return userRepository.findByStormpathId(stormpathId);
     }
-    
+
     public User getCurrentUserSecured() {
         User user = getCurrentUser();
         if (user == null) {
             throw new ApiForbiddenException("User not authenticated");
         }
-        
+
         return user;
     }
-    
+
     public User findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
-    
+
     public User createUser(Account account) {
         User user = new User();
         user.setEmail(account.getEmail());
@@ -61,5 +62,5 @@ public class UserService {
         user.setStormpathId(stormpathId);
         return userRepository.save(user);
     }
-    
+
 }
