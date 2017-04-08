@@ -37,15 +37,15 @@ public class DepartmentBoardHelper {
     public void verifyBoard(User user, BoardDTO boardDTO, BoardRepresentation boardR, boolean expectDepartmentAdministrator) {
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
         Assert.assertEquals(boardDTO.getPurpose(), boardR.getPurpose());
-        Assert.assertEquals(boardDTO.getSettings().getHandle(), boardR.getHandle());
-        Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getSettings().getPostCategories().stream().toArray(String[]::new)));
-        Assert.assertEquals(boardDTO.getSettings().getDefaultPostVisibility(), boardR.getDefaultPostVisibility());
-        
+        Assert.assertEquals(boardDTO.getHandle(), boardR.getHandle());
+        Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getPostCategories().toArray(new String[0])));
+        Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
+
         DepartmentRepresentation departmentR = boardR.getDepartment();
         Assert.assertEquals(boardDTO.getDepartment().getName(), departmentR.getName());
         Assert.assertEquals(boardDTO.getDepartment().getHandle(), departmentR.getHandle());
-        Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().stream().toArray(String[]::new)));
-        
+        Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().toArray(new String[0])));
+
         Board board = boardService.getBoard(boardR.getId());
         Department department = departmentService.getDepartment(departmentR.getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());

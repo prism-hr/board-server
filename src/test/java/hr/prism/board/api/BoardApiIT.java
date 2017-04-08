@@ -76,29 +76,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-    
-    @Test
-    public void shouldCreateBoardWithDefaultPostVisibilityLevel() {
-        User user = userTestService.authenticate();
-        transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO = new BoardDTO()
-                .setName("shouldCreateBoardDefaultPostVisibility Board")
-                .setPurpose("Purpose")
-                .setDepartment(new DepartmentDTO()
-                    .setName("shouldCreateBoardDefaultPostVisibility Department")
-                    .setHandle("scbdpv")
-                    .setMemberCategories(ImmutableList.of("category1", "category2")))
-                .setSettings(new BoardSettingsDTO()
-                    .setHandle("scbdpv")
-                    .setPostCategories(ImmutableList.of("category3", "category4")));
-            
-            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            boardDTO.getSettings().setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
-            return null;
-        });
-    }
-    
+
     @Test
     public void shouldNotCreateDuplicateBoard() {
         User user = userTestService.authenticate();
@@ -364,11 +342,14 @@ public class BoardApiIT extends AbstractIT {
                     .setMemberCategories(new ArrayList<>()));
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
-            
-            boardApi.updateBoardSettings(boardR.getId(), new BoardSettingsDTO()
-                .setHandle("subs2")
-                .setPostCategories(ImmutableList.of("c"))
-                .setDefaultPostVisibility(PostVisibility.PUBLIC));
+    
+            BoardPatchDTO boardPatchDTO = new BoardPatchDTO()
+                .setName(Optional.of("sub newName"))
+                .setPurpose(Optional.of("Purpose2"))
+                .setHandle(Optional.of("sub2"))
+                .setPostCategories(Optional.of(ImmutableList.of("c")))
+                .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC));
+            boardApi.updateBoard(boardR.getId(), boardPatchDTO);
             return boardR.getId();
         });
 
@@ -380,37 +361,6 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals("sub2", boardR.getHandle());
             Assert.assertThat(boardR.getPostCategories(), Matchers.contains("c"));
             Assert.assertEquals(PostVisibility.PUBLIC, boardR.getDefaultPostVisibility());
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldCreateBoardAndUpdateCategoriesForBoardAndDepartment() {
-        userTestService.authenticate();
-        BoardSettingsDTO settingsDTO = new BoardSettingsDTO()
-            .setHandle("sudc")
-            .setPostCategories(ImmutableList.of("b1", "b2"));
-        DepartmentDTO departmentDTO = new DepartmentDTO()
-            .setName("shouldUpdateDepartmentCategories Department 1")
-            .setHandle("sudc")
-            .setMemberCategories(ImmutableList.of("d1", "d2"));
-        
-        BoardRepresentation savedBoard = transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO1 = new BoardDTO()
-                .setName("shouldUpdateDepartmentCategories Board 1")
-                .setPurpose("Purpose")
-                .setDepartment(departmentDTO)
-                .setSettings(settingsDTO);
-            BoardRepresentation board = boardApi.postBoard(boardDTO1);
-            boardApi.updateBoardSettings(board.getId(), settingsDTO.setPostCategories(ImmutableList.of("b2", "b3")));
-            departmentApi.updateDepartment(board.getDepartment().getId(), departmentDTO.setMemberCategories(ImmutableList.of("d1", "d3")));
-            return board;
-        });
-        
-        transactionTemplate.execute(transactionStatus -> {
-            BoardRepresentation updatedBoard = boardApi.getBoard(savedBoard.getId());
-            Assert.assertThat(updatedBoard.getPostCategories(), Matchers.containsInAnyOrder("b2", "b3"));
-            Assert.assertThat(updatedBoard.getDepartment().getMemberCategories(), Matchers.containsInAnyOrder("d1", "d3"));
             return null;
         });
     }
