@@ -14,7 +14,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.UserTestService;
 import org.hamcrest.Matchers;
@@ -44,9 +43,6 @@ public class BoardApiIT extends AbstractIT {
 
     @Inject
     private BoardApi boardApi;
-
-    @Inject
-    private BoardService boardService;
 
     @Inject
     private DepartmentService departmentService;
@@ -257,17 +253,16 @@ public class BoardApiIT extends AbstractIT {
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 2"))
                 .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
-
-            // TODO uncomment following lines:
-//            userTestService.setAuthentication(null);
-//            boardRs = boardApi.getBoards();
-//            departmentRs = departmentApi.getDepartments();
-//
-//            Assert.assertEquals(2, boardRs.size());
-//            Assert.assertEquals(1, departmentRs.size());
-//
-//            Assert.assertThat(boardRs, Matchers.everyItem(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW))));
-//            Assert.assertThat(departmentRs, Matchers.contains(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW))));
+    
+            userTestService.setAuthentication(null);
+            boardRs = boardApi.getBoards();
+            departmentRs = departmentApi.getDepartments();
+    
+            Assert.assertEquals(2, boardRs.size());
+            Assert.assertEquals(1, departmentRs.size());
+    
+            Assert.assertThat(boardRs, Matchers.everyItem(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND))));
+            Assert.assertThat(departmentRs, Matchers.contains(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND))));
             return null;
         });
     }

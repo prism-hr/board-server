@@ -30,7 +30,15 @@ import java.util.*;
 @Service
 @Transactional
 public class ResourceService {
-
+    
+    private static final String PUBLIC_RESOURCE_ACTION =
+        "select resource.id, permission.action, " +
+            "permission.resource3_scope, permission.resource3_state " +
+            "from resource " +
+            "inner join permission " +
+            "on resource.scope = permission.resource2_scope " +
+            "and resource.state = permission.resource2_state";
+    
     private static final String SECURE_RESOURCE_ACTION =
         "select resource.id, permission.action, " +
             "permission.resource3_scope, permission.resource3_state " +
@@ -46,14 +54,6 @@ public class ResourceService {
             "inner join user_role " +
             "on parent.id = user_role.resource_id " +
             "and permission.role = user_role.role";
-
-    private static final String PUBLIC_RESOURCE_ACTION =
-        "select resource.id, permission.action, " +
-            "permission.resource3_scope, permission.resource3_state " +
-            "from resource " +
-            "inner join permission " +
-            "on resource.scope = permission.resource2_scope " +
-            "and resource.state = permission.resource2_state";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
@@ -147,17 +147,15 @@ public class ResourceService {
     }
 
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
-        entityManager.flush();
-
-        List<String> secureFilterStatements = new ArrayList<>();
-        secureFilterStatements.add("user_role.user_id = :userId");
-        Map<String, String> secureFilterParameters = new HashMap<>();
-        secureFilterParameters.put("userId", user.getId().toString());
-
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("permission.role = :role");
         Map<String, String> publicFilterParameters = new HashMap<>();
         publicFilterParameters.put("role", Role.PUBLIC.name());
+
+        List<String> secureFilterStatements = new ArrayList<>();
+        secureFilterStatements.add("user_role.user_id = :userId");
+        Map<String, String> secureFilterParameters = new HashMap<>();
+        secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
 
         // Unwrap the filters
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
@@ -171,8 +169,8 @@ public class ResourceService {
                         String parameter = resourceFilter.parameter();
 
                         secureFilterStatements.add(statement);
-                        secureFilterParameters.put(parameter, value.toString()
-                        );
+                        secureFilterParameters.put(parameter, value.toString());
+                        
                         if (!resourceFilter.secured()) {
                             publicFilterStatements.add(statement);
                             publicFilterParameters.put(parameter, value.toString());
@@ -185,10 +183,11 @@ public class ResourceService {
         }
 
         // Get the mappings
+        entityManager.flush();
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<Object[]> results = getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
-            results.addAll(getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters));
+            List<Object[]> results = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
+            results.addAll(getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters));
             return results;
         });
 
