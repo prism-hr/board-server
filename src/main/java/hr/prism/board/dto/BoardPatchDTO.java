@@ -14,8 +14,8 @@ public class BoardPatchDTO {
 
     @Size(max = 2000)
     private Optional<String> purpose;
-
-    @Size(max = 15)
+    
+    @Size(max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
 

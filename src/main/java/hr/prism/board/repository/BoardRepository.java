@@ -5,6 +5,8 @@ import hr.prism.board.domain.Department;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface BoardRepository extends MyRepository<Board, Long> {
     
     Board findByHandle(String handle);
@@ -21,7 +23,7 @@ public interface BoardRepository extends MyRepository<Board, Long> {
         "select board.handle " +
             "from Board board " +
             "where board.handle like concat('%', :suggestedHandle) " +
-            "order by board.handle")
-    String findBySuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
+            "order by board.handle desc")
+    List<String> findHandleLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
     
 }

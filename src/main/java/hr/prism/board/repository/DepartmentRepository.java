@@ -23,7 +23,7 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
         "select department.handle " +
             "from Department department " +
             "where department.handle like concat('%', :suggestedHandle) " +
-            "order by department.handle")
-    String findBySuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
+            "order by department.handle desc")
+    List<String> findHandleLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
     
 }

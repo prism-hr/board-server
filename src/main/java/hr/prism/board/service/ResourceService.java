@@ -11,6 +11,7 @@ import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import javax.persistence.Query;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -278,6 +280,32 @@ public class ResourceService {
         }
         
         return suggestion;
+    }
+    
+    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
+        if (similarHandles.contains(suggestedHandle)) {
+            
+            int ordinal = 1;
+            int suggestedHandleLength = suggestedHandle.length();
+            List<String> trimmedSimilarHandles = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
+            for (String trimmedSimilarHandle : trimmedSimilarHandles) {
+                if (trimmedSimilarHandle.startsWith("-")) {
+                    String[] parts = trimmedSimilarHandle.replaceFirst("-", "").split("-");
+                    String firstPart = parts[0];
+                    
+                    // We only care about creating a unique value in a formatted sequence
+                    // We can ignore anything else that has been reformatted by an end user
+                    if (parts.length == 1 && StringUtils.isNumeric(firstPart)) {
+                        ordinal = Integer.parseInt(firstPart) + 1;
+                        break;
+                    }
+                }
+            }
+            
+            return suggestedHandle + "-" + ordinal;
+        }
+        
+        return suggestedHandle;
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {

@@ -13,8 +13,8 @@ public class DepartmentPatchDTO {
 
     @Valid
     private Optional<DocumentDTO> documentLogo;
-
-    @Size(max = 15)
+    
+    @Size(max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
 

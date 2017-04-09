@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,37 +25,37 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DepartmentService {
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private DocumentService documentService;
-
+    
     @Inject
     private DepartmentRepository departmentRepository;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
-
+    
     public Department getDepartment(String handle) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, handle);
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
-
+    
     public List<Department> getDepartments() {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -63,24 +64,24 @@ public class DepartmentService {
                 .setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
-
+    
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
-
+        
         Department departmentById = null;
         Department departmentByName = null;
         for (Department department : departmentRepository.findByIdOrName(departmentDTO.getId(), name)) {
             if (department.getId().equals(id)) {
                 departmentById = department;
             }
-
+    
             if (department.getName().equals(name)) {
                 departmentByName = department;
                 break;
             }
         }
-
+        
         Department department;
         User currentUser = userService.getCurrentUserSecured();
         if (departmentById != null) {
@@ -94,24 +95,23 @@ public class DepartmentService {
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
-
-            String handle = departmentDTO.getHandle();
-            if (departmentRepository.findByHandle(handle) != null) {
-                throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
-            }
-
-            resourceService.updateHandle(department, departmentDTO.getHandle());
+    
+            String handle = ResourceService.suggestHandle(name);
+            List<String> similarHandles = departmentRepository.findHandleLikeSuggestedHandle(handle);
+            handle = ResourceService.confirmHandle(handle, similarHandles);
+    
+            resourceService.updateHandle(department, handle);
             List<String> memberCategories = departmentDTO.getMemberCategories();
-
+    
             department = departmentRepository.save(department);
             resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
             resourceService.createResourceRelation(department, department);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
         }
-
+        
         return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
     }
-
+    
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
@@ -124,7 +124,7 @@ public class DepartmentService {
     
                 department.setName(newName);
             }
-
+    
             if (departmentDTO.getDocumentLogo() != null) {
                 String existingLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
                 String newLogoId = departmentDTO.getDocumentLogo().map(DocumentDTO::getCloudinaryId).orElse(null);
@@ -132,30 +132,26 @@ public class DepartmentService {
                     department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo().orElse(null)));
                 }
             }
-
+    
             if (departmentDTO.getHandle() != null) {
                 String newHandle = departmentDTO.getHandle().orElse(null);
                 if (!newHandle.equals(department.getHandle())) {
                     if (departmentRepository.findByHandle(newHandle) != null) {
                         throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
                     }
-
+    
                     resourceService.updateHandle(department, newHandle);
                 }
             }
-
+    
             if (departmentDTO.getMemberCategories() != null) {
-                resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(null), CategoryType.MEMBER);
+                resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(Collections.emptyList()), CategoryType.MEMBER);
             }
     
             return department;
         });
-
+        
         return updatedDepartment;
     }
     
-    public String getSuggestedHandle(String name) {
-        return null;
-    }
-
 }
