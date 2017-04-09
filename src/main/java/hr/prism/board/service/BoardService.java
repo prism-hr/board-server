@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,28 +96,40 @@ public class BoardService {
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
         Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
             Department department = (Department) board.getParent();
-            if (boardDTO.getName() != null) {
-                String newName = boardDTO.getName().orElse(null);
-                if (!newName.equals(board.getName())) {
-                    validateNameUniqueness(newName, department);
+            // TODO: test coverage
+            Optional<String> nameOptional = boardDTO.getName();
+            if (nameOptional != null) {
+                if (nameOptional.isPresent()) {
+                    String name = nameOptional.get();
+                    if (!name.equals(board.getName())) {
+                        validateNameUniqueness(name, department);
+                    }
+            
+                    board.setName(name);
                 }
-    
-                board.setName(boardDTO.getName().orElse(null));
+        
+                throw new IllegalStateException("Attempted to set board name to null");
             }
     
             if (boardDTO.getPurpose() != null) {
                 board.setDescription(boardDTO.getPurpose().orElse(null));
             }
     
-            if (boardDTO.getHandle() != null) {
-                String handle = department.getHandle() + "/" + boardDTO.getHandle().orElse(null);
-                if (!handle.equals(board.getHandle())) {
-                    if (boardRepository.findByHandle(handle) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
+            // TODO: test coverage
+            Optional<String> handleOptional = boardDTO.getHandle();
+            if (handleOptional != null) {
+                if (handleOptional.isPresent()) {
+                    String handle = department.getHandle() + "/" + handleOptional.get();
+                    if (!handle.equals(board.getHandle())) {
+                        if (boardRepository.findByHandle(handle) != null) {
+                            throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
+                        }
+                
+                        resourceService.updateHandle(board, handle);
                     }
-            
-                    resourceService.updateHandle(board, handle);
                 }
+        
+                throw new IllegalStateException("Attempted to set board handle to null");
             }
     
             if (boardDTO.getPostCategories() != null) {

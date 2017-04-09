@@ -116,13 +116,19 @@ public class DepartmentService {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         Department updatedDepartment = (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
-            if (departmentDTO.getName() != null) {
-                String newName = departmentDTO.getName().orElse(null);
-                if (!newName.equals(department.getName()) && departmentRepository.findByName(newName) != null) {
-                    throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
+            // TODO: test coverage
+            Optional<String> nameOptional = departmentDTO.getName();
+            if (nameOptional != null) {
+                if (nameOptional.isPresent()) {
+                    String name = nameOptional.get();
+                    if (!name.equals(department.getName()) && departmentRepository.findByName(name) != null) {
+                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
+                    }
+            
+                    department.setName(name);
                 }
-    
-                department.setName(newName);
+        
+                throw new IllegalStateException("Attempted to set department name to null");
             }
     
             if (departmentDTO.getDocumentLogo() != null) {
@@ -133,15 +139,21 @@ public class DepartmentService {
                 }
             }
     
-            if (departmentDTO.getHandle() != null) {
-                String newHandle = departmentDTO.getHandle().orElse(null);
-                if (!newHandle.equals(department.getHandle())) {
-                    if (departmentRepository.findByHandle(newHandle) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+            // TODO: test coverage
+            Optional<String> handleOptional = departmentDTO.getHandle();
+            if (handleOptional != null) {
+                if (handleOptional.isPresent()) {
+                    String handle = handleOptional.get();
+                    if (!handle.equals(department.getHandle())) {
+                        if (departmentRepository.findByHandle(handle) != null) {
+                            throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+                        }
+                
+                        resourceService.updateHandle(department, handle);
                     }
-    
-                    resourceService.updateHandle(department, newHandle);
                 }
+        
+                throw new IllegalStateException("Attempted to set department handle to null");
             }
     
             if (departmentDTO.getMemberCategories() != null) {
