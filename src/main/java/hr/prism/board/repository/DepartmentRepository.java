@@ -19,4 +19,11 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
             "or department.name = :name")
     List<Department> findByIdOrName(@Param("id") Long id, @Param("name") String name);
     
+    @Query(value =
+        "select department.handle " +
+            "from Department department " +
+            "where department.handle like concat('%', :suggestedHandle) " +
+            "order by department.handle")
+    String findBySuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
+    
 }

@@ -17,4 +17,11 @@ public interface BoardRepository extends MyRepository<Board, Long> {
             "and parent.resource1 = :department")
     Board findByNameAndDepartment(@Param("name") String name, @Param("department") Department department);
     
+    @Query(value =
+        "select board.handle " +
+            "from Board board " +
+            "where board.handle like concat('%', :suggestedHandle) " +
+            "order by board.handle")
+    String findBySuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
+    
 }

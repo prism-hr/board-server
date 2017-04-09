@@ -11,6 +11,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +66,7 @@ public class DepartmentService {
 
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
-        String name = departmentDTO.getName();
+        String name = StringUtils.normalizeSpace(departmentDTO.getName());
 
         Department departmentById = null;
         Department departmentByName = null;
@@ -151,6 +152,10 @@ public class DepartmentService {
         });
 
         return updatedDepartment;
+    }
+    
+    public String getSuggestedHandle(String name) {
+        return null;
     }
 
 }

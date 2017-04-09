@@ -11,6 +11,7 @@ import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,7 +68,7 @@ public class BoardService {
         User currentUser = userService.getCurrentUserSecured();
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
         Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
-            String name = boardDTO.getName();
+            String name = StringUtils.normalizeSpace(boardDTO.getName());
             validateNameUniqueness(name, department);
 
             Board board = new Board();
@@ -120,6 +121,10 @@ public class BoardService {
         });
 
         return updatedBoard;
+    }
+    
+    public String getSuggestedHandle(String departmentHandle, String name) {
+        return null;
     }
 
     private void validateNameUniqueness(String name, Department department) {

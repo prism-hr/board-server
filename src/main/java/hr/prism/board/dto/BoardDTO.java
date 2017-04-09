@@ -18,7 +18,7 @@ public class BoardDTO {
     private String purpose;
 
     @NotEmpty
-    @Size(max = 15)
+    @Size(max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private String handle;
 
