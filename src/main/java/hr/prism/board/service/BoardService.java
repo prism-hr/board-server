@@ -106,9 +106,9 @@ public class BoardService {
                     }
             
                     board.setName(name);
+                } else {
+                    throw new IllegalStateException("Attempted to set board name to null");
                 }
-        
-                throw new IllegalStateException("Attempted to set board name to null");
             }
     
             if (boardDTO.getPurpose() != null) {
@@ -124,12 +124,12 @@ public class BoardService {
                         if (boardRepository.findByHandle(handle) != null) {
                             throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
                         }
-                
+            
                         resourceService.updateHandle(board, handle);
                     }
+                } else {
+                    throw new IllegalStateException("Attempted to set board handle to null");
                 }
-        
-                throw new IllegalStateException("Attempted to set board handle to null");
             }
     
             if (boardDTO.getPostCategories() != null) {

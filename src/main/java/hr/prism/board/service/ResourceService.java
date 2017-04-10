@@ -284,8 +284,8 @@ public class ResourceService {
     
     public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
         if (similarHandles.contains(suggestedHandle)) {
-            
-            int ordinal = 1;
+    
+            int ordinal = 2;
             int suggestedHandleLength = suggestedHandle.length();
             List<String> trimmedSimilarHandles = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
             for (String trimmedSimilarHandle : trimmedSimilarHandles) {

@@ -56,23 +56,23 @@ public class DepartmentApiIT extends AbstractIT {
         User user = userTestService.authenticate();
         Long departmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
-                .setName("Board 3")
-                .setPurpose("Purpose 3")
-                .setHandle("Handle3")
+                .setName("New Board")
+                .setPurpose("Purpose")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
-                    .setName("Department 3")
-                    .setHandle("Handle3")
+                    .setName("New Department")
                     .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                     .setMemberCategories(ImmutableList.of("a", "b")));
 
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            boardDTO.setHandle("new-board");
+            boardDTO.getDepartment().setHandle("new-department");
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
 
             departmentApi.updateDepartment(boardR.getDepartment().getId(),
                 new DepartmentPatchDTO()
-                    .setName(Optional.of("Another name 3"))
-                    .setHandle(Optional.of("AnotherHandle3"))
+                    .setName(Optional.of("Old Department"))
+                    .setHandle(Optional.of("new-department"))
                     .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                     .setMemberCategories(Optional.of(ImmutableList.of("c"))));
             return boardR.getDepartment().getId();
@@ -80,8 +80,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         transactionTemplate.execute(transactionStatus -> {
             DepartmentRepresentation departmentR = departmentBoardHelper.verifyGetDepartment(departmentId);
-            Assert.assertEquals("Another name 3", departmentR.getName());
-            Assert.assertEquals("AnotherHandle3", departmentR.getHandle());
+            Assert.assertEquals("Old department", departmentR.getName());
+            Assert.assertEquals("new-department", departmentR.getHandle());
             Assert.assertEquals("c2", departmentR.getDocumentLogo().getCloudinaryId());
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.contains("c"));
             return null;

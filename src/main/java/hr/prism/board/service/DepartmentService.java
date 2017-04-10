@@ -126,9 +126,9 @@ public class DepartmentService {
                     }
             
                     department.setName(name);
+                } else {
+                    throw new IllegalStateException("Attempted to set department name to null");
                 }
-        
-                throw new IllegalStateException("Attempted to set department name to null");
             }
     
             if (departmentDTO.getDocumentLogo() != null) {
@@ -148,12 +148,12 @@ public class DepartmentService {
                         if (departmentRepository.findByHandle(handle) != null) {
                             throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
                         }
-                
+            
                         resourceService.updateHandle(department, handle);
                     }
+                } else {
+                    throw new IllegalStateException("Attempted to set department handle to null");
                 }
-        
-                throw new IllegalStateException("Attempted to set department handle to null");
             }
     
             if (departmentDTO.getMemberCategories() != null) {
