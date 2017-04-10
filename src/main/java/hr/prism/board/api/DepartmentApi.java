@@ -40,8 +40,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PATCH)
-    public void updateDepartment(@PathVariable Long id, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
-        departmentService.updateDepartment(id, departmentDTO);
+    public DepartmentRepresentation updateDepartment(@PathVariable Long id, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
+        return departmentMapper.create().apply(departmentService.updateDepartment(id, departmentDTO));
     }
 
     @ExceptionHandler(ApiException.class)

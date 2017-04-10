@@ -11,9 +11,8 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.service.BoardService;
-import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.UserTestService;
+import javafx.util.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,25 +31,19 @@ import java.util.Optional;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class DepartmentApiIT extends AbstractIT {
-
+    
     @Inject
     private DepartmentApi departmentApi;
-
+    
     @Inject
     private BoardApi boardApi;
-
-    @Inject
-    private BoardService boardService;
-
-    @Inject
-    private DepartmentService departmentService;
-
+    
     @Inject
     private UserTestService userTestService;
-
+    
     @Inject
     private DepartmentBoardHelper departmentBoardHelper;
-
+    
     @Test
     public void shouldUpdateDepartment() {
         User user = userTestService.authenticate();
@@ -63,134 +56,155 @@ public class DepartmentApiIT extends AbstractIT {
                     .setName("New Department")
                     .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                     .setMemberCategories(ImmutableList.of("a", "b")));
-
+    
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             boardDTO.setHandle("new-board");
             boardDTO.getDepartment().setHandle("new-department");
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
-
-            departmentApi.updateDepartment(boardR.getDepartment().getId(),
+            return boardR.getDepartment().getId();
+        });
+        
+        transactionTemplate.execute(status -> {
+            DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setName(Optional.of("Old Department"))
                     .setHandle(Optional.of("new-department"))
                     .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                     .setMemberCategories(Optional.of(ImmutableList.of("c"))));
-            return boardR.getDepartment().getId();
-        });
-
-        transactionTemplate.execute(transactionStatus -> {
-            DepartmentRepresentation departmentR = departmentBoardHelper.verifyGetDepartment(departmentId);
-            Assert.assertEquals("Old department", departmentR.getName());
+            
+            Assert.assertEquals("Old Department", departmentR.getName());
             Assert.assertEquals("new-department", departmentR.getHandle());
             Assert.assertEquals("c2", departmentR.getDocumentLogo().getCloudinaryId());
             Assert.assertThat(departmentR.getMemberCategories(), Matchers.contains("c"));
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentHandle() {
         User user = userTestService.authenticate();
         transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO1 = new BoardDTO()
-                .setName("shouldNotCreateDuplicateDepartmentHandle Board 1")
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
                 .setPurpose("Purpose")
-                .setHandle("sncddh1")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
-                    .setName("shouldNotCreateDuplicateDepartmentHandle Department 1")
-                    .setHandle("sncddh1")
+                    .setName("New Department With Long Name")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-            BoardRepresentation boardR1 = boardApi.postBoard(boardDTO1);
-            departmentBoardHelper.verifyBoard(user, boardDTO1, boardR1, true);
-
-            BoardDTO boardDTO2 = new BoardDTO()
-                .setName("shouldNotCreateDuplicateDepartmentHandle Board 2")
+    
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            boardDTO.setHandle("new-board");
+            boardDTO.getDepartment().setHandle("new-department-with");
+            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            return null;
+        });
+        
+        
+        Long departmentId = transactionTemplate.execute(status -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
                 .setPurpose("Purpose")
-                .setHandle("sncddh1")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
-                    .setName("shouldNotCreateDuplicateDepartmentHandle Department 2")
-                    .setHandle("sncddh1")
+                    .setName("New Department With Long Name Too")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-
-            ExceptionUtil.verifyApiException(() -> boardApi.postBoard(boardDTO2), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
+            
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            boardDTO.setHandle("new-board");
+            boardDTO.getDepartment().setHandle("new-department-with-2");
+            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            return boardR.getDepartment().getId();
+        });
+        
+        transactionTemplate.execute(status -> {
+            DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId,
+                new DepartmentPatchDTO()
+                    .setHandle(Optional.of("new-department-with-long")));
+            Assert.assertEquals("new-department-with-long", departmentR.getHandle());
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
+                .setPurpose("Purpose")
+                .setPostCategories(ImmutableList.of("category3", "category4"))
+                .setDepartment(new DepartmentDTO()
+                    .setName("New Department With Long Name Also")
+                    .setMemberCategories(ImmutableList.of("category1", "category2")));
+            
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            boardDTO.setHandle("new-board");
+            boardDTO.getDepartment().setHandle("new-department-with-2");
+            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentsByUpdating() {
         User user = userTestService.authenticate();
-        transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO1 = new BoardDTO()
-                .setName("shouldNotCreateDuplicateDepartmentsByUpdating Board 1")
-                .setPurpose("Purpose")
-                .setHandle("sncddbu1")
-                .setPostCategories(ImmutableList.of("category3", "category4"))
-                .setDepartment(new DepartmentDTO()
-                    .setName("shouldNotCreateDuplicateDepartmentsByUpdating Department 1")
-                    .setHandle("sncddbu1")
-                    .setMemberCategories(ImmutableList.of("category1", "category2")));
-            BoardRepresentation boardR1 = boardApi.postBoard(boardDTO1);
-            departmentBoardHelper.verifyBoard(user, boardDTO1, boardR1, true);
-
-            BoardDTO boardDTO2 = new BoardDTO()
-                .setName("shouldNotCreateDuplicateDepartmentsByUpdating Board 2")
-                .setPurpose("Purpose")
-                .setHandle("sncddbu2")
-                .setPostCategories(ImmutableList.of("category3", "category4"))
-                .setDepartment(new DepartmentDTO()
-                    .setName("shouldNotCreateDuplicateDepartmentsByUpdating Department 2")
-                    .setHandle("sncddbu2")
-                    .setMemberCategories(ImmutableList.of("category1", "category2")));
-            BoardRepresentation boardR2 = boardApi.postBoard(boardDTO2);
-            departmentBoardHelper.verifyBoard(user, boardDTO2, boardR2, true);
-
+        Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = createTwoDepartments(user);
+        
+        transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(() ->
-                    departmentApi.updateDepartment(boardR1.getDepartment().getId(),
+                    departmentApi.updateDepartment(departmentRs.getKey().getId(),
                         new DepartmentPatchDTO()
-                            .setName(Optional.of(boardDTO2.getDepartment().getName()))),
-                ExceptionCode.DUPLICATE_DEPARTMENT, transactionStatus);
+                            .setName(Optional.of(departmentRs.getValue().getName()))),
+                ExceptionCode.DUPLICATE_DEPARTMENT, status);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentHandlesByUpdating() {
         User user = userTestService.authenticate();
-        transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO1 = new BoardDTO()
-                .setName("shouldNotCreateDuplicateDepartmentHandlesByUpdating Board 1")
-                .setPurpose("Purpose")
-                .setHandle("sncddhbu1")
-                .setPostCategories(ImmutableList.of("category3", "category4"))
-                .setDepartment(new DepartmentDTO()
-                    .setName("shouldNotCreateDuplicateDepartmentHandlesByUpdating Department 1")
-                    .setHandle("sncddhbu1")
-                    .setMemberCategories(ImmutableList.of("category1", "category2")));
-            BoardRepresentation boardR1 = boardApi.postBoard(boardDTO1);
-            departmentBoardHelper.verifyBoard(user, boardDTO1, boardR1, true);
-
-            BoardDTO boardDTO2 = new BoardDTO()
-                .setName("shouldNotCreateDuplicateDepartmentHandlesByUpdating Board 2")
-                .setPurpose("Purpose")
-                .setHandle("sncddhbu2")
-                .setPostCategories(ImmutableList.of("category3", "category4"))
-                .setDepartment(new DepartmentDTO()
-                    .setName("shouldNotCreateDuplicateDepartmentHandlesByUpdating Department 2")
-                    .setHandle("sncddhbu2")
-                    .setMemberCategories(ImmutableList.of("category1", "category2")));
-            BoardRepresentation boardR2 = boardApi.postBoard(boardDTO2);
-            departmentBoardHelper.verifyBoard(user, boardDTO2, boardR2, true);
-
+        Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = createTwoDepartments(user);
+        
+        transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(() ->
-                    departmentApi.updateDepartment(boardR1.getDepartment().getId(),
+                    departmentApi.updateDepartment(departmentRs.getKey().getId(),
                         new DepartmentPatchDTO()
-                            .setHandle(Optional.of(boardDTO2.getDepartment().getHandle()))),
-                ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, transactionStatus);
+                            .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
+                ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, status);
             return null;
         });
     }
-
+    
+    private Pair<DepartmentRepresentation, DepartmentRepresentation> createTwoDepartments(User user) {
+        DepartmentRepresentation departmentR1 = transactionTemplate.execute(transactionStatus -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
+                .setPurpose("Purpose")
+                .setPostCategories(ImmutableList.of("category3", "category4"))
+                .setDepartment(new DepartmentDTO()
+                    .setName("New Department")
+                    .setMemberCategories(ImmutableList.of("category1", "category2")));
+            
+            boardDTO.setHandle("new-board");
+            boardDTO.getDepartment().setHandle("new-department");
+            BoardRepresentation boardR1 = boardApi.postBoard(boardDTO);
+            departmentBoardHelper.verifyBoard(user, boardDTO, boardR1, true);
+            return boardR1.getDepartment();
+        });
+        
+        DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
+                .setPurpose("Purpose")
+                .setPostCategories(ImmutableList.of("category3", "category4"))
+                .setDepartment(new DepartmentDTO()
+                    .setName("New Department Two")
+                    .setMemberCategories(ImmutableList.of("category1", "category2")));
+            
+            boardDTO.setHandle("new-board");
+            boardDTO.getDepartment().setHandle("new-department-two");
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            return boardR.getDepartment();
+        });
+        
+        return new Pair<>(departmentR1, departmentR2);
+    }
+    
 }
