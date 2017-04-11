@@ -17,9 +17,4 @@ public class BoardApiTest {
         Assert.assertEquals(ExceptionCode.DUPLICATE_BOARD.name(), processedException.values().iterator().next());
     }
     
-    @Test
-    public void shouldNotSuggestDuplicateHandle() {
-        
-    }
-    
 }
