@@ -96,7 +96,7 @@ public class BoardApiIT extends AbstractIT {
             .setDepartment(new DepartmentDTO()
                 .setName("New Department")
                 .setMemberCategories(ImmutableList.of("category1", "category2")));
-        verifyPostBoard(user, boardDTO, "new-board", "new-department");
+        verifyPostBoard(user, boardDTO, "new-board-with-long", "new-department");
         
         boardDTO.setName("New Board With Long Name Two");
         verifyPostBoard(user, boardDTO, "new-board-with-long-2", "new-department");
@@ -148,7 +148,7 @@ public class BoardApiIT extends AbstractIT {
                     .setId(departmentId)
                     .setName("Department 1")
                     .setMemberCategories(new ArrayList<>())),
-            "board-2", "department-1");
+            "board-2", "department-1", false);
         
         transactionTemplate.execute(TransactionStatus -> {
             userTestService.setAuthentication(user.getStormpathId());
@@ -204,7 +204,6 @@ public class BoardApiIT extends AbstractIT {
         verifyPostBoard(user, new BoardDTO()
                 .setName("Board 2")
                 .setPurpose("Purpose 2")
-                .setHandle("Handle2")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setId(departmentId)
@@ -222,18 +221,18 @@ public class BoardApiIT extends AbstractIT {
             
             departmentApi.updateDepartment(departmentR.getId(),
                 new DepartmentPatchDTO()
-                    .setHandle(Optional.of("Handle2")));
+                    .setHandle(Optional.of("new-department-updated")));
             return null;
         });
         
         transactionTemplate.execute(status -> {
             Department department = departmentService.getDepartment(departmentId);
-            Assert.assertEquals("Handle2", department.getHandle());
+            Assert.assertEquals("new-department-updated", department.getHandle());
             
             int index = 1;
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId());
             for (BoardRepresentation boardR : boardRs) {
-                Assert.assertEquals("Handle2/Handle" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
             
@@ -329,6 +328,10 @@ public class BoardApiIT extends AbstractIT {
     }
     
     private BoardRepresentation verifyPostBoard(User user, BoardDTO boardDTO, String expectedHandle, String expectedDepartmentHandle) {
+        return verifyPostBoard(user, boardDTO, expectedHandle, expectedDepartmentHandle, true);
+    }
+    
+    private BoardRepresentation verifyPostBoard(User user, BoardDTO boardDTO, String expectedHandle, String expectedDepartmentHandle, boolean expectDepartmentAdministrator) {
         return transactionTemplate.execute(status -> {
             BoardRepresentation postedBoardR = boardApi.postBoard(boardDTO);
             boardDTO.setHandle(expectedHandle);
