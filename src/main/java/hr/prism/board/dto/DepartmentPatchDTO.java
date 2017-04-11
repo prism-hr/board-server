@@ -8,12 +8,12 @@ import java.util.Optional;
 
 public class DepartmentPatchDTO {
 
-    @Size(max = 255)
+    @Size(min=1, max = 255)
     private Optional<String> name;
 
     @Valid
     private Optional<DocumentDTO> documentLogo;
-    
+
     @Size(max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
@@ -55,5 +55,5 @@ public class DepartmentPatchDTO {
         this.memberCategories = memberCategories;
         return this;
     }
-    
+
 }

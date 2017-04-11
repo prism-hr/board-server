@@ -9,13 +9,13 @@ import java.util.Optional;
 
 public class PostPatchDTO {
 
-    @Size(max = 255)
+    @Size(min=1, max = 255)
     private Optional<String> name;
 
-    @Size(max = 2000)
+    @Size(min=1, max = 2000)
     private Optional<String> description;
 
-    @Size(max = 255)
+    @Size(min=1, max = 255)
     private Optional<String> organizationName;
 
     @Valid
@@ -25,7 +25,7 @@ public class PostPatchDTO {
 
     private Optional<List<String>> memberCategories;
 
-    @Size(max = 255)
+    @Size(min=1, max = 255)
     private Optional<String> applyWebsite;
 
     @Valid

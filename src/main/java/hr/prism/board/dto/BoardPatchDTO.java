@@ -9,12 +9,12 @@ import java.util.Optional;
 
 public class BoardPatchDTO {
 
-    @Size(max = 255)
+    @Size(min = 1, max = 255)
     private Optional<String> name;
 
-    @Size(max = 2000)
+    @Size(min = 1, max = 2000)
     private Optional<String> purpose;
-    
+
     @Size(max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
