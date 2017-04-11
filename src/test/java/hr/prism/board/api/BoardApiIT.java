@@ -38,22 +38,22 @@ import java.util.stream.Collectors;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class BoardApiIT extends AbstractIT {
-    
+
     @Inject
     private DepartmentApi departmentApi;
-    
+
     @Inject
     private BoardApi boardApi;
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private UserTestService userTestService;
-    
+
     @Inject
     private DepartmentBoardHelper departmentBoardHelper;
-    
+
     @Test
     public void shouldCreateBoard() {
         User user = userTestService.authenticate();
@@ -67,7 +67,7 @@ public class BoardApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("category1", "category2"))),
             "new-board", "new-department");
     }
-    
+
     @Test
     public void shouldNotCreateDuplicateBoard() {
         User user = userTestService.authenticate();
@@ -79,13 +79,13 @@ public class BoardApiIT extends AbstractIT {
                 .setName("New Department")
                 .setMemberCategories(ImmutableList.of("category1", "category2")));
         verifyPostBoard(user, boardDTO, "new-board", "new-department");
-        
+
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(() -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, status);
             return null;
         });
     }
-    
+
     @Test
     public void shouldNotCreateDuplicateBoardHandle() {
         User user = userTestService.authenticate();
@@ -97,11 +97,11 @@ public class BoardApiIT extends AbstractIT {
                 .setName("New Department")
                 .setMemberCategories(ImmutableList.of("category1", "category2")));
         verifyPostBoard(user, boardDTO, "new-board-with-long", "new-department");
-        
+
         boardDTO.setName("New Board With Long Name Two");
         verifyPostBoard(user, boardDTO, "new-board-with-long-2", "new-department");
     }
-    
+
     @Test
     public void shouldNotCreateDuplicateBoardByUpdating() {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
@@ -112,7 +112,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void shouldNotCreateDuplicateBoardHandleByUpdating() {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
@@ -123,7 +123,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void shouldCreateMultipleBoardsAndReturnCorrectResourceListsForUsers() {
         User user = userTestService.authenticate();
@@ -137,7 +137,7 @@ public class BoardApiIT extends AbstractIT {
                     .setMemberCategories(new ArrayList<>())),
             "board-1", "department-1")
             .getDepartment().getId();
-        
+
         User secondUser = userTestService.authenticate();
         verifyPostBoard(secondUser,
             new BoardDTO()
@@ -149,44 +149,44 @@ public class BoardApiIT extends AbstractIT {
                     .setName("Department 1")
                     .setMemberCategories(new ArrayList<>())),
             "board-2", "department-1", false);
-        
+
         transactionTemplate.execute(TransactionStatus -> {
             userTestService.setAuthentication(user.getStormpathId());
             List<BoardRepresentation> boardRs = boardApi.getBoards();
             List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments();
-    
+
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
-    
+
             boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
-    
+
             userTestService.setAuthentication(secondUser.getStormpathId());
             boardRs = boardApi.getBoards();
             departmentRs = departmentApi.getDepartments();
-    
+
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
-    
+
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 1"))
                 .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 2"))
                 .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
-    
+
             userTestService.setAuthentication(null);
             boardRs = boardApi.getBoards();
             departmentRs = departmentApi.getDepartments();
-    
+
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
-    
+
             Assert.assertThat(boardRs, Matchers.everyItem(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND))));
             Assert.assertThat(departmentRs, Matchers.contains(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND))));
             return null;
         });
     }
-    
+
     @Test
     public void shouldCreateAndUpdateTwoBoardsWithinOneDepartment() {
         User user = userTestService.authenticate();
@@ -200,7 +200,7 @@ public class BoardApiIT extends AbstractIT {
                     .setMemberCategories(new ArrayList<>())),
             "board-1", "department-1")
             .getDepartment().getId();
-        
+
         verifyPostBoard(user, new BoardDTO()
                 .setName("Board 2")
                 .setPurpose("Purpose 2")
@@ -210,36 +210,36 @@ public class BoardApiIT extends AbstractIT {
                     .setName("Department 1")
                     .setMemberCategories(new ArrayList<>())),
             "board-2", "department-1");
-        
+
         transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = departmentBoardHelper.verifyGetDepartment(departmentId);
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentR.getId());
             Assert.assertEquals(2, boardRs.size());
-            
+
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
             Assert.assertThat(boardNames, Matchers.containsInAnyOrder("Board 1", "Board 2"));
-            
+
             departmentApi.updateDepartment(departmentR.getId(),
                 new DepartmentPatchDTO()
                     .setHandle(Optional.of("new-department-updated")));
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             Department department = departmentService.getDepartment(departmentId);
             Assert.assertEquals("new-department-updated", department.getHandle());
-            
+
             int index = 1;
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId());
             for (BoardRepresentation boardR : boardRs) {
                 Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
-            
+
             return null;
         });
     }
-    
+
     @Test
     public void shouldUpdateBoard() {
         User user = userTestService.authenticate();
@@ -253,7 +253,7 @@ public class BoardApiIT extends AbstractIT {
                     .setMemberCategories(new ArrayList<>())),
             "new-board", "new-department")
             .getId();
-        
+
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO()
                 .setName(Optional.of("New Board Updated"))
@@ -264,7 +264,7 @@ public class BoardApiIT extends AbstractIT {
             boardApi.updateBoard(boardId, boardPatchDTO);
             return null;
         });
-        
+
         transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation boardR = departmentBoardHelper.verifyGetBoard(boardId);
             Assert.assertEquals("New Board Updated", boardR.getName());
@@ -275,7 +275,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void Board() {
         User user = userTestService.authenticate();
@@ -292,19 +292,19 @@ public class BoardApiIT extends AbstractIT {
                     "board-" + i + "-" + j, "department-" + i);
             }
         }
-        
+
         transactionTemplate.execute(transactionStatus -> {
             List<DepartmentRepresentation> departmentRepresentations = departmentApi.getDepartments();
             Assert.assertEquals(Arrays.asList("Department 1", "Department 2", "Department 3"),
                 departmentRepresentations.stream().map(DepartmentRepresentation::getName).collect(Collectors.toList()));
-    
+
             List<BoardRepresentation> boardRepresentations = boardApi.getBoards();
             Assert.assertEquals(Arrays.asList("Board 1 1", "Board 1 2", "Board 1 3", "Board 2 1", "Board 2 2", "Board 2 3", "Board 3 1", "Board 3 2", "Board 3 3"),
                 boardRepresentations.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
             return null;
         });
     }
-    
+
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         User user = userTestService.authenticate();
         BoardDTO boardDTO = new BoardDTO()
@@ -315,7 +315,7 @@ public class BoardApiIT extends AbstractIT {
                 .setName("New Department")
                 .setMemberCategories(ImmutableList.of("category1", "category2")));
         BoardRepresentation boardR = verifyPostBoard(user, boardDTO, "new-board", "new-department");
-        
+
         BoardDTO otherBoardDTO = new BoardDTO()
             .setName("Other New Board")
             .setPurpose("Purpose")
@@ -326,19 +326,19 @@ public class BoardApiIT extends AbstractIT {
         BoardRepresentation otherBoardR = verifyPostBoard(user, otherBoardDTO, "other-new-board", "new-department");
         return new Pair<>(boardR, otherBoardR);
     }
-    
+
     private BoardRepresentation verifyPostBoard(User user, BoardDTO boardDTO, String expectedHandle, String expectedDepartmentHandle) {
         return verifyPostBoard(user, boardDTO, expectedHandle, expectedDepartmentHandle, true);
     }
-    
+
     private BoardRepresentation verifyPostBoard(User user, BoardDTO boardDTO, String expectedHandle, String expectedDepartmentHandle, boolean expectDepartmentAdministrator) {
         return transactionTemplate.execute(status -> {
             BoardRepresentation postedBoardR = boardApi.postBoard(boardDTO);
-            boardDTO.setHandle(expectedHandle);
-            boardDTO.getDepartment().setHandle(expectedDepartmentHandle);
             departmentBoardHelper.verifyBoard(user, boardDTO, postedBoardR, expectDepartmentAdministrator);
+            Assert.assertEquals(expectedHandle, postedBoardR.getHandle());
+            Assert.assertEquals(expectedDepartmentHandle, postedBoardR.getDepartment().getHandle());
             return postedBoardR;
         });
     }
-    
+
 }

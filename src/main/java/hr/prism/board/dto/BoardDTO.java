@@ -3,7 +3,6 @@ package hr.prism.board.dto;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
 
@@ -16,11 +15,6 @@ public class BoardDTO {
     @NotEmpty
     @Size(max = 2000)
     private String purpose;
-
-    @NotEmpty
-    @Size(max = 25)
-    @Pattern(regexp = "^[a-z0-9-]+$")
-    private String handle;
 
     private List<String> postCategories;
 
@@ -45,15 +39,6 @@ public class BoardDTO {
         return this;
     }
 
-    public String getHandle() {
-        return handle;
-    }
-
-    public BoardDTO setHandle(String handle) {
-        this.handle = handle;
-        return this;
-    }
-
     public List<String> getPostCategories() {
         return postCategories;
     }
@@ -71,5 +56,5 @@ public class BoardDTO {
         this.department = department;
         return this;
     }
-    
+
 }
