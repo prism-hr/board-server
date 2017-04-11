@@ -336,7 +336,7 @@ public class BoardApiIT extends AbstractIT {
             BoardRepresentation postedBoardR = boardApi.postBoard(boardDTO);
             boardDTO.setHandle(expectedHandle);
             boardDTO.getDepartment().setHandle(expectedDepartmentHandle);
-            departmentBoardHelper.verifyBoard(user, boardDTO, postedBoardR, true);
+            departmentBoardHelper.verifyBoard(user, boardDTO, postedBoardR, expectDepartmentAdministrator);
             return postedBoardR;
         });
     }
