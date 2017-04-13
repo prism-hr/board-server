@@ -9,19 +9,21 @@ import java.util.Optional;
 
 public class DepartmentServiceTest {
     
-    DepartmentService departmentService = new DepartmentService();
+    private DepartmentService departmentService = new DepartmentService();
+    
+    private Department department = new Department();
     
     @Test
     public void shouldNotBeAbleToPatchDepartmentWithNullName() {
         ExceptionUtil.verifyIllegalStateException(() ->
-                departmentService.patchDepartment(new Department(), new DepartmentPatchDTO().setName(Optional.empty())),
+                departmentService.updateDepartment(department, new DepartmentPatchDTO().setName(Optional.empty())),
             "Attempted to set department name to null");
     }
     
     @Test
     public void shouldNotBeAbleToPatchDepartmentWithNullHandle() {
         ExceptionUtil.verifyIllegalStateException(() ->
-                departmentService.patchDepartment(new Department(), new DepartmentPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
+                departmentService.updateDepartment(department, new DepartmentPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
             "Attempted to set department handle to null");
     }
     

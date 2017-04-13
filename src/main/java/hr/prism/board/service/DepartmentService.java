@@ -116,14 +116,14 @@ public class DepartmentService {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         Department updatedDepartment = (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
-            patchDepartment(department, departmentDTO);
+            updateDepartment(department, departmentDTO);
             return department;
         });
     
         return updatedDepartment;
     }
     
-    void patchDepartment(Department department, DepartmentPatchDTO departmentDTO) {
+    void updateDepartment(Department department, DepartmentPatchDTO departmentDTO) {
         Optional<String> nameOptional = departmentDTO.getName();
         if (nameOptional != null) {
             if (nameOptional.isPresent()) {

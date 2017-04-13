@@ -95,14 +95,14 @@ public class BoardService {
         User currentUser = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
         Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
-            patchBoard(board, boardDTO);
+            updateBoard(board, boardDTO);
             return board;
         });
     
         return updatedBoard;
     }
     
-    void patchBoard(Board board, BoardPatchDTO boardDTO) {
+    void updateBoard(Board board, BoardPatchDTO boardDTO) {
         Department department = (Department) board.getParent();
         Optional<String> nameOptional = boardDTO.getName();
         if (nameOptional != null) {
