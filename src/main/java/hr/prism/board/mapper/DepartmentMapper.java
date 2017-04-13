@@ -1,10 +1,8 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.service.BoardService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +17,6 @@ public class DepartmentMapper {
     @Inject
     private DocumentMapper documentMapper;
     
-    @Inject
-    private BoardMapper boardMapper;
-    
-    @Inject
-    private BoardService boardService;
-    
-    @Inject
-    private ActionService actionService;
-    
     public Function<Department, DepartmentRepresentation> create() {
         return (Department department) -> {
             DepartmentRepresentation departmentRepresentation = new DepartmentRepresentation();
@@ -40,7 +29,7 @@ public class DepartmentMapper {
                 .setHandle(department.getHandle())
                 .setMemberCategories(department.getCategories().stream().filter(ResourceCategory::isActive).map(ResourceCategory::getName).collect(Collectors.toList()));
     
-            departmentRepresentation.setActions(actionService.getActions(department));
+            departmentRepresentation.setActions(department.getActions());
             return departmentRepresentation;
         };
     }

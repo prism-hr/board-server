@@ -5,8 +5,8 @@ import hr.prism.board.enums.State;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Entity
 @Table(name = "resource")
@@ -56,7 +56,7 @@ public class Resource extends BoardEntity {
     private Set<ResourceRelation> parents = new HashSet<>();
     
     @Transient
-    private TreeSet<ResourceAction> resourceActions;
+    private List<ActionRepresentation> actions;
     
     public Scope getScope() {
         return scope;
@@ -146,12 +146,12 @@ public class Resource extends BoardEntity {
         return parents;
     }
     
-    public TreeSet<ResourceAction> getResourceActions() {
-        return resourceActions;
+    public List<ActionRepresentation> getActions() {
+        return actions;
     }
     
-    public Resource setResourceActions(TreeSet<ResourceAction> resourceActions) {
-        this.resourceActions = resourceActions;
+    public Resource setActions(List<ActionRepresentation> actions) {
+        this.actions = actions;
         return this;
     }
     

@@ -1,6 +1,5 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceCategory;
@@ -19,9 +18,6 @@ public class BoardMapper {
     @Inject
     private DepartmentMapper departmentMapper;
     
-    @Inject
-    private ActionService actionService;
-    
     public Function<Board, BoardRepresentation> create() {
         return (Board board) -> {
             Department department = (Department) board.getParent();
@@ -37,7 +33,7 @@ public class BoardMapper {
                 .setDepartment(departmentMapper.create().apply(department))
                 .setDefaultPostVisibility(board.getDefaultPostVisibility());
     
-            boardRepresentation.setActions(actionService.getActions(board));
+            boardRepresentation.setActions(board.getActions());
             return boardRepresentation;
         };
     }

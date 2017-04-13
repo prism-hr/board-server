@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
@@ -194,7 +195,7 @@ public class ResourceService {
         });
         
         // Remove duplicate mappings
-        Map<ResourceActionKey, ResourceAction> rowIndex = new HashMap<>();
+        Map<ResourceActionKey, ActionRepresentation> rowIndex = new HashMap<>();
         for (Object[] row : rows) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
@@ -213,9 +214,9 @@ public class ResourceService {
     
             // Find the mapping that provides the most direct state transition, varies by role
             ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
-            ResourceAction rowValue = rowIndex.get(rowKey);
+            ActionRepresentation rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
-                rowIndex.put(rowKey, new ResourceAction().setAction(rowAction).setScope(rowScope).setState(rowState));
+                rowIndex.put(rowKey, new ActionRepresentation().setAction(rowAction).setScope(rowScope).setState(rowState));
             }
         }
         
@@ -224,7 +225,7 @@ public class ResourceService {
         }
         
         // Squash the mappings
-        LinkedHashMultimap<Long, ResourceAction> resourceActionIndex = LinkedHashMultimap.create();
+        LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex = LinkedHashMultimap.create();
         rowIndex.keySet().forEach(key -> resourceActionIndex.put((Long) key.id, rowIndex.get(key)));
         
         Scope scope = filter.getScope();
@@ -247,9 +248,9 @@ public class ResourceService {
         
         // Merge the output
         for (Resource resource : resources) {
-            TreeSet<ResourceAction> resourceActions = new TreeSet<>();
-            resourceActions.addAll(resourceActionIndex.get(resource.getId()));
-            resource.setResourceActions(resourceActions);
+            List<ActionRepresentation> actionRepresentations = Lists.newArrayList(resourceActionIndex.get(resource.getId()));
+            actionRepresentations.sort(Comparator.naturalOrder());
+            resource.setActions(actionRepresentations);
         }
         
         return resources;

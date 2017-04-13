@@ -1,6 +1,5 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.ActionService;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
 import hr.prism.board.enums.CategoryType;
@@ -25,9 +24,6 @@ public class PostMapper {
     
     @Inject
     private BoardMapper boardMapper;
-    
-    @Inject
-    private ActionService actionService;
     
     public Function<Post, PostRepresentation> create() {
         return (Post post) -> {
@@ -61,7 +57,7 @@ public class PostMapper {
                 .setApplyEmail(post.getApplyEmail())
                 .setBoard(boardMapper.create().apply(board));
     
-            postRepresentation.setActions(actionService.getActions(post));
+            postRepresentation.setActions(post.getActions());
             return postRepresentation;
         };
     }

@@ -4,7 +4,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import org.apache.commons.lang3.ObjectUtils;
 
-public class ResourceAction implements Comparable<ResourceAction> {
+public class ActionRepresentation implements Comparable<ActionRepresentation> {
     
     private Action action;
     
@@ -16,7 +16,7 @@ public class ResourceAction implements Comparable<ResourceAction> {
         return action;
     }
     
-    public ResourceAction setAction(Action action) {
+    public ActionRepresentation setAction(Action action) {
         this.action = action;
         return this;
     }
@@ -25,7 +25,7 @@ public class ResourceAction implements Comparable<ResourceAction> {
         return scope;
     }
     
-    public ResourceAction setScope(Scope scope) {
+    public ActionRepresentation setScope(Scope scope) {
         this.scope = scope;
         return this;
     }
@@ -34,13 +34,13 @@ public class ResourceAction implements Comparable<ResourceAction> {
         return state;
     }
     
-    public ResourceAction setState(State state) {
+    public ActionRepresentation setState(State state) {
         this.state = state;
         return this;
     }
     
     @Override
-    public int compareTo(ResourceAction o) {
+    public int compareTo(ActionRepresentation o) {
         int compare = ObjectUtils.compare(action, o.getAction());
         return compare == 0 ? ObjectUtils.compare(scope, o.getScope()) : compare;
     }
