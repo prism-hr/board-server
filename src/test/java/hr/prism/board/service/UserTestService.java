@@ -15,8 +15,8 @@ import java.util.Map;
 
 @Service
 public class UserTestService {
-
-    private static String STORMPATH_API_PATH = "https://api.stormpath.com/v1/accounts/";
+    
+    private static final String STORMPATH_API_PATH = "https://api.stormpath.com/v1/accounts/";
 
     @Inject
     private UserService userService;
@@ -57,6 +57,7 @@ public class UserTestService {
             authentication = new UsernamePasswordAuthenticationToken(
                 new org.springframework.security.core.userdetails.User(STORMPATH_API_PATH + id, "", Collections.emptyList()), null);
         }
+    
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

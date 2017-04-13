@@ -1,5 +1,6 @@
-package hr.prism.board.domain;
+package hr.prism.board.representation;
 
+import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import org.apache.commons.lang3.ObjectUtils;

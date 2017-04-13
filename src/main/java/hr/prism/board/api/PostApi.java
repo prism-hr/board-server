@@ -73,6 +73,16 @@ public class PostApi {
         return postMapper.create().apply(postService.executeAction(id, Action.REJECT, postDTO));
     }
     
+    @RequestMapping(value = "/posts/{id}/withdraw", method = RequestMethod.POST)
+    public PostRepresentation withdrawPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
+        return postMapper.create().apply(postService.executeAction(id, Action.WITHDRAW, postDTO));
+    }
+    
+    @RequestMapping(value = "/posts/{id}/withdraw", method = RequestMethod.POST)
+    public PostRepresentation restorePost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
+        return postMapper.create().apply(postService.executeAction(id, Action.RESTORE, postDTO));
+    }
+    
     @ExceptionHandler(ApiException.class)
     @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
     public Map<String, String> handleException(ApiException apiException) {

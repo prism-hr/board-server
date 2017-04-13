@@ -1,10 +1,12 @@
-package hr.prism.board.domain;
+package hr.prism.board.service;
 
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.permission.ActionExecutionTemplate;
-import hr.prism.board.service.ResourceService;
+import hr.prism.board.representation.ActionRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

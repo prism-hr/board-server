@@ -1,6 +1,5 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.domain.ActionRepresentation;
 import hr.prism.board.enums.State;
 
 import java.util.List;

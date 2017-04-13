@@ -74,7 +74,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("Organization Name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(RelationWithDepartment.FAMILY)
+                .setExistingRelation(RelationWithDepartment.STUDENT)
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
@@ -97,7 +97,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("Organization Name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(RelationWithDepartment.FAMILY)
+                .setExistingRelation(RelationWithDepartment.STUDENT)
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com")))
@@ -132,7 +132,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("Organization Name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(RelationWithDepartment.FAMILY)
+                .setExistingRelation(RelationWithDepartment.STUDENT)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
@@ -147,7 +147,7 @@ public class PostApiIT extends AbstractIT {
                 .setOrganizationName("Organization Name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(RelationWithDepartment.FAMILY)
+                .setExistingRelation(RelationWithDepartment.STUDENT)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
