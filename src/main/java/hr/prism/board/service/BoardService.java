@@ -95,55 +95,56 @@ public class BoardService {
         User currentUser = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
         Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
-            Department department = (Department) board.getParent();
-            // TODO: test coverage
-            Optional<String> nameOptional = boardDTO.getName();
-            if (nameOptional != null) {
-                if (nameOptional.isPresent()) {
-                    String name = nameOptional.get();
-                    if (!name.equals(board.getName())) {
-                        validateNameUniqueness(name, department);
-                    }
-            
-                    board.setName(name);
-                } else {
-                    throw new IllegalStateException("Attempted to set board name to null");
-                }
-            }
-    
-            if (boardDTO.getPurpose() != null) {
-                board.setDescription(boardDTO.getPurpose().orElse(null));
-            }
-    
-            // TODO: test coverage
-            Optional<String> handleOptional = boardDTO.getHandle();
-            if (handleOptional != null) {
-                if (handleOptional.isPresent()) {
-                    String handle = department.getHandle() + "/" + handleOptional.get();
-                    if (!handle.equals(board.getHandle())) {
-                        if (boardRepository.findByHandle(handle) != null) {
-                            throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
-                        }
-            
-                        resourceService.updateHandle(board, handle);
-                    }
-                } else {
-                    throw new IllegalStateException("Attempted to set board handle to null");
-                }
-            }
-    
-            if (boardDTO.getPostCategories() != null) {
-                resourceService.updateCategories(board, boardDTO.getPostCategories().orElse(Collections.emptyList()), CategoryType.POST);
-            }
-    
-            if (boardDTO.getDefaultPostVisibility() != null) {
-                board.setDefaultPostVisibility(boardDTO.getDefaultPostVisibility().orElse(null));
-            }
-    
+            patchBoard(board, boardDTO);
             return board;
         });
-        
+    
         return updatedBoard;
+    }
+    
+    void patchBoard(Board board, BoardPatchDTO boardDTO) {
+        Department department = (Department) board.getParent();
+        Optional<String> nameOptional = boardDTO.getName();
+        if (nameOptional != null) {
+            if (nameOptional.isPresent()) {
+                String name = nameOptional.get();
+                if (!name.equals(board.getName())) {
+                    validateNameUniqueness(name, department);
+                }
+                
+                board.setName(name);
+            } else {
+                throw new IllegalStateException("Attempted to set board name to null");
+            }
+        }
+        
+        if (boardDTO.getPurpose() != null) {
+            board.setDescription(boardDTO.getPurpose().orElse(null));
+        }
+        
+        Optional<String> handleOptional = boardDTO.getHandle();
+        if (handleOptional != null) {
+            if (handleOptional.isPresent()) {
+                String handle = department.getHandle() + "/" + handleOptional.get();
+                if (!handle.equals(board.getHandle())) {
+                    if (boardRepository.findByHandle(handle) != null) {
+                        throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
+                    }
+                    
+                    resourceService.updateHandle(board, handle);
+                }
+            } else {
+                throw new IllegalStateException("Attempted to set board handle to null");
+            }
+        }
+        
+        if (boardDTO.getPostCategories() != null) {
+            resourceService.updateCategories(board, boardDTO.getPostCategories().orElse(Collections.emptyList()), CategoryType.POST);
+        }
+        
+        if (boardDTO.getDefaultPostVisibility() != null) {
+            board.setDefaultPostVisibility(boardDTO.getDefaultPostVisibility().orElse(null));
+        }
     }
     
     private void validateNameUniqueness(String name, Department department) {
