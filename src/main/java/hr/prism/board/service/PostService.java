@@ -84,6 +84,8 @@ public class PostService {
             }
     
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
+            post.setLiveTimestamp(postDTO.getLiveTimestamp());
+            post.setDeadTimestamp(postDTO.getDeadTimestamp());
             post = postRepository.save(post);
     
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
@@ -162,21 +164,23 @@ public class PostService {
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
         if (applyWebsiteOptional != null) {
-            String applyWebsite = applyWebsiteOptional.get();
-            post.setApplyWebsite(applyWebsite);
-            if (applyWebsite != null) {
+            if (applyWebsiteOptional.isPresent()) {
+                post.setApplyWebsite(applyWebsiteOptional.get());
                 post.setApplyEmail(null);
                 removeApplyDocument(post);
+            } else {
+                post.setApplyWebsite(null);
             }
         }
         
         Optional<String> applyEmailOptional = postDTO.getApplyEmail();
         if (applyEmailOptional != null) {
-            String applyEmail = applyEmailOptional.get();
-            post.setApplyEmail(applyEmail);
-            if (applyEmail != null) {
+            if (applyEmailOptional.isPresent()) {
+                post.setApplyEmail(applyEmailOptional.get());
                 post.setApplyWebsite(null);
                 removeApplyDocument(post);
+            } else {
+                post.setApplyEmail(null);
             }
         }
         
@@ -196,6 +200,26 @@ public class PostService {
         
         if (post.getApplyWebsite() == null && post.getApplyEmail() == null && post.getApplyDocument() == null) {
             throw new IllegalStateException("Attempted to set post application mechanism to null");
+        }
+    
+        // TODO: test coverage
+        Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
+        if (liveTimestampOptional != null) {
+            if (liveTimestampOptional.isPresent()) {
+                post.setLiveTimestamp(liveTimestampOptional.get());
+            } else {
+                throw new IllegalStateException("Attempted to set post live timestamp to null");
+            }
+        }
+    
+        // TODO: test coverage
+        Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
+        if (deadTimestampOptional != null) {
+            if (deadTimestampOptional.isPresent()) {
+                post.setDeadTimestamp(deadTimestampOptional.get());
+            } else {
+                throw new IllegalStateException("Attempted to set post live timestamp to null");
+            }
         }
         
         if (postDTO.getPostCategories() != null) {

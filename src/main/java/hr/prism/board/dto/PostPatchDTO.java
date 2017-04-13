@@ -3,7 +3,9 @@ package hr.prism.board.dto;
 import org.hibernate.validator.constraints.Email;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +35,12 @@ public class PostPatchDTO {
 
     @Email
     private Optional<String> applyEmail;
+    
+    @NotNull
+    private Optional<LocalDateTime> liveTimestamp;
+    
+    @NotNull
+    private Optional<LocalDateTime> deadTimestamp;
 
     public Optional<String> getName() {
         return name;
@@ -114,4 +122,23 @@ public class PostPatchDTO {
         this.applyEmail = applyEmail;
         return this;
     }
+    
+    public Optional<LocalDateTime> getLiveTimestamp() {
+        return liveTimestamp;
+    }
+    
+    public PostPatchDTO setLiveTimestamp(Optional<LocalDateTime> liveTimestamp) {
+        this.liveTimestamp = liveTimestamp;
+        return this;
+    }
+    
+    public Optional<LocalDateTime> getDeadTimestamp() {
+        return deadTimestamp;
+    }
+    
+    public PostPatchDTO setDeadTimestamp(Optional<LocalDateTime> deadTimestamp) {
+        this.deadTimestamp = deadTimestamp;
+        return this;
+    }
+    
 }

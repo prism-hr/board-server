@@ -5,6 +5,7 @@ import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.POST)
@@ -45,6 +46,12 @@ public class Post extends Resource {
     @Email
     @Column(name = "apply_email")
     private String applyEmail;
+    
+    @Column(name = "live_timestamp", nullable = false)
+    private LocalDateTime liveTimestamp;
+    
+    @Column(name = "dead_timestamp", nullable = false)
+    private LocalDateTime deadTimestamp;
     
     public String getOrganizationName() {
         return organizationName;
@@ -100,6 +107,22 @@ public class Post extends Resource {
     
     public void setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
+    }
+    
+    public LocalDateTime getLiveTimestamp() {
+        return liveTimestamp;
+    }
+    
+    public void setLiveTimestamp(LocalDateTime liveTimestamp) {
+        this.liveTimestamp = liveTimestamp;
+    }
+    
+    public LocalDateTime getDeadTimestamp() {
+        return deadTimestamp;
+    }
+    
+    public void setDeadTimestamp(LocalDateTime deadTimestamp) {
+        this.deadTimestamp = deadTimestamp;
     }
     
 }

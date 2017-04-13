@@ -5,8 +5,10 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.permission.ActionExecutionTemplate;
 import hr.prism.board.representation.ActionRepresentation;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,14 @@ public class ActionService {
                 State newState = actionRepresentation.getState();
                 if (!(newState == null || state == newState)) {
                     if (newState == State.PREVIOUS) {
+                        // Restore to previous state
                         newState = resource.getPreviousState();
+                    }
+    
+                    Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
+                    if (interceptorClass != null) {
+                        // Apply any conditional logic
+                        newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
                     }
                     
                     resourceService.updateState(resource, newState);

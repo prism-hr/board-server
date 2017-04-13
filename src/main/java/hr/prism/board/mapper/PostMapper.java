@@ -55,8 +55,10 @@ public class PostMapper {
                 .setApplyWebsite(post.getApplyWebsite())
                 .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
                 .setApplyEmail(post.getApplyEmail())
-                .setBoard(boardMapper.create().apply(board));
-    
+                .setBoard(boardMapper.create().apply(board))
+                .setLiveTimestamp(post.getLiveTimestamp())
+                .setDeadTimestamp(post.getDeadTimestamp());
+            
             postRepresentation.setActions(post.getActions());
             return postRepresentation;
         };
