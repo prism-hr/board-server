@@ -3,6 +3,8 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceAction;
+import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
@@ -10,6 +12,7 @@ import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
@@ -158,8 +161,8 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
 
-            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EDIT), new ResourceAction(Action.EXTEND, Scope.POST, State.ACCEPTED))));
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EDIT), new ResourceAction(Action.EXTEND, Scope.BOARD, State.ACCEPTED))));
 
             userTestService.setAuthentication(secondUser.getStormpathId());
             boardRs = boardApi.getBoards();
@@ -169,10 +172,11 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(1, departmentRs.size());
 
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 1"))
-                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
+                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EXTEND, Scope.POST, State.DRAFT))));
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 2"))
-                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
+                .forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EDIT), new ResourceAction(Action.EXTEND, Scope.POST, State.ACCEPTED))));
+            // TODO Alastair, check if the following assert is right - (EXTEND, BOARD, ACCEPTED)
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EXTEND, Scope.BOARD, State.ACCEPTED))));
 
             userTestService.setAuthentication(null);
             boardRs = boardApi.getBoards();
@@ -180,9 +184,6 @@ public class BoardApiIT extends AbstractIT {
 
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
-
-            Assert.assertThat(boardRs, Matchers.everyItem(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND))));
-            Assert.assertThat(departmentRs, Matchers.contains(Matchers.hasProperty("actions", Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND))));
             return null;
         });
     }

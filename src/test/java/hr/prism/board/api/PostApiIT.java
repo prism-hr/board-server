@@ -6,6 +6,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.RelationWithDepartment;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.DocumentRepresentation;
@@ -40,33 +41,33 @@ import static org.junit.Assert.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class PostApiIT extends AbstractIT {
-    
+
     @Inject
     private PostApi postApi;
-    
+
     @Inject
     private BoardApi boardApi;
-    
+
     @Inject
     private PostService postService;
-    
+
     @Inject
     private BoardService boardService;
-    
+
     @Inject
     private DepartmentService departmentService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserTestService userTestService;
-    
+
     @Test
     public void shouldCreatePost() {
         User user = userTestService.authenticate();
         Long boardId = postBoard();
-        
+
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post")
@@ -78,18 +79,18 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
-            
+
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
             verifyPost(user, postDTO, postR);
             return null;
         });
     }
-    
+
     @Test
     public void shouldUpdatePost() {
         userTestService.authenticate();
         Long boardId = postBoard();
-        
+
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             new PostDTO()
                 .setName("New Post")
@@ -102,7 +103,7 @@ public class PostApiIT extends AbstractIT {
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com")))
             .getId());
-        
+
         transactionTemplate.execute(status -> {
             PostPatchDTO postPatchDTO = new PostPatchDTO()
                 .setName(Optional.of("shouldUpdatePost Board2"))
@@ -118,13 +119,13 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
         userTestService.authenticate();
         Long boardId = postBoard();
-        
+
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post 1")
@@ -139,7 +140,7 @@ public class PostApiIT extends AbstractIT {
             postApi.postPost(boardId, postDTO);
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post 2")
@@ -154,7 +155,7 @@ public class PostApiIT extends AbstractIT {
             postApi.postPost(boardId, postDTO);
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             List<PostRepresentation> posts = postApi.getPostsByBoard(boardId);
             assertThat(posts, contains(hasProperty("name", equalTo("Post 2")),
@@ -162,12 +163,12 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
         userTestService.authenticate();
         Long boardId = postBoard();
-        
+
         userTestService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -183,7 +184,7 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     private Long postBoard() {
         return transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
@@ -196,12 +197,12 @@ public class PostApiIT extends AbstractIT {
             return boardApi.postBoard(boardDTO).getId();
         });
     }
-    
+
     private void verifyPost(User user, PostDTO postDTO, PostRepresentation postR) {
         assertEquals(postDTO.getName(), postR.getName());
         assertEquals(postDTO.getDescription(), postR.getDescription());
         assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
-    
+
         LocationRepresentation locationR = postR.getLocation();
         LocationDTO locationDTO = postDTO.getLocation();
         assertEquals(locationDTO.getName(), locationR.getName());
@@ -209,34 +210,34 @@ public class PostApiIT extends AbstractIT {
         assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
         assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
         assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
-    
+
         assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
         assertThat(postR.getPostCategories(), containsInAnyOrder(postDTO.getPostCategories().toArray()));
         assertThat(postR.getMemberCategories(), containsInAnyOrder(postDTO.getMemberCategories().toArray()));
         assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
-    
+
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
         assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
         assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-    
+
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-        assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
-    
+        assertThat(postR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EDIT), new ResourceAction(Action.WITHDRAW, State.WITHDRAWN), new ResourceAction(Action.SUSPEND, State.SUSPENDED), new ResourceAction(Action.REJECT, State.REJECTED)));
+
         Post post = postService.getPost(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
-    
+
         Board board = boardService.getBoard(postR.getBoard().getId());
         Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
         assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
     }
-    
+
     private void verifyPost(PostPatchDTO postDTO, PostRepresentation postR) {
         assertEquals(postDTO.getName().orElse(null), postR.getName());
         assertEquals(postDTO.getDescription().orElse(null), postR.getDescription());
         assertEquals(postDTO.getOrganizationName().orElse(null), postR.getOrganizationName());
-        
+
         LocationRepresentation locationR = postR.getLocation();
         LocationDTO locationDTO = postDTO.getLocation().orElse(null);
         assertEquals(locationDTO.getName(), locationR.getName());
@@ -244,18 +245,18 @@ public class PostApiIT extends AbstractIT {
         assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
         assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
         assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
-        
+
         assertThat(postR.getPostCategories(), containsInAnyOrder(postDTO.getPostCategories().orElse(null).toArray()));
         assertThat(postR.getMemberCategories(), containsInAnyOrder(postDTO.getMemberCategories().orElse(null).toArray()));
         assertEquals(postDTO.getApplyWebsite() != null ? postDTO.getApplyWebsite().orElse(null) : null, postR.getApplyWebsite());
-        
+
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument().orElse(null);
         assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
         assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-        
+
         assertEquals(postDTO.getApplyEmail() != null ? postDTO.getApplyEmail().orElse(null) : null, postR.getApplyEmail());
     }
-    
+
 }

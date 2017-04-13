@@ -5,6 +5,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
+import hr.prism.board.enums.State;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
@@ -47,7 +48,7 @@ public class DepartmentBoardHelper {
         Board board = boardService.getBoard(boardR.getId());
         Department department = departmentService.getDepartment(departmentR.getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
-        Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND));
+        Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EDIT), new ResourceAction(Action.EXTEND, Scope.POST, State.ACCEPTED)));
 
         Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
         Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
@@ -55,7 +56,7 @@ public class DepartmentBoardHelper {
         Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
         if (expectDepartmentAdministrator) {
             Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
-            Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND));
+            Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(new ResourceAction(Action.VIEW), new ResourceAction(Action.EDIT), new ResourceAction(Action.EXTEND, Scope.POST, State.ACCEPTED)));
         }
     }
 
