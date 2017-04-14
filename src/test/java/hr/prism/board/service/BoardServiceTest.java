@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import org.junit.Test;
 
@@ -16,16 +17,16 @@ public class BoardServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchBoardWithNullName() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 boardService.updateBoard(board, new BoardPatchDTO().setName(Optional.empty())),
-            "Attempted to set board name to null");
+            ExceptionCode.MISSING_BOARD_NAME, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchBoardWithNullHandle() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 boardService.updateBoard(board, new BoardPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
-            "Attempted to set board handle to null");
+            ExceptionCode.MISSING_BOARD_HANDLE, null);
     }
     
 }

@@ -30,18 +30,18 @@ public class ActionService {
                 
                 State state = resource.getState();
                 State newState = actionRepresentation.getState();
-                if (!(newState == null || state == newState)) {
-                    if (newState == State.PREVIOUS) {
-                        // Restore to previous state
-                        newState = resource.getPreviousState();
-                    }
+                if (newState == null) {
+                    newState = state;
+                } else if (newState == state.PREVIOUS) {
+                    newState = resource.getPreviousState();
+                }
     
-                    Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
-                    if (interceptorClass != null) {
-                        // Apply any conditional logic
-                        newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
-                    }
-                    
+                Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
+                if (interceptorClass != null) {
+                    newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
+                }
+    
+                if (state != newState) {
                     resourceService.updateState(resource, newState);
                     return resourceService.getResource(user, resource.getScope(), resource.getId());
                 }

@@ -1,6 +1,6 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.RelationWithDepartment;
+import hr.prism.board.enums.ExistingRelation;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
@@ -30,7 +30,7 @@ public class Post extends Resource {
     
     @Column(name = "existing_relation")
     @Enumerated(value = EnumType.STRING)
-    private RelationWithDepartment existingRelation;
+    private ExistingRelation existingRelation;
     
     @Column(name = "existing_relation_explanation")
     private String existingRelationExplanation;
@@ -69,11 +69,11 @@ public class Post extends Resource {
         this.location = location;
     }
     
-    public RelationWithDepartment getExistingRelation() {
+    public ExistingRelation getExistingRelation() {
         return existingRelation;
     }
     
-    public void setExistingRelation(RelationWithDepartment existingRelation) {
+    public void setExistingRelation(ExistingRelation existingRelation) {
         this.existingRelation = existingRelation;
     }
     

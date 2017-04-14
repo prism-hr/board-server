@@ -103,7 +103,9 @@ public class DepartmentService {
             resourceService.updateHandle(department, handle);
             List<String> memberCategories = departmentDTO.getMemberCategories();
     
+            validateDepartment(department);
             department = departmentRepository.save(department);
+    
             resourceService.updateCategories(department, memberCategories, CategoryType.MEMBER);
             resourceService.createResourceRelation(department, department);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
@@ -126,44 +128,50 @@ public class DepartmentService {
     void updateDepartment(Department department, DepartmentPatchDTO departmentDTO) {
         Optional<String> nameOptional = departmentDTO.getName();
         if (nameOptional != null) {
-            if (nameOptional.isPresent()) {
-                String name = nameOptional.get();
-                if (!name.equals(department.getName()) && departmentRepository.findByName(name) != null) {
+            String oldName = department.getName();
+            String newName = nameOptional.orElse(null);
+            if (!Objects.equals(newName, oldName)) {
+                if (departmentRepository.findByName(newName) != null) {
                     throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
                 }
                 
-                department.setName(name);
-            } else {
-                throw new IllegalStateException("Attempted to set department name to null");
+                department.setName(newName);
             }
         }
         
         if (departmentDTO.getDocumentLogo() != null) {
-            String existingLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
             String newLogoId = departmentDTO.getDocumentLogo().map(DocumentDTO::getCloudinaryId).orElse(null);
-            if (!Objects.equals(existingLogoId, newLogoId)) {
+            String oldLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
+            if (!Objects.equals(newLogoId, oldLogoId)) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo().orElse(null)));
             }
         }
         
         Optional<String> handleOptional = departmentDTO.getHandle();
         if (handleOptional != null) {
-            if (handleOptional.isPresent()) {
-                String handle = handleOptional.get();
-                if (!handle.equals(department.getHandle())) {
-                    if (departmentRepository.findByHandle(handle) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
-                    }
-                    
-                    resourceService.updateHandle(department, handle);
+            String oldHandle = department.getHandle();
+            String newHandle = handleOptional.orElse(null);
+            if (!Objects.equals(newHandle, oldHandle)) {
+                if (departmentRepository.findByHandle(newHandle) != null) {
+                    throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
                 }
-            } else {
-                throw new IllegalStateException("Attempted to set department handle to null");
+                
+                resourceService.updateHandle(department, newHandle);
             }
         }
         
         if (departmentDTO.getMemberCategories() != null) {
             resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(Collections.emptyList()), CategoryType.MEMBER);
+        }
+        
+        validateDepartment(department);
+    }
+    
+    private void validateDepartment(Department department) {
+        if (department.getName() == null) {
+            throw new ApiException(ExceptionCode.MISSING_DEPARTMENT_NAME);
+        } else if (department.getHandle() == null) {
+            throw new ApiException(ExceptionCode.MISSING_DEPARTMENT_HANDLE);
         }
     }
     

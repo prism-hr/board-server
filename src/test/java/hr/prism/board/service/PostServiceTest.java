@@ -5,9 +5,11 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostPatchDTO;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class PostServiceTest {
@@ -18,41 +20,41 @@ public class PostServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullName() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 postService.updatePost(post, new PostPatchDTO().setName(Optional.empty())),
-            "Attempted to set post name to null");
+            ExceptionCode.MISSING_POST_NAME, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullDescription() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 postService.updatePost(post, new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.empty())),
-            "Attempted to set post description to null");
+            ExceptionCode.MISSING_POST_DESCRIPTION, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullOrganizationName() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 postService.updatePost(post,
                     new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.of("description")).setOrganizationName(Optional.empty())),
-            "Attempted to set post organization name to null");
+            ExceptionCode.MISSING_POST_ORGANIZATION_NAME, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullLocation() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))
                         .setDescription(Optional.of("description"))
                         .setOrganizationName(Optional.empty())
                         .setLocation(Optional.empty())),
-            "Attempted to set post location to null");
+            ExceptionCode.MISSING_POST_LOCATION, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullApplyWebsiteAndNullApplyEmailAndNullApplyDocument() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))
@@ -62,7 +64,50 @@ public class PostServiceTest {
                         .setApplyWebsite(Optional.empty())
                         .setApplyEmail(Optional.empty())
                         .setApplyDocument(Optional.empty())),
-            "Attempted to set post application mechanism to null");
+            ExceptionCode.CORRUPTED_POST_APPLY_MECHANISM, null);
+    }
+    
+    @Test
+    public void shouldNotBeAbleToPatchPostWithApplyWebsiteAndApplyEmail() {
+        ExceptionUtil.verifyApiException(() ->
+                postService.updatePost(post,
+                    new PostPatchDTO()
+                        .setName(Optional.of("name"))
+                        .setDescription(Optional.of("description"))
+                        .setOrganizationName(Optional.of("organization name"))
+                        .setLocation(Optional.of(new LocationDTO()))
+                        .setApplyWebsite(Optional.of("http://www.google.com"))
+                        .setApplyEmail(Optional.of("alastair@prism.hr"))),
+            ExceptionCode.CORRUPTED_POST_APPLY_MECHANISM, null);
+    }
+    
+    @Test
+    public void shouldNotBeAbleToPatchPostWithLiveTimestampNull() {
+        ExceptionUtil.verifyApiException(() ->
+                postService.updatePost(post,
+                    new PostPatchDTO()
+                        .setName(Optional.of("name"))
+                        .setDescription(Optional.of("description"))
+                        .setOrganizationName(Optional.of("organization name"))
+                        .setLocation(Optional.of(new LocationDTO()))
+                        .setApplyWebsite(Optional.of("http://www.google.com"))
+                        .setLiveTimestamp(Optional.empty())),
+            ExceptionCode.MISSING_POST_LIVE_TIMESTAMP, null);
+    }
+    
+    @Test
+    public void shouldNotBeAbleToPatchPostWithDeadTimestampNull() {
+        ExceptionUtil.verifyApiException(() ->
+                postService.updatePost(post,
+                    new PostPatchDTO()
+                        .setName(Optional.of("name"))
+                        .setDescription(Optional.of("description"))
+                        .setOrganizationName(Optional.of("organization name"))
+                        .setLocation(Optional.of(new LocationDTO()))
+                        .setApplyWebsite(Optional.of("http://www.google.com"))
+                        .setLiveTimestamp(Optional.of(LocalDateTime.now()))
+                        .setDeadTimestamp(Optional.empty())),
+            ExceptionCode.MISSING_POST_DEAD_TIMESTAMP, null);
     }
     
 }

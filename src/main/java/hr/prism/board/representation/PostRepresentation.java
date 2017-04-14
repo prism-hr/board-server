@@ -1,6 +1,6 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.enums.RelationWithDepartment;
+import hr.prism.board.enums.ExistingRelation;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +13,7 @@ public class PostRepresentation extends ResourceRepresentation {
     
     private LocationRepresentation location;
     
-    private RelationWithDepartment existingRelation;
+    private ExistingRelation existingRelation;
     
     private String existingRelationExplanation;
     
@@ -60,11 +60,11 @@ public class PostRepresentation extends ResourceRepresentation {
         return this;
     }
     
-    public RelationWithDepartment getExistingRelation() {
+    public ExistingRelation getExistingRelation() {
         return existingRelation;
     }
     
-    public PostRepresentation setExistingRelation(RelationWithDepartment existingRelation) {
+    public PostRepresentation setExistingRelation(ExistingRelation existingRelation) {
         this.existingRelation = existingRelation;
         return this;
     }

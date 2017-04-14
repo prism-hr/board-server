@@ -1,6 +1,6 @@
 package hr.prism.board.enums;
 
-public enum RelationWithDepartment {
+public enum ExistingRelation {
     
     /**
      * No questions needed

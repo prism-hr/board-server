@@ -9,7 +9,7 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.RelationWithDepartment;
+import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
@@ -260,7 +260,7 @@ public class ActionServiceIT extends AbstractIT {
                         .setLongitude(BigDecimal.ONE))
                     .setPostCategories(Collections.emptyList())
                     .setMemberCategories(Collections.emptyList())
-                    .setExistingRelation(RelationWithDepartment.STUDENT));
+                    .setExistingRelation(ExistingRelation.STUDENT));
         });
     }
     

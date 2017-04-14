@@ -14,10 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -86,6 +83,8 @@ public class PostService {
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
             post.setLiveTimestamp(postDTO.getLiveTimestamp());
             post.setDeadTimestamp(postDTO.getDeadTimestamp());
+    
+            validatePost(post);
             post = postRepository.save(post);
     
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
@@ -96,7 +95,7 @@ public class PostService {
         });
         
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
-            throw new ApiException(ExceptionCode.MISSING_RELATION_DESCRIPTION);
+            throw new ApiException(ExceptionCode.MISSING_POST_EXISTING_RELATION);
         }
         
         return createdPost;
@@ -122,43 +121,25 @@ public class PostService {
     void updatePost(Post post, PostPatchDTO postDTO) {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
-        Optional<String> nameOptional = postDTO.getName();
-        if (nameOptional != null) {
-            if (nameOptional.isPresent()) {
-                post.setName(nameOptional.get());
-            } else {
-                throw new IllegalStateException("Attempted to set post name to null");
-            }
+    
+        if (postDTO.getName() != null) {
+            post.setName(postDTO.getName().orElse(null));
         }
-        
-        Optional<String> descriptionOptional = postDTO.getDescription();
-        if (descriptionOptional != null) {
-            if (descriptionOptional.isPresent()) {
-                post.setDescription(descriptionOptional.get());
-            } else {
-                throw new IllegalStateException("Attempted to set post description to null");
-            }
+    
+        if (postDTO.getDescription() != null) {
+            post.setDescription(postDTO.getDescription().orElse(null));
         }
-        
-        Optional<String> organizationNameOptional = postDTO.getOrganizationName();
-        if (organizationNameOptional != null) {
-            if (organizationNameOptional.isPresent()) {
-                post.setOrganizationName(organizationNameOptional.get());
-            } else {
-                throw new IllegalStateException("Attempted to set post organization name to null");
-            }
+    
+        if (postDTO.getOrganizationName() != null) {
+            post.setOrganizationName(postDTO.getOrganizationName().orElse(null));
         }
-        
-        Optional<LocationDTO> locationOptional = postDTO.getLocation();
-        if (locationOptional != null) {
-            if (locationOptional.isPresent()) {
-                String oldLocationId = Optional.ofNullable(post.getLocation()).map(Location::getGoogleId).orElse(null);
-                String newLocationId = locationOptional.map(LocationDTO::getGoogleId).orElse(null);
-                if (!Objects.equals(oldLocationId, newLocationId)) {
-                    post.setLocation(locationService.getOrCreateLocation(locationOptional.orElse(null)));
-                }
-            } else {
-                throw new IllegalStateException("Attempted to set post location to null");
+    
+        // update location
+        if (postDTO.getLocation() != null) {
+            String newLocationId = postDTO.getLocation().map(LocationDTO::getGoogleId).orElse(null);
+            String oldLocationId = Optional.ofNullable(post.getLocation()).map(Location::getGoogleId).orElse(null);
+            if (!Objects.equals(newLocationId, oldLocationId)) {
+                post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation().orElse(null)));
             }
         }
         
@@ -173,6 +154,27 @@ public class PostService {
             }
         }
         
+        // update applyDocument
+        Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
+        if (applyDocumentOptional != null) {
+            if (applyDocumentOptional.isPresent()) {
+                DocumentDTO newApplyDocumentDTO = applyDocumentOptional.get();
+                String oldApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
+                if (!Objects.equals(newApplyDocumentDTO.getCloudinaryId(), oldApplyDocumentId)) {
+                    if (oldApplyDocumentId != null) {
+                        removeApplyDocument(post);
+                    }
+            
+                    post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
+                }
+        
+                post.setApplyWebsite(null);
+                post.setApplyEmail(null);
+            } else {
+                removeApplyDocument(post);
+            }
+        }
+    
         Optional<String> applyEmailOptional = postDTO.getApplyEmail();
         if (applyEmailOptional != null) {
             if (applyEmailOptional.isPresent()) {
@@ -183,43 +185,8 @@ public class PostService {
                 post.setApplyEmail(null);
             }
         }
-        
-        // update applyDocument
-        Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
-        if (applyDocumentOptional != null) {
-            String oldApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
-            String newApplyDocumentId = applyDocumentOptional.map(DocumentDTO::getCloudinaryId).orElse(null);
-            if (!Objects.equals(oldApplyDocumentId, newApplyDocumentId)) {
-                post.setApplyDocument(documentService.getOrCreateDocument(applyDocumentOptional.orElse(null)));
-                if (newApplyDocumentId != null) {
-                    post.setApplyWebsite(null);
-                    post.setApplyEmail(null);
-                }
-            }
-        }
-        
-        if (post.getApplyWebsite() == null && post.getApplyEmail() == null && post.getApplyDocument() == null) {
-            throw new IllegalStateException("Attempted to set post application mechanism to null");
-        }
-    
-        // TODO: test coverage
-        Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
-        if (liveTimestampOptional != null) {
-            if (liveTimestampOptional.isPresent()) {
-                post.setLiveTimestamp(liveTimestampOptional.get());
-            } else {
-                throw new IllegalStateException("Attempted to set post live timestamp to null");
-            }
-        }
-    
-        // TODO: test coverage
-        Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
-        if (deadTimestampOptional != null) {
-            if (deadTimestampOptional.isPresent()) {
-                post.setDeadTimestamp(deadTimestampOptional.get());
-            } else {
-                throw new IllegalStateException("Attempted to set post live timestamp to null");
-            }
+        if (postDTO.getApplyEmail() != null) {
+            post.setApplyEmail(postDTO.getApplyEmail().orElse(null));
         }
         
         if (postDTO.getPostCategories() != null) {
@@ -229,6 +196,16 @@ public class PostService {
         if (postDTO.getMemberCategories() != null) {
             updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories().orElse(null), department);
         }
+    
+        if (postDTO.getLiveTimestamp() != null) {
+            post.setLiveTimestamp(postDTO.getLiveTimestamp().orElse(null));
+        }
+    
+        if (postDTO.getDeadTimestamp() != null) {
+            post.setDeadTimestamp(postDTO.getDeadTimestamp().orElse(null));
+        }
+    
+        validatePost(post);
     }
     
     private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource parentResource) {
@@ -250,6 +227,33 @@ public class PostService {
         post.setApplyDocument(null);
         if (applyDocument != null) {
             documentService.deleteDocument(applyDocument);
+        }
+    }
+    
+    private void validatePost(Post post) {
+        if (post.getName() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_NAME);
+        } else if (post.getDescription() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_DESCRIPTION);
+        } else if (post.getOrganizationName() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_ORGANIZATION_NAME);
+        } else if (post.getLocation() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_LOCATION);
+        }
+        
+        int nonNullCount = 0;
+        for (Object applyMechanism : Arrays.asList(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail())) {
+            if (applyMechanism != null) {
+                nonNullCount++;
+            }
+        }
+        
+        if (nonNullCount != 1) {
+            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY_MECHANISM);
+        } else if (post.getLiveTimestamp() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_LIVE_TIMESTAMP);
+        } else if (post.getDeadTimestamp() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_DEAD_TIMESTAMP);
         }
     }
     

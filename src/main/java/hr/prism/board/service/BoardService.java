@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -70,8 +71,8 @@ public class BoardService {
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
         Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
-            validateNameUniqueness(name, department);
-    
+            validateNameUnique(name, department);
+            
             Board board = new Board();
             board.setName(name);
             board.setDescription(boardDTO.getPurpose());
@@ -80,6 +81,8 @@ public class BoardService {
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
             List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
             board.setHandle(ResourceService.confirmHandle(handle, similarHandles));
+    
+            validateBoard(board);
             board = boardRepository.save(board);
     
             resourceService.updateCategories(board, boardDTO.getPostCategories(), CategoryType.POST);
@@ -104,17 +107,14 @@ public class BoardService {
     
     void updateBoard(Board board, BoardPatchDTO boardDTO) {
         Department department = (Department) board.getParent();
+    
         Optional<String> nameOptional = boardDTO.getName();
         if (nameOptional != null) {
-            if (nameOptional.isPresent()) {
-                String name = nameOptional.get();
-                if (!name.equals(board.getName())) {
-                    validateNameUniqueness(name, department);
-                }
-                
-                board.setName(name);
-            } else {
-                throw new IllegalStateException("Attempted to set board name to null");
+            String oldName = board.getName();
+            String newName = nameOptional.orElse(null);
+            if (!Objects.equals(newName, oldName)) {
+                validateNameUnique(newName, department);
+                board.setName(newName);
             }
         }
         
@@ -124,17 +124,15 @@ public class BoardService {
         
         Optional<String> handleOptional = boardDTO.getHandle();
         if (handleOptional != null) {
-            if (handleOptional.isPresent()) {
-                String handle = department.getHandle() + "/" + handleOptional.get();
-                if (!handle.equals(board.getHandle())) {
-                    if (boardRepository.findByHandle(handle) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
-                    }
-                    
-                    resourceService.updateHandle(board, handle);
+            String oldHandle = board.getHandle();
+            String newHandle = handleOptional.orElse(null);
+            newHandle = newHandle == null ? null : department.getHandle() + "/" + newHandle;
+            if (!Objects.equals(newHandle, oldHandle)) {
+                if (boardRepository.findByHandle(newHandle) != null) {
+                    throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
                 }
-            } else {
-                throw new IllegalStateException("Attempted to set board handle to null");
+        
+                resourceService.updateHandle(board, newHandle);
             }
         }
         
@@ -145,12 +143,22 @@ public class BoardService {
         if (boardDTO.getDefaultPostVisibility() != null) {
             board.setDefaultPostVisibility(boardDTO.getDefaultPostVisibility().orElse(null));
         }
+    
+        validateBoard(board);
     }
     
-    private void validateNameUniqueness(String name, Department department) {
+    private void validateNameUnique(String name, Department department) {
         Board board = boardRepository.findByNameAndDepartment(name, department);
         if (board != null) {
             throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
+        }
+    }
+    
+    private void validateBoard(Board board) {
+        if (board.getName() == null) {
+            throw new ApiException(ExceptionCode.MISSING_BOARD_NAME);
+        } else if (board.getHandle() == null) {
+            throw new ApiException(ExceptionCode.MISSING_BOARD_HANDLE);
         }
     }
     

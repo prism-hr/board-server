@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.Department;
 import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import org.junit.Test;
 
@@ -15,16 +16,16 @@ public class DepartmentServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchDepartmentWithNullName() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 departmentService.updateDepartment(department, new DepartmentPatchDTO().setName(Optional.empty())),
-            "Attempted to set department name to null");
+            ExceptionCode.MISSING_DEPARTMENT_NAME, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchDepartmentWithNullHandle() {
-        ExceptionUtil.verifyIllegalStateException(() ->
+        ExceptionUtil.verifyApiException(() ->
                 departmentService.updateDepartment(department, new DepartmentPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
-            "Attempted to set department handle to null");
+            ExceptionCode.MISSING_DEPARTMENT_HANDLE, null);
     }
     
 }
