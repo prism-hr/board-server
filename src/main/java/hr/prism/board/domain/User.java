@@ -24,7 +24,7 @@ public class User extends BoardEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
     
-    @Column(name = "stormpath_id", nullable = false, unique = true)
+    @Column(name = "stormpath_id", unique = true)
     private String stormpathId;
     
     @OneToMany(mappedBy = "user")

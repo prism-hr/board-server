@@ -1,0 +1,2 @@
+ALTER TABLE user
+  MODIFY COLUMN stormpath_id VARCHAR(30);

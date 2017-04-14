@@ -1,6 +1,8 @@
 package hr.prism.board;
 
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.common.collect.ImmutableMap;
+import com.stormpath.sdk.impl.account.DefaultAccount;
 import com.stormpath.sdk.servlet.mvc.WebHandler;
 import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
 import hr.prism.board.repository.MyRepositoryImpl;
@@ -11,8 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -23,25 +27,28 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Configuration
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
-public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
+public class ApplicationConfiguration extends WebSecurityConfigurerAdapter implements ApplicationListener<ContextRefreshedEvent> {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
     
+    private static AtomicBoolean CONTEXT_READY = new AtomicBoolean(false);
+    
     @Inject
     private Environment environment;
-
+    
     @Inject
     private UserService userService;
-
+    
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
         springApplication.run(args);
     }
-
+    
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.apply(StormpathWebSecurityConfigurer.stormpath())
@@ -63,22 +70,22 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             .password("pgadmissions")
             .build();
     }
-
+    
     @Bean
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:db/migration");
-
+        
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
             flyway.clean();
         }
-
+        
         flyway.migrate();
         return flyway;
     }
-
+    
     @Bean
     public LocalSessionFactoryBean sessionFactory() {
         LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
@@ -90,7 +97,7 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
         return sessionFactoryBean;
     }
-
+    
     @Bean
     public WebHandler registerPostHandler() {
         return (request, response, account) -> {
@@ -98,13 +105,32 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             return true;
         };
     }
-
+    
     @Bean
     public Jackson2ObjectMapperBuilder objectMapperBuilder() {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
         builder.modules(new Jdk8Module());
         builder.indentOutput(true);
         return builder;
+    }
+    
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        synchronized (this.getClass()) {
+            if (CONTEXT_READY.get()) {
+                return;
+            }
+            
+            CONTEXT_READY.set(true);
+        }
+        
+        // Create the board bot
+        String boardBotEmail = "boardbot@prism.hr";
+        if (userService.findByEmail(boardBotEmail) == null) {
+            DefaultAccount account = new DefaultAccount(null,
+                ImmutableMap.of("email", boardBotEmail, "givenName", "board", "surname", "bot"));
+            userService.createUser(account);
+        }
     }
     
 }
