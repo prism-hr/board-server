@@ -120,15 +120,8 @@ public class PostService {
     }
     
     @Scheduled(fixedDelay = 60000, fixedRate = 60000)
-    public void publishAndRetirePosts() {
-        LocalDateTime baseline = LocalDateTime.now();
-        postRepository.findPostsToRetire(State.ACCEPTED, baseline).forEach(post -> {
-        
-        });
-    
-        postRepository.findPostsToPublish(State.PENDING, baseline).forEach(post -> {
-        
-        });
+    public void publishAndRetirePostsScheduled() {
+        publishAndRetirePosts();
     }
     
     void updatePost(Post post, PostPatchDTO postDTO) {
@@ -219,6 +212,21 @@ public class PostService {
         }
     
         validatePost(post);
+    }
+    
+    void publishAndRetirePosts() {
+        LocalDateTime baseline = LocalDateTime.now();
+        postRepository.findPostsToRetire(State.ACCEPTED, baseline).forEach(post -> {
+            // FIXME: translations
+            post.setComment("Retired post");
+            actionService.executeAction(post, Action.RETIRE, State.EXPIRED);
+        });
+        
+        postRepository.findPostsToPublish(State.PENDING, baseline).forEach(post -> {
+            // FIXME: translations
+            post.setComment("Published post");
+            actionService.executeAction(post, Action.PUBLISH, State.ACCEPTED);
+        });
     }
     
     private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource parentResource) {

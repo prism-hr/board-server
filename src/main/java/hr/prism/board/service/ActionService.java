@@ -72,6 +72,11 @@ public class ActionService {
         throw new ApiForbiddenException(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
     }
     
+    public void executeAction(Resource resource, Action action, State state) {
+        resourceService.updateState(resource, state);
+        recordOperation(resource, action, null);
+    }
+    
     // TODO: Generate comment and change list
     private void recordOperation(Resource resource, Action action, User user) {
         Operation operation = new Operation().setResource(resource).setAction(action).setUser(user).setComment(resource.getComment());
