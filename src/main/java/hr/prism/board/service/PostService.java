@@ -9,6 +9,7 @@ import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.PostRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,6 +117,11 @@ public class PostService {
     
             return post;
         });
+    }
+    
+    @Scheduled(fixedDelay = 60000, fixedRate = 60000)
+    public void publishAndRetirePosts() {
+        
     }
     
     void updatePost(Post post, PostPatchDTO postDTO) {
