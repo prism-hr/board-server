@@ -14,15 +14,15 @@ public interface PostRepository extends MyRepository<Post, Long> {
         "select post " +
             "from Post post " +
             "where post.state = :state " +
-            "and post.liveTimestamp >= :liveTimestamp " +
-            "and post.deadTimestamp < :liveTimestamp")
-    List<Post> getPostsToPublish(@Param("state") State state, @Param("liveTimestamp") LocalDateTime liveTimestamp);
+            "and post.deadTimestamp < :deadTimestamp")
+    List<Post> findPostsToRetire(@Param("state") State state, @Param("deadTimestamp") LocalDateTime deadTimestamp);
     
     @Query(value =
         "select post " +
             "from Post post " +
             "where post.state = :state " +
-            "and post.deadTimestamp < :deadTimestamp")
-    List<Post> getPostsToRetire(@Param("state") State state, @Param("deadTimestamp") LocalDateTime deadTimestamp);
+            "and post.liveTimestamp >= :liveTimestamp " +
+            "and post.deadTimestamp < :liveTimestamp")
+    List<Post> findPostsToPublish(@Param("state") State state, @Param("liveTimestamp") LocalDateTime liveTimestamp);
     
 }

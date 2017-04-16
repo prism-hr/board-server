@@ -121,7 +121,14 @@ public class PostService {
     
     @Scheduled(fixedDelay = 60000, fixedRate = 60000)
     public void publishAndRetirePosts() {
+        LocalDateTime baseline = LocalDateTime.now();
+        postRepository.findPostsToRetire(State.ACCEPTED, baseline).forEach(post -> {
         
+        });
+    
+        postRepository.findPostsToPublish(State.PENDING, baseline).forEach(post -> {
+        
+        });
     }
     
     void updatePost(Post post, PostPatchDTO postDTO) {
@@ -170,10 +177,10 @@ public class PostService {
                     if (oldApplyDocumentId != null) {
                         removeApplyDocument(post);
                     }
-            
+    
                     post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
                 }
-        
+    
                 post.setApplyWebsite(null);
                 post.setApplyEmail(null);
             } else {
