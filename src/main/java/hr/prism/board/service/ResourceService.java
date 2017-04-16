@@ -9,6 +9,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.CategoryRepository;
+import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
@@ -65,6 +66,9 @@ public class ResourceService {
     private ResourceRepository resourceRepository;
     
     @Inject
+    private ResourceCategoryRepository resourceCategoryRepository;
+    
+    @Inject
     private ResourceRelationRepository resourceRelationRepository;
     
     @Inject
@@ -114,7 +118,7 @@ public class ResourceService {
                 existingResourceCategory.setActive(false);
             }
     
-            existingResourceCategory.setUpdatedTimestamp(LocalDateTime.now());
+            resourceCategoryRepository.update(existingResourceCategory);
         }
         
         // add new categories

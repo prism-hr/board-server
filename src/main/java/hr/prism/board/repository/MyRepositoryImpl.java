@@ -8,21 +8,26 @@ import javax.persistence.EntityManager;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class MyRepositoryImpl<T extends BoardEntity, ID extends Serializable>
-    extends SimpleJpaRepository<T, ID> implements MyRepository<T, ID> {
+public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializable>
+    extends SimpleJpaRepository<ENTITY, ID> implements MyRepository<ENTITY, ID> {
     
-    public MyRepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
+    public MyRepositoryImpl(JpaEntityInformation<ENTITY, ID> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
     }
     
     @Override
-    public <S extends T> S save(S entity) {
+    public <T extends ENTITY> T save(T entity) {
         if (entity.getCreatedTimestamp() == null) {
             entity.setCreatedTimestamp(LocalDateTime.now());
         }
     
-        entity.setUpdatedTimestamp(LocalDateTime.now());
+        update(entity);
         return super.save(entity);
+    }
+    
+    @Override
+    public <T extends ENTITY> void update(T entity) {
+        entity.setUpdatedTimestamp(LocalDateTime.now());
     }
     
 }

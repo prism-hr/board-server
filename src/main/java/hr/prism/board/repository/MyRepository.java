@@ -7,7 +7,9 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import java.io.Serializable;
 
 @NoRepositoryBean
-public interface MyRepository<T extends BoardEntity, ID extends Serializable>
-    extends PagingAndSortingRepository<T, ID> {
+public interface MyRepository<ENTITY extends BoardEntity, ID extends Serializable>
+    extends PagingAndSortingRepository<ENTITY, ID> {
+    
+    <T extends ENTITY> void update(T entity);
     
 }
