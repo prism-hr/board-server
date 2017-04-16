@@ -44,10 +44,6 @@ public class UserService {
         return user;
     }
     
-    public User getBoardBotUser() {
-        return userRepository.findByStormpathIdNull();
-    }
-    
     public User findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -58,14 +54,9 @@ public class UserService {
         user.setGivenName(account.getGivenName());
         user.setSurname(account.getSurname());
         
-        // Board bot is identified by having no stormpathId
-        // Should be safe in all other cases as stormpath will validate href not null
         String href = account.getHref();
-        if (href != null) {
-            String stormpathId = href.substring(href.lastIndexOf('/') + 1);
-            user.setStormpathId(stormpathId);
-        }
-        
+        String stormpathId = href.substring(href.lastIndexOf('/') + 1);
+        user.setStormpathId(stormpathId);
         return userRepository.save(user);
     }
     
