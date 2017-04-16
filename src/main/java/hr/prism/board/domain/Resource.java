@@ -56,8 +56,17 @@ public class Resource extends BoardEntity {
     @OneToMany(mappedBy = "resource2")
     private Set<ResourceRelation> parents = new HashSet<>();
     
+    @OneToMany(mappedBy = "resource")
+    private Set<Operation> operations = new HashSet<>();
+    
     @Transient
     private List<ActionRepresentation> actions;
+    
+    @Transient
+    private String comment;
+    
+    @Transient
+    private List<String> changeList;
     
     public Scope getScope() {
         return scope;
@@ -147,12 +156,34 @@ public class Resource extends BoardEntity {
         return parents;
     }
     
+    public Set<Operation> getOperations() {
+        return operations;
+    }
+    
     public List<ActionRepresentation> getActions() {
         return actions;
     }
     
     public Resource setActions(List<ActionRepresentation> actions) {
         this.actions = actions;
+        return this;
+    }
+    
+    public String getComment() {
+        return comment;
+    }
+    
+    public Resource setComment(String comment) {
+        this.comment = comment;
+        return this;
+    }
+    
+    public List<String> getChangeList() {
+        return changeList;
+    }
+    
+    public Resource setChangeList(List<String> changeList) {
+        this.changeList = changeList;
         return this;
     }
     
