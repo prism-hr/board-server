@@ -77,7 +77,6 @@ public class ActionService {
         recordOperation(resource, action, null);
     }
     
-    // TODO: Generate comment and change list
     private void recordOperation(Resource resource, Action action, User user) {
         Operation operation = new Operation().setResource(resource).setAction(action).setUser(user).setComment(resource.getComment());
         

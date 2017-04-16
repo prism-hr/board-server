@@ -8,7 +8,6 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
-import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
@@ -66,13 +65,10 @@ public class ResourceService {
     private ResourceRepository resourceRepository;
     
     @Inject
-    private ResourceCategoryRepository resourceCategoryRepository;
-    
-    @Inject
     private ResourceRelationRepository resourceRelationRepository;
     
     @Inject
-    private CategoryRepository categoryRepository;
+    private ResourceCategoryRepository resourceCategoryRepository;
     
     @PersistenceContext
     private EntityManager entityManager;
@@ -125,7 +121,7 @@ public class ResourceService {
         for (String postedCategory : postedCategories) {
             ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(postedCategory).setActive(true).setType(type);
             newResourceCategory.setCreatedTimestamp(LocalDateTime.now());
-            categoryRepository.save(newResourceCategory);
+            resourceCategoryRepository.save(newResourceCategory);
             existingCategories.add(newResourceCategory);
         }
     }

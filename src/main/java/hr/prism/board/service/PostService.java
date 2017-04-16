@@ -7,8 +7,8 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.CategoryRepository;
 import hr.prism.board.repository.PostRepository;
+import hr.prism.board.repository.ResourceCategoryRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ public class PostService {
     private PostRepository postRepository;
     
     @Inject
-    private CategoryRepository categoryRepository;
+    private ResourceCategoryRepository resourceCategoryRepository;
     
     @Inject
     private DocumentService documentService;
@@ -45,6 +45,9 @@ public class PostService {
     
     @Inject
     private ActionService actionService;
+    
+    @Inject
+    private LocalizationService localizationService;
     
     public Post getPost(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -217,28 +220,26 @@ public class PostService {
     void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
         postRepository.findPostsToRetire(State.ACCEPTED, baseline).forEach(post -> {
-            // FIXME: translations
-            post.setComment("Retired post");
+            post.setComment(localizationService.getMessage(Arrays.asList("retired", "post"), Locale.UK));
             actionService.executeAction(post, Action.RETIRE, State.EXPIRED);
         });
         
         postRepository.findPostsToPublish(State.PENDING, baseline).forEach(post -> {
-            // FIXME: translations
-            post.setComment("Published post");
+            post.setComment(localizationService.getMessage(Arrays.asList("published", "post"), Locale.UK));
             actionService.executeAction(post, Action.PUBLISH, State.ACCEPTED);
         });
     }
     
     private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource parentResource) {
-        categoryRepository.deleteByResourceAndType(post, categoryType);
+        resourceCategoryRepository.deleteByResourceAndType(post, categoryType);
         Set<ResourceCategory> savedCategories = post.getCategories();
         savedCategories.removeIf(next -> next.getType() == categoryType);
     
-        List<ResourceCategory> newCategories = categoryRepository.findByResourceAndTypeAndNameIn(parentResource, categoryType, categories);
+        List<ResourceCategory> newCategories = resourceCategoryRepository.findByResourceAndTypeAndNameIn(parentResource, categoryType, categories);
         newCategories.forEach(category -> {
             ResourceCategory insertCategory = new ResourceCategory().setResource(post).setName(category.getName()).setActive(true).setType(category.getType());
             insertCategory.setCreatedTimestamp(LocalDateTime.now());
-            insertCategory = categoryRepository.save(insertCategory);
+            insertCategory = resourceCategoryRepository.save(insertCategory);
             savedCategories.add(insertCategory);
         });
     }
