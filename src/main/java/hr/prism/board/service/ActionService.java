@@ -1,20 +1,14 @@
 package hr.prism.board.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import hr.prism.board.domain.Operation;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.permission.ActionExecutionTemplate;
-import hr.prism.board.repository.OperationRepository;
-import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,19 +20,8 @@ import java.util.List;
 @Transactional
 public class ActionService {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
-    
     @Inject
     private ResourceService resourceService;
-    
-    @Inject
-    private ResourceRepository resourceRepository;
-    
-    @Inject
-    private OperationRepository operationRepository;
-    
-    @Inject
-    private ObjectMapper objectMapper;
     
     public Resource executeAction(User user, Resource resource, Action action, ActionExecutionTemplate executionTemplate) {
         List<ActionRepresentation> actions = resource.getActions();
@@ -50,7 +33,7 @@ public class ActionService {
                 State newState = actionRepresentation.getState();
                 if (newState == null) {
                     newState = state;
-                } else if (newState == state.PREVIOUS) {
+                } else if (newState == State.PREVIOUS) {
                     newState = resource.getPreviousState();
                 }
     
@@ -61,37 +44,16 @@ public class ActionService {
     
                 if (state != newState) {
                     resourceService.updateState(resource, newState);
-                    return resourceService.getResource(user, resource.getScope(), resource.getId());
+                    resource = resourceService.getResource(user, resource.getScope(), resource.getId());
                 }
     
-                recordOperation(resource, action, user);
+                ResourceOperation resourceOperation = resourceService.createResourceOperation(resource, action, user);
+                resourceService.updateResource(resource, resourceOperation.getUpdatedTimestamp());
                 return resource;
             }
         }
         
         throw new ApiForbiddenException(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
-    }
-    
-    public void executeAction(Resource resource, Action action, State state) {
-        resourceService.updateState(resource, state);
-        recordOperation(resource, action, null);
-    }
-    
-    private void recordOperation(Resource resource, Action action, User user) {
-        Operation operation = new Operation().setResource(resource).setAction(action).setUser(user).setComment(resource.getComment());
-        
-        List<String> changeList = resource.getChangeList();
-        if (changeList != null) {
-            try {
-                operation.setChangeList(objectMapper.writeValueAsString(changeList));
-            } catch (JsonProcessingException e) {
-                LOGGER.info("Could not serialize change list", e);
-            }
-        }
-        
-        operation = operationRepository.save(operation);
-        resource.getOperations().add(operation);
-        resourceRepository.update(resource);
     }
     
 }

@@ -1,5 +1,7 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
@@ -9,9 +11,12 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.ResourceCategoryRepository;
+import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -34,6 +39,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class ResourceService {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
     
     private static final String PUBLIC_RESOURCE_ACTION =
         "select resource.id, permission.action, " +
@@ -59,8 +66,6 @@ public class ResourceService {
             "on parent.id = user_role.resource_id " +
             "and permission.role = user_role.role";
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
-    
     @Inject
     private ResourceRepository resourceRepository;
     
@@ -70,10 +75,17 @@ public class ResourceService {
     @Inject
     private ResourceCategoryRepository resourceCategoryRepository;
     
+    @Inject
+    private ResourceOperationRepository resourceOperationRepository;
+    
+    @Inject
+    private ObjectMapper objectMapper;
+    
     @PersistenceContext
     private EntityManager entityManager;
     
     @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
     
     public void updateHandle(Resource resource, String newHandle) {
@@ -114,7 +126,7 @@ public class ResourceService {
                 existingResourceCategory.setActive(false);
             }
     
-            resourceCategoryRepository.update(existingResourceCategory);
+            resourceCategoryRepository.update(existingResourceCategory, LocalDateTime.now());
         }
         
         // add new categories
@@ -308,6 +320,51 @@ public class ResourceService {
         }
         
         return suggestedHandle;
+    }
+    
+    public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
+        ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user).setComment(resource.getComment());
+        
+        ResourceChangeListRepresentation changeList = resource.getChangeList();
+        if (changeList != null) {
+            try {
+                resourceOperation.setChangeList(objectMapper.writeValueAsString(changeList));
+            } catch (JsonProcessingException e) {
+                LOGGER.info("Could not serialize change list", e);
+            }
+        }
+        
+        resourceOperation = resourceOperationRepository.save(resourceOperation);
+        resource.getOperations().add(resourceOperation);
+        return resourceOperation;
+    }
+    
+    public List<String> getCategories(Resource resource, CategoryType categoryType) {
+        List<ResourceCategory> resourceCategories = resource.getCategories().stream()
+            .filter(resourceCategory -> BooleanUtils.isTrue(resourceCategory.getActive()))
+            .filter(resourceCategory -> categoryType == resourceCategory.getType())
+            .collect(Collectors.toList());
+        
+        if (resourceCategories.isEmpty()) {
+            return null;
+        }
+        
+        return resourceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
+    }
+    
+    public List<ResourceOperation> getResourceOperations(Long id) {
+        return new ArrayList<>(entityManager.createQuery(
+            "select resourceOperation " +
+                "from ResourceOperation resourceOperation " +
+                "where resourceOperation.resource.id = :resourceId " +
+                "order by resourceOperation.id desc", ResourceOperation.class)
+            .setParameter("resourceId", id)
+            .setHint("javax.persistence.loadgraph", "resource.operation")
+            .getResultList());
+    }
+    
+    void updateResource(Resource resource, LocalDateTime baseline) {
+        resourceRepository.update(resource, baseline);
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {

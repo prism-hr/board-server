@@ -3,12 +3,10 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.Location;
 import hr.prism.board.representation.LocationRepresentation;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.function.Function;
 
 @Service
-@Transactional
 public class LocationMapper implements Function<Location, LocationRepresentation> {
     
     @Override

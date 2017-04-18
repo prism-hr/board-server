@@ -11,18 +11,18 @@ import java.util.List;
 public interface PostRepository extends MyRepository<Post, Long> {
     
     @Query(value =
-        "select post " +
+        "select post.id " +
             "from Post post " +
             "where post.state = :state " +
-            "and post.deadTimestamp < :deadTimestamp")
-    List<Post> findPostsToRetire(@Param("state") State state, @Param("deadTimestamp") LocalDateTime deadTimestamp);
+            "and post.deadTimestamp < :baseline")
+    List<Long> findPostsToRetire(@Param("state") State state, @Param("baseline") LocalDateTime baseline);
     
     @Query(value =
-        "select post " +
+        "select post.id " +
             "from Post post " +
             "where post.state = :state " +
-            "and post.liveTimestamp >= :liveTimestamp " +
-            "and post.deadTimestamp < :liveTimestamp")
-    List<Post> findPostsToPublish(@Param("state") State state, @Param("liveTimestamp") LocalDateTime liveTimestamp);
+            "and post.liveTimestamp >= :baseline " +
+            "and post.deadTimestamp >= :baseline")
+    List<Long> findPostsToPublish(@Param("state") State state, @Param("baseline") LocalDateTime baseline);
     
 }

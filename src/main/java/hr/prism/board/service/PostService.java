@@ -7,13 +7,20 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.mapper.DocumentMapper;
+import hr.prism.board.mapper.LocationMapper;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.repository.ResourceCategoryRepository;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +54,17 @@ public class PostService {
     private ActionService actionService;
     
     @Inject
-    private LocalizationService localizationService;
+    private DocumentMapper documentMapper;
+    
+    @Inject
+    private LocationMapper locationMapper;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
+    
+    @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    private PlatformTransactionManager platformTransactionManager;
     
     public Post getPost(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -130,104 +147,119 @@ public class PostService {
     void updatePost(Post post, PostPatchDTO postDTO) {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
-    
+        ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
+        
         if (postDTO.getName() != null) {
+            String oldName = post.getName();
             post.setName(postDTO.getName().orElse(null));
+            changeList.put("name", oldName, post.getName());
         }
     
         if (postDTO.getDescription() != null) {
+            String oldDescription = post.getDescription();
             post.setDescription(postDTO.getDescription().orElse(null));
+            changeList.put("description", oldDescription, post.getDescription());
         }
     
         if (postDTO.getOrganizationName() != null) {
+            String oldOrganizationName = post.getOrganizationName();
             post.setOrganizationName(postDTO.getOrganizationName().orElse(null));
+            changeList.put("organizationName", oldOrganizationName, post.getOrganizationName());
         }
     
-        // update location
         if (postDTO.getLocation() != null) {
+            Location oldLocation = post.getLocation();
+            String oldLocationId = Optional.ofNullable(oldLocation).map(Location::getGoogleId).orElse(null);
             String newLocationId = postDTO.getLocation().map(LocationDTO::getGoogleId).orElse(null);
-            String oldLocationId = Optional.ofNullable(post.getLocation()).map(Location::getGoogleId).orElse(null);
             if (!Objects.equals(newLocationId, oldLocationId)) {
                 post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation().orElse(null)));
+                changeList.put("location", locationMapper.apply(oldLocation), locationMapper.apply(post.getLocation()));
             }
         }
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
-        if (applyWebsiteOptional != null) {
-            if (applyWebsiteOptional.isPresent()) {
-                post.setApplyWebsite(applyWebsiteOptional.get());
-                post.setApplyEmail(null);
-                removeApplyDocument(post);
-            } else {
-                post.setApplyWebsite(null);
-            }
-        }
-        
-        // update applyDocument
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
-        if (applyDocumentOptional != null) {
-            if (applyDocumentOptional.isPresent()) {
-                DocumentDTO newApplyDocumentDTO = applyDocumentOptional.get();
-                String oldApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
-                if (!Objects.equals(newApplyDocumentDTO.getCloudinaryId(), oldApplyDocumentId)) {
-                    if (oldApplyDocumentId != null) {
-                        removeApplyDocument(post);
-                    }
-    
-                    post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
-                }
-    
-                post.setApplyWebsite(null);
-                post.setApplyEmail(null);
-            } else {
-                removeApplyDocument(post);
-            }
-        }
-    
         Optional<String> applyEmailOptional = postDTO.getApplyEmail();
-        if (applyEmailOptional != null) {
-            if (applyEmailOptional.isPresent()) {
-                post.setApplyEmail(applyEmailOptional.get());
-                post.setApplyWebsite(null);
-                removeApplyDocument(post);
-            } else {
-                post.setApplyEmail(null);
+        if (applyWebsiteOptional != null || applyDocumentOptional != null || applyEmailOptional != null) {
+            String oldApplyWebsite = post.getApplyWebsite();
+            Document oldApplyDocument = post.getApplyDocument();
+            String oldApplyEmail = post.getApplyEmail();
+        
+            if (applyWebsiteOptional != null) {
+                if (applyWebsiteOptional.isPresent()) {
+                    post.setApplyWebsite(applyWebsiteOptional.get());
+                    post.setApplyDocument(null);
+                    post.setApplyEmail(null);
+                } else {
+                    post.setApplyWebsite(null);
+                }
             }
-        }
-        if (postDTO.getApplyEmail() != null) {
-            post.setApplyEmail(postDTO.getApplyEmail().orElse(null));
+        
+            if (applyDocumentOptional != null) {
+                if (applyDocumentOptional.isPresent()) {
+                    DocumentDTO newApplyDocumentDTO = applyDocumentOptional.get();
+                    String oldApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
+                    if (!Objects.equals(newApplyDocumentDTO.getCloudinaryId(), oldApplyDocumentId)) {
+                        post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
+                    }
+                
+                    post.setApplyWebsite(null);
+                    post.setApplyEmail(null);
+                } else {
+                    post.setApplyDocument(null);
+                }
+            }
+        
+            if (applyEmailOptional != null) {
+                if (applyEmailOptional.isPresent()) {
+                    post.setApplyEmail(applyEmailOptional.get());
+                    post.setApplyWebsite(null);
+                    post.setApplyDocument(null);
+                } else {
+                    post.setApplyEmail(null);
+                }
+            }
+        
+            changeList.put("applyWebsite", oldApplyWebsite, post.getApplyWebsite());
+            changeList.put("applyDocument", documentMapper.apply(oldApplyDocument), documentMapper.apply(post.getApplyDocument()));
+            changeList.put("applyEmail", oldApplyEmail, post.getApplyEmail());
         }
         
         if (postDTO.getPostCategories() != null) {
+            List<String> oldPostCategories = resourceService.getCategories(post, CategoryType.POST);
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories().orElse(null), board);
+            changeList.put("postCategories", oldPostCategories, resourceService.getCategories(post, CategoryType.POST));
         }
         
         if (postDTO.getMemberCategories() != null) {
+            List<String> oldMemberCategories = resourceService.getCategories(post, CategoryType.MEMBER);
             updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories().orElse(null), department);
+            changeList.put("memberCategories", oldMemberCategories, resourceService.getCategories(post, CategoryType.MEMBER));
         }
     
         if (postDTO.getLiveTimestamp() != null) {
+            LocalDateTime oldLiveTimestamp = post.getLiveTimestamp();
             post.setLiveTimestamp(postDTO.getLiveTimestamp().orElse(null));
+            changeList.put("liveTimestamp", oldLiveTimestamp, post.getLiveTimestamp());
         }
     
         if (postDTO.getDeadTimestamp() != null) {
+            LocalDateTime oldDeadTimestamp = post.getDeadTimestamp();
             post.setDeadTimestamp(postDTO.getDeadTimestamp().orElse(null));
+            changeList.put("deadTimestamp", oldDeadTimestamp, post.getDeadTimestamp());
         }
     
         validatePost(post);
+        post.setChangeList(changeList);
+        post.setComment(postDTO.getComment());
     }
     
     void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
-        postRepository.findPostsToRetire(State.ACCEPTED, baseline).forEach(post -> {
-            post.setComment(localizationService.getMessage(Arrays.asList("retired", "post"), Locale.UK));
-            actionService.executeAction(post, Action.RETIRE, State.EXPIRED);
-        });
-        
-        postRepository.findPostsToPublish(State.PENDING, baseline).forEach(post -> {
-            post.setComment(localizationService.getMessage(Arrays.asList("published", "post"), Locale.UK));
-            actionService.executeAction(post, Action.PUBLISH, State.ACCEPTED);
-        });
+        List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
+        List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
+        executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
+        executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
     }
     
     private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource parentResource) {
@@ -242,14 +274,6 @@ public class PostService {
             insertCategory = resourceCategoryRepository.save(insertCategory);
             savedCategories.add(insertCategory);
         });
-    }
-    
-    private void removeApplyDocument(Post post) {
-        Document applyDocument = post.getApplyDocument();
-        post.setApplyDocument(null);
-        if (applyDocument != null) {
-            documentService.deleteDocument(applyDocument);
-        }
     }
     
     private void validatePost(Post post) {
@@ -276,6 +300,36 @@ public class PostService {
             throw new ApiException(ExceptionCode.MISSING_POST_LIVE_TIMESTAMP);
         } else if (post.getDeadTimestamp() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_DEAD_TIMESTAMP);
+        }
+    }
+    
+    private void executeActions(List<Long> postIds, Action action, State state, LocalDateTime baseline) {
+        if (postIds.size() > 0) {
+            TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
+            transactionTemplate.execute(status -> {
+                entityManager.createQuery(
+                    "update Post post " +
+                        "set post.previousState = post.state, " +
+                        "post.state = :state, " +
+                        "post.updatedTimestamp = :baseline " +
+                        "where post.id in (:postIds)")
+                    .setParameter("state", state)
+                    .setParameter("baseline", baseline)
+                    .setParameter("postIds", postIds)
+                    .executeUpdate();
+                
+                entityManager.createNativeQuery(
+                    "insert into resource_operation (resource_id, action, created_timestamp) " +
+                        "select post.id as resource_id, :action as action, :baseline as created_timestamp " +
+                        "from post " +
+                        "where post.id in (:postIds) " +
+                        "order by post.id")
+                    .setParameter("action", action)
+                    .setParameter("baseline", baseline)
+                    .setParameter("postIds", postIds)
+                    .executeUpdate();
+                return null;
+            });
         }
     }
     

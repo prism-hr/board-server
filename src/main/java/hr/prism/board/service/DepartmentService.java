@@ -10,7 +10,9 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.mapper.DocumentMapper;
 import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,9 @@ public class DepartmentService {
     
     @Inject
     private ActionService actionService;
+    
+    @Inject
+    private DocumentMapper documentMapper;
     
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -126,6 +131,8 @@ public class DepartmentService {
     }
     
     void updateDepartment(Department department, DepartmentPatchDTO departmentDTO) {
+        ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
+        
         Optional<String> nameOptional = departmentDTO.getName();
         if (nameOptional != null) {
             String oldName = department.getName();
@@ -136,14 +143,17 @@ public class DepartmentService {
                 }
                 
                 department.setName(newName);
+                changeList.put("name", oldName, newName);
             }
         }
         
         if (departmentDTO.getDocumentLogo() != null) {
+            Document oldLogo = department.getDocumentLogo();
+            String oldLogoId = Optional.ofNullable(oldLogo).map(Document::getCloudinaryId).orElse(null);
             String newLogoId = departmentDTO.getDocumentLogo().map(DocumentDTO::getCloudinaryId).orElse(null);
-            String oldLogoId = Optional.ofNullable(department.getDocumentLogo()).map(Document::getCloudinaryId).orElse(null);
             if (!Objects.equals(newLogoId, oldLogoId)) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo().orElse(null)));
+                changeList.put("documentLogo", documentMapper.apply(oldLogo), documentMapper.apply(department.getDocumentLogo()));
             }
         }
         
@@ -157,14 +167,19 @@ public class DepartmentService {
                 }
                 
                 resourceService.updateHandle(department, newHandle);
+                changeList.put("handle", oldHandle, newHandle);
             }
         }
         
         if (departmentDTO.getMemberCategories() != null) {
+            List<String> oldMemberCategories = resourceService.getCategories(department, CategoryType.MEMBER);
             resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(Collections.emptyList()), CategoryType.MEMBER);
+            changeList.put("memberCategories", oldMemberCategories, resourceService.getCategories(department, CategoryType.MEMBER));
         }
         
         validateDepartment(department);
+        department.setChangeList(changeList);
+        department.setComment(departmentDTO.getComment());
     }
     
     private void validateDepartment(Department department) {

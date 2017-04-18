@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.State;
 import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -57,16 +58,16 @@ public class Resource extends BoardEntity {
     private Set<ResourceRelation> parents = new HashSet<>();
     
     @OneToMany(mappedBy = "resource")
-    private Set<Operation> operations = new HashSet<>();
+    private Set<ResourceOperation> operations = new HashSet<>();
     
     @Transient
     private List<ActionRepresentation> actions;
     
     @Transient
-    private String comment;
+    private ResourceChangeListRepresentation changeList;
     
     @Transient
-    private List<String> changeList;
+    private String comment;
     
     public Scope getScope() {
         return scope;
@@ -156,7 +157,7 @@ public class Resource extends BoardEntity {
         return parents;
     }
     
-    public Set<Operation> getOperations() {
+    public Set<ResourceOperation> getOperations() {
         return operations;
     }
     
@@ -169,21 +170,21 @@ public class Resource extends BoardEntity {
         return this;
     }
     
+    public ResourceChangeListRepresentation getChangeList() {
+        return changeList;
+    }
+    
+    public Resource setChangeList(ResourceChangeListRepresentation changeList) {
+        this.changeList = changeList;
+        return this;
+    }
+    
     public String getComment() {
         return comment;
     }
     
     public Resource setComment(String comment) {
         this.comment = comment;
-        return this;
-    }
-    
-    public List<String> getChangeList() {
-        return changeList;
-    }
-    
-    public Resource setChangeList(List<String> changeList) {
-        this.changeList = changeList;
         return this;
     }
     

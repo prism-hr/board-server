@@ -1,4 +1,4 @@
-CREATE TABLE operation (
+CREATE TABLE resource_operation (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   resource_id BIGINT UNSIGNED NOT NULL,
   action      VARCHAR(20)     NOT NULL,

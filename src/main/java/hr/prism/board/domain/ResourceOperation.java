@@ -5,8 +5,11 @@ import hr.prism.board.enums.Action;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "operation")
-public class Operation extends BoardEntity {
+@Table(name = "resource_operation")
+@NamedEntityGraph(
+    name = "resource.operation",
+    attributeNodes = @NamedAttributeNode(value = "user"))
+public class ResourceOperation extends BoardEntity {
     
     @ManyToOne
     @JoinColumn(name = "resource_id", nullable = false)
@@ -29,7 +32,7 @@ public class Operation extends BoardEntity {
         return resource;
     }
     
-    public Operation setResource(Resource resource) {
+    public ResourceOperation setResource(Resource resource) {
         this.resource = resource;
         return this;
     }
@@ -38,7 +41,7 @@ public class Operation extends BoardEntity {
         return action;
     }
     
-    public Operation setAction(Action action) {
+    public ResourceOperation setAction(Action action) {
         this.action = action;
         return this;
     }
@@ -47,7 +50,7 @@ public class Operation extends BoardEntity {
         return user;
     }
     
-    public Operation setUser(User user) {
+    public ResourceOperation setUser(User user) {
         this.user = user;
         return this;
     }
@@ -56,7 +59,7 @@ public class Operation extends BoardEntity {
         return changeList;
     }
     
-    public Operation setChangeList(String changeList) {
+    public ResourceOperation setChangeList(String changeList) {
         this.changeList = changeList;
         return this;
     }
@@ -65,7 +68,7 @@ public class Operation extends BoardEntity {
         return comment;
     }
     
-    public Operation setComment(String comment) {
+    public ResourceOperation setComment(String comment) {
         this.comment = comment;
         return this;
     }

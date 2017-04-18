@@ -10,6 +10,7 @@ import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,7 +108,8 @@ public class BoardService {
     
     void updateBoard(Board board, BoardPatchDTO boardDTO) {
         Department department = (Department) board.getParent();
-    
+        ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
+        
         Optional<String> nameOptional = boardDTO.getName();
         if (nameOptional != null) {
             String oldName = board.getName();
@@ -115,11 +117,14 @@ public class BoardService {
             if (!Objects.equals(newName, oldName)) {
                 validateNameUnique(newName, department);
                 board.setName(newName);
+                changeList.put("name", oldName, newName);
             }
         }
         
         if (boardDTO.getPurpose() != null) {
+            String oldPurpose = board.getDescription();
             board.setDescription(boardDTO.getPurpose().orElse(null));
+            changeList.put("purpose", oldPurpose, board.getDescription());
         }
         
         Optional<String> handleOptional = boardDTO.getHandle();
@@ -131,20 +136,27 @@ public class BoardService {
                 if (boardRepository.findByHandle(newHandle) != null) {
                     throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
                 }
-        
+    
                 resourceService.updateHandle(board, newHandle);
+                changeList.put("handle", oldHandle, newHandle);
             }
         }
         
         if (boardDTO.getPostCategories() != null) {
+            List<String> oldPostCategories = resourceService.getCategories(board, CategoryType.POST);
             resourceService.updateCategories(board, boardDTO.getPostCategories().orElse(Collections.emptyList()), CategoryType.POST);
+            changeList.put("postCategories", oldPostCategories, resourceService.getCategories(board, CategoryType.POST));
         }
         
         if (boardDTO.getDefaultPostVisibility() != null) {
+            PostVisibility oldDefaultPostVisibility = board.getDefaultPostVisibility();
             board.setDefaultPostVisibility(boardDTO.getDefaultPostVisibility().orElse(null));
+            changeList.put("defaultPostVisibility", oldDefaultPostVisibility, board.getDefaultPostVisibility());
         }
     
         validateBoard(board);
+        board.setChangeList(changeList);
+        board.setComment(boardDTO.getComment());
     }
     
     private void validateNameUnique(String name, Department department) {

@@ -20,7 +20,7 @@ public class ResourceCategory extends BoardEntity {
     private CategoryType type;
     
     @Column(name = "active", nullable = false)
-    private boolean active;
+    private Boolean active;
     
     public Resource getResource() {
         return resource;
@@ -49,11 +49,11 @@ public class ResourceCategory extends BoardEntity {
         return this;
     }
     
-    public boolean isActive() {
+    public Boolean getActive() {
         return active;
     }
     
-    public ResourceCategory setActive(boolean active) {
+    public ResourceCategory setActive(Boolean active) {
         this.active = active;
         return this;
     }

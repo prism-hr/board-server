@@ -28,6 +28,7 @@ public class PermissionInstaller {
     private EntityManager entityManager;
 
     @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
     @PostConstruct

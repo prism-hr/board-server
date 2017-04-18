@@ -17,17 +17,15 @@ public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializabl
     
     @Override
     public <T extends ENTITY> T save(T entity) {
-        if (entity.getCreatedTimestamp() == null) {
-            entity.setCreatedTimestamp(LocalDateTime.now());
-        }
-    
-        update(entity);
+        LocalDateTime baseline = LocalDateTime.now();
+        entity.setCreatedTimestamp(baseline);
+        update(entity, baseline);
         return super.save(entity);
     }
     
     @Override
-    public <T extends ENTITY> void update(T entity) {
-        entity.setUpdatedTimestamp(LocalDateTime.now());
+    public <T extends ENTITY> void update(T entity, LocalDateTime baseline) {
+        entity.setUpdatedTimestamp(baseline);
     }
     
 }
