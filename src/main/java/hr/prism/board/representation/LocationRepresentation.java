@@ -1,6 +1,7 @@
 package hr.prism.board.representation;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class LocationRepresentation {
     
@@ -58,4 +59,19 @@ public class LocationRepresentation {
         this.longitude = longitude;
         return this;
     }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(googleId);
+    }
+    
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        
+        return Objects.equals(googleId, ((LocationRepresentation) object).getGoogleId());
+    }
+    
 }

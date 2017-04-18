@@ -184,7 +184,7 @@ public class PostService {
             String oldApplyWebsite = post.getApplyWebsite();
             Document oldApplyDocument = post.getApplyDocument();
             String oldApplyEmail = post.getApplyEmail();
-        
+    
             if (applyWebsiteOptional != null) {
                 if (applyWebsiteOptional.isPresent()) {
                     post.setApplyWebsite(applyWebsiteOptional.get());
@@ -194,7 +194,7 @@ public class PostService {
                     post.setApplyWebsite(null);
                 }
             }
-        
+    
             if (applyDocumentOptional != null) {
                 if (applyDocumentOptional.isPresent()) {
                     DocumentDTO newApplyDocumentDTO = applyDocumentOptional.get();
@@ -202,14 +202,14 @@ public class PostService {
                     if (!Objects.equals(newApplyDocumentDTO.getCloudinaryId(), oldApplyDocumentId)) {
                         post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
                     }
-                
+    
                     post.setApplyWebsite(null);
                     post.setApplyEmail(null);
                 } else {
                     post.setApplyDocument(null);
                 }
             }
-        
+    
             if (applyEmailOptional != null) {
                 if (applyEmailOptional.isPresent()) {
                     post.setApplyEmail(applyEmailOptional.get());
@@ -219,7 +219,7 @@ public class PostService {
                     post.setApplyEmail(null);
                 }
             }
-        
+    
             changeList.put("applyWebsite", oldApplyWebsite, post.getApplyWebsite());
             changeList.put("applyDocument", documentMapper.apply(oldApplyDocument), documentMapper.apply(post.getApplyDocument()));
             changeList.put("applyEmail", oldApplyEmail, post.getApplyEmail());
@@ -254,7 +254,7 @@ public class PostService {
         post.setComment(postDTO.getComment());
     }
     
-    void publishAndRetirePosts() {
+    synchronized void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
         List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);

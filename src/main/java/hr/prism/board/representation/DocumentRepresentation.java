@@ -1,5 +1,7 @@
 package hr.prism.board.representation;
 
+import java.util.Objects;
+
 public class DocumentRepresentation {
     
     private String cloudinaryId;
@@ -34,4 +36,19 @@ public class DocumentRepresentation {
         this.fileName = fileName;
         return this;
     }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(cloudinaryId);
+    }
+    
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        
+        return Objects.equals(cloudinaryId, ((DocumentRepresentation) object).getCloudinaryId());
+    }
+    
 }
