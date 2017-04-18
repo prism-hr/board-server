@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+@SuppressWarnings("JpaQlInspection")
 public interface UserRoleRepository extends MyRepository<UserRole, Long> {
     
     UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);

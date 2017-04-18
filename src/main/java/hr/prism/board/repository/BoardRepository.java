@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+@SuppressWarnings("JpaQlInspection")
 public interface BoardRepository extends MyRepository<Board, Long> {
     
     Board findByHandle(String handle);

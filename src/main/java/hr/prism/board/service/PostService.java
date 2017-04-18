@@ -303,6 +303,7 @@ public class PostService {
         }
     }
     
+    @SuppressWarnings("JpaQlInspection")
     private void executeActions(List<Long> postIds, Action action, State state, LocalDateTime baseline) {
         if (postIds.size() > 0) {
             TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);

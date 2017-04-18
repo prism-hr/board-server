@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+@SuppressWarnings("JpaQlInspection")
 public interface DepartmentRepository extends MyRepository<Department, Long> {
     
     Department findByName(String name);

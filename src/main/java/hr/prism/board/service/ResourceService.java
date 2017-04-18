@@ -352,6 +352,7 @@ public class ResourceService {
         return resourceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
     }
     
+    @SuppressWarnings("JpaQlInspection")
     public List<ResourceOperation> getResourceOperations(Long id) {
         return new ArrayList<>(entityManager.createQuery(
             "select resourceOperation " +
