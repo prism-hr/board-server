@@ -161,8 +161,9 @@ public class BoardApiIT extends AbstractIT {
             
             Assert.assertEquals(2, boardRs.size());
             Assert.assertEquals(1, departmentRs.size());
-            
-            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+    
+            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
                 Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             
