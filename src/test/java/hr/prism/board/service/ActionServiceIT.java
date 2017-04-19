@@ -225,7 +225,7 @@ public class ActionServiceIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.getPost(postId);
             assertEquals(state, postR.getState());
-            assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(actions));
+            assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(actions.toArray(new Action[0])));
             return null;
         });
         
