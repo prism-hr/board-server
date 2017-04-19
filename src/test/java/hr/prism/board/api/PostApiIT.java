@@ -84,8 +84,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
             verifyPost(user, postDTO, postR);
@@ -109,8 +109,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)))
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS)))
             .getId());
         
         transactionTemplate.execute(status -> {
@@ -163,8 +163,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             postApi.postPost(boardId, postDTO);
             return null;
         });
@@ -193,8 +193,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("cloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             ExceptionUtil.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
             return null;
         });
