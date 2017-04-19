@@ -13,6 +13,7 @@ import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
+import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.DepartmentService;
@@ -162,7 +163,8 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(1, departmentRs.size());
             
             boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
             
             testUserService.setAuthentication(secondUser.getStormpathId());
             boardRs = boardApi.getBoards();
