@@ -6,17 +6,13 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.representation.LocationRepresentation;
-import hr.prism.board.representation.PostRepresentation;
-import hr.prism.board.service.BoardService;
-import hr.prism.board.service.DepartmentService;
-import hr.prism.board.service.PostService;
-import hr.prism.board.service.TestUserService;
+import hr.prism.board.representation.*;
+import hr.prism.board.service.*;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,9 +27,7 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
@@ -67,6 +61,9 @@ public class PostApiIT extends AbstractIT {
     
     @Inject
     private TestUserService testUserService;
+    
+    @Inject
+    private ActionService actionService;
     
     @Test
     public void shouldCreatePost() {
@@ -200,6 +197,272 @@ public class PostApiIT extends AbstractIT {
         });
     }
     
+    @Test
+    public void shouldDepartmentUserBeAbleToAcceptPost() {
+        BoardRepresentation board = postBoard("department@poczta.fm");
+        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        
+        Long postId = post.getId();
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
+        testUserService.authenticateAs("department@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.acceptPost(postId, new PostPatchDTO().setDescription(Optional.of("Corrected desc")));
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.ACCEPTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.ACCEPTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        
+        transactionTemplate.execute(status -> {
+            PostRepresentation postR = postApi.getPost(postId);
+            assertEquals("Corrected desc", postR.getDescription());
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldPosterBeAbleToCorrectPost() {
+        BoardRepresentation board = postBoard("department@poczta.fm");
+        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        
+        Long postId = post.getId();
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
+        testUserService.authenticateAs("department@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.suspendPost(post.getId(), new PostPatchDTO());
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.SUSPENDED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT),
+            Arrays.asList(Action.CORRECT, Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.SUSPENDED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.CORRECT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT));
+        
+        testUserService.authenticateAs("poster@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.correctPost(postId, new PostPatchDTO().setName(Optional.of("Corrected name")));
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
+        transactionTemplate.execute(status -> {
+            PostRepresentation postR = postApi.getPost(postId);
+            assertEquals("Corrected name", postR.getName());
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldDepartmentUserBeAbleToRejectAndRestorePost() {
+        BoardRepresentation board = postBoard("department@poczta.fm");
+        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        
+        Long postId = post.getId();
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
+        testUserService.authenticateAs("department@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.rejectPost(postId, new PostPatchDTO());
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.REJECTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.REJECTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
+        
+        testUserService.authenticateAs("department@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.restorePost(postId, new PostPatchDTO());
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+    }
+    
+    @Test
+    public void shouldPosterBeAbleToWithdrawAndRestorePost() {
+        BoardRepresentation board = postBoard("department@poczta.fm");
+        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        
+        Long postId = post.getId();
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
+        testUserService.authenticateAs("poster@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.withdrawPost(postId, new PostPatchDTO());
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.WITHDRAWN,
+            Arrays.asList(Action.VIEW, Action.EDIT),
+            Collections.singletonList(Action.RESTORE));
+        verifyPost(postId, "poster@poczta.fm", State.WITHDRAWN,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.RESTORE),
+            Collections.emptyList());
+        
+        testUserService.authenticateAs("poster@poczta.fm");
+        transactionTemplate.execute(status -> {
+            postApi.restorePost(postId, new PostPatchDTO());
+            return null;
+        });
+        
+        verifyPost(postId, "department@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+    }
+    
+    @Test
+    public void shouldNotBeAbleToCorruptPostByPatching() {
+        Long boardId = postBoard();
+        PostRepresentation postRepresentation = postPost(boardId, "poster@poczta.fm");
+        Long postId = postRepresentation.getId();
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId, new PostPatchDTO().setName(Optional.empty())),
+                ExceptionCode.MISSING_POST_NAME, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId, new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.empty())),
+                ExceptionCode.MISSING_POST_DESCRIPTION, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.of("description")).setOrganizationName(Optional.empty())),
+                ExceptionCode.MISSING_POST_ORGANIZATION_NAME, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO()
+                            .setName(Optional.of("name"))
+                            .setDescription(Optional.of("description"))
+                            .setOrganizationName(Optional.empty())
+                            .setLocation(Optional.empty())),
+                ExceptionCode.MISSING_POST_LOCATION, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO()
+                            .setName(Optional.of("name"))
+                            .setDescription(Optional.of("description"))
+                            .setOrganizationName(Optional.of("organization name"))
+                            .setLocation(Optional.of(new LocationDTO()))
+                            .setApplyWebsite(Optional.empty())
+                            .setApplyEmail(Optional.empty())
+                            .setApplyDocument(Optional.empty())),
+                ExceptionCode.CORRUPTED_POST_APPLY, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO()
+                            .setName(Optional.of("name"))
+                            .setDescription(Optional.of("description"))
+                            .setOrganizationName(Optional.of("organization name"))
+                            .setLocation(Optional.of(new LocationDTO()))
+                            .setApplyWebsite(Optional.of("http://www.google.com"))
+                            .setApplyEmail(Optional.of("alastair@prism.hr"))),
+                ExceptionCode.CORRUPTED_POST_APPLY, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO()
+                            .setName(Optional.of("name"))
+                            .setDescription(Optional.of("description"))
+                            .setOrganizationName(Optional.of("organization name"))
+                            .setLocation(Optional.of(new LocationDTO()))
+                            .setApplyWebsite(Optional.of("http://www.google.com"))
+                            .setLiveTimestamp(Optional.empty())),
+                ExceptionCode.MISSING_POST_LIVE_TIMESTAMP, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO()
+                            .setName(Optional.of("name"))
+                            .setDescription(Optional.of("description"))
+                            .setOrganizationName(Optional.of("organization name"))
+                            .setLocation(Optional.of(new LocationDTO()))
+                            .setApplyWebsite(Optional.of("http://www.google.com"))
+                            .setLiveTimestamp(Optional.of(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)))
+                            .setDeadTimestamp(Optional.empty())),
+                ExceptionCode.MISSING_POST_DEAD_TIMESTAMP, null);
+            status.setRollbackOnly();
+            return null;
+        });
+    }
+    
     private Long postBoard() {
         return transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
@@ -210,6 +473,45 @@ public class PostApiIT extends AbstractIT {
                     .setName("New Department")
                     .setMemberCategories(ImmutableList.of("m1", "m2", "m3")));
             return boardApi.postBoard(boardDTO).getId();
+        });
+    }
+    
+    private BoardRepresentation postBoard(String user) {
+        testUserService.authenticateAs(user);
+        
+        return transactionTemplate.execute(status -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("Board")
+                .setPurpose("Purpose")
+                .setPostCategories(ImmutableList.of("p1", "p2", "p3"))
+                .setDepartment(new DepartmentDTO()
+                    .setName("Department")
+                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")));
+            return boardApi.postBoard(boardDTO);
+        });
+    }
+    
+    private PostRepresentation postPost(Long boardId, String user) {
+        testUserService.authenticateAs(user);
+        return transactionTemplate.execute(status -> {
+            BoardRepresentation boardR = boardApi.getBoard(boardId);
+            return postApi.postPost(boardR.getId(),
+                new PostDTO()
+                    .setName("Post")
+                    .setDescription("desc")
+                    .setOrganizationName("org")
+                    .setLocation(new LocationDTO()
+                        .setName("BB")
+                        .setDomicile("PL")
+                        .setGoogleId("sss")
+                        .setLatitude(BigDecimal.ONE)
+                        .setLongitude(BigDecimal.ONE))
+                    .setApplyWebsite("http://www.google.co.uk")
+                    .setPostCategories(Collections.emptyList())
+                    .setMemberCategories(Collections.emptyList())
+                    .setExistingRelation(ExistingRelation.STUDENT)
+                    .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS)));
         });
     }
     
@@ -275,6 +577,22 @@ public class PostApiIT extends AbstractIT {
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
         
         assertEquals(postDTO.getApplyEmail() != null ? postDTO.getApplyEmail().orElse(null) : null, postR.getApplyEmail());
+    }
+    
+    private void verifyPost(Long postId, String username, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {
+        User user = testUserService.authenticateAs(username);
+        transactionTemplate.execute(status -> {
+            PostRepresentation postR = postApi.getPost(postId);
+            assertEquals(state, postR.getState());
+            assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(actions.toArray(new Action[0])));
+            return null;
+        });
+        
+        Post post = postService.getPost(postId);
+        for (Action forbiddenAction : forbiddenActions) {
+            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> actionService.executeAction(user, post, forbiddenAction, null),
+                ExceptionCode.FORBIDDEN_ACTION, null);
+        }
     }
     
 }

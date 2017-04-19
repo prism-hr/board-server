@@ -316,6 +316,38 @@ public class BoardApiIT extends AbstractIT {
         });
     }
     
+    @Test
+    public void shouldNotBeAbleToCorruptBoardByPatching() {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> {
+            BoardRepresentation boardRepresentation = boardApi.postBoard(
+                new BoardDTO()
+                    .setName("New Board")
+                    .setPurpose("Purpose")
+                    .setPostCategories(ImmutableList.of("category3", "category4"))
+                    .setDepartment(new DepartmentDTO()
+                        .setName("New Department")
+                        .setMemberCategories(ImmutableList.of("category1", "category2"))));
+            return boardRepresentation.getId();
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    boardApi.updateBoard(boardId, new BoardPatchDTO().setName(Optional.empty())),
+                ExceptionCode.MISSING_BOARD_NAME, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    boardApi.updateBoard(boardId, new BoardPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
+                ExceptionCode.MISSING_BOARD_HANDLE, null);
+            status.setRollbackOnly();
+            return null;
+        });
+    }
+    
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         User user = testUserService.authenticate();
         BoardDTO boardDTO = new BoardDTO()

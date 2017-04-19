@@ -174,6 +174,40 @@ public class DepartmentApiIT extends AbstractIT {
         });
     }
     
+    @Test
+    public void shouldNotBeAbleToCorruptDepartmentByPatching() {
+        testUserService.authenticate();
+        Long departmentId = transactionTemplate.execute(transactionStatus -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
+                .setPurpose("Purpose")
+                .setPostCategories(new ArrayList<>())
+                .setDepartment(new DepartmentDTO()
+                    .setName("New Department")
+                    .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+                    .setMemberCategories(ImmutableList.of("a", "b")));
+            
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            return boardR.getDepartment().getId();
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setName(Optional.empty())),
+                ExceptionCode.MISSING_DEPARTMENT_NAME, null);
+            status.setRollbackOnly();
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
+                ExceptionCode.MISSING_DEPARTMENT_HANDLE, null);
+            status.setRollbackOnly();
+            return null;
+        });
+    }
+    
     private Pair<DepartmentRepresentation, DepartmentRepresentation> createTwoDepartments(User user) {
         DepartmentRepresentation departmentR1 = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()

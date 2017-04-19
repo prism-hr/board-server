@@ -20,7 +20,7 @@ public class TestApi {
         throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
     }
     
-    @RequestMapping
+    @RequestMapping(value = "/test/apiForbiddenException")
     public void throwApiForbiddenException() {
         throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
     }
