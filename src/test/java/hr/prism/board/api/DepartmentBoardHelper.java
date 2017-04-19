@@ -57,7 +57,8 @@ public class DepartmentBoardHelper {
         Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
         if (expectDepartmentAdministrator) {
             Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
-            Assert.assertThat(boardR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND));
+            Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND));
         }
     }
     
