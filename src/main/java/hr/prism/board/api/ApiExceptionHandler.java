@@ -35,7 +35,7 @@ public class ApiExceptionHandler {
         return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
     }
     
-    @ExceptionHandler(ApiException.class)
+    @ExceptionHandler(ApiForbiddenException.class)
     @ResponseStatus(value = HttpStatus.FORBIDDEN)
     public Map<String, String> handleException(ApiForbiddenException apiException) {
         return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
