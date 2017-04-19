@@ -10,7 +10,7 @@ import hr.prism.board.object.AccountPassword;
 import org.springframework.stereotype.Service;
 
 @Service
-public class StormpathAccountTestService {
+public class TestStormpathAccountService {
     
     private static int TEST_ACCOUNT_INDEX = 1;
     
@@ -18,14 +18,14 @@ public class StormpathAccountTestService {
     
     private Application application;
     
-    public StormpathAccountTestService(Client client, Application application) {
+    public TestStormpathAccountService(Client client, Application application) {
         this.client = client;
         this.application = application;
     }
     
     public AccountPassword createTestAccount() {
         Integer index;
-        synchronized (StormpathAccountTestService.class) {
+        synchronized (TestStormpathAccountService.class) {
             index = TEST_ACCOUNT_INDEX;
             TEST_ACCOUNT_INDEX++;
         }

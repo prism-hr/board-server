@@ -5,7 +5,7 @@ import org.springframework.transaction.TransactionStatus;
 
 public class ExceptionUtil {
     
-    public static void verifyApiException(Runnable block, ExceptionCode expectedExceptionCode, TransactionStatus transactionStatus) {
+    public static <T extends ApiException> void verifyApiException(Class<T> exceptionClass, Runnable block, ExceptionCode exceptionCode, TransactionStatus status) {
         ApiException apiException = null;
         try {
             block.run();
@@ -14,22 +14,11 @@ public class ExceptionUtil {
             apiException = e;
         }
         
-        Assert.assertEquals(expectedExceptionCode, apiException.getExceptionCode());
-        if (transactionStatus != null) {
-            transactionStatus.setRollbackOnly();
+        Assert.assertEquals(exceptionClass, apiException.getClass());
+        Assert.assertEquals(exceptionCode, apiException.getExceptionCode());
+        if (status != null) {
+            status.setRollbackOnly();
         }
-    }
-    
-    public static void verifyApiForbiddenException(Runnable block, String expectedMessage) {
-        ApiForbiddenException apiForbiddenException = null;
-        try {
-            block.run();
-            Assert.fail("ApiForbiddenException not thrown");
-        } catch (ApiForbiddenException e) {
-            apiForbiddenException = e;
-        }
-        
-        Assert.assertEquals(expectedMessage, apiForbiddenException.getMessage());
     }
     
 }

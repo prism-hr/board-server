@@ -1,23 +1,19 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.exception.ApiException;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.ResourceService;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -69,12 +65,6 @@ public class BoardApi {
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.PATCH)
     public void updateBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
         boardService.updateBoard(id, boardDTO);
-    }
-    
-    @ExceptionHandler(ApiException.class)
-    @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
-    public Map<String, String> handleException(ApiException apiException) {
-        return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
     }
     
 }

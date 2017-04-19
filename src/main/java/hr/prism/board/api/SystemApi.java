@@ -1,7 +1,6 @@
 package hr.prism.board.api;
 
 import hr.prism.board.service.DefinitionService;
-import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,9 +10,6 @@ import java.util.TreeMap;
 
 @RestController
 public class SystemApi {
-    
-    @Inject
-    private Environment environment;
     
     @Inject
     private DefinitionService definitionService;

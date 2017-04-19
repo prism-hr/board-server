@@ -2,36 +2,28 @@ package hr.prism.board.api;
 
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.oauth.OAuthGrantRequestAuthenticationResult;
-import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.TestContext;
 import hr.prism.board.object.AccountPassword;
-import hr.prism.board.service.StormpathAccountTestService;
+import hr.prism.board.service.TestStormpathAccountService;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 
-@ActiveProfiles("test")
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
-@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
+@TestContext
 public class AuthenticationApiIT {
     
     @Inject
-    private StormpathAccountTestService stormpathAccountTestService;
+    private TestStormpathAccountService testStormpathAccountService;
     
     @Test
     @Ignore
     public void shouldCreateAndAuthenticateUser() throws Exception {
-        AccountPassword accountPassword = stormpathAccountTestService.createTestAccount();
+        AccountPassword accountPassword = testStormpathAccountService.createTestAccount();
         Account account = accountPassword.getAccount();
-        
-        OAuthGrantRequestAuthenticationResult authenticationResult = stormpathAccountTestService.authenticateTestAccount(account.getEmail(), accountPassword.getPassword());
+    
+        OAuthGrantRequestAuthenticationResult authenticationResult = testStormpathAccountService.authenticateTestAccount(account.getEmail(), accountPassword.getPassword());
         Assert.assertNotNull(authenticationResult.getAccessToken());
         Assert.assertNotNull(authenticationResult.getRefreshToken());
         account.delete();

@@ -1,40 +1,45 @@
 package hr.prism.board.service;
 
+import hr.prism.board.TestContext;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostPatchDTO;
+import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import org.junit.Test;
 
+import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public class PostServiceTest {
-
-    private PostService postService = new PostService();
-
+@TestContext
+public class PostServiceIT {
+    
+    @Inject
+    private PostService postService;
+    
     private Post post = (Post) new Post().setParent(new Board().setParent(new Department()));
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullName() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post, new PostPatchDTO().setName(Optional.empty())),
             ExceptionCode.MISSING_POST_NAME, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullDescription() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post, new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.empty())),
             ExceptionCode.MISSING_POST_DESCRIPTION, null);
     }
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullOrganizationName() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post,
                     new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.of("description")).setOrganizationName(Optional.empty())),
             ExceptionCode.MISSING_POST_ORGANIZATION_NAME, null);
@@ -42,7 +47,7 @@ public class PostServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullLocation() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))
@@ -54,7 +59,7 @@ public class PostServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchPostWithNullApplyWebsiteAndNullApplyEmailAndNullApplyDocument() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))
@@ -69,7 +74,7 @@ public class PostServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchPostWithApplyWebsiteAndApplyEmail() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))
@@ -83,7 +88,7 @@ public class PostServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchPostWithLiveTimestampNull() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))
@@ -97,7 +102,7 @@ public class PostServiceTest {
     
     @Test
     public void shouldNotBeAbleToPatchPostWithDeadTimestampNull() {
-        ExceptionUtil.verifyApiException(() ->
+        ExceptionUtil.verifyApiException(ApiException.class, () ->
                 postService.updatePost(post,
                     new PostPatchDTO()
                         .setName(Optional.of("name"))

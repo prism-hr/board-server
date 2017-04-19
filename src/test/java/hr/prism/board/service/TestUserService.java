@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class UserTestService {
+public class TestUserService {
     
     private static final String STORMPATH_API_PATH = "https://api.stormpath.com/v1/accounts/";
 

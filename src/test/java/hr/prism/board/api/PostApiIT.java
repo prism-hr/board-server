@@ -1,28 +1,25 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.TestContext;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
+import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.LocationRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
-import hr.prism.board.service.UserTestService;
+import hr.prism.board.service.TestUserService;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -36,10 +33,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-@ActiveProfiles("test")
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
-@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
+@TestContext
 public class PostApiIT extends AbstractIT {
     
     @Inject
@@ -61,11 +55,11 @@ public class PostApiIT extends AbstractIT {
     private UserRoleService userRoleService;
     
     @Inject
-    private UserTestService userTestService;
+    private TestUserService testUserService;
     
     @Test
     public void shouldCreatePost() {
-        User user = userTestService.authenticate();
+        User user = testUserService.authenticate();
         Long boardId = postBoard();
         
         transactionTemplate.execute(status -> {
@@ -90,7 +84,7 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldUpdatePost() {
-        userTestService.authenticate();
+        testUserService.authenticate();
         Long boardId = postBoard();
         
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
@@ -127,7 +121,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
-        userTestService.authenticate();
+        testUserService.authenticate();
         Long boardId = postBoard();
         
         transactionTemplate.execute(status -> {
@@ -174,10 +168,10 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
-        userTestService.authenticate();
+        testUserService.authenticate();
         Long boardId = postBoard();
-        
-        userTestService.authenticate();
+    
+        testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post")
@@ -190,7 +184,7 @@ public class PostApiIT extends AbstractIT {
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("cloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
                 .setLiveTimestamp(LocalDateTime.now())
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
-            ExceptionUtil.verifyApiException(() -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
+            ExceptionUtil.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
             return null;
         });
     }
@@ -235,8 +229,9 @@ public class PostApiIT extends AbstractIT {
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
         assertEquals(postDTO.getLiveTimestamp(), postR.getLiveTimestamp());
         assertEquals(postDTO.getDeadTimestamp(), postR.getDeadTimestamp());
-        assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
-    
+        assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
+        
         Post post = postService.getPost(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
     

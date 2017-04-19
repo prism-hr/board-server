@@ -6,9 +6,12 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.permission.ActionExecutionTemplate;
 import hr.prism.board.representation.ActionRepresentation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,8 @@ import java.util.List;
 @Service
 @Transactional
 public class ActionService {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
     
     @Inject
     private ResourceService resourceService;
@@ -52,8 +57,9 @@ public class ActionService {
                 return resource;
             }
         }
-        
-        throw new ApiForbiddenException(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+    
+        LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+        throw new ApiForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
     }
     
 }

@@ -23,7 +23,7 @@ public abstract class AbstractIT {
     protected TransactionTemplate transactionTemplate;
     
     @Before
-    public void setUp() {
+    public void before() {
         transactionTemplate = new TransactionTemplate(platformTransactionManager);
     }
     

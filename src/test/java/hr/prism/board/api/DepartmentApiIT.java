@@ -1,52 +1,45 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.TestContext;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.service.UserTestService;
+import hr.prism.board.service.TestUserService;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Optional;
 
-@ActiveProfiles("test")
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
-@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
+@TestContext
 public class DepartmentApiIT extends AbstractIT {
-
+    
     @Inject
     private DepartmentApi departmentApi;
-
+    
     @Inject
     private BoardApi boardApi;
-
+    
     @Inject
-    private UserTestService userTestService;
-
+    private TestUserService testUserService;
+    
     @Inject
     private DepartmentBoardHelper departmentBoardHelper;
-
+    
     @Test
     public void shouldUpdateDepartment() {
-        User user = userTestService.authenticate();
+        User user = testUserService.authenticate();
         Long departmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
@@ -56,14 +49,14 @@ public class DepartmentApiIT extends AbstractIT {
                     .setName("New Department")
                     .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                     .setMemberCategories(ImmutableList.of("a", "b")));
-
+    
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department", boardR.getDepartment().getHandle());
             return boardR.getDepartment().getId();
         });
-
+        
         transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -71,7 +64,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setHandle(Optional.of("new-department"))
                     .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                     .setMemberCategories(Optional.of(ImmutableList.of("c"))));
-
+            
             Assert.assertEquals("Old Department", departmentR.getName());
             Assert.assertEquals("new-department", departmentR.getHandle());
             Assert.assertEquals("c2", departmentR.getDocumentLogo().getCloudinaryId());
@@ -79,10 +72,10 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentHandle() {
-        User user = userTestService.authenticate();
+        User user = testUserService.authenticate();
         transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
@@ -91,15 +84,15 @@ public class DepartmentApiIT extends AbstractIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department With Long Name")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-
+    
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department-with", boardR.getDepartment().getHandle());
             return null;
         });
-
-
+        
+        
         Long departmentId = transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
@@ -108,14 +101,14 @@ public class DepartmentApiIT extends AbstractIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department With Long Name Too")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department-with-2", boardR.getDepartment().getHandle());
             return boardR.getDepartment().getId();
         });
-
+        
         transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -123,7 +116,7 @@ public class DepartmentApiIT extends AbstractIT {
             Assert.assertEquals("new-department-with-long", departmentR.getHandle());
             return null;
         });
-
+        
         transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
@@ -132,7 +125,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department With Long Name Also")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
@@ -140,14 +133,14 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentsByUpdating() {
-        User user = userTestService.authenticate();
+        User user = testUserService.authenticate();
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = createTwoDepartments(user);
-
+        
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(() ->
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
                         new DepartmentPatchDTO()
                             .setName(Optional.of(departmentRs.getValue().getName()))),
@@ -155,14 +148,14 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateDepartmentHandlesByUpdating() {
-        User user = userTestService.authenticate();
+        User user = testUserService.authenticate();
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = createTwoDepartments(user);
-
+        
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(() ->
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
                         new DepartmentPatchDTO()
                             .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
@@ -170,7 +163,7 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     private Pair<DepartmentRepresentation, DepartmentRepresentation> createTwoDepartments(User user) {
         DepartmentRepresentation departmentR1 = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
@@ -180,12 +173,12 @@ public class DepartmentApiIT extends AbstractIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-
+    
             BoardRepresentation boardR1 = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR1, true);
             return boardR1.getDepartment();
         });
-
+        
         DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
@@ -194,13 +187,13 @@ public class DepartmentApiIT extends AbstractIT {
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department Two")
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
-
+            
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
             return boardR.getDepartment();
         });
-
+        
         return new Pair<>(departmentR1, departmentR2);
     }
-
+    
 }

@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import com.stormpath.sdk.account.Account;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,7 +39,7 @@ public class UserService {
     public User getCurrentUserSecured() {
         User user = getCurrentUser();
         if (user == null) {
-            throw new ApiForbiddenException("User not authenticated");
+            throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
         }
         
         return user;
