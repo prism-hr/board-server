@@ -144,7 +144,7 @@ public class PostService {
         });
     }
     
-    @Scheduled(fixedDelay = 60000, fixedRate = 60000)
+    @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void publishAndRetirePostsScheduled() {
         publishAndRetirePosts();
     }
