@@ -259,6 +259,7 @@ public class ActionServiceIT extends AbstractIT {
                         .setGoogleId("sss")
                         .setLatitude(BigDecimal.ONE)
                         .setLongitude(BigDecimal.ONE))
+                    .setApplyWebsite("http://www.google.co.uk")
                     .setPostCategories(Collections.emptyList())
                     .setMemberCategories(Collections.emptyList())
                     .setExistingRelation(ExistingRelation.STUDENT)

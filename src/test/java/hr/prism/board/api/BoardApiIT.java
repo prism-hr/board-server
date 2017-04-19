@@ -277,7 +277,7 @@ public class BoardApiIT extends AbstractIT {
     }
 
     @Test
-    public void Board() {
+    public void shouldCreateAndListBoards() {
         User user = userTestService.authenticate();
         for (int i = 1; i < 4; i++) {
             for (int j = 1; j < 4; j++) {
