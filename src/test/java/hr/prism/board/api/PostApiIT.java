@@ -68,7 +68,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldCreatePost() {
         User user = testUserService.authenticate();
-        Long boardId = postBoard();
+        Long boardId = postBoard(user.getEmail()).getId();
         
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -92,9 +92,7 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldUpdatePost() {
-        testUserService.authenticate();
-        Long boardId = postBoard();
-        
+        Long boardId = postBoard("department@poczta.fm").getId();
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             new PostDTO()
                 .setName("New Post")
@@ -129,8 +127,8 @@ public class PostApiIT extends AbstractIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
-        testUserService.authenticate();
-        Long boardId = postBoard();
+        User user = testUserService.authenticate();
+        Long boardId = postBoard(user.getEmail()).getId();
         
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -176,9 +174,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
-        testUserService.authenticate();
-        Long boardId = postBoard();
-    
+        Long boardId = postBoard("department@poczta.fm").getId();
+        
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -358,7 +355,7 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldNotBeAbleToCorruptPostByPatching() {
-        Long boardId = postBoard();
+        Long boardId = postBoard("department@poczta.fm").getId();
         PostRepresentation postRepresentation = postPost(boardId, "poster@poczta.fm");
         Long postId = postRepresentation.getId();
         
@@ -461,11 +458,6 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
-    }
-    
-    private Long postBoard() {
-        BoardRepresentation boardR = postBoard("department@poczta.fm");
-        return boardR.getId();
     }
     
     private BoardRepresentation postBoard(String user) {
