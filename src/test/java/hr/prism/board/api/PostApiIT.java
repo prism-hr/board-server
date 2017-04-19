@@ -464,16 +464,8 @@ public class PostApiIT extends AbstractIT {
     }
     
     private Long postBoard() {
-        return transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO = new BoardDTO()
-                .setName("New Board")
-                .setPurpose("Purpose")
-                .setPostCategories(ImmutableList.of("p1", "p2", "p3"))
-                .setDepartment(new DepartmentDTO()
-                    .setName("New Department")
-                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")));
-            return boardApi.postBoard(boardDTO).getId();
-        });
+        BoardRepresentation boardR = postBoard("department@poczta.fm");
+        return boardR.getId();
     }
     
     private BoardRepresentation postBoard(String user) {
