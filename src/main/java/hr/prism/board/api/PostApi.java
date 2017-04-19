@@ -92,7 +92,7 @@ public class PostApi {
         return postMapper.apply(postService.executeAction(id, Action.WITHDRAW, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/withdraw", method = RequestMethod.POST)
+    @RequestMapping(value = "/posts/{id}/restore", method = RequestMethod.POST)
     public PostRepresentation restorePost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.RESTORE, postDTO));
     }
