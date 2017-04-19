@@ -1,5 +1,7 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
@@ -59,6 +61,9 @@ public class PostService {
     @Inject
     private LocationMapper locationMapper;
     
+    @Inject
+    private ObjectMapper objectMapper;
+    
     @PersistenceContext
     private EntityManager entityManager;
     
@@ -93,7 +98,7 @@ public class PostService {
             post.setDescription(postDTO.getDescription());
             post.setOrganizationName(postDTO.getOrganizationName());
             post.setExistingRelation(postDTO.getExistingRelation());
-            post.setExistingRelationExplanation(postDTO.getExistingRelationExplanation());
+            post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
             post.setApplyWebsite(postDTO.getApplyWebsite());
             post.setApplyEmail(postDTO.getApplyEmail());
     
@@ -295,7 +300,7 @@ public class PostService {
         }
         
         if (nonNullCount != 1) {
-            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY_MECHANISM);
+            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
         } else if (post.getLiveTimestamp() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_LIVE_TIMESTAMP);
         } else if (post.getDeadTimestamp() == null) {
@@ -331,6 +336,18 @@ public class PostService {
                     .executeUpdate();
                 return null;
             });
+        }
+    }
+    
+    private String mapExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
+        if (existingRelationExplanation == null) {
+            return null;
+        }
+        
+        try {
+            return objectMapper.writeValueAsString(existingRelationExplanation);
+        } catch (JsonProcessingException e) {
+            throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
         }
     }
     

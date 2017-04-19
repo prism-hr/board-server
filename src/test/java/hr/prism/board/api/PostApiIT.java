@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +78,9 @@ public class PostApiIT extends AbstractIT {
                 .setExistingRelation(ExistingRelation.STUDENT)
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setLiveTimestamp(LocalDateTime.now())
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
             
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
             verifyPost(user, postDTO, postR);
@@ -100,7 +103,9 @@ public class PostApiIT extends AbstractIT {
                 .setExistingRelation(ExistingRelation.STUDENT)
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com")))
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setLiveTimestamp(LocalDateTime.now())
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)))
             .getId());
         
         transactionTemplate.execute(status -> {
@@ -135,7 +140,9 @@ public class PostApiIT extends AbstractIT {
                 .setExistingRelation(ExistingRelation.STUDENT)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setLiveTimestamp(LocalDateTime.now())
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
             postApi.postPost(boardId, postDTO);
             return null;
         });
@@ -150,7 +157,9 @@ public class PostApiIT extends AbstractIT {
                 .setExistingRelation(ExistingRelation.STUDENT)
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setLiveTimestamp(LocalDateTime.now())
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
             postApi.postPost(boardId, postDTO);
             return null;
         });
@@ -178,7 +187,9 @@ public class PostApiIT extends AbstractIT {
                     .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("cloudinaryId").setCloudinaryUrl("http://cloudinary.com"));
+                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("cloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setLiveTimestamp(LocalDateTime.now())
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
             ExceptionUtil.verifyApiException(() -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
             return null;
         });
@@ -222,6 +233,8 @@ public class PostApiIT extends AbstractIT {
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
     
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
+        assertEquals(postDTO.getLiveTimestamp(), postR.getLiveTimestamp());
+        assertEquals(postDTO.getDeadTimestamp(), postR.getDeadTimestamp());
         assertThat(postR.getActions(), Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
     
         Post post = postService.getPost(postR.getId());

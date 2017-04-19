@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class PostServiceTest {
-    
+
     private PostService postService = new PostService();
-    
+
     private Post post = (Post) new Post().setParent(new Board().setParent(new Department()));
     
     @Test
@@ -64,7 +64,7 @@ public class PostServiceTest {
                         .setApplyWebsite(Optional.empty())
                         .setApplyEmail(Optional.empty())
                         .setApplyDocument(Optional.empty())),
-            ExceptionCode.CORRUPTED_POST_APPLY_MECHANISM, null);
+            ExceptionCode.CORRUPTED_POST_APPLY, null);
     }
     
     @Test
@@ -78,7 +78,7 @@ public class PostServiceTest {
                         .setLocation(Optional.of(new LocationDTO()))
                         .setApplyWebsite(Optional.of("http://www.google.com"))
                         .setApplyEmail(Optional.of("alastair@prism.hr"))),
-            ExceptionCode.CORRUPTED_POST_APPLY_MECHANISM, null);
+            ExceptionCode.CORRUPTED_POST_APPLY, null);
     }
     
     @Test

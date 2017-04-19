@@ -1,13 +1,19 @@
 package hr.prism.board.mapper;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.PostRepresentation;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Function;
 
@@ -22,6 +28,9 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     
     @Inject
     private BoardMapper boardMapper;
+    
+    @Inject
+    private ObjectMapper objectMapper;
     
     @Override
     public PostRepresentation apply(Post post) {
@@ -50,7 +59,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setOrganizationName(post.getOrganizationName())
             .setLocation(locationMapper.apply(post.getLocation()))
             .setExistingRelation(post.getExistingRelation())
-            .setExistingRelationExplanation(post.getExistingRelationExplanation())
+            .setExistingRelationExplanation(mapExistingRelationExplanation(post.getExistingRelationExplanation()))
             .setPostCategories(postCategories)
             .setMemberCategories(memberCategories)
             .setApplyWebsite(post.getApplyWebsite())
@@ -62,6 +71,19 @@ public class PostMapper implements Function<Post, PostRepresentation> {
         
         postRepresentation.setActions(post.getActions());
         return postRepresentation;
+    }
+    
+    private LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
+        if (existingRelationExplanation == null) {
+            return null;
+        }
+        
+        try {
+            return objectMapper.readValue(existingRelationExplanation, new TypeReference<LinkedHashMap<String, Object>>() {
+            });
+        } catch (IOException e) {
+            throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+        }
     }
     
 }

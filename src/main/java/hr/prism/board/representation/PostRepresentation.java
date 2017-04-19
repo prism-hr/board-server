@@ -3,6 +3,7 @@ package hr.prism.board.representation;
 import hr.prism.board.enums.ExistingRelation;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class PostRepresentation extends ResourceRepresentation {
@@ -15,7 +16,7 @@ public class PostRepresentation extends ResourceRepresentation {
     
     private ExistingRelation existingRelation;
     
-    private String existingRelationExplanation;
+    private LinkedHashMap<String, Object> existingRelationExplanation;
     
     private List<String> postCategories;
     
@@ -69,11 +70,11 @@ public class PostRepresentation extends ResourceRepresentation {
         return this;
     }
     
-    public String getExistingRelationExplanation() {
+    public LinkedHashMap<String, Object> getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
     
-    public PostRepresentation setExistingRelationExplanation(String existingRelationExplanation) {
+    public PostRepresentation setExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }

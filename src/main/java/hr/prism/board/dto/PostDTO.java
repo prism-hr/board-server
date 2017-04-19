@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class PostDTO {
@@ -29,7 +30,7 @@ public class PostDTO {
     
     private ExistingRelation existingRelation;
     
-    private String existingRelationExplanation;
+    private LinkedHashMap<String, Object> existingRelationExplanation;
     
     private List<String> postCategories;
     
@@ -95,11 +96,11 @@ public class PostDTO {
         return this;
     }
     
-    public String getExistingRelationExplanation() {
+    public LinkedHashMap<String, Object> getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
     
-    public PostDTO setExistingRelationExplanation(String existingRelationExplanation) {
+    public PostDTO setExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }

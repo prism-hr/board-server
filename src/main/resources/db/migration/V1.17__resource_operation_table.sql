@@ -13,3 +13,6 @@ CREATE TABLE resource_operation (
 )
   COLLATE = utf8_general_ci
   ENGINE = innodb;
+
+UPDATE resource
+SET existing_relation = NULL;
