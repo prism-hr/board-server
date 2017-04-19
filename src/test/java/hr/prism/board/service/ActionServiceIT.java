@@ -29,6 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -269,8 +270,8 @@ public class ActionServiceIT extends AbstractIT {
                     .setPostCategories(Collections.emptyList())
                     .setMemberCategories(Collections.emptyList())
                     .setExistingRelation(ExistingRelation.STUDENT)
-                    .setLiveTimestamp(LocalDateTime.now())
-                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)));
+                    .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS)));
         });
     }
     

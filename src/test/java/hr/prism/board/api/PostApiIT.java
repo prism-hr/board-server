@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -145,8 +146,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(new ArrayList<>())
                 .setMemberCategories(new ArrayList<>())
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             postApi.postPost(boardId, postDTO);
             return null;
         });
