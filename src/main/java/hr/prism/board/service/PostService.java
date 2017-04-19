@@ -172,14 +172,20 @@ public class PostService {
             changeList.put("organizationName", oldOrganizationName, post.getOrganizationName());
         }
     
-        if (postDTO.getLocation() != null) {
+        Optional<LocationDTO> locationOptional = postDTO.getLocation();
+        if (locationOptional != null) {
             Location oldLocation = post.getLocation();
-            String oldLocationId = Optional.ofNullable(oldLocation).map(Location::getGoogleId).orElse(null);
-            String newLocationId = postDTO.getLocation().map(LocationDTO::getGoogleId).orElse(null);
-            if (!Objects.equals(newLocationId, oldLocationId)) {
-                post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation().orElse(null)));
-                changeList.put("location", locationMapper.apply(oldLocation), locationMapper.apply(post.getLocation()));
+            if (locationOptional.isPresent()) {
+                post.setLocation(locationService.getOrCreateLocation(locationOptional.get()));
+            } else {
+                post.setLocation(null);
             }
+        
+            if (oldLocation != null) {
+                locationService.deleteLocation(oldLocation);
+            }
+        
+            changeList.put("location", locationMapper.apply(oldLocation), locationMapper.apply(post.getLocation()));
         }
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
@@ -203,15 +209,16 @@ public class PostService {
             if (applyDocumentOptional != null) {
                 if (applyDocumentOptional.isPresent()) {
                     DocumentDTO newApplyDocumentDTO = applyDocumentOptional.get();
-                    String oldApplyDocumentId = Optional.ofNullable(post.getApplyDocument()).map(Document::getCloudinaryId).orElse(null);
-                    if (!Objects.equals(newApplyDocumentDTO.getCloudinaryId(), oldApplyDocumentId)) {
-                        post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
-                    }
-    
+                    post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
+                    
                     post.setApplyWebsite(null);
                     post.setApplyEmail(null);
                 } else {
                     post.setApplyDocument(null);
+                }
+        
+                if (oldApplyDocument != null) {
+                    documentService.deleteDocument(oldApplyDocument);
                 }
             }
     

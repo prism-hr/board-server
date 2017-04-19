@@ -33,4 +33,8 @@ public class DocumentService {
         return document;
     }
     
+    public void deleteDocument(Document document) {
+        documentRepository.delete(document);
+    }
+    
 }

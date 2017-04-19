@@ -65,11 +65,12 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private ActionService actionService;
     
+    @Inject
+    private UserService userService;
+    
     @Test
     public void shouldCreatePost() {
-        User user = testUserService.authenticate();
-        Long boardId = postBoard(user.getEmail()).getId();
-        
+        Long boardId = postBoard("department@poczta.fm").getId();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post")
@@ -85,7 +86,7 @@ public class PostApiIT extends AbstractIT {
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
-            verifyPost(user, postDTO, postR);
+            verifyPost(userService.findByEmail("department@poczta.fm"), postDTO, postR);
             return null;
         });
     }
@@ -127,9 +128,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
-        User user = testUserService.authenticate();
-        Long boardId = postBoard(user.getEmail()).getId();
-        
+        Long boardId = postBoard("department@poczta.fm").getId();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post 1")
@@ -462,7 +461,6 @@ public class PostApiIT extends AbstractIT {
     
     private BoardRepresentation postBoard(String user) {
         testUserService.authenticateAs(user);
-        
         return transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("Board")

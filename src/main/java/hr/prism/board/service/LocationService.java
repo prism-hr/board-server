@@ -16,17 +16,22 @@ public class LocationService {
     private LocationRepository locationRepository;
     
     public Location getOrCreateLocation(LocationDTO locationDTO) {
-        Location foundLocation = locationRepository.findByGoogleId(locationDTO.getGoogleId());
-        if (foundLocation != null) {
-            return foundLocation;
+        Location location = locationRepository.findByGoogleId(locationDTO.getGoogleId());
+        if (location == null) {
+            location = new Location();
+            location.setName(locationDTO.getName());
+            location.setDomicile(locationDTO.getDomicile());
+            location.setGoogleId(locationDTO.getGoogleId());
+            location.setLatitude(locationDTO.getLatitude());
+            location.setLongitude(locationDTO.getLongitude());
+            return locationRepository.save(location);
         }
-        Location location = new Location();
-        location.setName(locationDTO.getName());
-        location.setDomicile(locationDTO.getDomicile());
-        location.setGoogleId(locationDTO.getGoogleId());
-        location.setLatitude(locationDTO.getLatitude());
-        location.setLongitude(locationDTO.getLongitude());
-        return locationRepository.save(location);
+    
+        return location;
+    }
+    
+    public void deleteLocation(Location location) {
+        locationRepository.delete(location);
     }
     
 }
