@@ -49,7 +49,7 @@ public class ApiExceptionHandlerIT {
     }
     
     private void doRequest(String path, ResultMatcher resultMatcher, ExceptionCode exceptionCode) throws Exception {
-        String response = mockMvc.perform(MockMvcRequestBuilders.get("/api/test/" + path))
+        String response = mockMvc.perform(MockMvcRequestBuilders.get("/test/" + path))
             .andExpect(resultMatcher).andReturn().getResponse().getContentAsString();
         
         Map<String, String> deserializedResponse = objectMapper.readValue(response, new TypeReference<Map<String, String>>() {
