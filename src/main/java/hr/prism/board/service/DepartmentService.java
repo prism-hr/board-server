@@ -123,63 +123,59 @@ public class DepartmentService {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         Department updatedDepartment = (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
-            updateDepartment(department, departmentDTO);
+            ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
+    
+            Optional<String> nameOptional = departmentDTO.getName();
+            if (nameOptional != null) {
+                String oldName = department.getName();
+                String newName = nameOptional.orElse(null);
+                if (!Objects.equals(newName, oldName)) {
+                    if (departmentRepository.findByName(newName) != null) {
+                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
+                    }
+            
+                    department.setName(newName);
+                    changeList.put("name", oldName, newName);
+                }
+            }
+    
+            if (departmentDTO.getDocumentLogo() != null) {
+                Document oldLogo = department.getDocumentLogo();
+                String oldLogoId = Optional.ofNullable(oldLogo).map(Document::getCloudinaryId).orElse(null);
+                String newLogoId = departmentDTO.getDocumentLogo().map(DocumentDTO::getCloudinaryId).orElse(null);
+                if (!Objects.equals(newLogoId, oldLogoId)) {
+                    department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo().orElse(null)));
+                    changeList.put("documentLogo", documentMapper.apply(oldLogo), documentMapper.apply(department.getDocumentLogo()));
+                }
+            }
+    
+            Optional<String> handleOptional = departmentDTO.getHandle();
+            if (handleOptional != null) {
+                String oldHandle = department.getHandle();
+                String newHandle = handleOptional.orElse(null);
+                if (!Objects.equals(newHandle, oldHandle)) {
+                    if (departmentRepository.findByHandle(newHandle) != null) {
+                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+                    }
+            
+                    resourceService.updateHandle(department, newHandle);
+                    changeList.put("handle", oldHandle, newHandle);
+                }
+            }
+    
+            if (departmentDTO.getMemberCategories() != null) {
+                List<String> oldMemberCategories = resourceService.getCategories(department, CategoryType.MEMBER);
+                resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(Collections.emptyList()), CategoryType.MEMBER);
+                changeList.put("memberCategories", oldMemberCategories, resourceService.getCategories(department, CategoryType.MEMBER));
+            }
+    
+            validateDepartment(department);
+            department.setChangeList(changeList);
+            department.setComment(departmentDTO.getComment());
             return department;
         });
     
         return updatedDepartment;
-    }
-    
-    void updateDepartment(Department department, DepartmentPatchDTO departmentDTO) {
-        ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
-        
-        Optional<String> nameOptional = departmentDTO.getName();
-        if (nameOptional != null) {
-            String oldName = department.getName();
-            String newName = nameOptional.orElse(null);
-            if (!Objects.equals(newName, oldName)) {
-                if (departmentRepository.findByName(newName) != null) {
-                    throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
-                }
-                
-                department.setName(newName);
-                changeList.put("name", oldName, newName);
-            }
-        }
-        
-        if (departmentDTO.getDocumentLogo() != null) {
-            Document oldLogo = department.getDocumentLogo();
-            String oldLogoId = Optional.ofNullable(oldLogo).map(Document::getCloudinaryId).orElse(null);
-            String newLogoId = departmentDTO.getDocumentLogo().map(DocumentDTO::getCloudinaryId).orElse(null);
-            if (!Objects.equals(newLogoId, oldLogoId)) {
-                department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo().orElse(null)));
-                changeList.put("documentLogo", documentMapper.apply(oldLogo), documentMapper.apply(department.getDocumentLogo()));
-            }
-        }
-        
-        Optional<String> handleOptional = departmentDTO.getHandle();
-        if (handleOptional != null) {
-            String oldHandle = department.getHandle();
-            String newHandle = handleOptional.orElse(null);
-            if (!Objects.equals(newHandle, oldHandle)) {
-                if (departmentRepository.findByHandle(newHandle) != null) {
-                    throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
-                }
-                
-                resourceService.updateHandle(department, newHandle);
-                changeList.put("handle", oldHandle, newHandle);
-            }
-        }
-        
-        if (departmentDTO.getMemberCategories() != null) {
-            List<String> oldMemberCategories = resourceService.getCategories(department, CategoryType.MEMBER);
-            resourceService.updateCategories(department, departmentDTO.getMemberCategories().orElse(Collections.emptyList()), CategoryType.MEMBER);
-            changeList.put("memberCategories", oldMemberCategories, resourceService.getCategories(department, CategoryType.MEMBER));
-        }
-        
-        validateDepartment(department);
-        department.setChangeList(changeList);
-        department.setComment(departmentDTO.getComment());
     }
     
     private void validateDepartment(Department department) {

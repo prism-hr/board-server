@@ -152,7 +152,7 @@ public class PostService {
         publishAndRetirePosts();
     }
     
-    void updatePost(Post post, PostPatchDTO postDTO) {
+    private void updatePost(Post post, PostPatchDTO postDTO) {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
         ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
