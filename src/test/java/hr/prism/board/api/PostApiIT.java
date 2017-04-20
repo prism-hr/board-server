@@ -86,7 +86,8 @@ public class PostApiIT extends AbstractIT {
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
-            verifyPost(userService.findByEmail("department@poczta.fm"), postDTO, postR);
+            User user = userService.findByEmail("department@poczta.fm");
+            verifyPost(user, postDTO, postR);
             return null;
         });
     }
@@ -403,7 +404,8 @@ public class PostApiIT extends AbstractIT {
                             .setName(Optional.of("name"))
                             .setDescription(Optional.of("description"))
                             .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO()))
+                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
+                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                             .setApplyWebsite(Optional.empty())
                             .setApplyEmail(Optional.empty())
                             .setApplyDocument(Optional.empty())),
@@ -419,7 +421,8 @@ public class PostApiIT extends AbstractIT {
                             .setName(Optional.of("name"))
                             .setDescription(Optional.of("description"))
                             .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO()))
+                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
+                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                             .setApplyWebsite(Optional.of("http://www.google.com"))
                             .setApplyEmail(Optional.of("alastair@prism.hr"))),
                 ExceptionCode.CORRUPTED_POST_APPLY, null);
@@ -434,7 +437,8 @@ public class PostApiIT extends AbstractIT {
                             .setName(Optional.of("name"))
                             .setDescription(Optional.of("description"))
                             .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO()))
+                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
+                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                             .setApplyWebsite(Optional.of("http://www.google.com"))
                             .setLiveTimestamp(Optional.empty())),
                 ExceptionCode.MISSING_POST_LIVE_TIMESTAMP, null);
@@ -449,7 +453,8 @@ public class PostApiIT extends AbstractIT {
                             .setName(Optional.of("name"))
                             .setDescription(Optional.of("description"))
                             .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO()))
+                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
+                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                             .setApplyWebsite(Optional.of("http://www.google.com"))
                             .setLiveTimestamp(Optional.of(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)))
                             .setDeadTimestamp(Optional.empty())),
