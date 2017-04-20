@@ -1,6 +1,8 @@
 package hr.prism.board;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.stormpath.sdk.servlet.mvc.WebHandler;
 import com.stormpath.spring.config.StormpathWebSecurityConfigurer;
 import hr.prism.board.repository.MyRepositoryImpl;
@@ -32,20 +34,20 @@ import java.util.Properties;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
-    
+
     @Inject
     private Environment environment;
-    
+
     @Inject
     private UserService userService;
-    
+
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
         springApplication.run(args);
     }
-    
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.apply(StormpathWebSecurityConfigurer.stormpath())
@@ -53,12 +55,12 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/**").permitAll()
             .antMatchers("/api/**").fullyAuthenticated();
     }
-    
+
     @Bean
     public DataSource dataSource() {
         String host = environment.getProperty("database.host");
         LOGGER.info("Creating datasource using: " + host);
-        
+
         return DataSourceBuilder.create()
             .driverClassName("com.mysql.cj.jdbc.Driver")
             .url("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
@@ -67,22 +69,22 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             .password("pgadmissions")
             .build();
     }
-    
+
     @Bean
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:db/migration");
-        
+
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
             flyway.clean();
         }
-        
+
         flyway.migrate();
         return flyway;
     }
-    
+
     @Bean
     public LocalSessionFactoryBean sessionFactory() {
         LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
@@ -94,7 +96,7 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
         return sessionFactoryBean;
     }
-    
+
     @Bean
     public WebHandler registerPostHandler() {
         return (request, response, account) -> {
@@ -102,13 +104,14 @@ public class ApplicationConfiguration extends WebSecurityConfigurerAdapter {
             return true;
         };
     }
-    
+
     @Bean
     public Jackson2ObjectMapperBuilder objectMapperBuilder() {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
         builder.modules(new Jdk8Module());
+        builder.modules(new JavaTimeModule());
+        builder.featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         builder.indentOutput(true);
         return builder;
     }
-    
 }

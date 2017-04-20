@@ -1,5 +1,6 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.State;
 
 import java.util.List;
@@ -8,10 +9,12 @@ public class ResourceRepresentation {
 
     private Long id;
 
+    private Scope scope;
+
     private String name;
 
     private State state;
-    
+
     private List<ActionRepresentation> actions;
 
     public Long getId() {
@@ -20,6 +23,15 @@ public class ResourceRepresentation {
 
     public ResourceRepresentation setId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public Scope getScope() {
+        return scope;
+    }
+
+    public ResourceRepresentation setScope(Scope scope) {
+        this.scope = scope;
         return this;
     }
 
@@ -39,11 +51,11 @@ public class ResourceRepresentation {
     public void setState(State state) {
         this.state = state;
     }
-    
+
     public List<ActionRepresentation> getActions() {
         return actions;
     }
-    
+
     public ResourceRepresentation setActions(List<ActionRepresentation> actions) {
         this.actions = actions;
         return this;

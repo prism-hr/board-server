@@ -19,25 +19,25 @@ import java.util.function.Function;
 
 @Service
 public class PostMapper implements Function<Post, PostRepresentation> {
-    
+
     @Inject
     private LocationMapper locationMapper;
-    
+
     @Inject
     private DocumentMapper documentMapper;
-    
+
     @Inject
     private BoardMapper boardMapper;
-    
+
     @Inject
     private ObjectMapper objectMapper;
-    
+
     @Override
     public PostRepresentation apply(Post post) {
         if (post == null) {
             return null;
         }
-        
+
         Board board = (Board) post.getParent();
         List<String> postCategories = new ArrayList<>();
         List<String> memberCategories = new ArrayList<>();
@@ -48,10 +48,11 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 memberCategories.add(category.getName());
             }
         });
-        
+
         PostRepresentation postRepresentation = new PostRepresentation();
         postRepresentation
             .setId(post.getId())
+            .setScope(post.getScope())
             .setName(post.getName())
             .setState(post.getState());
         postRepresentation
@@ -68,16 +69,16 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setBoard(boardMapper.apply(board))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp());
-        
+
         postRepresentation.setActions(post.getActions());
         return postRepresentation;
     }
-    
+
     private LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
         if (existingRelationExplanation == null) {
             return null;
         }
-        
+
         try {
             return objectMapper.readValue(existingRelationExplanation, new TypeReference<LinkedHashMap<String, Object>>() {
             });
@@ -85,5 +86,5 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
         }
     }
-    
+
 }

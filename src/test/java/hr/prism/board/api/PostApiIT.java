@@ -61,13 +61,13 @@ public class PostApiIT extends AbstractIT {
 
     @Inject
     private TestUserService testUserService;
-    
+
     @Inject
     private ActionService actionService;
-    
+
     @Inject
     private UserService userService;
-    
+
     @Test
     public void shouldCreatePost() {
         Long boardId = postBoard("department@poczta.fm").getId();
@@ -82,9 +82,9 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            
+                .setLiveTimestamp(LocalDateTime.now().plus(1, ChronoUnit.MONTHS))
+                .setDeadTimestamp(LocalDateTime.now().plus(1, ChronoUnit.YEARS));
+
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
             User user = userService.findByEmail("department@poczta.fm");
             verifyPost(user, postDTO, postR);
@@ -106,8 +106,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(ImmutableList.of("p1", "p3"))
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS)))
+                .setLiveTimestamp(LocalDateTime.now().plus(1, ChronoUnit.MONTHS))
+                .setDeadTimestamp(LocalDateTime.now()))
             .getId());
 
         transactionTemplate.execute(status -> {
@@ -119,8 +119,14 @@ public class PostApiIT extends AbstractIT {
                     .setGoogleId("shouldUpdatePost GoogleId2").setLatitude(BigDecimal.TEN).setLongitude(BigDecimal.TEN)))
                 .setPostCategories(Optional.of(ImmutableList.of("p2", "p3")))
                 .setMemberCategories(Optional.of(ImmutableList.of("m2", "m3")))
-                .setApplyDocument(Optional.of(new DocumentDTO().setFileName("file2").setCloudinaryId("shouldUpdatePost CloudinaryId2").setCloudinaryUrl("http://cloudinary2.com")));
+                .setApplyDocument(Optional.of(new DocumentDTO().setFileName("file2").setCloudinaryId("shouldUpdatePost CloudinaryId2").setCloudinaryUrl("http://cloudinary2.com")))
+                .setLiveTimestamp(Optional.empty())
+                .setDeadTimestamp(Optional.empty());
             PostRepresentation postR = postApi.updatePost(postId, postPatchDTO);
+
+            // make sure timestamps are set to defaults
+            postPatchDTO.setLiveTimestamp(Optional.of(LocalDateTime.now()));
+            postPatchDTO.setLiveTimestamp(Optional.of(LocalDateTime.now().plus(1, ChronoUnit.MONTHS)));
             verifyPost(postPatchDTO, postR);
             return null;
         });
@@ -175,7 +181,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
         Long boardId = postBoard("department@poczta.fm").getId();
-        
+
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -193,12 +199,12 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     @Test
     public void shouldDepartmentUserBeAbleToAcceptPost() {
         BoardRepresentation board = postBoard("department@poczta.fm");
         PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
-        
+
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
@@ -206,32 +212,32 @@ public class PostApiIT extends AbstractIT {
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
+
         testUserService.authenticateAs("department@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.acceptPost(postId, new PostPatchDTO().setDescription(Optional.of("Corrected desc")));
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.ACCEPTED,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.ACCEPTED,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.REJECT, Action.SUSPEND));
-        
+
         transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.getPost(postId);
             assertEquals("Corrected desc", postR.getDescription());
             return null;
         });
     }
-    
+
     @Test
     public void shouldPosterBeAbleToCorrectPost() {
         BoardRepresentation board = postBoard("department@poczta.fm");
         PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
-        
+
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
@@ -239,45 +245,45 @@ public class PostApiIT extends AbstractIT {
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
+
         testUserService.authenticateAs("department@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.suspendPost(post.getId(), new PostPatchDTO());
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.SUSPENDED,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT),
             Arrays.asList(Action.CORRECT, Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.SUSPENDED,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.CORRECT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT));
-        
+
         testUserService.authenticateAs("poster@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.correctPost(postId, new PostPatchDTO().setName(Optional.of("Corrected name")));
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
+
         transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.getPost(postId);
             assertEquals("Corrected name", postR.getName());
             return null;
         });
     }
-    
+
     @Test
     public void shouldDepartmentUserBeAbleToRejectAndRestorePost() {
         BoardRepresentation board = postBoard("department@poczta.fm");
         PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
-        
+
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
@@ -285,26 +291,26 @@ public class PostApiIT extends AbstractIT {
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
+
         testUserService.authenticateAs("department@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.rejectPost(postId, new PostPatchDTO());
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.REJECTED,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.REJECTED,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
-        
+
         testUserService.authenticateAs("department@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.restorePost(postId, new PostPatchDTO());
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
@@ -312,12 +318,12 @@ public class PostApiIT extends AbstractIT {
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
     }
-    
+
     @Test
     public void shouldPosterBeAbleToWithdrawAndRestorePost() {
         BoardRepresentation board = postBoard("department@poczta.fm");
         PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
-        
+
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
@@ -325,26 +331,26 @@ public class PostApiIT extends AbstractIT {
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
+
         testUserService.authenticateAs("poster@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.withdrawPost(postId, new PostPatchDTO());
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.WITHDRAWN,
             Arrays.asList(Action.VIEW, Action.EDIT),
             Collections.singletonList(Action.RESTORE));
         verifyPost(postId, "poster@poczta.fm", State.WITHDRAWN,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.RESTORE),
             Collections.emptyList());
-        
+
         testUserService.authenticateAs("poster@poczta.fm");
         transactionTemplate.execute(status -> {
             postApi.restorePost(postId, new PostPatchDTO());
             return null;
         });
-        
+
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
             Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
@@ -352,13 +358,13 @@ public class PostApiIT extends AbstractIT {
             Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
     }
-    
+
     @Test
     public void shouldNotBeAbleToCorruptPostByPatching() {
         Long boardId = postBoard("department@poczta.fm").getId();
         PostRepresentation postRepresentation = postPost(boardId, "poster@poczta.fm");
         Long postId = postRepresentation.getId();
-        
+
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO().setName(Optional.empty())),
@@ -366,7 +372,7 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.empty())),
@@ -374,7 +380,7 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId,
@@ -383,7 +389,7 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId,
@@ -396,7 +402,7 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
-        
+
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId,
@@ -413,41 +419,8 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO()
-                            .setName(Optional.of("name"))
-                            .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
-                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                            .setApplyWebsite(Optional.of("http://www.google.com"))
-                            .setLiveTimestamp(Optional.empty())),
-                ExceptionCode.MISSING_POST_LIVE_TIMESTAMP, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO()
-                            .setName(Optional.of("name"))
-                            .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
-                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                            .setApplyWebsite(Optional.of("http://www.google.com"))
-                            .setLiveTimestamp(Optional.of(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)))
-                            .setDeadTimestamp(Optional.empty())),
-                ExceptionCode.MISSING_POST_DEAD_TIMESTAMP, null);
-            status.setRollbackOnly();
-            return null;
-        });
     }
-    
+
     private BoardRepresentation postBoard(String user) {
         testUserService.authenticateAs(user);
         return transactionTemplate.execute(status -> {
@@ -461,7 +434,7 @@ public class PostApiIT extends AbstractIT {
             return boardApi.postBoard(boardDTO);
         });
     }
-    
+
     private PostRepresentation postPost(Long boardId, String user) {
         testUserService.authenticateAs(user);
         return transactionTemplate.execute(status -> {
@@ -511,11 +484,11 @@ public class PostApiIT extends AbstractIT {
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
 
         assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-        assertEquals(postDTO.getLiveTimestamp(), postR.getLiveTimestamp());
-        assertEquals(postDTO.getDeadTimestamp(), postR.getDeadTimestamp());
+        assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
+        assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
         assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
             Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
-        
+
         Post post = postService.getPost(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
 
@@ -549,7 +522,7 @@ public class PostApiIT extends AbstractIT {
 
         assertEquals(postDTO.getApplyEmail() != null ? postDTO.getApplyEmail().orElse(null) : null, postR.getApplyEmail());
     }
-    
+
     private void verifyPost(Long postId, String username, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {
         User user = testUserService.authenticateAs(username);
         transactionTemplate.execute(status -> {
@@ -558,12 +531,12 @@ public class PostApiIT extends AbstractIT {
             assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(actions.toArray(new Action[0])));
             return null;
         });
-        
+
         Post post = postService.getPost(postId);
         for (Action forbiddenAction : forbiddenActions) {
             ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> actionService.executeAction(user, post, forbiddenAction, null),
                 ExceptionCode.FORBIDDEN_ACTION, null);
         }
     }
-    
+
 }

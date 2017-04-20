@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -33,53 +34,53 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class PostService {
-    
+
     @Inject
     private PostRepository postRepository;
-    
+
     @Inject
     private ResourceCategoryRepository resourceCategoryRepository;
-    
+
     @Inject
     private DocumentService documentService;
-    
+
     @Inject
     private LocationService locationService;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private UserService userService;
-    
+
     @Inject
     private ActionService actionService;
-    
+
     @Inject
     private DocumentMapper documentMapper;
-    
+
     @Inject
     private LocationMapper locationMapper;
-    
+
     @Inject
     private ObjectMapper objectMapper;
-    
+
     @PersistenceContext
     private EntityManager entityManager;
-    
+
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-    
+
     public Post getPost(Long id) {
         User currentUser = userService.getCurrentUser();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
         return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
-    
+
     public List<Post> getPosts(Long boardId) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -89,14 +90,14 @@ public class PostService {
                 .setOrderStatement("order by resource.updatedTimestamp desc"))
             .stream().map(resource -> (Post) resource).collect(Collectors.toList());
     }
-    
+
     public Post createPost(Long boardId, PostDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.EXTEND, () -> {
             Post post = new Post();
             Department department = (Department) board.getParent();
-    
+
             post.setName(postDTO.getName());
             post.setDescription(postDTO.getDescription());
             post.setOrganizationName(postDTO.getOrganizationName());
@@ -104,32 +105,32 @@ public class PostService {
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
             post.setApplyWebsite(postDTO.getApplyWebsite());
             post.setApplyEmail(postDTO.getApplyEmail());
-    
+
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
             }
-    
+
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
-            post.setLiveTimestamp(postDTO.getLiveTimestamp());
-            post.setDeadTimestamp(postDTO.getDeadTimestamp());
-    
+            post.setLiveTimestamp((postDTO.getLiveTimestamp() != null ? postDTO.getLiveTimestamp() : LocalDateTime.now()).truncatedTo(ChronoUnit.SECONDS));
+            post.setDeadTimestamp((postDTO.getDeadTimestamp() != null ? postDTO.getDeadTimestamp() : post.getLiveTimestamp().plus(1, ChronoUnit.MONTHS)).truncatedTo(ChronoUnit.SECONDS));
+
             validatePost(post);
             post = postRepository.save(post);
-    
+
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
             updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories(), department);
             resourceService.createResourceRelation(board, post);
             userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
             return post;
         });
-        
+
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_EXISTING_RELATION);
         }
-        
+
         return createdPost;
     }
-    
+
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
@@ -142,39 +143,39 @@ public class PostService {
                     return post;
                 });
             }
-    
+
             return post;
         });
     }
-    
+
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void publishAndRetirePostsScheduled() {
         publishAndRetirePosts();
     }
-    
+
     private void updatePost(Post post, PostPatchDTO postDTO) {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
         ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
-        
+
         if (postDTO.getName() != null) {
             String oldName = post.getName();
             post.setName(postDTO.getName().orElse(null));
             changeList.put("name", oldName, post.getName());
         }
-    
+
         if (postDTO.getDescription() != null) {
             String oldDescription = post.getDescription();
             post.setDescription(postDTO.getDescription().orElse(null));
             changeList.put("description", oldDescription, post.getDescription());
         }
-    
+
         if (postDTO.getOrganizationName() != null) {
             String oldOrganizationName = post.getOrganizationName();
             post.setOrganizationName(postDTO.getOrganizationName().orElse(null));
             changeList.put("organizationName", oldOrganizationName, post.getOrganizationName());
         }
-    
+
         Optional<LocationDTO> locationOptional = postDTO.getLocation();
         if (locationOptional != null) {
             Location oldLocation = post.getLocation();
@@ -183,14 +184,14 @@ public class PostService {
             } else {
                 post.setLocation(null);
             }
-    
+
             if (oldLocation != null) {
                 locationService.deleteLocation(oldLocation);
             }
-    
+
             changeList.put("location", locationMapper.apply(oldLocation), locationMapper.apply(post.getLocation()));
         }
-        
+
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
         Optional<String> applyEmailOptional = postDTO.getApplyEmail();
@@ -198,7 +199,7 @@ public class PostService {
             String oldApplyWebsite = post.getApplyWebsite();
             Document oldApplyDocument = post.getApplyDocument();
             String oldApplyEmail = post.getApplyEmail();
-    
+
             if (applyWebsiteOptional != null) {
                 if (applyWebsiteOptional.isPresent()) {
                     post.setApplyWebsite(applyWebsiteOptional.get());
@@ -208,23 +209,23 @@ public class PostService {
                     post.setApplyWebsite(null);
                 }
             }
-    
+
             if (applyDocumentOptional != null) {
                 if (applyDocumentOptional.isPresent()) {
                     DocumentDTO newApplyDocumentDTO = applyDocumentOptional.get();
                     post.setApplyDocument(documentService.getOrCreateDocument(newApplyDocumentDTO));
-                    
+
                     post.setApplyWebsite(null);
                     post.setApplyEmail(null);
                 } else {
                     post.setApplyDocument(null);
                 }
-        
+
                 if (oldApplyDocument != null) {
                     documentService.deleteDocument(oldApplyDocument);
                 }
             }
-    
+
             if (applyEmailOptional != null) {
                 if (applyEmailOptional.isPresent()) {
                     post.setApplyEmail(applyEmailOptional.get());
@@ -234,41 +235,41 @@ public class PostService {
                     post.setApplyEmail(null);
                 }
             }
-    
+
             changeList.put("applyWebsite", oldApplyWebsite, post.getApplyWebsite());
             changeList.put("applyDocument", documentMapper.apply(oldApplyDocument), documentMapper.apply(post.getApplyDocument()));
             changeList.put("applyEmail", oldApplyEmail, post.getApplyEmail());
         }
-        
+
         if (postDTO.getPostCategories() != null) {
             List<String> oldPostCategories = resourceService.getCategories(post, CategoryType.POST);
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories().orElse(null), board);
             changeList.put("postCategories", oldPostCategories, resourceService.getCategories(post, CategoryType.POST));
         }
-        
+
         if (postDTO.getMemberCategories() != null) {
             List<String> oldMemberCategories = resourceService.getCategories(post, CategoryType.MEMBER);
             updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories().orElse(null), department);
             changeList.put("memberCategories", oldMemberCategories, resourceService.getCategories(post, CategoryType.MEMBER));
         }
-    
+
         if (postDTO.getLiveTimestamp() != null) {
             LocalDateTime oldLiveTimestamp = post.getLiveTimestamp();
-            post.setLiveTimestamp(postDTO.getLiveTimestamp().orElse(null));
+            post.setLiveTimestamp(postDTO.getLiveTimestamp().orElse(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)));
             changeList.put("liveTimestamp", oldLiveTimestamp, post.getLiveTimestamp());
         }
-    
+
         if (postDTO.getDeadTimestamp() != null) {
             LocalDateTime oldDeadTimestamp = post.getDeadTimestamp();
-            post.setDeadTimestamp(postDTO.getDeadTimestamp().orElse(null));
+            post.setDeadTimestamp(postDTO.getDeadTimestamp().orElse(post.getLiveTimestamp().plus(1, ChronoUnit.MONTHS).truncatedTo(ChronoUnit.SECONDS)));
             changeList.put("deadTimestamp", oldDeadTimestamp, post.getDeadTimestamp());
         }
-    
+
         validatePost(post);
         post.setChangeList(changeList);
         post.setComment(postDTO.getComment());
     }
-    
+
     synchronized void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
@@ -276,12 +277,12 @@ public class PostService {
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
     }
-    
+
     private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource parentResource) {
         resourceCategoryRepository.deleteByResourceAndType(post, categoryType);
         Set<ResourceCategory> savedCategories = post.getCategories();
         savedCategories.removeIf(next -> next.getType() == categoryType);
-    
+
         List<ResourceCategory> newCategories = resourceCategoryRepository.findByResourceAndTypeAndNameIn(parentResource, categoryType, categories);
         newCategories.forEach(category -> {
             ResourceCategory insertCategory = new ResourceCategory().setResource(post).setName(category.getName()).setActive(true).setType(category.getType());
@@ -290,7 +291,7 @@ public class PostService {
             savedCategories.add(insertCategory);
         });
     }
-    
+
     private void validatePost(Post post) {
         if (post.getName() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_NAME);
@@ -302,13 +303,9 @@ public class PostService {
             throw new ApiException(ExceptionCode.MISSING_POST_LOCATION);
         } else if (post.getApplyWebsite() == null && post.getApplyDocument() == null && post.getApplyEmail() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
-        } else if (post.getLiveTimestamp() == null) {
-            throw new ApiException(ExceptionCode.MISSING_POST_LIVE_TIMESTAMP);
-        } else if (post.getDeadTimestamp() == null) {
-            throw new ApiException(ExceptionCode.MISSING_POST_DEAD_TIMESTAMP);
         }
     }
-    
+
     @SuppressWarnings("JpaQlInspection")
     private void executeActions(List<Long> postIds, Action action, State state, LocalDateTime baseline) {
         if (postIds.size() > 0) {
@@ -324,13 +321,13 @@ public class PostService {
                     .setParameter("baseline", baseline)
                     .setParameter("postIds", postIds)
                     .executeUpdate();
-                
+
                 entityManager.createNativeQuery(
                     "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
-                        "SELECT post.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
-                        "FROM post " +
-                        "WHERE post.id IN (:postIds) " +
-                        "ORDER BY post.id")
+                        "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
+                        "FROM resource " +
+                        "WHERE resource.id IN (:postIds) " +
+                        "ORDER BY resource.id")
                     .setParameter("action", action)
                     .setParameter("baseline", baseline)
                     .setParameter("postIds", postIds)
@@ -339,17 +336,17 @@ public class PostService {
             });
         }
     }
-    
+
     private String mapExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
         if (existingRelationExplanation == null) {
             return null;
         }
-        
+
         try {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
             throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
         }
     }
-    
+
 }
