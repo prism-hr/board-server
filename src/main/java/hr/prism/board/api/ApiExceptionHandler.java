@@ -6,39 +6,33 @@ import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.Map;
-
-@RestControllerAdvice
-public class ApiExceptionHandler {
+@ControllerAdvice
+public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiExceptionHandler.class);
     
-    @ExceptionHandler(Throwable.class)
-    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleException(Throwable throwable) throws Throwable {
-        if (throwable instanceof ApiException || throwable instanceof ApiForbiddenException) {
-            throw throwable;
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> processException(Exception exception, WebRequest request) {
+        ExceptionCode exceptionCode = ExceptionCode.PROBLEM;
+        HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        if (exception instanceof ApiForbiddenException) {
+            exceptionCode = ((ApiForbiddenException) exception).getExceptionCode();
+            responseStatus = HttpStatus.FORBIDDEN;
+        } else if (exception instanceof ApiException) {
+            exceptionCode = ((ApiException) exception).getExceptionCode();
+            responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         }
         
-        LOGGER.error("Could not serve request", throwable);
-        return ImmutableMap.of("exceptionCode", ExceptionCode.PROBLEM.name());
-    }
-    
-    @ExceptionHandler(ApiException.class)
-    @ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
-    public Map<String, String> handleException(ApiException apiException) {
-        return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
-    }
-    
-    @ExceptionHandler(ApiForbiddenException.class)
-    @ResponseStatus(value = HttpStatus.FORBIDDEN)
-    public Map<String, String> handleException(ApiForbiddenException apiException) {
-        return ImmutableMap.of("exceptionCode", apiException.getExceptionCode().name());
+        LOGGER.error("Could not serve request", exception);
+        return handleExceptionInternal(exception, ImmutableMap.of("exceptionCode", exceptionCode), new HttpHeaders(), responseStatus, request);
     }
     
 }
