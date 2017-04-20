@@ -409,23 +409,7 @@ public class PostApiIT extends AbstractIT {
                             .setApplyWebsite(Optional.empty())
                             .setApplyEmail(Optional.empty())
                             .setApplyDocument(Optional.empty())),
-                ExceptionCode.CORRUPTED_POST_APPLY, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO()
-                            .setName(Optional.of("name"))
-                            .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
-                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                            .setApplyWebsite(Optional.of("http://www.google.com"))
-                            .setApplyEmail(Optional.of("alastair@prism.hr"))),
-                ExceptionCode.CORRUPTED_POST_APPLY, null);
+                ExceptionCode.MISSING_POST_APPLY, null);
             status.setRollbackOnly();
             return null;
         });

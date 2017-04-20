@@ -24,7 +24,10 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -180,11 +183,11 @@ public class PostService {
             } else {
                 post.setLocation(null);
             }
-        
+    
             if (oldLocation != null) {
                 locationService.deleteLocation(oldLocation);
             }
-        
+    
             changeList.put("location", locationMapper.apply(oldLocation), locationMapper.apply(post.getLocation()));
         }
         
@@ -297,17 +300,8 @@ public class PostService {
             throw new ApiException(ExceptionCode.MISSING_POST_ORGANIZATION_NAME);
         } else if (post.getLocation() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_LOCATION);
-        }
-        
-        int nonNullCount = 0;
-        for (Object applyMechanism : Arrays.asList(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail())) {
-            if (applyMechanism != null) {
-                nonNullCount++;
-            }
-        }
-        
-        if (nonNullCount != 1) {
-            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
+        } else if (post.getApplyWebsite() == null && post.getApplyDocument() == null && post.getApplyEmail() == null) {
+            throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
         } else if (post.getLiveTimestamp() == null) {
             throw new ApiException(ExceptionCode.MISSING_POST_LIVE_TIMESTAMP);
         } else if (post.getDeadTimestamp() == null) {
@@ -332,11 +326,11 @@ public class PostService {
                     .executeUpdate();
                 
                 entityManager.createNativeQuery(
-                    "insert into resource_operation (resource_id, action, created_timestamp) " +
-                        "select post.id as resource_id, :action as action, :baseline as created_timestamp " +
-                        "from post " +
-                        "where post.id in (:postIds) " +
-                        "order by post.id")
+                    "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
+                        "SELECT post.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
+                        "FROM post " +
+                        "WHERE post.id IN (:postIds) " +
+                        "ORDER BY post.id")
                     .setParameter("action", action)
                     .setParameter("baseline", baseline)
                     .setParameter("postIds", postIds)
