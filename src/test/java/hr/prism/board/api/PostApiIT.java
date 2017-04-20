@@ -389,7 +389,7 @@ public class PostApiIT extends AbstractIT {
                         new PostPatchDTO()
                             .setName(Optional.of("name"))
                             .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.empty())
+                            .setOrganizationName(Optional.of("organization name"))
                             .setLocation(Optional.empty())),
                 ExceptionCode.MISSING_POST_LOCATION, null);
             status.setRollbackOnly();
