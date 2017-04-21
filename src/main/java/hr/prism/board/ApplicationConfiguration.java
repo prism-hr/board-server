@@ -103,8 +103,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-        builder.modules(new Jdk8Module());
-        builder.modules(new JavaTimeModule());
+        builder.modules(new Jdk8Module(), new JavaTimeModule());
         builder.featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         builder.indentOutput(true);
         converters.add(new MappingJackson2HttpMessageConverter(builder.build()));
