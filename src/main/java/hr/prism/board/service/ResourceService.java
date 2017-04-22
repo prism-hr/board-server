@@ -6,16 +6,23 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.mapper.DocumentMapper;
+import hr.prism.board.mapper.LocationMapper;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,12 +39,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class ResourceService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
@@ -79,6 +88,18 @@ public class ResourceService {
     private ResourceOperationRepository resourceOperationRepository;
     
     @Inject
+    private DocumentService documentService;
+    
+    @Inject
+    private DocumentMapper documentMapper;
+    
+    @Inject
+    private LocationService locationService;
+    
+    @Inject
+    private LocationMapper locationMapper;
+    
+    @Inject
     private ObjectMapper objectMapper;
     
     @PersistenceContext
@@ -113,28 +134,28 @@ public class ResourceService {
             "Arguments passed where: " + Joiner.on(", ").join(resource1, resource2));
     }
     
-    public void updateCategories(Resource resource, List<String> categories, CategoryType type) {
-        HashSet<String> postedCategories = new HashSet<>(categories);
-        Set<ResourceCategory> existingCategories = resource.getCategories();
+    public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
+        HashSet<String> newCategories = new HashSet<>(categories);
+        Set<ResourceCategory> oldCategories = resource.getCategories();
         
         // modify existing categories
-        for (ResourceCategory existingResourceCategory : existingCategories) {
-            if (postedCategories.remove(existingResourceCategory.getName())) {
-                existingResourceCategory.setActive(true);
+        for (ResourceCategory oldCategory : oldCategories) {
+            if (newCategories.remove(oldCategory.getName())) {
+                oldCategory.setActive(true);
             } else {
                 // category was not in the posted list, make inactive
-                existingResourceCategory.setActive(false);
+                oldCategory.setActive(false);
             }
-    
-            resourceCategoryRepository.update(existingResourceCategory, LocalDateTime.now());
+            
+            resourceCategoryRepository.update(oldCategory, LocalDateTime.now());
         }
         
         // add new categories
-        for (String postedCategory : postedCategories) {
+        for (String postedCategory : newCategories) {
             ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(postedCategory).setActive(true).setType(type);
             newResourceCategory.setCreatedTimestamp(LocalDateTime.now());
             resourceCategoryRepository.save(newResourceCategory);
-            existingCategories.add(newResourceCategory);
+            oldCategories.add(newResourceCategory);
         }
     }
     
@@ -364,6 +385,81 @@ public class ResourceService {
             .getResultList());
     }
     
+    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional) {
+        patchProperty(resource, property, newValueOptional, null, null);
+    }
+    
+    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, ExceptionCode exceptionIfEmpty) {
+        patchProperty(resource, property, newValueOptional, exceptionIfEmpty, null);
+    }
+    
+    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, Runnable runIfNotEmpty) {
+        patchProperty(resource, property, newValueOptional, null, runIfNotEmpty);
+    }
+    
+    public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional) {
+        patchDocument(resource, property, newValueOptional, null);
+    }
+    
+    public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional, Runnable postProcessor) {
+        if (newValueOptional != null) {
+            try {
+                Document oldValue = (Document) PropertyUtils.getProperty(resource, property);
+                if (newValueOptional.isPresent()) {
+                    DocumentDTO newValue = newValueOptional.get();
+                    if (!Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
+                        patchDocument(resource, property, oldValue, newValue);
+                    }
+                    
+                    if (postProcessor != null) {
+                        postProcessor.run();
+                    }
+                } else if (oldValue != null) {
+                    patchDocument(resource, property, oldValue, null);
+                }
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+            }
+        }
+    }
+    
+    public void patchLocation(Resource resource, String property, Optional<LocationDTO> newValueOptional, ExceptionCode exceptionIfEmpty) {
+        if (newValueOptional != null) {
+            try {
+                Location oldValue = (Location) PropertyUtils.getProperty(resource, property);
+                if (newValueOptional.isPresent()) {
+                    LocationDTO newValue = newValueOptional.get();
+                    if (exceptionIfEmpty != null && newValue == null) {
+                        throw new ApiException(exceptionIfEmpty);
+                    }
+                    
+                    if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
+                        patchLocation(resource, property, oldValue, newValue);
+                    }
+                } else if (oldValue != null) {
+                    patchLocation(resource, property, oldValue, null);
+                }
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+            }
+        }
+    }
+    
+    public void patchCategories(Resource resource, CategoryType categoryType, Optional<List<String>> newValuesOptional) {
+        if (newValuesOptional != null) {
+            List<String> oldValues = getCategories(resource, categoryType);
+            if (newValuesOptional.isPresent()) {
+                List<String> newValues = newValuesOptional.get();
+                if (!Objects.equals(oldValues, newValues)) {
+                    newValues.sort(Comparator.naturalOrder());
+                    patchCategories(resource, categoryType, oldValues, newValues);
+                }
+            } else if (oldValues != null) {
+                patchCategories(resource, categoryType, oldValues, null);
+            }
+        }
+    }
+    
     void updateResource(Resource resource, LocalDateTime baseline) {
         resourceRepository.update(resource, baseline);
     }
@@ -381,6 +477,55 @@ public class ResourceService {
         Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
+    }
+    
+    private <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, ExceptionCode exceptionIfEmpty, Runnable runIfNotEmpty) {
+        if (newValueOptional != null) {
+            try {
+                T oldValue = (T) PropertyUtils.getProperty(resource, property);
+                if (newValueOptional.isPresent()) {
+                    T newValue = newValueOptional.get();
+                    if (exceptionIfEmpty != null && newValue == null) {
+                        throw new ApiException(exceptionIfEmpty);
+                    }
+                    
+                    if (!Objects.equals(oldValue, newValue)) {
+                        patchProperty(resource, property, oldValue, newValue);
+                    }
+                    
+                    if (runIfNotEmpty != null) {
+                        runIfNotEmpty.run();
+                    }
+                } else if (oldValue != null) {
+                    patchProperty(resource, property, oldValue, null);
+                }
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+            }
+        }
+    }
+    
+    private <T> void patchProperty(Resource resource, String property, T oldValue, T newValue)
+        throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        PropertyUtils.setProperty(resource, property, newValue);
+        resource.getChangeList().put(property, oldValue, newValue);
+    }
+    
+    private void patchDocument(Resource resource, String property, Document oldValue, DocumentDTO newValue)
+        throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        patchProperty(resource, property, documentMapper.apply(oldValue), documentService.getOrCreateDocument(newValue));
+        documentService.deleteDocument(oldValue);
+    }
+    
+    private void patchLocation(Resource resource, String property, Location oldValue, LocationDTO newValue)
+        throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        patchProperty(resource, property, locationMapper.apply(oldValue), locationService.getOrCreateLocation(newValue));
+        locationService.deleteLocation(oldValue);
+    }
+    
+    private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {
+        updateCategories(resource, categoryType, newValues);
+        resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);
     }
     
     private static class ResourceActionKey {

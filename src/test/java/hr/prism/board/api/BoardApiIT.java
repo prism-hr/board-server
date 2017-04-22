@@ -3,7 +3,6 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
@@ -12,7 +11,6 @@ import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
-import hr.prism.board.enums.State;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.ActionRepresentation;
@@ -66,7 +64,7 @@ public class BoardApiIT extends AbstractIT {
         verifyPostBoard(user,
             new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department")
@@ -79,7 +77,7 @@ public class BoardApiIT extends AbstractIT {
         User user = testUserService.authenticate();
         BoardDTO boardDTO = new BoardDTO()
             .setName("New Board")
-            .setPurpose("Purpose")
+            .setDescription("Purpose")
             .setPostCategories(ImmutableList.of("category3", "category4"))
             .setDepartment(new DepartmentDTO()
                 .setName("New Department")
@@ -97,7 +95,7 @@ public class BoardApiIT extends AbstractIT {
         User user = testUserService.authenticate();
         BoardDTO boardDTO = new BoardDTO()
             .setName("New Board With Long Name")
-            .setPurpose("Purpose")
+            .setDescription("Purpose")
             .setPostCategories(ImmutableList.of("category3", "category4"))
             .setDepartment(new DepartmentDTO()
                 .setName("New Department")
@@ -136,7 +134,7 @@ public class BoardApiIT extends AbstractIT {
         Long departmentId = verifyPostBoard(user,
             new BoardDTO()
                 .setName("Board 1")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setName("Department 1")
@@ -148,7 +146,7 @@ public class BoardApiIT extends AbstractIT {
         verifyPostBoard(secondUser,
             new BoardDTO()
                 .setName("Board 2")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setId(departmentId)
@@ -206,7 +204,7 @@ public class BoardApiIT extends AbstractIT {
         Long departmentId = verifyPostBoard(user,
             new BoardDTO()
                 .setName("Board 1")
-                .setPurpose("Purpose 1")
+                .setDescription("Purpose 1")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setName("Department 1")
@@ -216,7 +214,7 @@ public class BoardApiIT extends AbstractIT {
 
         verifyPostBoard(user, new BoardDTO()
                 .setName("Board 2")
-                .setPurpose("Purpose 2")
+                .setDescription("Purpose 2")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setId(departmentId)
@@ -259,7 +257,7 @@ public class BoardApiIT extends AbstractIT {
         Long boardId = verifyPostBoard(user,
             new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("a", "b"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department")
@@ -297,7 +295,7 @@ public class BoardApiIT extends AbstractIT {
                 verifyPostBoard(user,
                     new BoardDTO()
                         .setName("Board " + i + " " + j)
-                        .setPurpose("Purpose")
+                        .setDescription("Purpose")
                         .setPostCategories(ImmutableList.of("category3", "category4"))
                         .setDepartment(new DepartmentDTO()
                             .setName("Department " + i)
@@ -325,7 +323,7 @@ public class BoardApiIT extends AbstractIT {
             BoardRepresentation boardRepresentation = boardApi.postBoard(
                 new BoardDTO()
                     .setName("New Board")
-                    .setPurpose("Purpose")
+                    .setDescription("Purpose")
                     .setPostCategories(ImmutableList.of("category3", "category4"))
                     .setDepartment(new DepartmentDTO()
                         .setName("New Department")
@@ -354,7 +352,7 @@ public class BoardApiIT extends AbstractIT {
         User user = testUserService.authenticate();
         BoardDTO boardDTO = new BoardDTO()
             .setName("New Board")
-            .setPurpose("Purpose")
+            .setDescription("Purpose")
             .setPostCategories(ImmutableList.of("category3", "category4"))
             .setDepartment(new DepartmentDTO()
                 .setName("New Department")
@@ -363,7 +361,7 @@ public class BoardApiIT extends AbstractIT {
 
         BoardDTO otherBoardDTO = new BoardDTO()
             .setName("Other New Board")
-            .setPurpose("Purpose")
+            .setDescription("Purpose")
             .setPostCategories(ImmutableList.of("category3", "category4"))
             .setDepartment(new DepartmentDTO()
                 .setName("New Department")

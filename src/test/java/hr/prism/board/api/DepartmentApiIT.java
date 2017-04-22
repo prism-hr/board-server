@@ -53,7 +53,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department")
@@ -89,7 +89,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department With Long Name")
@@ -106,7 +106,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentId = transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department With Long Name Too")
@@ -130,7 +130,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department With Long Name Also")
@@ -180,7 +180,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department")
@@ -212,7 +212,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR1 = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department")
@@ -226,7 +226,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("category3", "category4"))
                 .setDepartment(new DepartmentDTO()
                     .setName("New Department Two")

@@ -14,7 +14,7 @@ public class BoardDTO {
 
     @NotEmpty
     @Size(max = 2000)
-    private String purpose;
+    private String description;
 
     private List<String> postCategories;
 
@@ -29,13 +29,13 @@ public class BoardDTO {
         this.name = name;
         return this;
     }
-
-    public String getPurpose() {
-        return purpose;
+    
+    public String getDescription() {
+        return description;
     }
-
-    public BoardDTO setPurpose(String purpose) {
-        this.purpose = purpose;
+    
+    public BoardDTO setDescription(String description) {
+        this.description = description;
         return this;
     }
 

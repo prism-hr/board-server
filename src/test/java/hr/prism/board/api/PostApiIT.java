@@ -426,7 +426,7 @@ public class PostApiIT extends AbstractIT {
         return transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("Board")
-                .setPurpose("Purpose")
+                .setDescription("Purpose")
                 .setPostCategories(ImmutableList.of("p1", "p2", "p3"))
                 .setDepartment(new DepartmentDTO()
                     .setName("Department")

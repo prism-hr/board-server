@@ -6,7 +6,6 @@ import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.enums.State;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.service.BoardService;
@@ -38,7 +37,7 @@ public class DepartmentBoardHelper {
 
     public void verifyBoard(User user, BoardDTO boardDTO, BoardRepresentation boardR, boolean expectDepartmentAdministrator) {
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
-        Assert.assertEquals(boardDTO.getPurpose(), boardR.getPurpose());
+        Assert.assertEquals(boardDTO.getDescription(), boardR.getPurpose());
         Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getPostCategories().toArray(new String[0])));
         Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
 

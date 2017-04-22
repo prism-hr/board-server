@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -76,7 +75,7 @@ public class BoardService {
             
             Board board = new Board();
             board.setName(name);
-            board.setDescription(boardDTO.getPurpose());
+            board.setDescription(boardDTO.getDescription());
             board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
     
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
@@ -86,7 +85,7 @@ public class BoardService {
             validateBoard(board);
             board = boardRepository.save(board);
     
-            resourceService.updateCategories(board, boardDTO.getPostCategories(), CategoryType.POST);
+            resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
             userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
@@ -101,7 +100,8 @@ public class BoardService {
         Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
             Department department = (Department) board.getParent();
             ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
-    
+            board.setChangeList(changeList);
+            
             Optional<String> nameOptional = boardDTO.getName();
             if (nameOptional != null) {
                 String oldName = board.getName();
@@ -113,12 +113,8 @@ public class BoardService {
                 }
             }
     
-            if (boardDTO.getPurpose() != null) {
-                String oldPurpose = board.getDescription();
-                board.setDescription(boardDTO.getPurpose().orElse(null));
-                changeList.put("purpose", oldPurpose, board.getDescription());
-            }
-    
+            resourceService.patchProperty(board, "description", boardDTO.getPurpose());
+            
             Optional<String> handleOptional = boardDTO.getHandle();
             if (handleOptional != null) {
                 String oldHandle = board.getHandle();
@@ -128,26 +124,16 @@ public class BoardService {
                     if (boardRepository.findByHandle(newHandle) != null) {
                         throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
                     }
-            
+    
                     resourceService.updateHandle(board, newHandle);
                     changeList.put("handle", oldHandle, newHandle);
                 }
             }
     
-            if (boardDTO.getPostCategories() != null) {
-                List<String> oldPostCategories = resourceService.getCategories(board, CategoryType.POST);
-                resourceService.updateCategories(board, boardDTO.getPostCategories().orElse(Collections.emptyList()), CategoryType.POST);
-                changeList.put("postCategories", oldPostCategories, resourceService.getCategories(board, CategoryType.POST));
-            }
-    
-            if (boardDTO.getDefaultPostVisibility() != null) {
-                PostVisibility oldDefaultPostVisibility = board.getDefaultPostVisibility();
-                board.setDefaultPostVisibility(boardDTO.getDefaultPostVisibility().orElse(null));
-                changeList.put("defaultPostVisibility", oldDefaultPostVisibility, board.getDefaultPostVisibility());
-            }
-    
+            resourceService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
+            resourceService.patchProperty(board, "defaultPostVisibility", boardDTO.getDefaultPostVisibility(), ExceptionCode.MISSING_BOARD_DEFAULT_VISIBILITY);
+            
             validateBoard(board);
-            board.setChangeList(changeList);
             board.setComment(boardDTO.getComment());
             return board;
         });
