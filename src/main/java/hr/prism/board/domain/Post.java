@@ -24,10 +24,6 @@ public class Post extends Resource {
     @Column(name = "organization_name", nullable = false)
     private String organizationName;
     
-    @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
-    private Location location;
-    
     @Column(name = "existing_relation")
     @Enumerated(value = EnumType.STRING)
     private ExistingRelation existingRelation;
@@ -59,14 +55,6 @@ public class Post extends Resource {
     
     public void setOrganizationName(String organizationName) {
         this.organizationName = organizationName;
-    }
-    
-    public Location getLocation() {
-        return location;
-    }
-    
-    public void setLocation(Location location) {
-        this.location = location;
     }
     
     public ExistingRelation getExistingRelation() {
