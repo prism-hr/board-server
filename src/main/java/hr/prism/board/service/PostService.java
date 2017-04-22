@@ -172,17 +172,17 @@ public class PostService {
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
         Optional<String> applyEmailOptional = postDTO.getApplyEmail();
-        
-        int applyOptionCount = 0;
+    
+        int applyCount = 0;
         for (Optional<?> applyOption : new Optional<?>[]{applyWebsiteOptional, applyDocumentOptional, applyEmailOptional}) {
             if (applyOption.isPresent()) {
-                applyOptionCount++;
+                applyCount++;
             }
         }
-        
-        if (applyOptionCount == 0) {
+    
+        if (applyCount == 0) {
             throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
-        } else if (applyOptionCount > 1) {
+        } else if (applyCount > 1) {
             throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
         }
         
@@ -192,7 +192,7 @@ public class PostService {
         });
         
         resourceService.patchDocument(post, "applyDocument", applyDocumentOptional, () -> {
-            resourceService.patchProperty(post, "applyWesbite", Optional.empty());
+            resourceService.patchProperty(post, "applyWebsite", Optional.empty());
             resourceService.patchProperty(post, "applyEmail", Optional.empty());
         });
         
