@@ -163,9 +163,7 @@ public class PostService {
     
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
-        ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
-        post.setChangeList(changeList);
-        
+        post.setChangeList(new ResourceChangeListRepresentation());
         resourceService.patchProperty(post, "name", postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
         resourceService.patchProperty(post, "description", postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
         resourceService.patchProperty(post, "organizationName", postDTO.getOrganizationName(), ExceptionCode.MISSING_POST_ORGANIZATION_NAME);

@@ -74,11 +74,11 @@ public class BoardService {
             board.setName(name);
             board.setDescription(boardDTO.getDescription());
             board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
-        
+    
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
             List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
             board.setHandle(ResourceService.confirmHandle(handle, similarHandles));
-        
+    
             board = boardRepository.save(board);
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
@@ -91,15 +91,12 @@ public class BoardService {
         User currentUser = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
         return (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
-            ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
-            board.setChangeList(changeList);
-        
+            board.setChangeList(new ResourceChangeListRepresentation());
             resourceService.patchName(board, boardDTO.getName(), ExceptionCode.MISSING_BOARD_NAME, ExceptionCode.DUPLICATE_BOARD);
             resourceService.patchProperty(board, "description", boardDTO.getPurpose());
             resourceService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.MISSING_BOARD_HANDLE, ExceptionCode.DUPLICATE_BOARD_HANDLE);
             resourceService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.patchProperty(board, "defaultPostVisibility", boardDTO.getDefaultPostVisibility(), ExceptionCode.MISSING_BOARD_DEFAULT_VISIBILITY);
-            
             board.setComment(boardDTO.getComment());
             return board;
         });
