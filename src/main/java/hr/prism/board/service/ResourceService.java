@@ -409,10 +409,12 @@ public class ResourceService {
         }
     }
     
+    @SuppressWarnings("JpaQlInspection")
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement = "select resource.id " +
-            "from " + scope.name().toLowerCase() + " resource " +
-            "where resource.name = :name";
+            "from Resource resource " +
+            "where resource.scope = :scope " +
+            "and resource.name = :name";
         
         Map<String, Object> constraints = new HashMap<>();
         if (id != null) {
@@ -425,7 +427,9 @@ public class ResourceService {
             constraints.put("parent", parent);
         }
         
-        Query query = entityManager.createQuery(statement).setParameter("name", name);
+        Query query = entityManager.createQuery(statement)
+            .setParameter("scope", scope)
+            .setParameter("name", name);
         constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
         
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
@@ -453,20 +457,6 @@ public class ResourceService {
             } else if (oldValue != null) {
                 patchHandle(resource, oldValue, null);
             }
-        }
-    }
-    
-    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
-        Query query = entityManager.createQuery(
-            "select resource.id " +
-                "from " + resource.getScope().name().toLowerCase() + " resource " +
-                "where resource.handle = :handle " +
-                "and resource.id <> :id")
-            .setParameter("handle", handle)
-            .setParameter("id", resource.getId());
-        
-        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new ApiException(exceptionCode);
         }
     }
     
@@ -570,7 +560,7 @@ public class ResourceService {
                     if (!Objects.equals(oldValue, newValue)) {
                         patchProperty(resource, property, oldValue, newValue);
                     }
-        
+    
                     if (after != null) {
                         after.run();
                     }
@@ -611,6 +601,21 @@ public class ResourceService {
     private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {
         updateCategories(resource, categoryType, newValues);
         resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);
+    }
+    
+    @SuppressWarnings("JpaQlInspection")
+    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
+        Query query = entityManager.createQuery(
+            "select resource.id " +
+                "from Resource resource " +
+                "where resource.handle = :handle " +
+                "and resource.id <> :id")
+            .setParameter("handle", handle)
+            .setParameter("id", resource.getId());
+        
+        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
+            throw new ApiException(exceptionCode);
+        }
     }
     
     private static class ResourceActionKey {
