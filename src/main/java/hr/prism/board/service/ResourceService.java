@@ -404,7 +404,7 @@ public class ResourceService {
                     patchProperty(resource, "name", oldValue, null);
                 }
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
             }
         }
     }
@@ -503,7 +503,7 @@ public class ResourceService {
                     patchDocument(resource, property, oldValue, null);
                 }
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
             }
         }
     }
@@ -523,7 +523,7 @@ public class ResourceService {
                     patchLocation(resource, oldValue, null);
                 }
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
             }
         }
     }
@@ -580,7 +580,7 @@ public class ResourceService {
                     patchProperty(resource, property, oldValue, null);
                 }
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
             }
         }
     }
