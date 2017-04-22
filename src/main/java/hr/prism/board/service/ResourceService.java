@@ -26,6 +26,8 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -577,7 +579,7 @@ public class ResourceService {
     
     private <T> void patchProperty(Resource resource, String property, T oldValue, T newValue)
         throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        PropertyUtils.setProperty(resource, property, newValue);
+        MethodUtils.invokeMethod(resource, "set" + WordUtils.capitalize(property), newValue);
         resource.getChangeList().put(property, oldValue, newValue);
     }
     
