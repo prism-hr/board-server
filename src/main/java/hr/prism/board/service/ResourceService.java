@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked"})
 public class ResourceService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
@@ -260,7 +260,7 @@ public class ResourceService {
         
         // Squash the mappings
         LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex = LinkedHashMultimap.create();
-        rowIndex.keySet().forEach(key -> resourceActionIndex.put((Long) key.id, rowIndex.get(key)));
+        rowIndex.keySet().forEach(key -> resourceActionIndex.put(key.id, rowIndex.get(key)));
         
         Scope scope = filter.getScope();
         Class<? extends Resource> resourceClass = scope.resourceClass;
@@ -385,6 +385,91 @@ public class ResourceService {
             .getResultList());
     }
     
+    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode exceptionIfEmpty, ExceptionCode exceptionIfDuplicate) {
+        if (newValueOptional != null) {
+            try {
+                String oldValue = resource.getName();
+                if (newValueOptional.isPresent()) {
+                    String newValue = newValueOptional.get();
+                    if (!Objects.equals(oldValue, newValue)) {
+                        if (exceptionIfDuplicate != null) {
+                            validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, exceptionIfDuplicate);
+                        }
+                        
+                        patchProperty(resource, "name", oldValue, newValue);
+                    }
+                } else if (exceptionIfEmpty != null) {
+                    throw new ApiException(exceptionIfEmpty);
+                } else if (oldValue != null) {
+                    patchProperty(resource, "name", oldValue, null);
+                }
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
+            }
+        }
+    }
+    
+    public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
+        String statement = "select resource.id " +
+            "from " + scope.name().toLowerCase() + " resource " +
+            "where resource.name = :name";
+        
+        Map<String, Object> constraints = new HashMap<>();
+        if (id != null) {
+            statement += " and resource.id <> :id";
+            constraints.put("id", id);
+        }
+        
+        if (!Objects.equals(scope, parent.getScope())) {
+            statement += " and resource.parent = :parent";
+            constraints.put("parent", parent);
+        }
+        
+        Query query = entityManager.createQuery(statement).setParameter("name", name);
+        constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
+        
+        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
+            throw new ApiException(exceptionCode);
+        }
+    }
+    
+    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode exceptionIfEmpty, ExceptionCode exceptionIfDuplicate) {
+        if (newValueOptional != null) {
+            String oldValue = resource.getHandle();
+            if (newValueOptional.isPresent()) {
+                String newValue = newValueOptional.get();
+                Resource parent = resource.getParent();
+                if (!Objects.equals(resource, parent)) {
+                    newValue = parent.getHandle() + "/" + newValue;
+                }
+                
+                if (exceptionIfDuplicate != null) {
+                    validateUniqueHandle(resource, newValue, exceptionIfDuplicate);
+                }
+                
+                patchHandle(resource, oldValue, newValue);
+            } else if (exceptionIfEmpty != null) {
+                throw new ApiException(exceptionIfEmpty);
+            } else if (oldValue != null) {
+                patchHandle(resource, oldValue, null);
+            }
+        }
+    }
+    
+    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
+        Query query = entityManager.createQuery(
+            "select resource.id " +
+                "from " + resource.getScope().name().toLowerCase() + " resource " +
+                "where resource.handle = :handle " +
+                "and resource.id <> :id")
+            .setParameter("handle", handle)
+            .setParameter("id", resource.getId());
+        
+        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
+            throw new ApiException(exceptionCode);
+        }
+    }
+    
     public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional) {
         patchProperty(resource, property, newValueOptional, null, null);
     }
@@ -393,8 +478,8 @@ public class ResourceService {
         patchProperty(resource, property, newValueOptional, exceptionIfEmpty, null);
     }
     
-    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, Runnable runIfNotEmpty) {
-        patchProperty(resource, property, newValueOptional, null, runIfNotEmpty);
+    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, Runnable after) {
+        patchProperty(resource, property, newValueOptional, null, after);
     }
     
     public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional) {
@@ -423,21 +508,19 @@ public class ResourceService {
         }
     }
     
-    public void patchLocation(Resource resource, String property, Optional<LocationDTO> newValueOptional, ExceptionCode exceptionIfEmpty) {
+    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode exceptionIfEmpty) {
         if (newValueOptional != null) {
             try {
-                Location oldValue = (Location) PropertyUtils.getProperty(resource, property);
+                Location oldValue = (Location) PropertyUtils.getProperty(resource, "location");
                 if (newValueOptional.isPresent()) {
                     LocationDTO newValue = newValueOptional.get();
-                    if (exceptionIfEmpty != null && newValue == null) {
-                        throw new ApiException(exceptionIfEmpty);
-                    }
-                    
                     if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
-                        patchLocation(resource, property, oldValue, newValue);
+                        patchLocation(resource, oldValue, newValue);
                     }
+                } else if (exceptionIfEmpty != null) {
+                    throw new ApiException(exceptionIfEmpty);
                 } else if (oldValue != null) {
-                    patchLocation(resource, property, oldValue, null);
+                    patchLocation(resource, oldValue, null);
                 }
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 throw new ApiException(ExceptionCode.CORRUPTED_PROPERTY, e);
@@ -472,30 +555,27 @@ public class ResourceService {
         resource2.getParents().add(resourceRelation);
     }
     
-    @SuppressWarnings("unchecked")
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
         Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
     }
     
-    private <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, ExceptionCode exceptionIfEmpty, Runnable runIfNotEmpty) {
+    private <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, ExceptionCode exceptionIfEmpty, Runnable after) {
         if (newValueOptional != null) {
             try {
                 T oldValue = (T) PropertyUtils.getProperty(resource, property);
                 if (newValueOptional.isPresent()) {
                     T newValue = newValueOptional.get();
-                    if (exceptionIfEmpty != null && newValue == null) {
-                        throw new ApiException(exceptionIfEmpty);
-                    }
-                    
                     if (!Objects.equals(oldValue, newValue)) {
                         patchProperty(resource, property, oldValue, newValue);
                     }
-                    
-                    if (runIfNotEmpty != null) {
-                        runIfNotEmpty.run();
+        
+                    if (after != null) {
+                        after.run();
                     }
+                } else if (exceptionIfEmpty != null) {
+                    throw new ApiException(exceptionIfEmpty);
                 } else if (oldValue != null) {
                     patchProperty(resource, property, oldValue, null);
                 }
@@ -511,15 +591,20 @@ public class ResourceService {
         resource.getChangeList().put(property, oldValue, newValue);
     }
     
+    private void patchHandle(Resource resource, String oldValue, String newValue) {
+        updateHandle(resource, newValue);
+        resource.getChangeList().put("handle", oldValue, newValue);
+    }
+    
     private void patchDocument(Resource resource, String property, Document oldValue, DocumentDTO newValue)
         throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         patchProperty(resource, property, documentMapper.apply(oldValue), documentService.getOrCreateDocument(newValue));
         documentService.deleteDocument(oldValue);
     }
     
-    private void patchLocation(Resource resource, String property, Location oldValue, LocationDTO newValue)
+    private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue)
         throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        patchProperty(resource, property, locationMapper.apply(oldValue), locationService.getOrCreateLocation(newValue));
+        patchProperty(resource, "location", locationMapper.apply(oldValue), locationService.getOrCreateLocation(newValue));
         locationService.deleteLocation(oldValue);
     }
     

@@ -161,6 +161,7 @@ public class PostService {
         publishAndRetirePosts();
     }
     
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
         ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
         post.setChangeList(changeList);
@@ -168,7 +169,7 @@ public class PostService {
         resourceService.patchProperty(post, "name", postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
         resourceService.patchProperty(post, "description", postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
         resourceService.patchProperty(post, "organizationName", postDTO.getOrganizationName(), ExceptionCode.MISSING_POST_ORGANIZATION_NAME);
-        resourceService.patchLocation(post, "location", postDTO.getLocation(), ExceptionCode.MISSING_POST_LOCATION);
+        resourceService.patchLocation(post, postDTO.getLocation(), ExceptionCode.MISSING_POST_LOCATION);
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
@@ -231,6 +232,7 @@ public class PostService {
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
     }
     
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchCategories(Post post, CategoryType categoryType, Optional<List<String>> categories, Resource reference) {
         if (categories != null) {
             List<String> oldCategories = resourceService.getCategories(post, categoryType);

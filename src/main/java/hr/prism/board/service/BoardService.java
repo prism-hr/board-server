@@ -7,7 +7,6 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
-import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
@@ -17,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,91 +66,43 @@ public class BoardService {
     public Board createBoard(BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
-        Board createdBoard = (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
+        return (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
-            validateNameUnique(name, department);
+            resourceService.validateUniqueName(Scope.BOARD, null, department, name, ExceptionCode.DUPLICATE_BOARD);
             
             Board board = new Board();
             board.setName(name);
             board.setDescription(boardDTO.getDescription());
             board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
-    
+        
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
             List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
             board.setHandle(ResourceService.confirmHandle(handle, similarHandles));
-    
-            validateBoard(board);
+        
             board = boardRepository.save(board);
-    
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
             userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
         });
-    
-        return createdBoard;
     }
     
     public Board updateBoard(Long id, BoardPatchDTO boardDTO) {
         User currentUser = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
-        Board updatedBoard = (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
-            Department department = (Department) board.getParent();
+        return (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
             ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
             board.setChangeList(changeList);
-            
-            Optional<String> nameOptional = boardDTO.getName();
-            if (nameOptional != null) {
-                String oldName = board.getName();
-                String newName = nameOptional.orElse(null);
-                if (!Objects.equals(newName, oldName)) {
-                    validateNameUnique(newName, department);
-                    board.setName(newName);
-                    changeList.put("name", oldName, newName);
-                }
-            }
-    
+        
+            resourceService.patchName(board, boardDTO.getName(), ExceptionCode.MISSING_BOARD_NAME, ExceptionCode.DUPLICATE_BOARD);
             resourceService.patchProperty(board, "description", boardDTO.getPurpose());
-            
-            Optional<String> handleOptional = boardDTO.getHandle();
-            if (handleOptional != null) {
-                String oldHandle = board.getHandle();
-                String newHandle = handleOptional.orElse(null);
-                newHandle = newHandle == null ? null : department.getHandle() + "/" + newHandle;
-                if (!Objects.equals(newHandle, oldHandle)) {
-                    if (boardRepository.findByHandle(newHandle) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_BOARD_HANDLE);
-                    }
-    
-                    resourceService.updateHandle(board, newHandle);
-                    changeList.put("handle", oldHandle, newHandle);
-                }
-            }
-    
+            resourceService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.MISSING_BOARD_HANDLE, ExceptionCode.DUPLICATE_BOARD_HANDLE);
             resourceService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.patchProperty(board, "defaultPostVisibility", boardDTO.getDefaultPostVisibility(), ExceptionCode.MISSING_BOARD_DEFAULT_VISIBILITY);
             
-            validateBoard(board);
             board.setComment(boardDTO.getComment());
             return board;
         });
-    
-        return updatedBoard;
-    }
-    
-    private void validateNameUnique(String name, Department department) {
-        Board board = boardRepository.findByNameAndDepartment(name, department);
-        if (board != null) {
-            throw new ApiException(ExceptionCode.DUPLICATE_BOARD);
-        }
-    }
-    
-    private void validateBoard(Board board) {
-        if (board.getName() == null) {
-            throw new ApiException(ExceptionCode.MISSING_BOARD_NAME);
-        } else if (board.getHandle() == null) {
-            throw new ApiException(ExceptionCode.MISSING_BOARD_HANDLE);
-        }
     }
     
 }

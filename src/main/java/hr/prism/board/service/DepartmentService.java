@@ -7,9 +7,7 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.mapper.DocumentMapper;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.apache.commons.lang3.StringUtils;
@@ -18,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,9 +39,6 @@ public class DepartmentService {
     
     @Inject
     private ActionService actionService;
-    
-    @Inject
-    private DocumentMapper documentMapper;
     
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -106,9 +99,7 @@ public class DepartmentService {
             resourceService.updateHandle(department, handle);
             List<String> memberCategories = departmentDTO.getMemberCategories();
     
-            validateDepartment(department);
             department = departmentRepository.save(department);
-    
             resourceService.updateCategories(department, CategoryType.MEMBER, memberCategories);
             resourceService.createResourceRelation(department, department);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
@@ -120,56 +111,18 @@ public class DepartmentService {
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
-        Department updatedDepartment = (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
+        return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             ResourceChangeListRepresentation changeList = new ResourceChangeListRepresentation();
             department.setChangeList(changeList);
-            
-            Optional<String> nameOptional = departmentDTO.getName();
-            if (nameOptional != null) {
-                String oldName = department.getName();
-                String newName = nameOptional.orElse(null);
-                if (!Objects.equals(newName, oldName)) {
-                    if (departmentRepository.findByName(newName) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT);
-                    }
-    
-                    department.setName(newName);
-                    changeList.put("name", oldName, newName);
-                }
-            }
-    
+        
+            resourceService.patchName(department, departmentDTO.getName(), ExceptionCode.MISSING_DEPARTMENT_NAME, ExceptionCode.DUPLICATE_DEPARTMENT);
             resourceService.patchDocument(department, "documentLogo", departmentDTO.getDocumentLogo());
-            
-            Optional<String> handleOptional = departmentDTO.getHandle();
-            if (handleOptional != null) {
-                String oldHandle = department.getHandle();
-                String newHandle = handleOptional.orElse(null);
-                if (!Objects.equals(newHandle, oldHandle)) {
-                    if (departmentRepository.findByHandle(newHandle) != null) {
-                        throw new ApiException(ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
-                    }
-    
-                    resourceService.updateHandle(department, newHandle);
-                    changeList.put("handle", oldHandle, newHandle);
-                }
-            }
-    
+            resourceService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.MISSING_DEPARTMENT_HANDLE, ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourceService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
             
-            validateDepartment(department);
             department.setComment(departmentDTO.getComment());
             return department;
         });
-    
-        return updatedDepartment;
-    }
-    
-    private void validateDepartment(Department department) {
-        if (department.getName() == null) {
-            throw new ApiException(ExceptionCode.MISSING_DEPARTMENT_NAME);
-        } else if (department.getHandle() == null) {
-            throw new ApiException(ExceptionCode.MISSING_DEPARTMENT_HANDLE);
-        }
     }
     
 }
