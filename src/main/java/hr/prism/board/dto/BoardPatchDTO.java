@@ -13,7 +13,7 @@ public class BoardPatchDTO extends ResourcePatchDTO {
     private Optional<String> name;
     
     @Size(min = 1, max = 2000)
-    private Optional<String> purpose;
+    private Optional<String> description;
     
     @Size(max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
@@ -32,12 +32,12 @@ public class BoardPatchDTO extends ResourcePatchDTO {
         return this;
     }
     
-    public Optional<String> getPurpose() {
-        return purpose;
+    public Optional<String> getDescription() {
+        return description;
     }
     
-    public BoardPatchDTO setPurpose(Optional<String> purpose) {
-        this.purpose = purpose;
+    public BoardPatchDTO setDescription(Optional<String> description) {
+        this.description = description;
         return this;
     }
     

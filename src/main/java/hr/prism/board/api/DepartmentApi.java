@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
@@ -46,7 +47,8 @@ public class DepartmentApi {
     
     @RequestMapping(value = "/departments/{id}/operations", method = RequestMethod.GET)
     public List<ResourceOperationRepresentation> getDepartmentOperations(@PathVariable Long id) {
-        return resourceService.getResourceOperations(id).stream().map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
+        return resourceService.getResourceOperations(Scope.DEPARTMENT, id).stream()
+            .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.PATCH)

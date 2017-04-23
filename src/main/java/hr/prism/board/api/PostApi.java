@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import hr.prism.board.domain.Post;
+import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.enums.Action;
@@ -55,7 +56,8 @@ public class PostApi {
     
     @RequestMapping(value = "/posts/{id}/operations", method = RequestMethod.GET)
     public List<ResourceOperationRepresentation> getPostOperations(@PathVariable Long id) {
-        return resourceService.getResourceOperations(id).stream().map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
+        return resourceService.getResourceOperations(Scope.POST, id).stream()
+            .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.PATCH)

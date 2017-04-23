@@ -90,6 +90,9 @@ public class ResourceService {
     private ResourceOperationRepository resourceOperationRepository;
     
     @Inject
+    private ActionService actionService;
+    
+    @Inject
     private DocumentService documentService;
     
     @Inject
@@ -100,6 +103,9 @@ public class ResourceService {
     
     @Inject
     private LocationMapper locationMapper;
+    
+    @Inject
+    private UserService userService;
     
     @Inject
     private ObjectMapper objectMapper;
@@ -376,7 +382,11 @@ public class ResourceService {
     }
     
     @SuppressWarnings("JpaQlInspection")
-    public List<ResourceOperation> getResourceOperations(Long id) {
+    public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
+        User user = userService.getCurrentUserSecured();
+        Resource resource = getResource(user, scope, id);
+        actionService.executeAction(user, resource, Action.VIEW, () -> resource);
+        
         return new ArrayList<>(entityManager.createQuery(
             "select resourceOperation " +
                 "from ResourceOperation resourceOperation " +
@@ -409,6 +419,10 @@ public class ResourceService {
                 throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
             }
         }
+    }
+    
+    public void validateUniqueName(Resource resource, String name, ExceptionCode exceptionCode) {
+        validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), name, exceptionCode);
     }
     
     @SuppressWarnings("JpaQlInspection")
@@ -478,7 +492,7 @@ public class ResourceService {
         patchDocument(resource, property, newValueOptional, null);
     }
     
-    public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional, Runnable postProcessor) {
+    public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional, Runnable after) {
         if (newValueOptional != null) {
             try {
                 Document oldValue = (Document) PropertyUtils.getProperty(resource, property);
@@ -487,9 +501,9 @@ public class ResourceService {
                     if (!Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
                         patchDocument(resource, property, oldValue, newValue);
                     }
-                    
-                    if (postProcessor != null) {
-                        postProcessor.run();
+    
+                    if (after != null) {
+                        after.run();
                     }
                 } else if (oldValue != null) {
                     patchDocument(resource, property, oldValue, null);

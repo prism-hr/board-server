@@ -268,7 +268,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO()
                 .setName(Optional.of("New Board Updated"))
-                .setPurpose(Optional.of("Purpose Updated"))
+                .setDescription(Optional.of("Purpose Updated"))
                 .setHandle(Optional.of("new-board-updated"))
                 .setPostCategories(Optional.of(ImmutableList.of("c")))
                 .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC));
