@@ -492,7 +492,7 @@ public class ResourceService {
         }
     }
     
-    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode exceptionIfEmpty) {
+    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode required) {
         if (newValueOptional != null) {
             Location oldValue = resource.getLocation();
             if (newValueOptional.isPresent()) {
@@ -500,8 +500,8 @@ public class ResourceService {
                 if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
                     patchLocation(resource, oldValue, newValue);
                 }
-            } else if (exceptionIfEmpty != null) {
-                throw new ApiException(exceptionIfEmpty);
+            } else if (required != null) {
+                throw new ApiException(required);
             } else if (oldValue != null) {
                 patchLocation(resource, oldValue, null);
             }
