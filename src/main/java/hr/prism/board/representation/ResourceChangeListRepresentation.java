@@ -1,14 +1,11 @@
 package hr.prism.board.representation;
 
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
 public class ResourceChangeListRepresentation extends LinkedHashMap<String, ResourceChangeListRepresentation.ResourceChangeRepresentation> {
     
     public void put(String property, Object oldValue, Object newValue) {
-        if (!Objects.equals(oldValue, newValue)) {
-            super.put(property, new ResourceChangeRepresentation().setOldValue(oldValue).setNewValue(newValue));
-        }
+        super.put(property, new ResourceChangeRepresentation().setOldValue(oldValue).setNewValue(newValue));
     }
     
     public static class ResourceChangeRepresentation {
