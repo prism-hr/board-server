@@ -173,17 +173,22 @@ public class PostService {
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
         Optional<String> applyEmailOptional = postDTO.getApplyEmail();
     
-        int applyCount = 0;
+        int applyNullCount = 0;
+        int applyPresentCount = 0;
         for (Optional<?> applyOption : new Optional<?>[]{applyWebsiteOptional, applyDocumentOptional, applyEmailOptional}) {
-            if (applyOption != null && applyOption.isPresent()) {
-                applyCount++;
+            if (applyOption == null) {
+                applyNullCount++;
+            } else if (applyOption.isPresent()) {
+                applyPresentCount++;
             }
         }
     
-        if (applyCount == 0) {
-            throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
-        } else if (applyCount > 1) {
-            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
+        if (applyNullCount < 3) {
+            if (applyPresentCount == 0) {
+                throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
+            } else if (applyPresentCount > 1) {
+                throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
+            }
         }
         
         resourceService.patchProperty(post, "applyWebsite", applyWebsiteOptional, () -> {
