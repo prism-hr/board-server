@@ -37,7 +37,7 @@ public class DepartmentBoardHelper {
 
     public void verifyBoard(User user, BoardDTO boardDTO, BoardRepresentation boardR, boolean expectDepartmentAdministrator) {
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
-        Assert.assertEquals(boardDTO.getDescription(), boardR.getPurpose());
+        Assert.assertEquals(boardDTO.getDescription(), boardR.getDescription());
         Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getPostCategories().toArray(new String[0])));
         Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
 

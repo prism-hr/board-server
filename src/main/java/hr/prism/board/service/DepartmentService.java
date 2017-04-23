@@ -114,7 +114,7 @@ public class DepartmentService {
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.setChangeList(new ResourceChangeListRepresentation());
             resourceService.patchName(department, departmentDTO.getName(), ExceptionCode.MISSING_DEPARTMENT_NAME, ExceptionCode.DUPLICATE_DEPARTMENT);
-            resourceService.patchDocument(department, "documentLogo", departmentDTO.getDocumentLogo());
+            resourceService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
             resourceService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.MISSING_DEPARTMENT_HANDLE, ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourceService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
             department.setComment(departmentDTO.getComment());

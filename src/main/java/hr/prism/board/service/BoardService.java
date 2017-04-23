@@ -7,9 +7,7 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
-import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.patch.Patcher;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.apache.commons.lang3.StringUtils;
@@ -95,24 +93,12 @@ public class BoardService {
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
         return (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
             board.setChangeList(new ResourceChangeListRepresentation());
-            
-            new Patcher<String>()
-                .validator((resource, value) -> {
-                    if (value == null) {
-                        throw new ApiException(ExceptionCode.MISSING_BOARD_NAME);
-                    }
-                    
-                    resourceService.validateUniqueName(resource, value, ExceptionCode.DUPLICATE_BOARD);
-                })
-                .getter(() -> board.getName())
-                .setter((name) -> board.setName(name))
-                .patch(board, "name", boardDTO.getName());
-
-//            resourceService.patchName(board, boardDTO.getName(), ExceptionCode.MISSING_BOARD_NAME, ExceptionCode.DUPLICATE_BOARD);
-            resourceService.patchProperty(board, "description", boardDTO.getDescription());
+            resourceService.patchName(board, boardDTO.getName(), ExceptionCode.MISSING_BOARD_NAME, ExceptionCode.DUPLICATE_BOARD);
+            resourceService.patchProperty(board, "description", board::getDescription, board::setDescription, boardDTO.getDescription());
             resourceService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.MISSING_BOARD_HANDLE, ExceptionCode.DUPLICATE_BOARD_HANDLE);
             resourceService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
-            resourceService.patchProperty(board, "defaultPostVisibility", boardDTO.getDefaultPostVisibility(), ExceptionCode.MISSING_BOARD_DEFAULT_VISIBILITY);
+            resourceService.patchProperty(board, "defaultPostVisibility", board::getDefaultPostVisibility, board::setDefaultPostVisibility,
+                boardDTO.getDefaultPostVisibility(), ExceptionCode.MISSING_BOARD_DEFAULT_VISIBILITY);
             board.setComment(boardDTO.getComment());
             return board;
         });

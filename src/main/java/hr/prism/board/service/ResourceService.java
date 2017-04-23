@@ -16,18 +16,17 @@ import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.DocumentMapper;
 import hr.prism.board.mapper.LocationMapper;
+import hr.prism.board.patch.Getter;
+import hr.prism.board.patch.Setter;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
-import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,7 +40,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -397,32 +395,24 @@ public class ResourceService {
             .getResultList());
     }
     
-    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode exceptionIfEmpty, ExceptionCode exceptionIfDuplicate) {
+    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
         if (newValueOptional != null) {
-            try {
-                String oldValue = resource.getName();
-                if (newValueOptional.isPresent()) {
-                    String newValue = newValueOptional.get();
-                    if (!Objects.equals(oldValue, newValue)) {
-                        if (exceptionIfDuplicate != null) {
-                            validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, exceptionIfDuplicate);
-                        }
-                        
-                        patchProperty(resource, "name", oldValue, newValue);
+            String oldValue = resource.getName();
+            if (newValueOptional.isPresent()) {
+                String newValue = newValueOptional.get();
+                if (!Objects.equals(oldValue, newValue)) {
+                    if (unique != null) {
+                        validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
                     }
-                } else if (exceptionIfEmpty != null) {
-                    throw new ApiException(exceptionIfEmpty);
-                } else if (oldValue != null) {
-                    patchProperty(resource, "name", oldValue, null);
+            
+                    patchProperty(resource, "name", resource::setName, oldValue, newValue);
                 }
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
+            } else if (required != null) {
+                throw new ApiException(required);
+            } else if (oldValue != null) {
+                patchProperty(resource, "name", resource::setName, oldValue, null);
             }
         }
-    }
-    
-    public void validateUniqueName(Resource resource, String name, ExceptionCode exceptionCode) {
-        validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), name, exceptionCode);
     }
     
     @SuppressWarnings("JpaQlInspection")
@@ -453,7 +443,7 @@ public class ResourceService {
         }
     }
     
-    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode exceptionIfEmpty, ExceptionCode exceptionIfDuplicate) {
+    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
             if (newValueOptional.isPresent()) {
@@ -462,74 +452,66 @@ public class ResourceService {
                 if (!Objects.equals(resource, parent)) {
                     newValue = parent.getHandle() + "/" + newValue;
                 }
-                
-                if (exceptionIfDuplicate != null) {
-                    validateUniqueHandle(resource, newValue, exceptionIfDuplicate);
+    
+                if (unique != null) {
+                    validateUniqueHandle(resource, newValue, unique);
                 }
                 
                 patchHandle(resource, oldValue, newValue);
-            } else if (exceptionIfEmpty != null) {
-                throw new ApiException(exceptionIfEmpty);
+            } else if (required != null) {
+                throw new ApiException(required);
             } else if (oldValue != null) {
                 patchHandle(resource, oldValue, null);
             }
         }
     }
     
-    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional) {
-        patchProperty(resource, property, newValueOptional, null, null);
+    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional) {
+        patchProperty(resource, property, getter, setter, newValueOptional, null, null);
     }
     
-    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, ExceptionCode exceptionIfEmpty) {
-        patchProperty(resource, property, newValueOptional, exceptionIfEmpty, null);
+    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required) {
+        patchProperty(resource, property, getter, setter, newValueOptional, required, null);
     }
     
-    public <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, Runnable after) {
-        patchProperty(resource, property, newValueOptional, null, after);
+    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, Runnable after) {
+        patchProperty(resource, property, getter, setter, newValueOptional, null, after);
     }
     
-    public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional) {
-        patchDocument(resource, property, newValueOptional, null);
+    public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
+        patchDocument(resource, property, getter, setter, newValueOptional, null);
     }
     
-    public void patchDocument(Resource resource, String property, Optional<DocumentDTO> newValueOptional, Runnable after) {
+    public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional, Runnable after) {
         if (newValueOptional != null) {
-            try {
-                Document oldValue = (Document) PropertyUtils.getProperty(resource, property);
-                if (newValueOptional.isPresent()) {
-                    DocumentDTO newValue = newValueOptional.get();
-                    if (!Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
-                        patchDocument(resource, property, oldValue, newValue);
-                    }
-    
-                    if (after != null) {
-                        after.run();
-                    }
-                } else if (oldValue != null) {
-                    patchDocument(resource, property, oldValue, null);
+            Document oldValue = getter.get();
+            if (newValueOptional.isPresent()) {
+                DocumentDTO newValue = newValueOptional.get();
+                if (!Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
+                    patchDocument(resource, property, setter, oldValue, newValue);
                 }
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
+        
+                if (after != null) {
+                    after.run();
+                }
+            } else if (oldValue != null) {
+                patchDocument(resource, property, setter, oldValue, null);
             }
         }
     }
     
     public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode exceptionIfEmpty) {
         if (newValueOptional != null) {
-            try {
-                Location oldValue = (Location) PropertyUtils.getProperty(resource, "location");
-                if (newValueOptional.isPresent()) {
-                    LocationDTO newValue = newValueOptional.get();
-                    if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
-                        patchLocation(resource, oldValue, newValue);
-                    }
-                } else if (exceptionIfEmpty != null) {
-                    throw new ApiException(exceptionIfEmpty);
-                } else if (oldValue != null) {
-                    patchLocation(resource, oldValue, null);
+            Location oldValue = resource.getLocation();
+            if (newValueOptional.isPresent()) {
+                LocationDTO newValue = newValueOptional.get();
+                if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
+                    patchLocation(resource, oldValue, newValue);
                 }
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
+            } else if (exceptionIfEmpty != null) {
+                throw new ApiException(exceptionIfEmpty);
+            } else if (oldValue != null) {
+                patchLocation(resource, oldValue, null);
             }
         }
     }
@@ -567,33 +549,28 @@ public class ResourceService {
         return query.getResultList();
     }
     
-    private <T> void patchProperty(Resource resource, String property, Optional<T> newValueOptional, ExceptionCode exceptionIfEmpty, Runnable after) {
+    private <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required, Runnable after) {
         if (newValueOptional != null) {
-            try {
-                T oldValue = (T) PropertyUtils.getProperty(resource, property);
-                if (newValueOptional.isPresent()) {
-                    T newValue = newValueOptional.get();
-                    if (!Objects.equals(oldValue, newValue)) {
-                        patchProperty(resource, property, oldValue, newValue);
-                    }
-    
-                    if (after != null) {
-                        after.run();
-                    }
-                } else if (exceptionIfEmpty != null) {
-                    throw new ApiException(exceptionIfEmpty);
-                } else if (oldValue != null) {
-                    patchProperty(resource, property, oldValue, null);
+            T oldValue = getter.get();
+            if (newValueOptional.isPresent()) {
+                T newValue = newValueOptional.get();
+                if (!Objects.equals(oldValue, newValue)) {
+                    patchProperty(resource, property, setter, oldValue, newValue);
                 }
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new ApiException(ExceptionCode.MISSING_PROPERTY, e);
+        
+                if (after != null) {
+                    after.run();
+                }
+            } else if (required != null) {
+                throw new ApiException(required);
+            } else if (oldValue != null) {
+                patchProperty(resource, property, setter, oldValue, null);
             }
         }
     }
     
-    private <T> void patchProperty(Resource resource, String property, T oldValue, T newValue)
-        throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        MethodUtils.invokeMethod(resource, "set" + WordUtils.capitalize(property), newValue);
+    private <T> void patchProperty(Resource resource, String property, Setter<T> setter, T oldValue, T newValue) {
+        setter.set(newValue);
         resource.getChangeList().put(property, oldValue, newValue);
     }
     
@@ -602,15 +579,13 @@ public class ResourceService {
         resource.getChangeList().put("handle", oldValue, newValue);
     }
     
-    private void patchDocument(Resource resource, String property, Document oldValue, DocumentDTO newValue)
-        throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        patchProperty(resource, property, documentMapper.apply(oldValue), documentService.getOrCreateDocument(newValue));
+    private void patchDocument(Resource resource, String property, Setter<Document> setter, Document oldValue, DocumentDTO newValue) {
+        patchProperty(resource, property, setter, oldValue, documentService.getOrCreateDocument(newValue));
         documentService.deleteDocument(oldValue);
     }
     
-    private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue)
-        throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        patchProperty(resource, "location", locationMapper.apply(oldValue), locationService.getOrCreateLocation(newValue));
+    private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue) {
+        patchProperty(resource, "location", resource::setLocation, oldValue, locationService.getOrCreateLocation(newValue));
         locationService.deleteLocation(oldValue);
     }
     

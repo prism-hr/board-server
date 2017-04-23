@@ -279,7 +279,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(transactionStatus -> {
             BoardRepresentation boardR = departmentBoardHelper.verifyGetBoard(boardId);
             Assert.assertEquals("New Board Updated", boardR.getName());
-            Assert.assertEquals("Purpose Updated", boardR.getPurpose());
+            Assert.assertEquals("Purpose Updated", boardR.getDescription());
             Assert.assertEquals("new-board-updated", boardR.getHandle());
             Assert.assertThat(boardR.getPostCategories(), Matchers.contains("c"));
             Assert.assertEquals(PostVisibility.PUBLIC, boardR.getDefaultPostVisibility());

@@ -12,8 +12,6 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.mapper.DocumentMapper;
-import hr.prism.board.mapper.LocationMapper;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
@@ -59,12 +57,6 @@ public class PostService {
     
     @Inject
     private ActionService actionService;
-    
-    @Inject
-    private DocumentMapper documentMapper;
-    
-    @Inject
-    private LocationMapper locationMapper;
     
     @Inject
     private ObjectMapper objectMapper;
@@ -164,9 +156,10 @@ public class PostService {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ResourceChangeListRepresentation());
-        resourceService.patchProperty(post, "name", postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
-        resourceService.patchProperty(post, "description", postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
-        resourceService.patchProperty(post, "organizationName", postDTO.getOrganizationName(), ExceptionCode.MISSING_POST_ORGANIZATION_NAME);
+        resourceService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
+        resourceService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
+        resourceService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName(),
+            ExceptionCode.MISSING_POST_ORGANIZATION_NAME);
         resourceService.patchLocation(post, postDTO.getLocation(), ExceptionCode.MISSING_POST_LOCATION);
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
@@ -190,20 +183,20 @@ public class PostService {
                 throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
             }
         }
-        
-        resourceService.patchProperty(post, "applyWebsite", applyWebsiteOptional, () -> {
-            resourceService.patchDocument(post, "applyDocument", Optional.empty());
-            resourceService.patchProperty(post, "applyEmail", Optional.empty());
+    
+        resourceService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsiteOptional, () -> {
+            resourceService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
+            resourceService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
         });
-        
-        resourceService.patchDocument(post, "applyDocument", applyDocumentOptional, () -> {
-            resourceService.patchProperty(post, "applyWebsite", Optional.empty());
-            resourceService.patchProperty(post, "applyEmail", Optional.empty());
+    
+        resourceService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocumentOptional, () -> {
+            resourceService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
+            resourceService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
         });
-        
-        resourceService.patchProperty(post, "applyEmail", applyWebsiteOptional, () -> {
-            resourceService.patchDocument(post, "applyDocument", Optional.empty());
-            resourceService.patchProperty(post, "applyWebsite", Optional.empty());
+    
+        resourceService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyWebsiteOptional, () -> {
+            resourceService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
+            resourceService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
         });
         
         Board board = (Board) post.getParent();
@@ -215,12 +208,14 @@ public class PostService {
         Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
         if (liveTimestampOptional != null && deadTimestampOptional != null) {
             if (liveTimestampOptional.isPresent() && deadTimestampOptional.isPresent()) {
-                resourceService.patchProperty(post, "liveTimestamp", Optional.of(liveTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
-                resourceService.patchProperty(post, "deadTimestamp", Optional.of(deadTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
+                resourceService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
+                    Optional.of(liveTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
+                resourceService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp,
+                    Optional.of(deadTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
             } else {
                 LocalDateTime baseline = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-                resourceService.patchProperty(post, "liveTimestamp", Optional.of(baseline));
-                resourceService.patchProperty(post, "deadTimestamp", Optional.of(baseline.plusWeeks(4)));
+                resourceService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp, Optional.of(baseline));
+                resourceService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp, Optional.of(baseline.plusWeeks(4)));
             }
         }
         

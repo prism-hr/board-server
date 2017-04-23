@@ -6,7 +6,7 @@ import java.util.List;
 
 public class BoardRepresentation extends ResourceRepresentation {
     
-    private String purpose;
+    private String description;
     
     private String handle;
     
@@ -16,12 +16,12 @@ public class BoardRepresentation extends ResourceRepresentation {
     
     private PostVisibility defaultPostVisibility;
     
-    public String getPurpose() {
-        return purpose;
+    public String getDescription() {
+        return description;
     }
     
-    public BoardRepresentation setPurpose(String purpose) {
-        this.purpose = purpose;
+    public BoardRepresentation setDescription(String description) {
+        this.description = description;
         return this;
     }
     

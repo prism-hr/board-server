@@ -31,7 +31,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setName(board.getName())
             .setState(board.getState());
         boardRepresentation
-            .setPurpose(board.getDescription())
+            .setDescription(board.getDescription())
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
             .setPostCategories(board.getCategories().stream()
                 .filter(resourceCategory -> BooleanUtils.isTrue(resourceCategory.getActive())).map(ResourceCategory::getName).collect(Collectors.toList()))
