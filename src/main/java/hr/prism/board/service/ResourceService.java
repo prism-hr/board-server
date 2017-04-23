@@ -14,8 +14,6 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.mapper.DocumentMapper;
-import hr.prism.board.mapper.LocationMapper;
 import hr.prism.board.patch.Getter;
 import hr.prism.board.patch.Setter;
 import hr.prism.board.repository.ResourceCategoryRepository;
@@ -94,13 +92,7 @@ public class ResourceService {
     private DocumentService documentService;
     
     @Inject
-    private DocumentMapper documentMapper;
-    
-    @Inject
     private LocationService locationService;
-    
-    @Inject
-    private LocationMapper locationMapper;
     
     @Inject
     private UserService userService;
@@ -404,7 +396,7 @@ public class ResourceService {
                     if (unique != null) {
                         validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
                     }
-            
+    
                     patchProperty(resource, "name", resource::setName, oldValue, newValue);
                 }
             } else if (required != null) {
@@ -490,7 +482,7 @@ public class ResourceService {
                 if (!Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
                     patchDocument(resource, property, setter, oldValue, newValue);
                 }
-        
+    
                 if (after != null) {
                     after.run();
                 }
@@ -557,7 +549,7 @@ public class ResourceService {
                 if (!Objects.equals(oldValue, newValue)) {
                     patchProperty(resource, property, setter, oldValue, newValue);
                 }
-        
+    
                 if (after != null) {
                     after.run();
                 }
