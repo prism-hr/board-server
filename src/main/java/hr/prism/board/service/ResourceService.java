@@ -524,7 +524,7 @@ public class ResourceService {
         if (newValuesOptional != null) {
             List<String> oldValues = getCategories(resource, categoryType);
             if (newValuesOptional.isPresent()) {
-                List<String> newValues = newValuesOptional.get();
+                List<String> newValues = new ArrayList<>(newValuesOptional.get());
                 if (!Objects.equals(oldValues, newValues)) {
                     newValues.sort(Comparator.naturalOrder());
                     patchCategories(resource, categoryType, oldValues, newValues);

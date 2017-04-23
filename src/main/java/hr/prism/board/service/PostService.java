@@ -175,7 +175,7 @@ public class PostService {
     
         int applyCount = 0;
         for (Optional<?> applyOption : new Optional<?>[]{applyWebsiteOptional, applyDocumentOptional, applyEmailOptional}) {
-            if (applyOption.isPresent()) {
+            if (applyOption != null && applyOption.isPresent()) {
                 applyCount++;
             }
         }
@@ -235,7 +235,7 @@ public class PostService {
         if (categories != null) {
             List<String> oldCategories = resourceService.getCategories(post, categoryType);
             if (categories.isPresent()) {
-                List<String> newCategories = categories.get();
+                List<String> newCategories = new ArrayList<>(categories.get());
                 newCategories.sort(Comparator.naturalOrder());
                 if (!Objects.equals(oldCategories, newCategories)) {
                     updateCategories(post, categoryType, newCategories, reference);
