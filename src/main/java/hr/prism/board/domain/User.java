@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
+import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -19,6 +20,7 @@ public class User extends BoardEntity {
     @Column(name = "surname", nullable = false)
     private String surname;
     
+    @Email
     @Column(name = "email", nullable = false, unique = true)
     private String email;
     

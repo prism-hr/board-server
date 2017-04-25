@@ -12,6 +12,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.TestUserService;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
@@ -26,6 +27,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @AutoConfigureMockMvc
@@ -204,6 +206,81 @@ public class DepartmentApiIT extends AbstractIT {
                     departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
                 ExceptionCode.MISSING_DEPARTMENT_HANDLE, null);
             status.setRollbackOnly();
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldAuditDepartmentAndMakeChangesPrivatelyVisible() {
+        User departmentUser = testUserService.authenticate();
+        Long departmentId = transactionTemplate.execute(transactionStatus -> {
+            BoardDTO boardDTO = new BoardDTO()
+                .setName("New Board")
+                .setDescription("Purpose")
+                .setPostCategories(new ArrayList<>())
+                .setDepartment(new DepartmentDTO()
+                    .setName("New Department")
+                    .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+                    .setMemberCategories(ImmutableList.of("a", "b")));
+            
+            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            return boardR.getDepartment().getId();
+        });
+        
+        User boardUser = testUserService.authenticate();
+        transactionTemplate.execute(transactionStatus -> {
+            boardApi.postBoard(
+                new BoardDTO()
+                    .setName("Other New Board")
+                    .setDescription("Purpose")
+                    .setPostCategories(new ArrayList<>())
+                    .setDepartment(new DepartmentDTO()
+                        .setId(departmentId)));
+            return null;
+        });
+        
+        // Test that we do not audit viewing
+        transactionTemplate.execute(status -> {
+            departmentApi.getDepartment(departmentId);
+            return null;
+        });
+        
+        testUserService.authenticateAs(departmentUser.getEmail());
+        transactionTemplate.execute(status -> {
+            departmentApi.updateDepartment(departmentId,
+                new DepartmentPatchDTO()
+                    .setName(Optional.of("New Department 2"))
+                    .setHandle(Optional.of("new-department-2"))
+                    .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
+                    .setMemberCategories(Optional.of(ImmutableList.of("c", "d"))));
+            return null;
+        });
+        
+        testUserService.authenticateAs(departmentUser.getEmail());
+        transactionTemplate.execute(status -> {
+            departmentApi.updateDepartment(departmentId,
+                new DepartmentPatchDTO()
+                    .setName(Optional.of("New Department 3"))
+                    .setHandle(Optional.of("new-department-3"))
+                    .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c3").setCloudinaryUrl("u3").setFileName("f3")))
+                    .setMemberCategories(Optional.of(ImmutableList.of("e", "f"))));
+            return null;
+        });
+        
+        List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
+        Assert.assertEquals(3, resourceOperationRs.size());
+        
+        // Test that other board administrator cannot view audit trail
+        testUserService.authenticateAs(boardUser.getEmail());
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
+            return null;
+        });
+        
+        // Test that a member of the public cannot view audit trail
+        testUserService.unauthenticate();
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
             return null;
         });
     }

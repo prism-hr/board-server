@@ -1,5 +1,8 @@
 package hr.prism.board.dto;
 
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.URL;
+
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -23,14 +26,14 @@ public class PostPatchDTO extends ResourcePatchDTO {
     private Optional<List<String>> postCategories;
 
     private Optional<List<String>> memberCategories;
-
-    @Size(min = 1, max = 255)
+    
+    @URL
     private Optional<String> applyWebsite;
 
     @Valid
     private Optional<DocumentDTO> applyDocument;
     
-    @Size(min = 1, max = 255)
+    @Email
     private Optional<String> applyEmail;
 
     private Optional<LocalDateTime> liveTimestamp;

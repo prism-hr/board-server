@@ -1,7 +1,9 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
+import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.URL;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
@@ -33,14 +35,14 @@ public class PostDTO {
     private List<String> postCategories;
 
     private List<String> memberCategories;
-
-    @Size(max = 255)
+    
+    @URL
     private String applyWebsite;
 
     @Valid
     private DocumentDTO applyDocument;
     
-    @Size(max = 255)
+    @Email
     private String applyEmail;
 
     private LocalDateTime liveTimestamp;

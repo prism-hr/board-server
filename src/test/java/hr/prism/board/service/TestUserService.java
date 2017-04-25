@@ -60,5 +60,9 @@ public class TestUserService {
     
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
+    
+    public void unauthenticate() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+    }
 
 }

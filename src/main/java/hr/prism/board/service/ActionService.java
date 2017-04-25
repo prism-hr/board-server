@@ -60,7 +60,8 @@ public class ActionService {
             }
         }
     
-        LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+        String userString = user == null ? "Public user" : user.toString();
+        LOGGER.info(userString + " cannot " + action.name().toLowerCase() + " " + resource.toString());
         throw new ApiForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
     }
     
