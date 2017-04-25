@@ -163,9 +163,9 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(1, departmentRs.size());
     
             boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND)));
             
             testUserService.setAuthentication(secondUser.getStormpathId());
             boardRs = boardApi.getBoards();
@@ -179,7 +179,7 @@ public class BoardApiIT extends AbstractIT {
                     Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
             boardRs.stream().filter(boardR -> boardR.getName().equals("Board 2"))
                 .forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                    Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND)));
+                    Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND)));
             departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
                 Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
             
