@@ -387,7 +387,7 @@ public class ResourceService {
                 "where resourceOperation.resource.id = :resourceId " +
                 "order by resourceOperation.id desc", ResourceOperation.class)
             .setParameter("resourceId", id)
-            .setHint("javax.persistence.loadgraph", "resource.operation")
+            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("resource.operation"))
             .getResultList());
     }
     

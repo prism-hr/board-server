@@ -166,6 +166,7 @@ public class ResourcePatchService {
     }
     
     private void patchDocument(Resource resource, String property, Setter<Document> setter, Document oldValue, DocumentDTO newValue) {
+        setter.set(documentService.getOrCreateDocument(newValue));
         patchProperty(resource, property, setter, oldValue, documentService.getOrCreateDocument(newValue));
         documentService.deleteDocument(oldValue);
     }

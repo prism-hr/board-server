@@ -1,19 +1,24 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.TestUserService;
+import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
@@ -269,18 +274,54 @@ public class DepartmentApiIT extends AbstractIT {
         
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(3, resourceOperationRs.size());
+    
+        ResourceOperationRepresentation resourceOperationR1 = resourceOperationRs.get(0);
+        Assert.assertEquals(Action.EDIT, resourceOperationR1.getAction());
+    
+        ResourceChangeListRepresentation resourceChangeListR1 = resourceOperationR1.getChangeList();
+        Assert.assertEquals(4, resourceChangeListR1.size());
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Department 2").setNewValue("New Department 3"),
+            resourceChangeListR1.get("name"));
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-department-2").setNewValue("new-department-3"),
+            resourceChangeListR1.get("handle"));
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation()
+                .setOldValue(ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
+                .setNewValue(ObjectUtils.orderedMap("cloudinaryId", "c3", "cloudinaryUrl", "u3", "fileName", "f3")),
+            resourceChangeListR1.get("documentLogo"));
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Lists.newArrayList("c", "d")).setNewValue(Lists.newArrayList("e", "f")),
+            resourceChangeListR1.get("memberCategories"));
+    
+        ResourceOperationRepresentation resourceOperationR2 = resourceOperationRs.get(1);
+        Assert.assertEquals(Action.EDIT, resourceOperationR2.getAction());
+    
+        ResourceChangeListRepresentation resourceChangeListR2 = resourceOperationR2.getChangeList();
+        Assert.assertEquals(4, resourceChangeListR1.size());
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Department").setNewValue("New Department 2"),
+            resourceChangeListR2.get("name"));
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-department").setNewValue("new-department-2"),
+            resourceChangeListR2.get("handle"));
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation()
+                .setOldValue(ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
+                .setNewValue(ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2")),
+            resourceChangeListR2.get("documentLogo"));
+        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Lists.newArrayList("a", "b")).setNewValue(Lists.newArrayList("c", "d")),
+            resourceChangeListR2.get("memberCategories"));
+    
+        ResourceOperationRepresentation resourceOperationR3 = resourceOperationRs.get(2);
+        Assert.assertEquals(Action.EXTEND, resourceOperationR3.getAction());
+        Assert.assertNull(resourceOperationR3.getChangeList());
         
         // Test that other board administrator cannot view audit trail
         testUserService.setAuthentication(boardUser.getStormpathId());
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
+            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
             return null;
         });
         
         // Test that a member of the public cannot view audit trail
         testUserService.unauthenticate();
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
+            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.UNAUTHENTICATED_USER, status);
             return null;
         });
     }
