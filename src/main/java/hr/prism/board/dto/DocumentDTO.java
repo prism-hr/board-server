@@ -1,7 +1,5 @@
 package hr.prism.board.dto;
 
-import org.hibernate.validator.constraints.URL;
-
 import javax.validation.constraints.NotNull;
 
 public class DocumentDTO {
@@ -9,7 +7,6 @@ public class DocumentDTO {
     @NotNull
     private String cloudinaryId;
     
-    @URL
     @NotNull
     private String cloudinaryUrl;
     

@@ -1,7 +1,6 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
-import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
@@ -40,8 +39,8 @@ public class PostDTO {
 
     @Valid
     private DocumentDTO applyDocument;
-
-    @Email
+    
+    @Size(max = 255)
     private String applyEmail;
 
     private LocalDateTime liveTimestamp;

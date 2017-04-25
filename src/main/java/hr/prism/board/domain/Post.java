@@ -1,8 +1,6 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -31,7 +29,6 @@ public class Post extends Resource {
     @Column(name = "existing_relation_explanation")
     private String existingRelationExplanation;
     
-    @URL
     @Column(name = "apply_website")
     private String applyWebsite;
     
@@ -39,7 +36,6 @@ public class Post extends Resource {
     @JoinColumn(name = "apply_document_id")
     private Document applyDocument;
     
-    @Email
     @Column(name = "apply_email")
     private String applyEmail;
     
