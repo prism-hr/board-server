@@ -15,6 +15,7 @@ public class ResourceOperation extends BoardEntity {
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "action", nullable = false)
     private Action action;
     

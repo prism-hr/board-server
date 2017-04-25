@@ -33,26 +33,25 @@ public class ActionService {
         for (ActionRepresentation actionRepresentation : actions) {
             if (actionRepresentation.getAction() == action) {
                 resource = executionTemplate.executeWithAction();
-                
-                State state = resource.getState();
-                State newState = actionRepresentation.getState();
-                if (newState == null) {
-                    newState = state;
-                } else if (newState == State.PREVIOUS) {
-                    newState = resource.getPreviousState();
-                }
+                if (action.isResourceOperation()) {
+                    State state = resource.getState();
+                    State newState = actionRepresentation.getState();
+                    if (newState == null) {
+                        newState = state;
+                    } else if (newState == State.PREVIOUS) {
+                        newState = resource.getPreviousState();
+                    }
+        
+                    Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
+                    if (interceptorClass != null) {
+                        newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
+                    }
+        
+                    if (state != newState) {
+                        resourceService.updateState(resource, newState);
+                        resource = resourceService.getResource(user, resource.getScope(), resource.getId());
+                    }
     
-                Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
-                if (interceptorClass != null) {
-                    newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
-                }
-    
-                if (state != newState) {
-                    resourceService.updateState(resource, newState);
-                    resource = resourceService.getResource(user, resource.getScope(), resource.getId());
-                }
-    
-                if (action != Action.VIEW) {
                     ResourceOperation resourceOperation = resourceService.createResourceOperation(resource, action, user);
                     resourceService.updateResource(resource, resourceOperation.getUpdatedTimestamp());
                 }
