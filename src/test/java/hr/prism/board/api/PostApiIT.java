@@ -207,10 +207,10 @@ public class PostApiIT extends AbstractIT {
 
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
 
         testUserService.authenticateAs("department@poczta.fm");
@@ -220,10 +220,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.REJECT, Action.SUSPEND));
 
         transactionTemplate.execute(status -> {
@@ -240,10 +240,10 @@ public class PostApiIT extends AbstractIT {
 
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
 
         testUserService.authenticateAs("department@poczta.fm");
@@ -253,10 +253,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.SUSPENDED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT),
             Arrays.asList(Action.CORRECT, Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.SUSPENDED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.CORRECT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.CORRECT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT));
 
         testUserService.authenticateAs("poster@poczta.fm");
@@ -266,10 +266,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
 
         transactionTemplate.execute(status -> {
@@ -286,10 +286,10 @@ public class PostApiIT extends AbstractIT {
 
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
 
         testUserService.authenticateAs("department@poczta.fm");
@@ -299,10 +299,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.REJECTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.REJECTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
 
         testUserService.authenticateAs("department@poczta.fm");
@@ -312,10 +312,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
     }
 
@@ -326,10 +326,10 @@ public class PostApiIT extends AbstractIT {
 
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
 
         testUserService.authenticateAs("poster@poczta.fm");
@@ -339,10 +339,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.WITHDRAWN,
-            Arrays.asList(Action.VIEW, Action.EDIT),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT),
             Collections.singletonList(Action.RESTORE));
         verifyPost(postId, "poster@poczta.fm", State.WITHDRAWN,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.RESTORE),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE),
             Collections.emptyList());
 
         testUserService.authenticateAs("poster@poczta.fm");
@@ -352,10 +352,10 @@ public class PostApiIT extends AbstractIT {
         });
 
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
             Collections.singletonList(Action.WITHDRAW));
         verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW),
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
             Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
     }
 
@@ -487,7 +487,7 @@ public class PostApiIT extends AbstractIT {
         assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
         assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
         assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
+            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
 
         Post post = postService.getPost(postR.getId());
         Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));

@@ -49,7 +49,7 @@ public class DepartmentBoardHelper {
         Department department = departmentService.getDepartment(departmentR.getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
         Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND));
+            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND));
         
         Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
         Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
@@ -58,7 +58,7 @@ public class DepartmentBoardHelper {
         if (expectDepartmentAdministrator) {
             Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
             Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND));
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND));
         }
     }
 
