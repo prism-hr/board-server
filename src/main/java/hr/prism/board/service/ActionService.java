@@ -1,7 +1,6 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
@@ -52,8 +51,7 @@ public class ActionService {
                         resource = resourceService.getResource(user, resource.getScope(), resource.getId());
                     }
     
-                    ResourceOperation resourceOperation = resourceService.createResourceOperation(resource, action, user);
-                    resourceService.updateResource(resource, resourceOperation.getUpdatedTimestamp());
+                    resourceService.createResourceOperation(resource, action, user);
                 }
                 
                 return resource;

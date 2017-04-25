@@ -244,8 +244,8 @@ public class DepartmentApiIT extends AbstractIT {
             departmentApi.getDepartment(departmentId);
             return null;
         });
-        
-        testUserService.authenticateAs(departmentUser.getEmail());
+    
+        testUserService.setAuthentication(departmentUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -255,8 +255,8 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(Optional.of(ImmutableList.of("c", "d"))));
             return null;
         });
-        
-        testUserService.authenticateAs(departmentUser.getEmail());
+    
+        testUserService.setAuthentication(departmentUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -271,7 +271,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(3, resourceOperationRs.size());
         
         // Test that other board administrator cannot view audit trail
-        testUserService.authenticateAs(boardUser.getEmail());
+        testUserService.setAuthentication(boardUser.getStormpathId());
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
             return null;

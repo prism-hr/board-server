@@ -105,6 +105,7 @@ public class DepartmentService {
             department = departmentRepository.save(department);
             resourceService.updateCategories(department, CategoryType.MEMBER, memberCategories);
             resourceService.createResourceRelation(department, department);
+            resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
         }
         

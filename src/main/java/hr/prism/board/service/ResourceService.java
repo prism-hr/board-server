@@ -351,6 +351,14 @@ public class ResourceService {
         
         resourceOperation = resourceOperationRepository.save(resourceOperation);
         resource.getOperations().add(resourceOperation);
+    
+        LocalDateTime baseline = resourceOperation.getUpdatedTimestamp();
+        if (action == Action.EXTEND) {
+            // New resource, synchronize created timestamp
+            resource.setCreatedTimestamp(baseline);
+        }
+    
+        resourceRepository.update(resource, baseline);
         return resourceOperation;
     }
     
@@ -424,10 +432,6 @@ public class ResourceService {
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
             throw new ApiException(exceptionCode);
         }
-    }
-    
-    void updateResource(Resource resource, LocalDateTime baseline) {
-        resourceRepository.update(resource, baseline);
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {
