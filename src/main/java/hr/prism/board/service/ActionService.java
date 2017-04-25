@@ -52,8 +52,11 @@ public class ActionService {
                     resource = resourceService.getResource(user, resource.getScope(), resource.getId());
                 }
     
-                ResourceOperation resourceOperation = resourceService.createResourceOperation(resource, action, user);
-                resourceService.updateResource(resource, resourceOperation.getUpdatedTimestamp());
+                if (action != Action.VIEW) {
+                    ResourceOperation resourceOperation = resourceService.createResourceOperation(resource, action, user);
+                    resourceService.updateResource(resource, resourceOperation.getUpdatedTimestamp());
+                }
+                
                 return resource;
             }
         }

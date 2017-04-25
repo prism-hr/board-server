@@ -6,16 +6,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.patch.Getter;
-import hr.prism.board.patch.Setter;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
@@ -387,26 +383,6 @@ public class ResourceService {
             .getResultList());
     }
     
-    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
-        if (newValueOptional != null) {
-            String oldValue = resource.getName();
-            if (newValueOptional.isPresent()) {
-                String newValue = newValueOptional.get();
-                if (!Objects.equals(oldValue, newValue)) {
-                    if (unique != null) {
-                        validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
-                    }
-    
-                    patchProperty(resource, "name", resource::setName, oldValue, newValue);
-                }
-            } else if (required != null) {
-                throw new ApiException(required);
-            } else if (oldValue != null) {
-                patchProperty(resource, "name", resource::setName, oldValue, null);
-            }
-        }
-    }
-    
     @SuppressWarnings("JpaQlInspection")
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement = "select resource.id " +
@@ -435,157 +411,6 @@ public class ResourceService {
         }
     }
     
-    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
-        if (newValueOptional != null) {
-            String oldValue = resource.getHandle();
-            if (newValueOptional.isPresent()) {
-                String newValue = newValueOptional.get();
-                Resource parent = resource.getParent();
-                if (!Objects.equals(resource, parent)) {
-                    newValue = parent.getHandle() + "/" + newValue;
-                }
-    
-                if (unique != null) {
-                    validateUniqueHandle(resource, newValue, unique);
-                }
-                
-                patchHandle(resource, oldValue, newValue);
-            } else if (required != null) {
-                throw new ApiException(required);
-            } else if (oldValue != null) {
-                patchHandle(resource, oldValue, null);
-            }
-        }
-    }
-    
-    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional) {
-        patchProperty(resource, property, getter, setter, newValueOptional, null, null);
-    }
-    
-    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required) {
-        patchProperty(resource, property, getter, setter, newValueOptional, required, null);
-    }
-    
-    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, Runnable after) {
-        patchProperty(resource, property, getter, setter, newValueOptional, null, after);
-    }
-    
-    public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
-        patchDocument(resource, property, getter, setter, newValueOptional, null);
-    }
-    
-    public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional, Runnable after) {
-        if (newValueOptional != null) {
-            Document oldValue = getter.get();
-            if (newValueOptional.isPresent()) {
-                DocumentDTO newValue = newValueOptional.get();
-                if (!Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
-                    patchDocument(resource, property, setter, oldValue, newValue);
-                }
-    
-                if (after != null) {
-                    after.run();
-                }
-            } else if (oldValue != null) {
-                patchDocument(resource, property, setter, oldValue, null);
-            }
-        }
-    }
-    
-    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode required) {
-        if (newValueOptional != null) {
-            Location oldValue = resource.getLocation();
-            if (newValueOptional.isPresent()) {
-                LocationDTO newValue = newValueOptional.get();
-                if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
-                    patchLocation(resource, oldValue, newValue);
-                }
-            } else if (required != null) {
-                throw new ApiException(required);
-            } else if (oldValue != null) {
-                patchLocation(resource, oldValue, null);
-            }
-        }
-    }
-    
-    public void patchCategories(Resource resource, CategoryType categoryType, Optional<List<String>> newValuesOptional) {
-        if (newValuesOptional != null) {
-            List<String> oldValues = getCategories(resource, categoryType);
-            if (newValuesOptional.isPresent()) {
-                List<String> newValues = new ArrayList<>(newValuesOptional.get());
-                if (!Objects.equals(oldValues, newValues)) {
-                    newValues.sort(Comparator.naturalOrder());
-                    patchCategories(resource, categoryType, oldValues, newValues);
-                }
-            } else if (oldValues != null) {
-                patchCategories(resource, categoryType, oldValues, null);
-            }
-        }
-    }
-    
-    void updateResource(Resource resource, LocalDateTime baseline) {
-        resourceRepository.update(resource, baseline);
-    }
-    
-    private void commitResourceRelation(Resource resource1, Resource resource2) {
-        ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
-        resourceRelationRepository.save(resourceRelation);
-    
-        resource1.getChildren().add(resourceRelation);
-        resource2.getParents().add(resourceRelation);
-    }
-    
-    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
-        Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
-        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return query.getResultList();
-    }
-    
-    private <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required, Runnable after) {
-        if (newValueOptional != null) {
-            T oldValue = getter.get();
-            if (newValueOptional.isPresent()) {
-                T newValue = newValueOptional.get();
-                if (!Objects.equals(oldValue, newValue)) {
-                    patchProperty(resource, property, setter, oldValue, newValue);
-                }
-    
-                if (after != null) {
-                    after.run();
-                }
-            } else if (required != null) {
-                throw new ApiException(required);
-            } else if (oldValue != null) {
-                patchProperty(resource, property, setter, oldValue, null);
-            }
-        }
-    }
-    
-    private <T> void patchProperty(Resource resource, String property, Setter<T> setter, T oldValue, T newValue) {
-        setter.set(newValue);
-        resource.getChangeList().put(property, oldValue, newValue);
-    }
-    
-    private void patchHandle(Resource resource, String oldValue, String newValue) {
-        updateHandle(resource, newValue);
-        resource.getChangeList().put("handle", oldValue, newValue);
-    }
-    
-    private void patchDocument(Resource resource, String property, Setter<Document> setter, Document oldValue, DocumentDTO newValue) {
-        patchProperty(resource, property, setter, oldValue, documentService.getOrCreateDocument(newValue));
-        documentService.deleteDocument(oldValue);
-    }
-    
-    private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue) {
-        patchProperty(resource, "location", resource::setLocation, oldValue, locationService.getOrCreateLocation(newValue));
-        locationService.deleteLocation(oldValue);
-    }
-    
-    private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {
-        updateCategories(resource, categoryType, newValues);
-        resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);
-    }
-    
     @SuppressWarnings("JpaQlInspection")
     public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
         Query query = entityManager.createQuery(
@@ -599,6 +424,24 @@ public class ResourceService {
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
             throw new ApiException(exceptionCode);
         }
+    }
+    
+    void updateResource(Resource resource, LocalDateTime baseline) {
+        resourceRepository.update(resource, baseline);
+    }
+    
+    private void commitResourceRelation(Resource resource1, Resource resource2) {
+        ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
+        resourceRelationRepository.save(resourceRelation);
+        
+        resource1.getChildren().add(resourceRelation);
+        resource2.getParents().add(resourceRelation);
+    }
+    
+    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
+        Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
+        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+        return query.getResultList();
     }
     
     private static class ResourceActionKey {

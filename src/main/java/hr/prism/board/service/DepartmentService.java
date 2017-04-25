@@ -35,6 +35,9 @@ public class DepartmentService {
     private ResourceService resourceService;
     
     @Inject
+    private ResourcePatchService resourcePatchService;
+    
+    @Inject
     private UserRoleService userRoleService;
     
     @Inject
@@ -113,10 +116,10 @@ public class DepartmentService {
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.setChangeList(new ResourceChangeListRepresentation());
-            resourceService.patchName(department, departmentDTO.getName(), ExceptionCode.MISSING_DEPARTMENT_NAME, ExceptionCode.DUPLICATE_DEPARTMENT);
-            resourceService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
-            resourceService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.MISSING_DEPARTMENT_HANDLE, ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
-            resourceService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
+            resourcePatchService.patchName(department, departmentDTO.getName(), ExceptionCode.MISSING_DEPARTMENT_NAME, ExceptionCode.DUPLICATE_DEPARTMENT);
+            resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
+            resourcePatchService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.MISSING_DEPARTMENT_HANDLE, ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+            resourcePatchService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
             department.setComment(departmentDTO.getComment());
             return department;
         });

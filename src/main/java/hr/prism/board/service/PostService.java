@@ -50,6 +50,9 @@ public class PostService {
     private ResourceService resourceService;
     
     @Inject
+    private ResourcePatchService resourcePatchService;
+    
+    @Inject
     private UserRoleService userRoleService;
     
     @Inject
@@ -156,11 +159,11 @@ public class PostService {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ResourceChangeListRepresentation());
-        resourceService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
-        resourceService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
-        resourceService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName(),
-            ExceptionCode.MISSING_POST_ORGANIZATION_NAME);
-        resourceService.patchLocation(post, postDTO.getLocation(), ExceptionCode.MISSING_POST_LOCATION);
+        resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
+        resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
+        resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName(), ExceptionCode
+            .MISSING_POST_ORGANIZATION_NAME);
+        resourcePatchService.patchLocation(post, postDTO.getLocation(), ExceptionCode.MISSING_POST_LOCATION);
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
@@ -184,19 +187,19 @@ public class PostService {
             }
         }
     
-        resourceService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsiteOptional, () -> {
-            resourceService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
-            resourceService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
+        resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsiteOptional, () -> {
+            resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
+            resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
         });
     
-        resourceService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocumentOptional, () -> {
-            resourceService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
-            resourceService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
+        resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocumentOptional, () -> {
+            resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
+            resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
         });
     
-        resourceService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyWebsiteOptional, () -> {
-            resourceService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
-            resourceService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
+        resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyEmailOptional, () -> {
+            resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
+            resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
         });
         
         Board board = (Board) post.getParent();
@@ -208,14 +211,14 @@ public class PostService {
         Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
         if (liveTimestampOptional != null && deadTimestampOptional != null) {
             if (liveTimestampOptional.isPresent() && deadTimestampOptional.isPresent()) {
-                resourceService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
+                resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
                     Optional.of(liveTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
-                resourceService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp,
+                resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp,
                     Optional.of(deadTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
             } else {
                 LocalDateTime baseline = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-                resourceService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp, Optional.of(baseline));
-                resourceService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp, Optional.of(baseline.plusWeeks(4)));
+                resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp, Optional.of(baseline));
+                resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp, Optional.of(baseline.plusWeeks(4)));
             }
         }
         
