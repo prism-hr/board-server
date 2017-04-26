@@ -162,7 +162,7 @@ public class ResourcePatchService {
     
     private void patchHandle(Resource resource, String oldValue, String newValue) {
         resourceService.updateHandle(resource, newValue);
-        resource.getChangeList().put("handle", oldValue, newValue);
+        resource.getChangeList().put("handle", getHandleLeaf(oldValue), getHandleLeaf(newValue));
     }
     
     private void patchDocument(Resource resource, String property, Setter<Document> setter, Document oldValue, DocumentDTO newValue) {
@@ -179,6 +179,11 @@ public class ResourcePatchService {
     private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {
         resourceService.updateCategories(resource, categoryType, newValues);
         resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);
+    }
+    
+    private String getHandleLeaf(String value) {
+        String[] parts = value.split("/");
+        return parts[(parts.length - 1)];
     }
     
     public interface Getter<T> {
