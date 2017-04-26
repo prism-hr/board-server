@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.VerificationHelper;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
@@ -56,7 +57,7 @@ public class BoardApiIT extends AbstractIT {
     private TestUserService testUserService;
     
     @Inject
-    private DepartmentBoardHelper departmentBoardHelper;
+    private VerificationHelper verificationHelper;
 
     @Test
     public void shouldCreateBoard() {
@@ -223,7 +224,7 @@ public class BoardApiIT extends AbstractIT {
             "board-2", "department-1");
 
         transactionTemplate.execute(status -> {
-            DepartmentRepresentation departmentR = departmentBoardHelper.verifyGetDepartment(departmentId);
+            DepartmentRepresentation departmentR = verificationHelper.verifyGetDepartment(departmentId);
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentR.getId());
             Assert.assertEquals(2, boardRs.size());
 
@@ -277,7 +278,7 @@ public class BoardApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(transactionStatus -> {
-            BoardRepresentation boardR = departmentBoardHelper.verifyGetBoard(boardId);
+            BoardRepresentation boardR = verificationHelper.verifyGetBoard(boardId);
             Assert.assertEquals("New Board Updated", boardR.getName());
             Assert.assertEquals("Purpose Updated", boardR.getDescription());
             Assert.assertEquals("new-board-updated", boardR.getHandle());
@@ -377,7 +378,7 @@ public class BoardApiIT extends AbstractIT {
     private BoardRepresentation verifyPostBoard(User user, BoardDTO boardDTO, String expectedHandle, String expectedDepartmentHandle, boolean expectDepartmentAdministrator) {
         return transactionTemplate.execute(status -> {
             BoardRepresentation postedBoardR = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, postedBoardR, expectDepartmentAdministrator);
+            verificationHelper.verifyBoard(user, boardDTO, postedBoardR, expectDepartmentAdministrator);
             Assert.assertEquals(expectedHandle, postedBoardR.getHandle());
             Assert.assertEquals(expectedDepartmentHandle, postedBoardR.getDepartment().getHandle());
             return postedBoardR;

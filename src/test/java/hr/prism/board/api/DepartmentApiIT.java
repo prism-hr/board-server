@@ -3,6 +3,7 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.VerificationHelper;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -52,7 +53,7 @@ public class DepartmentApiIT extends AbstractIT {
     private TestUserService testUserService;
     
     @Inject
-    private DepartmentBoardHelper departmentBoardHelper;
+    private VerificationHelper verificationHelper;
     
     @Test
     public void shouldUpdateDepartment() {
@@ -68,7 +69,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("a", "b")));
     
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            verificationHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department", boardR.getDepartment().getHandle());
             return boardR.getDepartment().getId();
@@ -103,7 +104,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
     
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            verificationHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department-with", boardR.getDepartment().getHandle());
             return null;
@@ -120,7 +121,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
             
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            verificationHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department-with-2", boardR.getDepartment().getHandle());
             return boardR.getDepartment().getId();
@@ -144,7 +145,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
             
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            verificationHelper.verifyBoard(user, boardDTO, boardR, true);
             Assert.assertEquals("new-board", boardR.getHandle());
             Assert.assertEquals("new-department-with-2", boardR.getDepartment().getHandle());
             return null;
@@ -271,13 +272,16 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(Optional.of(ImmutableList.of("e", "f"))));
             return null;
         });
-        
+    
+        String departmentUserEmail = departmentUser.getEmail();
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(3, resourceOperationRs.size());
     
         ResourceOperationRepresentation resourceOperationR1 = resourceOperationRs.get(0);
         Assert.assertEquals(Action.EDIT, resourceOperationR1.getAction());
-    
+        verificationHelper.verifyUser(departmentUser, resourceOperationR1.getUser());
+        
         ResourceChangeListRepresentation resourceChangeListR1 = resourceOperationR1.getChangeList();
         Assert.assertEquals(4, resourceChangeListR1.size());
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Department 2").setNewValue("New Department 3"),
@@ -293,7 +297,8 @@ public class DepartmentApiIT extends AbstractIT {
     
         ResourceOperationRepresentation resourceOperationR2 = resourceOperationRs.get(1);
         Assert.assertEquals(Action.EDIT, resourceOperationR2.getAction());
-    
+        verificationHelper.verifyUser(departmentUser, resourceOperationR2.getUser());
+        
         ResourceChangeListRepresentation resourceChangeListR2 = resourceOperationR2.getChangeList();
         Assert.assertEquals(4, resourceChangeListR1.size());
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Department").setNewValue("New Department 2"),
@@ -309,7 +314,11 @@ public class DepartmentApiIT extends AbstractIT {
     
         ResourceOperationRepresentation resourceOperationR3 = resourceOperationRs.get(2);
         Assert.assertEquals(Action.EXTEND, resourceOperationR3.getAction());
+        verificationHelper.verifyUser(departmentUser, resourceOperationR3.getUser());
         Assert.assertNull(resourceOperationR3.getChangeList());
+    
+        Assert.assertEquals(resourceOperationR1.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
+        Assert.assertEquals(resourceOperationR3.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
         
         // Test that other board administrator cannot view audit trail
         testUserService.setAuthentication(boardUser.getStormpathId());
@@ -337,7 +346,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
     
             BoardRepresentation boardR1 = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR1, true);
+            verificationHelper.verifyBoard(user, boardDTO, boardR1, true);
             return boardR1.getDepartment();
         });
         
@@ -351,7 +360,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberCategories(ImmutableList.of("category1", "category2")));
             
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            departmentBoardHelper.verifyBoard(user, boardDTO, boardR, true);
+            verificationHelper.verifyBoard(user, boardDTO, boardR, true);
             return boardR.getDepartment();
         });
         

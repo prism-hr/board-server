@@ -43,7 +43,8 @@ public class ResourceOperationMapper implements Function<ResourceOperation, Reso
             .setAction(resourceOperation.getAction())
             .setUser(userMapper.apply(resourceOperation.getUser()))
             .setChangeList(changeListRepresentation)
-            .setComment(resourceOperation.getComment());
+            .setComment(resourceOperation.getComment())
+            .setCreatedTimestamp(resourceOperation.getCreatedTimestamp());
     }
     
 }

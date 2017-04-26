@@ -2,6 +2,8 @@ package hr.prism.board.representation;
 
 import hr.prism.board.enums.Action;
 
+import java.time.LocalDateTime;
+
 public class ResourceOperationRepresentation {
     
     private Action action;
@@ -11,6 +13,8 @@ public class ResourceOperationRepresentation {
     private ResourceChangeListRepresentation changeList;
     
     private String comment;
+    
+    private LocalDateTime createdTimestamp;
     
     public Action getAction() {
         return action;
@@ -45,6 +49,15 @@ public class ResourceOperationRepresentation {
     
     public ResourceOperationRepresentation setComment(String comment) {
         this.comment = comment;
+        return this;
+    }
+    
+    public LocalDateTime getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+    
+    public ResourceOperationRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
         return this;
     }
     

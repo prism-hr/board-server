@@ -12,30 +12,24 @@ import java.util.stream.Collectors;
 
 @Service
 public class DepartmentMapper implements Function<Department, DepartmentRepresentation> {
-
+    
     @Inject
     private DocumentMapper documentMapper;
-
+    
+    @Inject
+    private ResourceMapper resourceMapper;
+    
     @Override
     public DepartmentRepresentation apply(Department department) {
         if (department == null) {
             return null;
         }
-
-        DepartmentRepresentation departmentRepresentation = new DepartmentRepresentation();
-        departmentRepresentation
-            .setId(department.getId())
-            .setScope(department.getScope())
-            .setName(department.getName())
-            .setState(department.getState());
-        departmentRepresentation
+    
+        return resourceMapper.apply(department, DepartmentRepresentation.class)
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(department.getHandle())
             .setMemberCategories(department.getCategories().stream()
                 .filter(resourceCategory -> BooleanUtils.isTrue(resourceCategory.getActive())).map(ResourceCategory::getName).collect(Collectors.toList()));
-
-        departmentRepresentation.setActions(department.getActions());
-        return departmentRepresentation;
     }
-
+    
 }
