@@ -30,19 +30,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiExceptionHandler.class);
     
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> processException(Exception exception, WebRequest request) {
+    public ResponseEntity<Object> processException(Exception ex, WebRequest request) {
         ExceptionCode exceptionCode = ExceptionCode.PROBLEM;
         HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        if (exception instanceof ApiForbiddenException) {
-            exceptionCode = ((ApiForbiddenException) exception).getExceptionCode();
+        if (ex instanceof ApiForbiddenException) {
+            exceptionCode = ((ApiForbiddenException) ex).getExceptionCode();
             responseStatus = HttpStatus.FORBIDDEN;
-        } else if (exception instanceof ApiException) {
-            exceptionCode = ((ApiException) exception).getExceptionCode();
+        } else if (ex instanceof ApiException) {
+            exceptionCode = ((ApiException) ex).getExceptionCode();
             responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         }
-        
-        LOGGER.error("Could not serve request", exception);
-        
+    
+        LOGGER.error("Could not serve request", ex);
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
         ImmutableMap<String, Object> body = ImmutableMap.<String, Object>builder()
             .put("timestamp", LocalDateTime.now())
@@ -51,8 +50,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             .put("error", responseStatus.getReasonPhrase())
             .put("exceptionCode", exceptionCode)
             .build();
-        
-        return handleExceptionInternal(exception, body, new HttpHeaders(), responseStatus, request);
+    
+        return handleExceptionInternal(ex, body, new HttpHeaders(), responseStatus, request);
     }
     
     @Override

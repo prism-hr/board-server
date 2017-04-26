@@ -420,17 +420,17 @@ public class BoardApiIT extends AbstractIT {
         testHelper.verifyUser(boardUser, resourceOperationR2.getUser());
         
         ResourceChangeListRepresentation resourceChangeListR2 = resourceOperationR2.getChangeList();
-        Assert.assertEquals(5, resourceChangeListR1.size());
+        Assert.assertEquals(5, resourceChangeListR2.size());
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Board").setNewValue("New Board 2"),
             resourceChangeListR2.get("name"));
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("Purpose").setNewValue("Purpose 2"),
-            resourceChangeListR1.get("description"));
+            resourceChangeListR2.get("description"));
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-board").setNewValue("new-board-2"),
             resourceChangeListR2.get("handle"));
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Arrays.asList("a", "b")).setNewValue(Arrays.asList("c", "d")),
-            resourceChangeListR1.get("postCategories"));
+            resourceChangeListR2.get("postCategories"));
         Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("PART_PRIVATE").setNewValue("PRIVATE"),
-            resourceChangeListR1.get("defaultPostVisibility"));
+            resourceChangeListR2.get("defaultPostVisibility"));
         
         ResourceOperationRepresentation resourceOperationR3 = resourceOperationRs.get(2);
         Assert.assertEquals(Action.EXTEND, resourceOperationR3.getAction());
@@ -443,7 +443,7 @@ public class BoardApiIT extends AbstractIT {
         // Test that post administrator cannot view audit trail
         testUserService.setAuthentication(postUser.getStormpathId());
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> departmentApi.getDepartmentOperations(boardId), ExceptionCode.FORBIDDEN_ACTION, status);
+            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> boardApi.getBoardOperations(boardId), ExceptionCode.FORBIDDEN_ACTION, status);
             return null;
         });
         
