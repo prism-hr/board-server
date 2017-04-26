@@ -273,7 +273,6 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     
-        String departmentUserEmail = departmentUser.getEmail();
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(3, resourceOperationRs.size());
