@@ -5,8 +5,9 @@ import java.util.Objects;
 
 public class ResourceChangeListRepresentation extends LinkedHashMap<String, ResourceChangeListRepresentation.ResourceChangeRepresentation> {
     
-    public void put(String property, Object oldValue, Object newValue) {
+    public ResourceChangeListRepresentation put(String property, Object oldValue, Object newValue) {
         super.put(property, new ResourceChangeRepresentation().setOldValue(oldValue).setNewValue(newValue));
+        return this;
     }
     
     public static class ResourceChangeRepresentation {

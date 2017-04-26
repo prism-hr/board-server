@@ -10,10 +10,7 @@ import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.PostVisibility;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import org.hamcrest.Matchers;
@@ -110,6 +107,13 @@ public class TestHelper {
             .setExistingRelation(ExistingRelation.STUDENT)
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+    }
+    
+    public void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
+        ResourceChangeListRepresentation expectedChanges) {
+        Assert.assertEquals(expectedAction, resourceOperationR.getAction());
+        verifyUser(expectedUser, resourceOperationR.getUser());
+        Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
     }
     
 }

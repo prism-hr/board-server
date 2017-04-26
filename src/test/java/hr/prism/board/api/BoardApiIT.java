@@ -1,11 +1,15 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
@@ -354,12 +358,8 @@ public class BoardApiIT extends AbstractIT {
         Long boardId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setDescription("Purpose")
-                .setPostCategories(Arrays.asList("a", "b"))
                 .setDepartment(new DepartmentDTO()
-                    .setName("New Department")
-                    .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                    .setMemberCategories(ImmutableList.of("a", "b")));
+                    .setName("New Department"));
             
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             return boardR.getId();
@@ -373,72 +373,89 @@ public class BoardApiIT extends AbstractIT {
             boardApi.getBoard(boardId);
             return null;
         });
-        
+    
+        // Check that we can make changes and leave nullable values null
         testUserService.setAuthentication(boardUser.getStormpathId());
         transactionTemplate.execute(status -> {
             boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
                     .setName(Optional.of("New Board 2"))
-                    .setDescription(Optional.of("Purpose 2"))
-                    .setHandle(Optional.of("new-board-2"))
-                    .setPostCategories(Optional.of(Arrays.asList("c", "d")))
-                    .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE)));
+                    .setHandle(Optional.of("new-board-2")));
             return null;
         });
-        
+    
+        // Check that we can make further changes and set default / nullable values
         transactionTemplate.execute(status -> {
             boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
                     .setName(Optional.of("New Board 3"))
-                    .setDescription(Optional.of("Purpose 3"))
                     .setHandle(Optional.of("new-board-3"))
+                    .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE))
+                    .setDescription(Optional.of("Description"))
+                    .setPostCategories(Optional.of(Arrays.asList("a", "b"))));
+            return null;
+        });
+    
+        // Check that we can make further changes and change default / nullable values
+        transactionTemplate.execute(status -> {
+            boardApi.updateBoard(boardId,
+                new BoardPatchDTO()
+                    .setName(Optional.of("New Board 4"))
+                    .setHandle(Optional.of("new-board-4"))
+                    .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC))
+                    .setDescription(Optional.of("Description 2"))
+                    .setPostCategories(Optional.of(Arrays.asList("a2", "b2"))));
+            return null;
+        });
+    
+        // Check that we can clear nullable values
+        transactionTemplate.execute(status -> {
+            boardApi.updateBoard(boardId,
+                new BoardPatchDTO()
+                    .setDescription(Optional.empty())
                     .setPostCategories(Optional.empty()));
             return null;
         });
         
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> boardApi.getBoardOperations(boardId));
-        Assert.assertEquals(3, resourceOperationRs.size());
-        
-        ResourceOperationRepresentation resourceOperationR1 = resourceOperationRs.get(0);
-        Assert.assertEquals(Action.EDIT, resourceOperationR1.getAction());
-        testHelper.verifyUser(boardUser, resourceOperationR1.getUser());
-        
-        ResourceChangeListRepresentation resourceChangeListR1 = resourceOperationR1.getChangeList();
-        Assert.assertEquals(4, resourceChangeListR1.size());
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Board 2").setNewValue("New Board 3"),
-            resourceChangeListR1.get("name"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("Purpose 2").setNewValue("Purpose 3"),
-            resourceChangeListR1.get("description"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-board-2").setNewValue("new-board-3"),
-            resourceChangeListR1.get("handle"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Arrays.asList("c", "d")).setNewValue(null),
-            resourceChangeListR1.get("postCategories"));
-        
-        ResourceOperationRepresentation resourceOperationR2 = resourceOperationRs.get(1);
-        Assert.assertEquals(Action.EDIT, resourceOperationR2.getAction());
-        testHelper.verifyUser(boardUser, resourceOperationR2.getUser());
-        
-        ResourceChangeListRepresentation resourceChangeListR2 = resourceOperationR2.getChangeList();
-        Assert.assertEquals(5, resourceChangeListR2.size());
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Board").setNewValue("New Board 2"),
-            resourceChangeListR2.get("name"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("Purpose").setNewValue("Purpose 2"),
-            resourceChangeListR2.get("description"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-board").setNewValue("new-board-2"),
-            resourceChangeListR2.get("handle"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Arrays.asList("a", "b")).setNewValue(Arrays.asList("c", "d")),
-            resourceChangeListR2.get("postCategories"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("PART_PRIVATE").setNewValue("PRIVATE"),
-            resourceChangeListR2.get("defaultPostVisibility"));
-        
-        ResourceOperationRepresentation resourceOperationR3 = resourceOperationRs.get(2);
-        Assert.assertEquals(Action.EXTEND, resourceOperationR3.getAction());
-        testHelper.verifyUser(boardUser, resourceOperationR3.getUser());
-        Assert.assertNull(resourceOperationR3.getChangeList());
-        
-        Assert.assertEquals(resourceOperationR1.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
-        Assert.assertEquals(resourceOperationR3.getCreatedTimestamp(), boardR.getCreatedTimestamp());
+        Assert.assertEquals(5, resourceOperationRs.size());
+    
+        // Operations are returned most recent first - reverse the order to make it easier to test
+        resourceOperationRs = Lists.reverse(resourceOperationRs);
+        ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
+        ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
+    
+        testHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, boardUser, null);
+    
+        testHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, boardUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "New Board", "New Board 2")
+                .put("handle", "new-board", "new-board-2"));
+    
+        testHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "New Board 2", "New Board 3")
+                .put("handle", "new-board-2", "new-board-3")
+                .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
+                .put("description", null, "Description")
+                .put("postCategories", null, Arrays.asList("a", "b")));
+    
+        testHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, boardUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "New Board 3", "New Board 4")
+                .put("handle", "new-board-3", "new-board-4")
+                .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
+                .put("description", "Description", "Description 2")
+                .put("postCategories", Arrays.asList("a", "b"), Arrays.asList("a2", "b2")));
+    
+        testHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
+            new ResourceChangeListRepresentation()
+                .put("description", "Description 2", null)
+                .put("postCategories", Arrays.asList("a2", "b2"), null));
+    
+        Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), boardR.getCreatedTimestamp());
+        Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
         
         // Test that post administrator cannot view audit trail
         testUserService.setAuthentication(postUser.getStormpathId());

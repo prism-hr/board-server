@@ -33,6 +33,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -222,12 +223,8 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentId = transactionTemplate.execute(transactionStatus -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("New Board")
-                .setDescription("Purpose")
-                .setPostCategories(new ArrayList<>())
                 .setDepartment(new DepartmentDTO()
-                    .setName("New Department")
-                    .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                    .setMemberCategories(ImmutableList.of("a", "b")));
+                    .setName("New Department"));
             
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             return boardR.getDepartment().getId();
@@ -238,7 +235,6 @@ public class DepartmentApiIT extends AbstractIT {
             boardApi.postBoard(
                 new BoardDTO()
                     .setName("Other New Board")
-                    .setDescription("Purpose")
                     .setPostCategories(new ArrayList<>())
                     .setDepartment(new DepartmentDTO()
                         .setId(departmentId)));
@@ -251,72 +247,87 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     
+        // Check that we can make changes and leave nullable values null
         testUserService.setAuthentication(departmentUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setName(Optional.of("New Department 2"))
-                    .setHandle(Optional.of("new-department-2"))
-                    .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
-                    .setMemberCategories(Optional.of(ImmutableList.of("c", "d"))));
+                    .setHandle(Optional.of("new-department-2")));
             return null;
         });
     
+        // Check that we can make further changes and set nullable values
+        testUserService.setAuthentication(departmentUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setName(Optional.of("New Department 3"))
                     .setHandle(Optional.of("new-department-3"))
-                    .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c3").setCloudinaryUrl("u3").setFileName("f3")))
-                    .setMemberCategories(Optional.of(ImmutableList.of("e", "f"))));
+                    .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
+                    .setMemberCategories(Optional.of(ImmutableList.of("a", "b"))));
+            return null;
+        });
+    
+        // Check that we can make further changes and change nullable values
+        transactionTemplate.execute(status -> {
+            departmentApi.updateDepartment(departmentId,
+                new DepartmentPatchDTO()
+                    .setName(Optional.of("New Department 4"))
+                    .setHandle(Optional.of("new-department-4"))
+                    .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
+                    .setMemberCategories(Optional.of(ImmutableList.of("a2", "b2"))));
+            return null;
+        });
+    
+        // Check that we can clear nullable values
+        transactionTemplate.execute(status -> {
+            departmentApi.updateDepartment(departmentId,
+                new DepartmentPatchDTO()
+                    .setDocumentLogo(Optional.empty())
+                    .setMemberCategories(Optional.empty()));
             return null;
         });
     
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
-        Assert.assertEquals(3, resourceOperationRs.size());
+        Assert.assertEquals(5, resourceOperationRs.size());
     
-        ResourceOperationRepresentation resourceOperationR1 = resourceOperationRs.get(0);
-        Assert.assertEquals(Action.EDIT, resourceOperationR1.getAction());
-        testHelper.verifyUser(departmentUser, resourceOperationR1.getUser());
-        
-        ResourceChangeListRepresentation resourceChangeListR1 = resourceOperationR1.getChangeList();
-        Assert.assertEquals(4, resourceChangeListR1.size());
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Department 2").setNewValue("New Department 3"),
-            resourceChangeListR1.get("name"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-department-2").setNewValue("new-department-3"),
-            resourceChangeListR1.get("handle"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation()
-                .setOldValue(ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
-                .setNewValue(ObjectUtils.orderedMap("cloudinaryId", "c3", "cloudinaryUrl", "u3", "fileName", "f3")),
-            resourceChangeListR1.get("documentLogo"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Lists.newArrayList("c", "d")).setNewValue(Lists.newArrayList("e", "f")),
-            resourceChangeListR1.get("memberCategories"));
+        // Operations are returned most recent first - reverse the order to make it easier to test
+        resourceOperationRs = Lists.reverse(resourceOperationRs);
+        ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
+        ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        ResourceOperationRepresentation resourceOperationR2 = resourceOperationRs.get(1);
-        Assert.assertEquals(Action.EDIT, resourceOperationR2.getAction());
-        testHelper.verifyUser(departmentUser, resourceOperationR2.getUser());
-        
-        ResourceChangeListRepresentation resourceChangeListR2 = resourceOperationR2.getChangeList();
-        Assert.assertEquals(4, resourceChangeListR1.size());
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("New Department").setNewValue("New Department 2"),
-            resourceChangeListR2.get("name"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue("new-department").setNewValue("new-department-2"),
-            resourceChangeListR2.get("handle"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation()
-                .setOldValue(ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
-                .setNewValue(ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2")),
-            resourceChangeListR2.get("documentLogo"));
-        Assert.assertEquals(new ResourceChangeListRepresentation.ResourceChangeRepresentation().setOldValue(Lists.newArrayList("a", "b")).setNewValue(Lists.newArrayList("c", "d")),
-            resourceChangeListR2.get("memberCategories"));
+        testHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser, null);
     
-        ResourceOperationRepresentation resourceOperationR3 = resourceOperationRs.get(2);
-        Assert.assertEquals(Action.EXTEND, resourceOperationR3.getAction());
-        testHelper.verifyUser(departmentUser, resourceOperationR3.getUser());
-        Assert.assertNull(resourceOperationR3.getChangeList());
+        testHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "New Department", "New Department 2")
+                .put("handle", "new-department", "new-department-2"));
     
-        Assert.assertEquals(resourceOperationR1.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
-        Assert.assertEquals(resourceOperationR3.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
+        testHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "New Department 2", "New Department 3")
+                .put("handle", "new-department-2", "new-department-3")
+                .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
+                .put("memberCategories", null, Arrays.asList("a", "b")));
+    
+        testHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "New Department 3", "New Department 4")
+                .put("handle", "new-department-3", "new-department-4")
+                .put("documentLogo",
+                    ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
+                    ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
+                .put("memberCategories", Arrays.asList("a", "b"), Arrays.asList("a2", "b2")));
+    
+        testHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, departmentUser,
+            new ResourceChangeListRepresentation()
+                .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
+                .put("memberCategories", Arrays.asList("a2", "b2"), null));
+    
+        Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
+        Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
         
         // Test that other board administrator cannot view audit trail
         testUserService.setAuthentication(boardUser.getStormpathId());
