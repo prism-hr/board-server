@@ -17,16 +17,16 @@ import java.util.*;
 @Service
 @Transactional
 public class ResourcePatchService {
-
+    
     @Inject
     private DocumentService documentService;
-
+    
     @Inject
     private LocationService locationService;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getName();
@@ -36,7 +36,7 @@ public class ResourcePatchService {
                     if (unique != null) {
                         resourceService.validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
                     }
-
+    
                     patchProperty(resource, "name", resource::setName, oldValue, newValue);
                 }
             } else if (required != null) {
@@ -46,7 +46,7 @@ public class ResourcePatchService {
             }
         }
     }
-
+    
     public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
@@ -56,11 +56,11 @@ public class ResourcePatchService {
                 if (!Objects.equals(resource, parent)) {
                     newValue = parent.getHandle() + "/" + newValue;
                 }
-
+    
                 if (unique != null) {
                     resourceService.validateUniqueHandle(resource, newValue, unique);
                 }
-
+    
                 patchHandle(resource, oldValue, newValue);
             } else if (required != null) {
                 throw new ApiException(required);
@@ -69,33 +69,32 @@ public class ResourcePatchService {
             }
         }
     }
-
+    
     public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional) {
         patchProperty(resource, property, getter, setter, newValueOptional, null, null);
     }
-
+    
     public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required) {
         patchProperty(resource, property, getter, setter, newValueOptional, required, null);
     }
-
+    
     public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, Runnable after) {
         patchProperty(resource, property, getter, setter, newValueOptional, null, after);
     }
-
+    
     public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
         patchDocument(resource, property, getter, setter, newValueOptional, null);
     }
-
+    
     public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional, Runnable after) {
         if (newValueOptional != null) {
             Document oldValue = getter.get();
             if (newValueOptional.isPresent()) {
-                String oldValueCloudinaryId = oldValue != null ? oldValue.getCloudinaryId() : null;
                 DocumentDTO newValue = newValueOptional.get();
-                if (!Objects.equals(oldValueCloudinaryId, newValue.getCloudinaryId())) {
+                if (oldValue == null || !Objects.equals(oldValue.getCloudinaryId(), newValue.getCloudinaryId())) {
                     patchDocument(resource, property, setter, oldValue, newValue);
                 }
-
+    
                 if (after != null) {
                     after.run();
                 }
@@ -104,13 +103,13 @@ public class ResourcePatchService {
             }
         }
     }
-
+    
     public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode required) {
         if (newValueOptional != null) {
             Location oldValue = resource.getLocation();
             if (newValueOptional.isPresent()) {
                 LocationDTO newValue = newValueOptional.get();
-                if (!Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
+                if (oldValue == null || !Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
                     patchLocation(resource, oldValue, newValue);
                 }
             } else if (required != null) {
@@ -120,7 +119,7 @@ public class ResourcePatchService {
             }
         }
     }
-
+    
     public void patchCategories(Resource resource, CategoryType categoryType, Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
             List<String> oldValues = resourceService.getCategories(resource, categoryType);
@@ -135,7 +134,7 @@ public class ResourcePatchService {
             }
         }
     }
-
+    
     private <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required, Runnable after) {
         if (newValueOptional != null) {
             T oldValue = getter.get();
@@ -144,7 +143,7 @@ public class ResourcePatchService {
                 if (!Objects.equals(oldValue, newValue)) {
                     patchProperty(resource, property, setter, oldValue, newValue);
                 }
-
+    
                 if (after != null) {
                     after.run();
                 }
@@ -155,17 +154,17 @@ public class ResourcePatchService {
             }
         }
     }
-
+    
     private <T> void patchProperty(Resource resource, String property, Setter<T> setter, T oldValue, T newValue) {
         setter.set(newValue);
         resource.getChangeList().put(property, oldValue, newValue);
     }
-
+    
     private void patchHandle(Resource resource, String oldValue, String newValue) {
         resourceService.updateHandle(resource, newValue);
         resource.getChangeList().put("handle", getHandleLeaf(oldValue), getHandleLeaf(newValue));
     }
-
+    
     private void patchDocument(Resource resource, String property, Setter<Document> setter, Document oldValue, DocumentDTO newValue) {
         setter.set(documentService.getOrCreateDocument(newValue));
         patchProperty(resource, property, setter, oldValue, documentService.getOrCreateDocument(newValue));
@@ -173,14 +172,14 @@ public class ResourcePatchService {
             documentService.deleteDocument(oldValue);
         }
     }
-
+    
     private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue) {
         patchProperty(resource, "location", resource::setLocation, oldValue, locationService.getOrCreateLocation(newValue));
         if (oldValue != null) {
             locationService.deleteLocation(oldValue);
         }
     }
-
+    
     private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {
         resourceService.updateCategories(resource, categoryType, newValues);
         resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);
@@ -194,9 +193,9 @@ public class ResourcePatchService {
     public interface Getter<T> {
         T get();
     }
-
+    
     public interface Setter<T> {
         void set(T value);
     }
-
+    
 }
