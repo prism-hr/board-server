@@ -5,7 +5,10 @@ import hr.prism.board.api.BoardApi;
 import hr.prism.board.api.DepartmentApi;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
@@ -18,10 +21,14 @@ import org.junit.Assert;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
-public class VerificationHelper {
+public class TestHelper {
     
     @Inject
     private DepartmentApi departmentApi;
@@ -84,6 +91,25 @@ public class VerificationHelper {
         Assert.assertEquals(user.getGivenName(), userRepresentation.getGivenName());
         Assert.assertEquals(user.getSurname(), userRepresentation.getSurname());
         Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
+    }
+    
+    public static PostDTO samplePost() {
+        return new PostDTO()
+            .setName("Post")
+            .setDescription("desc")
+            .setOrganizationName("org")
+            .setLocation(new LocationDTO()
+                .setName("BB")
+                .setDomicile("PL")
+                .setGoogleId("sss")
+                .setLatitude(BigDecimal.ONE)
+                .setLongitude(BigDecimal.ONE))
+            .setApplyWebsite("http://www.google.co.uk")
+            .setPostCategories(Collections.emptyList())
+            .setMemberCategories(Collections.emptyList())
+            .setExistingRelation(ExistingRelation.STUDENT)
+            .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+            .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
     
 }

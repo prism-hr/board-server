@@ -129,8 +129,8 @@ public class ResourceService {
     }
     
     public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
-        HashSet<String> newCategories = new HashSet<>(categories);
         Set<ResourceCategory> oldCategories = resource.getCategories();
+        HashSet<String> newCategories = new LinkedHashSet<>(categories == null ? Collections.emptyList() : categories);
         
         // modify existing categories
         for (ResourceCategory oldCategory : oldCategories) {
