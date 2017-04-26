@@ -85,12 +85,6 @@ public class ResourceService {
     private ActionService actionService;
     
     @Inject
-    private DocumentService documentService;
-    
-    @Inject
-    private LocationService locationService;
-    
-    @Inject
     private UserService userService;
     
     @Inject
