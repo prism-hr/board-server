@@ -9,6 +9,7 @@ import javax.persistence.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "resource")
@@ -49,9 +50,8 @@ public class Resource extends BoardEntity {
     @Column(name = "handle")
     private String handle;
     
-    @OrderBy("type, ordinal")
     @OneToMany(mappedBy = "resource")
-    private Set<ResourceCategory> categories = new HashSet<>();
+    private Set<ResourceCategory> categories = new TreeSet<>();
     
     @OneToMany(mappedBy = "resource")
     private Set<UserRole> userRoles = new HashSet<>();
@@ -62,7 +62,6 @@ public class Resource extends BoardEntity {
     @OneToMany(mappedBy = "resource2")
     private Set<ResourceRelation> parents = new HashSet<>();
     
-    @OrderBy("id desc")
     @OneToMany(mappedBy = "resource")
     private Set<ResourceOperation> operations = new HashSet<>();
     

@@ -257,7 +257,7 @@ public class ResourceService {
             String statement = Joiner.on(" ").skipNulls().join(
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
-                    "where resource.id in (:ids)",
+                    "where resource.id in (:ids) ",
                 filter.getOrderStatement());
     
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
