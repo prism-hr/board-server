@@ -1,13 +1,12 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.CategoryType;
-import org.apache.commons.lang3.ObjectUtils;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "resource_category")
-public class ResourceCategory extends BoardEntity implements Comparable<ResourceCategory> {
+public class ResourceCategory extends BoardEntity {
     
     @ManyToOne
     @JoinColumn(name = "resource_id", nullable = false)
@@ -57,12 +56,6 @@ public class ResourceCategory extends BoardEntity implements Comparable<Resource
     public ResourceCategory setOrdinal(Integer ordinal) {
         this.ordinal = ordinal;
         return this;
-    }
-    
-    @Override
-    public int compareTo(ResourceCategory o) {
-        int compare = ObjectUtils.compare(type, o.getType());
-        return compare == 0 ? ObjectUtils.compare(ordinal, o.getOrdinal()) : compare;
     }
     
 }

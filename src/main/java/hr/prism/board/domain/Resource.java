@@ -1,15 +1,17 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 
 import javax.persistence.*;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "resource")
@@ -51,7 +53,7 @@ public class Resource extends BoardEntity {
     private String handle;
     
     @OneToMany(mappedBy = "resource")
-    private Set<ResourceCategory> categories = new TreeSet<>();
+    private Set<ResourceCategory> categories = new HashSet<>();
     
     @OneToMany(mappedBy = "resource")
     private Set<UserRole> userRoles = new HashSet<>();
@@ -64,6 +66,12 @@ public class Resource extends BoardEntity {
     
     @OneToMany(mappedBy = "resource")
     private Set<ResourceOperation> operations = new HashSet<>();
+    
+    @Transient
+    private List<ResourceCategory> memberCategories;
+    
+    @Transient
+    private List<ResourceCategory> postCategories;
     
     @Transient
     private List<ActionRepresentation> actions;
@@ -159,6 +167,22 @@ public class Resource extends BoardEntity {
         return categories;
     }
     
+    public List<ResourceCategory> getMemberCategories() {
+        if (this.memberCategories == null) {
+            this.memberCategories = filterAndSortCategories(CategoryType.MEMBER);
+        }
+        
+        return this.memberCategories;
+    }
+    
+    public List<ResourceCategory> getPostCategories() {
+        if (this.postCategories == null) {
+            this.postCategories = filterAndSortCategories(CategoryType.POST);
+        }
+        
+        return this.postCategories;
+    }
+    
     public Set<UserRole> getUserRoles() {
         return userRoles;
     }
@@ -209,6 +233,13 @@ public class Resource extends BoardEntity {
         }
     
         return Joiner.on(" ").skipNulls().join(scope.name().toLowerCase(), getId());
+    }
+    
+    private List<ResourceCategory> filterAndSortCategories(CategoryType type) {
+        return categories.stream()
+            .filter(category -> category.getType() == type && category.getOrdinal() != null)
+            .sorted(Comparator.comparingInt(ResourceCategory::getOrdinal))
+            .collect(Collectors.toList());
     }
     
 }

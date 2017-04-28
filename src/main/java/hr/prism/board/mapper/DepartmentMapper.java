@@ -27,8 +27,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         return resourceMapper.apply(department, DepartmentRepresentation.class)
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(department.getHandle())
-            .setMemberCategories(department.getCategories().stream()
-                .filter(resourceCategory -> resourceCategory.getOrdinal() != null).map(ResourceCategory::getName).collect(Collectors.toList()));
+            .setMemberCategories(department.getMemberCategories().stream().map(ResourceCategory::getName).collect(Collectors.toList()));
     }
     
 }

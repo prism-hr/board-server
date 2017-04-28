@@ -29,8 +29,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
         return resourceMapper.apply(board, BoardRepresentation.class)
             .setDescription(board.getDescription())
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
-            .setPostCategories(board.getCategories().stream()
-                .filter(resourceCategory -> resourceCategory.getOrdinal() != null).map(ResourceCategory::getName).collect(Collectors.toList()))
+            .setPostCategories(board.getPostCategories().stream().map(ResourceCategory::getName).collect(Collectors.toList()))
             .setDepartment(departmentMapper.apply(department))
             .setDefaultPostVisibility(board.getDefaultPostVisibility());
     }
