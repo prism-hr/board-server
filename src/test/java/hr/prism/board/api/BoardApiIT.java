@@ -404,7 +404,7 @@ public class BoardApiIT extends AbstractIT {
                     .setHandle(Optional.of("new-board-4"))
                     .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC))
                     .setDescription(Optional.of("Description 2"))
-                    .setPostCategories(Optional.of(Arrays.asList("a2", "b2"))));
+                    .setPostCategories(Optional.of(Arrays.asList("b2", "a2"))));
             return null;
         });
     
@@ -447,12 +447,12 @@ public class BoardApiIT extends AbstractIT {
                 .put("handle", "new-board-3", "new-board-4")
                 .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
                 .put("description", "Description", "Description 2")
-                .put("postCategories", Arrays.asList("a", "b"), Arrays.asList("a2", "b2")));
+                .put("postCategories", Arrays.asList("a", "b"), Arrays.asList("b2", "a2")));
     
         testHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("description", "Description 2", null)
-                .put("postCategories", Arrays.asList("a2", "b2"), null));
+                .put("postCategories", Arrays.asList("b2", "a2"), null));
     
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), boardR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());

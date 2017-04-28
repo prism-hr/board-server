@@ -276,7 +276,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setName(Optional.of("New Department 4"))
                     .setHandle(Optional.of("new-department-4"))
                     .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
-                    .setMemberCategories(Optional.of(ImmutableList.of("a2", "b2"))));
+                    .setMemberCategories(Optional.of(ImmutableList.of("b2", "a2"))));
             return null;
         });
     
@@ -319,12 +319,12 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
-                .put("memberCategories", Arrays.asList("a", "b"), Arrays.asList("a2", "b2")));
+                .put("memberCategories", Arrays.asList("a", "b"), Arrays.asList("b2", "a2")));
     
         testHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
-                .put("memberCategories", Arrays.asList("a2", "b2"), null));
+                .put("memberCategories", Arrays.asList("b2", "a2"), null));
     
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
