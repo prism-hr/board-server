@@ -12,7 +12,10 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -126,7 +129,6 @@ public class ResourcePatchService {
             if (newValuesOptional.isPresent()) {
                 List<String> newValues = new ArrayList<>(newValuesOptional.get());
                 if (!Objects.equals(oldValues, newValues)) {
-                    newValues.sort(Comparator.naturalOrder());
                     patchCategories(resource, categoryType, oldValues, newValues);
                 }
             } else if (oldValues != null) {

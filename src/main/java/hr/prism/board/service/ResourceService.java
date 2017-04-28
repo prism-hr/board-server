@@ -310,17 +310,19 @@ public class ResourceService {
     
             int ordinal = 2;
             int suggestedHandleLength = suggestedHandle.length();
-            List<String> trimmedSimilarHandles = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
-            for (String trimmedSimilarHandle : trimmedSimilarHandles) {
-                if (trimmedSimilarHandle.startsWith("-")) {
-                    String[] parts = trimmedSimilarHandle.replaceFirst("-", "").split("-");
-                    String firstPart = parts[0];
+            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
+            for (String similarHandleSuffix : similarHandleSuffixes) {
+                if (similarHandleSuffix.startsWith("-")) {
+                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
                     
                     // We only care about creating a unique value in a formatted sequence
                     // We can ignore anything else that has been reformatted by an end user
-                    if (parts.length == 1 && StringUtils.isNumeric(firstPart)) {
-                        ordinal = Integer.parseInt(firstPart) + 1;
-                        break;
+                    if (parts.length == 1) {
+                        String firstPart = parts[0];
+                        if (StringUtils.isNumeric(firstPart)) {
+                            ordinal = Integer.parseInt(firstPart) + 1;
+                            break;
+                        }
                     }
                 }
             }
