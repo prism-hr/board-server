@@ -49,6 +49,7 @@ public class Resource extends BoardEntity {
     @Column(name = "handle")
     private String handle;
     
+    @OrderBy("type, ordinal")
     @OneToMany(mappedBy = "resource")
     private Set<ResourceCategory> categories = new HashSet<>();
     
@@ -61,6 +62,7 @@ public class Resource extends BoardEntity {
     @OneToMany(mappedBy = "resource2")
     private Set<ResourceRelation> parents = new HashSet<>();
     
+    @OrderBy("id desc")
     @OneToMany(mappedBy = "resource")
     private Set<ResourceOperation> operations = new HashSet<>();
     

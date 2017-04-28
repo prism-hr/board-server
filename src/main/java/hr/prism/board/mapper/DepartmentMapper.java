@@ -3,7 +3,6 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.representation.DepartmentRepresentation;
-import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -29,7 +28,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(department.getHandle())
             .setMemberCategories(department.getCategories().stream()
-                .filter(resourceCategory -> BooleanUtils.isTrue(resourceCategory.getActive())).map(ResourceCategory::getName).collect(Collectors.toList()));
+                .filter(resourceCategory -> resourceCategory.getOrdinal() != null).map(ResourceCategory::getName).collect(Collectors.toList()));
     }
     
 }

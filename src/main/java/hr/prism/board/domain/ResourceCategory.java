@@ -19,8 +19,8 @@ public class ResourceCategory extends BoardEntity {
     @Enumerated(value = EnumType.STRING)
     private CategoryType type;
     
-    @Column(name = "active", nullable = false)
-    private Boolean active;
+    @Column(name = "ordinal")
+    private Integer ordinal;
     
     public Resource getResource() {
         return resource;
@@ -49,12 +49,12 @@ public class ResourceCategory extends BoardEntity {
         return this;
     }
     
-    public Boolean getActive() {
-        return active;
+    public Integer getOrdinal() {
+        return ordinal;
     }
     
-    public ResourceCategory setActive(Boolean active) {
-        this.active = active;
+    public ResourceCategory setOrdinal(Integer ordinal) {
+        this.ordinal = ordinal;
         return this;
     }
     

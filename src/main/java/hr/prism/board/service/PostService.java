@@ -15,7 +15,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
-import org.apache.commons.collections.CollectionUtils;
+import hr.prism.board.util.BoardUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -252,15 +252,19 @@ public class PostService {
     }
     
     private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource reference) {
+        // Clear the old records
         resourceCategoryRepository.deleteByResourceAndType(post, categoryType);
         Set<ResourceCategory> oldCategories = post.getCategories();
         oldCategories.removeIf(next -> next.getType() == categoryType);
-        
-        if (CollectionUtils.isNotEmpty(categories)) {
-            List<ResourceCategory> newCategories = resourceCategoryRepository.findByResourceAndTypeAndNameIn(reference, categoryType, categories);
-            newCategories.forEach(category -> {
-                ResourceCategory newCategory = new ResourceCategory().setResource(post).setName(category.getName()).setActive(true).setType(categoryType);
-                newCategory.setCreatedTimestamp(LocalDateTime.now());
+    
+        // Index the insertion order
+        Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
+        if (orderIndex != null) {
+            // Write the new records
+            List<ResourceCategory> referenceCategories = resourceCategoryRepository.findByResourceAndTypeAndNameIn(reference, categoryType, categories);
+            referenceCategories.forEach(referenceCategory -> {
+                String name = referenceCategory.getName();
+                ResourceCategory newCategory = new ResourceCategory().setResource(post).setName(name).setOrdinal(orderIndex.get(name)).setType(categoryType);
                 newCategory = resourceCategoryRepository.save(newCategory);
                 oldCategories.add(newCategory);
             });

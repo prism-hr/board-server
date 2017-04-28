@@ -18,7 +18,7 @@ import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
-import org.apache.commons.lang3.BooleanUtils;
+import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -123,24 +123,22 @@ public class ResourceService {
     }
     
     public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
+        // Index the insertion order
+        Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
+        if (orderIndex == null) {
+            orderIndex = Collections.emptyMap();
+        }
+    
+        // Reorder / remove existing records
         Set<ResourceCategory> oldCategories = resource.getCategories();
-        HashSet<String> newCategories = new LinkedHashSet<>(categories == null ? Collections.emptyList() : categories);
-        
-        // modify existing categories
         for (ResourceCategory oldCategory : oldCategories) {
-            if (newCategories.remove(oldCategory.getName())) {
-                oldCategory.setActive(true);
-            } else {
-                // category was not in the posted list, make inactive
-                oldCategory.setActive(false);
-            }
-            
+            oldCategory.setOrdinal(orderIndex.remove(oldCategory.getName()));
             resourceCategoryRepository.update(oldCategory, LocalDateTime.now());
         }
-        
-        // add new categories
-        for (String postedCategory : newCategories) {
-            ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(postedCategory).setActive(true).setType(type);
+    
+        // Write new records
+        for (Map.Entry<String, Integer> insert : orderIndex.entrySet()) {
+            ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(insert.getKey()).setType(type).setOrdinal(insert.getValue());
             newResourceCategory.setCreatedTimestamp(LocalDateTime.now());
             resourceCategoryRepository.save(newResourceCategory);
             oldCategories.add(newResourceCategory);
@@ -278,61 +276,6 @@ public class ResourceService {
         return resources;
     }
     
-    public static String suggestHandle(String name) {
-        String suggestion = "";
-        name = name.toLowerCase();
-        String[] parts = name.split(" ");
-        for (int i = 0; i < parts.length; i++) {
-            String newSuggestion;
-            String part = parts[i];
-            if (suggestion.length() > 0) {
-                newSuggestion = suggestion + "-" + part;
-            } else {
-                newSuggestion = part;
-            }
-            
-            if (newSuggestion.length() > 20) {
-                if (i == 0) {
-                    return newSuggestion.substring(0, 20);
-                }
-                
-                return suggestion;
-            }
-            
-            suggestion = newSuggestion;
-        }
-        
-        return suggestion;
-    }
-    
-    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
-        if (similarHandles.contains(suggestedHandle)) {
-    
-            int ordinal = 2;
-            int suggestedHandleLength = suggestedHandle.length();
-            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
-            for (String similarHandleSuffix : similarHandleSuffixes) {
-                if (similarHandleSuffix.startsWith("-")) {
-                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
-                    
-                    // We only care about creating a unique value in a formatted sequence
-                    // We can ignore anything else that has been reformatted by an end user
-                    if (parts.length == 1) {
-                        String firstPart = parts[0];
-                        if (StringUtils.isNumeric(firstPart)) {
-                            ordinal = Integer.parseInt(firstPart) + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            return suggestedHandle + "-" + ordinal;
-        }
-        
-        return suggestedHandle;
-    }
-    
     public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
         ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user).setComment(resource.getComment());
         
@@ -360,7 +303,7 @@ public class ResourceService {
     
     public List<String> getCategories(Resource resource, CategoryType categoryType) {
         List<ResourceCategory> resourceCategories = resource.getCategories().stream()
-            .filter(resourceCategory -> BooleanUtils.isTrue(resourceCategory.getActive()))
+            .filter(resourceCategory -> resourceCategory.getOrdinal() != null)
             .filter(resourceCategory -> categoryType == resourceCategory.getType())
             .collect(Collectors.toList());
         
@@ -428,6 +371,61 @@ public class ResourceService {
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
             throw new ApiException(exceptionCode);
         }
+    }
+    
+    public static String suggestHandle(String name) {
+        String suggestion = "";
+        name = name.toLowerCase();
+        String[] parts = name.split(" ");
+        for (int i = 0; i < parts.length; i++) {
+            String newSuggestion;
+            String part = parts[i];
+            if (suggestion.length() > 0) {
+                newSuggestion = suggestion + "-" + part;
+            } else {
+                newSuggestion = part;
+            }
+            
+            if (newSuggestion.length() > 20) {
+                if (i == 0) {
+                    return newSuggestion.substring(0, 20);
+                }
+                
+                return suggestion;
+            }
+            
+            suggestion = newSuggestion;
+        }
+        
+        return suggestion;
+    }
+    
+    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
+        if (similarHandles.contains(suggestedHandle)) {
+            
+            int ordinal = 2;
+            int suggestedHandleLength = suggestedHandle.length();
+            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
+            for (String similarHandleSuffix : similarHandleSuffixes) {
+                if (similarHandleSuffix.startsWith("-")) {
+                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
+                    
+                    // We only care about creating a unique value in a formatted sequence
+                    // We can ignore anything else that has been reformatted by an end user
+                    if (parts.length == 1) {
+                        String firstPart = parts[0];
+                        if (StringUtils.isNumeric(firstPart)) {
+                            ordinal = Integer.parseInt(firstPart) + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return suggestedHandle + "-" + ordinal;
+        }
+        
+        return suggestedHandle;
     }
     
     private void commitResourceRelation(Resource resource1, Resource resource2) {
