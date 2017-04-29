@@ -15,7 +15,6 @@ import org.junit.Assert;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
 
 public class TestHelper {
@@ -30,7 +29,6 @@ public class TestHelper {
     public static BoardDTO sampleBoard() {
         return new BoardDTO()
             .setName("board")
-            .setPostCategories(new ArrayList<>())
             .setDepartment(new DepartmentDTO()
                 .setName("department"));
     }

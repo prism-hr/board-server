@@ -4,17 +4,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
-import hr.prism.board.domain.ResourceCategory;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.PostRepresentation;
+import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class PostMapper implements Function<Post, PostRepresentation> {
@@ -32,6 +32,9 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     private ResourceMapper resourceMapper;
     
     @Inject
+    private ResourceService resourceService;
+    
+    @Inject
     private ObjectMapper objectMapper;
     
     @Override
@@ -46,8 +49,8 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setLocation(locationMapper.apply(post.getLocation()))
             .setExistingRelation(post.getExistingRelation())
             .setExistingRelationExplanation(mapExistingRelationExplanation(post.getExistingRelationExplanation()))
-            .setPostCategories(post.getPostCategories().stream().map(ResourceCategory::getName).collect(Collectors.toList()))
-            .setMemberCategories(post.getMemberCategories().stream().map(ResourceCategory::getName).collect(Collectors.toList()))
+            .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
+            .setMemberCategories(resourceService.getCategories(post, CategoryType.MEMBER))
             .setApplyWebsite(post.getApplyWebsite())
             .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
             .setApplyEmail(post.getApplyEmail())

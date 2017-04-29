@@ -302,16 +302,8 @@ public class ResourceService {
     }
     
     public List<String> getCategories(Resource resource, CategoryType categoryType) {
-        List<ResourceCategory> resourceCategories = resource.getCategories().stream()
-            .filter(resourceCategory -> resourceCategory.getOrdinal() != null)
-            .filter(resourceCategory -> categoryType == resourceCategory.getType())
-            .collect(Collectors.toList());
-        
-        if (resourceCategories.isEmpty()) {
-            return null;
-        }
-        
-        return resourceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
+        List<ResourceCategory> categories = resource.getCategories(categoryType);
+        return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
     }
     
     @SuppressWarnings("JpaQlInspection")

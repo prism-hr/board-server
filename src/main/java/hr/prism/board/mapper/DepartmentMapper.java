@@ -1,13 +1,13 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Department;
-import hr.prism.board.domain.ResourceCategory;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class DepartmentMapper implements Function<Department, DepartmentRepresentation> {
@@ -18,6 +18,9 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
     @Inject
     private ResourceMapper resourceMapper;
     
+    @Inject
+    private ResourceService resourceService;
+    
     @Override
     public DepartmentRepresentation apply(Department department) {
         if (department == null) {
@@ -27,7 +30,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         return resourceMapper.apply(department, DepartmentRepresentation.class)
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(department.getHandle())
-            .setMemberCategories(department.getMemberCategories().stream().map(ResourceCategory::getName).collect(Collectors.toList()));
+            .setMemberCategories(resourceService.getCategories(department, CategoryType.MEMBER));
     }
     
 }

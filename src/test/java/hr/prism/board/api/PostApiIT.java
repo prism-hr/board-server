@@ -71,7 +71,7 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldCreatePost() {
-        Long boardId = postBoard("department@poczta.fm").getId();
+        Long boardId = postBoard().getId();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post")
@@ -95,7 +95,7 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldUpdatePost() {
-        Long boardId = postBoard("department@poczta.fm").getId();
+        Long boardId = postBoard().getId();
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             new PostDTO()
                 .setName("New Post")
@@ -136,7 +136,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
-        Long boardId = postBoard("department@poczta.fm").getId();
+        Long boardId = postBoard().getId();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("Post 1")
@@ -181,7 +181,7 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
-        Long boardId = postBoard("department@poczta.fm").getId();
+        Long boardId = postBoard().getId();
         
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
@@ -203,8 +203,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldDepartmentUserBeAbleToAcceptPost() {
-        BoardRepresentation board = postBoard("department@poczta.fm");
-        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        BoardRepresentation board = postBoard();
+        PostRepresentation post = postPost(board.getId());
         
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
@@ -236,8 +236,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldPosterBeAbleToCorrectPost() {
-        BoardRepresentation board = postBoard("department@poczta.fm");
-        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        BoardRepresentation board = postBoard();
+        PostRepresentation post = postPost(board.getId());
         
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
@@ -282,8 +282,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldDepartmentUserBeAbleToRejectAndRestorePost() {
-        BoardRepresentation board = postBoard("department@poczta.fm");
-        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        BoardRepresentation board = postBoard();
+        PostRepresentation post = postPost(board.getId());
         
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
@@ -322,8 +322,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldPosterBeAbleToWithdrawAndRestorePost() {
-        BoardRepresentation board = postBoard("department@poczta.fm");
-        PostRepresentation post = postPost(board.getId(), "poster@poczta.fm");
+        BoardRepresentation board = postBoard();
+        PostRepresentation post = postPost(board.getId());
         
         Long postId = post.getId();
         verifyPost(postId, "department@poczta.fm", State.DRAFT,
@@ -362,8 +362,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldNotBeAbleToCorruptPostByPatching() {
-        Long boardId = postBoard("department@poczta.fm").getId();
-        PostRepresentation postRepresentation = postPost(boardId, "poster@poczta.fm");
+        Long boardId = postBoard().getId();
+        PostRepresentation postRepresentation = postPost(boardId);
         Long postId = postRepresentation.getId();
         
         transactionTemplate.execute(status -> {
@@ -422,8 +422,8 @@ public class PostApiIT extends AbstractIT {
         });
     }
     
-    private BoardRepresentation postBoard(String user) {
-        testUserService.authenticateAs(user);
+    private BoardRepresentation postBoard() {
+        testUserService.authenticateAs("department@poczta.fm");
         return transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
                 .setName("Board")
@@ -436,8 +436,8 @@ public class PostApiIT extends AbstractIT {
         });
     }
     
-    private PostRepresentation postPost(Long boardId, String user) {
-        testUserService.authenticateAs(user);
+    private PostRepresentation postPost(Long boardId) {
+        testUserService.authenticateAs("poster@poczta.fm");
         return transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
     }
     
@@ -455,8 +455,8 @@ public class PostApiIT extends AbstractIT {
         assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
         
         assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
-        assertThat(postR.getPostCategories(), containsInAnyOrder(postDTO.getPostCategories().toArray()));
-        assertThat(postR.getMemberCategories(), containsInAnyOrder(postDTO.getMemberCategories().toArray()));
+        assertEquals(postDTO.getPostCategories(), postR.getPostCategories());
+        assertEquals(postDTO.getMemberCategories(), postR.getMemberCategories());
         assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
         
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();

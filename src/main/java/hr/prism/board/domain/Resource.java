@@ -68,12 +68,6 @@ public class Resource extends BoardEntity {
     private Set<ResourceOperation> operations = new HashSet<>();
     
     @Transient
-    private List<ResourceCategory> memberCategories;
-    
-    @Transient
-    private List<ResourceCategory> postCategories;
-    
-    @Transient
     private List<ActionRepresentation> actions;
     
     @Transient
@@ -168,13 +162,11 @@ public class Resource extends BoardEntity {
     }
     
     public List<ResourceCategory> getMemberCategories() {
-        this.memberCategories = this.memberCategories == null ? filterAndSortCategories(CategoryType.MEMBER) : this.memberCategories;
-        return this.memberCategories;
+        return getCategories(CategoryType.MEMBER);
     }
     
     public List<ResourceCategory> getPostCategories() {
-        this.postCategories = this.postCategories == null ? filterAndSortCategories(CategoryType.POST) : this.postCategories;
-        return this.postCategories;
+        return getCategories(CategoryType.POST);
     }
     
     public Set<UserRole> getUserRoles() {
@@ -229,11 +221,17 @@ public class Resource extends BoardEntity {
         return Joiner.on(" ").skipNulls().join(scope.name().toLowerCase(), getId());
     }
     
-    private List<ResourceCategory> filterAndSortCategories(CategoryType type) {
-        return categories.stream()
+    public List<ResourceCategory> getCategories(CategoryType type) {
+        List<ResourceCategory> processedCategories = categories.stream()
             .filter(category -> category.getType() == type && category.getOrdinal() != null)
             .sorted(Comparator.comparingInt(ResourceCategory::getOrdinal))
             .collect(Collectors.toList());
+        
+        if (processedCategories.isEmpty()) {
+            return null;
+        }
+        
+        return processedCategories;
     }
     
 }

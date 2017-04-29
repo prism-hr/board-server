@@ -34,7 +34,6 @@ import org.springframework.transaction.TransactionStatus;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -455,9 +454,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(boardDTO.getName(), boardR.getName());
             Assert.assertEquals(expectedHandle, boardR.getHandle());
             Assert.assertEquals(boardDTO.getDescription(), boardR.getDescription());
-    
-            List<String> expectedPostCategories = boardDTO.getPostCategories();
-            Assert.assertEquals(expectedPostCategories == null ? Collections.emptyList() : expectedPostCategories, boardR.getPostCategories());
+            Assert.assertEquals(boardDTO.getPostCategories(), boardR.getPostCategories());
             Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
     
             Board board = boardService.getBoard(boardR.getId());
