@@ -305,7 +305,7 @@ public class DepartmentApiIT extends AbstractIT {
             DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
             Assert.assertEquals(departmentR.getName(), departmentR.getName());
             Assert.assertEquals(expectedHandle, departmentR.getHandle());
-            Assert.assertThat(departmentR.getMemberCategories(), Matchers.containsInAnyOrder(boardDTO.getDepartment().getMemberCategories().toArray(new String[0])));
+            Assert.assertEquals(boardDTO.getDepartment().getMemberCategories(), departmentR.getMemberCategories());
             
             Department department = departmentService.getDepartment(departmentR.getId());
             Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));

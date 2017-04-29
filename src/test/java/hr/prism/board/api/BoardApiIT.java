@@ -121,6 +121,7 @@ public class BoardApiIT extends AbstractIT {
     
     @Test
     public void shouldNotCreateDuplicateBoardByUpdating() {
+        testUserService.authenticate();
         Pair<BoardRepresentation, BoardRepresentation> boardRs = postTwoBoards();
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
@@ -132,6 +133,7 @@ public class BoardApiIT extends AbstractIT {
     
     @Test
     public void shouldNotCreateDuplicateBoardHandleByUpdating() {
+        testUserService.authenticate();
         Pair<BoardRepresentation, BoardRepresentation> boardRs = postTwoBoards();
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
@@ -452,7 +454,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(boardDTO.getName(), boardR.getName());
             Assert.assertEquals(expectedHandle, boardR.getHandle());
             Assert.assertEquals(boardDTO.getDescription(), boardR.getDescription());
-            Assert.assertThat(boardR.getPostCategories(), Matchers.containsInAnyOrder(boardDTO.getPostCategories().toArray(new String[0])));
+            Assert.assertEquals(boardDTO.getPostCategories(), boardR.getPostCategories());
             Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
     
             Board board = boardService.getBoard(boardR.getId());
