@@ -31,6 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -305,7 +306,9 @@ public class DepartmentApiIT extends AbstractIT {
             DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
             Assert.assertEquals(departmentR.getName(), departmentR.getName());
             Assert.assertEquals(expectedHandle, departmentR.getHandle());
-            Assert.assertEquals(boardDTO.getDepartment().getMemberCategories(), departmentR.getMemberCategories());
+    
+            List<String> memberCategories = boardDTO.getDepartment().getMemberCategories();
+            Assert.assertEquals(memberCategories == null ? Collections.emptyList() : memberCategories, departmentR.getMemberCategories());
             
             Department department = departmentService.getDepartment(departmentR.getId());
             Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
