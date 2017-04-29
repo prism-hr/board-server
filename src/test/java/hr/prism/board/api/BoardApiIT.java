@@ -213,7 +213,7 @@ public class BoardApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldReindexBoardHandleWhenDepartmentHandleUpdated() {
+    public void shouldUpdateBoardHandleWhenUpdatingDepartmentHandle() {
         User user = testUserService.authenticate();
         Long departmentId = verifyPostBoard(user,
             new BoardDTO()
@@ -438,9 +438,9 @@ public class BoardApiIT extends AbstractIT {
         
         BoardRepresentation boardR2 = transactionTemplate.execute(status -> {
             BoardDTO boardDTO = new BoardDTO()
-                .setName("board")
+                .setName("board 2")
                 .setDepartment(new DepartmentDTO()
-                    .setName("department 2"));
+                    .setId(boardR1.getDepartment().getId()));
             
             return boardApi.postBoard(boardDTO);
         });
