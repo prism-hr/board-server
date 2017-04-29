@@ -13,9 +13,9 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
-import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -36,9 +36,6 @@ public class PostService {
     
     @Inject
     private PostRepository postRepository;
-    
-    @Inject
-    private ResourceCategoryRepository resourceCategoryRepository;
     
     @Inject
     private DocumentService documentService;
@@ -251,22 +248,33 @@ public class PostService {
         }
     }
     
-    private void updateCategories(Post post, CategoryType categoryType, List<String> categories, Resource reference) {
+    private void updateCategories(Post post, CategoryType type, List<String> categories, Resource reference) {
+        // Validate the update
+        if (type == CategoryType.POST) {
+            validateCategories(reference, type, categories,
+                ExceptionCode.MISSING_POST_POST_CATEGORIES,
+                ExceptionCode.CORRUPTED_POST_POST_CATEGORIES,
+                ExceptionCode.INVALID_POST_POST_CATEGORIES);
+        } else {
+            validateCategories(reference, type, categories,
+                ExceptionCode.MISSING_POST_MEMBER_CATEGORIES,
+                ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES,
+                ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
+        }
+        
         // Clear the old records
-        resourceCategoryRepository.deleteByResourceAndType(post, categoryType);
+        resourceService.deleteResourceCategories(post, type);
         Set<ResourceCategory> oldCategories = post.getCategories();
-        oldCategories.removeIf(next -> next.getType() == categoryType);
-    
+        oldCategories.removeIf(next -> next.getType() == type);
+        
         // Index the insertion order
         Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
         if (orderIndex != null) {
             // Write the new records
-            List<ResourceCategory> referenceCategories = resourceCategoryRepository.findByResourceAndTypeAndNameIn(reference, categoryType, categories);
-            referenceCategories.forEach(referenceCategory -> {
-                String name = referenceCategory.getName();
-                ResourceCategory newCategory = new ResourceCategory().setResource(post).setName(name).setOrdinal(orderIndex.get(name)).setType(categoryType);
-                newCategory = resourceCategoryRepository.save(newCategory);
-                oldCategories.add(newCategory);
+            categories.forEach(category -> {
+                ResourceCategory resourceCategory = new ResourceCategory().setResource(post).setName(category).setOrdinal(orderIndex.get(category)).setType(type);
+                resourceCategory = resourceService.createResourceCategory(resourceCategory);
+                oldCategories.add(resourceCategory);
             });
         }
     }
@@ -311,6 +319,19 @@ public class PostService {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
             throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+        }
+    }
+    
+    private void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
+        List<ResourceCategory> referenceCategories = reference.getCategories(type);
+        if (referenceCategories != null) {
+            if (CollectionUtils.isEmpty(categories)) {
+                throw new ApiException(missing);
+            } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
+                throw new ApiException(invalid);
+            }
+        } else if (CollectionUtils.isNotEmpty(categories)) {
+            throw new ApiException(corrupted);
         }
     }
     

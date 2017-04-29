@@ -7,12 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
 @SuppressWarnings("JpaQlInspection")
 public interface ResourceCategoryRepository extends MyRepository<ResourceCategory, Long> {
-    
-    List<ResourceCategory> findByResourceAndTypeAndNameIn(Resource resource, CategoryType type, List<String> names);
     
     @Modifying
     @Query(value =

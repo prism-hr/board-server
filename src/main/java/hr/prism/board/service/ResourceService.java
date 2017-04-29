@@ -420,6 +420,14 @@ public class ResourceService {
         return suggestedHandle;
     }
     
+    public ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {
+        return resourceCategoryRepository.save(resourceCategory);
+    }
+    
+    public void deleteResourceCategories(Resource resource, CategoryType type) {
+        resourceCategoryRepository.deleteByResourceAndType(resource, type);
+    }
+    
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);
