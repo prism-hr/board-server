@@ -5,6 +5,7 @@ import hr.prism.board.api.BoardApi;
 import hr.prism.board.api.DepartmentApi;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
@@ -21,6 +22,7 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -90,13 +92,21 @@ public class TestHelper {
         Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
     }
     
+    public static BoardDTO sampleBoard() {
+        return new BoardDTO()
+            .setName("board")
+            .setPostCategories(new ArrayList<>())
+            .setDepartment(new DepartmentDTO()
+                .setName("department"));
+    }
+    
     public static PostDTO samplePost() {
         return new PostDTO()
-            .setName("Post")
-            .setDescription("desc")
-            .setOrganizationName("org")
+            .setName("post")
+            .setDescription("description")
+            .setOrganizationName("organization name")
             .setLocation(new LocationDTO()
-                .setName("BB")
+                .setName("krakow")
                 .setDomicile("PL")
                 .setGoogleId("sss")
                 .setLatitude(BigDecimal.ONE)

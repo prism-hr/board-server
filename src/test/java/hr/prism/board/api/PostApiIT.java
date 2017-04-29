@@ -69,9 +69,6 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private UserService userService;
     
-    @Inject
-    private TestHelper testHelper;
-    
     @Test
     public void shouldCreatePost() {
         Long boardId = postBoard("department@poczta.fm").getId();

@@ -168,18 +168,12 @@ public class Resource extends BoardEntity {
     }
     
     public List<ResourceCategory> getMemberCategories() {
-        if (this.memberCategories == null) {
-            this.memberCategories = filterAndSortCategories(CategoryType.MEMBER);
-        }
-        
+        this.memberCategories = this.memberCategories == null ? filterAndSortCategories(CategoryType.MEMBER) : this.memberCategories;
         return this.memberCategories;
     }
     
     public List<ResourceCategory> getPostCategories() {
-        if (this.postCategories == null) {
-            this.postCategories = filterAndSortCategories(CategoryType.POST);
-        }
-        
+        this.postCategories = this.postCategories == null ? filterAndSortCategories(CategoryType.POST) : this.postCategories;
         return this.postCategories;
     }
     
