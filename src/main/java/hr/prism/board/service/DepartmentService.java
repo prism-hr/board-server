@@ -82,9 +82,9 @@ public class DepartmentService {
         }
         
         if (departmentById != null) {
-            id = departmentById.getId();
+            return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentById.getId());
         } else if (departmentByName != null) {
-            id = departmentByName.getId();
+            return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentByName.getId());
         } else {
             Department department = new Department();
             resourceService.updateState(department, State.ACCEPTED);
@@ -105,10 +105,8 @@ public class DepartmentService {
             resourceService.createResourceRelation(department, department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
-            id = department.getId();
+            return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
         }
-        
-        return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
     }
     
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
