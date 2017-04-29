@@ -308,18 +308,10 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldAuditBoardAndMakeChangesPrivatelyVisible() {
         User boardUser = testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO = new BoardDTO()
-                .setName("new board")
-                .setDepartment(new DepartmentDTO()
-                    .setName("new department"));
-            
-            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            return boardR.getId();
-        });
+        Long boardId = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()).getId());
         
         User postUser = testUserService.authenticate();
-        transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, TestHelper.samplePost()));
+        transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -332,8 +324,8 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
-                    .setName(Optional.of("new board 2"))
-                    .setHandle(Optional.of("new-board-2")));
+                    .setName(Optional.of("board 2"))
+                    .setHandle(Optional.of("board-2")));
             return null;
         });
     
@@ -341,11 +333,11 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
-                    .setName(Optional.of("new board 3"))
-                    .setHandle(Optional.of("new-board-3"))
+                    .setName(Optional.of("board 3"))
+                    .setHandle(Optional.of("board-3"))
                     .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE))
                     .setDescription(Optional.of("description"))
-                    .setPostCategories(Optional.of(Arrays.asList("a", "b"))));
+                    .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))));
             return null;
         });
     
@@ -353,11 +345,11 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
-                    .setName(Optional.of("new board 4"))
-                    .setHandle(Optional.of("new-board-4"))
+                    .setName(Optional.of("board 4"))
+                    .setHandle(Optional.of("board-4"))
                     .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC))
                     .setDescription(Optional.of("description 2"))
-                    .setPostCategories(Optional.of(Arrays.asList("b2", "a2"))));
+                    .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))));
             return null;
         });
     
@@ -383,30 +375,30 @@ public class BoardApiIT extends AbstractIT {
     
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
-                .put("name", "new board", "new board 2")
-                .put("handle", "new-board", "new-board-2"));
-    
+                .put("name", "board", "board 2")
+                .put("handle", "board", "board-2"));
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
-                .put("name", "new board 2", "new board 3")
-                .put("handle", "new-board-2", "new-board-3")
+                .put("name", "board 2", "board 3")
+                .put("handle", "board-2", "board-3")
                 .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
                 .put("description", null, "description")
-                .put("postCategories", null, Arrays.asList("a", "b")));
-    
+                .put("postCategories", null, Arrays.asList("m1", "m2")));
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
-                .put("name", "new board 3", "new board 4")
-                .put("handle", "new-board-3", "new-board-4")
+                .put("name", "board 3", "board 4")
+                .put("handle", "board-3", "board-4")
                 .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
                 .put("description", "description", "description 2")
-                .put("postCategories", Arrays.asList("a", "b"), Arrays.asList("b2", "a2")));
-    
+                .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
+        
         TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("description", "description 2", null)
-                .put("postCategories", Arrays.asList("b2", "a2"), null));
-    
+                .put("postCategories", Arrays.asList("m2", "m1"), null));
+        
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), boardR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
         

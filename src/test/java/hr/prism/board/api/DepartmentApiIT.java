@@ -166,11 +166,7 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     public void shouldAuditDepartmentAndMakeChangesPrivatelyVisible() {
         User departmentUser = testUserService.authenticate();
-        Long departmentId = transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO = TestHelper.sampleBoard();
-            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            return boardR.getDepartment().getId();
-        });
+        Long departmentId = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()).getId());
         
         User boardUser = testUserService.authenticate();
         transactionTemplate.execute(transactionStatus -> {
@@ -206,7 +202,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setName(Optional.of("department 3"))
                     .setHandle(Optional.of("department-3"))
                     .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-                    .setMemberCategories(Optional.of(ImmutableList.of("a", "b"))));
+                    .setMemberCategories(Optional.of(ImmutableList.of("m1", "m2"))));
             return null;
         });
     
@@ -217,7 +213,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setName(Optional.of("department 4"))
                     .setHandle(Optional.of("department-4"))
                     .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
-                    .setMemberCategories(Optional.of(ImmutableList.of("b2", "a2"))));
+                    .setMemberCategories(Optional.of(ImmutableList.of("m2", "m1"))));
             return null;
         });
     
@@ -251,8 +247,8 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("name", "department 2", "department 3")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
-                .put("memberCategories", null, Arrays.asList("a", "b")));
-    
+                .put("memberCategories", null, Arrays.asList("m1", "m2")));
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 3", "department 4")
@@ -260,13 +256,13 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
-                .put("memberCategories", Arrays.asList("a", "b"), Arrays.asList("b2", "a2")));
-    
+                .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
+        
         TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
-                .put("memberCategories", Arrays.asList("b2", "a2"), null));
-    
+                .put("memberCategories", Arrays.asList("m2", "m1"), null));
+        
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
         

@@ -67,49 +67,38 @@ public class DepartmentService {
     public Department getOrCreateDepartment(DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
-        
-        Department departmentById = null;
-        Department departmentByName = null;
-        for (Department department : departmentRepository.findByIdOrName(departmentDTO.getId(), name)) {
-            if (department.getId().equals(id)) {
-                departmentById = department;
-            }
     
-            if (department.getName().equals(name)) {
-                departmentByName = department;
-                break;
-            }
+        Department department = null;
+        if (id != null) {
+            department = departmentRepository.findOne(id);
+        } else if (name != null) {
+            department = departmentRepository.findByName(name);
         }
-        
-        Department department;
+    
         User currentUser = userService.getCurrentUserSecured();
-        if (departmentById != null) {
-            department = departmentById;
-        } else if (departmentByName != null) {
-            department = departmentByName;
-        } else {
+        if (department == null) {
             department = new Department();
             resourceService.updateState(department, State.ACCEPTED);
-            department.setName(departmentDTO.getName());
+            department.setName(name);
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
-    
+        
             String handle = ResourceService.suggestHandle(name);
-            List<String> similarHandles = departmentRepository.findHandleLikeSuggestedHandle(handle);
+            List<String> similarHandles = departmentRepository.findHandleByLikeSuggestedHandle(handle);
             handle = ResourceService.confirmHandle(handle, similarHandles);
-    
+        
             resourceService.updateHandle(department, handle);
             List<String> memberCategories = departmentDTO.getMemberCategories();
-    
+        
             department = departmentRepository.save(department);
             resourceService.updateCategories(department, CategoryType.MEMBER, memberCategories);
             resourceService.createResourceRelation(department, department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
         }
-        
-        return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
+    
+        return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
     }
     
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {

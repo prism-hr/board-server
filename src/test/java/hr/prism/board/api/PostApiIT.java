@@ -4,7 +4,10 @@ import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.PostDTO;
+import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.State;
@@ -74,9 +77,9 @@ public class PostApiIT extends AbstractIT {
         Long boardId = postBoard().getId();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
-                .setName("Post")
-                .setDescription("Description")
-                .setOrganizationName("Organization Name")
+                .setName("post")
+                .setDescription("description")
+                .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(ExistingRelation.STUDENT)
@@ -99,8 +102,8 @@ public class PostApiIT extends AbstractIT {
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             new PostDTO()
                 .setName("New Post")
-                .setDescription("Description")
-                .setOrganizationName("Organization Name")
+                .setDescription("description")
+                .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
                     .setGoogleId("GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(ExistingRelation.STUDENT)
@@ -139,15 +142,15 @@ public class PostApiIT extends AbstractIT {
         Long boardId = postBoard().getId();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
-                .setName("Post 1")
-                .setDescription("Description")
-                .setOrganizationName("Organization Name")
+                .setName("post 1")
+                .setDescription("description")
+                .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
-                    .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(ExistingRelation.STUDENT)
-                .setPostCategories(new ArrayList<>())
-                .setMemberCategories(new ArrayList<>())
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList("m1"))
+                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             postApi.postPost(boardId, postDTO);
@@ -156,15 +159,15 @@ public class PostApiIT extends AbstractIT {
         
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
-                .setName("Post 2")
-                .setDescription("Description")
-                .setOrganizationName("Organization Name")
+                .setName("post 2")
+                .setDescription("description")
+                .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
-                    .setGoogleId("shouldGetPosts GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setExistingRelation(ExistingRelation.STUDENT)
-                .setPostCategories(new ArrayList<>())
-                .setMemberCategories(new ArrayList<>())
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList("m1"))
+                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             postApi.postPost(boardId, postDTO);
@@ -173,8 +176,8 @@ public class PostApiIT extends AbstractIT {
         
         transactionTemplate.execute(status -> {
             List<PostRepresentation> posts = postApi.getPostsByBoard(boardId);
-            assertThat(posts, contains(hasProperty("name", equalTo("Post 2")),
-                hasProperty("name", equalTo("Post 1"))));
+            assertThat(posts, contains(hasProperty("name", equalTo("post 2")),
+                hasProperty("name", equalTo("post 1"))));
             return null;
         });
     }
@@ -186,14 +189,14 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
-                .setName("Post")
-                .setDescription("Description")
-                .setOrganizationName("Organization")
+                .setName("post")
+                .setDescription("description")
+                .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
-                    .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setPostCategories(new ArrayList<>())
-                .setMemberCategories(new ArrayList<>())
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("cloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList("m1"))
+                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             ExceptionUtil.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
@@ -216,7 +219,7 @@ public class PostApiIT extends AbstractIT {
         
         testUserService.authenticateAs("department@poczta.fm");
         transactionTemplate.execute(status -> {
-            postApi.acceptPost(postId, new PostPatchDTO().setDescription(Optional.of("Corrected desc")));
+            postApi.acceptPost(postId, new PostPatchDTO().setDescription(Optional.of("corrected description")));
             return null;
         });
         
@@ -229,7 +232,7 @@ public class PostApiIT extends AbstractIT {
         
         transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.getPost(postId);
-            assertEquals("Corrected desc", postR.getDescription());
+            assertEquals("corrected description", postR.getDescription());
             return null;
         });
     }
@@ -262,7 +265,7 @@ public class PostApiIT extends AbstractIT {
         
         testUserService.authenticateAs("poster@poczta.fm");
         transactionTemplate.execute(status -> {
-            postApi.correctPost(postId, new PostPatchDTO().setName(Optional.of("Corrected name")));
+            postApi.correctPost(postId, new PostPatchDTO().setName(Optional.of("corrected name")));
             return null;
         });
         
@@ -275,7 +278,7 @@ public class PostApiIT extends AbstractIT {
         
         transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.getPost(postId);
-            assertEquals("Corrected name", postR.getName());
+            assertEquals("corrected name", postR.getName());
             return null;
         });
     }
@@ -412,7 +415,7 @@ public class PostApiIT extends AbstractIT {
                             .setDescription(Optional.of("description"))
                             .setOrganizationName(Optional.of("organization name"))
                             .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
-                                .setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                                .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                             .setApplyWebsite(Optional.empty())
                             .setApplyEmail(Optional.empty())
                             .setApplyDocument(Optional.empty())),
@@ -424,16 +427,7 @@ public class PostApiIT extends AbstractIT {
     
     private BoardRepresentation postBoard() {
         testUserService.authenticateAs("department@poczta.fm");
-        return transactionTemplate.execute(status -> {
-            BoardDTO boardDTO = new BoardDTO()
-                .setName("Board")
-                .setDescription("Purpose")
-                .setPostCategories(ImmutableList.of("p1", "p2", "p3"))
-                .setDepartment(new DepartmentDTO()
-                    .setName("Department")
-                    .setMemberCategories(ImmutableList.of("m1", "m2", "m3")));
-            return boardApi.postBoard(boardDTO);
-        });
+        return transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()));
     }
     
     private PostRepresentation postPost(Long boardId) {

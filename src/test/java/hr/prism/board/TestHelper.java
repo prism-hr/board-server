@@ -15,7 +15,7 @@ import org.junit.Assert;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
+import java.util.Arrays;
 
 public class TestHelper {
     
@@ -26,11 +26,37 @@ public class TestHelper {
         Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
     }
     
-    public static BoardDTO sampleBoard() {
+    public static BoardDTO smallSampleBoard() {
         return new BoardDTO()
             .setName("board")
             .setDepartment(new DepartmentDTO()
                 .setName("department"));
+    }
+    
+    public static BoardDTO sampleBoard() {
+        return new BoardDTO()
+            .setName("board")
+            .setPostCategories(Arrays.asList("p1", "p2", "p3"))
+            .setDepartment(new DepartmentDTO()
+                .setName("department")
+                .setMemberCategories(Arrays.asList("m1", "m2", "m3")));
+    }
+    
+    public static PostDTO smallSamplePost() {
+        return new PostDTO()
+            .setName("post")
+            .setDescription("description")
+            .setOrganizationName("organization name")
+            .setLocation(new LocationDTO()
+                .setName("krakow")
+                .setDomicile("PL")
+                .setGoogleId("sss")
+                .setLatitude(BigDecimal.ONE)
+                .setLongitude(BigDecimal.ONE))
+            .setApplyWebsite("http://www.google.co.uk")
+            .setExistingRelation(ExistingRelation.STUDENT)
+            .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+            .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
     
     public static PostDTO samplePost() {
@@ -45,8 +71,8 @@ public class TestHelper {
                 .setLatitude(BigDecimal.ONE)
                 .setLongitude(BigDecimal.ONE))
             .setApplyWebsite("http://www.google.co.uk")
-            .setPostCategories(Collections.emptyList())
-            .setMemberCategories(Collections.emptyList())
+            .setPostCategories(Arrays.asList("p1", "p2"))
+            .setMemberCategories(Arrays.asList("m1", "m2"))
             .setExistingRelation(ExistingRelation.STUDENT)
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
