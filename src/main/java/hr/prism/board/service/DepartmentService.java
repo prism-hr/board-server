@@ -68,15 +68,26 @@ public class DepartmentService {
         Long id = departmentDTO.getId();
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
     
-        Department department = null;
-        if (id != null) {
-            department = departmentRepository.findOne(id);
-        } else if (name != null) {
-            department = departmentRepository.findByName(name);
+        Department departmentById = null;
+        Department departmentByName = null;
+        for (Department department : departmentRepository.findByIdOrName(id, name)) {
+            if (department.getId().equals(id)) {
+                departmentById = department;
+            }
+        
+            if (department.getName().equals(name)) {
+                departmentByName = department;
+                break;
+            }
         }
     
+        Department department;
         User currentUser = userService.getCurrentUserSecured();
-        if (department == null) {
+        if (departmentById != null) {
+            department = departmentById;
+        } else if (departmentByName != null) {
+            department = departmentByName;
+        } else {
             department = new Department();
             resourceService.updateState(department, State.ACCEPTED);
             department.setName(name);

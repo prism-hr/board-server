@@ -68,7 +68,7 @@ public class BoardService {
     // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
-        Department department = departmentService.getOrCreateDepartment(boardDTO.getDepartment());
+        Department department = departmentService.getOrCreateDepartment(currentUser, boardDTO.getDepartment());
         return (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
             resourceService.validateUniqueName(Scope.BOARD, null, department, name, ExceptionCode.DUPLICATE_BOARD);

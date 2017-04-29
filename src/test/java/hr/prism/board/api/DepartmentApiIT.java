@@ -166,7 +166,7 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     public void shouldAuditDepartmentAndMakeChangesPrivatelyVisible() {
         User departmentUser = testUserService.authenticate();
-        Long departmentId = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()).getId());
+        Long departmentId = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()).getDepartment().getId());
         
         User boardUser = testUserService.authenticate();
         transactionTemplate.execute(transactionStatus -> {
