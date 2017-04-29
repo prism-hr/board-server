@@ -137,6 +137,38 @@ public class PostApiIT extends AbstractIT {
     }
     
     @Test
+    public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
+        Long boardId = postBoard().getId();
+        
+        testUserService.authenticate();
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = new PostDTO()
+                .setName("post")
+                .setDescription("description")
+                .setOrganizationName("organization name")
+                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList("m1"))
+                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+            ExceptionUtil.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldNotAcceptPostWithCategoriesForBoardWithoutCategories() {
+        
+    }
+    
+    @Test
+    public void shouldNotAcceptPostWithoutCategoriesForBoardWithCategories() {
+        
+    }
+    
+    @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
         Long boardId = postBoard().getId();
@@ -178,28 +210,6 @@ public class PostApiIT extends AbstractIT {
             List<PostRepresentation> posts = postApi.getPostsByBoard(boardId);
             assertThat(posts, contains(hasProperty("name", equalTo("post 2")),
                 hasProperty("name", equalTo("post 1"))));
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
-        Long boardId = postBoard().getId();
-        
-        testUserService.authenticate();
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
-                .setName("post")
-                .setDescription("description")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
-                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList("m1"))
-                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtil.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
             return null;
         });
     }
@@ -406,6 +416,8 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
+    
+        // TODO: coverage for missing / corrupted / invalid categories
         
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
@@ -423,6 +435,11 @@ public class PostApiIT extends AbstractIT {
             status.setRollbackOnly();
             return null;
         });
+    }
+    
+    @Test
+    public void shouldAuditPostAndMakeChangesPrivatelyVisible() {
+        
     }
     
     private BoardRepresentation postBoard() {
