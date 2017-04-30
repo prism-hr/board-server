@@ -439,7 +439,18 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldAuditPostAndMakeChangesPrivatelyVisible() {
-        
+        User user = testUserService.authenticate();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()));
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId = boardR.getId();
+    
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId);
+    
+        testUserService.setAuthentication(user.getStormpathId());
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
+    
+        // Test that unprivileged users cannot view the audit trail
+        verifyUnprivilegedUsers(unprivilegedUsers, () -> postApi.getPost(postId));
     }
     
     private BoardRepresentation postBoard() {

@@ -11,7 +11,6 @@ import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.*;
@@ -165,18 +164,12 @@ public class DepartmentApiIT extends AbstractIT {
     
     @Test
     public void shouldAuditDepartmentAndMakeChangesPrivatelyVisible() {
-        User departmentUser = testUserService.authenticate();
-        Long departmentId = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()).getDepartment().getId());
-        
-        User boardUser = testUserService.authenticate();
-        transactionTemplate.execute(transactionStatus -> {
-            boardApi.postBoard(
-                new BoardDTO()
-                    .setName("other board")
-                    .setDepartment(new DepartmentDTO()
-                        .setId(departmentId)));
-            return null;
-        });
+        User user = testUserService.authenticate();
+        BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()));
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId = boardR.getId();
+    
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId);
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -185,7 +178,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
     
         // Check that we can make changes and leave nullable values null
-        testUserService.setAuthentication(departmentUser.getStormpathId());
+        testUserService.setAuthentication(user.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -195,7 +188,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
     
         // Check that we can make further changes and set nullable values
-        testUserService.setAuthentication(departmentUser.getStormpathId());
+        testUserService.setAuthentication(user.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -235,21 +228,21 @@ public class DepartmentApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser, null);
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, user, null);
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("name", "department", "department 2")
                 .put("handle", "department", "department-2"));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("name", "department 2", "department 3")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
                 .put("memberCategories", null, Arrays.asList("m1", "m2")));
-        
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("name", "department 3", "department 4")
                 .put("handle", "department-3", "department-4")
@@ -257,8 +250,8 @@ public class DepartmentApiIT extends AbstractIT {
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
                 .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
-        
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, departmentUser,
+    
+        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("m2", "m1"), null));
@@ -267,18 +260,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
         
         // Test that other board administrator cannot view audit trail
-        testUserService.setAuthentication(boardUser.getStormpathId());
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.FORBIDDEN_ACTION, status);
-            return null;
-        });
-        
-        // Test that a member of the public cannot view audit trail
-        testUserService.unauthenticate();
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> departmentApi.getDepartmentOperations(departmentId), ExceptionCode.UNAUTHENTICATED_USER, status);
-            return null;
-        });
+        verifyUnprivilegedUsers(unprivilegedUsers, () -> departmentApi.getDepartmentOperations(departmentId));
     }
     
     private Pair<DepartmentRepresentation, DepartmentRepresentation> postTwoDepartments() {

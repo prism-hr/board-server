@@ -50,12 +50,12 @@ public class TestUserService {
         setAuthentication(id);
         return user;
     }
-
-    public void setAuthentication(String id) {
+    
+    public void setAuthentication(String stormpathId) {
         UsernamePasswordAuthenticationToken authentication = null;
-        if (id != null) {
+        if (stormpathId != null) {
             authentication = new UsernamePasswordAuthenticationToken(
-                new org.springframework.security.core.userdetails.User(STORMPATH_API_PATH + id, "", Collections.emptyList()), null);
+                new org.springframework.security.core.userdetails.User(STORMPATH_API_PATH + stormpathId, "", Collections.emptyList()), null);
         }
     
         SecurityContextHolder.getContext().setAuthentication(authentication);

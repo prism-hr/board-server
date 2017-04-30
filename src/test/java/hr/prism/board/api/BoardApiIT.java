@@ -13,13 +13,11 @@ import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
-import hr.prism.board.service.TestUserService;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
@@ -49,12 +47,6 @@ public class BoardApiIT extends AbstractIT {
     private DepartmentApi departmentApi;
     
     @Inject
-    private BoardApi boardApi;
-    
-    @Inject
-    private PostApi postApi;
-    
-    @Inject
     private BoardService boardService;
     
     @Inject
@@ -62,9 +54,6 @@ public class BoardApiIT extends AbstractIT {
     
     @Inject
     private DepartmentService departmentService;
-    
-    @Inject
-    private TestUserService testUserService;
     
     @Test
     public void shouldCreateBoard() {
@@ -307,11 +296,12 @@ public class BoardApiIT extends AbstractIT {
     
     @Test
     public void shouldAuditBoardAndMakeChangesPrivatelyVisible() {
-        User boardUser = testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()).getId());
-        
-        User postUser = testUserService.authenticate();
-        transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        User user = testUserService.authenticate();
+        BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()));
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId = boardR.getId();
+    
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId);
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -320,7 +310,7 @@ public class BoardApiIT extends AbstractIT {
         });
     
         // Check that we can make changes and leave nullable values null
-        testUserService.setAuthentication(boardUser.getStormpathId());
+        testUserService.setAuthentication(user.getStormpathId());
         transactionTemplate.execute(status -> {
             boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
@@ -361,8 +351,8 @@ public class BoardApiIT extends AbstractIT {
                     .setPostCategories(Optional.empty()));
             return null;
         });
-        
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+    
+        boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> boardApi.getBoardOperations(boardId));
         Assert.assertEquals(5, resourceOperationRs.size());
     
@@ -371,50 +361,39 @@ public class BoardApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, boardUser, null);
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, user, null);
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("name", "board", "board 2")
                 .put("handle", "board", "board-2"));
-        
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("name", "board 2", "board 3")
                 .put("handle", "board-2", "board-3")
                 .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
                 .put("description", null, "description")
                 .put("postCategories", null, Arrays.asList("m1", "m2")));
-        
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, boardUser,
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("name", "board 3", "board 4")
                 .put("handle", "board-3", "board-4")
                 .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
                 .put("description", "description", "description 2")
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
-        
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
+    
+        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, user,
             new ResourceChangeListRepresentation()
                 .put("description", "description 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
         
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), boardR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
-        
-        // Test that post administrator cannot view audit trail
-        testUserService.setAuthentication(postUser.getStormpathId());
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> boardApi.getBoardOperations(boardId), ExceptionCode.FORBIDDEN_ACTION, status);
-            return null;
-        });
-        
-        // Test that a member of the public cannot view audit trail
-        testUserService.unauthenticate();
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> boardApi.getBoardOperations(boardId), ExceptionCode.UNAUTHENTICATED_USER, status);
-            return null;
-        });
+    
+        // Test that unprivileged users cannot view the audit trail
+        verifyUnprivilegedUsers(unprivilegedUsers, () -> boardApi.getBoardOperations(boardId));
     }
     
     private Pair<BoardRepresentation, BoardRepresentation> postTwoBoards() {
