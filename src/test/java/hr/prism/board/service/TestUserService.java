@@ -17,27 +17,12 @@ import java.util.Map;
 public class TestUserService {
     
     private static final String STORMPATH_API_PATH = "https://api.stormpath.com/v1/accounts/";
-
+    
     @Inject
     private UserService userService;
-
+    
     private SecureRandom random = new SecureRandom();
-
-    public User authenticateAs(String email) {
-        User user = userService.findByEmail(email);
-        if (user == null) {
-            Map<String, Object> properties = new HashMap<>();
-            properties.put("email", email);
-            properties.put("givenName", email);
-            properties.put("surname", email);
-            properties.put("href", STORMPATH_API_PATH + email);
-            user = userService.createUser(new DefaultAccount(null, properties));
-        }
-
-        setAuthentication(email);
-        return user;
-    }
-
+    
     public synchronized User authenticate() {
         String id = new BigInteger(140, random).toString(30);
         Map<String, Object> properties = new HashMap<>();
@@ -46,7 +31,7 @@ public class TestUserService {
         properties.put("surname", id);
         properties.put("href", STORMPATH_API_PATH + id);
         User user = userService.createUser(new DefaultAccount(null, properties));
-
+        
         setAuthentication(id);
         return user;
     }
@@ -64,5 +49,5 @@ public class TestUserService {
     public void unauthenticate() {
         SecurityContextHolder.getContext().setAuthentication(null);
     }
-
+    
 }

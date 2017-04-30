@@ -70,12 +70,10 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private ActionService actionService;
     
-    @Inject
-    private UserService userService;
-    
     @Test
     public void shouldCreatePost() {
-        Long boardId = postBoard().getId();
+        User user = testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post")
@@ -91,7 +89,6 @@ public class PostApiIT extends AbstractIT {
                 .setDeadTimestamp(LocalDateTime.now().plus(1, ChronoUnit.YEARS));
     
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
-            User user = userService.findByEmail("department@poczta.fm");
             verifyPost(user, postDTO, postR);
             return null;
         });
@@ -99,7 +96,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldUpdatePost() {
-        Long boardId = postBoard().getId();
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             new PostDTO()
                 .setName("New Post")
@@ -139,8 +137,8 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
-        Long boardId = postBoard().getId();
-        
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -172,7 +170,8 @@ public class PostApiIT extends AbstractIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetPosts() {
-        Long boardId = postBoard().getId();
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post 1")
@@ -216,169 +215,10 @@ public class PostApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldDepartmentUserBeAbleToAcceptPost() {
-        BoardRepresentation board = postBoard();
-        PostRepresentation post = postPost(board.getId());
-        
-        Long postId = post.getId();
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
-        testUserService.authenticateAs("department@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.acceptPost(postId, new PostPatchDTO().setDescription(Optional.of("corrected description")));
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.REJECT, Action.SUSPEND));
-        
-        transactionTemplate.execute(status -> {
-            PostRepresentation postR = postApi.getPost(postId);
-            assertEquals("corrected description", postR.getDescription());
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldPosterBeAbleToCorrectPost() {
-        BoardRepresentation board = postBoard();
-        PostRepresentation post = postPost(board.getId());
-        
-        Long postId = post.getId();
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
-        testUserService.authenticateAs("department@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.suspendPost(post.getId(), new PostPatchDTO());
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.SUSPENDED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT),
-            Arrays.asList(Action.CORRECT, Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.SUSPENDED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.CORRECT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT));
-        
-        testUserService.authenticateAs("poster@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.correctPost(postId, new PostPatchDTO().setName(Optional.of("corrected name")));
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
-        transactionTemplate.execute(status -> {
-            PostRepresentation postR = postApi.getPost(postId);
-            assertEquals("corrected name", postR.getName());
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldDepartmentUserBeAbleToRejectAndRestorePost() {
-        BoardRepresentation board = postBoard();
-        PostRepresentation post = postPost(board.getId());
-        
-        Long postId = post.getId();
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
-        testUserService.authenticateAs("department@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.rejectPost(postId, new PostPatchDTO());
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.REJECTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.REJECTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
-        
-        testUserService.authenticateAs("department@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.restorePost(postId, new PostPatchDTO());
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-    }
-    
-    @Test
-    public void shouldPosterBeAbleToWithdrawAndRestorePost() {
-        BoardRepresentation board = postBoard();
-        PostRepresentation post = postPost(board.getId());
-        
-        Long postId = post.getId();
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        
-        testUserService.authenticateAs("poster@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.withdrawPost(postId, new PostPatchDTO());
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.WITHDRAWN,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT),
-            Collections.singletonList(Action.RESTORE));
-        verifyPost(postId, "poster@poczta.fm", State.WITHDRAWN,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE),
-            Collections.emptyList());
-        
-        testUserService.authenticateAs("poster@poczta.fm");
-        transactionTemplate.execute(status -> {
-            postApi.restorePost(postId, new PostPatchDTO());
-            return null;
-        });
-        
-        verifyPost(postId, "department@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, "poster@poczta.fm", State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-    }
-    
-    @Test
     public void shouldNotBeAbleToCorruptPostByPatching() {
-        Long boardId = postBoard().getId();
-        PostRepresentation postRepresentation = postPost(boardId);
-        Long postId = postRepresentation.getId();
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
         
         // TODO: coverage for missing / corrupted / invalid categories
         
@@ -412,6 +252,13 @@ public class PostApiIT extends AbstractIT {
         Assert.assertEquals(State.DRAFT, postR.getState());
         Long postId = postR.getId();
     
+        verifyPost(postId, user, State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
             postApi.getPost(postId);
@@ -426,7 +273,7 @@ public class PostApiIT extends AbstractIT {
     
         // Check that the administrator can make changes and suspend the post
         testUserService.setAuthentication(user.getStormpathId());
-        postR = transactionTemplate.execute(status -> postApi.suspendPost(postId,
+        transactionTemplate.execute(status -> postApi.suspendPost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setName(Optional.of("name 2"))
                 .setDescription(Optional.of("description 2"))
@@ -446,11 +293,17 @@ public class PostApiIT extends AbstractIT {
                 .setLiveTimestamp(Optional.of(liveTimestampSuspend))
                 .setDeadTimestamp(Optional.of(deadTimestampSuspend))
                 .setComment("could you please explain what you will pay the successful applicant")));
-        assertEquals(State.SUSPENDED, postR.getState());
     
+        verifyPost(postId, user, State.SUSPENDED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.SUSPENDED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT),
+            Arrays.asList(Action.ACCEPT, Action.REJECT));
+        
         // Check that the author can make changes and correct the post
         testUserService.setAuthentication(postUser.getStormpathId());
-        postR = transactionTemplate.execute(status -> postApi.correctPost(postId,
+        transactionTemplate.execute(status -> postApi.correctPost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setOrganizationName(Optional.of("organization name"))
                 .setLocation(Optional.of(
@@ -463,11 +316,17 @@ public class PostApiIT extends AbstractIT {
                 .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
                 .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
                 .setComment("i uploaded a document this time which explains that")));
-        assertEquals(State.DRAFT, postR.getState());
     
+        verifyPost(postId, user, State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.DRAFT,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        
         // Check that the administrator can make further changes and accept the post
         testUserService.setAuthentication(user.getStormpathId());
-        postR = transactionTemplate.execute(status -> postApi.acceptPost(postId,
+        transactionTemplate.execute(status -> postApi.acceptPost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setOrganizationName(Optional.of("organization name"))
                 .setLocation(Optional.of(
@@ -480,8 +339,14 @@ public class PostApiIT extends AbstractIT {
                 .setApplyWebsite(Optional.of("http://www.twitter.com"))
                 .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
                 .setComment("this looks good now - i replaced the document with the complete website for the opportunity")));
-        assertEquals(State.PENDING, postR.getState());
     
+        verifyPost(postId, user, State.PENDING,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.PENDING,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
     
@@ -495,18 +360,39 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
     
+        verifyPost(postId, user, State.ACCEPTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.ACCEPTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        
         // Check that the administrator can reject the post
-        postR = transactionTemplate.execute(status -> postApi.rejectPost(postId,
+        testUserService.setAuthentication(user.getStormpathId());
+        transactionTemplate.execute(status -> postApi.rejectPost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setComment("we have received a complaint, we're closing down the post")));
-        assertEquals(State.REJECTED, postR.getState());
     
+        verifyPost(postId, user, State.REJECTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.REJECTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
+        
         // Check that the administrator can restore the post
-        postR = transactionTemplate.execute(status -> postApi.restorePost(postId,
+        testUserService.setAuthentication(user.getStormpathId());
+        transactionTemplate.execute(status -> postApi.restorePost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setComment("sorry we made a mistake, we're restoring the post")));
-        assertEquals(State.ACCEPTED, postR.getState());
     
+        verifyPost(postId, user, State.ACCEPTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.ACCEPTED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
             post.setDeadTimestamp(liveTimestampExtend.minusSeconds(1));
@@ -516,25 +402,42 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
     
+        verifyPost(postId, user, State.EXPIRED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.EXPIRED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        
         // Check that the author can withdraw the post
         testUserService.setAuthentication(postUser.getStormpathId());
         postR = transactionTemplate.execute(status -> postApi.withdrawPost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setComment("this is rubbish, I'm withdrawing the post anyway")));
         assertEquals(State.WITHDRAWN, postR.getState());
+    
+        verifyPost(postId, user, State.WITHDRAWN,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT),
+            Collections.singletonList(Action.RESTORE));
+        verifyPost(postId, postUser, State.WITHDRAWN,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE),
+            Collections.emptyList());
+    
+        // Check that the author can restore the post
+        testUserService.setAuthentication(postUser.getStormpathId());
+        transactionTemplate.execute(status -> postApi.restorePost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setComment("oh well, i'll give it one more chance")));
+    
+        verifyPost(postId, user, State.EXPIRED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
+            Collections.singletonList(Action.WITHDRAW));
+        verifyPost(postId, postUser, State.EXPIRED,
+            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
+            Arrays.asList(Action.REJECT, Action.SUSPEND));
         
         // Test that unprivileged users cannot view the audit trail
         verifyUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost(), () -> postApi.getPostOperations(postId));
-    }
-    
-    private BoardRepresentation postBoard() {
-        testUserService.authenticateAs("department@poczta.fm");
-        return transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()));
-    }
-    
-    private PostRepresentation postPost(Long boardId) {
-        testUserService.authenticateAs("poster@poczta.fm");
-        return transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
     }
     
     private void verifyPost(User user, PostDTO postDTO, PostRepresentation postR) {
@@ -605,8 +508,8 @@ public class PostApiIT extends AbstractIT {
         assertEquals(postDTO.getApplyEmail() == null ? null : postDTO.getApplyEmail().orElse(null), postR.getApplyEmail());
     }
     
-    private void verifyPost(Long postId, String username, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {
-        User user = testUserService.authenticateAs(username);
+    private void verifyPost(Long postId, User user, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {
+        testUserService.setAuthentication(user.getStormpathId());
         transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.getPost(postId);
             assertEquals(state, postR.getState());
