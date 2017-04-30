@@ -153,14 +153,21 @@ public class PostService {
         publishAndRetirePosts();
     }
     
+    public synchronized void publishAndRetirePosts() {
+        LocalDateTime baseline = LocalDateTime.now();
+        List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
+        List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
+        executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
+        executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
+    }
+    
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ResourceChangeListRepresentation());
-        resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName(), ExceptionCode.MISSING_POST_NAME);
-        resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription(), ExceptionCode.MISSING_POST_DESCRIPTION);
-        resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName(), ExceptionCode
-            .MISSING_POST_ORGANIZATION_NAME);
-        resourcePatchService.patchLocation(post, postDTO.getLocation(), ExceptionCode.MISSING_POST_LOCATION);
+        resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
+        resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
+        resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
+        resourcePatchService.patchLocation(post, postDTO.getLocation());
         
         Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
         Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
@@ -220,14 +227,6 @@ public class PostService {
         }
         
         post.setComment(postDTO.getComment());
-    }
-    
-    synchronized void publishAndRetirePosts() {
-        LocalDateTime baseline = LocalDateTime.now();
-        List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
-        List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
-        executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
-        executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
     }
     
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

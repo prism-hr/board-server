@@ -8,8 +8,9 @@ public class ResourcePatchDTO {
         return comment;
     }
     
-    public void setComment(String comment) {
+    public ResourcePatchDTO setComment(String comment) {
         this.comment = comment;
+        return this;
     }
     
 }

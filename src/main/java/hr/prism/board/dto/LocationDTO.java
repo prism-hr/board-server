@@ -1,7 +1,5 @@
 package hr.prism.board.dto;
 
-import org.hibernate.validator.constraints.NotEmpty;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -11,12 +9,10 @@ public class LocationDTO {
     @Size(max = 255)
     private String name;
     
-    @NotEmpty
-    @Size(max = 3)
+    @Size(min = 1, max = 3)
     private String domicile;
     
-    @NotEmpty
-    @Size(max = 255)
+    @Size(min = 1, max = 255)
     private String googleId;
     
     @NotNull

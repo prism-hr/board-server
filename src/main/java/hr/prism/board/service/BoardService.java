@@ -96,10 +96,10 @@ public class BoardService {
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
         return (Board) actionService.executeAction(currentUser, board, Action.EDIT, () -> {
             board.setChangeList(new ResourceChangeListRepresentation());
-            resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.MISSING_BOARD_NAME, ExceptionCode.DUPLICATE_BOARD);
-            resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.MISSING_BOARD_HANDLE, ExceptionCode.DUPLICATE_BOARD_HANDLE);
+            resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.DUPLICATE_BOARD);
+            resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.DUPLICATE_BOARD_HANDLE);
             resourcePatchService.patchProperty(board, "defaultPostVisibility", board::getDefaultPostVisibility, board::setDefaultPostVisibility,
-                boardDTO.getDefaultPostVisibility(), ExceptionCode.MISSING_BOARD_DEFAULT_VISIBILITY);
+                boardDTO.getDefaultPostVisibility());
             resourcePatchService.patchProperty(board, "description", board::getDescription, board::setDescription, boardDTO.getDescription());
             resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             board.setComment(boardDTO.getComment());

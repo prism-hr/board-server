@@ -64,8 +64,8 @@ public abstract class AbstractIT {
         });
     }
     
-    List<User> makeUnprivilegedUsers(Long departmentId, Long boardId) {
-        List<User> otherUsers = Lists.newArrayList(testUserService.authenticate());
+    void verifyUnprivilegedUsers(Long departmentId, Long boardId, Runnable operation) {
+        List<User> unprivilegedUsers = Lists.newArrayList(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> {
             boardApi.postBoard(
                 new BoardDTO()
@@ -75,7 +75,7 @@ public abstract class AbstractIT {
             return null;
         });
         
-        otherUsers.add(testUserService.authenticate());
+        unprivilegedUsers.add(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> {
             boardApi.postBoard(
                 new BoardDTO()
@@ -85,12 +85,9 @@ public abstract class AbstractIT {
             return null;
         });
         
-        otherUsers.add(testUserService.authenticate());
+        unprivilegedUsers.add(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-        return otherUsers;
-    }
-    
-    void verifyUnprivilegedUsers(List<User> unprivilegedUsers, Runnable operation) {
+        
         unprivilegedUsers.stream().map(User::getStormpathId).forEach(stormpathId -> {
             testUserService.setAuthentication(stormpathId);
             transactionTemplate.execute(status -> {

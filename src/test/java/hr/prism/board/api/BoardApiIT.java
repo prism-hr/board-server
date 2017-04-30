@@ -28,7 +28,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.TransactionStatus;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -273,35 +272,11 @@ public class BoardApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldNotBeAbleToCorruptBoardByPatching() {
-        testUserService.authenticate();
-        Long boardId = transactionTemplate.execute((TransactionStatus status) -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    boardApi.updateBoard(boardId, new BoardPatchDTO().setName(Optional.empty())),
-                ExceptionCode.MISSING_BOARD_NAME, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    boardApi.updateBoard(boardId, new BoardPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
-                ExceptionCode.MISSING_BOARD_HANDLE, null);
-            status.setRollbackOnly();
-            return null;
-        });
-    }
-    
-    @Test
     public void shouldAuditBoardAndMakeChangesPrivatelyVisible() {
         User user = testUserService.authenticate();
         BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()));
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
-    
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId);
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -393,7 +368,7 @@ public class BoardApiIT extends AbstractIT {
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
     
         // Test that unprivileged users cannot view the audit trail
-        verifyUnprivilegedUsers(unprivilegedUsers, () -> boardApi.getBoardOperations(boardId));
+        verifyUnprivilegedUsers(departmentId, boardId, () -> boardApi.getBoardOperations(boardId));
     }
     
     private Pair<BoardRepresentation, BoardRepresentation> postTwoBoards() {

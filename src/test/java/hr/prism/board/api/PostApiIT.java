@@ -17,6 +17,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.*;
+import hr.prism.board.util.ObjectUtils;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -379,44 +380,6 @@ public class PostApiIT extends AbstractIT {
         PostRepresentation postRepresentation = postPost(boardId);
         Long postId = postRepresentation.getId();
         
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO().setName(Optional.empty())),
-                ExceptionCode.MISSING_POST_NAME, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.empty())),
-                ExceptionCode.MISSING_POST_DESCRIPTION, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO().setName(Optional.of("name")).setDescription(Optional.of("description")).setOrganizationName(Optional.empty())),
-                ExceptionCode.MISSING_POST_ORGANIZATION_NAME, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO()
-                            .setName(Optional.of("name"))
-                            .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.empty())),
-                ExceptionCode.MISSING_POST_LOCATION, null);
-            status.setRollbackOnly();
-            return null;
-        });
-    
         // TODO: coverage for missing / corrupted / invalid categories
         
         transactionTemplate.execute(status -> {
@@ -444,13 +407,88 @@ public class PostApiIT extends AbstractIT {
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
     
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId);
+        User postUser = testUserService.authenticate();
+        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
+        Assert.assertEquals(State.DRAFT, postR.getState());
+        Long postId = postR.getId();
     
+        // Test that we do not audit viewing
+        transactionTemplate.execute(status -> {
+            postApi.getPost(postId);
+            return null;
+        });
+    
+        LocalDateTime liveTimestampExtend = postR.getLiveTimestamp();
+        LocalDateTime deadTimestampExtend = postR.getDeadTimestamp();
+    
+        LocalDateTime liveTimestampSuspend = LocalDateTime.now().plusWeeks(4L).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime deadTimestampSuspend = LocalDateTime.now().plusWeeks(8L).truncatedTo(ChronoUnit.SECONDS);
+    
+        // Check that the administrator can make changes and suspend the post
         testUserService.setAuthentication(user.getStormpathId());
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
+        postR = transactionTemplate.execute(status -> postApi.suspendPost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setName(Optional.of("name 2"))
+                .setDescription(Optional.of("description 2"))
+                .setOrganizationName(Optional.of("organization name 2"))
+                .setLocation(Optional.of(
+                    new LocationDTO()
+                        .setName("london")
+                        .setDomicile("GB")
+                        .setGoogleId("ttt")
+                        .setLatitude(BigDecimal.TEN)
+                        .setLongitude(BigDecimal.TEN)))
+                .setApplyEmail(Optional.of("http://www.facebook.com"))
+                .setExistingRelation(Optional.of(ExistingRelation.STAFF))
+                .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
+                .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
+                .setMemberCategories(Optional.of(Arrays.asList("m2", "m1")))
+                .setLiveTimestamp(Optional.of(liveTimestampSuspend))
+                .setDeadTimestamp(Optional.of(deadTimestampSuspend))
+                .setComment("could you please explain what you will pay the successful applicant")));
+        assertEquals(State.SUSPENDED, postR.getState());
     
+        // Check that the author can make changes and correct the post
+        testUserService.setAuthentication(postUser.getStormpathId());
+        postR = transactionTemplate.execute(status -> postApi.correctPost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setOrganizationName(Optional.of("organization name"))
+                .setLocation(Optional.of(
+                    new LocationDTO()
+                        .setName("birmingham")
+                        .setDomicile("GB")
+                        .setGoogleId("uuu")
+                        .setLatitude(BigDecimal.ZERO)
+                        .setLongitude(BigDecimal.ZERO)))
+                .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
+                .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
+                .setLiveTimestamp(Optional.of(liveTimestampExtend))
+                .setDeadTimestamp(Optional.of(deadTimestampExtend))
+                .setComment("i uploaded a document this time which explains that")));
+        assertEquals(State.DRAFT, postR.getState());
+    
+        // Check that the administrator can make further changes and accept the post
+        testUserService.setAuthentication(user.getStormpathId());
+        postR = transactionTemplate.execute(status -> postApi.correctPost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setOrganizationName(Optional.of("organization name"))
+                .setLocation(Optional.of(
+                    new LocationDTO()
+                        .setName("birmingham")
+                        .setDomicile("GB")
+                        .setGoogleId("uuu")
+                        .setLatitude(BigDecimal.ZERO)
+                        .setLongitude(BigDecimal.ZERO)))
+                .setApplyEmail(Optional.of("http://www.twitter.com"))
+                .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
+                .setComment("this looks good now")));
+        assertEquals(State.PENDING, postR.getState());
+    
+        // Check that the post stays in pending state when scheduler runs
+        verifyPublishAndRetirePost(postId, State.PENDING);
+        
         // Test that unprivileged users cannot view the audit trail
-        verifyUnprivilegedUsers(unprivilegedUsers, () -> postApi.getPost(postId));
+        verifyUnprivilegedUsers(departmentId, boardId, () -> postApi.getPost(postId));
     }
     
     private BoardRepresentation postBoard() {
@@ -511,20 +549,20 @@ public class PostApiIT extends AbstractIT {
         assertEquals(locationDTO.getName(), locationR.getName());
         assertEquals(locationDTO.getDomicile(), locationR.getDomicile());
         assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
-        assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
-        assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
-        
-        assertThat(postR.getPostCategories(), containsInAnyOrder(postDTO.getPostCategories().orElse(null).toArray()));
-        assertThat(postR.getMemberCategories(), containsInAnyOrder(postDTO.getMemberCategories().orElse(null).toArray()));
-        assertEquals(postDTO.getApplyWebsite() != null ? postDTO.getApplyWebsite().orElse(null) : null, postR.getApplyWebsite());
+        assertEquals(locationDTO.getLatitude(), locationR.getLatitude());
+        assertEquals(locationDTO.getLongitude(), locationR.getLongitude());
+    
+        assertEquals(postDTO.getPostCategories().orElse(null), postR.getPostCategories());
+        assertEquals(postDTO.getMemberCategories().orElse(null), postR.getMemberCategories());
+        assertEquals(postDTO.getApplyWebsite().orElse(null), postR.getApplyWebsite());
         
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument().orElse(null);
         assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
         assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
         assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-        
-        assertEquals(postDTO.getApplyEmail() != null ? postDTO.getApplyEmail().orElse(null) : null, postR.getApplyEmail());
+    
+        assertEquals(postDTO.getApplyEmail().orElse(null), postR.getApplyEmail());
     }
     
     private void verifyPost(Long postId, String username, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {
@@ -541,6 +579,17 @@ public class PostApiIT extends AbstractIT {
             ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> actionService.executeAction(user, post, forbiddenAction, null),
                 ExceptionCode.FORBIDDEN_ACTION, null);
         }
+    }
+    
+    private void verifyPublishAndRetirePost(Long postId, State expectedState) {
+        PostRepresentation postR;
+        transactionTemplate.execute(status -> {
+            postService.publishAndRetirePosts();
+            return null;
+        });
+        
+        postR = transactionTemplate.execute(status -> postApi.getPost(postId));
+        Assert.assertEquals(expectedState, postR.getState());
     }
     
 }

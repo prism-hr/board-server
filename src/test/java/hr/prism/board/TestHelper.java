@@ -10,6 +10,7 @@ import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.util.ObjectUtils;
 import org.junit.Assert;
 
 import java.math.BigDecimal;
@@ -55,6 +56,7 @@ public class TestHelper {
                 .setLongitude(BigDecimal.ONE))
             .setApplyWebsite("http://www.google.co.uk")
             .setExistingRelation(ExistingRelation.STUDENT)
+            .setExistingRelationExplanation(ObjectUtils.orderedMap("studyLevel", "MASTER"))
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
@@ -74,6 +76,7 @@ public class TestHelper {
             .setPostCategories(Arrays.asList("p1", "p2"))
             .setMemberCategories(Arrays.asList("m1", "m2"))
             .setExistingRelation(ExistingRelation.STUDENT)
+            .setExistingRelationExplanation(ObjectUtils.orderedMap("studyLevel", "MASTER"))
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }

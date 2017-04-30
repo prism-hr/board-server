@@ -6,7 +6,6 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.enums.CategoryType;
-import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +18,7 @@ import java.util.Optional;
 
 @Service
 @Transactional
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class ResourcePatchService {
     
     @Inject
@@ -30,7 +30,7 @@ public class ResourcePatchService {
     @Inject
     private ResourceService resourceService;
     
-    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
+    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getName();
             if (newValueOptional.isPresent()) {
@@ -42,15 +42,13 @@ public class ResourcePatchService {
     
                     patchProperty(resource, "name", resource::setName, oldValue, newValue);
                 }
-            } else if (required != null) {
-                throw new ApiException(required);
             } else if (oldValue != null) {
                 patchProperty(resource, "name", resource::setName, oldValue, null);
             }
         }
     }
     
-    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode required, ExceptionCode unique) {
+    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
             if (newValueOptional.isPresent()) {
@@ -65,8 +63,6 @@ public class ResourcePatchService {
                 }
     
                 patchHandle(resource, oldValue, newValue);
-            } else if (required != null) {
-                throw new ApiException(required);
             } else if (oldValue != null) {
                 patchHandle(resource, oldValue, null);
             }
@@ -74,15 +70,7 @@ public class ResourcePatchService {
     }
     
     public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional) {
-        patchProperty(resource, property, getter, setter, newValueOptional, null, null);
-    }
-    
-    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required) {
-        patchProperty(resource, property, getter, setter, newValueOptional, required, null);
-    }
-    
-    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, Runnable after) {
-        patchProperty(resource, property, getter, setter, newValueOptional, null, after);
+        patchProperty(resource, property, getter, setter, newValueOptional, null);
     }
     
     public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
@@ -107,7 +95,7 @@ public class ResourcePatchService {
         }
     }
     
-    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional, ExceptionCode required) {
+    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional) {
         if (newValueOptional != null) {
             Location oldValue = resource.getLocation();
             if (newValueOptional.isPresent()) {
@@ -115,8 +103,6 @@ public class ResourcePatchService {
                 if (oldValue == null || !Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
                     patchLocation(resource, oldValue, newValue);
                 }
-            } else if (required != null) {
-                throw new ApiException(required);
             } else if (oldValue != null) {
                 patchLocation(resource, oldValue, null);
             }
@@ -137,7 +123,7 @@ public class ResourcePatchService {
         }
     }
     
-    private <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, ExceptionCode required, Runnable after) {
+    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, Runnable after) {
         if (newValueOptional != null) {
             T oldValue = getter.get();
             if (newValueOptional.isPresent()) {
@@ -149,8 +135,6 @@ public class ResourcePatchService {
                 if (after != null) {
                     after.run();
                 }
-            } else if (required != null) {
-                throw new ApiException(required);
             } else if (oldValue != null) {
                 patchProperty(resource, property, setter, oldValue, null);
             }

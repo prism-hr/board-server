@@ -2,25 +2,28 @@ package hr.prism.board.dto;
 
 import hr.prism.board.enums.PostVisibility;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class BoardPatchDTO extends ResourcePatchDTO {
     
-    @Size(min = 1, max = 255)
+    @Size(min = 3, max = 100)
     private Optional<String> name;
     
-    @Size(min = 1, max = 2000)
+    @Size(min = 3, max = 2000)
     private Optional<String> description;
     
-    @Size(max = 25)
+    @Size(min = 1, max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
     
     private Optional<List<String>> postCategories;
     
+    @NotNull
     private Optional<PostVisibility> defaultPostVisibility;
     
     public Optional<String> getName() {

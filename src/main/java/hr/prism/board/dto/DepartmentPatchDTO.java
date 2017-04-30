@@ -6,15 +6,16 @@ import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class DepartmentPatchDTO extends ResourcePatchDTO {
     
-    @Size(min = 1, max = 255)
+    @Size(min = 3, max = 100)
     private Optional<String> name;
     
     @Valid
     private Optional<DocumentDTO> documentLogo;
     
-    @Size(max = 25)
+    @Size(min = 1, max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
     

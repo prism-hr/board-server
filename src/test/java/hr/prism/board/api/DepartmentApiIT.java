@@ -137,39 +137,11 @@ public class DepartmentApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldNotBeAbleToCorruptDepartmentByPatching() {
-        testUserService.authenticate();
-        Long departmentId = transactionTemplate.execute(transactionStatus -> {
-            BoardDTO boardDTO = TestHelper.sampleBoard();
-            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-            return boardR.getDepartment().getId();
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setName(Optional.empty())),
-                ExceptionCode.MISSING_DEPARTMENT_NAME, null);
-            status.setRollbackOnly();
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setName(Optional.of("name")).setHandle(Optional.empty())),
-                ExceptionCode.MISSING_DEPARTMENT_HANDLE, null);
-            status.setRollbackOnly();
-            return null;
-        });
-    }
-    
-    @Test
     public void shouldAuditDepartmentAndMakeChangesPrivatelyVisible() {
         User user = testUserService.authenticate();
         BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()));
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
-    
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId);
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -260,7 +232,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
         
         // Test that other board administrator cannot view audit trail
-        verifyUnprivilegedUsers(unprivilegedUsers, () -> departmentApi.getDepartmentOperations(departmentId));
+        verifyUnprivilegedUsers(departmentId, boardId, () -> departmentApi.getDepartmentOperations(departmentId));
     }
     
     private Pair<DepartmentRepresentation, DepartmentRepresentation> postTwoDepartments() {
