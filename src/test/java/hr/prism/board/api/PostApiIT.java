@@ -438,7 +438,7 @@ public class PostApiIT extends AbstractIT {
                         .setGoogleId("ttt")
                         .setLatitude(BigDecimal.TEN)
                         .setLongitude(BigDecimal.TEN)))
-                .setApplyEmail(Optional.of("http://www.facebook.com"))
+                .setApplyWebsite(Optional.of("http://www.facebook.com"))
                 .setExistingRelation(Optional.of(ExistingRelation.STAFF))
                 .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
                 .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
@@ -462,14 +462,12 @@ public class PostApiIT extends AbstractIT {
                         .setLongitude(BigDecimal.ZERO)))
                 .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
                 .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
-                .setLiveTimestamp(Optional.of(liveTimestampExtend))
-                .setDeadTimestamp(Optional.of(deadTimestampExtend))
                 .setComment("i uploaded a document this time which explains that")));
         assertEquals(State.DRAFT, postR.getState());
     
         // Check that the administrator can make further changes and accept the post
         testUserService.setAuthentication(user.getStormpathId());
-        postR = transactionTemplate.execute(status -> postApi.correctPost(postId,
+        postR = transactionTemplate.execute(status -> postApi.acceptPost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setOrganizationName(Optional.of("organization name"))
                 .setLocation(Optional.of(
@@ -479,16 +477,16 @@ public class PostApiIT extends AbstractIT {
                         .setGoogleId("uuu")
                         .setLatitude(BigDecimal.ZERO)
                         .setLongitude(BigDecimal.ZERO)))
-                .setApplyEmail(Optional.of("http://www.twitter.com"))
+                .setApplyWebsite(Optional.of("http://www.twitter.com"))
                 .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
-                .setComment("this looks good now")));
+                .setComment("this looks good now - i replaced the document with the complete website for the opportunity")));
         assertEquals(State.PENDING, postR.getState());
     
         // Check that the post stays in pending state when scheduler runs
         verifyPublishAndRetirePost(postId, State.PENDING);
         
         // Test that unprivileged users cannot view the audit trail
-        verifyUnprivilegedUsers(departmentId, boardId, () -> postApi.getPost(postId));
+        verifyUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost(), () -> postApi.getPostOperations(postId));
     }
     
     private BoardRepresentation postBoard() {
@@ -554,15 +552,19 @@ public class PostApiIT extends AbstractIT {
     
         assertEquals(postDTO.getPostCategories().orElse(null), postR.getPostCategories());
         assertEquals(postDTO.getMemberCategories().orElse(null), postR.getMemberCategories());
-        assertEquals(postDTO.getApplyWebsite().orElse(null), postR.getApplyWebsite());
+        assertEquals(postDTO.getApplyWebsite() == null ? null : postDTO.getApplyWebsite().orElse(null), postR.getApplyWebsite());
         
         DocumentRepresentation applyDocumentR = postR.getApplyDocument();
         DocumentDTO applyDocumentDTO = postDTO.getApplyDocument().orElse(null);
-        assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
-        assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
-        assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
+        if (applyDocumentDTO == null) {
+            Assert.assertNull(applyDocumentR);
+        } else {
+            assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
+            assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
+            assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
+        }
     
-        assertEquals(postDTO.getApplyEmail().orElse(null), postR.getApplyEmail());
+        assertEquals(postDTO.getApplyEmail() == null ? null : postDTO.getApplyEmail().orElse(null), postR.getApplyEmail());
     }
     
     private void verifyPost(Long postId, String username, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {

@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 @SuppressWarnings("JpaQlInspection")
 public interface ResourceRepository extends MyRepository<Resource, Long> {
     
+    Resource findByHandle(String handle);
+    
     @Modifying
     @Query(value =
         "update resource " +

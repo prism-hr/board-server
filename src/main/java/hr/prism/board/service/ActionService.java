@@ -29,32 +29,34 @@ public class ActionService {
     
     public Resource executeAction(User user, Resource resource, Action action, ActionExecutionTemplate executionTemplate) {
         List<ActionRepresentation> actions = resource.getActions();
-        for (ActionRepresentation actionRepresentation : actions) {
-            if (actionRepresentation.getAction() == action) {
-                resource = executionTemplate.executeWithAction();
-                if (action.isResourceOperation()) {
-                    State state = resource.getState();
-                    State newState = actionRepresentation.getState();
-                    if (newState == null) {
-                        newState = state;
-                    } else if (newState == State.PREVIOUS) {
-                        newState = resource.getPreviousState();
+        if (actions != null) {
+            for (ActionRepresentation actionRepresentation : actions) {
+                if (actionRepresentation.getAction() == action) {
+                    resource = executionTemplate.executeWithAction();
+                    if (action.isResourceOperation()) {
+                        State state = resource.getState();
+                        State newState = actionRepresentation.getState();
+                        if (newState == null) {
+                            newState = state;
+                        } else if (newState == State.PREVIOUS) {
+                            newState = resource.getPreviousState();
+                        }
+                    
+                        Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
+                        if (interceptorClass != null) {
+                            newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
+                        }
+                    
+                        if (state != newState) {
+                            resourceService.updateState(resource, newState);
+                            resource = resourceService.getResource(user, resource.getScope(), resource.getId());
+                        }
+                    
+                        resourceService.createResourceOperation(resource, action, user);
                     }
-        
-                    Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
-                    if (interceptorClass != null) {
-                        newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
-                    }
-        
-                    if (state != newState) {
-                        resourceService.updateState(resource, newState);
-                        resource = resourceService.getResource(user, resource.getScope(), resource.getId());
-                    }
-    
-                    resourceService.createResourceOperation(resource, action, user);
-                }
                 
-                return resource;
+                    return resource;
+                }
             }
         }
     

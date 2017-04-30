@@ -161,12 +161,12 @@ public class ResourceService {
     
     public Resource getResource(User user, Scope scope, Long id) {
         List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id));
-        return resources.isEmpty() ? null : resources.get(0);
+        return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
     }
     
     public Resource getResource(User user, Scope scope, String handle) {
         List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle));
-        return resources.isEmpty() ? null : resources.get(0);
+        return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
     }
     
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {

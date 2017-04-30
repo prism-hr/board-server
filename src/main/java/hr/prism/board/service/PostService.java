@@ -300,7 +300,7 @@ public class PostService {
                         "FROM resource " +
                         "WHERE resource.id IN (:postIds) " +
                         "ORDER BY resource.id")
-                    .setParameter("action", action)
+                    .setParameter("action", action.name())
                     .setParameter("baseline", baseline)
                     .setParameter("postIds", postIds)
                     .executeUpdate();

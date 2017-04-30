@@ -232,7 +232,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
         
         // Test that other board administrator cannot view audit trail
-        verifyUnprivilegedUsers(departmentId, boardId, () -> departmentApi.getDepartmentOperations(departmentId));
+        verifyUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost(), () -> departmentApi.getDepartmentOperations(departmentId));
     }
     
     private Pair<DepartmentRepresentation, DepartmentRepresentation> postTwoDepartments() {

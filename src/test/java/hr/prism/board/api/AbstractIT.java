@@ -1,10 +1,10 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.Lists;
-import hr.prism.board.TestHelper;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.PostDTO;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
@@ -64,7 +64,7 @@ public abstract class AbstractIT {
         });
     }
     
-    void verifyUnprivilegedUsers(Long departmentId, Long boardId, Runnable operation) {
+    void verifyUnprivilegedUsers(Long departmentId, Long boardId, PostDTO samplePost, Runnable operation) {
         List<User> unprivilegedUsers = Lists.newArrayList(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> {
             boardApi.postBoard(
@@ -86,7 +86,7 @@ public abstract class AbstractIT {
         });
         
         unprivilegedUsers.add(testUserService.authenticate());
-        transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, samplePost));
         
         unprivilegedUsers.stream().map(User::getStormpathId).forEach(stormpathId -> {
             testUserService.setAuthentication(stormpathId);

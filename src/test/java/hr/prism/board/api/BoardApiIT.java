@@ -368,7 +368,7 @@ public class BoardApiIT extends AbstractIT {
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
     
         // Test that unprivileged users cannot view the audit trail
-        verifyUnprivilegedUsers(departmentId, boardId, () -> boardApi.getBoardOperations(boardId));
+        verifyUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost(), () -> boardApi.getBoardOperations(boardId));
     }
     
     private Pair<BoardRepresentation, BoardRepresentation> postTwoBoards() {
