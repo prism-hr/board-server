@@ -252,12 +252,8 @@ public class PostApiIT extends AbstractIT {
         Assert.assertEquals(State.DRAFT, postR.getState());
         Long postId = postR.getId();
     
-        verifyPost(postId, user, State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -294,12 +290,8 @@ public class PostApiIT extends AbstractIT {
                 .setDeadTimestamp(Optional.of(deadTimestampSuspend))
                 .setComment("could you please explain what you will pay the successful applicant")));
     
-        verifyPost(postId, user, State.SUSPENDED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.SUSPENDED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT),
-            Arrays.asList(Action.ACCEPT, Action.REJECT));
+        verifyPost(postId, user, State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT));
+        verifyPost(postId, postUser, State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT));
         
         // Check that the author can make changes and correct the post
         testUserService.setAuthentication(postUser.getStormpathId());
@@ -317,12 +309,8 @@ public class PostApiIT extends AbstractIT {
                 .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
                 .setComment("i uploaded a document this time which explains that")));
     
-        verifyPost(postId, user, State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.DRAFT,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Check that the administrator can make further changes and accept the post
         testUserService.setAuthentication(user.getStormpathId());
@@ -340,12 +328,8 @@ public class PostApiIT extends AbstractIT {
                 .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
                 .setComment("this looks good now - i replaced the document with the complete website for the opportunity")));
     
-        verifyPost(postId, user, State.PENDING,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.PENDING,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
@@ -360,12 +344,8 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
     
-        verifyPost(postId, user, State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Check that the administrator can reject the post
         testUserService.setAuthentication(user.getStormpathId());
@@ -373,12 +353,8 @@ public class PostApiIT extends AbstractIT {
             (PostPatchDTO) new PostPatchDTO()
                 .setComment("we have received a complaint, we're closing down the post")));
     
-        verifyPost(postId, user, State.REJECTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.REJECTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
+        verifyPost(postId, user, State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
+        verifyPost(postId, postUser, State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Check that the administrator can restore the post
         testUserService.setAuthentication(user.getStormpathId());
@@ -386,12 +362,8 @@ public class PostApiIT extends AbstractIT {
             (PostPatchDTO) new PostPatchDTO()
                 .setComment("sorry we made a mistake, we're restoring the post")));
     
-        verifyPost(postId, user, State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.ACCEPTED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
@@ -402,12 +374,8 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
     
-        verifyPost(postId, user, State.EXPIRED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.EXPIRED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Check that the author can withdraw the post
         testUserService.setAuthentication(postUser.getStormpathId());
@@ -416,25 +384,17 @@ public class PostApiIT extends AbstractIT {
                 .setComment("this is rubbish, I'm withdrawing the post anyway")));
         assertEquals(State.WITHDRAWN, postR.getState());
     
-        verifyPost(postId, user, State.WITHDRAWN,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT),
-            Collections.singletonList(Action.RESTORE));
-        verifyPost(postId, postUser, State.WITHDRAWN,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE),
-            Collections.emptyList());
-    
+        verifyPost(postId, user, State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT));
+        verifyPost(postId, postUser, State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE));
+        
         // Check that the author can restore the post
         testUserService.setAuthentication(postUser.getStormpathId());
         transactionTemplate.execute(status -> postApi.restorePost(postId,
             (PostPatchDTO) new PostPatchDTO()
                 .setComment("oh well, i'll give it one more chance")));
     
-        verifyPost(postId, user, State.EXPIRED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND),
-            Collections.singletonList(Action.WITHDRAW));
-        verifyPost(postId, postUser, State.EXPIRED,
-            Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW),
-            Arrays.asList(Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, user, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
+        verifyPost(postId, postUser, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
         
         // Test that unprivileged users cannot view the audit trail
         verifyUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost(), () -> postApi.getPostOperations(postId));
@@ -508,19 +468,21 @@ public class PostApiIT extends AbstractIT {
         assertEquals(postDTO.getApplyEmail() == null ? null : postDTO.getApplyEmail().orElse(null), postR.getApplyEmail());
     }
     
-    private void verifyPost(Long postId, User user, State state, Collection<Action> actions, Collection<Action> forbiddenActions) {
+    private void verifyPost(Long postId, User user, State state, Collection<Action> actions) {
         testUserService.setAuthentication(user.getStormpathId());
-        transactionTemplate.execute(status -> {
-            PostRepresentation postR = postApi.getPost(postId);
-            assertEquals(state, postR.getState());
-            assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(actions.toArray(new Action[0])));
-            return null;
-        });
+        PostRepresentation postR = transactionTemplate.execute(status -> postApi.getPost(postId));
+        Assert.assertEquals(state, postR.getState());
         
         Post post = postService.getPost(postId);
-        for (Action forbiddenAction : forbiddenActions) {
-            ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> actionService.executeAction(user, post, forbiddenAction, null),
-                ExceptionCode.FORBIDDEN_ACTION, null);
+        for (Action action : Action.values()) {
+            if (actions.contains(action)) {
+                assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+                    Matchers.containsInAnyOrder(actions.toArray(new Action[0])));
+            } else {
+                ExceptionUtil.verifyApiException(ApiForbiddenException.class,
+                    () -> actionService.executeAction(user, post, action, null),
+                    ExceptionCode.FORBIDDEN_ACTION, null);
+            }
         }
     }
     
