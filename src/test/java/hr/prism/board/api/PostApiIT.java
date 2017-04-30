@@ -482,8 +482,46 @@ public class PostApiIT extends AbstractIT {
                 .setComment("this looks good now - i replaced the document with the complete website for the opportunity")));
         assertEquals(State.PENDING, postR.getState());
     
-        // Check that the post stays in pending state when scheduler runs
+        // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
+    
+        transactionTemplate.execute(status -> {
+            Post post = postService.getPost(postId);
+            post.setLiveTimestamp(liveTimestampExtend);
+            post.setDeadTimestamp(deadTimestampExtend);
+            return null;
+        });
+    
+        // Check that the post now moves to the accepted state when the update job runs
+        verifyPublishAndRetirePost(postId, State.ACCEPTED);
+    
+        // Check that the administrator can reject the post
+        postR = transactionTemplate.execute(status -> postApi.rejectPost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setComment("we have received a complaint, we're closing down the post")));
+        assertEquals(State.REJECTED, postR.getState());
+    
+        // Check that the administrator can restore the post
+        postR = transactionTemplate.execute(status -> postApi.restorePost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setComment("sorry we made a mistake, we're restoring the post")));
+        assertEquals(State.ACCEPTED, postR.getState());
+    
+        transactionTemplate.execute(status -> {
+            Post post = postService.getPost(postId);
+            post.setDeadTimestamp(liveTimestampExtend.minusSeconds(1));
+            return null;
+        });
+    
+        // Check that the post now moves to the expired state when the update job runs
+        verifyPublishAndRetirePost(postId, State.EXPIRED);
+    
+        // Check that the author can withdraw the post
+        testUserService.setAuthentication(postUser.getStormpathId());
+        postR = transactionTemplate.execute(status -> postApi.withdrawPost(postId,
+            (PostPatchDTO) new PostPatchDTO()
+                .setComment("this is rubbish, I'm withdrawing the post anyway")));
+        assertEquals(State.WITHDRAWN, postR.getState());
         
         // Test that unprivileged users cannot view the audit trail
         verifyUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost(), () -> postApi.getPostOperations(postId));
