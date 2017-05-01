@@ -1,5 +1,7 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.definition.LocationDefinition;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -7,7 +9,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "location")
-public class Location extends BoardEntity {
+public class Location extends BoardEntity implements LocationDefinition {
     
     @Column(name = "name", nullable = false)
     private String name;

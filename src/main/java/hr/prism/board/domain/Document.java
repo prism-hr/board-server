@@ -1,12 +1,14 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.definition.DocumentDefinition;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
 @Table(name = "document")
-public class Document extends BoardEntity {
+public class Document extends BoardEntity implements DocumentDefinition {
     
     @Column(name = "cloudinary_id", nullable = false)
     private String cloudinaryId;

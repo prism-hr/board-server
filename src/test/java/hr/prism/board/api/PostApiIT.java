@@ -3,20 +3,24 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.TestHelper;
+import hr.prism.board.definition.DocumentDefinition;
+import hr.prism.board.definition.LocationDefinition;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.*;
+import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.PostService;
+import hr.prism.board.service.TestUserService;
 import hr.prism.board.util.ObjectUtils;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
@@ -36,8 +40,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -56,9 +59,6 @@ public class PostApiIT extends AbstractIT {
     private PostService postService;
     
     @Inject
-    private BoardService boardService;
-    
-    @Inject
     private DepartmentService departmentService;
     
     @Inject
@@ -67,15 +67,12 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private TestUserService testUserService;
     
-    @Inject
-    private ActionService actionService;
-    
     @Test
     public void shouldCreatePost() {
         User user = testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
+        verifyPostPost(user, boardId,
+            new PostDTO()
                 .setName("post")
                 .setDescription("description")
                 .setOrganizationName("organization name")
@@ -86,53 +83,7 @@ public class PostApiIT extends AbstractIT {
                 .setMemberCategories(ImmutableList.of("m1", "m3"))
                 .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
                 .setLiveTimestamp(LocalDateTime.now().plus(1, ChronoUnit.MONTHS))
-                .setDeadTimestamp(LocalDateTime.now().plus(1, ChronoUnit.YEARS));
-    
-            PostRepresentation postR = postApi.postPost(boardId, postDTO);
-            verifyPost(user, postDTO, postR);
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldUpdatePost() {
-        testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
-            new PostDTO()
-                .setName("New Post")
-                .setDescription("description")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
-                    .setGoogleId("GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(ExistingRelation.STUDENT)
-                .setPostCategories(ImmutableList.of("p1", "p3"))
-                .setMemberCategories(ImmutableList.of("m1", "m3"))
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now().plus(1, ChronoUnit.MONTHS))
-                .setDeadTimestamp(LocalDateTime.now()))
-            .getId());
-        
-        transactionTemplate.execute(status -> {
-            PostPatchDTO postPatchDTO = new PostPatchDTO()
-                .setName(Optional.of("shouldUpdatePost Board2"))
-                .setDescription(Optional.of("Desc"))
-                .setOrganizationName(Optional.of("shouldUpdatePost Organization2"))
-                .setLocation(Optional.of(new LocationDTO().setName("location2").setDomicile("NG")
-                    .setGoogleId("shouldUpdatePost GoogleId2").setLatitude(BigDecimal.TEN).setLongitude(BigDecimal.TEN)))
-                .setPostCategories(Optional.of(ImmutableList.of("p2", "p3")))
-                .setMemberCategories(Optional.of(ImmutableList.of("m2", "m3")))
-                .setApplyDocument(Optional.of(new DocumentDTO().setFileName("file2").setCloudinaryId("shouldUpdatePost CloudinaryId2").setCloudinaryUrl("http://cloudinary2.com")))
-                .setLiveTimestamp(Optional.empty())
-                .setDeadTimestamp(Optional.empty());
-            PostRepresentation postR = postApi.updatePost(postId, postPatchDTO);
-            
-            // make sure timestamps are set to defaults
-            postPatchDTO.setLiveTimestamp(Optional.of(LocalDateTime.now()));
-            postPatchDTO.setLiveTimestamp(Optional.of(LocalDateTime.now().plus(1, ChronoUnit.MONTHS)));
-            verifyPost(postPatchDTO, postR);
-            return null;
-        });
+                .setDeadTimestamp(LocalDateTime.now().plus(1, ChronoUnit.YEARS)));
     }
     
     @Test
@@ -165,6 +116,32 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithoutCategoriesForBoardWithCategories() {
         
+    }
+    
+    @Test
+    public void shouldNotBeAbleToCorruptPostByPatching() {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
+        
+        // TODO: coverage for missing / corrupted / invalid categories
+        
+        transactionTemplate.execute(status -> {
+            ExceptionUtil.verifyApiException(ApiException.class, () ->
+                    postApi.updatePost(postId,
+                        new PostPatchDTO()
+                            .setName(Optional.of("name"))
+                            .setDescription(Optional.of("description"))
+                            .setOrganizationName(Optional.of("organization name"))
+                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
+                                .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                            .setApplyWebsite(Optional.empty())
+                            .setApplyEmail(Optional.empty())
+                            .setApplyDocument(Optional.empty())),
+                ExceptionCode.MISSING_POST_APPLY, null);
+            status.setRollbackOnly();
+            return null;
+        });
     }
     
     @Test
@@ -215,47 +192,42 @@ public class PostApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldNotBeAbleToCorruptPostByPatching() {
-        testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
-        
-        // TODO: coverage for missing / corrupted / invalid categories
-        
-        transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO()
-                            .setName(Optional.of("name"))
-                            .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
-                                .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                            .setApplyWebsite(Optional.empty())
-                            .setApplyEmail(Optional.empty())
-                            .setApplyDocument(Optional.empty())),
-                ExceptionCode.MISSING_POST_APPLY, null);
-            status.setRollbackOnly();
-            return null;
-        });
-    }
-    
-    @Test
     public void shouldAuditPostAndMakeChangesPrivatelyVisible() {
-        User user = testUserService.authenticate();
+        // Create admin users / resources
+        User dUser = testUserService.authenticate();
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()));
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
     
-        User postUser = testUserService.authenticate();
-        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
-        Assert.assertEquals(State.DRAFT, postR.getState());
+        User bUser = testUserService.authenticate();
+        Board board = boardService.getBoard(boardId);
+        transactionTemplate.execute(status -> {
+            userRoleService.createUserRole(board, bUser, Role.ADMINISTRATOR);
+            return null;
+        });
+    
+        List<User> aUsers = Arrays.asList(dUser, bUser);
+    
+        // Create resource user
+        User pUser = testUserService.authenticate();
+        PostRepresentation postR = verifyPostPost(pUser, boardId, TestHelper.samplePost());
+    
+        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
         Long postId = postR.getId();
     
-        verifyPost(postId, user, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        
-        // Test that we do not audit viewing
+        // Create unprivileged users
+        List<User> uUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
+    
+        // Check submission
+        verifyResourceActions(
+            Scope.POST, postId, State.DRAFT,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND)));
+    
+        // Check that we do not audit viewing
         transactionTemplate.execute(status -> {
             postApi.getPost(postId);
             return null;
@@ -268,222 +240,270 @@ public class PostApiIT extends AbstractIT {
         LocalDateTime deadTimestampSuspend = LocalDateTime.now().plusWeeks(8L).truncatedTo(ChronoUnit.SECONDS);
     
         // Check that the administrator can make changes and suspend the post
-        testUserService.setAuthentication(user.getStormpathId());
-        transactionTemplate.execute(status -> postApi.suspendPost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setName(Optional.of("name 2"))
-                .setDescription(Optional.of("description 2"))
-                .setOrganizationName(Optional.of("organization name 2"))
-                .setLocation(Optional.of(
-                    new LocationDTO()
-                        .setName("london")
-                        .setDomicile("GB")
-                        .setGoogleId("ttt")
-                        .setLatitude(BigDecimal.TEN)
-                        .setLongitude(BigDecimal.TEN)))
-                .setApplyWebsite(Optional.of("http://www.facebook.com"))
-                .setExistingRelation(Optional.of(ExistingRelation.STAFF))
-                .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
-                .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
-                .setMemberCategories(Optional.of(Arrays.asList("m2", "m1")))
-                .setLiveTimestamp(Optional.of(liveTimestampSuspend))
-                .setDeadTimestamp(Optional.of(deadTimestampSuspend))
-                .setComment("could you please explain what you will pay the successful applicant")));
+        testUserService.setAuthentication(dUser.getStormpathId());
+        PostPatchDTO postSuspendDTO = (PostPatchDTO) new PostPatchDTO()
+            .setName(Optional.of("name 2"))
+            .setDescription(Optional.of("description 2"))
+            .setOrganizationName(Optional.of("organization name 2"))
+            .setLocation(Optional.of(
+                new LocationDTO()
+                    .setName("london")
+                    .setDomicile("GB")
+                    .setGoogleId("ttt")
+                    .setLatitude(BigDecimal.TEN)
+                    .setLongitude(BigDecimal.TEN)))
+            .setApplyWebsite(Optional.of("http://www.facebook.com"))
+            .setExistingRelation(Optional.of(ExistingRelation.STAFF))
+            .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
+            .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
+            .setMemberCategories(Optional.of(Arrays.asList("m2", "m1")))
+            .setLiveTimestamp(Optional.of(liveTimestampSuspend))
+            .setDeadTimestamp(Optional.of(deadTimestampSuspend))
+            .setComment("could you please explain what you will pay the successful applicant");
     
-        verifyPost(postId, user, State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT));
-        verifyPost(postId, postUser, State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT));
+        postR = transactionTemplate.execute(status -> postApi.suspendPost(postId, postSuspendDTO));
+        Post post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postSuspendDTO, postR);
+    
+        verifyResourceActions(
+            Scope.POST, postId, State.SUSPENDED,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT)));
         
         // Check that the author can make changes and correct the post
-        testUserService.setAuthentication(postUser.getStormpathId());
-        transactionTemplate.execute(status -> postApi.correctPost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setOrganizationName(Optional.of("organization name"))
-                .setLocation(Optional.of(
-                    new LocationDTO()
-                        .setName("birmingham")
-                        .setDomicile("GB")
-                        .setGoogleId("uuu")
-                        .setLatitude(BigDecimal.ZERO)
-                        .setLongitude(BigDecimal.ZERO)))
-                .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-                .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
-                .setComment("i uploaded a document this time which explains that")));
+        testUserService.setAuthentication(pUser.getStormpathId());
+        PostPatchDTO postCorrectDTO = (PostPatchDTO) new PostPatchDTO()
+            .setOrganizationName(Optional.of("organization name"))
+            .setLocation(Optional.of(
+                new LocationDTO()
+                    .setName("birmingham")
+                    .setDomicile("GB")
+                    .setGoogleId("uuu")
+                    .setLatitude(BigDecimal.ZERO)
+                    .setLongitude(BigDecimal.ZERO)))
+            .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
+            .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
+            .setComment("i uploaded a document this time which explains that");
     
-        verifyPost(postId, user, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
+        postR = transactionTemplate.execute(status -> postApi.correctPost(postId, postCorrectDTO));
+        post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postCorrectDTO, postR);
+    
+        verifyResourceActions(
+            Scope.POST, postId, State.DRAFT,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND)));
         
         // Check that the administrator can make further changes and accept the post
-        testUserService.setAuthentication(user.getStormpathId());
-        transactionTemplate.execute(status -> postApi.acceptPost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setOrganizationName(Optional.of("organization name"))
-                .setLocation(Optional.of(
-                    new LocationDTO()
-                        .setName("birmingham")
-                        .setDomicile("GB")
-                        .setGoogleId("uuu")
-                        .setLatitude(BigDecimal.ZERO)
-                        .setLongitude(BigDecimal.ZERO)))
-                .setApplyWebsite(Optional.of("http://www.twitter.com"))
-                .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
-                .setComment("this looks good now - i replaced the document with the complete website for the opportunity")));
+        testUserService.setAuthentication(bUser.getStormpathId());
+        PostPatchDTO postAcceptDTO = (PostPatchDTO) new PostPatchDTO()
+            .setOrganizationName(Optional.of("organization name"))
+            .setLocation(Optional.of(
+                new LocationDTO()
+                    .setName("birmingham")
+                    .setDomicile("GB")
+                    .setGoogleId("uuu")
+                    .setLatitude(BigDecimal.ZERO)
+                    .setLongitude(BigDecimal.ZERO)))
+            .setApplyWebsite(Optional.of("http://www.twitter.com"))
+            .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
+            .setComment("this looks good now - i replaced the document with the complete website for the opportunity");
     
-        verifyPost(postId, user, State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
+        postR = transactionTemplate.execute(status -> postApi.acceptPost(postId, postAcceptDTO));
+        post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postAcceptDTO, postR);
+    
+        verifyResourceActions(
+            Scope.POST, postId, State.PENDING,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND)));
         
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
     
         transactionTemplate.execute(status -> {
-            Post post = postService.getPost(postId);
-            post.setLiveTimestamp(liveTimestampExtend);
-            post.setDeadTimestamp(deadTimestampExtend);
+            Post publishedPost = postService.getPost(postId);
+            publishedPost.setLiveTimestamp(liveTimestampExtend);
+            publishedPost.setDeadTimestamp(deadTimestampExtend);
             return null;
         });
     
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
     
-        verifyPost(postId, user, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
+        verifyResourceActions(
+            Scope.POST, postId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Collections.singletonList(Action.VIEW), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.singletonList(Action.VIEW), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND)));
         
         // Check that the administrator can reject the post
-        testUserService.setAuthentication(user.getStormpathId());
-        transactionTemplate.execute(status -> postApi.rejectPost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setComment("we have received a complaint, we're closing down the post")));
+        testUserService.setAuthentication(dUser.getStormpathId());
+        PostPatchDTO postRejectDTO = (PostPatchDTO) new PostPatchDTO().setComment("we have received a complaint, we're closing down the post");
+        postR = transactionTemplate.execute(status -> postApi.rejectPost(postId, postRejectDTO));
+        post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postRejectDTO, postR);
     
-        verifyPost(postId, user, State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
-        verifyPost(postId, postUser, State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
+        verifyResourceActions(
+            Scope.POST, postId, State.REJECTED,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE)));
         
         // Check that the administrator can restore the post
-        testUserService.setAuthentication(user.getStormpathId());
-        transactionTemplate.execute(status -> postApi.restorePost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setComment("sorry we made a mistake, we're restoring the post")));
+        testUserService.setAuthentication(bUser.getStormpathId());
+        PostPatchDTO postRestoreFromRejectedDTO = (PostPatchDTO) new PostPatchDTO().setComment("sorry we made a mistake, we're restoring the post");
+        postR = transactionTemplate.execute(status -> postApi.restorePost(postId, postRestoreFromRejectedDTO));
+        post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postRestoreFromRejectedDTO, postR);
     
-        verifyPost(postId, user, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
+        verifyResourceActions(
+            Scope.POST, postId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Collections.singletonList(Action.VIEW), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.singletonList(Action.VIEW), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND)));
         
         transactionTemplate.execute(status -> {
-            Post post = postService.getPost(postId);
-            post.setDeadTimestamp(liveTimestampExtend.minusSeconds(1));
+            Post retiredPost = postService.getPost(postId);
+            retiredPost.setDeadTimestamp(liveTimestampExtend.minusSeconds(1));
             return null;
         });
     
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
     
-        verifyPost(postId, user, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
+        verifyResourceActions(
+            Scope.POST, postId, State.EXPIRED,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND)));
         
         // Check that the author can withdraw the post
-        testUserService.setAuthentication(postUser.getStormpathId());
-        postR = transactionTemplate.execute(status -> postApi.withdrawPost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setComment("this is rubbish, I'm withdrawing the post anyway")));
-        assertEquals(State.WITHDRAWN, postR.getState());
+        testUserService.setAuthentication(pUser.getStormpathId());
+        PostPatchDTO postWithdrawDTO = (PostPatchDTO) new PostPatchDTO().setComment("this is rubbish, I'm withdrawing the post anyway");
+        postR = transactionTemplate.execute(status -> postApi.withdrawPost(postId, postWithdrawDTO));
+        post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postWithdrawDTO, postR);
     
-        verifyPost(postId, user, State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT));
-        verifyPost(postId, postUser, State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE));
+        verifyResourceActions(
+            Scope.POST, postId, State.WITHDRAWN,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT)));
         
         // Check that the author can restore the post
-        testUserService.setAuthentication(postUser.getStormpathId());
-        transactionTemplate.execute(status -> postApi.restorePost(postId,
-            (PostPatchDTO) new PostPatchDTO()
-                .setComment("oh well, i'll give it one more chance")));
+        testUserService.setAuthentication(pUser.getStormpathId());
+        PostPatchDTO postRestoreFromWithdrawnDTO = (PostPatchDTO) new PostPatchDTO().setComment("oh well, i'll give it one more chance");
+        postR = transactionTemplate.execute(status -> postApi.restorePost(postId, postRestoreFromWithdrawnDTO));
+        post = transactionTemplate.execute(status -> postService.getPost(postId));
+        verifyPatchPost(post, postRestoreFromWithdrawnDTO, postR);
     
-        verifyPost(postId, user, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        verifyPost(postId, postUser, State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        
-        // Test that unprivileged users cannot view the audit trail
-        verifyUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost(), () -> postApi.getPostOperations(postId));
+        verifyResourceActions(
+            Scope.POST, postId, State.EXPIRED,
+            new ExpectedUserActions()
+                .add(Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .add(pUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW))
+                .addAll(uUsers, Collections.emptyList(), () -> postApi.getPostOperations(postId))
+                .addAll(aUsers, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND)));
+    
+        testUserService.setAuthentication(pUser.getStormpathId());
     }
     
-    private void verifyPost(User user, PostDTO postDTO, PostRepresentation postR) {
-        assertEquals(postDTO.getName(), postR.getName());
-        assertEquals(postDTO.getDescription(), postR.getDescription());
-        assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
-        
-        LocationRepresentation locationR = postR.getLocation();
-        LocationDTO locationDTO = postDTO.getLocation();
-        assertEquals(locationDTO.getName(), locationR.getName());
-        assertEquals(locationDTO.getDomicile(), locationR.getDomicile());
-        assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
-        assertThat(locationR.getLatitude(), Matchers.comparesEqualTo(locationDTO.getLatitude()));
-        assertThat(locationR.getLongitude(), Matchers.comparesEqualTo(locationDTO.getLongitude()));
-        
-        assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
-        assertEquals(postDTO.getPostCategories(), postR.getPostCategories());
-        assertEquals(postDTO.getMemberCategories(), postR.getMemberCategories());
-        assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
-        
-        DocumentRepresentation applyDocumentR = postR.getApplyDocument();
-        DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
-        assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
-        assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
-        assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-        
-        assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-        assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
-        assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
-        assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
-        
-        Post post = postService.getPost(postR.getId());
-        Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
-        
-        Board board = boardService.getBoard(postR.getBoard().getId());
-        Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
-        assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
+    private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {
+        return transactionTemplate.execute(status -> {
+            PostRepresentation postR = postApi.postPost(boardId, postDTO);
+            
+            assertEquals(postDTO.getName(), postR.getName());
+            assertEquals(postDTO.getDescription(), postR.getDescription());
+            assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
+            verifyLocation(postDTO.getLocation(), postR);
+            
+            assertEquals(postDTO.getPostCategories(), postR.getPostCategories());
+            assertEquals(postDTO.getMemberCategories(), postR.getMemberCategories());
+            assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
+            assertEquals(postDTO.getExistingRelationExplanation(), postR.getExistingRelationExplanation());
+            assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
+            
+            DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
+            verifyApplyDocument(applyDocumentDTO, postR);
+            
+            assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
+            assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
+            assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
+            assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
+            
+            Post post = postService.getPost(postR.getId());
+            Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
+            
+            Board board = boardService.getBoard(postR.getBoard().getId());
+            Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
+            assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
+            return postR;
+        });
     }
     
-    private void verifyPost(PostPatchDTO postDTO, PostRepresentation postR) {
-        assertEquals(postDTO.getName().orElse(null), postR.getName());
-        assertEquals(postDTO.getDescription().orElse(null), postR.getDescription());
-        assertEquals(postDTO.getOrganizationName().orElse(null), postR.getOrganizationName());
+    private void verifyPatchPost(Post post, PostPatchDTO postDTO, PostRepresentation postR) {
+        Optional<String> nameOptional = postDTO.getName();
+        assertEquals(nameOptional == null ? post.getName() : nameOptional.orElse(null), postR.getName());
         
-        LocationRepresentation locationR = postR.getLocation();
-        LocationDTO locationDTO = postDTO.getLocation().orElse(null);
-        assertEquals(locationDTO.getName(), locationR.getName());
-        assertEquals(locationDTO.getDomicile(), locationR.getDomicile());
-        assertEquals(locationDTO.getGoogleId(), locationR.getGoogleId());
-        assertEquals(locationDTO.getLatitude(), locationR.getLatitude());
-        assertEquals(locationDTO.getLongitude(), locationR.getLongitude());
-    
-        assertEquals(postDTO.getPostCategories().orElse(null), postR.getPostCategories());
-        assertEquals(postDTO.getMemberCategories().orElse(null), postR.getMemberCategories());
-        assertEquals(postDTO.getApplyWebsite() == null ? null : postDTO.getApplyWebsite().orElse(null), postR.getApplyWebsite());
+        Optional<String> descriptionOptional = postDTO.getDescription();
+        assertEquals(descriptionOptional == null ? post.getDescription() : descriptionOptional.orElse(null), postR.getDescription());
         
-        DocumentRepresentation applyDocumentR = postR.getApplyDocument();
-        DocumentDTO applyDocumentDTO = postDTO.getApplyDocument().orElse(null);
-        if (applyDocumentDTO == null) {
-            Assert.assertNull(applyDocumentR);
-        } else {
-            assertEquals(applyDocumentDTO.getFileName(), applyDocumentR.getFileName());
-            assertEquals(applyDocumentDTO.getCloudinaryId(), applyDocumentR.getCloudinaryId());
-            assertEquals(applyDocumentDTO.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
-        }
-    
-        assertEquals(postDTO.getApplyEmail() == null ? null : postDTO.getApplyEmail().orElse(null), postR.getApplyEmail());
-    }
-    
-    private void verifyPost(Long postId, User user, State state, Collection<Action> actions) {
-        testUserService.setAuthentication(user.getStormpathId());
-        PostRepresentation postR = transactionTemplate.execute(status -> postApi.getPost(postId));
-        Assert.assertEquals(state, postR.getState());
+        Optional<String> organizationNameOptional = postDTO.getOrganizationName();
+        assertEquals(organizationNameOptional == null ? post.getOrganizationName() : organizationNameOptional.orElse(null), postR.getOrganizationName());
         
-        Post post = postService.getPost(postId);
-        for (Action action : Action.values()) {
-            if (actions.contains(action)) {
-                assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                    Matchers.containsInAnyOrder(actions.toArray(new Action[0])));
-            } else {
-                ExceptionUtil.verifyApiException(ApiForbiddenException.class,
-                    () -> actionService.executeAction(user, post, action, null),
-                    ExceptionCode.FORBIDDEN_ACTION, null);
-            }
-        }
+        Optional<LocationDTO> locationOptional = postDTO.getLocation();
+        verifyLocation(locationOptional == null ? post.getLocation() : locationOptional.orElse(null), postR);
+        
+        Optional<List<String>> postCategoriesOptional = postDTO.getPostCategories();
+        assertEquals(postCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.POST) : postCategoriesOptional.orElse(null),
+            postR.getPostCategories());
+        
+        Optional<List<String>> memberCategoriesOptional = postDTO.getMemberCategories();
+        assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.MEMBER) : memberCategoriesOptional.orElse(null),
+            postR.getMemberCategories());
+        
+        Optional<ExistingRelation> existingRelationOptional = postDTO.getExistingRelation();
+        assertEquals(existingRelationOptional == null ? post.getExistingRelation() : existingRelationOptional.orElse(null), postR.getExistingRelation());
+        
+        Optional<LinkedHashMap<String, Object>> existingRelationExplanationOptional = postDTO.getExistingRelationExplanation();
+        assertEquals(existingRelationExplanationOptional == null ? postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()) :
+            existingRelationExplanationOptional.orElse(null), postR.getExistingRelationExplanation());
+        
+        Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
+        assertEquals(applyWebsiteOptional == null ? post.getApplyWebsite() : applyWebsiteOptional.orElse(null), postR.getApplyWebsite());
+        
+        Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
+        verifyApplyDocument(applyDocumentOptional == null ? post.getApplyDocument() : postDTO.getApplyDocument().orElse(null), postR);
+        
+        Optional<String> applyEmail = postDTO.getApplyEmail();
+        assertEquals(applyEmail == null ? post.getApplyEmail() : applyEmail.orElse(null), postR.getApplyEmail());
+        
+        Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
+        assertEquals(liveTimestampOptional == null ? post.getLiveTimestamp() : liveTimestampOptional.orElse(null), postR.getLiveTimestamp());
+        
+        Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
+        assertEquals(deadTimestampOptional == null ? post.getDeadTimestamp() : deadTimestampOptional.orElse(null), postR.getDeadTimestamp());
     }
     
     private void verifyPublishAndRetirePost(Long postId, State expectedState) {
@@ -495,6 +515,30 @@ public class PostApiIT extends AbstractIT {
         
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         Assert.assertEquals(expectedState, postR.getState());
+    }
+    
+    private void verifyLocation(LocationDefinition locationDefinition, PostRepresentation postR) {
+        if (locationDefinition == null) {
+            fail("Post location can never be set to null");
+        }
+        
+        LocationRepresentation locationR = postR.getLocation();
+        assertEquals(locationDefinition.getName(), locationR.getName());
+        assertEquals(locationDefinition.getDomicile(), locationR.getDomicile());
+        assertEquals(locationDefinition.getGoogleId(), locationR.getGoogleId());
+        assertEquals(locationDefinition.getLatitude(), locationR.getLatitude());
+        assertEquals(locationDefinition.getLongitude(), locationR.getLongitude());
+    }
+    
+    private void verifyApplyDocument(DocumentDefinition applyDocumentDefinition, PostRepresentation postR) {
+        if (applyDocumentDefinition == null) {
+            assertNull(postR.getApplyDocument());
+        } else {
+            DocumentRepresentation applyDocumentR = postR.getApplyDocument();
+            assertEquals(applyDocumentDefinition.getFileName(), applyDocumentR.getFileName());
+            assertEquals(applyDocumentDefinition.getCloudinaryId(), applyDocumentR.getCloudinaryId());
+            assertEquals(applyDocumentDefinition.getCloudinaryUrl(), applyDocumentR.getCloudinaryUrl());
+        }
     }
     
 }

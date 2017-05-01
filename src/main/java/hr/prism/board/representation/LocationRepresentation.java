@@ -1,9 +1,11 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.definition.LocationDefinition;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public class LocationRepresentation {
+public class LocationRepresentation implements LocationDefinition {
     
     private String name;
     

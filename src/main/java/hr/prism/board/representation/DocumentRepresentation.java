@@ -1,8 +1,10 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.definition.DocumentDefinition;
+
 import java.util.Objects;
 
-public class DocumentRepresentation {
+public class DocumentRepresentation implements DocumentDefinition {
     
     private String cloudinaryId;
     

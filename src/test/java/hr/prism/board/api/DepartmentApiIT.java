@@ -10,6 +10,7 @@ import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
@@ -57,20 +58,19 @@ public class DepartmentApiIT extends AbstractIT {
     private UserRoleService userRoleService;
     
     @Test
-    public void shouldCreateDepartment() {
+    public void shouldCreateBoard() {
         BoardDTO boardDTO = TestHelper.sampleBoard();
         BoardDTO fullBoardDTO = new BoardDTO()
-            .setName("new board")
+            .setName("other board")
             .setDescription("description")
             .setPostCategories(ImmutableList.of("a", "b"))
             .setDepartment(new DepartmentDTO()
-                .setName("new department")
-                .setDocumentLogo(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+                .setName("other department")
                 .setMemberCategories(ImmutableList.of("c", "d")));
     
         User user = testUserService.authenticate();
         verifyPostDepartment(user, boardDTO, "department");
-        verifyPostDepartment(user, fullBoardDTO, "new-department");
+        verifyPostDepartment(user, fullBoardDTO, "other-department");
     }
     
     @Test
@@ -108,9 +108,7 @@ public class DepartmentApiIT extends AbstractIT {
     
     @Test
     public void shouldNotCreateDuplicateDepartmentsByUpdating() {
-        testUserService.authenticate();
-        Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = postTwoDepartments();
-        
+        Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
@@ -123,9 +121,7 @@ public class DepartmentApiIT extends AbstractIT {
     
     @Test
     public void shouldNotCreateDuplicateDepartmentHandlesByUpdating() {
-        testUserService.authenticate();
-        Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = postTwoDepartments();
-        
+        Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
             ExceptionUtil.verifyApiException(ApiException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
@@ -138,19 +134,46 @@ public class DepartmentApiIT extends AbstractIT {
     
     @Test
     public void shouldAuditDepartmentAndMakeChangesPrivatelyVisible() {
-        User user = testUserService.authenticate();
-        BoardRepresentation boardR = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.smallSampleBoard()));
-        Long departmentId = boardR.getDepartment().getId();
+        // Create resource user
+        User dUser = testUserService.authenticate();
+        BoardDTO boardDTO = TestHelper.smallSampleBoard();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO));
+        DepartmentRepresentation departmentR = boardR.getDepartment();
+        verifyPostedDepartment(dUser, boardDTO.getDepartment(), departmentR, "department");
+        Long departmentId = departmentR.getId();
         Long boardId = boardR.getId();
-        
-        // Test that we do not audit viewing
+    
+        // Create unprivileged users
+        User bUser = testUserService.authenticate();
+        Board board = boardService.getBoard(boardId);
+        transactionTemplate.execute(status -> {
+            userRoleService.createUserRole(board, bUser, Role.ADMINISTRATOR);
+            return null;
+        });
+    
+        User pUser = testUserService.authenticate();
+        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
+        Assert.assertEquals(State.DRAFT, postR.getState());
+    
+        List<User> uUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
+        uUsers.add(bUser);
+        uUsers.add(pUser);
+    
+        verifyResourceActions(
+            Scope.DEPARTMENT, departmentId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId))
+                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
+                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId)));
+    
+        // Check that we do not audit viewing
         transactionTemplate.execute(status -> {
             departmentApi.getDepartment(departmentId);
             return null;
         });
     
         // Check that we can make changes and leave nullable values null
-        testUserService.setAuthentication(user.getStormpathId());
+        testUserService.setAuthentication(dUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -159,8 +182,15 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     
+        verifyResourceActions(
+            Scope.DEPARTMENT, departmentId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId))
+                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
+                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId)));
+        
         // Check that we can make further changes and set nullable values
-        testUserService.setAuthentication(user.getStormpathId());
+        testUserService.setAuthentication(dUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -171,7 +201,15 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     
+        verifyResourceActions(
+            Scope.DEPARTMENT, departmentId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId))
+                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
+                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId)));
+        
         // Check that we can make further changes and change nullable values
+        testUserService.setAuthentication(dUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -182,7 +220,15 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     
+        verifyResourceActions(
+            Scope.DEPARTMENT, departmentId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId))
+                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
+                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId)));
+        
         // Check that we can clear nullable values
+        testUserService.setAuthentication(dUser.getStormpathId());
         transactionTemplate.execute(status -> {
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -191,7 +237,15 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
     
-        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        verifyResourceActions(
+            Scope.DEPARTMENT, departmentId, State.ACCEPTED,
+            new ExpectedUserActions()
+                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId))
+                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
+                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> departmentApi.getDepartmentOperations(departmentId)));
+    
+        testUserService.setAuthentication(dUser.getStormpathId());
+        departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(5, resourceOperationRs.size());
     
@@ -200,21 +254,21 @@ public class DepartmentApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, user, null);
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, bUser, null);
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, user,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, bUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department", "department 2")
                 .put("handle", "department", "department-2"));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, user,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, bUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 2", "department 3")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
                 .put("memberCategories", null, Arrays.asList("m1", "m2")));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, user,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, bUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 3", "department 4")
                 .put("handle", "department-3", "department-4")
@@ -223,29 +277,24 @@ public class DepartmentApiIT extends AbstractIT {
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
                 .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
     
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, user,
+        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, bUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("m2", "m1"), null));
         
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
-        
-        // Test that other board administrator cannot view audit trail
-        verifyUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost(), () -> departmentApi.getDepartmentOperations(departmentId));
     }
     
-    private Pair<DepartmentRepresentation, DepartmentRepresentation> postTwoDepartments() {
-        DepartmentRepresentation departmentR1 = transactionTemplate.execute(transactionStatus -> boardApi.postBoard(TestHelper.sampleBoard()).getDepartment());
-        
-        DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> {
-            BoardDTO boardDTO = new BoardDTO()
+    private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
+        User user = testUserService.authenticate();
+        DepartmentRepresentation departmentR1 = verifyPostDepartment(user, TestHelper.smallSampleBoard(), "department");
+        DepartmentRepresentation departmentR2 = verifyPostDepartment(user,
+            new BoardDTO()
                 .setName("board")
                 .setDepartment(new DepartmentDTO()
-                    .setName("department 2"));
-    
-            return boardApi.postBoard(boardDTO).getDepartment();
-        });
+                    .setName("department 2")),
+            "department-2");
         
         return new Pair<>(departmentR1, departmentR2);
     }
@@ -253,19 +302,23 @@ public class DepartmentApiIT extends AbstractIT {
     public DepartmentRepresentation verifyPostDepartment(User user, BoardDTO boardDTO, String expectedHandle) {
         return transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
-            Assert.assertEquals(departmentR.getName(), departmentR.getName());
-            Assert.assertEquals(expectedHandle, departmentR.getHandle());
-            Assert.assertEquals(boardDTO.getDepartment().getMemberCategories(), departmentR.getMemberCategories());
-            
-            Department department = departmentService.getDepartment(departmentR.getId());
-            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
-            
-            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
-            Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
-            Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND));
+            verifyPostedDepartment(user, boardDTO.getDepartment(), departmentR, expectedHandle);
             return departmentR;
         });
+    }
+    
+    private void verifyPostedDepartment(User user, DepartmentDTO departmentDTO, DepartmentRepresentation departmentR, String expectedHandle) {
+        Assert.assertEquals(departmentDTO.getName(), departmentR.getName());
+        Assert.assertEquals(expectedHandle, departmentR.getHandle());
+        Assert.assertEquals(departmentDTO.getMemberCategories(), departmentR.getMemberCategories());
+        
+        Department department = departmentService.getDepartment(departmentR.getId());
+        Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
+        
+        Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
+        Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
+        Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
+            Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND));
     }
     
 }

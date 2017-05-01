@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
@@ -25,6 +26,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -159,6 +161,19 @@ public class PostService {
         List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
+    }
+    
+    public LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
+        if (existingRelationExplanation == null) {
+            return null;
+        }
+        
+        try {
+            return objectMapper.readValue(existingRelationExplanation, new TypeReference<LinkedHashMap<String, Object>>() {
+            });
+        } catch (IOException e) {
+            throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+        }
     }
     
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

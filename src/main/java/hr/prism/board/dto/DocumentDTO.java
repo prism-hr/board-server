@@ -1,8 +1,10 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.definition.DocumentDefinition;
+
 import javax.validation.constraints.NotNull;
 
-public class DocumentDTO {
+public class DocumentDTO implements DocumentDefinition {
     
     @NotNull
     private String cloudinaryId;

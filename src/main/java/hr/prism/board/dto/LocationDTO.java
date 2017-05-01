@@ -1,10 +1,12 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.definition.LocationDefinition;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 
-public class LocationDTO {
+public class LocationDTO implements LocationDefinition {
     
     @Size(max = 255)
     private String name;
