@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.Lists;
+import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
@@ -8,18 +9,18 @@ import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
 import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.ActionService;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.TestUserService;
+import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -28,10 +29,12 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 public abstract class AbstractIT {
     
@@ -114,98 +117,50 @@ public abstract class AbstractIT {
         return unprivilegedUsers;
     }
     
-    void verifyResourceActions(Scope scope, Long id, State expectedState, ExpectedUserActions expectedUserActions) {
-        // Verify expected resource
-        testUserService.unauthenticate();
-        Resource resource = resourceService.getResource(null, scope, id);
-        Assert.assertEquals(expectedState, resource.getState());
-        
-        // Verify public user
-        verifyPermissions(null, resource, expectedUserActions.get(), ExceptionCode.UNAUTHENTICATED_USER);
-        
-        // Verify privileged / unprivileged users
-        for (User user : expectedUserActions.keySet()) {
+    void verifyResourceActions(Scope scope, Long id, ForbiddenActionExecutor forbiddenActionExecutor, Action... expectedActions) {
+        User user = null;
+        verifyResourceActions(user, scope, id, forbiddenActionExecutor, expectedActions);
+    }
+    
+    void verifyResourceActions(Collection<User> users, Scope scope, Long id, ForbiddenActionExecutor forbiddenActionExecutor, Action... expectedActions) {
+        users.forEach(user -> verifyResourceActions(user, scope, id, forbiddenActionExecutor, expectedActions));
+    }
+    
+    void verifyResourceActions(User user, Scope scope, Long id, ForbiddenActionExecutor forbiddenActionExecutor, Action... expectedActions) {
+        ExceptionCode exceptionCode;
+        if (user == null) {
+            testUserService.unauthenticate();
+            exceptionCode = ExceptionCode.UNAUTHENTICATED_USER;
+        } else {
             testUserService.setAuthentication(user.getStormpathId());
-            resource = resourceService.getResource(user, scope, id);
-            verifyPermissions(user, resource, expectedUserActions.get(user), ExceptionCode.FORBIDDEN_ACTION);
+            exceptionCode = ExceptionCode.FORBIDDEN_ACTION;
         }
-    }
-    
-    private void verifyPermissions(User user, Resource resource, ExpectedUserActions.ExpectedUserActionEntry expectedUserActionEntry, ExceptionCode expectedExceptionCode) {
-        // Verify permitted actions
-        Collection<Action> expectedActions = expectedUserActionEntry.getActions();
-        assertThat(resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-            Matchers.containsInAnyOrder(expectedUserActionEntry.getActions().toArray(new Action[0])));
         
-        // Verify forbidden actions
+        Resource resource = resourceService.getResource(user, scope, id);
+        assertThat(resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(expectedActions));
         for (Action action : Action.values()) {
-            if (!expectedActions.contains(action)) {
-                ExceptionUtil.verifyApiException(ApiForbiddenException.class,
-                    () -> actionService.executeAction(user, resource, action, null), expectedExceptionCode, null);
+            if (!ArrayUtils.contains(expectedActions, action)) {
+                transactionTemplate.execute(status -> {
+                    ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> forbiddenActionExecutor.execute(id, action), exceptionCode, status);
+                    return null;
+                });
             }
-        }
-        
-        // Verify forbidden operations
-        for (Runnable forbiddenOperation : expectedUserActionEntry.getForbiddenOperations()) {
-            transactionTemplate.execute(status -> {
-                ExceptionUtil.verifyApiException(ApiForbiddenException.class, forbiddenOperation, expectedExceptionCode, status);
-                return null;
-            });
         }
     }
     
-    public static class ExpectedUserActions extends HashMap<User, ExpectedUserActions.ExpectedUserActionEntry> {
-        
-        private ExpectedUserActionEntry expectedPublicActions;
-        
-        public ExpectedUserActions add(Collection<Action> actions, Runnable... forbiddenOperations) {
-            this.expectedPublicActions = new ExpectedUserActionEntry().setActions(actions).setForbiddenOperations(convertForbiddenOperations(forbiddenOperations));
-            return this;
+    void verifyDocument(DocumentDefinition documentDefinition, DocumentRepresentation documentRepresentation) {
+        if (documentDefinition == null) {
+            assertNull(documentRepresentation);
+        } else {
+            assertEquals(documentDefinition.getFileName(), documentRepresentation.getFileName());
+            assertEquals(documentDefinition.getCloudinaryId(), documentRepresentation.getCloudinaryId());
+            assertEquals(documentDefinition.getCloudinaryUrl(), documentRepresentation.getCloudinaryUrl());
         }
+    }
+    
+    interface ForbiddenActionExecutor {
         
-        public ExpectedUserActions add(User user, Collection<Action> actions, Runnable... forbiddenOperations) {
-            put(user, new ExpectedUserActionEntry().setActions(actions).setForbiddenOperations(convertForbiddenOperations(forbiddenOperations)));
-            return this;
-        }
-        
-        public ExpectedUserActions addAll(Collection<User> users, Collection<Action> actions, Runnable... forbiddenOperations) {
-            users.forEach(key -> add(key, actions, forbiddenOperations));
-            return this;
-        }
-        
-        public ExpectedUserActionEntry get() {
-            return expectedPublicActions;
-        }
-        
-        private Collection<Runnable> convertForbiddenOperations(Runnable[] forbiddenActions) {
-            return forbiddenActions == null ? Collections.emptyList() : Arrays.asList(forbiddenActions);
-        }
-        
-        public static class ExpectedUserActionEntry {
-            
-            private Collection<Action> actions;
-            
-            private Collection<Runnable> forbiddenOperations;
-            
-            public Collection<Action> getActions() {
-                return actions;
-            }
-            
-            public ExpectedUserActionEntry setActions(Collection<Action> actions) {
-                this.actions = actions;
-                return this;
-            }
-            
-            public Collection<Runnable> getForbiddenOperations() {
-                return forbiddenOperations;
-            }
-            
-            public ExpectedUserActionEntry setForbiddenOperations(Collection<Runnable> forbiddenOperations) {
-                this.forbiddenOperations = forbiddenOperations;
-                return this;
-            }
-            
-        }
+        void execute(Long id, Action action);
         
     }
     
