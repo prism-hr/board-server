@@ -90,7 +90,6 @@ public abstract class AbstractIT {
     }
     
     List<User> makeUnprivilegedUsers(Long departmentId, Long boardId, PostDTO samplePost) {
-        // Other department and board
         List<User> unprivilegedUsers = Lists.newArrayList(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> {
             boardApi.postBoard(
@@ -101,7 +100,6 @@ public abstract class AbstractIT {
             return null;
         });
         
-        // Same department other board
         unprivilegedUsers.add(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> {
             boardApi.postBoard(
@@ -112,7 +110,6 @@ public abstract class AbstractIT {
             return null;
         });
         
-        // Same board other post
         unprivilegedUsers.add(testUserService.authenticate());
         transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;
