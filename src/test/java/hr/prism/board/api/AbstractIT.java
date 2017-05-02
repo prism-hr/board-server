@@ -32,6 +32,7 @@ import javax.persistence.Query;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -117,16 +118,17 @@ public abstract class AbstractIT {
         return unprivilegedUsers;
     }
     
-    void verifyResourceActions(Scope scope, Long id, ForbiddenActionExecutor forbiddenActionExecutor, Action... expectedActions) {
+    @SuppressWarnings("ConstantConditions")
+    void verifyResourceActions(Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         User user = null;
-        verifyResourceActions(user, scope, id, forbiddenActionExecutor, expectedActions);
+        verifyResourceActions(user, scope, id, operations, expectedActions);
     }
     
-    void verifyResourceActions(Collection<User> users, Scope scope, Long id, ForbiddenActionExecutor forbiddenActionExecutor, Action... expectedActions) {
-        users.forEach(user -> verifyResourceActions(user, scope, id, forbiddenActionExecutor, expectedActions));
+    void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
+        users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
     }
     
-    void verifyResourceActions(User user, Scope scope, Long id, ForbiddenActionExecutor forbiddenActionExecutor, Action... expectedActions) {
+    void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         ExceptionCode exceptionCode;
         if (user == null) {
             testUserService.unauthenticate();
@@ -141,7 +143,11 @@ public abstract class AbstractIT {
         for (Action action : Action.values()) {
             if (!ArrayUtils.contains(expectedActions, action)) {
                 transactionTemplate.execute(status -> {
-                    ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> forbiddenActionExecutor.execute(id, action), exceptionCode, status);
+                    Runnable operation = operations.get(action);
+                    if (operation != null) {
+                        ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> operations.get(action), exceptionCode, status);
+                    }
+                    
                     return null;
                 });
             }
@@ -156,12 +162,6 @@ public abstract class AbstractIT {
             assertEquals(documentDefinition.getCloudinaryId(), documentRepresentation.getCloudinaryId());
             assertEquals(documentDefinition.getCloudinaryUrl(), documentRepresentation.getCloudinaryUrl());
         }
-    }
-    
-    interface ForbiddenActionExecutor {
-        
-        void execute(Long id, Action action);
-        
     }
     
 }

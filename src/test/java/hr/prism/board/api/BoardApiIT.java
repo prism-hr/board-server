@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.TestHelper;
@@ -11,6 +12,7 @@ import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
@@ -33,6 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -272,34 +275,36 @@ public class BoardApiIT extends AbstractIT {
     
     @Test
     public void shouldAuditBoardAndMakeChangesPrivatelyVisible() {
-        // Create admin user / resource
-        User dUser = testUserService.authenticate();
-        BoardRepresentation boardR = verifyPostBoard(dUser, TestHelper.smallSampleBoard(), "board");
+        // Create department and board
+        User departmentUser = testUserService.authenticate();
+        BoardRepresentation boardR = verifyPostBoard(departmentUser, TestHelper.smallSampleBoard(), "board");
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
     
-        // Create resource user
-        User bUser = testUserService.authenticate();
+        User boardUser = testUserService.authenticate();
         Board board = boardService.getBoard(boardId);
         transactionTemplate.execute(status -> {
-            userRoleService.createUserRole(board, bUser, Role.ADMINISTRATOR);
+            userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
             return null;
         });
     
-        // Create unprivileged users
+        List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
+    
+        // Create post
         User pUser = testUserService.authenticate();
         PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
         Assert.assertEquals(State.DRAFT, postR.getState());
     
-        List<User> uUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
-        uUsers.add(pUser);
+        // Create unprivileged users
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
+        unprivilegedUsers.add(pUser);
     
-        verifyResourceActions(
-            Scope.BOARD, boardId, State.ACCEPTED,
-            new ExpectedUserActions()
-                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId))
-                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
-                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId)));
+        Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
+            .put(Action.AUDIT, () -> boardApi.getBoardOperations(boardId))
+            .put(Action.EDIT, () -> boardApi.updateBoard(boardId, new BoardPatchDTO()))
+            .build();
+    
+        verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> {
@@ -308,78 +313,46 @@ public class BoardApiIT extends AbstractIT {
         });
     
         // Check that we can make changes and leave nullable values null
-        testUserService.setAuthentication(dUser.getStormpathId());
-        transactionTemplate.execute(status -> {
-            boardApi.updateBoard(boardId,
-                new BoardPatchDTO()
-                    .setName(Optional.of("board 2"))
-                    .setHandle(Optional.of("board-2")));
-            return null;
-        });
+        verifyPatchBoard(departmentUser, boardId,
+            new BoardPatchDTO()
+                .setName(Optional.of("board 2"))
+                .setHandle(Optional.of("board-2")),
+            State.ACCEPTED);
     
-        verifyResourceActions(
-            Scope.BOARD, boardId, State.ACCEPTED,
-            new ExpectedUserActions()
-                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId))
-                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
-                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId)));
+        verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         
         // Check that we can make further changes and set default / nullable values
-        testUserService.setAuthentication(bUser.getStormpathId());
-        transactionTemplate.execute(status -> {
-            boardApi.updateBoard(boardId,
-                new BoardPatchDTO()
-                    .setName(Optional.of("board 3"))
-                    .setHandle(Optional.of("board-3"))
-                    .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE))
-                    .setDescription(Optional.of("description"))
-                    .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))));
-            return null;
-        });
+        verifyPatchBoard(boardUser, boardId,
+            new BoardPatchDTO()
+                .setName(Optional.of("board 3"))
+                .setHandle(Optional.of("board-3"))
+                .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE))
+                .setDescription(Optional.of("description"))
+                .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))),
+            State.ACCEPTED);
     
-        verifyResourceActions(
-            Scope.BOARD, boardId, State.ACCEPTED,
-            new ExpectedUserActions()
-                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId))
-                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
-                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId)));
+        verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         
         // Check that we can make further changes and change default / nullable values
-        testUserService.setAuthentication(dUser.getStormpathId());
-        transactionTemplate.execute(status -> {
-            boardApi.updateBoard(boardId,
-                new BoardPatchDTO()
-                    .setName(Optional.of("board 4"))
-                    .setHandle(Optional.of("board-4"))
-                    .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC))
-                    .setDescription(Optional.of("description 2"))
-                    .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))));
-            return null;
-        });
+        verifyPatchBoard(departmentUser, boardId,
+            new BoardPatchDTO()
+                .setName(Optional.of("board 4"))
+                .setHandle(Optional.of("board-4"))
+                .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC))
+                .setDescription(Optional.of("description 2"))
+                .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))),
+            State.ACCEPTED);
     
-        verifyResourceActions(
-            Scope.BOARD, boardId, State.ACCEPTED,
-            new ExpectedUserActions()
-                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId))
-                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
-                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId)));
+        verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         
         // Check that we can clear nullable values
-        testUserService.setAuthentication(bUser.getStormpathId());
-        transactionTemplate.execute(status -> {
-            boardApi.updateBoard(boardId,
-                new BoardPatchDTO()
-                    .setDescription(Optional.empty())
-                    .setPostCategories(Optional.empty()));
-            return null;
-        });
+        verifyPatchBoard(boardUser, boardId,
+            new BoardPatchDTO()
+                .setDescription(Optional.empty())
+                .setPostCategories(Optional.empty()),
+            State.ACCEPTED);
     
-        verifyResourceActions(
-            Scope.BOARD, boardId, State.ACCEPTED,
-            new ExpectedUserActions()
-                .add(Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId))
-                .add(dUser, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND))
-                .addAll(uUsers, Arrays.asList(Action.VIEW, Action.EXTEND), () -> boardApi.getBoardOperations(boardId)));
+        verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         
         boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> boardApi.getBoardOperations(boardId));
@@ -390,14 +363,14 @@ public class BoardApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, dUser, null);
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser, null);
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, dUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board", "board 2")
                 .put("handle", "board", "board-2"));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, bUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board 2", "board 3")
                 .put("handle", "board-2", "board-3")
@@ -405,7 +378,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("description", null, "description")
                 .put("postCategories", null, Arrays.asList("m1", "m2")));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, dUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board 3", "board 4")
                 .put("handle", "board-3", "board-4")
@@ -413,7 +386,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("description", "description", "description 2")
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
     
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, bUser,
+        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("description", "description 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
@@ -455,6 +428,40 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
             return boardR;
         });
+    }
+    
+    private BoardRepresentation verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
+        testUserService.setAuthentication(user.getStormpathId());
+        return transactionTemplate.execute(status -> {
+            Board board = boardService.getBoard(boardId);
+            BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
+            
+            Optional<String> nameOptional = boardDTO.getName();
+            Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
+            
+            Optional<String> descriptionOptional = boardDTO.getDescription();
+            Assert.assertEquals(descriptionOptional == null ? board.getDescription() : descriptionOptional.orElse(null), boardR.getDescription());
+            
+            Optional<String> handleOptional = boardDTO.getHandle();
+            Assert.assertEquals(handleOptional == null ? board.getHandle() : handleOptional.orElse(null), boardR.getHandle());
+            
+            Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
+            Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(null),
+                boardR.getPostCategories());
+            
+            Optional<PostVisibility> defaultVisibilityOptional = boardDTO.getDefaultPostVisibility();
+            Assert.assertEquals(defaultVisibilityOptional == null ? board.getDefaultPostVisibility() : defaultVisibilityOptional.orElse(null),
+                boardR.getDefaultPostVisibility());
+            
+            Assert.assertEquals(expectedState, boardR.getState());
+            return boardR;
+        });
+    }
+    
+    private void verifyBoardActions(List<User> adminUsers, List<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
+        verifyResourceActions(Scope.BOARD, boardId, operations, Action.VIEW, Action.EXTEND);
+        verifyResourceActions(unprivilegedUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EXTEND);
+        verifyResourceActions(adminUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND);
     }
     
 }
