@@ -486,8 +486,8 @@ public class PostApiIT extends AbstractIT {
         assertEquals(locationDefinition.getName(), locationR.getName());
         assertEquals(locationDefinition.getDomicile(), locationR.getDomicile());
         assertEquals(locationDefinition.getGoogleId(), locationR.getGoogleId());
-        assertEquals(locationDefinition.getLatitude(), locationR.getLatitude());
-        assertEquals(locationDefinition.getLongitude(), locationR.getLongitude());
+        assertTrue(locationDefinition.getLatitude().compareTo(locationR.getLatitude()) == 0);
+        assertTrue(locationDefinition.getLongitude().compareTo(locationR.getLongitude()) == 0);
     }
     
     private void verifyPostActionsInDraft(List<User> adminUsers, User postUser, List<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
