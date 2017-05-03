@@ -17,10 +17,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.LocationRepresentation;
-import hr.prism.board.representation.PostRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestUserService;
@@ -203,9 +200,8 @@ public class PostApiIT extends AbstractIT {
         Long boardId = boardR.getId();
     
         User boardUser = testUserService.authenticate();
-        Board board = boardService.getBoard(boardId);
         transactionTemplate.execute(status -> {
-            userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
+            userRoleService.createUserRole(boardId, boardUser.getId(), Role.ADMINISTRATOR);
             return null;
         });
     
@@ -376,6 +372,10 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         testUserService.setAuthentication(postUser.getStormpathId());
+        postR = transactionTemplate.execute(status -> postApi.getPost(postId));
+        List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
+        Assert.assertEquals(11, resourceOperationRs.size());
+        
     }
     
     private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {

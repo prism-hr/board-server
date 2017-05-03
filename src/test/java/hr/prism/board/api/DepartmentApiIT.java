@@ -91,7 +91,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
                     .setName("new department with long name too")),
-            "new-department-with-2").getId();
+            "new-department-with-2").getDepartment().getId();
         
         transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId,
@@ -145,9 +145,8 @@ public class DepartmentApiIT extends AbstractIT {
         Long boardId = boardR.getId();
     
         User boardUser = testUserService.authenticate();
-        Board board = boardService.getBoard(boardId);
         transactionTemplate.execute(status -> {
-            userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
+            userRoleService.createUserRole(boardId, boardUser.getId(), Role.ADMINISTRATOR);
             return null;
         });
     

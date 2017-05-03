@@ -282,9 +282,8 @@ public class BoardApiIT extends AbstractIT {
         Long boardId = boardR.getId();
     
         User boardUser = testUserService.authenticate();
-        Board board = boardService.getBoard(boardId);
         transactionTemplate.execute(status -> {
-            userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
+            userRoleService.createUserRole(boardId, boardUser.getId(), Role.ADMINISTRATOR);
             return null;
         });
     

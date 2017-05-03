@@ -6,6 +6,4 @@ public interface UserRepository extends MyRepository<User, Long> {
     
     User findByStormpathId(String stormpathId);
     
-    User findByEmail(String email);
-    
 }

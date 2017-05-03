@@ -19,6 +19,10 @@ public class UserService {
     @Inject
     private UserRepository userRepository;
     
+    public User findOne(Long id) {
+        return userRepository.findOne(id);
+    }
+    
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -43,10 +47,6 @@ public class UserService {
         }
         
         return user;
-    }
-    
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email);
     }
     
     public User createUser(Account account) {

@@ -97,6 +97,20 @@ public class ResourceService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
     
+    public Resource findOne(Long id) {
+        return resourceRepository.findOne(id);
+    }
+    
+    public Resource getResource(User user, Scope scope, Long id) {
+        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id));
+        return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
+    }
+    
+    public Resource getResource(User user, Scope scope, String handle) {
+        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle));
+        return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
+    }
+    
     public void updateHandle(Resource resource, String newHandle) {
         String handle = resource.getHandle();
         resource.setHandle(newHandle);
@@ -157,16 +171,6 @@ public class ResourceService {
         
         resource.setState(state);
         resource.setPreviousState(previousState);
-    }
-    
-    public Resource getResource(User user, Scope scope, Long id) {
-        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id));
-        return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
-    }
-    
-    public Resource getResource(User user, Scope scope, String handle) {
-        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle));
-        return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
     }
     
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
