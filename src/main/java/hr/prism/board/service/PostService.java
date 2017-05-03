@@ -235,12 +235,12 @@ public class PostService {
             if (liveTimestampOptional.isPresent() && deadTimestampOptional.isPresent()) {
                 resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
                     Optional.of(liveTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
-                resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp,
+                resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
                     Optional.of(deadTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
             } else {
                 LocalDateTime baseline = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp, Optional.of(baseline));
-                resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setLiveTimestamp, Optional.of(baseline.plusWeeks(4)));
+                resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp, Optional.of(baseline.plusWeeks(4)));
             }
         }
         
