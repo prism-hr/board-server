@@ -440,7 +440,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(descriptionOptional == null ? board.getDescription() : descriptionOptional.orElse(null), boardR.getDescription());
             
             Optional<String> handleOptional = boardDTO.getHandle();
-            Assert.assertEquals(handleOptional == null ? board.getHandle() : handleOptional.orElse(null), boardR.getHandle());
+            Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[1] : handleOptional.orElse(null), boardR.getHandle());
             
             Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
             Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(null),

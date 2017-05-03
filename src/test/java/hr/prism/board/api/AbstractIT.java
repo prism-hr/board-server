@@ -21,7 +21,10 @@ import hr.prism.board.service.TestUserService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -38,6 +41,8 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
 public abstract class AbstractIT {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
     
     @Inject
     BoardApi boardApi;
@@ -136,13 +141,19 @@ public abstract class AbstractIT {
         }
         
         Resource resource = resourceService.getResource(user, scope, id);
-        assertThat(resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(expectedActions));
+        if (expectedActions == null) {
+            Assert.assertNull(resource.getActions());
+        } else {
+            assertThat(resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(expectedActions));
+        }
+        
         for (Action action : Action.values()) {
             if (!ArrayUtils.contains(expectedActions, action)) {
                 transactionTemplate.execute(status -> {
                     Runnable operation = operations.get(action);
                     if (operation != null) {
-                        ExceptionUtil.verifyApiException(ApiForbiddenException.class, () -> operations.get(action), exceptionCode, status);
+                        LOGGER.info("Verifying forbidden action: " + action.name().toLowerCase());
+                        ExceptionUtil.verifyApiException(ApiForbiddenException.class, operation, exceptionCode, status);
                     }
                     
                     return null;

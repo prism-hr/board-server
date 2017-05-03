@@ -223,21 +223,21 @@ public class DepartmentApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, boardUser, null);
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser, null);
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department", "department 2")
                 .put("handle", "department", "department-2"));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 2", "department 3")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
                 .put("memberCategories", null, Arrays.asList("m1", "m2")));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 3", "department 4")
                 .put("handle", "department-3", "department-4")
@@ -246,7 +246,7 @@ public class DepartmentApiIT extends AbstractIT {
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
                 .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
     
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("m2", "m1"), null));

@@ -5,10 +5,10 @@ import org.springframework.transaction.TransactionStatus;
 
 public class ExceptionUtil {
     
-    public static <T extends ApiException> void verifyApiException(Class<T> exceptionClass, Runnable block, ExceptionCode exceptionCode, TransactionStatus status) {
+    public static <T extends ApiException> void verifyApiException(Class<T> exceptionClass, Runnable operation, ExceptionCode exceptionCode, TransactionStatus status) {
         ApiException apiException = null;
         try {
-            block.run();
+            operation.run();
             Assert.fail("ApiException not thrown");
         } catch (ApiException e) {
             apiException = e;

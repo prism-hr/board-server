@@ -41,27 +41,31 @@ public class ActionService {
                         } else if (newState == State.PREVIOUS) {
                             newState = resource.getPreviousState();
                         }
-                    
+    
                         Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
                         if (interceptorClass != null) {
                             newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
                         }
-                    
+    
                         if (state != newState) {
                             resourceService.updateState(resource, newState);
                             resource = resourceService.getResource(user, resource.getScope(), resource.getId());
                         }
-                    
+    
                         resourceService.createResourceOperation(resource, action, user);
                     }
-                
+    
                     return resource;
                 }
             }
         }
     
-        String userString = user == null ? "Public user" : user.toString();
-        LOGGER.info(userString + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+        if (user == null) {
+            LOGGER.info("Public user cannot " + action.name().toLowerCase() + " " + resource.toString());
+            throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+        }
+    
+        LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
         throw new ApiForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
     }
     
