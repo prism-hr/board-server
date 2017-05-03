@@ -379,7 +379,7 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(postUser.getStormpathId());
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
-        Assert.assertEquals(11, resourceOperationRs.size());
+        Assert.assertEquals(18, resourceOperationRs.size());
         
     }
     
