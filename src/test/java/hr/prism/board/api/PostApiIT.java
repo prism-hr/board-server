@@ -309,6 +309,8 @@ public class PostApiIT extends AbstractIT {
                     .setLongitude(BigDecimal.ZERO)))
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
+            .setLiveTimestamp(Optional.of(liveTimestampDelayed))
+            .setDeadTimestamp(Optional.of(deadTimestampDelayed))
             .setComment("this looks good now - i replaced the document with the complete website for the opportunity");
     
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.acceptPost(postId, acceptDTO), State.PENDING);
