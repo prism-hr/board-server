@@ -141,7 +141,7 @@ public abstract class AbstractIT {
         }
         
         Resource resource = resourceService.getResource(user, scope, id);
-        if (expectedActions == null) {
+        if (ArrayUtils.isEmpty(expectedActions)) {
             Assert.assertNull(resource.getActions());
         } else {
             assertThat(resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(expectedActions));

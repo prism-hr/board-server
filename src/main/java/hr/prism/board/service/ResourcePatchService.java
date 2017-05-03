@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -112,13 +111,9 @@ public class ResourcePatchService {
     public void patchCategories(Resource resource, CategoryType categoryType, Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
             List<String> oldValues = resourceService.getCategories(resource, categoryType);
-            if (newValuesOptional.isPresent()) {
-                List<String> newValues = new ArrayList<>(newValuesOptional.get());
-                if (!Objects.equals(oldValues, newValues)) {
-                    patchCategories(resource, categoryType, oldValues, newValues);
-                }
-            } else if (oldValues != null) {
-                patchCategories(resource, categoryType, oldValues, null);
+            List<String> newValues = newValuesOptional.orElse(null);
+            if (!Objects.equals(oldValues, newValues)) {
+                patchCategories(resource, categoryType, oldValues, newValues);
             }
         }
     }
@@ -141,7 +136,7 @@ public class ResourcePatchService {
         }
     }
     
-    private <T> void patchProperty(Resource resource, String property, Setter<T> setter, T oldValue, T newValue) {
+    public <T> void patchProperty(Resource resource, String property, Setter<T> setter, T oldValue, T newValue) {
         setter.set(newValue);
         resource.getChangeList().put(property, oldValue, newValue);
     }
@@ -161,9 +156,6 @@ public class ResourcePatchService {
     
     private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue) {
         patchProperty(resource, "location", resource::setLocation, oldValue, locationService.getOrCreateLocation(newValue));
-        if (oldValue != null) {
-            locationService.deleteLocation(oldValue);
-        }
     }
     
     private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {

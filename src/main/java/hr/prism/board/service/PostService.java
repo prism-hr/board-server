@@ -225,6 +225,9 @@ public class PostService {
         Department department = (Department) board.getParent();
         patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
         patchCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories(), department);
+    
+        resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
+        patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
         
         Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
         Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
@@ -250,7 +253,6 @@ public class PostService {
             List<String> oldCategories = resourceService.getCategories(post, categoryType);
             if (categories.isPresent()) {
                 List<String> newCategories = new ArrayList<>(categories.get());
-                newCategories.sort(Comparator.naturalOrder());
                 if (!Objects.equals(oldCategories, newCategories)) {
                     updateCategories(post, categoryType, newCategories, reference);
                     post.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldCategories, resourceService.getCategories(post, categoryType));
@@ -258,6 +260,18 @@ public class PostService {
             } else if (oldCategories != null) {
                 updateCategories(post, categoryType, null, reference);
                 post.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldCategories, resourceService.getCategories(post, categoryType));
+            }
+        }
+    }
+    
+    private void patchExistingRelationExplanation(Post post, Optional<LinkedHashMap<String, Object>> existingRelationExplanation) {
+        if (existingRelationExplanation != null) {
+            String oldValue = post.getExistingRelationExplanation();
+            if (existingRelationExplanation.isPresent()) {
+                String newValue = existingRelationExplanation.map(this::mapExistingRelationExplanation).orElse(null);
+                if (!Objects.equals(oldValue, newValue)) {
+                    resourcePatchService.patchProperty(post, "existingRelationExplanation", post::setExistingRelationExplanation, oldValue, newValue);
+                }
             }
         }
     }
@@ -284,6 +298,15 @@ public class PostService {
         // Index the insertion order
         Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
         if (orderIndex != null) {
+            // Reorder the old records
+            List<ResourceCategory> resourceCategories = post.getCategories(type);
+            if (resourceCategories != null) {
+                resourceCategories.forEach(resourceCategory -> {
+                    Integer ordinal = orderIndex.get(resourceCategory.getName());
+                    resourceCategory.setOrdinal(ordinal == null ? null : ordinal);
+                });
+            }
+            
             // Write the new records
             categories.forEach(category -> {
                 ResourceCategory resourceCategory = new ResourceCategory().setResource(post).setName(category).setOrdinal(orderIndex.get(category)).setType(type);
