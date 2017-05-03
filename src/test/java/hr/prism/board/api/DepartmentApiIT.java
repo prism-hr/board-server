@@ -152,11 +152,11 @@ public class DepartmentApiIT extends AbstractIT {
     
         // Create post
         User postUser = testUserService.authenticate();
-        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
+        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
         Assert.assertEquals(State.DRAFT, postR.getState());
     
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost());
         unprivilegedUsers.add(boardUser);
         unprivilegedUsers.add(postUser);
     
@@ -283,8 +283,6 @@ public class DepartmentApiIT extends AbstractIT {
     
             Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
             Assert.assertTrue(userRoleService.hasUserRole(department, user, Role.ADMINISTRATOR));
-            Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND));
             return boardR;
         });
     }

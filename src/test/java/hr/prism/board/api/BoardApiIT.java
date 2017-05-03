@@ -274,7 +274,7 @@ public class BoardApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldAuditBoardAndMakeChangesPrivatelyVisible() {
+    public void shouldSupportBoardLifeCycleAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         BoardRepresentation boardR = verifyPostBoard(departmentUser, TestHelper.smallSampleBoard(), "board");
@@ -291,11 +291,11 @@ public class BoardApiIT extends AbstractIT {
     
         // Create post
         User pUser = testUserService.authenticate();
-        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()));
+        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
         Assert.assertEquals(State.DRAFT, postR.getState());
     
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost());
         unprivilegedUsers.add(pUser);
     
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
@@ -420,8 +420,6 @@ public class BoardApiIT extends AbstractIT {
             Board board = boardService.getBoard(boardR.getId());
             Department department = departmentService.getDepartment(boardR.getDepartment().getId());
             Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
-            Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND));
     
             Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
             Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));

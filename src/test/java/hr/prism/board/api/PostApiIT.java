@@ -17,7 +17,10 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
-import hr.prism.board.representation.*;
+import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.LocationRepresentation;
+import hr.prism.board.representation.PostRepresentation;
+import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestUserService;
@@ -399,8 +402,6 @@ public class PostApiIT extends AbstractIT {
             assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
             assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
             assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
-            assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.SUSPEND, Action.REJECT));
             
             Post post = postService.getPost(postR.getId());
             Assert.assertTrue(userRoleService.hasUserRole(post, user, Role.ADMINISTRATOR));
