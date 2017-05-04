@@ -4,7 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
@@ -26,10 +26,6 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
@@ -39,11 +35,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@TestContext
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
-@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class BoardApiIT extends AbstractIT {
     
     @Inject
@@ -306,11 +299,8 @@ public class BoardApiIT extends AbstractIT {
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         
         // Test that we do not audit viewing
-        transactionTemplate.execute(status -> {
-            boardApi.getBoard(boardId);
-            return null;
-        });
-    
+        transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+        
         // Check that we can make changes and leave nullable values null
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()

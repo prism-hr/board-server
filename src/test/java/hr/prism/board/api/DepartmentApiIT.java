@@ -3,7 +3,7 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
@@ -25,24 +25,18 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@TestContext
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
-@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class DepartmentApiIT extends AbstractIT {
     
     @Inject
@@ -136,7 +130,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
     
     @Test
-    public void shouldSupportDepartmentLifecycleAndPermissions() {
+    public void shouldSupportDepartmentLifecycleAndPermissions() throws IOException {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.smallSampleBoard();
@@ -168,11 +162,8 @@ public class DepartmentApiIT extends AbstractIT {
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         
         // Check that we do not audit viewing
-        transactionTemplate.execute(status -> {
-            departmentApi.getDepartment(departmentId);
-            return null;
-        });
-    
+        transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        
         // Check that we can make changes and leave nullable values null
         verifyPatchDepartment(departmentUser, departmentId,
             new DepartmentPatchDTO()

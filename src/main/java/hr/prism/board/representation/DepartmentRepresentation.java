@@ -8,8 +8,6 @@ public class DepartmentRepresentation extends ResourceRepresentation {
     
     private String handle;
     
-    private List<BoardRepresentation> boards;
-    
     private List<String> memberCategories;
     
     public DocumentRepresentation getDocumentLogo() {
@@ -27,15 +25,6 @@ public class DepartmentRepresentation extends ResourceRepresentation {
     
     public DepartmentRepresentation setHandle(String handle) {
         this.handle = handle;
-        return this;
-    }
-    
-    public List<BoardRepresentation> getBoards() {
-        return boards;
-    }
-    
-    public DepartmentRepresentation setBoards(List<BoardRepresentation> boards) {
-        this.boards = boards;
         return this;
     }
     

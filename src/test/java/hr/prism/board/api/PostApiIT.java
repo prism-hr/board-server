@@ -1,9 +1,10 @@
 package hr.prism.board.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import hr.prism.board.ApplicationConfiguration;
+import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.definition.LocationDefinition;
 import hr.prism.board.domain.*;
@@ -27,10 +28,6 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
@@ -43,11 +40,8 @@ import java.util.stream.Collectors;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@TestContext
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ApplicationConfiguration.class})
-@TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public class PostApiIT extends AbstractIT {
     
     @Inject
@@ -67,6 +61,9 @@ public class PostApiIT extends AbstractIT {
     
     @Inject
     private TestUserService testUserService;
+    
+    @Inject
+    private ObjectMapper objectMapper;
     
     @Test
     public void shouldCreatePost() {
@@ -231,11 +228,8 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInDraft(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         // Check that we do not audit viewing
-        transactionTemplate.execute(status -> {
-            postApi.getPost(postId);
-            return null;
-        });
-    
+        transactionTemplate.execute(status -> postApi.getPost(postId));
+        
         LocalDateTime liveTimestamp = postR.getLiveTimestamp();
         LocalDateTime deadTimestamp = postR.getDeadTimestamp();
     
@@ -401,6 +395,8 @@ public class PostApiIT extends AbstractIT {
     
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), postR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR17.getCreatedTimestamp(), postR.getUpdatedTimestamp());
+    
+    
     }
     
     private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {
