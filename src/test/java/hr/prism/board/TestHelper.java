@@ -84,20 +84,25 @@ public class TestHelper {
     @SuppressWarnings("ConstantConditions")
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser) {
         ResourceChangeListRepresentation resourceChangeListRepresentation = null;
-        verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, resourceChangeListRepresentation);
-    }
-    
-    public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
-        String expectedComment) {
-        verifyResourceOperation(resourceOperationR, expectedAction, expectedUser);
-        Assert.assertEquals(expectedComment, resourceOperationR.getComment());
+        verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, null);
     }
     
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
         ResourceChangeListRepresentation expectedChanges) {
+        verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, expectedChanges, null);
+    }
+    
+    public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
+        String expectedComment) {
+        verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, expectedComment);
+    }
+    
+    public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
+        ResourceChangeListRepresentation expectedChanges, String expectedComment) {
         Assert.assertEquals(expectedAction, resourceOperationR.getAction());
         verifyUser(expectedUser, resourceOperationR.getUser());
         Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
+        Assert.assertEquals(expectedComment, resourceOperationR.getComment());
     }
     
 }
