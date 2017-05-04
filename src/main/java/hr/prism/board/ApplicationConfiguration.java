@@ -107,6 +107,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         objectMapper.registerModule(new Jdk8Module());
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.enable(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS);
         objectMapper.enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN);
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return objectMapper;

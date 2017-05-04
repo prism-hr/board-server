@@ -35,7 +35,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -387,11 +386,9 @@ public class PostApiIT extends AbstractIT {
                 .put("organizationName", "organization name", "organization name 2")
                 .put("location",
                     ObjectUtils.orderedMap("name", "krakow", "domicile", "PL", "googleId", "sss",
-                        "latitude", BigDecimal.ONE.setScale(18, BigDecimal.ROUND_UP).stripTrailingZeros().toPlainString(),
-                        "longitude", BigDecimal.ONE.setScale(18, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()),
+                        "latitude", BigDecimal.ONE.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.ONE.stripTrailingZeros().toPlainString()),
                     ObjectUtils.orderedMap("name", "london", "domicile", "GB", "googleId", "ttt",
-                        "latitude", BigDecimal.TEN.setScale(18, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString(),
-                        "longitude", BigDecimal.TEN.setScale(18, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()))
+                        "latitude", BigDecimal.TEN.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.TEN.stripTrailingZeros().toPlainString()))
                 .put("applyWebsite", "http://www.google.co.uk", "http://www.facebook.com")
                 .put("postCategories", Arrays.asList("p1", "p2"), Arrays.asList("p2", "p1"))
                 .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1"))
