@@ -83,7 +83,6 @@ public class TestHelper {
     
     @SuppressWarnings("ConstantConditions")
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser) {
-        ResourceChangeListRepresentation resourceChangeListRepresentation = null;
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, null);
     }
     
