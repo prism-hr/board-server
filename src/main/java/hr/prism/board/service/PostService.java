@@ -264,14 +264,20 @@ public class PostService {
         }
     }
     
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchExistingRelationExplanation(Post post, Optional<LinkedHashMap<String, Object>> existingRelationExplanation) {
         if (existingRelationExplanation != null) {
+            String newValue = null;
+            LinkedHashMap<String, Object> newValueMap = existingRelationExplanation.orElse(null);
+            if (newValueMap != null) {
+                newValue = mapExistingRelationExplanation(newValueMap);
+            }
+            
             String oldValue = post.getExistingRelationExplanation();
-            if (existingRelationExplanation.isPresent()) {
-                String newValue = existingRelationExplanation.map(this::mapExistingRelationExplanation).orElse(null);
-                if (!Objects.equals(oldValue, newValue)) {
-                    resourcePatchService.patchProperty(post, "existingRelationExplanation", post::setExistingRelationExplanation, oldValue, newValue);
-                }
+            if (!Objects.equals(oldValue, newValue)) {
+                post.setExistingRelationExplanation(newValue);
+                LinkedHashMap<String, Object> oldValueMap = oldValue == null ? null : mapExistingRelationExplanation(oldValue);
+                post.getChangeList().put("existingRelationExplanation", oldValueMap, newValueMap);
             }
         }
     }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.math.RoundingMode;
 
 @Service
 @Transactional
@@ -22,8 +23,8 @@ public class LocationService {
             location.setName(locationDTO.getName());
             location.setDomicile(locationDTO.getDomicile());
             location.setGoogleId(locationDTO.getGoogleId());
-            location.setLatitude(locationDTO.getLatitude());
-            location.setLongitude(locationDTO.getLongitude());
+            location.setLatitude(locationDTO.getLatitude().setScale(18, RoundingMode.HALF_UP));
+            location.setLongitude(locationDTO.getLongitude().setScale(18, RoundingMode.HALF_UP));
             return locationRepository.save(location);
         }
     

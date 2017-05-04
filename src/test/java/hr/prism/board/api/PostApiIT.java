@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import hr.prism.board.ApplicationConfiguration;
 import hr.prism.board.TestHelper;
 import hr.prism.board.definition.LocationDefinition;
@@ -17,10 +18,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtil;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.LocationRepresentation;
-import hr.prism.board.representation.PostRepresentation;
-import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestUserService;
@@ -246,7 +244,7 @@ public class PostApiIT extends AbstractIT {
     
         // Check that the author can update the post
         PostPatchDTO updateDTO = new PostPatchDTO()
-            .setName(Optional.of("name 2"))
+            .setName(Optional.of("post 2"))
             .setDescription(Optional.of("description 2"))
             .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
@@ -257,10 +255,10 @@ public class PostApiIT extends AbstractIT {
                     .setLatitude(BigDecimal.TEN)
                     .setLongitude(BigDecimal.TEN)))
             .setApplyWebsite(Optional.of("http://www.facebook.com"))
-            .setExistingRelation(Optional.of(ExistingRelation.STAFF))
-            .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
             .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
             .setMemberCategories(Optional.of(Arrays.asList("m2", "m1")))
+            .setExistingRelation(Optional.of(ExistingRelation.STAFF))
+            .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
             .setDeadTimestamp(Optional.of(deadTimestampDelayed));
     
@@ -282,7 +280,7 @@ public class PostApiIT extends AbstractIT {
         
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = (PostPatchDTO) new PostPatchDTO()
-            .setOrganizationName(Optional.of("organization name"))
+            .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
                 new LocationDTO()
                     .setName("birmingham")
@@ -300,13 +298,6 @@ public class PostApiIT extends AbstractIT {
         // Check that the administrator can make further changes and accept the post
         PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name"))
-            .setLocation(Optional.of(
-                new LocationDTO()
-                    .setName("birmingham")
-                    .setDomicile("GB")
-                    .setGoogleId("uuu")
-                    .setLatitude(BigDecimal.ZERO)
-                    .setLongitude(BigDecimal.ZERO)))
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
@@ -380,7 +371,36 @@ public class PostApiIT extends AbstractIT {
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
         Assert.assertEquals(18, resourceOperationRs.size());
-        
+    
+        // Operations are returned most recent first - reverse the order to make it easier to test
+        resourceOperationRs = Lists.reverse(resourceOperationRs);
+        ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
+        ResourceOperationRepresentation resourceOperationR17 = resourceOperationRs.get(17);
+    
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, postUser, null);
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, postUser,
+            new ResourceChangeListRepresentation()
+                .put("name", "post", "post 2")
+                .put("description", "description", "description 2")
+                .put("organizationName", "organization name", "organization name 2")
+                .put("location",
+                    ObjectUtils.orderedMap("name", "krakow", "domicile", "PL", "googleId", "sss",
+                        "latitude", BigDecimal.ONE.toString(), "longitude", BigDecimal.ONE.toString()),
+                    ObjectUtils.orderedMap("name", "london", "domicile", "GB", "googleId", "ttt",
+                        "latitude", BigDecimal.TEN.toString(), "longitude", BigDecimal.TEN.toString()))
+                .put("applyWebsite", "http://www.google.co.uk", "http://www.facebook.com")
+                .put("postCategories", Arrays.asList("p1", "p2"), Arrays.asList("p2", "p1"))
+                .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1"))
+                .put("existingRelation", "STUDENT", "STAFF")
+                .put("existingRelationExplanation",
+                    ObjectUtils.orderedMap("studyLevel", "MASTER"),
+                    ObjectUtils.orderedMap("jobTitle", "professor"))
+                .put("liveTimestamp", liveTimestamp.toString(), liveTimestampDelayed.toString())
+                .put("deadTimestamp", deadTimestamp.toString(), deadTimestampDelayed.toString()));
+    
+        Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), postR.getCreatedTimestamp());
+        Assert.assertEquals(resourceOperationR17.getCreatedTimestamp(), postR.getUpdatedTimestamp());
     }
     
     private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {

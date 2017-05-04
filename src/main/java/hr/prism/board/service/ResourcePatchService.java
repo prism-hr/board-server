@@ -136,6 +136,7 @@ public class ResourcePatchService {
         }
     }
     
+    @SuppressWarnings("unchecked")
     public <T> void patchProperty(Resource resource, String property, Setter<T> setter, T oldValue, T newValue) {
         setter.set(newValue);
         resource.getChangeList().put(property, oldValue, newValue);
