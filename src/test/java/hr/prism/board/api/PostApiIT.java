@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -61,9 +60,6 @@ public class PostApiIT extends AbstractIT {
     
     @Inject
     private TestUserService testUserService;
-    
-    @Inject
-    private ObjectMapper objectMapper;
     
     @Test
     public void shouldCreatePost() {
@@ -260,7 +256,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInDraft(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         // Check that the administrator can make changes and suspend the post
-        PostPatchDTO suspendDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO suspendDTO = new PostPatchDTO()
             .setLiveTimestamp(Optional.of(liveTimestamp))
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
@@ -273,7 +269,7 @@ public class PostApiIT extends AbstractIT {
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT);
         
         // Check that the author can make changes and correct the post
-        PostPatchDTO correctDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO correctDTO = new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
                 new LocationDTO()
@@ -290,7 +286,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInDraft(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         // Check that the administrator can make further changes and accept the post
-        PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO acceptDTO = new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name"))
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
@@ -316,7 +312,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInAccepted(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         // Check that the administrator can reject the post
-        PostPatchDTO rejectDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO rejectDTO = new PostPatchDTO()
             .setComment("we have received a complaint, we're closing down the post");
     
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.rejectPost(postId, rejectDTO), State.REJECTED);
@@ -327,7 +323,7 @@ public class PostApiIT extends AbstractIT {
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW);
         
         // Check that the administrator can restore the post
-        PostPatchDTO restoreFromRejectedDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
     
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.restorePost(postId, restoreFromRejectedDTO), State.ACCEPTED);
@@ -344,7 +340,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         // Check that the author can withdraw the post
-        PostPatchDTO withdrawDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO withdrawDTO = new PostPatchDTO()
             .setComment("this is rubbish, I'm withdrawing the post anyway");
     
         verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.withdrawPost(postId, withdrawDTO), State.WITHDRAWN);
@@ -355,7 +351,7 @@ public class PostApiIT extends AbstractIT {
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE);
         
         // Check that the author can restore the post
-        PostPatchDTO restoreFromWithdrawnDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO()
             .setComment("oh well, i'll give it one more chance");
     
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.restorePost(postId, restoreFromWithdrawnDTO), State.EXPIRED);
@@ -371,8 +367,8 @@ public class PostApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR17 = resourceOperationRs.get(17);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, postUser, null);
-    
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, postUser);
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, postUser,
             new ResourceChangeListRepresentation()
                 .put("name", "post", "post 2")
@@ -393,10 +389,16 @@ public class PostApiIT extends AbstractIT {
                 .put("liveTimestamp", liveTimestamp.toString(), liveTimestampDelayed.toString())
                 .put("deadTimestamp", deadTimestamp.toString(), deadTimestampDelayed.toString()));
     
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
+            new ResourceChangeListRepresentation()
+                .put("liveTimestamp", liveTimestampDelayed.toString(), liveTimestamp.toString())
+                .put("deadTimestamp", deadTimestampDelayed.toString(), deadTimestamp.toString()));
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.SUSPEND, departmentUser,
+            "could you please explain what you will pay the successful applicant");
+        
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), postR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR17.getCreatedTimestamp(), postR.getUpdatedTimestamp());
-    
-    
     }
     
     private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {

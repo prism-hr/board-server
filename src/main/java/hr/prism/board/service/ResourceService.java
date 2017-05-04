@@ -281,15 +281,18 @@ public class ResourceService {
     }
     
     public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
-        ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user).setComment(resource.getComment());
-        
-        ResourceChangeListRepresentation changeList = resource.getChangeList();
-        if (changeList != null) {
-            try {
-                resourceOperation.setChangeList(objectMapper.writeValueAsString(changeList));
-            } catch (JsonProcessingException e) {
-                LOGGER.info("Could not serialize change list", e);
+        ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
+        if (action == Action.EDIT) {
+            ResourceChangeListRepresentation changeList = resource.getChangeList();
+            if (changeList != null) {
+                try {
+                    resourceOperation.setChangeList(objectMapper.writeValueAsString(changeList));
+                } catch (JsonProcessingException e) {
+                    LOGGER.info("Could not serialize change list", e);
+                }
             }
+        } else {
+            resourceOperation.setComment(resource.getComment());
         }
         
         resourceOperation = resourceOperationRepository.save(resourceOperation);

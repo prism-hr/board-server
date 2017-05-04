@@ -118,7 +118,6 @@ public class DepartmentService {
             resourcePatchService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
             resourcePatchService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
-            department.setComment(departmentDTO.getComment());
             return department;
         });
     }

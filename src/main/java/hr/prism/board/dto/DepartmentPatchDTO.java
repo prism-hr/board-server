@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class DepartmentPatchDTO extends ResourcePatchDTO {
+public class DepartmentPatchDTO {
     
     @Size(min = 3, max = 100)
     private Optional<String> name;

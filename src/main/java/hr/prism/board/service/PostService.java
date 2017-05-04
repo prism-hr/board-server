@@ -136,7 +136,7 @@ public class PostService {
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
-        return (Post) actionService.executeAction(currentUser, post, action, () -> {
+        return (Post) actionService.executeAction(currentUser, post.setComment(postDTO.getComment()), action, () -> {
             if (action == Action.EDIT) {
                 updatePost(post, postDTO);
             } else {
@@ -145,7 +145,7 @@ public class PostService {
                     return post;
                 });
             }
-    
+        
             return post;
         });
     }
@@ -243,8 +243,6 @@ public class PostService {
                 resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp, Optional.of(baseline.plusWeeks(4)));
             }
         }
-        
-        post.setComment(postDTO.getComment());
     }
     
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

@@ -352,8 +352,8 @@ public class BoardApiIT extends AbstractIT {
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
         ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
     
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser, null);
-    
+        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser);
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board", "board 2")

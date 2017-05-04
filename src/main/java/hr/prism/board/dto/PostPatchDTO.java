@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class PostPatchDTO extends ResourcePatchDTO {
+public class PostPatchDTO {
     
     @Size(min = 3, max = 100)
     private Optional<String> name;
@@ -46,6 +46,8 @@ public class PostPatchDTO extends ResourcePatchDTO {
     private Optional<LocalDateTime> liveTimestamp;
     
     private Optional<LocalDateTime> deadTimestamp;
+    
+    private String comment;
     
     public Optional<String> getName() {
         return name;
@@ -161,6 +163,15 @@ public class PostPatchDTO extends ResourcePatchDTO {
     
     public PostPatchDTO setDeadTimestamp(Optional<LocalDateTime> deadTimestamp) {
         this.deadTimestamp = deadTimestamp;
+        return this;
+    }
+    
+    public String getComment() {
+        return comment;
+    }
+    
+    public PostPatchDTO setComment(String comment) {
+        this.comment = comment;
         return this;
     }
     
