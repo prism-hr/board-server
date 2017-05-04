@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.stormpath.sdk.servlet.mvc.WebHandler;
 import hr.prism.board.repository.MyRepositoryImpl;
 import hr.prism.board.service.UserService;
@@ -104,6 +105,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new Jdk8Module());
+        objectMapper.registerModule(new JavaTimeModule());
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         objectMapper.enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN);
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);

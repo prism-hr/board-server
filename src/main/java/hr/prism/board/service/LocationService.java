@@ -23,8 +23,8 @@ public class LocationService {
             location.setName(locationDTO.getName());
             location.setDomicile(locationDTO.getDomicile());
             location.setGoogleId(locationDTO.getGoogleId());
-            location.setLatitude(locationDTO.getLatitude().setScale(18, RoundingMode.HALF_UP));
-            location.setLongitude(locationDTO.getLongitude().setScale(18, RoundingMode.HALF_UP));
+            location.setLatitude(locationDTO.getLatitude().setScale(18, RoundingMode.HALF_UP).stripTrailingZeros());
+            location.setLongitude(locationDTO.getLongitude().setScale(18, RoundingMode.HALF_UP).stripTrailingZeros());
             return locationRepository.save(location);
         }
     
