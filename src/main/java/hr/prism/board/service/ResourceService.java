@@ -24,9 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityGraph;
@@ -92,10 +90,6 @@ public class ResourceService {
     
     @PersistenceContext
     private EntityManager entityManager;
-    
-    @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
     
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
@@ -211,12 +205,8 @@ public class ResourceService {
         
         // Get the mappings
         entityManager.flush();
-        TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<Object[]> results = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
-            results.addAll(getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters));
-            return results;
-        });
+        List<Object[]> rows = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
+        rows.addAll(getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters));
         
         // Remove duplicate mappings
         Map<ResourceActionKey, ActionRepresentation> rowIndex = new HashMap<>();
@@ -257,18 +247,16 @@ public class ResourceService {
         EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
         
         // Get the resource data
-        List<Resource> resources = transactionTemplate.execute(status -> {
-            String statement = Joiner.on(" ").skipNulls().join(
-                "select distinct resource " +
-                    "from " + resourceClass.getSimpleName() + " resource " +
-                    "where resource.id in (:ids) ",
-                filter.getOrderStatement());
+        String statement = Joiner.on(" ").skipNulls().join(
+            "select distinct resource " +
+                "from " + resourceClass.getSimpleName() + " resource " +
+                "where resource.id in (:ids) ",
+            filter.getOrderStatement());
     
-            return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
-                .setParameter("ids", resourceActionIndex.keySet())
-                .setHint("javax.persistence.loadgraph", entityGraph)
-                .getResultList());
-        });
+        List<Resource> resources = new ArrayList(entityManager.createQuery(statement, resourceClass)
+            .setParameter("ids", resourceActionIndex.keySet())
+            .setHint("javax.persistence.loadgraph", entityGraph)
+            .getResultList());
         
         // Merge the output
         for (Resource resource : resources) {

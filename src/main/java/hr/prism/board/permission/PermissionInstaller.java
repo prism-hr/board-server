@@ -3,11 +3,8 @@ package hr.prism.board.permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
@@ -26,10 +23,6 @@ public class PermissionInstaller {
     
     @PersistenceContext
     private EntityManager entityManager;
-    
-    @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
     
     @PostConstruct
     public void install() {
@@ -161,18 +154,13 @@ public class PermissionInstaller {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS);
-        
-        TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        transactionTemplate.execute(transactionStatus -> {
-            LOGGER.info("Deleting old permission definitions");
-            entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
     
-            LOGGER.info("Inserting new permission definitions");
-            entityManager.createNativeQuery("INSERT INTO permission(resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state) " +
-                "VALUES" + permissions.toString()).executeUpdate();
+        LOGGER.info("Deleting old permission definitions");
+        entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
     
-            return null;
-        });
+        LOGGER.info("Inserting new permission definitions");
+        entityManager.createNativeQuery("INSERT INTO permission(resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state) " +
+            "VALUES" + permissions.toString()).executeUpdate();
     }
     
 }

@@ -270,7 +270,7 @@ public class PostApiIT extends AbstractIT {
         
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = new PostPatchDTO()
-            .setOrganizationName(Optional.of("organization name 2"))
+            .setOrganizationName(Optional.of("organization name"))
             .setLocation(Optional.of(
                 new LocationDTO()
                     .setName("birmingham")
@@ -287,7 +287,6 @@ public class PostApiIT extends AbstractIT {
         
         // Check that the administrator can make further changes and accept the post
         PostPatchDTO acceptDTO = new PostPatchDTO()
-            .setOrganizationName(Optional.of("organization name"))
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
@@ -396,6 +395,34 @@ public class PostApiIT extends AbstractIT {
     
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.SUSPEND, departmentUser,
             "could you please explain what you will pay the successful applicant");
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, postUser,
+            new ResourceChangeListRepresentation()
+                .put("organizationName", "organization name 2", "organization name")
+                .put("location",
+                    ObjectUtils.orderedMap("name", "london", "domicile", "GB", "googleId", "ttt",
+                        "latitude", BigDecimal.TEN.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.TEN.stripTrailingZeros().toPlainString()),
+                    ObjectUtils.orderedMap("name", "birmingham", "domicile", "GB", "googleId", "uuu",
+                        "latitude", BigDecimal.ZERO.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.ZERO.stripTrailingZeros().toPlainString()))
+                .put("applyWebsite", "http://www.facebook.com", null)
+                .put("applyDocument", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
+                .put("memberCategories", Arrays.asList("m2", "m1"), Arrays.asList("m1", "m2")));
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(5), Action.CORRECT, postUser,
+            "i uploaded a document this time which explains that");
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(6), Action.EDIT, boardUser,
+            new ResourceChangeListRepresentation()
+                .put("applyWebsite", null, "http://www.twitter.com")
+                .put("applyDocument", ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"), null)
+                .put("postCategories", Arrays.asList("p2", "p1"), Arrays.asList("p1", "p2"))
+                .put("liveTimestamp", liveTimestamp, liveTimestampDelayed)
+                .put("deadTimestamp", deadTimestamp, deadTimestampDelayed));
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.CORRECT, boardUser,
+            "this looks good now - i replaced the document with the complete website for the opportunity");
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.PUBLISH);
         
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), postR.getCreatedTimestamp());
         Assert.assertEquals(resourceOperationR17.getCreatedTimestamp(), postR.getUpdatedTimestamp());

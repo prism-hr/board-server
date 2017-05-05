@@ -29,7 +29,7 @@ public class BigDecimalConverter implements AttributeConverter<BigDecimal, Strin
         try {
             return ((BigDecimal) decimalFormat.parse(dbData)).stripTrailingZeros();
         } catch (ParseException e) {
-            throw new ApiException(ExceptionCode.PROBLEM);
+            throw new ApiException(ExceptionCode.PROBLEM, e);
         }
     }
     

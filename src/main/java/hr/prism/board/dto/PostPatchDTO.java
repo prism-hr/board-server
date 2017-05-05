@@ -1,11 +1,14 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,14 +29,6 @@ public class PostPatchDTO {
     @Valid
     private Optional<LocationDTO> location;
     
-    private Optional<List<String>> postCategories;
-    
-    private Optional<List<String>> memberCategories;
-    
-    private Optional<ExistingRelation> existingRelation;
-    
-    private Optional<LinkedHashMap<String, Object>> existingRelationExplanation;
-    
     @URL
     private Optional<String> applyWebsite;
     
@@ -42,6 +37,14 @@ public class PostPatchDTO {
     
     @Email
     private Optional<String> applyEmail;
+    
+    private Optional<List<String>> postCategories;
+    
+    private Optional<List<String>> memberCategories;
+    
+    private Optional<ExistingRelation> existingRelation;
+    
+    private Optional<LinkedHashMap<String, Object>> existingRelationExplanation;
     
     private Optional<LocalDateTime> liveTimestamp;
     
@@ -85,6 +88,33 @@ public class PostPatchDTO {
         return this;
     }
     
+    public Optional<String> getApplyWebsite() {
+        return applyWebsite;
+    }
+    
+    public PostPatchDTO setApplyWebsite(Optional<String> applyWebsite) {
+        this.applyWebsite = applyWebsite;
+        return this;
+    }
+    
+    public Optional<DocumentDTO> getApplyDocument() {
+        return applyDocument;
+    }
+    
+    public PostPatchDTO setApplyDocument(Optional<DocumentDTO> applyDocument) {
+        this.applyDocument = applyDocument;
+        return this;
+    }
+    
+    public Optional<String> getApplyEmail() {
+        return applyEmail;
+    }
+    
+    public PostPatchDTO setApplyEmail(Optional<String> applyEmail) {
+        this.applyEmail = applyEmail;
+        return this;
+    }
+    
     public Optional<ExistingRelation> getExistingRelation() {
         return existingRelation;
     }
@@ -121,33 +151,6 @@ public class PostPatchDTO {
         return this;
     }
     
-    public Optional<String> getApplyWebsite() {
-        return applyWebsite;
-    }
-    
-    public PostPatchDTO setApplyWebsite(Optional<String> applyWebsite) {
-        this.applyWebsite = applyWebsite;
-        return this;
-    }
-    
-    public Optional<DocumentDTO> getApplyDocument() {
-        return applyDocument;
-    }
-    
-    public PostPatchDTO setApplyDocument(Optional<DocumentDTO> applyDocument) {
-        this.applyDocument = applyDocument;
-        return this;
-    }
-    
-    public Optional<String> getApplyEmail() {
-        return applyEmail;
-    }
-    
-    public PostPatchDTO setApplyEmail(Optional<String> applyEmail) {
-        this.applyEmail = applyEmail;
-        return this;
-    }
-    
     public Optional<LocalDateTime> getLiveTimestamp() {
         return liveTimestamp;
     }
@@ -173,6 +176,23 @@ public class PostPatchDTO {
     public PostPatchDTO setComment(String comment) {
         this.comment = comment;
         return this;
+    }
+    
+    public boolean hasUpdates() {
+        for (Field field : getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            if (field.getName() != "comment") {
+                try {
+                    if (field.get(this) != null) {
+                        return true;
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new ApiException(ExceptionCode.PROBLEM, e);
+                }
+            }
+        }
+        
+        return false;
     }
     
 }

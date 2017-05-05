@@ -81,7 +81,10 @@ public class TestHelper {
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
     
-    @SuppressWarnings("ConstantConditions")
+    public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction) {
+        verifyResourceOperation(resourceOperationR, expectedAction, null, null, null);
+    }
+    
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, null);
     }
@@ -96,7 +99,7 @@ public class TestHelper {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, expectedComment);
     }
     
-    public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
+    private static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
         ResourceChangeListRepresentation expectedChanges, String expectedComment) {
         Assert.assertEquals(expectedAction, resourceOperationR.getAction());
         verifyUser(expectedUser, resourceOperationR.getUser());
