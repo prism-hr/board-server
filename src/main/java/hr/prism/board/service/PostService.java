@@ -19,7 +19,9 @@ import hr.prism.board.util.BoardUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -63,6 +65,10 @@ public class PostService {
     
     @PersistenceContext
     private EntityManager entityManager;
+    
+    @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    private PlatformTransactionManager platformTransactionManager;
     
     public Post getPost(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -317,27 +323,30 @@ public class PostService {
     @SuppressWarnings("JpaQlInspection")
     private void executeActions(List<Long> postIds, Action action, State state, LocalDateTime baseline) {
         if (postIds.size() > 0) {
-            entityManager.createQuery(
-                "update Post post " +
-                    "set post.previousState = post.state, " +
-                    "post.state = :state, " +
-                    "post.updatedTimestamp = :baseline " +
-                    "where post.id in (:postIds)")
-                .setParameter("state", state)
-                .setParameter("baseline", baseline)
-                .setParameter("postIds", postIds)
-                .executeUpdate();
-    
-            entityManager.createNativeQuery(
-                "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
-                    "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
-                    "FROM resource " +
-                    "WHERE resource.id IN (:postIds) " +
-                    "ORDER BY resource.id")
-                .setParameter("action", action.name())
-                .setParameter("baseline", baseline)
-                .setParameter("postIds", postIds)
-                .executeUpdate();
+            new TransactionTemplate(platformTransactionManager).execute(status -> {
+                entityManager.createQuery(
+                    "update Post post " +
+                        "set post.previousState = post.state, " +
+                        "post.state = :state, " +
+                        "post.updatedTimestamp = :baseline " +
+                        "where post.id in (:postIds)")
+                    .setParameter("state", state)
+                    .setParameter("baseline", baseline)
+                    .setParameter("postIds", postIds)
+                    .executeUpdate();
+        
+                entityManager.createNativeQuery(
+                    "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
+                        "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
+                        "FROM resource " +
+                        "WHERE resource.id IN (:postIds) " +
+                        "ORDER BY resource.id")
+                    .setParameter("action", action.name())
+                    .setParameter("baseline", baseline)
+                    .setParameter("postIds", postIds)
+                    .executeUpdate();
+                return null;
+            });
         }
     }
     
