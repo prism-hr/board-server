@@ -339,9 +339,9 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         // Check that the author can withdraw the post
-        PostPatchDTO withdrawDTO = new PostPatchDTO()
-            .setComment("this is rubbish, I'm withdrawing the post anyway");
-    
+        // It is likely that the comment would be empty in this case - we can make it optional
+        PostPatchDTO withdrawDTO = new PostPatchDTO();
+        
         verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.withdrawPost(postId, withdrawDTO), State.WITHDRAWN);
     
         verifyResourceActions(Scope.POST, postId, operations);
@@ -350,22 +350,22 @@ public class PostApiIT extends AbstractIT {
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE);
         
         // Check that the author can restore the post
-        PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO()
-            .setComment("oh well, i'll give it one more chance");
-    
+        // It is likely that the comment would be empty in this case - we can make it optional
+        PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO();
+        
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.restorePost(postId, restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         testUserService.setAuthentication(postUser.getStormpathId());
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
-        Assert.assertEquals(18, resourceOperationRs.size());
-    
+        Assert.assertEquals(14, resourceOperationRs.size());
+        
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
         ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
-        ResourceOperationRepresentation resourceOperationR17 = resourceOperationRs.get(17);
-    
+        ResourceOperationRepresentation resourceOperationR13 = resourceOperationRs.get(13);
+        
         TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, postUser);
         
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, postUser,
@@ -416,16 +416,28 @@ public class PostApiIT extends AbstractIT {
                 .put("applyWebsite", null, "http://www.twitter.com")
                 .put("applyDocument", ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"), null)
                 .put("postCategories", Arrays.asList("p2", "p1"), Arrays.asList("p1", "p2"))
-                .put("liveTimestamp", liveTimestamp, liveTimestampDelayed)
-                .put("deadTimestamp", deadTimestamp, deadTimestampDelayed));
+                .put("liveTimestamp", liveTimestamp.toString(), liveTimestampDelayed.toString())
+                .put("deadTimestamp", deadTimestamp.toString(), deadTimestampDelayed.toString()));
     
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.CORRECT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.ACCEPT, boardUser,
             "this looks good now - i replaced the document with the complete website for the opportunity");
     
         TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.PUBLISH);
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(9), Action.REJECT, departmentUser,
+            "we have received a complaint, we're closing down the post");
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(10), Action.RESTORE, boardUser,
+            "sorry we made a mistake, we're restoring the post");
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(11), Action.RETIRE);
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(12), Action.WITHDRAW, postUser);
+    
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(13), Action.RESTORE, postUser);
         
         Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), postR.getCreatedTimestamp());
-        Assert.assertEquals(resourceOperationR17.getCreatedTimestamp(), postR.getUpdatedTimestamp());
+        Assert.assertEquals(resourceOperationR13.getCreatedTimestamp(), postR.getUpdatedTimestamp());
     }
     
     private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {

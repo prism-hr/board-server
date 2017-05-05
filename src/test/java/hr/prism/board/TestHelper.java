@@ -102,7 +102,13 @@ public class TestHelper {
     private static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
         ResourceChangeListRepresentation expectedChanges, String expectedComment) {
         Assert.assertEquals(expectedAction, resourceOperationR.getAction());
-        verifyUser(expectedUser, resourceOperationR.getUser());
+    
+        if (expectedUser == null) {
+            Assert.assertNull(resourceOperationR.getUser());
+        } else {
+            verifyUser(expectedUser, resourceOperationR.getUser());
+        }
+        
         Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
     }
