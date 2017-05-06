@@ -3,7 +3,7 @@ package hr.prism.board.exception;
 import org.junit.Assert;
 import org.springframework.transaction.TransactionStatus;
 
-public class ExceptionUtil {
+public class ExceptionUtils {
     
     public static <T extends ApiException> void verifyApiException(Class<T> exceptionClass, Runnable operation, ExceptionCode exceptionCode, TransactionStatus status) {
         ApiException apiException = null;

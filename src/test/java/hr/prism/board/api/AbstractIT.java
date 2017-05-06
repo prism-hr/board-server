@@ -11,7 +11,7 @@ import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtil;
+import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.ActionService;
@@ -96,7 +96,7 @@ public abstract class AbstractIT {
     
     List<User> makeUnprivilegedUsers(Long departmentId, Long boardId, PostDTO samplePost) {
         List<User> unprivilegedUsers = Lists.newArrayList(testUserService.authenticate());
-        transactionTemplate.execute(transactionStatus -> {
+        transactionTemplate.execute(status -> {
             boardApi.postBoard(
                 new BoardDTO()
                     .setName("other board")
@@ -106,7 +106,7 @@ public abstract class AbstractIT {
         });
         
         unprivilegedUsers.add(testUserService.authenticate());
-        transactionTemplate.execute(transactionStatus -> {
+        transactionTemplate.execute(status -> {
             boardApi.postBoard(
                 new BoardDTO()
                     .setName("sibling board")
@@ -116,7 +116,7 @@ public abstract class AbstractIT {
         });
         
         unprivilegedUsers.add(testUserService.authenticate());
-        transactionTemplate.execute(transactionStatus -> postApi.postPost(boardId, samplePost));
+        transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;
     }
     
@@ -153,7 +153,7 @@ public abstract class AbstractIT {
                     Runnable operation = operations.get(action);
                     if (operation != null) {
                         LOGGER.info("Verifying forbidden action: " + action.name().toLowerCase());
-                        ExceptionUtil.verifyApiException(ApiForbiddenException.class, operation, exceptionCode, status);
+                        ExceptionUtils.verifyApiException(ApiForbiddenException.class, operation, exceptionCode, status);
                     }
                     
                     return null;

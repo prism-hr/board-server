@@ -17,7 +17,7 @@ import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtil;
+import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
@@ -97,19 +97,63 @@ public class PostApiIT extends AbstractIT {
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtil.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
             return null;
         });
     }
     
     @Test
     public void shouldNotAcceptPostWithCategoriesForBoardWithoutCategories() {
-        
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()).getId());
+    
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Arrays.asList("p1"));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
+            return null;
+        });
+    
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Arrays.asList("m1"));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
+            return null;
+        });
     }
     
     @Test
     public void shouldNotAcceptPostWithoutCategoriesForBoardWithCategories() {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+    
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Arrays.asList("m1"));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
+            return null;
+        });
+    
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Arrays.asList("p1"));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldNotAcceptPostWithInvalidCategoriesForBoardWithCategories() {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = TestHelper.samplePost().setPostCategories(Arrays.asList("p3"));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
+            return null;
+        });
+        
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Arrays.asList("m1"));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
+            return null;
+        });
     }
     
     @Test
@@ -121,7 +165,7 @@ public class PostApiIT extends AbstractIT {
         // TODO: coverage for missing / corrupted / invalid categories
         
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
+            ExceptionUtils.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId,
                         new PostPatchDTO()
                             .setName(Optional.of("name"))

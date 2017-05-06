@@ -17,7 +17,7 @@ import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtil;
+import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
@@ -78,7 +78,7 @@ public class BoardApiIT extends AbstractIT {
         });
         
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, status);
+            ExceptionUtils.verifyApiException(ApiException.class, () -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, status);
             return null;
         });
     }
@@ -110,7 +110,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setName(Optional.of(boardRs.getValue().getName()));
-            ExceptionUtil.verifyApiException(ApiException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, status);
+            ExceptionUtils.verifyApiException(ApiException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, status);
             return null;
         });
     }
@@ -121,7 +121,8 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-            ExceptionUtil.verifyApiException(ApiException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE, status);
+            ExceptionUtils.verifyApiException(ApiException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
+                status);
             return null;
         });
     }

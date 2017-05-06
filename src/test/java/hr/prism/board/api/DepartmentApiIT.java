@@ -15,7 +15,7 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtil;
+import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.TestUserService;
@@ -107,7 +107,7 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldNotCreateDuplicateDepartmentsByUpdating() {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
+            ExceptionUtils.verifyApiException(ApiException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
                         new DepartmentPatchDTO()
                             .setName(Optional.of(departmentRs.getValue().getName()))),
@@ -120,7 +120,7 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldNotCreateDuplicateDepartmentHandlesByUpdating() {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
-            ExceptionUtil.verifyApiException(ApiException.class, () ->
+            ExceptionUtils.verifyApiException(ApiException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
                         new DepartmentPatchDTO()
                             .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
