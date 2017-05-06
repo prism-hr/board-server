@@ -285,13 +285,13 @@ public class PostService {
         if (type == CategoryType.POST) {
             validateCategories(reference, type, categories,
                 ExceptionCode.MISSING_POST_POST_CATEGORIES,
-                ExceptionCode.CORRUPTED_POST_POST_CATEGORIES,
-                ExceptionCode.INVALID_POST_POST_CATEGORIES);
+                ExceptionCode.INVALID_POST_POST_CATEGORIES,
+                ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
         } else {
             validateCategories(reference, type, categories,
                 ExceptionCode.MISSING_POST_MEMBER_CATEGORIES,
-                ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES,
-                ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
+                ExceptionCode.INVALID_POST_MEMBER_CATEGORIES,
+                ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
         }
         
         // Clear the old records
