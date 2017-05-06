@@ -144,13 +144,13 @@ public class PostApiIT extends AbstractIT {
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.samplePost().setPostCategories(Collections.singletonList("p3"));
+            PostDTO postDTO = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
             ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
             return null;
         });
         
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList("m1"));
+            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList("m4"));
             ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -200,7 +200,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
-                        .setPostCategories(Optional.of(Collections.singletonList("p3")))),
+                        .setPostCategories(Optional.of(Collections.singletonList("p4")))),
                 ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
             return null;
         });
@@ -208,7 +208,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList("m3")))),
+                        .setMemberCategories(Optional.of(Collections.singletonList("m4")))),
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
