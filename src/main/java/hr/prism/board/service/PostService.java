@@ -157,9 +157,10 @@ public class PostService {
     
     public synchronized void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
-        List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
+        List<State> states = Arrays.asList(State.PENDING, State.ACCEPTED, State.EXPIRED);
+        List<Long> postToRetireIds = postRepository.findPostsToRetire(states, baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
-        List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
+        List<Long> postToPublishIds = postRepository.findPostsToPublish(states, baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
     }
     

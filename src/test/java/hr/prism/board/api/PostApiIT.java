@@ -459,7 +459,7 @@ public class PostApiIT extends AbstractIT {
     
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
-        verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
+        verifyPostActionsInAccepted(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         testUserService.setAuthentication(postUser.getStormpathId());
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
