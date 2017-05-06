@@ -395,9 +395,9 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.PENDING);
     
         transactionTemplate.execute(status -> {
-            Post publishedPost = postService.getPost(postId);
-            publishedPost.setLiveTimestamp(liveTimestamp);
-            publishedPost.setDeadTimestamp(deadTimestamp);
+            Post post = postService.getPost(postId);
+            post.setLiveTimestamp(liveTimestamp);
+            post.setDeadTimestamp(deadTimestamp);
             return null;
         });
     
@@ -424,8 +424,8 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInAccepted(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         transactionTemplate.execute(status -> {
-            Post retiredPost = postService.getPost(postId);
-            retiredPost.setDeadTimestamp(liveTimestamp.minusSeconds(1));
+            Post post = postService.getPost(postId);
+            post.setDeadTimestamp(liveTimestamp.minusSeconds(1));
             return null;
         });
     
@@ -450,18 +450,25 @@ public class PostApiIT extends AbstractIT {
         
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.restorePost(postId, restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
+    
+        transactionTemplate.execute(status -> {
+            Post post = postService.getPost(postId);
+            post.setDeadTimestamp(null);
+            return null;
+        });
+    
+        // Check that the post now moves to the accepted state when the update job runs
+        verifyPublishAndRetirePost(postId, State.ACCEPTED);
+        verifyPostActionsInPendingOrExpired(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         testUserService.setAuthentication(postUser.getStormpathId());
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
-        Assert.assertEquals(14, resourceOperationRs.size());
+        Assert.assertEquals(15, resourceOperationRs.size());
         
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
-        ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
-        ResourceOperationRepresentation resourceOperationR13 = resourceOperationRs.get(13);
-        
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, postUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, postUser);
         
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, postUser,
             new ResourceChangeListRepresentation()
@@ -526,13 +533,9 @@ public class PostApiIT extends AbstractIT {
             "sorry we made a mistake, we're restoring the post");
     
         TestHelper.verifyResourceOperation(resourceOperationRs.get(11), Action.RETIRE);
-    
         TestHelper.verifyResourceOperation(resourceOperationRs.get(12), Action.WITHDRAW, postUser);
-    
         TestHelper.verifyResourceOperation(resourceOperationRs.get(13), Action.RESTORE, postUser);
-        
-        Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), postR.getCreatedTimestamp());
-        Assert.assertEquals(resourceOperationR13.getCreatedTimestamp(), postR.getUpdatedTimestamp());
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(14), Action.PUBLISH);
     }
     
     private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {

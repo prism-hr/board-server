@@ -147,7 +147,7 @@ public class ResourceService {
         Set<ResourceCategory> oldCategories = resource.getCategories();
         for (ResourceCategory oldCategory : oldCategories) {
             oldCategory.setOrdinal(orderIndex.remove(oldCategory.getName()));
-            resourceCategoryRepository.update(oldCategory, LocalDateTime.now());
+            resourceCategoryRepository.update(oldCategory);
         }
     
         // Write new records
@@ -263,7 +263,7 @@ public class ResourceService {
                     "from " + resourceClass.getSimpleName() + " resource " +
                     "where resource.id in (:ids) ",
                 filter.getOrderStatement());
-        
+    
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
                 .setParameter("ids", resourceActionIndex.keySet())
                 .setHint("javax.persistence.loadgraph", entityGraph)
@@ -297,14 +297,6 @@ public class ResourceService {
         
         resourceOperation = resourceOperationRepository.save(resourceOperation);
         resource.getOperations().add(resourceOperation);
-    
-        LocalDateTime baseline = resourceOperation.getUpdatedTimestamp();
-        if (action == Action.EXTEND) {
-            // New resource, synchronize created timestamp
-            resource.setCreatedTimestamp(baseline);
-        }
-    
-        resourceRepository.update(resource, baseline);
         return resourceOperation;
     }
     

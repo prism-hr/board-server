@@ -158,8 +158,8 @@ public class PostService {
     public synchronized void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> postToRetireIds = postRepository.findPostsToRetire(State.ACCEPTED, baseline);
-        List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
+        List<Long> postToPublishIds = postRepository.findPostsToPublish(State.PENDING, baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
     }
     
@@ -243,6 +243,8 @@ public class PostService {
                 resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp, Optional.of(baseline.plusWeeks(4)));
             }
         }
+    
+        postRepository.update(post);
     }
     
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -302,15 +304,6 @@ public class PostService {
         // Index the insertion order
         Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
         if (orderIndex != null) {
-            // Reorder the old records
-            List<ResourceCategory> resourceCategories = post.getCategories(type);
-            if (resourceCategories != null) {
-                resourceCategories.forEach(resourceCategory -> {
-                    Integer ordinal = orderIndex.get(resourceCategory.getName());
-                    resourceCategory.setOrdinal(ordinal == null ? null : ordinal);
-                });
-            }
-            
             // Write the new records
             categories.forEach(category -> {
                 ResourceCategory resourceCategory = new ResourceCategory().setResource(post).setName(category).setOrdinal(orderIndex.get(category)).setType(type);
@@ -334,7 +327,7 @@ public class PostService {
                     .setParameter("baseline", baseline)
                     .setParameter("postIds", postIds)
                     .executeUpdate();
-        
+    
                 entityManager.createNativeQuery(
                     "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
                         "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +

@@ -205,16 +205,12 @@ public class DepartmentApiIT extends AbstractIT {
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
     
         testUserService.setAuthentication(departmentUser.getStormpathId());
-        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(5, resourceOperationRs.size());
     
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
-        ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
-        ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
-    
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, departmentUser);
         
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
@@ -237,13 +233,10 @@ public class DepartmentApiIT extends AbstractIT {
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
                 .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
     
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, departmentUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("m2", "m1"), null));
-        
-        Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), departmentR.getCreatedTimestamp());
-        Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), departmentR.getUpdatedTimestamp());
     }
     
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {

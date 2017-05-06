@@ -343,17 +343,12 @@ public class BoardApiIT extends AbstractIT {
             State.ACCEPTED);
     
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
-        
-        boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> boardApi.getBoardOperations(boardId));
         Assert.assertEquals(5, resourceOperationRs.size());
     
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
-        ResourceOperationRepresentation resourceOperationR0 = resourceOperationRs.get(0);
-        ResourceOperationRepresentation resourceOperationR4 = resourceOperationRs.get(4);
-    
-        TestHelper.verifyResourceOperation(resourceOperationR0, Action.EXTEND, departmentUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, departmentUser);
         
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
@@ -376,13 +371,10 @@ public class BoardApiIT extends AbstractIT {
                 .put("description", "description", "description 2")
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
     
-        TestHelper.verifyResourceOperation(resourceOperationR4, Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("description", "description 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
-        
-        Assert.assertEquals(resourceOperationR0.getCreatedTimestamp(), boardR.getCreatedTimestamp());
-        Assert.assertEquals(resourceOperationR4.getCreatedTimestamp(), boardR.getUpdatedTimestamp());
     }
     
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {

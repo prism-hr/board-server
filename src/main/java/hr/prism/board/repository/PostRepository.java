@@ -15,6 +15,7 @@ public interface PostRepository extends MyRepository<Post, Long> {
         "select post.id " +
             "from Post post " +
             "where post.state = :state " +
+            "and post.deadTimestamp is not null " +
             "and post.deadTimestamp < :baseline")
     List<Long> findPostsToRetire(@Param("state") State state, @Param("baseline") LocalDateTime baseline);
     
@@ -22,8 +23,9 @@ public interface PostRepository extends MyRepository<Post, Long> {
         "select post.id " +
             "from Post post " +
             "where post.state = :state " +
-            "and post.liveTimestamp <= :baseline " +
-            "and post.deadTimestamp >= :baseline")
+            "and post.liveTimestamp < :baseline " +
+            "and (post.deadTimestamp >= :baseline " +
+            "or post.deadTimestamp is null)")
     List<Long> findPostsToPublish(@Param("state") State state, @Param("baseline") LocalDateTime baseline);
     
 }

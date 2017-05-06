@@ -102,6 +102,7 @@ public class BoardService {
                 boardDTO.getDefaultPostVisibility());
             resourcePatchService.patchProperty(board, "description", board::getDescription, board::setDescription, boardDTO.getDescription());
             resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
+            boardRepository.update(board);
             return board;
         });
     }
