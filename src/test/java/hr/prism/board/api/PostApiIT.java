@@ -302,7 +302,7 @@ public class PostApiIT extends AbstractIT {
         Long postId = postR.getId();
     
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 1, TestHelper.samplePost());
+        Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
         
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId))
@@ -646,21 +646,21 @@ public class PostApiIT extends AbstractIT {
         assertTrue(locationDefinition.getLongitude().compareTo(locationR.getLongitude()) == 0);
     }
     
-    private void verifyPostActionsInDraft(List<User> adminUsers, User postUser, List<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
+    private void verifyPostActionsInDraft(List<User> adminUsers, User postUser, Collection<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.POST, postId, operations);
         verifyResourceActions(unprivilegedUsers, Scope.POST, postId, operations);
         verifyResourceActions(adminUsers, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND);
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW);
     }
     
-    private void verifyPostActionsInPendingOrExpired(List<User> adminUsers, User postUser, List<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
+    private void verifyPostActionsInPendingOrExpired(List<User> adminUsers, User postUser, Collection<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.POST, postId, operations);
         verifyResourceActions(unprivilegedUsers, Scope.POST, postId, operations);
         verifyResourceActions(adminUsers, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND);
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW);
     }
     
-    private void verifyPostActionsInAccepted(List<User> adminUsers, User postUser, List<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
+    private void verifyPostActionsInAccepted(List<User> adminUsers, User postUser, Collection<User> unprivilegedUsers, Long postId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.POST, postId, operations, Action.VIEW);
         verifyResourceActions(unprivilegedUsers, Scope.POST, postId, operations, Action.VIEW);
         verifyResourceActions(adminUsers, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND);

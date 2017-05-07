@@ -230,8 +230,8 @@ public class ResourceService {
             for (Object[] secureResult : secureResults) {
                 securePublicResults.addAll(publicResultsIndex.get(secureResult[0]));
             }
-            
-            // Return secure results including public actions
+    
+            // Return secure results with public actions
             secureResults.addAll(securePublicResults);
             return secureResults;
         });

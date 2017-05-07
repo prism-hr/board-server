@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.Lists;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.Scope;
@@ -32,10 +31,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -94,28 +90,29 @@ public abstract class AbstractIT {
         });
     }
     
-    List<User> makeUnprivilegedUsers(Long departmentId, Long boardId, int suffix, PostDTO samplePost) {
-        List<User> unprivilegedUsers = Lists.newArrayList(testUserService.authenticate());
+    Map<Scope, User> makeUnprivilegedUsers(Long departmentId, Long boardId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
+        Map<Scope, User> unprivilegedUsers = new HashMap<>();
+        unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
         transactionTemplate.execute(status -> {
             boardApi.postBoard(
                 new BoardDTO()
-                    .setName("board")
+                    .setName("board" + departmentSuffix)
                     .setDepartment(new DepartmentDTO()
-                        .setName("department" + suffix)));
+                        .setName("department" + departmentSuffix)));
             return null;
         });
         
-        unprivilegedUsers.add(testUserService.authenticate());
+        unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
         transactionTemplate.execute(status -> {
             boardApi.postBoard(
                 new BoardDTO()
-                    .setName("board" + suffix)
+                    .setName("board" + boardSuffix)
                     .setDepartment(new DepartmentDTO()
                         .setId(departmentId)));
             return null;
         });
         
-        unprivilegedUsers.add(testUserService.authenticate());
+        unprivilegedUsers.put(Scope.POST, testUserService.authenticate());
         transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;
     }

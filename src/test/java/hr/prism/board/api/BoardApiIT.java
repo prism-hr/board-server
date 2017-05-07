@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
@@ -30,10 +31,7 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @TestContext
@@ -54,29 +52,214 @@ public class BoardApiIT extends AbstractIT {
     
     @Test
     public void shouldCreateAndListBoards() {
-        User user1 = testUserService.authenticate();
-        verifyPostBoard(user1, TestHelper.sampleBoard().setName("board 1"), "board-1");
-        verifyPostBoard(user1, TestHelper.smallSampleBoard().setName("board 2"), "board-2");
+        User user11 = testUserService.authenticate();
+        BoardDTO boardDTO11 = TestHelper.sampleBoard();
+        boardDTO11.getDepartment().setName("department1");
+        boardDTO11.setName("board11");
+        BoardRepresentation boardR11 = verifyPostBoard(user11, boardDTO11, "board11");
+        Long department1Id = boardR11.getDepartment().getId();
+        List<User> unprivilegedUsers11 = makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 10, 110, TestHelper.samplePost());
     
-        User user2 = testUserService.authenticate();
-        verifyPostBoard(user1, TestHelper.sampleBoard().setName("board 3"), "board-3");
-        verifyPostBoard(user1, TestHelper.smallSampleBoard().setName("board 4"), "board-4");
+        User user12 = testUserService.authenticate();
+        BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
+        boardDTO12.getDepartment().setName("department1");
+        boardDTO12.setName("board12");
+        BoardRepresentation boardR12 = verifyPostBoard(user11, boardDTO12, "board12");
+        List<User> unprivilegedUsers12 = makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 20, 120, TestHelper.smallSamplePost());
     
+        User user21 = testUserService.authenticate();
+        BoardDTO boardDTO21 = TestHelper.sampleBoard();
+        boardDTO21.getDepartment().setName("department2");
+        boardDTO21.setName("board21");
+        BoardRepresentation boardR21 = verifyPostBoard(user12, boardDTO21, "board21");
+        Long department2Id = boardR21.getDepartment().getId();
+        List<User> unprivilegedUsers21 = makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 30, 210, TestHelper.samplePost());
+    
+        User user22 = testUserService.authenticate();
+        BoardDTO boardDTO22 = TestHelper.smallSampleBoard();
+        boardDTO22.getDepartment().setName("department2");
+        boardDTO22.setName("board22");
+        BoardRepresentation boardR22 = verifyPostBoard(user12, boardDTO22, "board22");
+        List<User> unprivilegedUsers22 = makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 40, 220, TestHelper.smallSamplePost());
+        
         testUserService.unauthenticate();
-        Assert.assertEquals(0, transactionTemplate.execute(status -> departmentApi.getDepartments(null)).size());
-        Assert.assertEquals(4, transactionTemplate.execute(status -> departmentApi.getDepartments(true)).size());
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> boardApi.getBoards(null)),
+            Collections.emptyList(),
+            null);
     
-        testUserService.setAuthentication(user1.getStormpathId());
-        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(null));
-        Assert.assertEquals(2, boardRs.size());
-        Assert.assertEquals(Arrays.asList("board 1", "board 2"), boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
-        Assert.assertEquals(4, transactionTemplate.execute(status -> departmentApi.getDepartments(true)).size());
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> boardApi.getBoards(true)),
+            Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.EXTEND, Action.VIEW));
     
-        testUserService.setAuthentication(user2.getStormpathId());
-        boardRs = transactionTemplate.execute(status -> boardApi.getBoards(null));
-        Assert.assertEquals(2, boardRs.size());
-        Assert.assertEquals(Arrays.asList("board 3", "board 4"), boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
-        Assert.assertEquals(4, transactionTemplate.execute(status -> departmentApi.getDepartments(true)).size());
+        HashMultimap<Long, String> boardsByDepartment = HashMultimap.create();
+        boardsByDepartment.putAll(boardDTO11.getDepartment().getId(), Arrays.asList("board11", "board110", "board12", "board120"));
+        boardsByDepartment.putAll(boardDTO21.getDepartment().getId(), Arrays.asList("board21", "board210", "board22", "board220"));
+    
+        for (Long departmentId : boardsByDepartment.keySet()) {
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                Collections.emptyList(),
+                null);
+        
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                Lists.newArrayList(boardsByDepartment.get(departmentId)),
+                new TestHelper.ExpectedActions()
+                    .put("default", Action.EXTEND, Action.VIEW));
+        }
+    
+        int step = 1;
+        for (List<User> unprivilegedUsers : Arrays.asList(unprivilegedUsers11, unprivilegedUsers12, unprivilegedUsers21, unprivilegedUsers22)) {
+            for (int i = 0; i < 3; i++) {
+                testUserService.setAuthentication(unprivilegedUsers.get(i).getStormpathId());
+                if (i == 0) {
+                    String boardName = "board" + step + 0;
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> boardApi.getBoards(null)),
+                        Collections.singletonList(boardName),
+                        new TestHelper.ExpectedActions()
+                            .put(boardName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+                
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> boardApi.getBoards(true)),
+                        Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+                        new TestHelper.ExpectedActions()
+                            .put("default", Action.EXTEND, Action.VIEW)
+                            .put(boardName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+                
+                    for (Long departmentId : boardsByDepartment.keySet()) {
+                        List<String> boardNamesByDepartment = Lists.newArrayList(boardsByDepartment.get(departmentId));
+                        if (boardNamesByDepartment.contains(boardName)) {
+                            TestHelper.verifyResources(
+                                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                                Collections.singletonList(boardName),
+                                new TestHelper.ExpectedActions()
+                                    .put(boardName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+                        
+                            TestHelper.verifyResources(
+                                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                                boardNamesByDepartment,
+                                new TestHelper.ExpectedActions()
+                                    .put("default", Action.EXTEND, Action.VIEW)
+                                    .put(boardName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+                        } else {
+                            TestHelper.verifyResources(
+                                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                                Collections.emptyList(),
+                                null);
+                        
+                            TestHelper.verifyResources(
+                                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                                boardNamesByDepartment,
+                                new TestHelper.ExpectedActions()
+                                    .put("default", Action.EXTEND, Action.VIEW));
+                        }
+                    }
+                } else {
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> boardApi.getBoards(null)),
+                        Collections.emptyList(),
+                        null);
+                
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> boardApi.getBoards(true)),
+                        Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+                        new TestHelper.ExpectedActions()
+                            .put("default", Action.EXTEND, Action.VIEW));
+                
+                    for (Long departmentId : boardsByDepartment.keySet()) {
+                        TestHelper.verifyResources(
+                            transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                            Collections.emptyList(),
+                            null);
+                    
+                        TestHelper.verifyResources(
+                            transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                            Lists.newArrayList(boardsByDepartment.get(departmentId)),
+                            new TestHelper.ExpectedActions()
+                                .put("default", Action.EXTEND, Action.VIEW));
+                    }
+                }
+            }
+        
+            step++;
+        }
+    
+        testUserService.setAuthentication(user11.getStormpathId());
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> boardApi.getBoards(null)),
+            Arrays.asList("board11", "board110", "board12", "board120"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> boardApi.getBoards(true)),
+            Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.EXTEND, Action.VIEW)
+                .put("board11", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                .put("board110", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                .put("board12", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                .put("board120", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        for (Long departmentId : boardsByDepartment.keySet()) {
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                Lists.newArrayList(boardsByDepartment.get(departmentId)),
+                new TestHelper.ExpectedActions()
+                    .put("default", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+        
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+                new TestHelper.ExpectedActions()
+                    .put("default", Action.EXTEND, Action.VIEW)
+                    .put("board11", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                    .put("board110", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                    .put("board12", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                    .put("board120", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+        }
+    
+        testUserService.setAuthentication(user12.getStormpathId());
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> boardApi.getBoards(null)),
+            Arrays.asList("board12", "board120"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> boardApi.getBoards(true)),
+            Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.EXTEND, Action.VIEW)
+                .put("board12", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                .put("board120", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        for (Long departmentId : boardsByDepartment.keySet()) {
+            List<String> boardByDepartmentNames = Lists.newArrayList(boardsByDepartment.get(departmentId));
+            if ()
+            
+                TestHelper.verifyResources(
+                    transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                    Lists.newArrayList(boardsByDepartment.get(departmentId)),
+                    new TestHelper.ExpectedActions()
+                        .put("default", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+        
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                Arrays.asList("board10", "board11", "board110", "board12", "board120", "board20", "board21", "board210", "board22", "board220", "board30", "board40"),
+                new TestHelper.ExpectedActions()
+                    .put("default", Action.EXTEND, Action.VIEW)
+                    .put("board12", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                    .put("board120", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+        }
+    
+        testUserService.setAuthentication(user21.getStormpathId());
+    
+        testUserService.setAuthentication(user22.getStormpathId());
     }
     
     @Test
@@ -206,7 +389,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
         
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 1, TestHelper.smallSamplePost());
+        Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.smallSamplePost()).values();
         unprivilegedUsers.add(pUser);
     
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
@@ -355,7 +538,7 @@ public class BoardApiIT extends AbstractIT {
         });
     }
     
-    private void verifyBoardActions(List<User> adminUsers, List<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
+    private void verifyBoardActions(List<User> adminUsers, Collection<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.BOARD, boardId, operations, Action.VIEW, Action.EXTEND);
         verifyResourceActions(unprivilegedUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EXTEND);
         verifyResourceActions(adminUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND);

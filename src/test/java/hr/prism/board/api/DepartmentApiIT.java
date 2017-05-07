@@ -56,32 +56,32 @@ public class DepartmentApiIT extends AbstractIT {
     
     @Test
     public void shouldCreateAndListDepartments() {
+        Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
+        
         User user1 = testUserService.authenticate();
-    
         BoardDTO boardDTO1 = TestHelper.sampleBoard();
         boardDTO1.getDepartment().setName("department1");
         BoardRepresentation boardR1 = verifyPostDepartment(user1, boardDTO1, "department1");
-        List<User> unprivilegedUsers1 = makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, TestHelper.samplePost());
-    
+        unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, 2, TestHelper.samplePost()));
+        
         testUserService.setAuthentication(user1.getStormpathId());
         BoardDTO boardDTO2 = TestHelper.smallSampleBoard();
         boardDTO2.getDepartment().setName("department2");
         BoardRepresentation boardR2 = verifyPostDepartment(user1, boardDTO2, "department2");
-        List<User> unprivilegedUsers2 = makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, TestHelper.smallSamplePost());
-    
+        unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, 2, TestHelper.smallSamplePost()));
+        
         User user2 = testUserService.authenticate();
-    
         BoardDTO boardDTO3 = TestHelper.sampleBoard();
         boardDTO3.getDepartment().setName("department3");
         BoardRepresentation boardR3 = verifyPostDepartment(user2, boardDTO3, "department3");
-        List<User> unprivilegedUsers3 = makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, TestHelper.samplePost());
-    
+        unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, 2, TestHelper.samplePost()));
+        
         testUserService.setAuthentication(user2.getStormpathId());
         BoardDTO boardDTO4 = TestHelper.smallSampleBoard();
         boardDTO4.getDepartment().setName("department4");
         BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
-        List<User> unprivilegedUsers4 = makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, TestHelper.smallSamplePost());
-    
+        unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2, TestHelper.smallSamplePost()));
+        
         testUserService.unauthenticate();
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
@@ -94,18 +94,17 @@ public class DepartmentApiIT extends AbstractIT {
             new TestHelper.ExpectedActions()
                 .put("default", Action.EXTEND, Action.VIEW));
     
-        int step = 1;
-        for (List<User> unprivilegedUsers : Arrays.asList(unprivilegedUsers1, unprivilegedUsers2, unprivilegedUsers3, unprivilegedUsers4)) {
-            for (int i = 0; i < 3; i++) {
-                testUserService.setAuthentication(unprivilegedUsers.get(i).getStormpathId());
-                if (i == 0) {
-                    String departmentName = "department" + step + 0;
+        for (String departmentName : unprivilegedUsers.keySet()) {
+            Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(departmentName);
+            for (Scope scope : unprivilegedUserMap.keySet()) {
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
+                if (scope == Scope.DEPARTMENT) {
                     TestHelper.verifyResources(
                         transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
                         Collections.singletonList(departmentName),
                         new TestHelper.ExpectedActions()
                             .put(departmentName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
-    
+                
                     TestHelper.verifyResources(
                         transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
                         Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
@@ -117,7 +116,7 @@ public class DepartmentApiIT extends AbstractIT {
                         transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
                         Collections.emptyList(),
                         null);
-    
+                
                     TestHelper.verifyResources(
                         transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
                         Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
@@ -125,8 +124,6 @@ public class DepartmentApiIT extends AbstractIT {
                             .put("default", Action.EXTEND, Action.VIEW));
                 }
             }
-    
-            step++;
         }
     
         testUserService.setAuthentication(user1.getStormpathId());
@@ -239,7 +236,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
         
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 1, TestHelper.smallSamplePost());
+        Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.smallSamplePost()).values();
         unprivilegedUsers.add(boardUser);
         unprivilegedUsers.add(postUser);
     
@@ -384,7 +381,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
     }
     
-    private void verifyDepartmentActions(User departmentUser, List<User> unprivilegedUsers, Long departmentId, Map<Action, Runnable> operations) {
+    private void verifyDepartmentActions(User departmentUser, Collection<User> unprivilegedUsers, Long departmentId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.DEPARTMENT, departmentId, operations, Action.VIEW, Action.EXTEND);
         verifyResourceActions(unprivilegedUsers, Scope.DEPARTMENT, departmentId, operations, Action.VIEW, Action.EXTEND);
         verifyResourceActions(departmentUser, Scope.DEPARTMENT, departmentId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND);
