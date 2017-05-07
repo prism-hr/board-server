@@ -16,7 +16,10 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.representation.*;
+import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.TestUserService;
 import hr.prism.board.util.ObjectUtils;
@@ -29,10 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @TestContext
@@ -55,19 +55,109 @@ public class DepartmentApiIT extends AbstractIT {
     private UserRoleService userRoleService;
     
     @Test
-    public void shouldCreateBoard() {
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardDTO fullBoardDTO = new BoardDTO()
-            .setName("other board")
-            .setDescription("description")
-            .setPostCategories(ImmutableList.of("a", "b"))
-            .setDepartment(new DepartmentDTO()
-                .setName("other department")
-                .setMemberCategories(ImmutableList.of("c", "d")));
+    public void shouldCreateAndListDepartments() {
+        User user1 = testUserService.authenticate();
     
-        User user = testUserService.authenticate();
-        verifyPostDepartment(user, boardDTO, "department");
-        verifyPostDepartment(user, fullBoardDTO, "other-department");
+        BoardDTO boardDTO1 = TestHelper.sampleBoard();
+        boardDTO1.getDepartment().setName("department1");
+        BoardRepresentation boardR1 = verifyPostDepartment(user1, boardDTO1, "department1");
+        List<User> unprivilegedUsers1 = makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, TestHelper.samplePost());
+    
+        testUserService.setAuthentication(user1.getStormpathId());
+        BoardDTO boardDTO2 = TestHelper.smallSampleBoard();
+        boardDTO2.getDepartment().setName("department2");
+        BoardRepresentation boardR2 = verifyPostDepartment(user1, boardDTO2, "department2");
+        List<User> unprivilegedUsers2 = makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, TestHelper.smallSamplePost());
+    
+        User user2 = testUserService.authenticate();
+    
+        BoardDTO boardDTO3 = TestHelper.sampleBoard();
+        boardDTO3.getDepartment().setName("department3");
+        BoardRepresentation boardR3 = verifyPostDepartment(user2, boardDTO3, "department3");
+        List<User> unprivilegedUsers3 = makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, TestHelper.samplePost());
+    
+        testUserService.setAuthentication(user2.getStormpathId());
+        BoardDTO boardDTO4 = TestHelper.smallSampleBoard();
+        boardDTO4.getDepartment().setName("department4");
+        BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
+        List<User> unprivilegedUsers4 = makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, TestHelper.smallSamplePost());
+    
+        testUserService.unauthenticate();
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+            Collections.emptyList(),
+            null);
+    
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+            Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.EXTEND, Action.VIEW));
+    
+        int step = 1;
+        for (List<User> unprivilegedUsers : Arrays.asList(unprivilegedUsers1, unprivilegedUsers2, unprivilegedUsers3, unprivilegedUsers4)) {
+            for (int i = 0; i < 3; i++) {
+                testUserService.setAuthentication(unprivilegedUsers.get(i).getStormpathId());
+                if (i == 0) {
+                    String departmentName = "department" + step + 0;
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+                        Collections.singletonList(departmentName),
+                        new TestHelper.ExpectedActions()
+                            .put(departmentName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+                
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+                        Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+                        new TestHelper.ExpectedActions()
+                            .put("default", Action.EXTEND, Action.VIEW)
+                            .put(departmentName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+                } else {
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+                        Collections.emptyList(),
+                        null);
+                
+                    TestHelper.verifyResources(
+                        transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+                        Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+                        new TestHelper.ExpectedActions()
+                            .put("default", Action.EXTEND, Action.VIEW));
+                }
+            }
+        
+            step++;
+        }
+    
+        testUserService.setAuthentication(user1.getStormpathId());
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+            Arrays.asList("department1", "department2"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+            Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.EXTEND, Action.VIEW)
+                .put("department1", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                .put("department2", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        testUserService.setAuthentication(user2.getStormpathId());
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+            Arrays.asList("department3", "department4"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
+    
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+            Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+            new TestHelper.ExpectedActions()
+                .put("default", Action.EXTEND, Action.VIEW)
+                .put("department3", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
+                .put("department4", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
     }
     
     @Test
@@ -146,11 +236,10 @@ public class DepartmentApiIT extends AbstractIT {
     
         // Create post
         User postUser = testUserService.authenticate();
-        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-        Assert.assertEquals(State.DRAFT, postR.getState());
-    
+        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost());
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 1, TestHelper.smallSamplePost());
         unprivilegedUsers.add(boardUser);
         unprivilegedUsers.add(postUser);
     

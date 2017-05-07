@@ -1,7 +1,6 @@
 package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
@@ -18,7 +17,9 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.representation.*;
+import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import javafx.util.Pair;
@@ -52,19 +53,30 @@ public class BoardApiIT extends AbstractIT {
     private DepartmentService departmentService;
     
     @Test
-    public void shouldCreateBoard() {
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardDTO fullBoardDTO = new BoardDTO()
-            .setName("other board")
-            .setDescription("description")
-            .setPostCategories(ImmutableList.of("a", "b"))
-            .setDepartment(new DepartmentDTO()
-                .setName("other department")
-                .setMemberCategories(ImmutableList.of("c", "d")));
+    public void shouldCreateAndListBoards() {
+        User user1 = testUserService.authenticate();
+        verifyPostBoard(user1, TestHelper.sampleBoard().setName("board 1"), "board-1");
+        verifyPostBoard(user1, TestHelper.smallSampleBoard().setName("board 2"), "board-2");
     
-        User user = testUserService.authenticate();
-        verifyPostBoard(user, boardDTO, "board");
-        verifyPostBoard(user, fullBoardDTO, "other-board");
+        User user2 = testUserService.authenticate();
+        verifyPostBoard(user1, TestHelper.sampleBoard().setName("board 3"), "board-3");
+        verifyPostBoard(user1, TestHelper.smallSampleBoard().setName("board 4"), "board-4");
+    
+        testUserService.unauthenticate();
+        Assert.assertEquals(0, transactionTemplate.execute(status -> departmentApi.getDepartments(null)).size());
+        Assert.assertEquals(4, transactionTemplate.execute(status -> departmentApi.getDepartments(true)).size());
+    
+        testUserService.setAuthentication(user1.getStormpathId());
+        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(null));
+        Assert.assertEquals(2, boardRs.size());
+        Assert.assertEquals(Arrays.asList("board 1", "board 2"), boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
+        Assert.assertEquals(4, transactionTemplate.execute(status -> departmentApi.getDepartments(true)).size());
+    
+        testUserService.setAuthentication(user2.getStormpathId());
+        boardRs = transactionTemplate.execute(status -> boardApi.getBoards(null));
+        Assert.assertEquals(2, boardRs.size());
+        Assert.assertEquals(Arrays.asList("board 3", "board 4"), boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
+        Assert.assertEquals(4, transactionTemplate.execute(status -> departmentApi.getDepartments(true)).size());
     }
     
     @Test
@@ -145,7 +157,7 @@ public class BoardApiIT extends AbstractIT {
             "board-2");
         
         transactionTemplate.execute(status -> {
-            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId);
+            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId, true);
             Assert.assertEquals(2, boardRs.size());
             
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
@@ -162,107 +174,13 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals("new-department-updated", department.getHandle());
             
             int index = 1;
-            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId());
+            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true);
             Assert.assertEquals(2, boardRs.size());
             for (BoardRepresentation boardR : boardRs) {
                 Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
             
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldCreateMultipleBoardsAndReturnCorrectResourceListsForUsers() {
-        User user = testUserService.authenticate();
-        Long departmentId = verifyPostBoard(user,
-            new BoardDTO()
-                .setName("board 1")
-                .setDepartment(new DepartmentDTO()
-                    .setName("department")),
-            "board-1")
-            .getDepartment().getId();
-        
-        User secondUser = testUserService.authenticate();
-        verifyPostBoard(secondUser,
-            new BoardDTO()
-                .setName("board 2")
-                .setDepartment(new DepartmentDTO()
-                    .setId(departmentId)
-                    .setName("department")),
-            "board-2");
-    
-        // Verify second user does not also get department admin role
-        Department department = departmentService.getDepartment(departmentId);
-        Assert.assertFalse(userRoleService.hasUserRole(department, secondUser, Role.ADMINISTRATOR));
-        
-        transactionTemplate.execute(TransactionStatus -> {
-            testUserService.setAuthentication(user.getStormpathId());
-            List<BoardRepresentation> boardRs = boardApi.getBoards();
-            List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments();
-            
-            Assert.assertEquals(2, boardRs.size());
-            Assert.assertEquals(1, departmentRs.size());
-            
-            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND)));
-            
-            testUserService.setAuthentication(secondUser.getStormpathId());
-            boardRs = boardApi.getBoards();
-            departmentRs = departmentApi.getDepartments();
-            
-            Assert.assertEquals(2, boardRs.size());
-            Assert.assertEquals(1, departmentRs.size());
-    
-            boardRs.stream().filter(boardR -> boardR.getName().equals("board 1"))
-                .forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                    Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
-            boardRs.stream().filter(boardR -> boardR.getName().equals("board 2"))
-                .forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                    Matchers.containsInAnyOrder(Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
-            
-            testUserService.setAuthentication(null);
-            boardRs = boardApi.getBoards();
-            departmentRs = departmentApi.getDepartments();
-            
-            Assert.assertEquals(2, boardRs.size());
-            Assert.assertEquals(1, departmentRs.size());
-            
-            boardRs.forEach(boardR -> Assert.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
-            departmentRs.forEach(departmentR -> Assert.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(Action.VIEW, Action.EXTEND)));
-            return null;
-        });
-    }
-    
-    @Test
-    public void shouldCreateAndListBoards() {
-        User user = testUserService.authenticate();
-        for (int i = 1; i < 4; i++) {
-            for (int j = 1; j < 4; j++) {
-                verifyPostBoard(user,
-                    new BoardDTO()
-                        .setName("board " + i + " " + j)
-                        .setDepartment(new DepartmentDTO()
-                            .setName("department " + i)),
-                    "board-" + i + "-" + j);
-            }
-        }
-        
-        transactionTemplate.execute(transactionStatus -> {
-            List<DepartmentRepresentation> departmentRepresentations = departmentApi.getDepartments();
-            Assert.assertEquals(Arrays.asList("department 1", "department 2", "department 3"),
-                departmentRepresentations.stream().map(DepartmentRepresentation::getName).collect(Collectors.toList()));
-            
-            List<BoardRepresentation> boardRepresentations = boardApi.getBoards();
-            Assert.assertEquals(Arrays.asList("board 1 1", "board 1 2", "board 1 3", "board 2 1", "board 2 2", "board 2 3", "board 3 1", "board 3 2", "board 3 3"),
-                boardRepresentations.stream().map(BoardRepresentation::getName).collect(Collectors.toList()));
             return null;
         });
     }
@@ -285,11 +203,10 @@ public class BoardApiIT extends AbstractIT {
     
         // Create post
         User pUser = testUserService.authenticate();
-        PostRepresentation postR = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-        Assert.assertEquals(State.DRAFT, postR.getState());
-    
+        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.smallSamplePost());
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 1, TestHelper.smallSamplePost());
         unprivilegedUsers.add(pUser);
     
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()

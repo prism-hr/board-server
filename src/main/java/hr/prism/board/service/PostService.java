@@ -76,12 +76,13 @@ public class PostService {
         return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
     
-    public List<Post> getPosts(Long boardId) {
+    public List<Post> getPosts(Long boardId, Boolean includePublicPosts) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
             new ResourceFilterDTO()
                 .setScope(Scope.POST)
                 .setParentId(boardId)
+                .setIncludePublicResources(includePublicPosts)
                 .setOrderStatement("order by resource.updatedTimestamp desc"))
             .stream().map(resource -> (Post) resource).collect(Collectors.toList());
     }

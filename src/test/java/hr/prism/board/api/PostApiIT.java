@@ -273,7 +273,7 @@ public class PostApiIT extends AbstractIT {
         });
         
         transactionTemplate.execute(status -> {
-            List<PostRepresentation> posts = postApi.getPostsByBoard(boardId);
+            List<PostRepresentation> posts = postApi.getPostsByBoard(boardId, true);
             assertThat(posts, contains(hasProperty("name", equalTo("post 2")),
                 hasProperty("name", equalTo("post 1"))));
             return null;
@@ -302,8 +302,8 @@ public class PostApiIT extends AbstractIT {
         Long postId = postR.getId();
     
         // Create unprivileged users
-        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, TestHelper.samplePost());
-    
+        List<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 1, TestHelper.samplePost());
+        
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId))
             .put(Action.AUDIT, () -> postApi.getPostOperations(postId))
@@ -462,7 +462,6 @@ public class PostApiIT extends AbstractIT {
         verifyPostActionsInAccepted(adminUsers, postUser, unprivilegedUsers, postId, operations);
         
         testUserService.setAuthentication(postUser.getStormpathId());
-        postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
         Assert.assertEquals(15, resourceOperationRs.size());
         

@@ -55,11 +55,12 @@ public class DepartmentService {
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
     
-    public List<Department> getDepartments() {
+    public List<Department> getDepartments(Boolean includePublicDepartments) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
             new ResourceFilterDTO()
                 .setScope(Scope.DEPARTMENT)
+                .setIncludePublicResources(includePublicDepartments)
                 .setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }

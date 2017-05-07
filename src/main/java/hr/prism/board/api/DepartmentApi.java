@@ -31,8 +31,8 @@ public class DepartmentApi {
     private ResourceOperationMapper resourceOperationMapper;
     
     @RequestMapping(value = "/departments", method = RequestMethod.GET)
-    public List<DepartmentRepresentation> getDepartments() {
-        return departmentService.getDepartments().stream().map(department -> departmentMapper.apply(department)).collect(Collectors.toList());
+    public List<DepartmentRepresentation> getDepartments(@RequestParam(required = false) Boolean includePublicDepartments) {
+        return departmentService.getDepartments(includePublicDepartments).stream().map(department -> departmentMapper.apply(department)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)

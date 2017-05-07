@@ -94,14 +94,14 @@ public abstract class AbstractIT {
         });
     }
     
-    List<User> makeUnprivilegedUsers(Long departmentId, Long boardId, PostDTO samplePost) {
+    List<User> makeUnprivilegedUsers(Long departmentId, Long boardId, int suffix, PostDTO samplePost) {
         List<User> unprivilegedUsers = Lists.newArrayList(testUserService.authenticate());
         transactionTemplate.execute(status -> {
             boardApi.postBoard(
                 new BoardDTO()
-                    .setName("other board")
+                    .setName("board")
                     .setDepartment(new DepartmentDTO()
-                        .setName("other department")));
+                        .setName("department" + suffix)));
             return null;
         });
         
@@ -109,7 +109,7 @@ public abstract class AbstractIT {
         transactionTemplate.execute(status -> {
             boardApi.postBoard(
                 new BoardDTO()
-                    .setName("sibling board")
+                    .setName("board" + suffix)
                     .setDepartment(new DepartmentDTO()
                         .setId(departmentId)));
             return null;

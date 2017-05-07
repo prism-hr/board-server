@@ -29,6 +29,8 @@ public class ResourceFilterDTO {
         statement = "resource.parent_id = :parentId")
     private Long parentId;
     
+    private Boolean includePublicResources;
+    
     private String orderStatement;
     
     public Scope getScope() {
@@ -64,6 +66,15 @@ public class ResourceFilterDTO {
     
     public ResourceFilterDTO setParentId(Long parentId) {
         this.parentId = parentId;
+        return this;
+    }
+    
+    public Boolean getIncludePublicResources() {
+        return includePublicResources;
+    }
+    
+    public ResourceFilterDTO setIncludePublicResources(Boolean includePublicResources) {
+        this.includePublicResources = includePublicResources;
         return this;
     }
     

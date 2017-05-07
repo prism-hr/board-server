@@ -39,13 +39,13 @@ public class BoardApi {
     }
     
     @RequestMapping(value = "/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoards() {
-        return boardService.getBoards(null).stream().map(board -> boardMapper.apply(board)).collect(Collectors.toList());
+    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Boolean includePublicBoards) {
+        return boardService.getBoards(null, includePublicBoards).stream().map(board -> boardMapper.apply(board)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "departments/{departmentId}/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoardsByDepartment(@PathVariable Long departmentId) {
-        return boardService.getBoards(departmentId).stream().map(board -> boardMapper.apply(board)).collect(Collectors.toList());
+    public List<BoardRepresentation> getBoardsByDepartment(@PathVariable Long departmentId, @RequestParam(required = false) Boolean includePublicBoards) {
+        return boardService.getBoards(departmentId, includePublicBoards).stream().map(board -> boardMapper.apply(board)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/boards/{id}", method = RequestMethod.GET)

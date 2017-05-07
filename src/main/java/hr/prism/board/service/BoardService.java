@@ -55,12 +55,13 @@ public class BoardService {
         return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
     }
     
-    public List<Board> getBoards(Long departmentId) {
+    public List<Board> getBoards(Long departmentId, Boolean includePublicBoards) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
             new ResourceFilterDTO()
                 .setScope(Scope.BOARD)
                 .setParentId(departmentId)
+                .setIncludePublicResources(includePublicBoards)
                 .setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }

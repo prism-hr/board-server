@@ -19,6 +19,7 @@ import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -102,12 +103,12 @@ public class ResourceService {
     }
     
     public Resource getResource(User user, Scope scope, Long id) {
-        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id));
+        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
     }
     
     public Resource getResource(User user, Scope scope, String handle) {
-        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle));
+        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
     }
     
@@ -213,7 +214,11 @@ public class ResourceService {
         entityManager.flush();
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<Object[]> results = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
+            List<Object[]> results = new ArrayList<>();
+            if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
+                results.addAll(getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters));
+            }
+            
             results.addAll(getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters));
             return results;
         });

@@ -40,13 +40,13 @@ public class PostApi {
     }
     
     @RequestMapping(value = "posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPosts() {
-        return postService.getPosts(null).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
+    public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublicPosts) {
+        return postService.getPosts(null, includePublicPosts).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId) {
-        return postService.getPosts(boardId).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
+    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublicPosts) {
+        return postService.getPosts(boardId, includePublicPosts).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
     }
     
     @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)

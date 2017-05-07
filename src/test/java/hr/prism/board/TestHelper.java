@@ -1,5 +1,7 @@
 package hr.prism.board;
 
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Lists;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -7,16 +9,18 @@ import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
-import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.util.ObjectUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestHelper {
     
@@ -81,6 +85,40 @@ public class TestHelper {
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
     
+    public static <T extends ResourceRepresentation> void verifyResources(List<T> resources, List<String> expectedNames, ExpectedActions expectedActions) {
+        int resourcesSize = resources.size();
+        Assert.assertEquals(resourcesSize, expectedNames.size());
+        if (expectedActions == null) {
+            if (resourcesSize > 0) {
+                Assert.fail();
+            }
+            
+            return;
+        }
+        
+        Collection<Action> expectedActionsDefault = expectedActions.get("default");
+        if (expectedActionsDefault == null && expectedActions.size() < resourcesSize) {
+            Assert.fail();
+        }
+        
+        for (int i = 0; i < resources.size(); i++) {
+            T resource = resources.get(i);
+            String expectedName = expectedNames.get(i);
+            Assert.assertEquals(expectedName, resource.getName());
+            
+            Collection<Action> expectedActionsCustom = expectedActions.get(expectedName);
+            if (expectedActionsCustom == null) {
+                if (expectedActionsDefault == null) {
+                    Assert.fail();
+                }
+                
+                Assert.assertEquals(expectedActionsDefault, resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()));
+            } else {
+                Assert.assertEquals(expectedActionsCustom, resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()));
+            }
+        }
+    }
+    
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction) {
         verifyResourceOperation(resourceOperationR, expectedAction, null, null, null);
     }
@@ -111,6 +149,34 @@ public class TestHelper {
         
         Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
+    }
+    
+    public static class ExpectedActions {
+        
+        private LinkedHashMultimap<String, Action> data = LinkedHashMultimap.create();
+        
+        public ExpectedActions put(String key, Action... values) {
+            if (ArrayUtils.isEmpty(values)) {
+                throw new Error();
+            }
+            
+            Arrays.stream(values).forEach(value -> data.put(key, value));
+            return this;
+        }
+        
+        public List<Action> get(String key) {
+            Collection<Action> values = data.get(key);
+            if (values == null) {
+                return null;
+            }
+            
+            return Lists.newArrayList(values);
+        }
+        
+        public int size() {
+            return data.keySet().size();
+        }
+        
     }
     
 }
