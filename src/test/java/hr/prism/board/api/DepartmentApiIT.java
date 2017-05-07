@@ -90,7 +90,7 @@ public class DepartmentApiIT extends AbstractIT {
     
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-            Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+            Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
             new TestHelper.ExpectedActions()
                 .put("default", Action.EXTEND, Action.VIEW));
     
@@ -105,10 +105,10 @@ public class DepartmentApiIT extends AbstractIT {
                         Collections.singletonList(departmentName),
                         new TestHelper.ExpectedActions()
                             .put(departmentName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
-                
+    
                     TestHelper.verifyResources(
                         transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-                        Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+                        Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
                         new TestHelper.ExpectedActions()
                             .put("default", Action.EXTEND, Action.VIEW)
                             .put(departmentName, Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW));
@@ -117,15 +117,15 @@ public class DepartmentApiIT extends AbstractIT {
                         transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
                         Collections.emptyList(),
                         null);
-                
+    
                     TestHelper.verifyResources(
                         transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-                        Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+                        Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
                         new TestHelper.ExpectedActions()
                             .put("default", Action.EXTEND, Action.VIEW));
                 }
             }
-        
+    
             step++;
         }
     
@@ -138,7 +138,7 @@ public class DepartmentApiIT extends AbstractIT {
     
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-            Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+            Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
             new TestHelper.ExpectedActions()
                 .put("default", Action.EXTEND, Action.VIEW)
                 .put("department1", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)
@@ -153,7 +153,7 @@ public class DepartmentApiIT extends AbstractIT {
     
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-            Arrays.asList("department1", "department2", "department3", "department4", "department10", "department20", "department30", "department40"),
+            Arrays.asList("department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40"),
             new TestHelper.ExpectedActions()
                 .put("default", Action.EXTEND, Action.VIEW)
                 .put("department3", Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW)

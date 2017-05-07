@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,7 +98,7 @@ public class TestHelper {
         }
         
         Collection<Action> expectedActionsDefault = expectedActions.get("default");
-        if (expectedActionsDefault == null && expectedActions.size() < resourcesSize) {
+        if (expectedActionsDefault.isEmpty() && expectedActions.size() < resourcesSize) {
             Assert.fail();
         }
         
@@ -107,7 +108,7 @@ public class TestHelper {
             Assert.assertEquals(expectedName, resource.getName());
             
             Collection<Action> expectedActionsCustom = expectedActions.get(expectedName);
-            if (expectedActionsCustom == null) {
+            if (expectedActionsCustom.isEmpty()) {
                 if (expectedActionsDefault == null) {
                     Assert.fail();
                 }
@@ -159,8 +160,10 @@ public class TestHelper {
             if (ArrayUtils.isEmpty(values)) {
                 throw new Error();
             }
-            
-            Arrays.stream(values).forEach(value -> data.put(key, value));
+    
+            List<Action> valuesList = Arrays.asList(values);
+            valuesList.sort(Comparator.naturalOrder());
+            data.putAll(key, valuesList);
             return this;
         }
         
