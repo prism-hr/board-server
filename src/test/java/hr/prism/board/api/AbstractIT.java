@@ -90,8 +90,8 @@ public abstract class AbstractIT {
         });
     }
     
-    Map<Scope, User> makeUnprivilegedUsers(Long departmentId, Long boardId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
-        Map<Scope, User> unprivilegedUsers = new HashMap<>();
+    LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, Long boardId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
+        LinkedHashMap<Scope, User> unprivilegedUsers = new LinkedHashMap<>();
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
         transactionTemplate.execute(status -> {
             boardApi.postBoard(

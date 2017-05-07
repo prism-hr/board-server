@@ -1,7 +1,5 @@
 package hr.prism.board;
 
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Lists;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -11,16 +9,13 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.representation.*;
 import hr.prism.board.util.ObjectUtils;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestHelper {
@@ -88,7 +83,7 @@ public class TestHelper {
     
     public static <T extends ResourceRepresentation> void verifyResources(List<T> resources, List<String> expectedNames, ExpectedActions expectedActions) {
         int resourcesSize = resources.size();
-        Assert.assertEquals(resourcesSize, expectedNames.size());
+        Assert.assertEquals(expectedNames.size(), resourcesSize);
         if (expectedActions == null) {
             if (resourcesSize > 0) {
                 Assert.fail();
@@ -98,7 +93,7 @@ public class TestHelper {
         }
         
         Collection<Action> expectedActionsDefault = expectedActions.get("default");
-        if (expectedActionsDefault.isEmpty() && expectedActions.size() < resourcesSize) {
+        if (CollectionUtils.isEmpty(expectedActionsDefault) && expectedActions.size() < resourcesSize) {
             Assert.fail();
         }
         
@@ -108,7 +103,7 @@ public class TestHelper {
             Assert.assertEquals(expectedName, resource.getName());
             
             Collection<Action> expectedActionsCustom = expectedActions.get(expectedName);
-            if (expectedActionsCustom.isEmpty()) {
+            if (CollectionUtils.isEmpty(expectedActionsCustom)) {
                 if (expectedActionsDefault == null) {
                     Assert.fail();
                 }
@@ -152,32 +147,17 @@ public class TestHelper {
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
     }
     
-    public static class ExpectedActions {
+    public static class ExpectedActions extends LinkedHashMap<String, List<Action>> {
         
-        private LinkedHashMultimap<String, Action> data = LinkedHashMultimap.create();
-        
-        public ExpectedActions put(String key, Action... values) {
-            if (ArrayUtils.isEmpty(values)) {
-                throw new Error();
-            }
-    
-            List<Action> valuesList = Arrays.asList(values);
-            valuesList.sort(Comparator.naturalOrder());
-            data.putAll(key, valuesList);
+        public ExpectedActions add(String key, List<Action> values) {
+            values.sort(Comparator.naturalOrder());
+            super.put(key, values);
             return this;
         }
         
-        public List<Action> get(String key) {
-            Collection<Action> values = data.get(key);
-            if (values == null) {
-                return null;
-            }
-            
-            return Lists.newArrayList(values);
-        }
-        
-        public int size() {
-            return data.keySet().size();
+        public ExpectedActions addAll(List<String> keys, List<Action> values) {
+            keys.forEach(key -> add(key, values));
+            return this;
         }
         
     }
