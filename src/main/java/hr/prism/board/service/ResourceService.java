@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
@@ -174,6 +175,7 @@ public class ResourceService {
         resource.setPreviousState(previousState);
     }
     
+    // TODO: implement paging / continuous scrolling mechanism
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("permission.role = :role");
@@ -195,7 +197,7 @@ public class ResourceService {
                     if (resourceFilter != null) {
                         String statement = resourceFilter.statement();
                         String parameter = resourceFilter.parameter();
-    
+                        
                         secureFilterStatements.add(statement);
                         secureFilterParameters.put(parameter, value.toString());
                         
@@ -214,13 +216,24 @@ public class ResourceService {
         entityManager.flush();
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<Object[]> results = new ArrayList<>();
+            List<Object[]> publicResults = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
+            List<Object[]> secureResults = getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
             if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
-                results.addAll(getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters));
+                // Return public and secure results
+                secureResults.addAll(publicResults);
+                return secureResults;
             }
             
-            results.addAll(getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters));
-            return results;
+            List<Object[]> securePublicResults = new ArrayList<>();
+            HashMultimap<Object, Object[]> publicResultsIndex = HashMultimap.create();
+            publicResults.forEach(result -> publicResultsIndex.put(result[0], result));
+            for (Object[] secureResult : secureResults) {
+                securePublicResults.addAll(publicResultsIndex.get(secureResult[0]));
+            }
+            
+            // Return secure results including public actions
+            secureResults.addAll(securePublicResults);
+            return secureResults;
         });
         
         // Remove duplicate mappings
@@ -228,19 +241,19 @@ public class ResourceService {
         for (Object[] row : rows) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
-    
+            
             Scope rowScope = null;
             Object column3 = row[2];
             if (column3 != null) {
                 rowScope = Scope.valueOf(column3.toString());
             }
-    
+            
             State rowState = null;
             Object column4 = row[3];
             if (column4 != null) {
                 rowState = State.valueOf(column4.toString());
             }
-    
+            
             // Find the mapping that provides the most direct state transition, varies by role
             ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
             ActionRepresentation rowValue = rowIndex.get(rowKey);
@@ -268,7 +281,7 @@ public class ResourceService {
                     "from " + resourceClass.getSimpleName() + " resource " +
                     "where resource.id in (:ids) ",
                 filter.getOrderStatement());
-    
+            
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
                 .setParameter("ids", resourceActionIndex.keySet())
                 .setHint("javax.persistence.loadgraph", entityGraph)
