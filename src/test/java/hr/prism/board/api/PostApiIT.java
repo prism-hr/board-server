@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
@@ -33,7 +32,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 @TestContext
@@ -62,22 +60,75 @@ public class PostApiIT extends AbstractIT {
     private TestUserService testUserService;
     
     @Test
-    public void shouldCreatePost() {
-        User user = testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
-        verifyPostPost(user, boardId,
-            new PostDTO()
-                .setName("post")
-                .setDescription("description")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
-                    .setGoogleId("GoogleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(ExistingRelation.STUDENT)
-                .setPostCategories(ImmutableList.of("p1", "p3"))
-                .setMemberCategories(ImmutableList.of("m1", "m3"))
-                .setApplyDocument(new DocumentDTO().setFileName("file1").setCloudinaryId("CloudinaryId").setCloudinaryUrl("http://cloudinary.com"))
-                .setLiveTimestamp(LocalDateTime.now().plus(1, ChronoUnit.MONTHS))
-                .setDeadTimestamp(LocalDateTime.now().plus(1, ChronoUnit.YEARS)));
+    public void shouldCreateAndListPosts() {
+        Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
+    
+        User user11 = testUserService.authenticate();
+        BoardDTO boardDTO11 = TestHelper.sampleBoard();
+        boardDTO11.getDepartment().setName("department1");
+        boardDTO11.setName("board11");
+        BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
+        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100, TestHelper.samplePost()));
+    
+        User user12 = testUserService.authenticate();
+        BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
+        boardDTO12.getDepartment().setName("department1");
+        boardDTO12.setName("board12");
+        BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
+        unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
+            TestHelper.smallSamplePost()
+                .setMemberCategories(Collections.singletonList("m1"))));
+    
+        User user21 = testUserService.authenticate();
+        BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
+        boardDTO21.getDepartment().setName("department2");
+        boardDTO21.setName("board21");
+        BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO21));
+        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100, TestHelper.smallSamplePost()));
+    
+        User user22 = testUserService.authenticate();
+        BoardDTO boardDTO22 = TestHelper.sampleBoard();
+        boardDTO22.getDepartment().setName("department2");
+        boardDTO22.setName("board22");
+        BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
+        unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
+            TestHelper.smallSamplePost()
+                .setPostCategories(Collections.singletonList("p1"))));
+    
+        LinkedHashMap<State, LinkedHashMap<User, PostRepresentation>> posts = new LinkedHashMap<>();
+        for (State state : State.values()) {
+            User postUser1 = testUserService.authenticate();
+            for (int i = 1; i < 3; i++) {
+                LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
+            
+                userPosts.put(postUser1, verifyPostPostAndSetState(postUser1, boardR11.getId(),
+                    TestHelper.samplePost()
+                        .setName(boardR11.getName() + " " + state.name().toLowerCase() + " " + i),
+                    state));
+            
+                userPosts.put(postUser1, verifyPostPostAndSetState(postUser1, boardR12.getId(),
+                    TestHelper.smallSamplePost()
+                        .setName(boardR12.getName() + " " + state.name().toLowerCase() + " " + i)
+                        .setMemberCategories(Collections.singletonList("m1")),
+                    state));
+            }
+        
+            User postUser2 = testUserService.authenticate();
+            for (int i = 1; i < 3; i++) {
+                LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
+            
+                userPosts.put(postUser2, verifyPostPostAndSetState(postUser2, boardR21.getId(),
+                    TestHelper.smallSamplePost()
+                        .setName(boardR21.getName() + " " + state.name().toLowerCase() + " " + i),
+                    state));
+            
+                userPosts.put(postUser2, verifyPostPostAndSetState(postUser2, boardR22.getId(),
+                    TestHelper.smallSamplePost()
+                        .setName(boardR22.getName() + " " + state.name().toLowerCase() + " " + i)
+                        .setPostCategories(Collections.singletonList("p1")),
+                    state));
+            }
+        }
     }
     
     @Test
@@ -229,53 +280,6 @@ public class PostApiIT extends AbstractIT {
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.of(Collections.singletonList("m1")))),
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
-    }
-    
-    @Test
-    @SuppressWarnings("unchecked")
-    public void shouldGetPosts() {
-        testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
-                .setName("post 1")
-                .setDescription("description")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
-                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(ExistingRelation.STUDENT)
-                .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList("m1"))
-                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            postApi.postPost(boardId, postDTO);
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
-                .setName("post 2")
-                .setDescription("description")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location1").setDomicile("PL")
-                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setExistingRelation(ExistingRelation.STUDENT)
-                .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList("m1"))
-                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            postApi.postPost(boardId, postDTO);
-            return null;
-        });
-        
-        transactionTemplate.execute(status -> {
-            List<PostRepresentation> posts = postApi.getPostsByBoard(boardId, true);
-            assertThat(posts, contains(hasProperty("name", equalTo("post 2")),
-                hasProperty("name", equalTo("post 1"))));
             return null;
         });
     }
@@ -665,6 +669,12 @@ public class PostApiIT extends AbstractIT {
         verifyResourceActions(unprivilegedUsers, Scope.POST, postId, operations, Action.VIEW);
         verifyResourceActions(adminUsers, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND);
         verifyResourceActions(postUser, Scope.POST, postId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW);
+    }
+    
+    private PostRepresentation verifyPostPostAndSetState(User user, Long boardId, PostDTO postDTO, State state) {
+        PostRepresentation postR = verifyPostPost(user, boardId, postDTO);
+        transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state));
+        return postR;
     }
     
     private interface PostOperation {
