@@ -204,7 +204,7 @@
                 <version>2.20</version>
                 <configuration>
                     <includes>
-                        <!-- Includes **/*Test.java by default -->
+                        <include>**/*Test.java</include>
                         <include>**/*IT.java</include>
                     </includes>
                 </configuration>
