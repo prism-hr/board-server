@@ -132,6 +132,48 @@ public class PostApiIT extends AbstractIT {
     }
     
     @Test
+    public void shouldNotAcceptPostWithMissingApply() {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = new PostDTO()
+                .setName("post")
+                .setDescription("description")
+                .setOrganizationName("organization name")
+                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList("m1"))
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
+            return null;
+        });
+    }
+    
+    @Test
+    public void shouldNotAcceptPostWithCorruptedApply() {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        transactionTemplate.execute(status -> {
+            PostDTO postDTO = new PostDTO()
+                .setName("post")
+                .setDescription("description")
+                .setOrganizationName("organization name")
+                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList("m1"))
+                .setApplyWebsite("http://www.google.com")
+                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+            ExceptionUtils.verifyApiException(ApiException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
+            return null;
+        });
+    }
+    
+    @Test
     public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
         testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
@@ -215,23 +257,6 @@ public class PostApiIT extends AbstractIT {
         Long boardId = boardRepresentation.getId();
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
         
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class, () ->
-                    postApi.updatePost(postId,
-                        new PostPatchDTO()
-                            .setName(Optional.of("name"))
-                            .setDescription(Optional.of("description"))
-                            .setOrganizationName(Optional.of("organization name"))
-                            .setLocation(Optional.of(new LocationDTO().setName("name").setDomicile("PL")
-                                .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                            .setApplyWebsite(Optional.empty())
-                            .setApplyEmail(Optional.empty())
-                            .setApplyDocument(Optional.empty())),
-                ExceptionCode.MISSING_POST_APPLY, status);
-            status.setRollbackOnly();
-            return null;
-        });
-    
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()

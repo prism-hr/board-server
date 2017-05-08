@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -106,6 +107,7 @@ public class PostService {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
             }
     
+            validatePostApply(post);
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
     
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
@@ -184,43 +186,21 @@ public class PostService {
         resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
-        
-        Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
-        Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
-        Optional<String> applyEmailOptional = postDTO.getApplyEmail();
     
-        int applyNullCount = 0;
-        int applyPresentCount = 0;
-        for (Optional<?> applyOption : new Optional<?>[]{applyWebsiteOptional, applyDocumentOptional, applyEmailOptional}) {
-            if (applyOption == null) {
-                applyNullCount++;
-            } else if (applyOption.isPresent()) {
-                applyPresentCount++;
-            }
+        Optional<String> applyWebsite = postDTO.getApplyWebsite();
+        if (BoardUtils.isPresent(applyWebsite)) {
+            patchPostApply(post, applyWebsite, Optional.empty(), Optional.empty());
         }
     
-        if (applyNullCount < 3) {
-            if (applyPresentCount == 0) {
-                throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
-            } else if (applyPresentCount > 1) {
-                throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
-            }
+        Optional<DocumentDTO> applyDocument = postDTO.getApplyDocument();
+        if (BoardUtils.isPresent(applyDocument)) {
+            patchPostApply(post, Optional.empty(), applyDocument, Optional.empty());
         }
     
-        resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsiteOptional, () -> {
-            resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
-            resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
-        });
-    
-        resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocumentOptional, () -> {
-            resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
-            resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, Optional.empty());
-        });
-    
-        resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyEmailOptional, () -> {
-            resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, Optional.empty());
-            resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, Optional.empty());
-        });
+        Optional<String> applyEmail = postDTO.getApplyEmail();
+        if (BoardUtils.isPresent(applyEmail)) {
+            patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
+        }
         
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
@@ -229,15 +209,15 @@ public class PostService {
     
         resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
         patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
-        
-        Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
-        Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
-        if (liveTimestampOptional != null && deadTimestampOptional != null) {
-            if (liveTimestampOptional.isPresent() && deadTimestampOptional.isPresent()) {
+    
+        Optional<LocalDateTime> liveTimestamp = postDTO.getLiveTimestamp();
+        Optional<LocalDateTime> deadTimestamp = postDTO.getDeadTimestamp();
+        if (liveTimestamp != null && deadTimestamp != null) {
+            if (liveTimestamp.isPresent() && deadTimestamp.isPresent()) {
                 resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
-                    Optional.of(liveTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
+                    Optional.of(liveTimestamp.get().truncatedTo(ChronoUnit.SECONDS)));
                 resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
-                    Optional.of(deadTimestampOptional.get().truncatedTo(ChronoUnit.SECONDS)));
+                    Optional.of(deadTimestamp.get().truncatedTo(ChronoUnit.SECONDS)));
             } else {
                 LocalDateTime baseline = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp, Optional.of(baseline));
@@ -246,6 +226,13 @@ public class PostService {
         }
     
         postRepository.update(post);
+    }
+    
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private void patchPostApply(Post post, Optional<String> applyWebsite, Optional<DocumentDTO> applyDocument, Optional<String> applyEmail) {
+        resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsite);
+        resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocument);
+        resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyEmail);
     }
     
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -329,6 +316,7 @@ public class PostService {
                     .setParameter("postIds", postIds)
                     .executeUpdate();
     
+                //noinspection SqlResolve
                 entityManager.createNativeQuery(
                     "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
                         "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
@@ -366,6 +354,15 @@ public class PostService {
             }
         } else if (CollectionUtils.isNotEmpty(categories)) {
             throw new ApiException(corrupted);
+        }
+    }
+    
+    private void validatePostApply(Post post) {
+        long applyCount = Stream.of(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail()).filter(Objects::nonNull).count();
+        if (applyCount == 0) {
+            throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
+        } else if (applyCount > 1) {
+            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
         }
     }
     

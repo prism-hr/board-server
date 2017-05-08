@@ -69,7 +69,18 @@ public class ResourcePatchService {
     }
     
     public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional) {
-        patchProperty(resource, property, getter, setter, newValueOptional, null);
+        if (newValueOptional != null) {
+            T oldValue = getter.get();
+            if (newValueOptional.isPresent()) {
+                T newValue = newValueOptional.get();
+                if (!Objects.equals(oldValue, newValue)) {
+                    patchProperty(resource, property, setter, oldValue, newValue);
+                }
+            
+            } else if (oldValue != null) {
+                patchProperty(resource, property, setter, oldValue, null);
+            }
+        }
     }
     
     public void patchDocument(Resource resource, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
@@ -114,24 +125,6 @@ public class ResourcePatchService {
             List<String> newValues = newValuesOptional.orElse(null);
             if (!Objects.equals(oldValues, newValues)) {
                 patchCategories(resource, categoryType, oldValues, newValues);
-            }
-        }
-    }
-    
-    public <T> void patchProperty(Resource resource, String property, Getter<T> getter, Setter<T> setter, Optional<T> newValueOptional, Runnable after) {
-        if (newValueOptional != null) {
-            T oldValue = getter.get();
-            if (newValueOptional.isPresent()) {
-                T newValue = newValueOptional.get();
-                if (!Objects.equals(oldValue, newValue)) {
-                    patchProperty(resource, property, setter, oldValue, newValue);
-                }
-    
-                if (after != null) {
-                    after.run();
-                }
-            } else if (oldValue != null) {
-                patchProperty(resource, property, setter, oldValue, null);
             }
         }
     }
