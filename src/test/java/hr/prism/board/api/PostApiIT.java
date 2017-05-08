@@ -100,28 +100,28 @@ public class PostApiIT extends AbstractIT {
             User postUser1 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
-            
+    
                 userPosts.put(postUser1, verifyPostPostAndSetState(postUser1, boardR11.getId(),
                     TestHelper.samplePost()
                         .setName(boardR11.getName() + " " + state.name().toLowerCase() + " " + i),
                     state));
-            
+    
                 userPosts.put(postUser1, verifyPostPostAndSetState(postUser1, boardR12.getId(),
                     TestHelper.smallSamplePost()
                         .setName(boardR12.getName() + " " + state.name().toLowerCase() + " " + i)
                         .setMemberCategories(Collections.singletonList("m1")),
                     state));
             }
-        
+    
             User postUser2 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
-            
+    
                 userPosts.put(postUser2, verifyPostPostAndSetState(postUser2, boardR21.getId(),
                     TestHelper.smallSamplePost()
                         .setName(boardR21.getName() + " " + state.name().toLowerCase() + " " + i),
                     state));
-            
+    
                 userPosts.put(postUser2, verifyPostPostAndSetState(postUser2, boardR22.getId(),
                     TestHelper.smallSamplePost()
                         .setName(boardR22.getName() + " " + state.name().toLowerCase() + " " + i)
@@ -628,10 +628,16 @@ public class PostApiIT extends AbstractIT {
     
     private void verifyPublishAndRetirePost(Long postId, State expectedState) {
         PostRepresentation postR;
-        transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
-            return null;
-        });
+    
+        int runs = 0;
+        while (runs < 2) {
+            transactionTemplate.execute(status -> {
+                postService.publishAndRetirePosts();
+                return null;
+            });
+        
+            runs++;
+        }
         
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
         Assert.assertEquals(expectedState, postR.getState());
