@@ -629,14 +629,12 @@ public class PostApiIT extends AbstractIT {
     private void verifyPublishAndRetirePost(Long postId, State expectedState) {
         PostRepresentation postR;
     
-        int runs = 0;
-        while (runs < 2) {
+        // Check that the scheduler does not create duplicate operations
+        for (int i = 0; i < 2; i++) {
             transactionTemplate.execute(status -> {
                 postService.publishAndRetirePosts();
                 return null;
             });
-        
-            runs++;
         }
         
         postR = transactionTemplate.execute(status -> postApi.getPost(postId));
