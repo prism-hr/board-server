@@ -11,7 +11,7 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface PostRepository extends MyRepository<Post, Long> {
-    
+
     @Query(value =
         "select post.id " +
             "from Post post " +
@@ -19,14 +19,15 @@ public interface PostRepository extends MyRepository<Post, Long> {
             "and post.deadTimestamp is not null " +
             "and post.deadTimestamp < :baseline")
     List<Long> findPostsToRetire(@Param("states") Collection<State> states, @Param("baseline") LocalDateTime baseline);
-    
+
     @Query(value =
         "select post.id " +
             "from Post post " +
             "where post.state in (:states) " +
-            "and post.liveTimestamp < :baseline " +
+            "and (post.liveTimestamp < :baseline " +
+            "or post.liveTimestamp is null) " +
             "and (post.deadTimestamp >= :baseline " +
             "or post.deadTimestamp is null)")
     List<Long> findPostsToPublish(@Param("states") Collection<State> states, @Param("baseline") LocalDateTime baseline);
-    
+
 }
