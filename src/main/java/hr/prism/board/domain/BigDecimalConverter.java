@@ -7,7 +7,9 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Locale;
 
 @Converter(autoApply = true)
 public class BigDecimalConverter implements AttributeConverter<BigDecimal, String> {
@@ -22,8 +24,9 @@ public class BigDecimalConverter implements AttributeConverter<BigDecimal, Strin
         if (dbData == null) {
             return null;
         }
-        
-        DecimalFormat decimalFormat = new DecimalFormat();
+    
+        NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.UK);
+        DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
         decimalFormat.setParseBigDecimal(true);
         
         try {
