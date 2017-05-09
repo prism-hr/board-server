@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
@@ -19,6 +20,7 @@ import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestUserService;
 import hr.prism.board.util.ObjectUtils;
+import org.apache.commons.collections.ListUtils;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -68,8 +70,10 @@ public class PostApiIT extends AbstractIT {
         boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11");
         BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
-        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100, TestHelper.samplePost()));
-    
+        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
+            TestHelper.samplePost()
+                .setName(boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)));
+        
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
         boardDTO12.getDepartment().setName("department1");
@@ -77,6 +81,7 @@ public class PostApiIT extends AbstractIT {
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
         unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
+                .setName(boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
                 .setMemberCategories(Collections.singletonList("m1"))));
     
         User user21 = testUserService.authenticate();
@@ -84,8 +89,10 @@ public class PostApiIT extends AbstractIT {
         boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO21));
-        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100, TestHelper.smallSamplePost()));
-    
+        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
+            TestHelper.smallSamplePost()
+                .setName(boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)));
+        
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
         boardDTO22.getDepartment().setName("department2");
@@ -93,10 +100,11 @@ public class PostApiIT extends AbstractIT {
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
         unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()
+                .setName(boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
                 .setPostCategories(Collections.singletonList("p1"))));
     
         LinkedHashMap<State, LinkedHashMap<User, PostRepresentation>> posts = new LinkedHashMap<>();
-        for (State state : State.values()) {
+        for (State state : Arrays.stream(State.values()).filter(state -> state != State.PREVIOUS).collect(Collectors.toList())) {
             User postUser1 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
@@ -112,7 +120,7 @@ public class PostApiIT extends AbstractIT {
                         .setMemberCategories(Collections.singletonList("m1")),
                     state));
             }
-    
+        
             User postUser2 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
@@ -129,6 +137,26 @@ public class PostApiIT extends AbstractIT {
                     state));
             }
         }
+    
+        List<String> publicPostNames = Arrays.asList(
+            "board11 draft 0", "board11 draft 1", "board11 draft 2",
+            "board11 draft 0", "board11 draft 1", "board11 draft 2",
+            "board11 suspended 1", "board11 suspended 2",
+            "board11 pending 1", "board11 pending 2",
+            "board11 accepted 1", "board11 accepted 2",
+            "board11 expired 1", "board11 expired 2",
+            "board11 rejected 1", "board11 rejected 2",
+            "board11 withdrawn 1", "board11 withdrawn 2",
+        
+            "board1100", "board12", "board120", "board1200", "board21", "board210", "board2100", "board22", "board220", "board2200");
+        LinkedHashMultimap<Long, String> boardPostNames = LinkedHashMultimap.create();
+        boardPostNames.putAll(boardR11.getDepartment().getId(), Arrays.asList("board11", "board1100", "board12", "board1200"));
+        boardPostNames.putAll(boardR21.getDepartment().getId(), Arrays.asList("board21", "board2100", "board22", "board2200"));
+        List<Action> publicActions = Collections.singletonList(Action.VIEW);
+    
+        testUserService.unauthenticate();
+        verifyUnprivilegedPostUser(publicPostNames, boardPostNames, publicActions);
+        
     }
     
     @Test
@@ -704,6 +732,66 @@ public class PostApiIT extends AbstractIT {
         PostRepresentation postR = verifyPostPost(user, boardId, postDTO);
         transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state));
         return postR;
+    }
+    
+    private void verifyUnprivilegedPostUser(List<String> publicPostNames, LinkedHashMultimap<Long, String> boardPostNameMap, List<Action> publicActions) {
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> postApi.getPosts(null)),
+            Collections.emptyList(),
+            null);
+        
+        TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
+            .add("default", publicActions);
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> postApi.getPosts(true)),
+            publicPostNames,
+            expectedActions);
+        
+        for (Long boardId : boardPostNameMap.keySet()) {
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
+                Collections.emptyList(),
+                null);
+            
+            @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(Lists.newArrayList(), publicPostNames);
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
+                publicBoardPostNames,
+                expectedActions);
+        }
+    }
+    
+    private void verifyPrivilegedPostUser(List<String> publicPostNames, List<String> securePostNames, LinkedHashMultimap<Long, String> boardPostNameMap,
+        List<Action> publicActions, List<Action> secureActions) {
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> postApi.getPosts(null)),
+            securePostNames,
+            new TestHelper.ExpectedActions()
+                .addAll(securePostNames, secureActions));
+        
+        TestHelper.verifyResources(
+            transactionTemplate.execute(status -> postApi.getPosts(true)),
+            publicPostNames,
+            new TestHelper.ExpectedActions()
+                .add("default", publicActions)
+                .addAll(securePostNames, secureActions));
+        
+        for (Long boardId : boardPostNameMap.keySet()) {
+            List<String> boardPostNames = Lists.newArrayList(boardPostNameMap.get(boardId));
+            @SuppressWarnings("unchecked") List<String> secureBoardPostNames = ListUtils.intersection(boardPostNames, securePostNames);
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
+                secureBoardPostNames,
+                new TestHelper.ExpectedActions()
+                    .addAll(secureBoardPostNames, secureActions));
+            
+            TestHelper.verifyResources(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
+                boardPostNames,
+                new TestHelper.ExpectedActions()
+                    .add("default", publicActions)
+                    .addAll(secureBoardPostNames, secureActions));
+        }
     }
     
     private interface PostOperation {

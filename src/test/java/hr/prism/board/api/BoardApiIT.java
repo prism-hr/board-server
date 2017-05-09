@@ -60,7 +60,8 @@ public class BoardApiIT extends AbstractIT {
         boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11");
         BoardRepresentation boardR11 = verifyPostBoard(user11, boardDTO11, "board11");
-        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100, TestHelper.samplePost()));
+        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
+            TestHelper.samplePost()));
         
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
@@ -76,7 +77,8 @@ public class BoardApiIT extends AbstractIT {
         boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = verifyPostBoard(user21, boardDTO21, "board21");
-        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100, TestHelper.smallSamplePost()));
+        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
+            TestHelper.smallSamplePost()));
         
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
@@ -413,7 +415,7 @@ public class BoardApiIT extends AbstractIT {
         verifyResourceActions(adminUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND);
     }
     
-    private void verifyUnprivilegedBoardUser(List<String> publicBoardNames, LinkedHashMultimap<Long, String> departmentBoardNames, List<Action> publicActions) {
+    private void verifyUnprivilegedBoardUser(List<String> publicBoardNames, LinkedHashMultimap<Long, String> departmentBoardNameMap, List<Action> publicActions) {
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
             Collections.emptyList(),
@@ -426,7 +428,7 @@ public class BoardApiIT extends AbstractIT {
             publicBoardNames,
             expectedActions);
         
-        for (Long departmentId : departmentBoardNames.keySet()) {
+        for (Long departmentId : departmentBoardNameMap.keySet()) {
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
                 Collections.emptyList(),
@@ -434,7 +436,7 @@ public class BoardApiIT extends AbstractIT {
             
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
-                Lists.newArrayList(departmentBoardNames.get(departmentId)),
+                Lists.newArrayList(departmentBoardNameMap.get(departmentId)),
                 expectedActions);
         }
     }

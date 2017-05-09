@@ -62,26 +62,30 @@ public class DepartmentApiIT extends AbstractIT {
         BoardDTO boardDTO1 = TestHelper.sampleBoard();
         boardDTO1.getDepartment().setName("department1");
         BoardRepresentation boardR1 = verifyPostDepartment(user1, boardDTO1, "department1");
-        unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, 2, TestHelper.samplePost()));
+        unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, 2,
+            TestHelper.samplePost()));
         
         testUserService.setAuthentication(user1.getStormpathId());
         BoardDTO boardDTO2 = TestHelper.smallSampleBoard();
         boardDTO2.getDepartment().setName("department2");
         BoardRepresentation boardR2 = verifyPostDepartment(user1, boardDTO2, "department2");
-        unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, 2, TestHelper.smallSamplePost()));
+        unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, 2,
+            TestHelper.smallSamplePost()));
         
         User user2 = testUserService.authenticate();
         BoardDTO boardDTO3 = TestHelper.sampleBoard();
         boardDTO3.getDepartment().setName("department3");
         BoardRepresentation boardR3 = verifyPostDepartment(user2, boardDTO3, "department3");
-        unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, 2, TestHelper.samplePost()));
+        unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, 2,
+            TestHelper.samplePost()));
         
         testUserService.setAuthentication(user2.getStormpathId());
         BoardDTO boardDTO4 = TestHelper.smallSampleBoard();
         boardDTO4.getDepartment().setName("department4");
         BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
-        unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2, TestHelper.smallSamplePost()));
-    
+        unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2,
+            TestHelper.smallSamplePost()));
+        
         List<String> publicDepartmentNames = Arrays.asList(
             "department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40");
         List<Action> publicActions = Arrays.asList(Action.EXTEND, Action.VIEW);
