@@ -20,6 +20,7 @@ import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -302,7 +303,7 @@ public class ResourceService {
         ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
         if (action == Action.EDIT) {
             ResourceChangeListRepresentation changeList = resource.getChangeList();
-            if (changeList != null && !changeList.isEmpty()) {
+            if (CollectionUtils.isNotEmpty(changeList)) {
                 try {
                     resourceOperation.setChangeList(objectMapper.writeValueAsString(changeList));
                 } catch (JsonProcessingException e) {

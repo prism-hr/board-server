@@ -123,6 +123,20 @@ public abstract class AbstractIT {
         verifyResourceActions(user, scope, id, operations, expectedActions);
     }
     
+    @SuppressWarnings("ConstantConditions")
+    void verifyResourceActions(Scope scope, Long id, Map<Action, Runnable> operations, Collection<Action> expectedActions) {
+        User user = null;
+        verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[expectedActions.size()]));
+    }
+    
+    void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Collection<Action> expectedActions) {
+        verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[expectedActions.size()]));
+    }
+    
+    void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Collection<Action> expectedActions) {
+        users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[expectedActions.size()])));
+    }
+    
     void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
     }
