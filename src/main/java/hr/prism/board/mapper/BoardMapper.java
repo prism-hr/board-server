@@ -4,6 +4,7 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +23,16 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
     @Inject
     private ResourceService resourceService;
 
+    @Inject
+    private DepartmentService departmentService;
+
     @Override
     public BoardRepresentation apply(Board board) {
         if (board == null) {
             return null;
         }
 
-        Department department = (Department) board.getParent();
+        Department department = departmentService.getDepartment(board.getParent().getId());
         return resourceMapper.apply(board, BoardRepresentation.class)
             .setSummary(board.getSummary())
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))

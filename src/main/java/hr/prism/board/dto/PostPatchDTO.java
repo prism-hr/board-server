@@ -23,6 +23,8 @@ public class PostPatchDTO {
     @Size(min = 3, max = 1000)
     private Optional<String> summary;
 
+    private Optional<String> description;
+
     @Size(min = 3, max = 255)
     private Optional<String> organizationName;
 
@@ -67,6 +69,15 @@ public class PostPatchDTO {
 
     public PostPatchDTO setSummary(Optional<String> summary) {
         this.summary = summary;
+        return this;
+    }
+
+    public Optional<String> getDescription() {
+        return description;
+    }
+
+    public PostPatchDTO setDescription(Optional<String> description) {
+        this.description = description;
         return this;
     }
 

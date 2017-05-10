@@ -360,6 +360,7 @@ public class PostApiIT extends AbstractIT {
         PostPatchDTO updateDTO = new PostPatchDTO()
             .setName(Optional.of("post 2"))
             .setSummary(Optional.of("summary 2"))
+            .setDescription(Optional.of("description"))
             .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
                 new LocationDTO()
@@ -395,6 +396,7 @@ public class PostApiIT extends AbstractIT {
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name"))
+            .setDescription(Optional.of("description 2"))
             .setLocation(Optional.of(
                 new LocationDTO()
                     .setName("birmingham")
@@ -514,6 +516,7 @@ public class PostApiIT extends AbstractIT {
             new ResourceChangeListRepresentation()
                 .put("name", "post", "post 2")
                 .put("summary", "summary", "summary 2")
+                .put("description", null, "description")
                 .put("organizationName", "organization name", "organization name 2")
                 .put("location",
                     ObjectUtils.orderedMap("name", "krakow", "domicile", "PL", "googleId", "sss",
@@ -540,6 +543,7 @@ public class PostApiIT extends AbstractIT {
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, postUser,
             new ResourceChangeListRepresentation()
+                .put("description", "description", "description 2")
                 .put("organizationName", "organization name 2", "organization name")
                 .put("location",
                     ObjectUtils.orderedMap("name", "london", "domicile", "GB", "googleId", "ttt",
@@ -630,6 +634,9 @@ public class PostApiIT extends AbstractIT {
 
             Optional<String> summaryOptional = postDTO.getSummary();
             assertEquals(summaryOptional == null ? post.getSummary() : summaryOptional.orElse(null), postR.getSummary());
+
+            Optional<String> descriptionOptional = postDTO.getDescription();
+            assertEquals(descriptionOptional == null ? post.getDescription() : descriptionOptional.orElse(null), postR.getDescription());
 
             Optional<String> organizationNameOptional = postDTO.getOrganizationName();
             assertEquals(organizationNameOptional == null ? post.getOrganizationName() : organizationNameOptional.orElse(null), postR.getOrganizationName());

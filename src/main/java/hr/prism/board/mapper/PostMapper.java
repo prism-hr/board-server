@@ -40,6 +40,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
 
         return resourceMapper.apply(post, PostRepresentation.class)
             .setSummary(post.getSummary())
+            .setDescription(post.getDescription())
             .setOrganizationName(post.getOrganizationName())
             .setLocation(locationMapper.apply(post.getLocation()))
             .setExistingRelation(post.getExistingRelation())

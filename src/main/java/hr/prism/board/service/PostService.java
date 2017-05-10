@@ -178,6 +178,7 @@ public class PostService {
         post.setChangeList(new ResourceChangeListRepresentation());
         resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
         resourcePatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
+        resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
 

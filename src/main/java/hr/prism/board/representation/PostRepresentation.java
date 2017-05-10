@@ -10,6 +10,8 @@ public class PostRepresentation extends ResourceRepresentation {
 
     private String summary;
 
+    private String description;
+
     private String organizationName;
 
     private LocationRepresentation location;
@@ -40,6 +42,15 @@ public class PostRepresentation extends ResourceRepresentation {
 
     public PostRepresentation setSummary(String summary) {
         this.summary = summary;
+        return this;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public PostRepresentation setDescription(String description) {
+        this.description = description;
         return this;
     }
 
