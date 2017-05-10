@@ -175,7 +175,6 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<Long, String> boardPostNames = LinkedHashMultimap.create();
         boardPostNames.putAll(boardR11.getId(),
             Arrays.asList("board11 draft 0", "board11 draft 1", "board11 draft 2",
-                "board11 draft 0", "board11 draft 1", "board11 draft 2",
                 "board11 suspended 1", "board11 suspended 2",
                 "board11 pending 1", "board11 pending 2",
                 "board11 accepted 1", "board11 accepted 2",
@@ -185,7 +184,6 @@ public class PostApiIT extends AbstractIT {
         
         boardPostNames.putAll(boardR12.getId(),
             Arrays.asList("board12 draft 0", "board12 draft 1", "board12 draft 2",
-                "board12 draft 0", "board12 draft 1", "board12 draft 2",
                 "board12 suspended 1", "board12 suspended 2",
                 "board12 pending 1", "board12 pending 2",
                 "board12 accepted 1", "board12 accepted 2",
@@ -195,7 +193,6 @@ public class PostApiIT extends AbstractIT {
         
         boardPostNames.putAll(boardR21.getId(),
             Arrays.asList("board21 draft 0", "board21 draft 1", "board21 draft 2",
-                "board21 draft 0", "board21 draft 1", "board21 draft 2",
                 "board21 suspended 1", "board21 suspended 2",
                 "board21 pending 1", "board21 pending 2",
                 "board21 accepted 1", "board21 accepted 2",
@@ -205,7 +202,6 @@ public class PostApiIT extends AbstractIT {
         
         boardPostNames.putAll(boardR22.getId(),
             Arrays.asList("board22 draft 0", "board22 draft 1", "board22 draft 2",
-                "board22 draft 0", "board22 draft 1", "board22 draft 2",
                 "board22 suspended 1", "board22 suspended 2",
                 "board22 pending 1", "board22 pending 2",
                 "board22 accepted 1", "board22 accepted 2",
@@ -213,12 +209,23 @@ public class PostApiIT extends AbstractIT {
                 "board22 rejected 1", "board22 rejected 2",
                 "board22 withdrawn 1", "board22 withdrawn 2"));
         
-        boardPostNames.putAll(boardR11.getDepartment().getId(), Arrays.asList("board11", "board1100", "board12", "board1200"));
-        boardPostNames.putAll(boardR21.getDepartment().getId(), Arrays.asList("board21", "board2100", "board22", "board2200"));
         List<Action> publicActions = Collections.singletonList(Action.VIEW);
         
         testUserService.unauthenticate();
         verifyUnprivilegedPostUser(publicPostNames, boardPostNames, publicActions);
+    
+        for (String boardName : unprivilegedUsers.keySet()) {
+            Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
+            for (Scope scope : unprivilegedUserMap.keySet()) {
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
+                if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
+                    verifyPrivilegedPostUser(publicPostNames, Collections.emptyList(), boardPostNames, Collections.emptyList(),
+                        Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED)));
+                } else if (scope == Scope.POST) {
+                
+                }
+            }
+        }
         
     }
     
@@ -817,8 +824,9 @@ public class PostApiIT extends AbstractIT {
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
                 Collections.emptyList(),
                 null);
-            
-            @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(Lists.newArrayList(), publicPostNames);
+    
+            List<String> boardPostNames = Lists.newArrayList(boardPostNameMap.get(boardId));
+            @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(boardPostNames, publicPostNames);
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
                 publicBoardPostNames,
@@ -836,13 +844,14 @@ public class PostApiIT extends AbstractIT {
         
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> postApi.getPosts(true)),
-            publicPostNames,
+            ListUtils.union(publicActions, securePostNames),
             new TestHelper.ExpectedActions()
-                .add("default", publicActions)
+                .addAll(publicPostNames, publicActions)
                 .addAll(securePostNames, secureActions));
         
         for (Long boardId : boardPostNameMap.keySet()) {
             List<String> boardPostNames = Lists.newArrayList(boardPostNameMap.get(boardId));
+            @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(boardPostNames, publicPostNames);
             @SuppressWarnings("unchecked") List<String> secureBoardPostNames = ListUtils.intersection(boardPostNames, securePostNames);
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
@@ -852,9 +861,9 @@ public class PostApiIT extends AbstractIT {
             
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
-                boardPostNames,
+                ListUtils.union(publicBoardPostNames, secureBoardPostNames),
                 new TestHelper.ExpectedActions()
-                    .add("default", publicActions)
+                    .addAll(publicBoardPostNames, publicActions)
                     .addAll(secureBoardPostNames, secureActions));
         }
     }
