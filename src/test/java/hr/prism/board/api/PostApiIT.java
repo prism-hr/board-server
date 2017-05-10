@@ -477,6 +477,7 @@ public class PostApiIT extends AbstractIT {
             .setComment("could you please explain what you will pay the successful applicant");
         
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.suspendPost(postId, suspendDTO), State.SUSPENDED);
+        verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
         
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = new PostPatchDTO()
