@@ -12,29 +12,29 @@ import java.util.function.Function;
 
 @Service
 public class BoardMapper implements Function<Board, BoardRepresentation> {
-    
+
     @Inject
     private DepartmentMapper departmentMapper;
-    
+
     @Inject
     private ResourceMapper resourceMapper;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Override
     public BoardRepresentation apply(Board board) {
         if (board == null) {
             return null;
         }
-    
+
         Department department = (Department) board.getParent();
         return resourceMapper.apply(board, BoardRepresentation.class)
-            .setDescription(board.getDescription())
+            .setSummary(board.getSummary())
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
             .setPostCategories(resourceService.getCategories(board, CategoryType.POST))
             .setDepartment(departmentMapper.apply(department))
             .setDefaultPostVisibility(board.getDefaultPostVisibility());
     }
-    
+
 }

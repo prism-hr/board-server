@@ -46,7 +46,7 @@ public class TestHelper {
     public static PostDTO smallSamplePost() {
         return new PostDTO()
             .setName("post")
-            .setDescription("description")
+            .setSummary("summary")
             .setOrganizationName("organization name")
             .setLocation(new LocationDTO()
                 .setName("krakow")
@@ -64,7 +64,7 @@ public class TestHelper {
     public static PostDTO samplePost() {
         return new PostDTO()
             .setName("post")
-            .setDescription("description")
+            .setSummary("summary")
             .setOrganizationName("organization name")
             .setLocation(new LocationDTO()
                 .setName("krakow")

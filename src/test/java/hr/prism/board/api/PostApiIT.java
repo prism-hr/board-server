@@ -138,7 +138,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post")
-                .setDescription("description")
+                .setSummary("summary")
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
@@ -158,7 +158,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post")
-                .setDescription("description")
+                .setSummary("summary")
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
@@ -174,14 +174,14 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldNotAcceptPostWithMissingRelationDescriptionForUserWithoutAuthorRole() {
+    public void shouldNotAcceptPostWithMissingRelationForUserWithoutAuthorRole() {
         testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post")
-                .setDescription("description")
+                .setSummary("summary")
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
@@ -359,7 +359,7 @@ public class PostApiIT extends AbstractIT {
         // Check that the author can update the post
         PostPatchDTO updateDTO = new PostPatchDTO()
             .setName(Optional.of("post 2"))
-            .setDescription(Optional.of("description 2"))
+            .setSummary(Optional.of("summary 2"))
             .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
                 new LocationDTO()
@@ -513,7 +513,7 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, postUser,
             new ResourceChangeListRepresentation()
                 .put("name", "post", "post 2")
-                .put("description", "description", "description 2")
+                .put("summary", "summary", "summary 2")
                 .put("organizationName", "organization name", "organization name 2")
                 .put("location",
                     ObjectUtils.orderedMap("name", "krakow", "domicile", "PL", "googleId", "sss",
@@ -592,7 +592,7 @@ public class PostApiIT extends AbstractIT {
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
 
             assertEquals(postDTO.getName(), postR.getName());
-            assertEquals(postDTO.getDescription(), postR.getDescription());
+            assertEquals(postDTO.getSummary(), postR.getSummary());
             assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
             verifyLocation(postDTO.getLocation(), postR);
 
@@ -628,8 +628,8 @@ public class PostApiIT extends AbstractIT {
             Optional<String> nameOptional = postDTO.getName();
             assertEquals(nameOptional == null ? post.getName() : nameOptional.orElse(null), postR.getName());
 
-            Optional<String> descriptionOptional = postDTO.getDescription();
-            assertEquals(descriptionOptional == null ? post.getDescription() : descriptionOptional.orElse(null), postR.getDescription());
+            Optional<String> summaryOptional = postDTO.getSummary();
+            assertEquals(summaryOptional == null ? post.getSummary() : summaryOptional.orElse(null), postR.getSummary());
 
             Optional<String> organizationNameOptional = postDTO.getOrganizationName();
             assertEquals(organizationNameOptional == null ? post.getOrganizationName() : organizationNameOptional.orElse(null), postR.getOrganizationName());

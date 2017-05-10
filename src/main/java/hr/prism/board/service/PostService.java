@@ -96,7 +96,7 @@ public class PostService {
             Department department = (Department) board.getParent();
 
             post.setName(postDTO.getName());
-            post.setDescription(postDTO.getDescription());
+            post.setSummary(postDTO.getSummary());
             post.setOrganizationName(postDTO.getOrganizationName());
             post.setExistingRelation(postDTO.getExistingRelation());
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
@@ -177,7 +177,7 @@ public class PostService {
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ResourceChangeListRepresentation());
         resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
-        resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
+        resourcePatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
 
