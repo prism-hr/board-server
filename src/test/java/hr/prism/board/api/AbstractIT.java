@@ -37,59 +37,59 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
 public abstract class AbstractIT {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
-    
+
     @Inject
     BoardApi boardApi;
-    
+
     @Inject
     PostApi postApi;
-    
+
     @Inject
     ActionService actionService;
-    
+
     @Inject
     BoardService boardService;
-    
+
     @Inject
     ResourceService resourceService;
-    
+
     @Inject
     TestUserService testUserService;
-    
+
     TransactionTemplate transactionTemplate;
-    
+
     @PersistenceContext
     private EntityManager entityManager;
-    
+
     @Inject
     private PlatformTransactionManager platformTransactionManager;
-    
+
     @Before
     public void before() {
         transactionTemplate = new TransactionTemplate(platformTransactionManager);
     }
-    
+
     @After
     @SuppressWarnings("unchecked")
     public void after() {
         transactionTemplate.execute(transactionTemplate -> {
             Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
             removeForeignKeyChecks.executeUpdate();
-            
+
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
             tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "permission").contains(tableName)).forEach(tableName -> {
                 Query truncateTable = entityManager.createNativeQuery("TRUNCATE TABLE " + tableName);
                 truncateTable.executeUpdate();
             });
-            
+
             Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
             restoreForeignKeyChecks.executeUpdate();
             return null;
         });
     }
-    
+
     LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, Long boardId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
         LinkedHashMap<Scope, User> unprivilegedUsers = new LinkedHashMap<>();
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
@@ -101,7 +101,7 @@ public abstract class AbstractIT {
                         .setName("department" + departmentSuffix)));
             return null;
         });
-        
+
         unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
         transactionTemplate.execute(status -> {
             boardApi.postBoard(
@@ -111,22 +111,22 @@ public abstract class AbstractIT {
                         .setId(departmentId)));
             return null;
         });
-        
+
         unprivilegedUsers.put(Scope.POST, testUserService.authenticate());
         transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;
     }
-    
+
     @SuppressWarnings("ConstantConditions")
     void verifyResourceActions(Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         User user = null;
         verifyResourceActions(user, scope, id, operations, expectedActions);
     }
-    
+
     void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
     }
-    
+
     void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         ExceptionCode exceptionCode;
         if (user == null) {
@@ -136,14 +136,14 @@ public abstract class AbstractIT {
             testUserService.setAuthentication(user.getStormpathId());
             exceptionCode = ExceptionCode.FORBIDDEN_ACTION;
         }
-        
+
         Resource resource = resourceService.getResource(user, scope, id);
         if (ArrayUtils.isEmpty(expectedActions)) {
             Assert.assertNull(resource.getActions());
         } else {
             assertThat(resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()), Matchers.containsInAnyOrder(expectedActions));
         }
-        
+
         for (Action action : Action.values()) {
             if (!ArrayUtils.contains(expectedActions, action)) {
                 transactionTemplate.execute(status -> {
@@ -152,21 +152,21 @@ public abstract class AbstractIT {
                         LOGGER.info("Verifying forbidden action: " + action.name().toLowerCase());
                         ExceptionUtils.verifyApiException(ApiForbiddenException.class, operation, exceptionCode, status);
                     }
-                    
+
                     return null;
                 });
             }
         }
     }
-    
-    void verifyDocument(DocumentDefinition documentDefinition, DocumentRepresentation documentRepresentation) {
-        if (documentDefinition == null) {
-            assertNull(documentRepresentation);
+
+    void verifyDocument(DocumentDefinition expectedDocument, DocumentRepresentation axctualDocument) {
+        if (expectedDocument == null) {
+            assertNull(axctualDocument);
         } else {
-            assertEquals(documentDefinition.getFileName(), documentRepresentation.getFileName());
-            assertEquals(documentDefinition.getCloudinaryId(), documentRepresentation.getCloudinaryId());
-            assertEquals(documentDefinition.getCloudinaryUrl(), documentRepresentation.getCloudinaryUrl());
+            assertEquals(expectedDocument.getFileName(), axctualDocument.getFileName());
+            assertEquals(expectedDocument.getCloudinaryId(), axctualDocument.getCloudinaryId());
+            assertEquals(expectedDocument.getCloudinaryUrl(), axctualDocument.getCloudinaryUrl());
         }
     }
-    
+
 }

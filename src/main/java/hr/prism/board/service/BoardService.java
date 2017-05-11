@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
@@ -43,6 +44,9 @@ public class BoardService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private DocumentService documentService;
+
     public Board getBoard(Long id) {
         User currentUser = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
@@ -79,6 +83,12 @@ public class BoardService {
             board.setSummary(boardDTO.getSummary());
             board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
 
+            if (boardDTO.getDocumentLogo() != null) {
+                board.setDocumentLogo(documentService.getOrCreateDocument(boardDTO.getDocumentLogo()));
+            } else if (department.getDocumentLogo() != null) {
+                board.setDocumentLogo(documentService.getOrCreateDocument(new DocumentDTO().setCloudinaryId(department.getDocumentLogo().getCloudinaryId())));
+            }
+
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
             List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
             board.setHandle(ResourceService.confirmHandle(handle, similarHandles));
@@ -99,6 +109,7 @@ public class BoardService {
             board.setChangeList(new ResourceChangeListRepresentation());
             resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.DUPLICATE_BOARD);
             resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.DUPLICATE_BOARD_HANDLE);
+            resourcePatchService.patchDocument(board, "documentLogo", board::getDocumentLogo, board::setDocumentLogo, boardDTO.getDocumentLogo());
             resourcePatchService.patchProperty(board, "defaultPostVisibility", board::getDefaultPostVisibility, board::setDefaultPostVisibility,
                 boardDTO.getDefaultPostVisibility());
             resourcePatchService.patchProperty(board, "summary", board::getSummary, board::setSummary, boardDTO.getSummary());

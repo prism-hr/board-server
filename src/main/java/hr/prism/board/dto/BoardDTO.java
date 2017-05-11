@@ -9,6 +9,9 @@ public class BoardDTO {
     @Size(min = 3, max = 100)
     private String name;
 
+    @Valid
+    private DocumentDTO documentLogo;
+
     @Size(min = 3, max = 1000)
     private String summary;
 
@@ -23,6 +26,15 @@ public class BoardDTO {
 
     public BoardDTO setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public DocumentDTO getDocumentLogo() {
+        return documentLogo;
+    }
+
+    public BoardDTO setDocumentLogo(DocumentDTO documentLogo) {
+        this.documentLogo = documentLogo;
         return this;
     }
 

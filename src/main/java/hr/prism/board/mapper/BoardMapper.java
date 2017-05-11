@@ -26,6 +26,9 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
     @Inject
     private DepartmentService departmentService;
 
+    @Inject
+    private DocumentMapper documentMapper;
+
     @Override
     public BoardRepresentation apply(Board board) {
         if (board == null) {
@@ -34,6 +37,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
         Department department = departmentService.getDepartment(board.getParent().getId());
         return resourceMapper.apply(board, BoardRepresentation.class)
+            .setDocumentLogo(documentMapper.apply(board.getDocumentLogo()))
             .setSummary(board.getSummary())
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
             .setPostCategories(resourceService.getCategories(board, CategoryType.POST))

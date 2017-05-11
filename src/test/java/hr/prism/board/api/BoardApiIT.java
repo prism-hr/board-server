@@ -7,10 +7,7 @@ import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.PostVisibility;
@@ -19,10 +16,12 @@ import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
+import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.apache.commons.collections.ListUtils;
 import org.hamcrest.Matchers;
@@ -58,14 +57,14 @@ public class BoardApiIT extends AbstractIT {
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.getDepartment().setName("department1");
-        boardDTO11.setName("board11");
+        boardDTO11.setName("board11").setDocumentLogo(new DocumentDTO().setCloudinaryId("board1logo").setCloudinaryUrl("board1logo").setFileName("board1logo"));
         BoardRepresentation boardR11 = verifyPostBoard(user11, boardDTO11, "board11");
         unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100, TestHelper.samplePost()));
 
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
         boardDTO12.getDepartment().setName("department1");
-        boardDTO12.setName("board12");
+        boardDTO12.setName("board12").setDocumentLogo(new DocumentDTO().setCloudinaryId("board2logo").setCloudinaryUrl("board2logo").setFileName("board2logo"));
         BoardRepresentation boardR12 = verifyPostBoard(user11, boardDTO12, "board12");
         unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
@@ -275,7 +274,8 @@ public class BoardApiIT extends AbstractIT {
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 2"))
-                .setHandle(Optional.of("board-2")),
+                .setHandle(Optional.of("board-2"))
+                .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("logo 1").setCloudinaryUrl("logo 1").setFileName("logo 1"))),
             State.ACCEPTED);
 
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
@@ -285,6 +285,7 @@ public class BoardApiIT extends AbstractIT {
             new BoardPatchDTO()
                 .setName(Optional.of("board 3"))
                 .setHandle(Optional.of("board-3"))
+                .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("logo 2").setCloudinaryUrl("logo 2").setFileName("logo 2")))
                 .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE))
                 .setSummary(Optional.of("summary"))
                 .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))),
@@ -322,12 +323,16 @@ public class BoardApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board", "board 2")
-                .put("handle", "board", "board-2"));
+                .put("handle", "board", "board-2")
+                .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board 2", "board 3")
                 .put("handle", "board-2", "board-3")
+                .put("documentLogo",
+                    ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1"),
+                    ObjectUtils.orderedMap("cloudinaryId", "logo 2", "cloudinaryUrl", "logo 2", "fileName", "logo 2"))
                 .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
                 .put("summary", null, "summary")
                 .put("postCategories", null, Arrays.asList("m1", "m2")));
@@ -344,6 +349,29 @@ public class BoardApiIT extends AbstractIT {
             new ResourceChangeListRepresentation()
                 .put("summary", "summary 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
+    }
+
+    @Test
+    public void shouldPostAndReplaceLogo() {
+        // Create department and board
+        User user = testUserService.authenticate();
+        BoardDTO boardDTO = TestHelper.smallSampleBoard();
+        DocumentDTO initialLogo = new DocumentDTO().setCloudinaryId("postingLogo").setCloudinaryUrl("postingLogo").setFileName("postingLogo");
+        boardDTO.setDocumentLogo(initialLogo);
+        boardDTO.getDepartment().setDocumentLogo(initialLogo);
+        BoardRepresentation boardR = verifyPostBoard(user, boardDTO, "board");
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId = boardR.getId();
+
+        // Check that we can make further changes and set default / nullable values
+        DocumentDTO replacingLogo = new DocumentDTO().setCloudinaryId("replacingLogo").setCloudinaryUrl("replacingLogo").setFileName("replacingLogo");
+        verifyPatchBoard(user, boardId,
+            new BoardPatchDTO()
+                .setDocumentLogo(Optional.of(replacingLogo)),
+            State.ACCEPTED);
+
+        DepartmentRepresentation department = departmentApi.getDepartment(departmentId);
+        verifyDocument(initialLogo, department.getDocumentLogo());
     }
 
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
@@ -366,6 +394,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(boardDTO.getName(), boardR.getName());
             Assert.assertEquals(expectedHandle, boardR.getHandle());
             Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
+            verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
             Assert.assertEquals(boardDTO.getPostCategories(), boardR.getPostCategories());
             Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
 
@@ -387,6 +416,9 @@ public class BoardApiIT extends AbstractIT {
 
             Optional<String> nameOptional = boardDTO.getName();
             Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
+
+            Optional<DocumentDTO> documentLogoOptional = boardDTO.getDocumentLogo();
+            verifyDocument(documentLogoOptional == null ? board.getDocumentLogo() : boardDTO.getDocumentLogo().orElse(null), boardR.getDocumentLogo());
 
             Optional<String> summaryOptional = boardDTO.getSummary();
             Assert.assertEquals(summaryOptional == null ? board.getSummary() : summaryOptional.orElse(null), boardR.getSummary());
@@ -440,7 +472,7 @@ public class BoardApiIT extends AbstractIT {
     }
 
     private void verifyPrivilegedBoardUser(List<String> publicBoardNames, List<String> secureBoardNames, LinkedHashMultimap<Long, String> departmentBoardNameMap,
-        List<Action> publicActions, List<Action> secureActions) {
+                                           List<Action> publicActions, List<Action> secureActions) {
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
             secureBoardNames,

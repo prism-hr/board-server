@@ -8,17 +8,18 @@ import java.util.function.Function;
 
 @Service
 public class DocumentMapper implements Function<Document, DocumentRepresentation> {
-    
+
     @Override
     public DocumentRepresentation apply(Document document) {
         if (document == null) {
             return null;
         }
-    
+
         return new DocumentRepresentation()
+            .setId(document.getId())
             .setCloudinaryId(document.getCloudinaryId())
             .setCloudinaryUrl(document.getCloudinaryUrl())
             .setFileName(document.getFileName());
     }
-    
+
 }

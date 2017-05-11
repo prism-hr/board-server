@@ -27,7 +27,7 @@ public class TestHelper {
         Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
     }
 
-    public static BoardDTO smallSampleBoard() {
+    public static BoardDTO  smallSampleBoard() {
         return new BoardDTO()
             .setName("board")
             .setDepartment(new DepartmentDTO()
