@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
@@ -42,28 +41,28 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 public class PostApiIT extends AbstractIT {
     
-    private static HashMultimap<State, Action> ADMIN_ACTIONS = HashMultimap.create();
+    private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
     
-    private static HashMultimap<State, Action> AUTHOR_ACTIONS = HashMultimap.create();
+    private static LinkedHashMultimap<State, Action> AUTHOR_ACTIONS = LinkedHashMultimap.create();
     
-    private static HashMultimap<State, Action> PUBLIC_ACTIONS = HashMultimap.create();
+    private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
     
     static {
-        ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
-        ADMIN_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.REJECT));
-        ADMIN_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        ADMIN_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.REJECT, Action.SUSPEND));
-        ADMIN_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
-        ADMIN_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT));
-        
-        AUTHOR_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        AUTHOR_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW, Action.CORRECT));
-        AUTHOR_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        AUTHOR_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        AUTHOR_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        AUTHOR_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.WITHDRAW));
-        AUTHOR_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.AUDIT, Action.RESTORE));
+        ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
+        ADMIN_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.ACCEPT, Action.REJECT));
+        ADMIN_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.REJECT, Action.SUSPEND));
+        ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.REJECT, Action.SUSPEND));
+        ADMIN_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.REJECT, Action.SUSPEND));
+        ADMIN_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
+        ADMIN_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT));
+    
+        AUTHOR_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
+        AUTHOR_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW, Action.CORRECT));
+        AUTHOR_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
+        AUTHOR_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
+        AUTHOR_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
+        AUTHOR_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
+        AUTHOR_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.RESTORE));
         
         PUBLIC_ACTIONS.put(State.ACCEPTED, Action.VIEW);
     }
@@ -165,67 +164,91 @@ public class PostApiIT extends AbstractIT {
                     state));
             }
         }
-        
-        List<String> publicPostNames = Arrays.asList(
-            "board11 accepted 1", "board11 accepted 2",
-            "board12 accepted 1", "board12 accepted 2",
-            "board21 accepted 1", "board21 accepted 2",
-            "board22 accepted 1", "board22 accepted 2");
-        
-        LinkedHashMultimap<Long, String> boardPostNames = LinkedHashMultimap.create();
-        boardPostNames.putAll(boardR11.getId(),
-            Arrays.asList("board11 draft 0", "board11 draft 1", "board11 draft 2",
-                "board11 suspended 1", "board11 suspended 2",
-                "board11 pending 1", "board11 pending 2",
-                "board11 accepted 1", "board11 accepted 2",
-                "board11 expired 1", "board11 expired 2",
-                "board11 rejected 1", "board11 rejected 2",
-                "board11 withdrawn 1", "board11 withdrawn 2"));
-        
-        boardPostNames.putAll(boardR12.getId(),
-            Arrays.asList("board12 draft 0", "board12 draft 1", "board12 draft 2",
-                "board12 suspended 1", "board12 suspended 2",
-                "board12 pending 1", "board12 pending 2",
-                "board12 accepted 1", "board12 accepted 2",
-                "board12 expired 1", "board12 expired 2",
-                "board12 rejected 1", "board12 rejected 2",
-                "board12 withdrawn 1", "board12 withdrawn 2"));
-        
-        boardPostNames.putAll(boardR21.getId(),
-            Arrays.asList("board21 draft 0", "board21 draft 1", "board21 draft 2",
-                "board21 suspended 1", "board21 suspended 2",
-                "board21 pending 1", "board21 pending 2",
-                "board21 accepted 1", "board21 accepted 2",
-                "board21 expired 1", "board21 expired 2",
-                "board21 rejected 1", "board21 rejected 2",
-                "board21 withdrawn 1", "board21 withdrawn 2"));
-        
-        boardPostNames.putAll(boardR22.getId(),
-            Arrays.asList("board22 draft 0", "board22 draft 1", "board22 draft 2",
-                "board22 suspended 1", "board22 suspended 2",
-                "board22 pending 1", "board22 pending 2",
-                "board22 accepted 1", "board22 accepted 2",
-                "board22 expired 1", "board22 expired 2",
-                "board22 rejected 1", "board22 rejected 2",
-                "board22 withdrawn 1", "board22 withdrawn 2"));
-        
-        List<Action> publicActions = Collections.singletonList(Action.VIEW);
+    
+        Long board11Id = boardR11.getId();
+        Long board12Id = boardR12.getId();
+        Long board21Id = boardR21.getId();
+        Long board22Id = boardR22.getId();
+    
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
+        LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
+        boardPostNames11.putAll(State.DRAFT, Arrays.asList("board11 draft 0", "board11 draft 1", "board11 draft 2"));
+        boardPostNames11.putAll(State.SUSPENDED, Arrays.asList("board11 suspended 1", "board11 suspended 2"));
+        boardPostNames11.putAll(State.PENDING, Arrays.asList("board11 pending 1", "board11 pending 2"));
+        boardPostNames11.putAll(State.ACCEPTED, Arrays.asList("board11 accepted 1", "board11 accepted 2"));
+        boardPostNames11.putAll(State.EXPIRED, Arrays.asList("board11 expired 1", "board11 expired 2"));
+        boardPostNames11.putAll(State.REJECTED, Arrays.asList("board11 rejected 1", "board11 rejected 2"));
+        boardPostNames11.putAll(State.WITHDRAWN, Arrays.asList("board11 withdrawn 1", "board11 withdrawn 2"));
+        boardPostNames.put(board11Id, boardPostNames11);
+    
+        LinkedHashMultimap<State, String> boardPostNames12 = LinkedHashMultimap.create();
+        boardPostNames12.putAll(State.DRAFT, Arrays.asList("board12 draft 0", "board12 draft 1", "board12 draft 2"));
+        boardPostNames12.putAll(State.SUSPENDED, Arrays.asList("board12 suspended 1", "board12 suspended 2"));
+        boardPostNames12.putAll(State.PENDING, Arrays.asList("board12 pending 1", "board12 pending 2"));
+        boardPostNames12.putAll(State.ACCEPTED, Arrays.asList("board12 accepted 1", "board12 accepted 2"));
+        boardPostNames12.putAll(State.EXPIRED, Arrays.asList("board12 expired 1", "board12 expired 2"));
+        boardPostNames12.putAll(State.REJECTED, Arrays.asList("board12 rejected 1", "board12 rejected 2"));
+        boardPostNames12.putAll(State.WITHDRAWN, Arrays.asList("board12 withdrawn 1", "board12 withdrawn 2"));
+        boardPostNames.put(board12Id, boardPostNames12);
+    
+        LinkedHashMultimap<State, String> boardPostNames21 = LinkedHashMultimap.create();
+        boardPostNames21.putAll(State.DRAFT, Arrays.asList("board21 draft 0", "board21 draft 1", "board21 draft 2"));
+        boardPostNames21.putAll(State.SUSPENDED, Arrays.asList("board21 suspended 1", "board21 suspended 2"));
+        boardPostNames21.putAll(State.PENDING, Arrays.asList("board21 pending 1", "board21 pending 2"));
+        boardPostNames21.putAll(State.ACCEPTED, Arrays.asList("board21 accepted 1", "board21 accepted 2"));
+        boardPostNames21.putAll(State.EXPIRED, Arrays.asList("board21 expired 1", "board21 expired 2"));
+        boardPostNames21.putAll(State.REJECTED, Arrays.asList("board21 rejected 1", "board21 rejected 2"));
+        boardPostNames21.putAll(State.WITHDRAWN, Arrays.asList("board21 withdrawn 1", "board21 withdrawn 2"));
+        boardPostNames.put(board21Id, boardPostNames21);
+    
+        LinkedHashMultimap<State, String> boardPostNames22 = LinkedHashMultimap.create();
+        boardPostNames22.putAll(State.DRAFT, Arrays.asList("board22 draft 0", "board22 draft 1", "board22 draft 2"));
+        boardPostNames22.putAll(State.SUSPENDED, Arrays.asList("board22 suspended 1", "board22 suspended 2"));
+        boardPostNames22.putAll(State.PENDING, Arrays.asList("board22 pending 1", "board22 pending 2"));
+        boardPostNames22.putAll(State.ACCEPTED, Arrays.asList("board22 accepted 1", "board22 accepted 2"));
+        boardPostNames22.putAll(State.EXPIRED, Arrays.asList("board22 expired 1", "board22 expired 2"));
+        boardPostNames22.putAll(State.REJECTED, Arrays.asList("board22 rejected 1", "board22 rejected 2"));
+        boardPostNames22.putAll(State.WITHDRAWN, Arrays.asList("board22 withdrawn 1", "board22 withdrawn 2"));
+        boardPostNames.put(board22Id, boardPostNames22);
+    
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames = new LinkedHashMap<>();
+        LinkedHashMultimap<State, String> publicPostNames11 = LinkedHashMultimap.create();
+        publicPostNames11.putAll(State.ACCEPTED, Arrays.asList("board11 accepted 1", "board11 accepted 2"));
+        publicPostNames.put(board11Id, publicPostNames11);
+    
+        LinkedHashMultimap<State, String> publicPostNames12 = LinkedHashMultimap.create();
+        publicPostNames12.putAll(State.ACCEPTED, Arrays.asList("board12 accepted 1", "board12 accepted 2"));
+        publicPostNames.put(board12Id, publicPostNames12);
+    
+        LinkedHashMultimap<State, String> publicPostNames21 = LinkedHashMultimap.create();
+        publicPostNames21.putAll(State.ACCEPTED, Arrays.asList("board21 accepted 1", "board21 accepted 2"));
+        publicPostNames.put(board21Id, publicPostNames21);
+    
+        LinkedHashMultimap<State, String> publicPostNames22 = LinkedHashMultimap.create();
+        publicPostNames22.putAll(State.ACCEPTED, Arrays.asList("board22 accepted 1", "board22 accepted 2"));
+        publicPostNames.put(board22Id, publicPostNames22);
         
         testUserService.unauthenticate();
-        verifyUnprivilegedPostUser(publicPostNames, boardPostNames, publicActions);
-    
+        verifyUnprivilegedPostUser(publicPostNames);
+        
         for (String boardName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
                 testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
                 if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
-                    verifyPrivilegedPostUser(publicPostNames, Collections.emptyList(), boardPostNames, Collections.emptyList(),
-                        Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED)));
+                    verifyPrivilegedPostUser(publicPostNames, Collections.emptyList(), boardPostNames, Collections.emptySet(), PUBLIC_ACTIONS.get(State.ACCEPTED));
                 } else if (scope == Scope.POST) {
-                
+                    verifyPrivilegedPostUser(publicPostNames, Collections.singletonList(boardName + " draft 0"), boardPostNames, AUTHOR_ACTIONS.get(State.DRAFT),
+                        PUBLIC_ACTIONS.get(State.ACCEPTED));
                 }
             }
         }
+    
+        testUserService.setAuthentication(user11.getStormpathId());
+        List<String> secureBoards11 = Lists.newArrayList(boardPostNames.get(boardR11.getId()));
+        secureBoards11.addAll(boardPostNames.get(boardR12.getId()));
+    
+        verifyPrivilegedPostUser(publicPostNames, secureBoards11);
         
     }
     
@@ -806,66 +829,96 @@ public class PostApiIT extends AbstractIT {
         return postR;
     }
     
-    private void verifyUnprivilegedPostUser(List<String> publicPostNames, LinkedHashMultimap<Long, String> boardPostNameMap, List<Action> publicActions) {
+    private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> postApi.getPosts(null)),
             Collections.emptyList(),
             null);
         
-        TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
-            .add("default", publicActions);
-        TestHelper.verifyResources(
-            transactionTemplate.execute(status -> postApi.getPosts(true)),
-            publicPostNames,
-            expectedActions);
+        LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
+        LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
+        statePostNames.keySet().forEach(state -> {
+            TestHelper.verifyResources(
+                Lists.newArrayList(statePosts.get(state)),
+                Lists.newArrayList(statePostNames.get(state)),
+                new TestHelper.ExpectedActions()
+                    .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state))));
+        });
         
-        for (Long boardId : boardPostNameMap.keySet()) {
+        for (Long boardId : postNames.keySet()) {
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
                 Collections.emptyList(),
                 null);
-    
-            List<String> boardPostNames = Lists.newArrayList(boardPostNameMap.get(boardId));
-            @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(boardPostNames, publicPostNames);
-            TestHelper.verifyResources(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
-                publicBoardPostNames,
-                expectedActions);
+            
+            LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
+            LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(postApi.getPostsByBoard(boardId, true));
+            boardStatePostNames.keySet().forEach(state -> {
+                TestHelper.verifyResources(
+                    Lists.newArrayList(boardStatePosts.get(state)),
+                    Lists.newArrayList(boardStatePostNames.get(state)),
+                    new TestHelper.ExpectedActions()
+                        .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state))));
+            });
         }
     }
     
-    private void verifyPrivilegedPostUser(List<String> publicPostNames, List<String> securePostNames, LinkedHashMultimap<Long, String> boardPostNameMap,
-        List<Action> publicActions, List<Action> secureActions) {
-        TestHelper.verifyResources(
-            transactionTemplate.execute(status -> postApi.getPosts(null)),
-            securePostNames,
-            new TestHelper.ExpectedActions()
-                .addAll(securePostNames, secureActions));
+    private void verifyPrivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames,
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
+        LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
+        LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
+        statePostNames.keySet().forEach(state -> {
+            TestHelper.verifyResources(
+                Lists.newArrayList(statePosts.get(state)),
+                Lists.newArrayList(statePostNames.get(state)),
+                new TestHelper.ExpectedActions()
+                    .add(Lists.newArrayList(ADMIN_ACTIONS.get(state))));
+        });
         
-        TestHelper.verifyResources(
-            transactionTemplate.execute(status -> postApi.getPosts(true)),
-            ListUtils.union(publicActions, securePostNames),
-            new TestHelper.ExpectedActions()
-                .addAll(publicPostNames, publicActions)
-                .addAll(securePostNames, secureActions));
+        LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
+        LinkedHashMultimap<State, PostRepresentation> publicStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
+        statePostNames.keySet().forEach(state -> {
+            TestHelper.verifyResources(
+                Lists.newArrayList(publicStatePosts.get(state)),
+                Lists.newArrayList(publicStatePostNames.get(state)),
+                new TestHelper.ExpectedActions()
+                    .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
+                    .addAll(Lists.newArrayList(statePostNames.values()), Lists.newArrayList(ADMIN_ACTIONS.get(state))));
+        });
         
-        for (Long boardId : boardPostNameMap.keySet()) {
-            List<String> boardPostNames = Lists.newArrayList(boardPostNameMap.get(boardId));
+        for (Long boardId : postNames.keySet()) {
+            List<String> boardPostNames = Lists.newArrayList(postNames.get(boardId));
             @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(boardPostNames, publicPostNames);
             @SuppressWarnings("unchecked") List<String> secureBoardPostNames = ListUtils.intersection(boardPostNames, securePostNames);
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
                 secureBoardPostNames,
                 new TestHelper.ExpectedActions()
-                    .addAll(secureBoardPostNames, secureActions));
+                    .addAll(secureBoardPostNames, secureActionsList));
             
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
                 ListUtils.union(publicBoardPostNames, secureBoardPostNames),
                 new TestHelper.ExpectedActions()
-                    .addAll(publicBoardPostNames, publicActions)
-                    .addAll(secureBoardPostNames, secureActions));
+                    .addAll(publicBoardPostNames, publicActionsList)
+                    .addAll(secureBoardPostNames, secureActionsList));
         }
+    }
+    
+    private LinkedHashMultimap<State, PostRepresentation> getPostsByState(List<PostRepresentation> postRs) {
+        LinkedHashMultimap<State, PostRepresentation> postsByState = LinkedHashMultimap.create();
+        postRs.forEach(postR -> postsByState.put(postR.getState(), postR));
+        return postsByState;
+    }
+    
+    private LinkedHashMultimap<State, String> getPostNamesByState(LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNameMap) {
+        LinkedHashMultimap<State, String> postNamesByState = LinkedHashMultimap.create();
+        boardPostNameMap.entrySet().forEach(entry -> postNamesByState.putAll(entry.getValue()));
+        return postNamesByState;
+    }
+    
+    private LinkedHashMultimap<State, String> getBoardPostNamesByState(Long boardId, LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNameMap) {
+        return boardPostNameMap.get(boardId);
     }
     
     private interface PostOperation {

@@ -39,6 +39,15 @@ import java.util.stream.Collectors;
 @RunWith(SpringRunner.class)
 public class BoardApiIT extends AbstractIT {
     
+    private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
+    
+    private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
+    
+    static {
+        ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
+        PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
+    }
+    
     @Inject
     private DepartmentApi departmentApi;
     
@@ -89,48 +98,42 @@ public class BoardApiIT extends AbstractIT {
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("p1"))));
     
-        List<String> publicBoardNames = Arrays.asList(
+        List<String> boardNames = Arrays.asList(
             "board11", "board110", "board1100", "board12", "board120", "board1200", "board21", "board210", "board2100", "board22", "board220", "board2200");
         LinkedHashMultimap<Long, String> departmentBoardNames = LinkedHashMultimap.create();
         departmentBoardNames.putAll(boardR11.getDepartment().getId(), Arrays.asList("board11", "board1100", "board12", "board1200"));
         departmentBoardNames.putAll(boardR21.getDepartment().getId(), Arrays.asList("board21", "board2100", "board22", "board2200"));
-        List<Action> publicActions = Arrays.asList(Action.EXTEND, Action.VIEW);
-        List<Action> secureActions = Arrays.asList(Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW);
         
         testUserService.unauthenticate();
-        verifyUnprivilegedBoardUser(publicBoardNames, departmentBoardNames, publicActions);
-    
+        verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
+        
         for (String boardName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
                 testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
                 if (scope == Scope.DEPARTMENT) {
                     verifyPrivilegedBoardUser(
-                        publicBoardNames, Collections.singletonList(boardName + "0"), departmentBoardNames, publicActions, secureActions);
+                        boardNames, Collections.singletonList(boardName + "0"), departmentBoardNames);
                 } else if (scope == Scope.BOARD) {
                     verifyPrivilegedBoardUser(
-                        publicBoardNames, Collections.singletonList(boardName + "00"), departmentBoardNames, publicActions, secureActions);
+                        boardNames, Collections.singletonList(boardName + "00"), departmentBoardNames);
                 } else {
-                    verifyUnprivilegedBoardUser(publicBoardNames, departmentBoardNames, publicActions);
+                    verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
                 }
             }
         }
     
         testUserService.setAuthentication(user11.getStormpathId());
-        verifyPrivilegedBoardUser(
-            publicBoardNames, Arrays.asList("board11", "board1100", "board12", "board1200"), departmentBoardNames, publicActions, secureActions);
+        verifyPrivilegedBoardUser(boardNames, Arrays.asList("board11", "board1100", "board12", "board1200"), departmentBoardNames);
         
         testUserService.setAuthentication(user12.getStormpathId());
-        verifyPrivilegedBoardUser(
-            publicBoardNames, Collections.singletonList("board12"), departmentBoardNames, publicActions, secureActions);
+        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board12"), departmentBoardNames);
         
         testUserService.setAuthentication(user21.getStormpathId());
-        verifyPrivilegedBoardUser(
-            publicBoardNames, Arrays.asList("board21", "board2100", "board22", "board2200"), departmentBoardNames, publicActions, secureActions);
+        verifyPrivilegedBoardUser(boardNames, Arrays.asList("board21", "board2100", "board22", "board2200"), departmentBoardNames);
         
         testUserService.setAuthentication(user22.getStormpathId());
-        verifyPrivilegedBoardUser(
-            publicBoardNames, Collections.singletonList("board22"), departmentBoardNames, publicActions, secureActions);
+        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board22"), departmentBoardNames);
     }
     
     @Test
@@ -410,25 +413,27 @@ public class BoardApiIT extends AbstractIT {
     }
     
     private void verifyBoardActions(List<User> adminUsers, Collection<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
-        verifyResourceActions(Scope.BOARD, boardId, operations, Action.VIEW, Action.EXTEND);
-        verifyResourceActions(unprivilegedUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EXTEND);
-        verifyResourceActions(adminUsers, Scope.BOARD, boardId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND);
+        verifyResourceActions(Scope.BOARD, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
+        verifyResourceActions(unprivilegedUsers, Scope.BOARD, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
+        verifyResourceActions(adminUsers, Scope.BOARD, boardId, operations, ADMIN_ACTIONS.get(State.ACCEPTED));
     }
     
-    private void verifyUnprivilegedBoardUser(List<String> publicBoardNames, LinkedHashMultimap<Long, String> departmentBoardNameMap, List<Action> publicActions) {
+    private void verifyUnprivilegedBoardUser(List<String> boardNames, LinkedHashMultimap<Long, String> boardNamesByDepartment) {
+        List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
+        
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
             Collections.emptyList(),
             null);
         
         TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
-            .add("default", publicActions);
+            .add(publicActions);
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(true)),
-            publicBoardNames,
+            boardNames,
             expectedActions);
         
-        for (Long departmentId : departmentBoardNameMap.keySet()) {
+        for (Long departmentId : boardNamesByDepartment.keySet()) {
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
                 Collections.emptyList(),
@@ -436,41 +441,43 @@ public class BoardApiIT extends AbstractIT {
             
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
-                Lists.newArrayList(departmentBoardNameMap.get(departmentId)),
+                Lists.newArrayList(boardNamesByDepartment.get(departmentId)),
                 expectedActions);
         }
     }
     
-    private void verifyPrivilegedBoardUser(List<String> publicBoardNames, List<String> secureBoardNames, LinkedHashMultimap<Long, String> departmentBoardNameMap,
-        List<Action> publicActions, List<Action> secureActions) {
+    private void verifyPrivilegedBoardUser(List<String> boardNames, List<String> adminBoardNames, LinkedHashMultimap<Long, String> boardNamesByDepartment) {
+        List<Action> adminActions = Lists.newArrayList(ADMIN_ACTIONS.get(State.ACCEPTED));
+        List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
+        
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
-            secureBoardNames,
+            adminBoardNames,
             new TestHelper.ExpectedActions()
-                .addAll(secureBoardNames, secureActions));
+                .addAll(adminBoardNames, adminActions));
         
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(true)),
-            publicBoardNames,
+            boardNames,
             new TestHelper.ExpectedActions()
-                .add("default", publicActions)
-                .addAll(secureBoardNames, secureActions));
+                .add(publicActions)
+                .addAll(adminBoardNames, adminActions));
         
-        for (Long departmentId : departmentBoardNameMap.keySet()) {
-            List<String> departmentBoardNames = Lists.newArrayList(departmentBoardNameMap.get(departmentId));
-            @SuppressWarnings("unchecked") List<String> secureDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, secureBoardNames);
+        for (Long departmentId : boardNamesByDepartment.keySet()) {
+            List<String> departmentBoardNames = Lists.newArrayList(boardNamesByDepartment.get(departmentId));
+            @SuppressWarnings("unchecked") List<String> adminDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, adminBoardNames);
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
-                secureDepartmentBoardNames,
+                adminDepartmentBoardNames,
                 new TestHelper.ExpectedActions()
-                    .addAll(secureDepartmentBoardNames, secureActions));
+                    .addAll(adminDepartmentBoardNames, adminActions));
             
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
                 departmentBoardNames,
                 new TestHelper.ExpectedActions()
-                    .add("default", publicActions)
-                    .addAll(secureDepartmentBoardNames, secureActions));
+                    .add(publicActions)
+                    .addAll(adminDepartmentBoardNames, adminActions));
         }
     }
     

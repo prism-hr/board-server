@@ -19,21 +19,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestHelper {
-
+    
     public static void verifyUser(User user, UserRepresentation userRepresentation) {
         Assert.assertEquals(user.getId(), userRepresentation.getId());
         Assert.assertEquals(user.getGivenName(), userRepresentation.getGivenName());
         Assert.assertEquals(user.getSurname(), userRepresentation.getSurname());
         Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
     }
-
+    
     public static BoardDTO smallSampleBoard() {
         return new BoardDTO()
             .setName("board")
             .setDepartment(new DepartmentDTO()
                 .setName("department"));
     }
-
+    
     public static BoardDTO sampleBoard() {
         return new BoardDTO()
             .setName("board")
@@ -42,7 +42,7 @@ public class TestHelper {
                 .setName("department")
                 .setMemberCategories(Arrays.asList("m1", "m2", "m3")));
     }
-
+    
     public static PostDTO smallSamplePost() {
         return new PostDTO()
             .setName("post")
@@ -60,7 +60,7 @@ public class TestHelper {
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
-
+    
     public static PostDTO samplePost() {
         return new PostDTO()
             .setName("post")
@@ -80,7 +80,7 @@ public class TestHelper {
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
-
+    
     public static <T extends ResourceRepresentation> void verifyResources(List<T> resources, List<String> expectedNames, ExpectedActions expectedActions) {
         int resourcesSize = resources.size();
         Assert.assertEquals(expectedNames.size(), resourcesSize);
@@ -88,78 +88,83 @@ public class TestHelper {
             if (resourcesSize > 0) {
                 Assert.fail();
             }
-
+    
             return;
         }
-
+        
         Collection<Action> expectedActionsDefault = expectedActions.get("default");
         if (CollectionUtils.isEmpty(expectedActionsDefault) && expectedActions.size() < resourcesSize) {
             Assert.fail();
         }
-
+        
         for (int i = 0; i < resources.size(); i++) {
             T resource = resources.get(i);
             String expectedName = expectedNames.get(i);
             Assert.assertEquals(expectedName, resource.getName());
-
+            
             Collection<Action> expectedActionsCustom = expectedActions.get(expectedName);
             if (CollectionUtils.isEmpty(expectedActionsCustom)) {
                 if (expectedActionsDefault == null) {
                     Assert.fail();
                 }
-
+    
                 Assert.assertEquals(expectedActionsDefault, resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()));
             } else {
                 Assert.assertEquals(expectedActionsCustom, resource.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()));
             }
         }
     }
-
+    
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction) {
         verifyResourceOperation(resourceOperationR, expectedAction, null, null, null);
     }
-
+    
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, null);
     }
-
+    
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
         ResourceChangeListRepresentation expectedChanges) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, expectedChanges, null);
     }
-
+    
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
         String expectedComment) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, expectedComment);
     }
-
+    
     private static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
         ResourceChangeListRepresentation expectedChanges, String expectedComment) {
         Assert.assertEquals(expectedAction, resourceOperationR.getAction());
-
+        
         if (expectedUser == null) {
             Assert.assertNull(resourceOperationR.getUser());
         } else {
             verifyUser(expectedUser, resourceOperationR.getUser());
         }
-
+        
         Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
     }
-
+    
     public static class ExpectedActions extends LinkedHashMap<String, List<Action>> {
-
-        public ExpectedActions add(String key, List<Action> values) {
-            values.sort(Comparator.naturalOrder());
-            super.put(key, values);
+        
+        public ExpectedActions add(List<Action> values) {
+            add("default", values);
             return this;
         }
-
+        
         public ExpectedActions addAll(List<String> keys, List<Action> values) {
             keys.forEach(key -> add(key, values));
             return this;
         }
-
+        
+        private ExpectedActions add(String key, List<Action> values) {
+            values.sort(Comparator.naturalOrder());
+            super.put(key, values);
+            return this;
+        }
+        
     }
-
+    
 }

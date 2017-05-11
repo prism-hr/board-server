@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
@@ -38,6 +39,15 @@ import java.util.stream.Collectors;
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
+    
+    private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
+    
+    private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
+    
+    static {
+        ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
+        PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
+    }
     
     @Inject
     private DepartmentApi departmentApi;
@@ -85,32 +95,30 @@ public class DepartmentApiIT extends AbstractIT {
         BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
         unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2,
             TestHelper.smallSamplePost()));
-        
-        List<String> publicDepartmentNames = Arrays.asList(
+    
+        List<String> departmentNames = Arrays.asList(
             "department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40");
-        List<Action> publicActions = Arrays.asList(Action.EXTEND, Action.VIEW);
-        List<Action> secureActions = Arrays.asList(Action.AUDIT, Action.EDIT, Action.EXTEND, Action.VIEW);
         
         testUserService.unauthenticate();
-        verifyUnprivilegedDepartmentUser(publicDepartmentNames, publicActions);
+        verifyUnprivilegedDepartmentUser(departmentNames);
         
         for (String departmentName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(departmentName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
                 testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
                 if (scope == Scope.DEPARTMENT) {
-                    verifyPrivilegedDepartmentUser(publicDepartmentNames, Collections.singletonList(departmentName + "0"), publicActions, secureActions);
+                    verifyPrivilegedDepartmentUser(departmentNames, Collections.singletonList(departmentName + "0"));
                 } else {
-                    verifyUnprivilegedDepartmentUser(publicDepartmentNames, publicActions);
+                    verifyUnprivilegedDepartmentUser(departmentNames);
                 }
             }
         }
     
         testUserService.setAuthentication(user1.getStormpathId());
-        verifyPrivilegedDepartmentUser(publicDepartmentNames, Arrays.asList("department1", "department2"), publicActions, secureActions);
+        verifyPrivilegedDepartmentUser(departmentNames, Arrays.asList("department1", "department2"));
         
         testUserService.setAuthentication(user2.getStormpathId());
-        verifyPrivilegedDepartmentUser(publicDepartmentNames, Arrays.asList("department3", "department4"), publicActions, secureActions);
+        verifyPrivilegedDepartmentUser(departmentNames, Arrays.asList("department3", "department4"));
     }
     
     @Test
@@ -337,13 +345,13 @@ public class DepartmentApiIT extends AbstractIT {
         });
     }
     
-    private void verifyDepartmentActions(User departmentUser, Collection<User> unprivilegedUsers, Long departmentId, Map<Action, Runnable> operations) {
-        verifyResourceActions(Scope.DEPARTMENT, departmentId, operations, Action.VIEW, Action.EXTEND);
-        verifyResourceActions(unprivilegedUsers, Scope.DEPARTMENT, departmentId, operations, Action.VIEW, Action.EXTEND);
-        verifyResourceActions(departmentUser, Scope.DEPARTMENT, departmentId, operations, Action.VIEW, Action.EDIT, Action.AUDIT, Action.EXTEND);
+    private void verifyDepartmentActions(User adminUser, Collection<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
+        verifyResourceActions(Scope.DEPARTMENT, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
+        verifyResourceActions(unprivilegedUsers, Scope.DEPARTMENT, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
+        verifyResourceActions(adminUser, Scope.DEPARTMENT, boardId, operations, ADMIN_ACTIONS.get(State.ACCEPTED));
     }
     
-    private void verifyUnprivilegedDepartmentUser(List<String> publicDepartmentNames, List<Action> publicActions) {
+    private void verifyUnprivilegedDepartmentUser(List<String> departmentNames) {
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
             Collections.emptyList(),
@@ -351,24 +359,26 @@ public class DepartmentApiIT extends AbstractIT {
         
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-            publicDepartmentNames,
+            departmentNames,
             new TestHelper.ExpectedActions()
-                .add("default", publicActions));
+                .add(Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED))));
     }
     
-    private void verifyPrivilegedDepartmentUser(List<String> publicDepartmentNames, List<String> secureDepartmentNames, List<Action> publicActions, List<Action> secureActions) {
+    private void verifyPrivilegedDepartmentUser(List<String> departmentNames, List<String> adminDepartmentNames) {
+        List<Action> adminActions = Lists.newArrayList(ADMIN_ACTIONS.get(State.ACCEPTED));
+        
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
-            secureDepartmentNames,
+            adminDepartmentNames,
             new TestHelper.ExpectedActions()
-                .addAll(secureDepartmentNames, secureActions));
+                .addAll(adminDepartmentNames, adminActions));
         
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
-            publicDepartmentNames,
+            departmentNames,
             new TestHelper.ExpectedActions()
-                .add("default", publicActions)
-                .addAll(secureDepartmentNames, secureActions));
+                .add(Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED)))
+                .addAll(adminDepartmentNames, adminActions));
     }
     
 }
