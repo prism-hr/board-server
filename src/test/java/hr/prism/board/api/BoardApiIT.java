@@ -112,11 +112,9 @@ public class BoardApiIT extends AbstractIT {
             for (Scope scope : unprivilegedUserMap.keySet()) {
                 testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
                 if (scope == Scope.DEPARTMENT) {
-                    verifyPrivilegedBoardUser(
-                        boardNames, Collections.singletonList(boardName + "0"), departmentBoardNames);
+                    verifyPrivilegedBoardUser(boardNames, Collections.singletonList(boardName + "0"), departmentBoardNames);
                 } else if (scope == Scope.BOARD) {
-                    verifyPrivilegedBoardUser(
-                        boardNames, Collections.singletonList(boardName + "00"), departmentBoardNames);
+                    verifyPrivilegedBoardUser(boardNames, Collections.singletonList(boardName + "00"), departmentBoardNames);
                 } else {
                     verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
                 }

@@ -21,7 +21,6 @@ import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestUserService;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.ListUtils;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -90,14 +89,15 @@ public class PostApiIT extends AbstractIT {
     
     @Test
     public void shouldCreateAndListPosts() {
-        Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
+        Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11");
         BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
-        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
+        Long board11Id = boardR11.getId();
+        unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
             TestHelper.samplePost()
                 .setName(boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)));
         
@@ -106,7 +106,8 @@ public class PostApiIT extends AbstractIT {
         boardDTO12.getDepartment().setName("department1");
         boardDTO12.setName("board12");
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
-        unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
+        Long board12Id = boardR12.getId();
+        unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
                 .setName(boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
                 .setMemberCategories(Collections.singletonList("m1"))));
@@ -116,7 +117,8 @@ public class PostApiIT extends AbstractIT {
         boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO21));
-        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
+        Long board21Id = boardR21.getId();
+        unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
             TestHelper.smallSamplePost()
                 .setName(boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)));
         
@@ -125,50 +127,42 @@ public class PostApiIT extends AbstractIT {
         boardDTO22.getDepartment().setName("department2");
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
-        unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
+        Long board22Id = boardR22.getId();
+        unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()
                 .setName(boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
                 .setPostCategories(Collections.singletonList("p1"))));
-        
-        LinkedHashMap<State, LinkedHashMap<User, PostRepresentation>> posts = new LinkedHashMap<>();
+    
+        LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
         for (State state : Arrays.stream(State.values()).filter(state -> state != State.PREVIOUS).collect(Collectors.toList())) {
             User postUser1 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
-                LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
+                LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(postUser1, k -> new LinkedHashMap<>());
+                LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(board11Id, k -> LinkedHashMultimap.create());
+                String postName = boardR11.getName() + " " + state.name().toLowerCase() + " " + i;
+                verifyPostPostAndSetState(postUser1, board11Id, TestHelper.samplePost().setName(postName), state);
+                userStatePosts.put(state, postName);
     
-                userPosts.put(postUser1, verifyPostPostAndSetState(postUser1, boardR11.getId(),
-                    TestHelper.samplePost()
-                        .setName(boardR11.getName() + " " + state.name().toLowerCase() + " " + i),
-                    state));
-    
-                userPosts.put(postUser1, verifyPostPostAndSetState(postUser1, boardR12.getId(),
-                    TestHelper.smallSamplePost()
-                        .setName(boardR12.getName() + " " + state.name().toLowerCase() + " " + i)
-                        .setMemberCategories(Collections.singletonList("m1")),
-                    state));
+                userStatePosts = userPosts.computeIfAbsent(board12Id, k -> LinkedHashMultimap.create());
+                postName = boardR12.getName() + " " + state.name().toLowerCase() + " " + i;
+                verifyPostPostAndSetState(postUser1, board12Id, TestHelper.samplePost().setName(postName).setMemberCategories(Collections.singletonList("m1")), state);
+                userStatePosts.put(state, postName);
             }
     
             User postUser2 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
-                LinkedHashMap<User, PostRepresentation> userPosts = posts.computeIfAbsent(state, k -> new LinkedHashMap<>());
+                LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(postUser2, k -> new LinkedHashMap<>());
+                LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(board21Id, k -> LinkedHashMultimap.create());
+                String postName = boardR21.getName() + " " + state.name().toLowerCase() + " " + i;
+                verifyPostPostAndSetState(postUser2, board21Id, TestHelper.samplePost().setName(postName), state);
+                userStatePosts.put(state, postName);
     
-                userPosts.put(postUser2, verifyPostPostAndSetState(postUser2, boardR21.getId(),
-                    TestHelper.smallSamplePost()
-                        .setName(boardR21.getName() + " " + state.name().toLowerCase() + " " + i),
-                    state));
-    
-                userPosts.put(postUser2, verifyPostPostAndSetState(postUser2, boardR22.getId(),
-                    TestHelper.smallSamplePost()
-                        .setName(boardR22.getName() + " " + state.name().toLowerCase() + " " + i)
-                        .setPostCategories(Collections.singletonList("p1")),
-                    state));
+                userStatePosts = userPosts.computeIfAbsent(board22Id, k -> LinkedHashMultimap.create());
+                postName = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
+                verifyPostPostAndSetState(postUser2, board22Id, TestHelper.samplePost().setName(postName).setPostCategories(Collections.singletonList("p1")), state);
+                userStatePosts.put(state, postName);
             }
         }
-    
-        Long board11Id = boardR11.getId();
-        Long board12Id = boardR12.getId();
-        Long board21Id = boardR21.getId();
-        Long board22Id = boardR22.getId();
     
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
         LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
@@ -230,26 +224,50 @@ public class PostApiIT extends AbstractIT {
         
         testUserService.unauthenticate();
         verifyUnprivilegedPostUser(publicPostNames);
-        
-        for (String boardName : unprivilegedUsers.keySet()) {
-            Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
+    
+        for (Long boardId : unprivilegedUsers.keySet()) {
+            Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardId);
             for (Scope scope : unprivilegedUserMap.keySet()) {
                 testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
                 if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
-                    verifyPrivilegedPostUser(publicPostNames, Collections.emptyList(), boardPostNames, Collections.emptySet(), PUBLIC_ACTIONS.get(State.ACCEPTED));
+                    verifyPrivilegedPostUser(publicPostNames, new LinkedHashMap<>());
                 } else if (scope == Scope.POST) {
-                    verifyPrivilegedPostUser(publicPostNames, Collections.singletonList(boardName + " draft 0"), boardPostNames, AUTHOR_ACTIONS.get(State.DRAFT),
-                        PUBLIC_ACTIONS.get(State.ACCEPTED));
+                    LinkedHashMultimap<State, String> filteredBoardPostNames = boardPostNames.get(boardId);
+                    LinkedHashMap<Long, LinkedHashMultimap<State, String>> authorPostNames = new LinkedHashMap<>();
+                    LinkedHashMultimap<State, String> authorStatePostNames = LinkedHashMultimap.create();
+                    authorStatePostNames.put(State.DRAFT, filteredBoardPostNames.get(State.DRAFT).iterator().next());
+                    authorPostNames.put(boardId, authorStatePostNames);
+                    verifyPrivilegedPostUser(publicPostNames, authorPostNames);
                 }
             }
         }
     
         testUserService.setAuthentication(user11.getStormpathId());
-        List<String> secureBoards11 = Lists.newArrayList(boardPostNames.get(boardR11.getId()));
-        secureBoards11.addAll(boardPostNames.get(boardR12.getId()));
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> user11BoardPostNames = new LinkedHashMap<>();
+        user11BoardPostNames.put(board11Id, boardPostNames11);
+        user11BoardPostNames.put(board12Id, boardPostNames12);
+        verifyPrivilegedPostUser(publicPostNames, user11BoardPostNames);
     
-        verifyPrivilegedPostUser(publicPostNames, secureBoards11);
-        
+        testUserService.setAuthentication(user12.getStormpathId());
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> user12BoardPostNames = new LinkedHashMap<>();
+        user12BoardPostNames.put(board12Id, boardPostNames12);
+        verifyPrivilegedPostUser(publicPostNames, user12BoardPostNames);
+    
+        testUserService.setAuthentication(user21.getStormpathId());
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> user21BoardPostNames = new LinkedHashMap<>();
+        user11BoardPostNames.put(board21Id, boardPostNames21);
+        user11BoardPostNames.put(board22Id, boardPostNames22);
+        verifyPrivilegedPostUser(publicPostNames, user21BoardPostNames);
+    
+        testUserService.setAuthentication(user22.getStormpathId());
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> user22BoardPostNames = new LinkedHashMap<>();
+        user12BoardPostNames.put(board22Id, boardPostNames22);
+        verifyPrivilegedPostUser(publicPostNames, user22BoardPostNames);
+    
+        for (User postUser : posts.keySet()) {
+            testUserService.setAuthentication(postUser.getStormpathId());
+            verifyPrivilegedPostUser(publicPostNames, posts.get(postUser));
+        }
     }
     
     @Test
@@ -837,13 +855,12 @@ public class PostApiIT extends AbstractIT {
         
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
-        statePostNames.keySet().forEach(state -> {
+        statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(statePosts.get(state)),
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
-                    .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state))));
-        });
+                    .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))));
         
         for (Long boardId : postNames.keySet()) {
             TestHelper.verifyResources(
@@ -853,13 +870,12 @@ public class PostApiIT extends AbstractIT {
             
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(postApi.getPostsByBoard(boardId, true));
-            boardStatePostNames.keySet().forEach(state -> {
+            boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
                     Lists.newArrayList(boardStatePosts.get(state)),
                     Lists.newArrayList(boardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
-                        .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state))));
-            });
+                        .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))));
         }
     }
     
@@ -867,41 +883,44 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
-        statePostNames.keySet().forEach(state -> {
+        statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(statePosts.get(state)),
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
-                    .add(Lists.newArrayList(ADMIN_ACTIONS.get(state))));
-        });
+                    .add(Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
         
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
         LinkedHashMultimap<State, PostRepresentation> publicStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
-        statePostNames.keySet().forEach(state -> {
+        statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(publicStatePosts.get(state)),
                 Lists.newArrayList(publicStatePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
-                    .addAll(Lists.newArrayList(statePostNames.values()), Lists.newArrayList(ADMIN_ACTIONS.get(state))));
-        });
+                    .addAll(Lists.newArrayList(statePostNames.get(state)), Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
         
         for (Long boardId : postNames.keySet()) {
-            List<String> boardPostNames = Lists.newArrayList(postNames.get(boardId));
-            @SuppressWarnings("unchecked") List<String> publicBoardPostNames = ListUtils.intersection(boardPostNames, publicPostNames);
-            @SuppressWarnings("unchecked") List<String> secureBoardPostNames = ListUtils.intersection(boardPostNames, securePostNames);
-            TestHelper.verifyResources(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
-                secureBoardPostNames,
-                new TestHelper.ExpectedActions()
-                    .addAll(secureBoardPostNames, secureActionsList));
-            
-            TestHelper.verifyResources(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)),
-                ListUtils.union(publicBoardPostNames, secureBoardPostNames),
-                new TestHelper.ExpectedActions()
-                    .addAll(publicBoardPostNames, publicActionsList)
-                    .addAll(secureBoardPostNames, secureActionsList));
+            LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
+            LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
+            boardStatePostNames.keySet().forEach(state ->
+                TestHelper.verifyResources(
+                    Lists.newArrayList(boardStatePosts.get(state)),
+                    Lists.newArrayList(boardStatePostNames.get(state)),
+                    new TestHelper.ExpectedActions()
+                        .add(Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
+    
+            LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
+            LinkedHashMultimap<State, PostRepresentation> publicBoardStatePosts = getPostsByState(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
+            publicBoardStatePostNames.keySet().forEach(state ->
+                TestHelper.verifyResources(
+                    Lists.newArrayList(publicBoardStatePosts.get(state)),
+                    Lists.newArrayList(publicBoardStatePostNames.get(state)),
+                    new TestHelper.ExpectedActions()
+                        .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
+                        .addAll(Lists.newArrayList(boardStatePostNames.get(state)), Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
         }
     }
     
@@ -915,10 +934,6 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<State, String> postNamesByState = LinkedHashMultimap.create();
         boardPostNameMap.entrySet().forEach(entry -> postNamesByState.putAll(entry.getValue()));
         return postNamesByState;
-    }
-    
-    private LinkedHashMultimap<State, String> getBoardPostNamesByState(Long boardId, LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNameMap) {
-        return boardPostNameMap.get(boardId);
     }
     
     private interface PostOperation {
