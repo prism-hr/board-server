@@ -905,15 +905,15 @@ public class PostApiIT extends AbstractIT {
                     .add(getAdminActions(state, adminContext))));
         
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
-        LinkedHashMultimap<State, PostRepresentation> publicStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
+        LinkedHashMultimap<State, PostRepresentation> mergedStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
     
-        Set<State> mergedPostStates = new LinkedHashSet<>();
-        mergedPostStates.addAll(statePostNames.keySet());
-        mergedPostStates.addAll(publicStatePosts.keySet());
-        mergedPostStates.forEach(state ->
+        LinkedHashMultimap<State, String> mergedStatePostNames = LinkedHashMultimap.create();
+        mergedStatePostNames.putAll(statePostNames);
+        mergedStatePostNames.putAll(publicStatePostNames);
+        mergedStatePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
-                Lists.newArrayList(publicStatePosts.get(state)),
-                Lists.newArrayList(publicStatePostNames.get(state)),
+                Lists.newArrayList(mergedStatePosts.get(state)),
+                Lists.newArrayList(mergedStatePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
                     .addAll(Lists.newArrayList(statePostNames.get(state)), getAdminActions(state, adminContext))));
@@ -930,16 +930,18 @@ public class PostApiIT extends AbstractIT {
                         .add(getAdminActions(state, adminContext))));
             
             LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
-            LinkedHashMultimap<State, PostRepresentation> publicBoardStatePosts = getPostsByState(
+            LinkedHashMultimap<State, PostRepresentation> mergedBoardStatePosts = getPostsByState(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
     
-            Set<State> mergedBoardPostStates = new LinkedHashSet<>();
-            mergedBoardPostStates.addAll(boardStatePostNames.keySet());
-            mergedBoardPostStates.addAll(publicBoardStatePostNames.keySet());
-            mergedBoardPostStates.forEach(state ->
+    
+            LinkedHashMultimap<State, String> mergedBoardStatePostNames = LinkedHashMultimap.create();
+            mergedStatePostNames.putAll(boardStatePostNames);
+            mergedStatePostNames.putAll(publicBoardStatePostNames);
+    
+            mergedBoardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
-                    Lists.newArrayList(publicBoardStatePosts.get(state)),
-                    Lists.newArrayList(publicBoardStatePostNames.get(state)),
+                    Lists.newArrayList(mergedBoardStatePosts.get(state)),
+                    Lists.newArrayList(mergedBoardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
                         .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
                         .addAll(Lists.newArrayList(boardStatePostNames.get(state)), getAdminActions(state, adminContext))));
