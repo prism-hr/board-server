@@ -24,24 +24,27 @@ public abstract class BoardEntity {
         return id;
     }
     
-    public void setId(Long id) {
+    public BoardEntity setId(Long id) {
         this.id = id;
+        return this;
     }
     
     public LocalDateTime getCreatedTimestamp() {
         return createdTimestamp;
     }
     
-    public void setCreatedTimestamp(LocalDateTime createdTimestamp) {
+    public BoardEntity setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
+        return this;
     }
     
     public LocalDateTime getUpdatedTimestamp() {
         return updatedTimestamp;
     }
     
-    public void setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
+    public BoardEntity setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
         this.updatedTimestamp = updatedTimestamp;
+        return this;
     }
     
     @Override
@@ -51,11 +54,7 @@ public abstract class BoardEntity {
     
     @Override
     public boolean equals(Object object) {
-        if (object == null || getClass() != object.getClass()) {
-            return false;
-        }
-    
-        return Objects.equals(id, ((BoardEntity) object).getId());
+        return !(object == null || getClass() != object.getClass()) && Objects.equals(id, ((BoardEntity) object).getId());
     }
     
 }

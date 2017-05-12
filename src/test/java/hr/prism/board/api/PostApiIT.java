@@ -133,6 +133,8 @@ public class PostApiIT extends AbstractIT {
                 .setName(boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
                 .setPostCategories(Collections.singletonList("p1"))));
     
+        int postCount = 1;
+        LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
         for (State state : Arrays.stream(State.values()).filter(state -> state != State.PREVIOUS).collect(Collectors.toList())) {
             User postUser1 = testUserService.authenticate();
@@ -140,7 +142,8 @@ public class PostApiIT extends AbstractIT {
                 verifyPostPostAndSetState(postUser1, board11Id,
                     TestHelper.samplePost()
                         .setName(boardR11.getName() + " " + state.name().toLowerCase() + " " + i),
-                    state, posts);
+                    state, posts, baseline, postCount);
+                postCount++;
             }
     
             for (int i = 1; i < 3; i++) {
@@ -148,7 +151,8 @@ public class PostApiIT extends AbstractIT {
                     TestHelper.smallSamplePost()
                         .setName(boardR12.getName() + " " + state.name().toLowerCase() + " " + i)
                         .setMemberCategories(Collections.singletonList("m1")),
-                    state, posts);
+                    state, posts, baseline, postCount);
+                postCount++;
             }
     
             User postUser2 = testUserService.authenticate();
@@ -156,7 +160,8 @@ public class PostApiIT extends AbstractIT {
                 verifyPostPostAndSetState(postUser2, board21Id,
                     TestHelper.smallSamplePost()
                         .setName(boardR21.getName() + " " + state.name().toLowerCase() + " " + i),
-                    state, posts);
+                    state, posts, baseline, postCount);
+                postCount++;
             }
     
             for (int i = 1; i < 3; i++) {
@@ -164,7 +169,8 @@ public class PostApiIT extends AbstractIT {
                     TestHelper.smallSamplePost()
                         .setName(boardR22.getName() + " " + state.name().toLowerCase() + " " + i)
                         .setPostCategories(Collections.singletonList("p1")),
-                    state, posts);
+                    state, posts, baseline, postCount);
+                postCount++;
             }
         }
     
@@ -846,11 +852,11 @@ public class PostApiIT extends AbstractIT {
     }
     
     private void verifyPostPostAndSetState(User user, Long boardId, PostDTO postDTO, State state,
-        LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts) {
+        LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int ordinal) {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(user, k -> new LinkedHashMap<>());
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
         PostRepresentation postR = verifyPostPost(user, boardId, postDTO);
-        transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state));
+        transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state).setUpdatedTimestamp(baseline.minusSeconds(ordinal)));
         userStatePosts.put(state, postDTO.getName());
     }
     
