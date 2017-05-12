@@ -47,6 +47,7 @@ public class TestHelper {
         return new PostDTO()
             .setName("post")
             .setSummary("summary")
+            .setDescription("description")
             .setOrganizationName("organization name")
             .setLocation(new LocationDTO()
                 .setName("krakow")

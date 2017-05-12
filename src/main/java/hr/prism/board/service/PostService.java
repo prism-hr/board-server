@@ -97,6 +97,7 @@ public class PostService {
 
             post.setName(postDTO.getName());
             post.setSummary(postDTO.getSummary());
+            post.setDescription(postDTO.getDescription());
             post.setOrganizationName(postDTO.getOrganizationName());
             post.setExistingRelation(postDTO.getExistingRelation());
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));

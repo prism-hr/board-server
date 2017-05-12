@@ -597,6 +597,7 @@ public class PostApiIT extends AbstractIT {
 
             assertEquals(postDTO.getName(), postR.getName());
             assertEquals(postDTO.getSummary(), postR.getSummary());
+            assertEquals(postDTO.getDescription(), postR.getDescription());
             assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
             verifyLocation(postDTO.getLocation(), postR);
 

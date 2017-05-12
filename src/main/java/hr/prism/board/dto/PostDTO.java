@@ -20,6 +20,8 @@ public class PostDTO {
     @Size(min = 3, max = 1000)
     private String summary;
 
+    private String description;
+
     @Size(min = 3, max = 255)
     private String organizationName;
 
@@ -62,6 +64,15 @@ public class PostDTO {
 
     public PostDTO setSummary(String summary) {
         this.summary = summary;
+        return this;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public PostDTO setDescription(String description) {
+        this.description = description;
         return this;
     }
 
