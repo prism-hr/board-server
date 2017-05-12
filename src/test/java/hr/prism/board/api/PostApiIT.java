@@ -870,7 +870,7 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
-                Lists.reverse(Lists.newArrayList(statePosts.get(state))),
+                Lists.newArrayList(statePosts.get(state)),
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))));
@@ -882,10 +882,11 @@ public class PostApiIT extends AbstractIT {
                 null);
             
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
-            LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(postApi.getPostsByBoard(boardId, true));
+            LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
+                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)));
             boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
-                    Lists.reverse(Lists.newArrayList(boardStatePosts.get(state))),
+                    Lists.newArrayList(boardStatePosts.get(state)),
                     Lists.newArrayList(boardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
                         .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))));
@@ -898,7 +899,7 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
-                Lists.reverse(Lists.newArrayList(statePosts.get(state))),
+                Lists.newArrayList(statePosts.get(state)),
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
@@ -907,7 +908,7 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<State, PostRepresentation> publicStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
-                Lists.reverse(Lists.newArrayList(publicStatePosts.get(state))),
+                Lists.newArrayList(publicStatePosts.get(state)),
                 Lists.newArrayList(publicStatePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
@@ -919,7 +920,7 @@ public class PostApiIT extends AbstractIT {
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
             boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
-                    Lists.reverse(Lists.newArrayList(boardStatePosts.get(state))),
+                    Lists.newArrayList(boardStatePosts.get(state)),
                     Lists.newArrayList(boardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
                         .add(Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
@@ -929,7 +930,7 @@ public class PostApiIT extends AbstractIT {
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
             publicBoardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
-                    Lists.reverse(Lists.newArrayList(publicBoardStatePosts.get(state))),
+                    Lists.newArrayList(publicBoardStatePosts.get(state)),
                     Lists.newArrayList(publicBoardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
                         .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
