@@ -240,14 +240,14 @@ public class PostApiIT extends AbstractIT {
             for (Scope scope : unprivilegedUserMap.keySet()) {
                 testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
                 if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
-                    verifyPrivilegedPostUser(publicPostNames, new LinkedHashMap<>());
+                    verifyPrivilegedPostUser(publicPostNames, new LinkedHashMap<>(), PostAdminContext.ADMIN);
                 } else if (scope == Scope.POST) {
                     LinkedHashMultimap<State, String> filteredBoardPostNames = boardPostNames.get(boardId);
                     LinkedHashMap<Long, LinkedHashMultimap<State, String>> authorPostNames = new LinkedHashMap<>();
                     LinkedHashMultimap<State, String> authorStatePostNames = LinkedHashMultimap.create();
                     authorStatePostNames.put(State.DRAFT, filteredBoardPostNames.get(State.DRAFT).iterator().next());
                     authorPostNames.put(boardId, authorStatePostNames);
-                    verifyPrivilegedPostUser(publicPostNames, authorPostNames);
+                    verifyPrivilegedPostUser(publicPostNames, authorPostNames, PostAdminContext.AUTHOR);
                 }
             }
         }
@@ -256,27 +256,27 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user11BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board11Id, boardPostNames11);
         user11BoardPostNames.put(board12Id, boardPostNames12);
-        verifyPrivilegedPostUser(publicPostNames, user11BoardPostNames);
-    
+        verifyPrivilegedPostUser(publicPostNames, user11BoardPostNames, PostAdminContext.ADMIN);
+        
         testUserService.setAuthentication(user12.getStormpathId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user12BoardPostNames = new LinkedHashMap<>();
         user12BoardPostNames.put(board12Id, boardPostNames12);
-        verifyPrivilegedPostUser(publicPostNames, user12BoardPostNames);
-    
+        verifyPrivilegedPostUser(publicPostNames, user12BoardPostNames, PostAdminContext.ADMIN);
+        
         testUserService.setAuthentication(user21.getStormpathId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user21BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board21Id, boardPostNames21);
         user11BoardPostNames.put(board22Id, boardPostNames22);
-        verifyPrivilegedPostUser(publicPostNames, user21BoardPostNames);
-    
+        verifyPrivilegedPostUser(publicPostNames, user21BoardPostNames, PostAdminContext.ADMIN);
+        
         testUserService.setAuthentication(user22.getStormpathId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user22BoardPostNames = new LinkedHashMap<>();
         user12BoardPostNames.put(board22Id, boardPostNames22);
-        verifyPrivilegedPostUser(publicPostNames, user22BoardPostNames);
-    
+        verifyPrivilegedPostUser(publicPostNames, user22BoardPostNames, PostAdminContext.ADMIN);
+        
         for (User postUser : posts.keySet()) {
             testUserService.setAuthentication(postUser.getStormpathId());
-            verifyPrivilegedPostUser(publicPostNames, posts.get(postUser));
+            verifyPrivilegedPostUser(publicPostNames, posts.get(postUser), PostAdminContext.AUTHOR);
         }
     }
     
@@ -894,7 +894,7 @@ public class PostApiIT extends AbstractIT {
     }
     
     private void verifyPrivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames,
-        LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames, PostAdminContext adminContext) {
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
         statePostNames.keySet().forEach(state ->
@@ -902,7 +902,7 @@ public class PostApiIT extends AbstractIT {
                 Lists.newArrayList(statePosts.get(state)),
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
-                    .add(Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
+                    .add(getAdminActions(state, adminContext))));
         
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
         LinkedHashMultimap<State, PostRepresentation> publicStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
@@ -912,7 +912,7 @@ public class PostApiIT extends AbstractIT {
                 Lists.newArrayList(publicStatePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
-                    .addAll(Lists.newArrayList(statePostNames.get(state)), Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
+                    .addAll(Lists.newArrayList(statePostNames.get(state)), getAdminActions(state, adminContext))));
         
         for (Long boardId : postNames.keySet()) {
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
@@ -923,8 +923,8 @@ public class PostApiIT extends AbstractIT {
                     Lists.newArrayList(boardStatePosts.get(state)),
                     Lists.newArrayList(boardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
-                        .add(Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
-    
+                        .add(getAdminActions(state, adminContext))));
+            
             LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> publicBoardStatePosts = getPostsByState(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
@@ -934,8 +934,12 @@ public class PostApiIT extends AbstractIT {
                     Lists.newArrayList(publicBoardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
                         .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
-                        .addAll(Lists.newArrayList(boardStatePostNames.get(state)), Lists.newArrayList(ADMIN_ACTIONS.get(state)))));
+                        .addAll(Lists.newArrayList(boardStatePostNames.get(state)), getAdminActions(state, adminContext))));
         }
+    }
+    
+    private List<Action> getAdminActions(State state, PostAdminContext adminContext) {
+        return Lists.newArrayList(adminContext == PostAdminContext.ADMIN ? ADMIN_ACTIONS.get(state) : AUTHOR_ACTIONS.get(state));
     }
     
     private LinkedHashMultimap<State, PostRepresentation> getPostsByState(List<PostRepresentation> postRs) {
@@ -951,9 +955,11 @@ public class PostApiIT extends AbstractIT {
     }
     
     private interface PostOperation {
-    
         PostRepresentation execute();
+    }
     
+    private enum PostAdminContext {
+        ADMIN, AUTHOR
     }
     
 }
