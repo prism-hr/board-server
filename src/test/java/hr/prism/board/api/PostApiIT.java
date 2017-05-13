@@ -99,11 +99,11 @@ public class PostApiIT extends AbstractIT {
         BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
     
         Long board11Id = boardR11.getId();
-        String board11postName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
+        String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
             TestHelper.samplePost()
-                .setName(board11postName)));
-        unprivilegedUserPosts.put(board11Id, board11postName);
+                .setName(board11PostName)));
+        unprivilegedUserPosts.put(board11Id, board11PostName);
         
         
         User user12 = testUserService.authenticate();
@@ -146,99 +146,90 @@ public class PostApiIT extends AbstractIT {
                 .setName(board22PostName)
                 .setPostCategories(Collections.singletonList("p1"))));
         unprivilegedUserPosts.put(board22Id, board22PostName);
+    
+        LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
+        LinkedHashMultimap<State, String> boardPostNames12 = LinkedHashMultimap.create();
+        LinkedHashMultimap<State, String> boardPostNames21 = LinkedHashMultimap.create();
+        LinkedHashMultimap<State, String> boardPostNames22 = LinkedHashMultimap.create();
         
         int postCount = 1;
         LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
         for (State state : Arrays.stream(State.values()).filter(state -> state != State.PREVIOUS).collect(Collectors.toList())) {
-            reschedulePost(unprivilegedUserPosts.get(board11Id), state, baseline, postCount);
-            postCount++;
+            if (state == State.DRAFT) {
+                reschedulePost(board11PostName, baseline, postCount);
+                boardPostNames11.put(state, board11PostName);
+                postCount++;
+            }
             
             User postUser1 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
+                String name = boardR11.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board11Id,
                     TestHelper.samplePost()
-                        .setName(boardR11.getName() + " " + state.name().toLowerCase() + " " + i),
+                        .setName(name),
                     state, posts, baseline, postCount);
+                boardPostNames11.put(state, name);
                 postCount++;
             }
     
-            reschedulePost(unprivilegedUserPosts.get(board12Id), state, baseline, postCount);
-            postCount++;
+            if (state == State.DRAFT) {
+                reschedulePost(board12PostName, baseline, postCount);
+                boardPostNames12.put(state, board12PostName);
+                postCount++;
+            }
             
             for (int i = 1; i < 3; i++) {
+                String name = boardR12.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board12Id,
                     TestHelper.smallSamplePost()
-                        .setName(boardR12.getName() + " " + state.name().toLowerCase() + " " + i)
+                        .setName(name)
                         .setMemberCategories(Collections.singletonList("m1")),
                     state, posts, baseline, postCount);
+                boardPostNames12.put(state, name);
                 postCount++;
             }
     
-            reschedulePost(unprivilegedUserPosts.get(board21Id), state, baseline, postCount);
-            postCount++;
+            if (state == State.DRAFT) {
+                reschedulePost(board21PostName, baseline, postCount);
+                boardPostNames21.put(state, board21PostName);
+                postCount++;
+            }
             
             User postUser2 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
+                String name = boardR21.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board21Id,
                     TestHelper.smallSamplePost()
-                        .setName(boardR21.getName() + " " + state.name().toLowerCase() + " " + i),
+                        .setName(name),
                     state, posts, baseline, postCount);
+                boardPostNames21.put(state, name);
                 postCount++;
             }
     
-            reschedulePost(unprivilegedUserPosts.get(board22Id), state, baseline, postCount);
-            postCount++;
+            if (state == State.DRAFT) {
+                reschedulePost(board22PostName, baseline, postCount);
+                boardPostNames22.put(state, board22PostName);
+                postCount++;
+            }
             
             for (int i = 1; i < 3; i++) {
+                String name = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board22Id,
                     TestHelper.smallSamplePost()
-                        .setName(boardR22.getName() + " " + state.name().toLowerCase() + " " + i)
+                        .setName(name)
                         .setPostCategories(Collections.singletonList("p1")),
                     state, posts, baseline, postCount);
+                boardPostNames22.put(state, name);
                 postCount++;
             }
         }
     
-        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
-        LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
-        boardPostNames11.putAll(State.DRAFT, Arrays.asList("board11 draft 0", "board11 draft 1", "board11 draft 2"));
-        boardPostNames11.putAll(State.SUSPENDED, Arrays.asList("board11 suspended 1", "board11 suspended 2"));
-        boardPostNames11.putAll(State.PENDING, Arrays.asList("board11 pending 1", "board11 pending 2"));
-        boardPostNames11.putAll(State.ACCEPTED, Arrays.asList("board11 accepted 1", "board11 accepted 2"));
-        boardPostNames11.putAll(State.EXPIRED, Arrays.asList("board11 expired 1", "board11 expired 2"));
-        boardPostNames11.putAll(State.REJECTED, Arrays.asList("board11 rejected 1", "board11 rejected 2"));
-        boardPostNames11.putAll(State.WITHDRAWN, Arrays.asList("board11 withdrawn 1", "board11 withdrawn 2"));
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+        LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
         boardPostNames.put(board11Id, boardPostNames11);
-    
-        LinkedHashMultimap<State, String> boardPostNames12 = LinkedHashMultimap.create();
-        boardPostNames12.putAll(State.DRAFT, Arrays.asList("board12 draft 0", "board12 draft 1", "board12 draft 2"));
-        boardPostNames12.putAll(State.SUSPENDED, Arrays.asList("board12 suspended 1", "board12 suspended 2"));
-        boardPostNames12.putAll(State.PENDING, Arrays.asList("board12 pending 1", "board12 pending 2"));
-        boardPostNames12.putAll(State.ACCEPTED, Arrays.asList("board12 accepted 1", "board12 accepted 2"));
-        boardPostNames12.putAll(State.EXPIRED, Arrays.asList("board12 expired 1", "board12 expired 2"));
-        boardPostNames12.putAll(State.REJECTED, Arrays.asList("board12 rejected 1", "board12 rejected 2"));
-        boardPostNames12.putAll(State.WITHDRAWN, Arrays.asList("board12 withdrawn 1", "board12 withdrawn 2"));
         boardPostNames.put(board12Id, boardPostNames12);
-    
-        LinkedHashMultimap<State, String> boardPostNames21 = LinkedHashMultimap.create();
-        boardPostNames21.putAll(State.DRAFT, Arrays.asList("board21 draft 0", "board21 draft 1", "board21 draft 2"));
-        boardPostNames21.putAll(State.SUSPENDED, Arrays.asList("board21 suspended 1", "board21 suspended 2"));
-        boardPostNames21.putAll(State.PENDING, Arrays.asList("board21 pending 1", "board21 pending 2"));
-        boardPostNames21.putAll(State.ACCEPTED, Arrays.asList("board21 accepted 1", "board21 accepted 2"));
-        boardPostNames21.putAll(State.EXPIRED, Arrays.asList("board21 expired 1", "board21 expired 2"));
-        boardPostNames21.putAll(State.REJECTED, Arrays.asList("board21 rejected 1", "board21 rejected 2"));
-        boardPostNames21.putAll(State.WITHDRAWN, Arrays.asList("board21 withdrawn 1", "board21 withdrawn 2"));
         boardPostNames.put(board21Id, boardPostNames21);
-    
-        LinkedHashMultimap<State, String> boardPostNames22 = LinkedHashMultimap.create();
-        boardPostNames22.putAll(State.DRAFT, Arrays.asList("board22 draft 0", "board22 draft 1", "board22 draft 2"));
-        boardPostNames22.putAll(State.SUSPENDED, Arrays.asList("board22 suspended 1", "board22 suspended 2"));
-        boardPostNames22.putAll(State.PENDING, Arrays.asList("board22 pending 1", "board22 pending 2"));
-        boardPostNames22.putAll(State.ACCEPTED, Arrays.asList("board22 accepted 1", "board22 accepted 2"));
-        boardPostNames22.putAll(State.EXPIRED, Arrays.asList("board22 expired 1", "board22 expired 2"));
-        boardPostNames22.putAll(State.REJECTED, Arrays.asList("board22 rejected 1", "board22 rejected 2"));
-        boardPostNames22.putAll(State.WITHDRAWN, Arrays.asList("board22 withdrawn 1", "board22 withdrawn 2"));
         boardPostNames.put(board22Id, boardPostNames22);
     
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames = new LinkedHashMap<>();
@@ -885,13 +876,10 @@ public class PostApiIT extends AbstractIT {
         userStatePosts.put(state, postDTO.getName());
     }
     
-    private void reschedulePost(String postName, State state, LocalDateTime baseline, int seconds) {
+    private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
         transactionTemplate.execute(status -> {
             Post post = postService.getByName(postName).get(0);
-            if (post.getState() == state) {
-                post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
-            }
-            
+            post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
             return null;
         });
     }
