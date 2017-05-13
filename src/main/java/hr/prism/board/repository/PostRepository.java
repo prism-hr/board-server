@@ -11,7 +11,9 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface PostRepository extends MyRepository<Post, Long> {
-
+    
+    List<Post> findByName(String name);
+    
     @Query(value =
         "select post.id " +
             "from Post post " +

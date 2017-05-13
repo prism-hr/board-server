@@ -90,49 +90,63 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
+        Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
         
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11");
         BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
+    
         Long board11Id = boardR11.getId();
+        String board11postName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
             TestHelper.samplePost()
-                .setName(boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)));
+                .setName(board11postName)));
+        unprivilegedUserPosts.put(board11Id, board11postName);
+        
         
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
         boardDTO12.getDepartment().setName("department1");
         boardDTO12.setName("board12");
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
+    
         Long board12Id = boardR12.getId();
+        String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
-                .setName(boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
+                .setName(board12PostName)
                 .setMemberCategories(Collections.singletonList("m1"))));
+        unprivilegedUserPosts.put(board12Id, board12PostName);
         
         User user21 = testUserService.authenticate();
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO21));
+    
         Long board21Id = boardR21.getId();
+        String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
             TestHelper.smallSamplePost()
-                .setName(boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)));
+                .setName(board21PostName)));
+        unprivilegedUserPosts.put(board21Id, board21PostName);
         
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
         boardDTO22.getDepartment().setName("department2");
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
+    
         Long board22Id = boardR22.getId();
+        String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()
-                .setName(boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0)
+                .setName(board22PostName)
                 .setPostCategories(Collections.singletonList("p1"))));
-    
+        unprivilegedUserPosts.put(board22Id, board22PostName);
+        
         int postCount = 1;
         LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
@@ -146,6 +160,9 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
     
+            reschedulePost(unprivilegedUserPosts.get(board11Id), baseline, postCount);
+            postCount++;
+            
             for (int i = 1; i < 3; i++) {
                 verifyPostPostAndSetState(postUser1, board12Id,
                     TestHelper.smallSamplePost()
@@ -155,6 +172,9 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
     
+            reschedulePost(unprivilegedUserPosts.get(board12Id), baseline, postCount);
+            postCount++;
+            
             User postUser2 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 verifyPostPostAndSetState(postUser2, board21Id,
@@ -164,6 +184,9 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
     
+            reschedulePost(unprivilegedUserPosts.get(board21Id), baseline, postCount);
+            postCount++;
+            
             for (int i = 1; i < 3; i++) {
                 verifyPostPostAndSetState(postUser2, board22Id,
                     TestHelper.smallSamplePost()
@@ -172,9 +195,12 @@ public class PostApiIT extends AbstractIT {
                     state, posts, baseline, postCount);
                 postCount++;
             }
+    
+            reschedulePost(unprivilegedUserPosts.get(board22Id), baseline, postCount);
+            postCount++;
         }
     
-        LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
         LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
         boardPostNames11.putAll(State.DRAFT, Arrays.asList("board11 draft 0", "board11 draft 1", "board11 draft 2"));
         boardPostNames11.putAll(State.SUSPENDED, Arrays.asList("board11 suspended 1", "board11 suspended 2"));
@@ -242,10 +268,9 @@ public class PostApiIT extends AbstractIT {
                 if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
                     verifyPrivilegedPostUser(publicPostNames, new LinkedHashMap<>(), PostAdminContext.ADMIN);
                 } else if (scope == Scope.POST) {
-                    LinkedHashMultimap<State, String> filteredBoardPostNames = boardPostNames.get(boardId);
                     LinkedHashMap<Long, LinkedHashMultimap<State, String>> authorPostNames = new LinkedHashMap<>();
                     LinkedHashMultimap<State, String> authorStatePostNames = LinkedHashMultimap.create();
-                    authorStatePostNames.put(State.DRAFT, filteredBoardPostNames.get(State.DRAFT).iterator().next());
+                    authorStatePostNames.put(State.DRAFT, unprivilegedUserPosts.get(boardId));
                     authorPostNames.put(boardId, authorStatePostNames);
                     verifyPrivilegedPostUser(publicPostNames, authorPostNames, PostAdminContext.AUTHOR);
                 }
@@ -852,12 +877,20 @@ public class PostApiIT extends AbstractIT {
     }
     
     private void verifyPostPostAndSetState(User user, Long boardId, PostDTO postDTO, State state,
-        LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int ordinal) {
+        LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int seconds) {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(user, k -> new LinkedHashMap<>());
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
         PostRepresentation postR = verifyPostPost(user, boardId, postDTO);
-        transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state).setUpdatedTimestamp(baseline.minusSeconds(ordinal)));
+        transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state).setUpdatedTimestamp(baseline.minusSeconds(seconds)));
         userStatePosts.put(state, postDTO.getName());
+    }
+    
+    private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
+        transactionTemplate.execute(status -> {
+            Post post = postService.getByName(postName).get(0);
+            post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
+            return null;
+        });
     }
     
     private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {

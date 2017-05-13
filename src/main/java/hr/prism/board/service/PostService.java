@@ -76,6 +76,10 @@ public class PostService {
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
         return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
+    
+    public List<Post> getByName(String name) {
+        return postRepository.findByName(name);
+    }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts) {
         User currentUser = userService.getCurrentUser();
