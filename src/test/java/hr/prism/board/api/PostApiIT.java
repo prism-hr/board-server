@@ -151,6 +151,9 @@ public class PostApiIT extends AbstractIT {
         LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
         for (State state : Arrays.stream(State.values()).filter(state -> state != State.PREVIOUS).collect(Collectors.toList())) {
+            reschedulePost(unprivilegedUserPosts.get(board11Id), state, baseline, postCount);
+            postCount++;
+            
             User postUser1 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 verifyPostPostAndSetState(postUser1, board11Id,
@@ -160,7 +163,7 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
     
-            reschedulePost(unprivilegedUserPosts.get(board11Id), baseline, postCount);
+            reschedulePost(unprivilegedUserPosts.get(board12Id), state, baseline, postCount);
             postCount++;
             
             for (int i = 1; i < 3; i++) {
@@ -172,7 +175,7 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
     
-            reschedulePost(unprivilegedUserPosts.get(board12Id), baseline, postCount);
+            reschedulePost(unprivilegedUserPosts.get(board21Id), state, baseline, postCount);
             postCount++;
             
             User postUser2 = testUserService.authenticate();
@@ -184,7 +187,7 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
     
-            reschedulePost(unprivilegedUserPosts.get(board21Id), baseline, postCount);
+            reschedulePost(unprivilegedUserPosts.get(board22Id), state, baseline, postCount);
             postCount++;
             
             for (int i = 1; i < 3; i++) {
@@ -195,9 +198,6 @@ public class PostApiIT extends AbstractIT {
                     state, posts, baseline, postCount);
                 postCount++;
             }
-    
-            reschedulePost(unprivilegedUserPosts.get(board22Id), baseline, postCount);
-            postCount++;
         }
     
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
@@ -885,10 +885,13 @@ public class PostApiIT extends AbstractIT {
         userStatePosts.put(state, postDTO.getName());
     }
     
-    private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
+    private void reschedulePost(String postName, State state, LocalDateTime baseline, int seconds) {
         transactionTemplate.execute(status -> {
             Post post = postService.getByName(postName).get(0);
-            post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
+            if (post.getState() == state) {
+                post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
+            }
+            
             return null;
         });
     }
