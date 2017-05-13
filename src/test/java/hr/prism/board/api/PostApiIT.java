@@ -942,10 +942,7 @@ public class PostApiIT extends AbstractIT {
         
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
         LinkedHashMultimap<State, PostRepresentation> mergedStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
-    
-        LinkedHashMultimap<State, String> mergedStatePostNames = LinkedHashMultimap.create();
-        mergedStatePostNames.putAll(statePostNames);
-        mergedStatePostNames.putAll(publicStatePostNames);
+        LinkedHashMultimap<State, String> mergedStatePostNames = mergePostNamesPreservingOrder(statePostNames, publicStatePostNames);
         mergedStatePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(mergedStatePosts.get(state)),
@@ -968,12 +965,7 @@ public class PostApiIT extends AbstractIT {
             LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> mergedBoardStatePosts = getPostsByState(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
-    
-    
-            LinkedHashMultimap<State, String> mergedBoardStatePostNames = LinkedHashMultimap.create();
-            mergedStatePostNames.putAll(boardStatePostNames);
-            mergedStatePostNames.putAll(publicBoardStatePostNames);
-    
+            LinkedHashMultimap<State, String> mergedBoardStatePostNames = mergePostNamesPreservingOrder(boardStatePostNames, publicBoardStatePostNames);
             mergedBoardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
                     Lists.newArrayList(mergedBoardStatePosts.get(state)),
@@ -999,6 +991,19 @@ public class PostApiIT extends AbstractIT {
         boardPostNameMap.entrySet().forEach(entry -> postNamesByState.putAll(entry.getValue()));
         return postNamesByState;
     }
+    
+    private LinkedHashMultimap<State, String> mergePostNamesPreservingOrder(LinkedHashMultimap<State, String> postNames, LinkedHashMultimap<State, String> publicPostNames) {
+        LinkedHashMultimap<State, String> mergedPostNames = LinkedHashMultimap.create();
+        postNames.keySet().forEach(state -> {
+            List<String> merge = Lists.newArrayList(postNames.get(state));
+            merge.addAll(publicPostNames.get(state));
+            merge.sort(Comparator.naturalOrder());
+            mergedPostNames.putAll(state, merge);
+        });
+        
+        return mergedPostNames;
+    }
+    
     
     private interface PostOperation {
         PostRepresentation execute();
