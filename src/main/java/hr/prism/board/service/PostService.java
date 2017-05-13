@@ -334,7 +334,7 @@ public class PostService {
 
     private void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
         List<ResourceCategory> referenceCategories = reference.getCategories(type);
-        if (referenceCategories != null) {
+        if (!referenceCategories.isEmpty()) {
             if (CollectionUtils.isEmpty(categories)) {
                 throw new ApiException(missing);
             } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {

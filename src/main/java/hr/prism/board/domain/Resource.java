@@ -222,16 +222,10 @@ public class Resource extends BoardEntity {
     }
 
     public List<ResourceCategory> getCategories(CategoryType type) {
-        List<ResourceCategory> processedCategories = categories.stream()
+        return categories.stream()
             .filter(category -> category.getType() == type && category.getOrdinal() != null)
             .sorted(Comparator.comparingInt(ResourceCategory::getOrdinal))
             .collect(Collectors.toList());
-
-        if (processedCategories.isEmpty()) {
-            return null;
-        }
-
-        return processedCategories;
     }
 
 }

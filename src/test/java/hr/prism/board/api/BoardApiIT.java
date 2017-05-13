@@ -335,7 +335,7 @@ public class BoardApiIT extends AbstractIT {
                     ObjectUtils.orderedMap("cloudinaryId", "logo 2", "cloudinaryUrl", "logo 2", "fileName", "logo 2"))
                 .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
                 .put("summary", null, "summary")
-                .put("postCategories", null, Arrays.asList("m1", "m2")));
+                .put("postCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
@@ -395,7 +395,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(expectedHandle, boardR.getHandle());
             Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
             verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
-            Assert.assertEquals(boardDTO.getPostCategories(), boardR.getPostCategories());
+            Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
             Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
 
             Board board = boardService.getBoard(boardR.getId());
@@ -427,7 +427,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[1] : handleOptional.orElse(null), boardR.getHandle());
 
             Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
-            Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(null),
+            Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),
                 boardR.getPostCategories());
 
             Optional<PostVisibility> defaultVisibilityOptional = boardDTO.getDefaultPostVisibility();
