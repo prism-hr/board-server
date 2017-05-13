@@ -2,6 +2,7 @@ package hr.prism.board.dto;
 
 import hr.prism.board.enums.PostVisibility;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
@@ -13,8 +14,11 @@ public class BoardPatchDTO {
     @Size(min = 3, max = 100)
     private Optional<String> name;
 
-    @Size(min = 3, max = 2000)
-    private Optional<String> description;
+    @Size(min = 3, max = 1000)
+    private Optional<String> summary;
+
+    @Valid
+    private Optional<DocumentDTO> documentLogo;
 
     @Size(min = 1, max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
@@ -33,12 +37,21 @@ public class BoardPatchDTO {
         return this;
     }
 
-    public Optional<String> getDescription() {
-        return description;
+    public Optional<String> getSummary() {
+        return summary;
     }
 
-    public BoardPatchDTO setDescription(Optional<String> description) {
-        this.description = description;
+    public BoardPatchDTO setSummary(Optional<String> summary) {
+        this.summary = summary;
+        return this;
+    }
+
+    public Optional<DocumentDTO> getDocumentLogo() {
+        return documentLogo;
+    }
+
+    public BoardPatchDTO setDocumentLogo(Optional<DocumentDTO> documentLogo) {
+        this.documentLogo = documentLogo;
         return this;
     }
 

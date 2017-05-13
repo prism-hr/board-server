@@ -100,6 +100,7 @@ public class PostService {
             Department department = (Department) board.getParent();
 
             post.setName(postDTO.getName());
+            post.setSummary(postDTO.getSummary());
             post.setDescription(postDTO.getDescription());
             post.setOrganizationName(postDTO.getOrganizationName());
             post.setExistingRelation(postDTO.getExistingRelation());
@@ -181,6 +182,7 @@ public class PostService {
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ResourceChangeListRepresentation());
         resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
+        resourcePatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
         resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
@@ -336,7 +338,7 @@ public class PostService {
 
     private void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
         List<ResourceCategory> referenceCategories = reference.getCategories(type);
-        if (referenceCategories != null) {
+        if (!referenceCategories.isEmpty()) {
             if (CollectionUtils.isEmpty(categories)) {
                 throw new ApiException(missing);
             } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
