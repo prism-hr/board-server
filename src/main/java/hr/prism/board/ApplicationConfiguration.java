@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.stormpath.sdk.servlet.mvc.WebHandler;
 import hr.prism.board.repository.MyRepositoryImpl;
-import hr.prism.board.service.UserService;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +41,6 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     
     @Inject
     private Environment environment;
-    
-    @Inject
-    private UserService userService;
     
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
@@ -91,14 +86,6 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         hibernateProperties.put("hibernate.show_sql", true);
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
         return sessionFactoryBean;
-    }
-    
-    @Bean
-    public WebHandler registerPostHandler() {
-        return (request, response, account) -> {
-            userService.createUser(account);
-            return true;
-        };
     }
     
     @Bean

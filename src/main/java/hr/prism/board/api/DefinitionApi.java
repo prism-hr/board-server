@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.inject.Inject;
 import java.util.TreeMap;
 
-@RestController
-public class SystemApi {
+@RestController(value = "/api")
+public class DefinitionApi {
     
     @Inject
     private DefinitionService definitionService;

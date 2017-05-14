@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public class BoardUtils {
     
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static boolean isPresent(Optional<?> optional) {
         return optional != null && optional.isPresent();
     }

@@ -16,18 +16,18 @@ import java.util.TreeMap;
 
 @TestContext
 @RunWith(SpringRunner.class)
-public class SystemApiIT {
+public class DefinitionApiIT {
     
     @Inject
     private Environment environment;
     
     @Inject
-    private SystemApi systemApi;
+    private DefinitionApi definitionApi;
     
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetDefinitions() {
-        TreeMap<String, Object> definitions = systemApi.getDefinitions();
+        TreeMap<String, Object> definitions = definitionApi.getDefinitions();
         List<String> postVisibility = (List<String>) definitions.get("postVisibility");
         Assert.assertThat(postVisibility, Matchers.containsInAnyOrder(Arrays.stream(PostVisibility.values()).map(PostVisibility::name).toArray(String[]::new)));
         

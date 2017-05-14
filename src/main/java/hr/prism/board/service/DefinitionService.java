@@ -1,7 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.Sets;
-import com.stormpath.sdk.lang.Strings;
+import org.apache.commons.lang3.text.WordUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.env.Environment;
@@ -58,7 +58,7 @@ public class DefinitionService {
     }
     
     private String getDefinitionKey(Class<? extends Enum<?>> definitionClass) {
-        return Strings.uncapitalize(definitionClass.getSimpleName());
+        return WordUtils.uncapitalize(definitionClass.getSimpleName());
     }
     
 }

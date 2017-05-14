@@ -3,9 +3,9 @@ package hr.prism.board.domain;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thymeleaf.util.ArrayUtils;
 
 import javax.inject.Inject;
 

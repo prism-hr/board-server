@@ -9,16 +9,16 @@ import java.util.function.Function;
 
 @Service
 public class UserMapper implements Function<User, UserRepresentation> {
-
+    
     @Inject
     private DocumentMapper documentMapper;
-
+    
     @Override
     public UserRepresentation apply(User user) {
         if (user == null) {
             return null;
         }
-
+        
         return new UserRepresentation()
             .setId(user.getId())
             .setGivenName(user.getGivenName())
@@ -26,5 +26,5 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setEmail(user.getEmail())
             .setDocumentImage(documentMapper.apply(user.getDocumentImage()));
     }
-
+    
 }

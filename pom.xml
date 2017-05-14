@@ -25,8 +25,30 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.10</version>
         </dependency>
 
         <dependency>
@@ -40,18 +62,19 @@
         </dependency>
 
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jdk8</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>5.4.1.Final</version>
         </dependency>
 
         <dependency>
-            <groupId>com.stormpath.spring</groupId>
-            <artifactId>stormpath-default-spring-boot-starter</artifactId>
-            <version>1.5.5</version>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
         <dependency>
@@ -236,7 +259,6 @@
             <properties>
                 <profile.app.url>http://localhost:4200</profile.app.url>
                 <profile.database.host>localhost:3306</profile.database.host>
-                <profile.stormpath.application>https://api.stormpath.com/v1/applications/6kpN9ZKGmZW8lA4CAOcQEm</profile.stormpath.application>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -248,7 +270,6 @@
             <properties>
                 <profile.app.url>https://board-uat.prism.hr</profile.app.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.stormpath.application>https://api.stormpath.com/v1/applications/e0hKW20zMgJA1eOTdT2QW</profile.stormpath.application>
             </properties>
         </profile>
 
@@ -257,7 +278,6 @@
             <properties>
                 <profile.app.url>https://board.prism.hr</profile.app.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.stormpath.application>https://api.stormpath.com/v1/applications/2373d6FfLQr8gWBT6JYMiy</profile.stormpath.application>
             </properties>
         </profile>
     </profiles>

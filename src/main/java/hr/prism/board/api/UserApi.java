@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.inject.Inject;
 import javax.validation.Valid;
 
-@RestController
+@RestController(value = "/api")
 public class UserApi {
 
     @Inject
