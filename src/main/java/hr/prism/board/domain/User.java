@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
+import hr.prism.board.enums.OauthProvider;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
@@ -31,8 +32,12 @@ public class User extends BoardEntity {
     @Column(name = "temporary_password_expiry_timestamp")
     private LocalDateTime temporaryPasswordExpiryTimestamp;
     
-    @Column(name = "stormpath_id", nullable = false, unique = true)
-    private String stormpathId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "oauth_provider")
+    private OauthProvider oauthProvider;
+    
+    @Column(name = "oauth_account_id")
+    private String oauthAccountId;
     
     @OneToOne
     @JoinColumn(name = "document_image_id")
@@ -40,9 +45,6 @@ public class User extends BoardEntity {
     
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
-    
-    @Transient
-    private String accessToken;
     
     public String getGivenName() {
         return givenName;
@@ -98,17 +100,26 @@ public class User extends BoardEntity {
         return this;
     }
     
+    public OauthProvider getOauthProvider() {
+        return oauthProvider;
+    }
+    
+    public User setOauthProvider(OauthProvider oauthProvider) {
+        this.oauthProvider = oauthProvider;
+        return this;
+    }
+    
+    public String getOauthAccountId() {
+        return oauthAccountId;
+    }
+    
+    public User setOauthAccountId(String oauthAccountId) {
+        this.oauthAccountId = oauthAccountId;
+        return this;
+    }
+    
     public void setUserRoles(Set<UserRole> userRoles) {
         this.userRoles = userRoles;
-    }
-    
-    public String getStormpathId() {
-        return stormpathId;
-    }
-    
-    public User setStormpathId(String stormpathId) {
-        this.stormpathId = stormpathId;
-        return this;
     }
     
     public Document getDocumentImage() {

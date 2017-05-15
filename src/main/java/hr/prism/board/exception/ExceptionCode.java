@@ -3,6 +3,8 @@ package hr.prism.board.exception;
 public enum ExceptionCode {
     
     PROBLEM,
+    UNSUPPORTED_AUTHENTICATOR,
+    UNIDENTIFIABLE_USER,
     UNREGISTERED_USER,
     UNAUTHENTICATED_USER,
     DUPLICATE_USER,

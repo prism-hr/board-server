@@ -1,12 +1,12 @@
 package hr.prism.board.dto;
 
-import hr.prism.board.enums.OAuthProvider;
+import hr.prism.board.enums.OauthProvider;
 import org.hibernate.validator.constraints.NotEmpty;
 
 public class OauthDTO {
     
     @NotEmpty
-    private OAuthProvider provider;
+    private OauthProvider provider;
     
     @NotEmpty
     private String clientId;
@@ -17,11 +17,11 @@ public class OauthDTO {
     @NotEmpty
     private String redirectUri;
     
-    public OAuthProvider getProvider() {
+    public OauthProvider getProvider() {
         return provider;
     }
     
-    public OauthDTO setProvider(OAuthProvider provider) {
+    public OauthDTO setProvider(OauthProvider provider) {
         this.provider = provider;
         return this;
     }

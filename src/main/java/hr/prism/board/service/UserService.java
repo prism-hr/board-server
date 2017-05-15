@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.authentication.AuthenticationToken;
+import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
@@ -13,6 +14,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,9 @@ public class UserService {
     
     @Inject
     private DocumentService documentService;
+    
+    @Inject
+    private ApplicationContext applicationContext;
     
     public User findOne(Long id) {
         return userRepository.findOne(id);
@@ -80,7 +85,22 @@ public class UserService {
     }
     
     public User signin(OauthDTO oauthDTO) {
-        return null;
+        Class<? extends OauthAdapter> oauthAdapterClass = oauthDTO.getProvider().getOauthAdapter();
+        if (oauthAdapterClass == null) {
+            throw new ApiForbiddenException(ExceptionCode.UNSUPPORTED_AUTHENTICATOR);
+        }
+    
+        User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(oauthDTO);
+        if (newUser.getEmail() == null) {
+            throw new ApiForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER);
+        }
+    
+        User oldUser = userRepository.findByOauthProviderAndOauthAccountId(newUser.getOauthProvider(), newUser.getOauthAccountId());
+        if (oldUser == null) {
+            return userRepository.save(newUser);
+        }
+    
+        return oldUser;
     }
     
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
@@ -101,15 +121,18 @@ public class UserService {
         if (userDTO.getGivenName() != null) {
             user.setGivenName(userDTO.getGivenName().orElse(null));
         }
+    
         if (userDTO.getSurname() != null) {
             user.setSurname(userDTO.getSurname().orElse(null));
         }
+    
         if (userDTO.getDocumentImage() != null) {
             Document oldImage = user.getDocumentImage();
             DocumentDTO newImage = userDTO.getDocumentImage().orElse(null);
             if (oldImage != null && !oldImage.getId().equals(newImage.getId())) {
                 documentService.deleteDocument(oldImage);
             }
+        
             user.setDocumentImage(documentService.getOrCreateDocument(newImage));
         }
         

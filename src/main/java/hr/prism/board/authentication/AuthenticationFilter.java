@@ -23,12 +23,12 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
         if (authorization != null) {
             String accessToken = authorization.replaceFirst("Bearer", "");
-            if (accessToken != null) {
-                Long userId = userService.decodeAccessToken(accessToken);
-                SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
-                response.setHeader("Authorization", "Bearer" + userService.makeAccessToken(userId));
-            }
+            Long userId = userService.decodeAccessToken(accessToken);
+            SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
+            response.setHeader("Authorization", "Bearer" + userService.makeAccessToken(userId));
         }
+    
+        filterChain.doFilter(request, response);
     }
     
 }
