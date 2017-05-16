@@ -14,6 +14,8 @@ public class OauthDTO {
     @NotEmpty
     private String code;
     
+    private String secret;
+    
     @NotEmpty
     private String redirectUri;
     
@@ -41,6 +43,15 @@ public class OauthDTO {
     
     public OauthDTO setCode(String code) {
         this.code = code;
+        return this;
+    }
+    
+    public String getSecret() {
+        return secret;
+    }
+    
+    public OauthDTO setSecret(String secret) {
+        this.secret = secret;
         return this;
     }
     

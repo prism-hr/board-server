@@ -25,9 +25,6 @@ public class LinkedinAdapter implements OauthAdapter {
         
         LinkedInTemplate template = new LinkedInTemplate(accessGrant.getAccessToken());
         LinkedInProfile user = template.profileOperations().getUserProfile();
-        if (user == null) {
-            return null;
-        }
         
         return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName())
             .setEmail(user.getEmailAddress()).setOauthProvider(OauthProvider.LINKEDIN).setOauthAccountId(user.getId());

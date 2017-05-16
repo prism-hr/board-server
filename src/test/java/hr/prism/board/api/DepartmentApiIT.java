@@ -74,8 +74,8 @@ public class DepartmentApiIT extends AbstractIT {
         BoardRepresentation boardR1 = verifyPostDepartment(user1, boardDTO1, "department1");
         unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, 2,
             TestHelper.samplePost()));
-        
-        testUserService.setAuthentication(user1.getStormpathId());
+    
+        testUserService.setAuthentication(user1.getId());
         BoardDTO boardDTO2 = TestHelper.smallSampleBoard();
         boardDTO2.getDepartment().setName("department2");
         BoardRepresentation boardR2 = verifyPostDepartment(user1, boardDTO2, "department2");
@@ -88,8 +88,8 @@ public class DepartmentApiIT extends AbstractIT {
         BoardRepresentation boardR3 = verifyPostDepartment(user2, boardDTO3, "department3");
         unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, 2,
             TestHelper.samplePost()));
-        
-        testUserService.setAuthentication(user2.getStormpathId());
+    
+        testUserService.setAuthentication(user2.getId());
         BoardDTO boardDTO4 = TestHelper.smallSampleBoard();
         boardDTO4.getDepartment().setName("department4");
         BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
@@ -105,7 +105,7 @@ public class DepartmentApiIT extends AbstractIT {
         for (String departmentName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(departmentName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
-                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getId());
                 if (scope == Scope.DEPARTMENT) {
                     verifyPrivilegedDepartmentUser(departmentNames, Collections.singletonList(departmentName + "0"));
                 } else {
@@ -113,11 +113,11 @@ public class DepartmentApiIT extends AbstractIT {
                 }
             }
         }
-
-        testUserService.setAuthentication(user1.getStormpathId());
+    
+        testUserService.setAuthentication(user1.getId());
         verifyPrivilegedDepartmentUser(departmentNames, Arrays.asList("department1", "department2"));
-        
-        testUserService.setAuthentication(user2.getStormpathId());
+    
+        testUserService.setAuthentication(user2.getId());
         verifyPrivilegedDepartmentUser(departmentNames, Arrays.asList("department3", "department4"));
     }
 
@@ -253,8 +253,8 @@ public class DepartmentApiIT extends AbstractIT {
             State.ACCEPTED);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
-
-        testUserService.setAuthentication(departmentUser.getStormpathId());
+    
+        testUserService.setAuthentication(departmentUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(5, resourceOperationRs.size());
 
@@ -322,7 +322,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     private DepartmentRepresentation verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
-        testUserService.setAuthentication(user.getStormpathId());
+        testUserService.setAuthentication(user.getId());
         return transactionTemplate.execute(status -> {
             Department department = departmentService.getDepartment(departmentId);
             DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId, departmentDTO);

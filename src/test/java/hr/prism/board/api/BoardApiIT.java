@@ -49,20 +49,20 @@ public class BoardApiIT extends AbstractIT {
     
     @Inject
     private DepartmentApi departmentApi;
-
+    
     @Inject
     private BoardService boardService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private DepartmentService departmentService;
-
+    
     @Test
     public void shouldCreateAndListBoards() {
         Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
-
+        
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.getDepartment().setName("department1");
@@ -79,7 +79,7 @@ public class BoardApiIT extends AbstractIT {
         unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
                 .setMemberCategories(Collections.singletonList("m1"))));
-
+        
         User user21 = testUserService.authenticate();
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.getDepartment().setName("department2");
@@ -96,7 +96,7 @@ public class BoardApiIT extends AbstractIT {
         unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("p1"))));
-    
+        
         List<String> boardNames = Arrays.asList(
             "board11", "board110", "board1100", "board12", "board120", "board1200", "board21", "board210", "board2100", "board22", "board220", "board2200");
         LinkedHashMultimap<Long, String> departmentBoardNames = LinkedHashMultimap.create();
@@ -109,7 +109,7 @@ public class BoardApiIT extends AbstractIT {
         for (String boardName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
-                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getId());
                 if (scope == Scope.DEPARTMENT) {
                     verifyPrivilegedBoardUser(boardNames, Collections.singletonList(boardName + "0"), departmentBoardNames);
                 } else if (scope == Scope.BOARD) {
@@ -119,36 +119,36 @@ public class BoardApiIT extends AbstractIT {
                 }
             }
         }
-
-        testUserService.setAuthentication(user11.getStormpathId());
+        
+        testUserService.setAuthentication(user11.getId());
         verifyPrivilegedBoardUser(boardNames, Arrays.asList("board11", "board1100", "board12", "board1200"), departmentBoardNames);
         
-        testUserService.setAuthentication(user12.getStormpathId());
+        testUserService.setAuthentication(user12.getId());
         verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board12"), departmentBoardNames);
         
-        testUserService.setAuthentication(user21.getStormpathId());
+        testUserService.setAuthentication(user21.getId());
         verifyPrivilegedBoardUser(boardNames, Arrays.asList("board21", "board2100", "board22", "board2200"), departmentBoardNames);
         
-        testUserService.setAuthentication(user22.getStormpathId());
+        testUserService.setAuthentication(user22.getId());
         verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board22"), departmentBoardNames);
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoard() {
         testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.sampleBoard();
-
+        
         transactionTemplate.execute(status -> {
             boardApi.postBoard(boardDTO);
             return null;
         });
-
+        
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, status);
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoardHandle() {
         User user = testUserService.authenticate();
@@ -158,7 +158,7 @@ public class BoardApiIT extends AbstractIT {
                 .setName("new department"));
         verifyPostBoard(user, boardDTO, "new-board-with-long");
         Long boardId = verifyPostBoard(user, boardDTO.setName("new board with long name too"), "new-board-with-long-2").getId();
-
+        
         transactionTemplate.execute(status -> {
             BoardRepresentation boardR = boardApi.updateBoard(boardId,
                 new BoardPatchDTO()
@@ -166,10 +166,10 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals("new-board-with-long-name", boardR.getHandle());
             return null;
         });
-
+        
         verifyPostBoard(user, boardDTO.setName("new board with long name also"), "new-board-with-long-2");
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoardByUpdating() {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
@@ -180,7 +180,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldNotCreateDuplicateBoardHandleByUpdating() {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
@@ -192,7 +192,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
     }
-
+    
     @Test
     public void shouldUpdateBoardHandleWhenUpdatingDepartmentHandle() {
         User user = testUserService.authenticate();
@@ -203,30 +203,30 @@ public class BoardApiIT extends AbstractIT {
                     .setName("department")),
             "board-1")
             .getDepartment().getId();
-
+        
         verifyPostBoard(user, new BoardDTO()
                 .setName("board 2")
                 .setDepartment(new DepartmentDTO()
                     .setId(departmentId)),
             "board-2");
-
+        
         transactionTemplate.execute(status -> {
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId, true);
             Assert.assertEquals(2, boardRs.size());
-
+            
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
             Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2"));
-
+            
             departmentApi.updateDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setHandle(Optional.of("new-department-updated")));
             return null;
         });
-
+        
         transactionTemplate.execute(status -> {
             Department department = departmentService.getDepartment(departmentId);
             Assert.assertEquals("new-department-updated", department.getHandle());
-
+            
             int index = 1;
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true);
             Assert.assertEquals(2, boardRs.size());
@@ -234,11 +234,11 @@ public class BoardApiIT extends AbstractIT {
                 Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
-
+            
             return null;
         });
     }
-
+    
     @Test
     public void shouldSupportBoardLifeCycleAndPermissions() {
         // Create department and board
@@ -246,33 +246,33 @@ public class BoardApiIT extends AbstractIT {
         BoardRepresentation boardR = verifyPostBoard(departmentUser, TestHelper.smallSampleBoard(), "board");
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
-
+        
         User boardUser = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             userRoleService.createUserRole(boardId, boardUser.getId(), Role.ADMINISTRATOR);
             return null;
         });
-
+        
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
-
+        
         // Create post
         User pUser = testUserService.authenticate();
         transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-
+        
         // Create unprivileged users
         List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.smallSamplePost()).values());
         unprivilegedUsers.add(pUser);
-
+        
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.AUDIT, () -> boardApi.getBoardOperations(boardId))
             .put(Action.EDIT, () -> boardApi.updateBoard(boardId, new BoardPatchDTO()))
             .build();
-
+        
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
-
+        
         // Test that we do not audit viewing
         transactionTemplate.execute(status -> boardApi.getBoard(boardId));
-
+        
         // Check that we can make changes and leave nullable values null
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
@@ -280,9 +280,9 @@ public class BoardApiIT extends AbstractIT {
                 .setHandle(Optional.of("board-2"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("logo 1").setCloudinaryUrl("logo 1").setFileName("logo 1"))),
             State.ACCEPTED);
-
+        
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
-
+        
         // Check that we can make further changes and set default / nullable values
         verifyPatchBoard(boardUser, boardId,
             new BoardPatchDTO()
@@ -293,9 +293,9 @@ public class BoardApiIT extends AbstractIT {
                 .setSummary(Optional.of("summary"))
                 .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))),
             State.ACCEPTED);
-
+        
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
-
+        
         // Check that we can make further changes and change default / nullable values
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
@@ -305,30 +305,30 @@ public class BoardApiIT extends AbstractIT {
                 .setSummary(Optional.of("summary 2"))
                 .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))),
             State.ACCEPTED);
-
+        
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
-
+        
         // Check that we can clear nullable values
         verifyPatchBoard(boardUser, boardId,
             new BoardPatchDTO()
                 .setSummary(Optional.empty())
                 .setPostCategories(Optional.empty()),
             State.ACCEPTED);
-
+        
         verifyBoardActions(adminUsers, unprivilegedUsers, boardId, operations);
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> boardApi.getBoardOperations(boardId));
         Assert.assertEquals(5, resourceOperationRs.size());
-
+        
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
         TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, departmentUser);
-
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board", "board 2")
                 .put("handle", "board", "board-2")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1")));
-
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board 2", "board 3")
@@ -339,7 +339,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
                 .put("summary", null, "summary")
                 .put("postCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
-
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "board 3", "board 4")
@@ -347,13 +347,13 @@ public class BoardApiIT extends AbstractIT {
                 .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
                 .put("summary", "summary", "summary 2")
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
-
+        
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
                 .put("summary", "summary 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
     }
-
+    
     @Test
     public void shouldPostAndReplaceLogo() {
         // Create department and board
@@ -365,18 +365,18 @@ public class BoardApiIT extends AbstractIT {
         BoardRepresentation boardR = verifyPostBoard(user, boardDTO, "board");
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
-
+        
         // Check that we can make further changes and set default / nullable values
         DocumentDTO replacingLogo = new DocumentDTO().setCloudinaryId("replacingLogo").setCloudinaryUrl("replacingLogo").setFileName("replacingLogo");
         verifyPatchBoard(user, boardId,
             new BoardPatchDTO()
                 .setDocumentLogo(Optional.of(replacingLogo)),
             State.ACCEPTED);
-
+        
         DepartmentRepresentation department = departmentApi.getDepartment(departmentId);
         verifyDocument(initialLogo, department.getDocumentLogo());
     }
-
+    
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         User user = testUserService.authenticate();
         BoardRepresentation boardR1 = verifyPostBoard(user, TestHelper.smallSampleBoard(), "board");
@@ -386,62 +386,62 @@ public class BoardApiIT extends AbstractIT {
                 .setDepartment(new DepartmentDTO()
                     .setId(boardR1.getDepartment().getId())),
             "board-2");
-
+        
         return new Pair<>(boardR1, boardR2);
     }
-
+    
     private BoardRepresentation verifyPostBoard(User user, BoardDTO boardDTO, String expectedHandle) {
         return transactionTemplate.execute(status -> {
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-
+    
             Assert.assertEquals(boardDTO.getName(), boardR.getName());
             Assert.assertEquals(expectedHandle, boardR.getHandle());
             Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
             verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
             Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
             Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
-
+    
             Board board = boardService.getBoard(boardR.getId());
             Department department = departmentService.getDepartment(boardR.getDepartment().getId());
             Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
-
+    
             Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
             Assert.assertTrue(userRoleService.hasUserRole(board, user, Role.ADMINISTRATOR));
             return boardR;
         });
     }
-
+    
     private BoardRepresentation verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
-        testUserService.setAuthentication(user.getStormpathId());
+        testUserService.setAuthentication(user.getId());
         return transactionTemplate.execute(status -> {
             Board board = boardService.getBoard(boardId);
             BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
-
+    
             Optional<String> nameOptional = boardDTO.getName();
             Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
-
+    
             Optional<DocumentDTO> documentLogoOptional = boardDTO.getDocumentLogo();
             verifyDocument(documentLogoOptional == null ? board.getDocumentLogo() : boardDTO.getDocumentLogo().orElse(null), boardR.getDocumentLogo());
-
+    
             Optional<String> summaryOptional = boardDTO.getSummary();
             Assert.assertEquals(summaryOptional == null ? board.getSummary() : summaryOptional.orElse(null), boardR.getSummary());
-
+    
             Optional<String> handleOptional = boardDTO.getHandle();
             Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[1] : handleOptional.orElse(null), boardR.getHandle());
-
+    
             Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
             Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),
                 boardR.getPostCategories());
-
+    
             Optional<PostVisibility> defaultVisibilityOptional = boardDTO.getDefaultPostVisibility();
             Assert.assertEquals(defaultVisibilityOptional == null ? board.getDefaultPostVisibility() : defaultVisibilityOptional.orElse(null),
                 boardR.getDefaultPostVisibility());
-
+    
             Assert.assertEquals(expectedState, boardR.getState());
             return boardR;
         });
     }
-
+    
     private void verifyBoardActions(List<User> adminUsers, Collection<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.BOARD, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
         verifyResourceActions(unprivilegedUsers, Scope.BOARD, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
@@ -455,7 +455,7 @@ public class BoardApiIT extends AbstractIT {
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
             Collections.emptyList(),
             null);
-
+    
         TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
             .add(publicActions);
         TestHelper.verifyResources(
@@ -468,7 +468,7 @@ public class BoardApiIT extends AbstractIT {
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
                 Collections.emptyList(),
                 null);
-
+    
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
                 Lists.newArrayList(boardNamesByDepartment.get(departmentId)),
@@ -510,5 +510,5 @@ public class BoardApiIT extends AbstractIT {
                     .addAll(adminDepartmentBoardNames, adminActions));
         }
     }
-
+    
 }

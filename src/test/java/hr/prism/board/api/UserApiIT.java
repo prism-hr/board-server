@@ -24,7 +24,7 @@ public class UserApiIT extends AbstractIT {
     private TestUserService testUserService;
 
     @Test
-    public void shouldCreateAndListDepartments() {
+    public void shouldCreateAndUpdateUser() {
         testUserService.authenticate();
 
         DocumentDTO imageDTO = new DocumentDTO().setCloudinaryId("userImage").setCloudinaryUrl("userImage").setFileName("userImage");

@@ -1,22 +1,17 @@
 package hr.prism.board.service;
 
-import com.stormpath.sdk.impl.account.DefaultAccount;
+import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import hr.prism.board.dto.RegisterDTO;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class TestUserService {
-    
-    private static final String STORMPATH_API_PATH = "https://api.stormpath.com/v1/accounts/";
     
     @Inject
     private UserService userService;
@@ -25,24 +20,17 @@ public class TestUserService {
     
     public synchronized User authenticate() {
         String id = new BigInteger(140, random).toString(30);
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("email", id + "@example.com");
-        properties.put("givenName", id);
-        properties.put("surname", id);
-        properties.put("href", STORMPATH_API_PATH + id);
-        User user = userService.createUser(new DefaultAccount(null, properties));
-        
-        setAuthentication(id);
+        User user = userService.register(new RegisterDTO().setGivenName(id).setSurname(id).setEmail(id + "@example.com").setPassword("password"));
+        setAuthentication(user.getId());
         return user;
     }
     
-    public void setAuthentication(String stormpathId) {
-        UsernamePasswordAuthenticationToken authentication = null;
-        if (stormpathId != null) {
-            authentication = new UsernamePasswordAuthenticationToken(
-                new org.springframework.security.core.userdetails.User(STORMPATH_API_PATH + stormpathId, "", Collections.emptyList()), null);
+    public void setAuthentication(Long userId) {
+        AuthenticationToken authentication = null;
+        if (userId != null) {
+            authentication = new AuthenticationToken(userId);
         }
-    
+        
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
     

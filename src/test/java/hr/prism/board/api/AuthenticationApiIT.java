@@ -1,15 +1,17 @@
 package hr.prism.board.api;
 
-import com.stormpath.sdk.account.Account;
-import com.stormpath.sdk.oauth.OAuthGrantRequestAuthenticationResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.TestContext;
-import hr.prism.board.object.AccountPassword;
-import hr.prism.board.service.TestStormpathAccountService;
+import hr.prism.board.dto.RegisterDTO;
+import hr.prism.board.representation.UserRepresentation;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
 
@@ -18,18 +20,27 @@ import javax.inject.Inject;
 public class AuthenticationApiIT {
     
     @Inject
-    private TestStormpathAccountService testStormpathAccountService;
+    private MockMvc mockMvc;
+    
+    @Inject
+    private ObjectMapper objectMapper;
     
     @Test
-    @Ignore
-    public void shouldCreateAndAuthenticateUser() throws Exception {
-        AccountPassword accountPassword = testStormpathAccountService.createTestAccount();
-        Account account = accountPassword.getAccount();
+    public void shouldRegisterAndAuthenticateUser() throws Exception {
+        RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
+        MockHttpServletResponse response =
+            mockMvc.perform(MockMvcRequestBuilders.post("auth/register"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse();
     
-        OAuthGrantRequestAuthenticationResult authenticationResult = testStormpathAccountService.authenticateTestAccount(account.getEmail(), accountPassword.getPassword());
-        Assert.assertNotNull(authenticationResult.getAccessToken());
-        Assert.assertNotNull(authenticationResult.getRefreshToken());
-        account.delete();
+        String authorization = response.getHeader("Authorization");
+        Assert.assertTrue(authorization.startsWith("Bearer"));
+    
+        UserRepresentation userRepresentation = objectMapper.readValue(response.getContentAsString(), UserRepresentation.class);
+        Assert.assertEquals(registerDTO.getGivenName(), userRepresentation.getGivenName());
+        Assert.assertEquals(registerDTO.getSurname(), userRepresentation.getSurname());
+        Assert.assertEquals(registerDTO.getEmail(), userRepresentation.getEmail());
     }
     
 }

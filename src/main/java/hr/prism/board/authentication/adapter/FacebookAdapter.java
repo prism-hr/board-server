@@ -24,9 +24,6 @@ public class FacebookAdapter implements OauthAdapter {
         
         FacebookTemplate template = new FacebookTemplate(accessGrant.getAccessToken());
         org.springframework.social.facebook.api.User user = template.userOperations().getUserProfile();
-        if (user == null) {
-            return null;
-        }
         
         return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName())
             .setEmail(user.getEmail()).setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId());

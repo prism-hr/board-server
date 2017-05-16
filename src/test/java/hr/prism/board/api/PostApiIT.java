@@ -255,7 +255,7 @@ public class PostApiIT extends AbstractIT {
         for (Long boardId : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardId);
             for (Scope scope : unprivilegedUserMap.keySet()) {
-                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getStormpathId());
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getId());
                 if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
                     verifyPrivilegedPostUser(publicPostNames, new LinkedHashMap<>(), PostAdminContext.ADMIN);
                 } else if (scope == Scope.POST) {
@@ -268,30 +268,30 @@ public class PostApiIT extends AbstractIT {
             }
         }
     
-        testUserService.setAuthentication(user11.getStormpathId());
+        testUserService.setAuthentication(user11.getId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user11BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board11Id, boardPostNames11);
         user11BoardPostNames.put(board12Id, boardPostNames12);
         verifyPrivilegedPostUser(publicPostNames, user11BoardPostNames, PostAdminContext.ADMIN);
-        
-        testUserService.setAuthentication(user12.getStormpathId());
+    
+        testUserService.setAuthentication(user12.getId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user12BoardPostNames = new LinkedHashMap<>();
         user12BoardPostNames.put(board12Id, boardPostNames12);
         verifyPrivilegedPostUser(publicPostNames, user12BoardPostNames, PostAdminContext.ADMIN);
-        
-        testUserService.setAuthentication(user21.getStormpathId());
+    
+        testUserService.setAuthentication(user21.getId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user21BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board21Id, boardPostNames21);
         user11BoardPostNames.put(board22Id, boardPostNames22);
         verifyPrivilegedPostUser(publicPostNames, user21BoardPostNames, PostAdminContext.ADMIN);
-        
-        testUserService.setAuthentication(user22.getStormpathId());
+    
+        testUserService.setAuthentication(user22.getId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user22BoardPostNames = new LinkedHashMap<>();
         user12BoardPostNames.put(board22Id, boardPostNames22);
         verifyPrivilegedPostUser(publicPostNames, user22BoardPostNames, PostAdminContext.ADMIN);
         
         for (User postUser : posts.keySet()) {
-            testUserService.setAuthentication(postUser.getStormpathId());
+            testUserService.setAuthentication(postUser.getId());
             verifyPrivilegedPostUser(publicPostNames, posts.get(postUser), PostAdminContext.AUTHOR);
         }
     }
@@ -656,8 +656,8 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
-        
-        testUserService.setAuthentication(postUser.getStormpathId());
+    
+        testUserService.setAuthentication(postUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
         Assert.assertEquals(18, resourceOperationRs.size());
 
@@ -778,7 +778,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     private PostRepresentation verifyPatchPost(User user, Long postId, PostPatchDTO postDTO, PostOperation operation, State expectedState) {
-        testUserService.setAuthentication(user.getStormpathId());
+        testUserService.setAuthentication(user.getId());
         return transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
             PostRepresentation postR = operation.execute();
