@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-@RestController(value = "/auth")
+@RestController
 public class AuthenticationApi {
     
     @Inject
@@ -26,25 +26,25 @@ public class AuthenticationApi {
     @Inject
     private UserMapper userMapper;
     
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/login", method = RequestMethod.POST)
     public UserRepresentation login(HttpServletResponse response, @RequestBody @Valid LoginDTO loginDTO) {
         User user = userService.login(loginDTO);
         return authorizeAndReturn(response, user);
     }
     
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/register", method = RequestMethod.POST)
     public UserRepresentation register(HttpServletResponse response, @RequestBody @Valid RegisterDTO registerDTO) {
         User user = userService.register(registerDTO);
         return authorizeAndReturn(response, user);
     }
     
-    @RequestMapping(value = "/signin", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/signin", method = RequestMethod.POST)
     public UserRepresentation signin(HttpServletResponse response, @RequestBody @Valid OauthDTO oauthDTO) {
         User user = userService.signin(oauthDTO);
         return authorizeAndReturn(response, user);
     }
     
-    @RequestMapping(value = "/resetPassword", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/resetPassword", method = RequestMethod.POST)
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
         userService.resetPassword(resetPasswordDTO);
     }

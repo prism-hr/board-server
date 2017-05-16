@@ -18,7 +18,7 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController(value = "/api")
+@RestController
 public class PostApi {
     
     @Inject
@@ -33,64 +33,64 @@ public class PostApi {
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
     
-    @RequestMapping(value = "/boards/{id}/posts", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/boards/{id}/posts", method = RequestMethod.POST)
     public PostRepresentation postPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
         Post post = postService.createPost(id, postDTO);
         return postMapper.apply(post);
     }
     
-    @RequestMapping(value = "posts", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublicPosts) {
         return postService.getPosts(null, includePublicPosts).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/boards/{boardId}/posts", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublicPosts) {
         return postService.getPosts(boardId, includePublicPosts).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.GET)
     public PostRepresentation getPost(@PathVariable Long id) {
         return postMapper.apply(postService.getPost(id));
     }
     
-    @RequestMapping(value = "/posts/{id}/operations", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/posts/{id}/operations", method = RequestMethod.GET)
     public List<ResourceOperationRepresentation> getPostOperations(@PathVariable Long id) {
         return resourceService.getResourceOperations(Scope.POST, id).stream()
             .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/posts/{id}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.PATCH)
     public PostRepresentation updatePost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.EDIT, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/accept", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/accept", method = RequestMethod.POST)
     public PostRepresentation acceptPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.ACCEPT, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/suspend", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/suspend", method = RequestMethod.POST)
     public PostRepresentation suspendPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.SUSPEND, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/correct", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/correct", method = RequestMethod.POST)
     public PostRepresentation correctPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.CORRECT, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/reject", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/reject", method = RequestMethod.POST)
     public PostRepresentation rejectPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.REJECT, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/withdraw", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/withdraw", method = RequestMethod.POST)
     public PostRepresentation withdrawPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.WITHDRAW, postDTO));
     }
     
-    @RequestMapping(value = "/posts/{id}/restore", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/restore", method = RequestMethod.POST)
     public PostRepresentation restorePost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.RESTORE, postDTO));
     }

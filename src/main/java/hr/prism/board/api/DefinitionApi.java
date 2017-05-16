@@ -8,13 +8,13 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.inject.Inject;
 import java.util.TreeMap;
 
-@RestController(value = "/api")
+@RestController
 public class DefinitionApi {
     
     @Inject
     private DefinitionService definitionService;
     
-    @RequestMapping(value = "/definitions", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/definitions", method = RequestMethod.GET)
     public TreeMap<String, Object> getDefinitions() {
         return definitionService.getDefinitions();
     }

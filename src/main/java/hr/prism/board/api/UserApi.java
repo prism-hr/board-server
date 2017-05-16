@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.inject.Inject;
 import javax.validation.Valid;
 
-@RestController(value = "/api")
+@RestController
 public class UserApi {
 
     @Inject
@@ -21,14 +21,14 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
-
-    @RequestMapping(value = "/user", method = RequestMethod.GET)
+    
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getCurrentUser() {
         User currentUser = userService.getCurrentUser();
         return userMapper.apply(currentUser);
     }
-
-    @RequestMapping(value = "/user", method = RequestMethod.PATCH)
+    
+    @RequestMapping(value = "/api/user", method = RequestMethod.PATCH)
     public UserRepresentation updateUser(@RequestBody @Valid UserPatchDTO userDTO) {
         User currentUser = userService.updateUser(userDTO);
         return userMapper.apply(currentUser);

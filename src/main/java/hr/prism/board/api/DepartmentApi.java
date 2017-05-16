@@ -15,7 +15,7 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController(value = "/api")
+@RestController
 public class DepartmentApi {
     
     @Inject
@@ -30,28 +30,28 @@ public class DepartmentApi {
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
     
-    @RequestMapping(value = "/departments", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments(@RequestParam(required = false) Boolean includePublicDepartments) {
         return departmentService.getDepartments(includePublicDepartments).stream().map(department -> departmentMapper.apply(department)).collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/departments/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
         return departmentMapper.apply(departmentService.getDepartment(id));
     }
     
-    @RequestMapping(value = "/departments", method = RequestMethod.GET, params = "handle")
+    @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "handle")
     public DepartmentRepresentation getDepartmentByHandle(@RequestParam String handle) {
         return departmentMapper.apply(departmentService.getDepartment(handle));
     }
     
-    @RequestMapping(value = "/departments/{id}/operations", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/departments/{id}/operations", method = RequestMethod.GET)
     public List<ResourceOperationRepresentation> getDepartmentOperations(@PathVariable Long id) {
         return resourceService.getResourceOperations(Scope.DEPARTMENT, id).stream()
             .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
     
-    @RequestMapping(value = "/departments/{id}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.PATCH)
     public DepartmentRepresentation updateDepartment(@PathVariable Long id, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
         return departmentMapper.apply(departmentService.updateDepartment(id, departmentDTO));
     }
