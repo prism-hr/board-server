@@ -5,7 +5,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.Size;
 
-// FIXME: adjust database schema
 public class RegisterDTO {
     
     @NotEmpty
