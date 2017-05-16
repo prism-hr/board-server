@@ -21,6 +21,7 @@ import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.UserRoleService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.apache.commons.collections.ListUtils;
@@ -37,16 +38,16 @@ import java.util.stream.Collectors;
 @TestContext
 @RunWith(SpringRunner.class)
 public class BoardApiIT extends AbstractIT {
-    
+
     private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
-    
+
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
-    
+
     static {
         ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
-    
+
     @Inject
     private DepartmentApi departmentApi;
 
@@ -70,7 +71,7 @@ public class BoardApiIT extends AbstractIT {
         BoardRepresentation boardR11 = verifyPostBoard(user11, boardDTO11, "board11");
         unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
             TestHelper.samplePost()));
-        
+
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
         boardDTO12.getDepartment().setName("department1");
@@ -87,7 +88,7 @@ public class BoardApiIT extends AbstractIT {
         BoardRepresentation boardR21 = verifyPostBoard(user21, boardDTO21, "board21");
         unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
             TestHelper.smallSamplePost()));
-        
+
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
         boardDTO22.getDepartment().setName("department2");
@@ -96,16 +97,16 @@ public class BoardApiIT extends AbstractIT {
         unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("p1"))));
-    
+
         List<String> boardNames = Arrays.asList(
             "board11", "board110", "board1100", "board12", "board120", "board1200", "board21", "board210", "board2100", "board22", "board220", "board2200");
         LinkedHashMultimap<Long, String> departmentBoardNames = LinkedHashMultimap.create();
         departmentBoardNames.putAll(boardR11.getDepartment().getId(), Arrays.asList("board11", "board1100", "board12", "board1200"));
         departmentBoardNames.putAll(boardR21.getDepartment().getId(), Arrays.asList("board21", "board2100", "board22", "board2200"));
-        
+
         testUserService.unauthenticate();
         verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
-        
+
         for (String boardName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
@@ -122,13 +123,13 @@ public class BoardApiIT extends AbstractIT {
 
         testUserService.setAuthentication(user11.getStormpathId());
         verifyPrivilegedBoardUser(boardNames, Arrays.asList("board11", "board1100", "board12", "board1200"), departmentBoardNames);
-        
+
         testUserService.setAuthentication(user12.getStormpathId());
         verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board12"), departmentBoardNames);
-        
+
         testUserService.setAuthentication(user21.getStormpathId());
         verifyPrivilegedBoardUser(boardNames, Arrays.asList("board21", "board2100", "board22", "board2200"), departmentBoardNames);
-        
+
         testUserService.setAuthentication(user22.getStormpathId());
         verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board22"), departmentBoardNames);
     }
@@ -447,10 +448,10 @@ public class BoardApiIT extends AbstractIT {
         verifyResourceActions(unprivilegedUsers, Scope.BOARD, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
         verifyResourceActions(adminUsers, Scope.BOARD, boardId, operations, ADMIN_ACTIONS.get(State.ACCEPTED));
     }
-    
+
     private void verifyUnprivilegedBoardUser(List<String> boardNames, LinkedHashMultimap<Long, String> boardNamesByDepartment) {
         List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
-        
+
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
             Collections.emptyList(),
@@ -462,7 +463,7 @@ public class BoardApiIT extends AbstractIT {
             transactionTemplate.execute(status -> boardApi.getBoards(true)),
             boardNames,
             expectedActions);
-        
+
         for (Long departmentId : boardNamesByDepartment.keySet()) {
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
@@ -475,24 +476,24 @@ public class BoardApiIT extends AbstractIT {
                 expectedActions);
         }
     }
-    
+
     private void verifyPrivilegedBoardUser(List<String> boardNames, List<String> adminBoardNames, LinkedHashMultimap<Long, String> boardNamesByDepartment) {
         List<Action> adminActions = Lists.newArrayList(ADMIN_ACTIONS.get(State.ACCEPTED));
         List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
-        
+
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(null)),
             adminBoardNames,
             new TestHelper.ExpectedActions()
                 .addAll(adminBoardNames, adminActions));
-        
+
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> boardApi.getBoards(true)),
             boardNames,
             new TestHelper.ExpectedActions()
                 .add(publicActions)
                 .addAll(adminBoardNames, adminActions));
-        
+
         for (Long departmentId : boardNamesByDepartment.keySet()) {
             List<String> departmentBoardNames = Lists.newArrayList(boardNamesByDepartment.get(departmentId));
             @SuppressWarnings("unchecked") List<String> adminDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, adminBoardNames);
@@ -501,7 +502,7 @@ public class BoardApiIT extends AbstractIT {
                 adminDepartmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .addAll(adminDepartmentBoardNames, adminActions));
-            
+
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
                 departmentBoardNames,

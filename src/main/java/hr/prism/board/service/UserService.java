@@ -4,6 +4,7 @@ import com.stormpath.sdk.account.Account;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -86,5 +87,22 @@ public class UserService {
 
         userRepository.update(user);
         return user;
+    }
+
+    public User getOrCreateUser(UserDTO userDTO) {
+        User user = userRepository.findByEmail(userDTO.getEmail());
+        if(user != null) {
+            return user;
+        }
+        user = new User();
+        user.setEmail(userDTO.getEmail());
+        user.setGivenName(userDTO.getGivenName());
+        user.setSurname(userDTO.getSurname());
+        user.setStormpathId("fake" + userDTO.getEmail()); // TODO drop this line
+        return userRepository.save(user);
+    }
+
+    public User get(Long id) {
+        return userRepository.findOne(id);
     }
 }

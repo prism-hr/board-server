@@ -1,5 +1,7 @@
 package hr.prism.board.representation;
 
+import com.google.common.base.MoreObjects;
+
 public class UserRepresentation {
 
     private Long id;
@@ -55,5 +57,13 @@ public class UserRepresentation {
     public UserRepresentation setDocumentImage(DocumentRepresentation documentImage) {
         this.documentImage = documentImage;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+            .add("name", givenName + " " + surname)
+            .add("email", email)
+            .toString();
     }
 }

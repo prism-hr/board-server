@@ -11,9 +11,11 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface UserRoleRepository extends MyRepository<UserRole, Long> {
-    
+
+    List<UserRole> findByResource(Resource resource);
+
     UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);
-    
+
     @Query(value =
         "select userRole " +
             "from UserRole userRole " +
@@ -23,5 +25,9 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "and userRole.role in (:roles) " +
             "and child.resource2 = :resource")
     List<UserRole> findByResourceAndUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") Role... roles);
-    
+
+    Long deleteByResourceAndUserAndRole(Resource resource, User user, Role role);
+
+    Long deleteByResourceAndUser(Resource resource, User user);
+
 }
