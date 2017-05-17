@@ -74,7 +74,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
-        flyway.setLocations("classpath:db/migration");
+        flyway.setLocations("classpath:database");
         
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
@@ -100,7 +100,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
         templateResolver.setApplicationContext(applicationContext);
         templateResolver.setTemplateMode(StandardTemplateModeHandlers.HTML5.getTemplateModeName());
-        templateResolver.setPrefix("classpath:/notification/");
+        templateResolver.setPrefix("classpath:notification");
         templateResolver.setSuffix(".html");
         SpringTemplateEngine engine = new SpringTemplateEngine();
         engine.setTemplateResolver(templateResolver);
