@@ -2,32 +2,38 @@ package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestControllerAdvice
-public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+public class ApiAdvice extends ResponseEntityExceptionHandler {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApiExceptionHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiAdvice.class);
     
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> processException(Exception ex, WebRequest request) {
@@ -71,6 +77,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         }
         
         return handleExceptionInternal(ex, errors, headers, HttpStatus.UNPROCESSABLE_ENTITY, request);
+    }
+    
+    @ModelAttribute
+    public void modifyHeader(HttpServletResponse response) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            Long userId = ((AuthenticationToken) authentication).getUserId();
+            String accessToken = UserService.makeAccessToken(userId);
+            response.setHeader("Authorization", "Bearer" + accessToken);
+        }
     }
     
 }

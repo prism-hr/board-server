@@ -8,8 +8,6 @@ import hr.prism.board.dto.*;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -117,7 +115,7 @@ public class UserService {
     }
     
     public User updateUser(UserPatchDTO userDTO) {
-        User user = getCurrentUser();
+        User user = getCurrentUserSecured();
         if (userDTO.getGivenName() != null) {
             user.setGivenName(userDTO.getGivenName().orElse(null));
         }
@@ -140,9 +138,8 @@ public class UserService {
         return user;
     }
     
-    public String makeAccessToken(Long userId) {
+    public static String makeAccessToken(Long userId) {
         // FIXME: externalise the secret
-        // We use the user ID as the subject as the email address might change, we don't want to have to change the token
         return Jwts.builder()
             .setSubject(userId.toString())
             .setExpiration(new Date(System.currentTimeMillis() + 3600000))
@@ -150,11 +147,9 @@ public class UserService {
             .compact();
     }
     
-    public Long decodeAccessToken(String accessToken) {
+    public static Long decodeAccessToken(String accessToken) {
         // FIXME: externalise the secret
-        // We don't need to check whether the user ID is valid here, as that would be validated later in the request
-        Jws<Claims> claims = Jwts.parser().setSigningKey("secret").parseClaimsJws(accessToken);
-        return Long.parseLong(claims.getBody().getSubject());
+        return Long.parseLong(Jwts.parser().setSigningKey("secret").parseClaimsJws(accessToken).getBody().getSubject());
     }
     
 }

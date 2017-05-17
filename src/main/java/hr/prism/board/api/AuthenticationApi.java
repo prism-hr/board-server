@@ -50,7 +50,7 @@ public class AuthenticationApi {
     }
     
     private UserRepresentation authorizeAndReturn(HttpServletResponse response, User user) {
-        response.setHeader("Authorization", "Bearer" + userService.makeAccessToken(user.getId()));
+        response.setHeader("Authorization", "Bearer" + UserService.makeAccessToken(user.getId()));
         return userMapper.apply(user);
     }
     
