@@ -77,9 +77,11 @@ public class UserRoleService {
             if (!resourceUsersMap.containsKey(user.getId())) {
                 resourceUsersMap.put(user.getId(), new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new HashSet<>()));
             }
+    
             ResourceUserRepresentation representation = resourceUsersMap.get(user.getId());
             representation.getRoles().add(userRole.getRole());
         }
+    
         return new ArrayList<>(resourceUsersMap.values());
     }
     
@@ -93,10 +95,10 @@ public class UserRoleService {
         ResourceUserRepresentation userRepresentation = new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new HashSet<>());
         
         for (Role role : resourceUserDTO.getRoles()) {
-            UserRole userRole = new UserRole().setRole(role).setUser(user).setResource(resource);
-            userRoleRepository.save(userRole);
+            createUserRole(resource, user, role);
             userRepresentation.getRoles().add(role);
         }
+    
         return userRepresentation;
     }
     
