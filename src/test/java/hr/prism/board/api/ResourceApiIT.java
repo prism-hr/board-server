@@ -121,15 +121,19 @@ public class ResourceApiIT extends AbstractIT {
         BoardRepresentation boardR = boardApi.postBoard(boardDTO);
         Long departmentId = boardR.getDepartment().getId();
 
+        // add another administrator
         UserDTO newUserDTO = new UserDTO().setEmail("last-admin-role@mail.com").setGivenName("Sample").setSurname("User");
         ResourceUserRepresentation boardManager = resourceApi.addResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO().setUser(newUserDTO).setRoles(ImmutableSet.of(Role.ADMINISTRATOR, Role.MEMBER)));
 
+        // remove current user as administrator
         resourceApi.removeResourceUser(Scope.DEPARTMENT, departmentId, creator.getId());
 
+        // authenticate as another administrator
         User newUser = userService.get(boardManager.getUser().getId());
         testUserService.setAuthentication(newUser.getStormpathId());
 
+        // try to remove yourself as administrator
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.removeUserRole(Scope.DEPARTMENT, departmentId, boardManager.getUser().getId(), Role.ADMINISTRATOR), ExceptionCode.IRREMOVABLE_USER_ROLE, status);
             return null;
