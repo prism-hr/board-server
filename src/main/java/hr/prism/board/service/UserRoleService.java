@@ -3,6 +3,8 @@ package hr.prism.board.service;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
@@ -105,6 +107,13 @@ public class UserRoleService {
 
         User user = userService.get(userId);
         userRoleRepository.deleteByResourceAndUser(resource, user);
+
+        if (scope == Scope.DEPARTMENT) {
+            List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, Role.ADMINISTRATOR);
+            if (remainingAdminRoles.isEmpty()) {
+                throw new ApiException(ExceptionCode.IRREMOVABLE_USER);
+            }
+        }
     }
 
     public void addUserRole(Scope scope, Long resourceId, Long userId, Role role) {
@@ -123,6 +132,21 @@ public class UserRoleService {
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
 
         User user = userService.get(userId);
-        userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        List<UserRole> userRoles = userRoleRepository.findByResourceAndUser(resource, user);
+        if (userRoles.size() <= 1) {
+            throw new ApiException(ExceptionCode.IRREMOVABLE_USER_ROLE);
+        }
+
+        Long deletedCount = userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        if (deletedCount < 1) {
+            throw new ApiException(ExceptionCode.NON_EXISTING_USER_ROLE);
+        }
+
+        if (scope == Scope.DEPARTMENT) {
+            List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, Role.ADMINISTRATOR);
+            if (remainingAdminRoles.isEmpty()) {
+                throw new ApiException(ExceptionCode.IRREMOVABLE_USER_ROLE);
+            }
+        }
     }
 }
