@@ -19,16 +19,16 @@ import java.util.stream.Collectors;
 
 @RestController
 public class BoardApi {
-    
+
     @Inject
     private BoardService boardService;
-    
+
     @Inject
     private BoardMapper boardMapper;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
     
@@ -68,5 +68,5 @@ public class BoardApi {
     public BoardRepresentation updateBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
         return boardMapper.apply(boardService.updateBoard(id, boardDTO));
     }
-    
+
 }

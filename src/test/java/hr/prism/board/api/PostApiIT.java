@@ -19,6 +19,7 @@ import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestUserService;
+import hr.prism.board.service.UserRoleService;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.hamcrest.Matchers;
@@ -39,13 +40,13 @@ import static org.junit.Assert.*;
 @TestContext
 @RunWith(SpringRunner.class)
 public class PostApiIT extends AbstractIT {
-    
+
     private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
-    
+
     private static LinkedHashMultimap<State, Action> AUTHOR_ACTIONS = LinkedHashMultimap.create();
-    
+
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
-    
+
     static {
         ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.ACCEPT, Action.REJECT, Action.SUSPEND));
         ADMIN_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.ACCEPT, Action.REJECT));
@@ -54,7 +55,7 @@ public class PostApiIT extends AbstractIT {
         ADMIN_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.REJECT, Action.SUSPEND));
         ADMIN_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
         ADMIN_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT));
-    
+
         AUTHOR_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW, Action.CORRECT));
         AUTHOR_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
@@ -62,10 +63,10 @@ public class PostApiIT extends AbstractIT {
         AUTHOR_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.RESTORE));
-        
+
         PUBLIC_ACTIONS.put(State.ACCEPTED, Action.VIEW);
     }
-    
+
     @Inject
     private PostApi postApi;
 
@@ -91,27 +92,27 @@ public class PostApiIT extends AbstractIT {
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
-        
+
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11");
         BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
-    
+
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
             TestHelper.samplePost()
                 .setName(board11PostName)));
         unprivilegedUserPosts.put(board11Id, board11PostName);
-        
-        
+
+
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
         boardDTO12.getDepartment().setName("department1");
         boardDTO12.setName("board12");
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
-    
+
         Long board12Id = boardR12.getId();
         String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
@@ -119,26 +120,26 @@ public class PostApiIT extends AbstractIT {
                 .setName(board12PostName)
                 .setMemberCategories(Collections.singletonList("m1"))));
         unprivilegedUserPosts.put(board12Id, board12PostName);
-        
+
         User user21 = testUserService.authenticate();
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO21));
-    
+
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
             TestHelper.smallSamplePost()
                 .setName(board21PostName)));
         unprivilegedUserPosts.put(board21Id, board21PostName);
-        
+
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
         boardDTO22.getDepartment().setName("department2");
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
-    
+
         Long board22Id = boardR22.getId();
         String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
@@ -146,12 +147,12 @@ public class PostApiIT extends AbstractIT {
                 .setName(board22PostName)
                 .setPostCategories(Collections.singletonList("p1"))));
         unprivilegedUserPosts.put(board22Id, board22PostName);
-    
+
         LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
         LinkedHashMultimap<State, String> boardPostNames12 = LinkedHashMultimap.create();
         LinkedHashMultimap<State, String> boardPostNames21 = LinkedHashMultimap.create();
         LinkedHashMultimap<State, String> boardPostNames22 = LinkedHashMultimap.create();
-        
+
         int postCount = 1;
         LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
@@ -161,7 +162,7 @@ public class PostApiIT extends AbstractIT {
                 boardPostNames11.put(state, board11PostName);
                 postCount++;
             }
-            
+
             User postUser1 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 String name = boardR11.getName() + " " + state.name().toLowerCase() + " " + i;
@@ -172,13 +173,13 @@ public class PostApiIT extends AbstractIT {
                 boardPostNames11.put(state, name);
                 postCount++;
             }
-    
+
             if (state == State.DRAFT) {
                 reschedulePost(board12PostName, baseline, postCount);
                 boardPostNames12.put(state, board12PostName);
                 postCount++;
             }
-            
+
             for (int i = 1; i < 3; i++) {
                 String name = boardR12.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board12Id,
@@ -189,13 +190,13 @@ public class PostApiIT extends AbstractIT {
                 boardPostNames12.put(state, name);
                 postCount++;
             }
-    
+
             if (state == State.DRAFT) {
                 reschedulePost(board21PostName, baseline, postCount);
                 boardPostNames21.put(state, board21PostName);
                 postCount++;
             }
-            
+
             User postUser2 = testUserService.authenticate();
             for (int i = 1; i < 3; i++) {
                 String name = boardR21.getName() + " " + state.name().toLowerCase() + " " + i;
@@ -206,13 +207,13 @@ public class PostApiIT extends AbstractIT {
                 boardPostNames21.put(state, name);
                 postCount++;
             }
-    
+
             if (state == State.DRAFT) {
                 reschedulePost(board22PostName, baseline, postCount);
                 boardPostNames22.put(state, board22PostName);
                 postCount++;
             }
-            
+
             for (int i = 1; i < 3; i++) {
                 String name = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board22Id,
@@ -224,34 +225,34 @@ public class PostApiIT extends AbstractIT {
                 postCount++;
             }
         }
-    
+
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
         boardPostNames.put(board11Id, boardPostNames11);
         boardPostNames.put(board12Id, boardPostNames12);
         boardPostNames.put(board21Id, boardPostNames21);
         boardPostNames.put(board22Id, boardPostNames22);
-    
+
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames = new LinkedHashMap<>();
         LinkedHashMultimap<State, String> publicPostNames11 = LinkedHashMultimap.create();
         publicPostNames11.putAll(State.ACCEPTED, Arrays.asList("board11 accepted 1", "board11 accepted 2"));
         publicPostNames.put(board11Id, publicPostNames11);
-    
+
         LinkedHashMultimap<State, String> publicPostNames12 = LinkedHashMultimap.create();
         publicPostNames12.putAll(State.ACCEPTED, Arrays.asList("board12 accepted 1", "board12 accepted 2"));
         publicPostNames.put(board12Id, publicPostNames12);
-    
+
         LinkedHashMultimap<State, String> publicPostNames21 = LinkedHashMultimap.create();
         publicPostNames21.putAll(State.ACCEPTED, Arrays.asList("board21 accepted 1", "board21 accepted 2"));
         publicPostNames.put(board21Id, publicPostNames21);
-    
+
         LinkedHashMultimap<State, String> publicPostNames22 = LinkedHashMultimap.create();
         publicPostNames22.putAll(State.ACCEPTED, Arrays.asList("board22 accepted 1", "board22 accepted 2"));
         publicPostNames.put(board22Id, publicPostNames22);
-        
+
         testUserService.unauthenticate();
         verifyUnprivilegedPostUser(publicPostNames);
-    
+
         for (Long boardId : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardId);
             for (Scope scope : unprivilegedUserMap.keySet()) {
@@ -289,7 +290,7 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user22BoardPostNames = new LinkedHashMap<>();
         user12BoardPostNames.put(board22Id, boardPostNames22);
         verifyPrivilegedPostUser(publicPostNames, user22BoardPostNames, PostAdminContext.ADMIN);
-        
+
         for (User postUser : posts.keySet()) {
             testUserService.setAuthentication(postUser.getId());
             verifyPrivilegedPostUser(publicPostNames, posts.get(postUser), PostAdminContext.AUTHOR);
@@ -509,9 +510,9 @@ public class PostApiIT extends AbstractIT {
             .put(Action.RESTORE, () -> postApi.restorePost(postId, new PostPatchDTO()))
             .put(Action.WITHDRAW, () -> postApi.withdrawPost(postId, new PostPatchDTO()))
             .build();
-        
+
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
-        
+
         // Check that we do not audit viewing
         transactionTemplate.execute(status -> postApi.getPost(postId));
 
@@ -544,7 +545,7 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(postUser, postId, updateDTO, () -> postApi.updatePost(postId, updateDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
-        
+
         // Check that the administrator can make changes and suspend the post
         PostPatchDTO suspendDTO = new PostPatchDTO()
             .setLiveTimestamp(Optional.of(liveTimestamp))
@@ -553,7 +554,7 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.suspendPost(postId, suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
-        
+
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name"))
@@ -571,7 +572,7 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.correctPost(postId, correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
-        
+
         // Check that the administrator can accept post in the accepted state
         PostPatchDTO acceptDTO = new PostPatchDTO()
             .setLiveTimestamp(Optional.empty())
@@ -580,11 +581,11 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.acceptPost(postId, acceptDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
-        
+
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.suspendPost(postId, new PostPatchDTO()), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
-        
+
         // Check that the administrator can make further changes and accept the post in the pending state
         PostPatchDTO acceptPendingDTO = new PostPatchDTO()
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
@@ -595,7 +596,7 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.acceptPost(postId, acceptPendingDTO), State.PENDING);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
-        
+
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
 
@@ -609,21 +610,21 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
-        
+
         // Check that the administrator can reject the post
         PostPatchDTO rejectDTO = new PostPatchDTO()
             .setComment("we have received a complaint, we're closing down the post");
 
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.rejectPost(postId, rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
-        
+
         // Check that the administrator can restore the post
         PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.restorePost(postId, restoreFromRejectedDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
-        
+
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
             post.setDeadTimestamp(liveTimestamp.minusSeconds(1));
@@ -633,20 +634,20 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
-        
+
         // Check that the author can withdraw the post
         // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO withdrawDTO = new PostPatchDTO();
         verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.withdrawPost(postId, withdrawDTO), State.WITHDRAWN);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.WITHDRAWN, operations);
-        
+
         // Check that the author can restore the post
         // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO();
 
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.restorePost(postId, restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
-        
+
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
             post.setDeadTimestamp(null);
@@ -860,7 +861,7 @@ public class PostApiIT extends AbstractIT {
         assertTrue(locationDefinition.getLatitude().compareTo(locationR.getLatitude()) == 0);
         assertTrue(locationDefinition.getLongitude().compareTo(locationR.getLongitude()) == 0);
     }
-    
+
     private void verifyPostActions(List<User> adminUsers, User postUser, Collection<User> unprivilegedUsers, Long postId, State state, Map<Action, Runnable> operations) {
         Collection<Action> publicActions = PUBLIC_ACTIONS.get(state);
         if (CollectionUtils.isEmpty(publicActions)) {
@@ -870,11 +871,11 @@ public class PostApiIT extends AbstractIT {
             verifyResourceActions(Scope.POST, postId, operations, publicActions);
             verifyResourceActions(unprivilegedUsers, Scope.POST, postId, operations, publicActions);
         }
-    
+
         verifyResourceActions(adminUsers, Scope.POST, postId, operations, ADMIN_ACTIONS.get(state));
         verifyResourceActions(postUser, Scope.POST, postId, operations, AUTHOR_ACTIONS.get(state));
     }
-    
+
     private void verifyPostPostAndSetState(User user, Long boardId, PostDTO postDTO, State state,
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int seconds) {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(user, k -> new LinkedHashMap<>());
@@ -883,7 +884,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state).setUpdatedTimestamp(baseline.minusSeconds(seconds)));
         userStatePosts.put(state, postDTO.getName());
     }
-    
+
     private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
         transactionTemplate.execute(status -> {
             Post post = postService.getByName(postName).get(0);
@@ -891,13 +892,13 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
     }
-    
+
     private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> postApi.getPosts(null)),
             Collections.emptyList(),
             null);
-        
+
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
         statePostNames.keySet().forEach(state ->
@@ -906,13 +907,13 @@ public class PostApiIT extends AbstractIT {
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))));
-        
+
         for (Long boardId : postNames.keySet()) {
             TestHelper.verifyResources(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)),
                 Collections.emptyList(),
                 null);
-            
+
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true)));
@@ -924,7 +925,7 @@ public class PostApiIT extends AbstractIT {
                         .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))));
         }
     }
-    
+
     private void verifyPrivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames,
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames, PostAdminContext adminContext) {
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
@@ -935,7 +936,7 @@ public class PostApiIT extends AbstractIT {
                 Lists.newArrayList(statePostNames.get(state)),
                 new TestHelper.ExpectedActions()
                     .add(getAdminActions(state, adminContext))));
-        
+
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
         LinkedHashMultimap<State, PostRepresentation> mergedStatePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(true)));
         LinkedHashMultimap<State, String> mergedStatePostNames = mergePostNamesPreservingOrder(statePostNames, publicStatePostNames);
@@ -946,7 +947,7 @@ public class PostApiIT extends AbstractIT {
                 new TestHelper.ExpectedActions()
                     .add(Lists.newArrayList(PUBLIC_ACTIONS.get(state)))
                     .addAll(Lists.newArrayList(statePostNames.get(state)), getAdminActions(state, adminContext))));
-        
+
         for (Long boardId : postNames.keySet()) {
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
@@ -957,7 +958,7 @@ public class PostApiIT extends AbstractIT {
                     Lists.newArrayList(boardStatePostNames.get(state)),
                     new TestHelper.ExpectedActions()
                         .add(getAdminActions(state, adminContext))));
-            
+
             LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> mergedBoardStatePosts = getPostsByState(
                 transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null)));
@@ -971,23 +972,23 @@ public class PostApiIT extends AbstractIT {
                         .addAll(Lists.newArrayList(boardStatePostNames.get(state)), getAdminActions(state, adminContext))));
         }
     }
-    
+
     private List<Action> getAdminActions(State state, PostAdminContext adminContext) {
         return Lists.newArrayList(adminContext == PostAdminContext.ADMIN ? ADMIN_ACTIONS.get(state) : AUTHOR_ACTIONS.get(state));
     }
-    
+
     private LinkedHashMultimap<State, PostRepresentation> getPostsByState(List<PostRepresentation> postRs) {
         LinkedHashMultimap<State, PostRepresentation> postsByState = LinkedHashMultimap.create();
         postRs.forEach(postR -> postsByState.put(postR.getState(), postR));
         return postsByState;
     }
-    
+
     private LinkedHashMultimap<State, String> getPostNamesByState(LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNameMap) {
         LinkedHashMultimap<State, String> postNamesByState = LinkedHashMultimap.create();
         boardPostNameMap.entrySet().forEach(entry -> postNamesByState.putAll(entry.getValue()));
         return postNamesByState;
     }
-    
+
     private LinkedHashMultimap<State, String> mergePostNamesPreservingOrder(LinkedHashMultimap<State, String> postNames, LinkedHashMultimap<State, String> publicPostNames) {
         LinkedHashMultimap<State, String> mergedPostNames = LinkedHashMultimap.create();
         postNames.keySet().forEach(state -> {
@@ -996,15 +997,14 @@ public class PostApiIT extends AbstractIT {
             merge.sort(Comparator.naturalOrder());
             mergedPostNames.putAll(state, merge);
         });
-        
+
         return mergedPostNames;
     }
-    
-    
+
     private interface PostOperation {
         PostRepresentation execute();
     }
-    
+
     private enum PostAdminContext {
         ADMIN, AUTHOR
     }

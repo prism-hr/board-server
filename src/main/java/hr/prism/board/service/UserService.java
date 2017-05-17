@@ -1,10 +1,10 @@
 package hr.prism.board.service;
 
-import hr.prism.board.authentication.AuthenticationToken;
-import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
@@ -25,10 +25,10 @@ import java.util.Date;
 @Service
 @Transactional
 public class UserService {
-    
+
     @Inject
     private UserRepository userRepository;
-    
+
     @Inject
     private DocumentService documentService;
     
@@ -38,7 +38,7 @@ public class UserService {
     public User findOne(Long id) {
         return userRepository.findOne(id);
     }
-    
+
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -52,13 +52,13 @@ public class UserService {
         
         return userRepository.findOne(userId);
     }
-    
+
     public User getCurrentUserSecured() {
         User user = getCurrentUser();
         if (user == null) {
             throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
         }
-        
+
         return user;
     }
     
@@ -113,7 +113,7 @@ public class UserService {
         user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
     }
-    
+
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured();
         if (userDTO.getGivenName() != null) {
@@ -133,9 +133,25 @@ public class UserService {
         
             user.setDocumentImage(documentService.getOrCreateDocument(newImage));
         }
-        
+
         userRepository.update(user);
         return user;
+    }
+
+    public User getOrCreateUser(UserDTO userDTO) {
+        User user = userRepository.findByEmail(userDTO.getEmail());
+        if(user != null) {
+            return user;
+        }
+        user = new User();
+        user.setEmail(userDTO.getEmail());
+        user.setGivenName(userDTO.getGivenName());
+        user.setSurname(userDTO.getSurname());
+        return userRepository.save(user);
+    }
+
+    public User get(Long id) {
+        return userRepository.findOne(id);
     }
     
     public static String makeAccessToken(Long userId) {

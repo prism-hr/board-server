@@ -23,6 +23,7 @@ import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.TestUserService;
+import hr.prism.board.service.UserRoleService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
@@ -39,16 +40,16 @@ import java.util.stream.Collectors;
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
-    
+
     private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
-    
+
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
-    
+
     static {
         ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
-    
+
     @Inject
     private DepartmentApi departmentApi;
 
@@ -81,7 +82,7 @@ public class DepartmentApiIT extends AbstractIT {
         BoardRepresentation boardR2 = verifyPostDepartment(user1, boardDTO2, "department2");
         unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, 2,
             TestHelper.smallSamplePost()));
-        
+
         User user2 = testUserService.authenticate();
         BoardDTO boardDTO3 = TestHelper.sampleBoard();
         boardDTO3.getDepartment().setName("department3");
@@ -95,13 +96,13 @@ public class DepartmentApiIT extends AbstractIT {
         BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
         unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2,
             TestHelper.smallSamplePost()));
-    
+
         List<String> departmentNames = Arrays.asList(
             "department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40");
-        
+
         testUserService.unauthenticate();
         verifyUnprivilegedDepartmentUser(departmentNames);
-        
+
         for (String departmentName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(departmentName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
@@ -344,13 +345,13 @@ public class DepartmentApiIT extends AbstractIT {
             return departmentR;
         });
     }
-    
+
     private void verifyDepartmentActions(User adminUser, Collection<User> unprivilegedUsers, Long boardId, Map<Action, Runnable> operations) {
         verifyResourceActions(Scope.DEPARTMENT, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
         verifyResourceActions(unprivilegedUsers, Scope.DEPARTMENT, boardId, operations, PUBLIC_ACTIONS.get(State.ACCEPTED));
         verifyResourceActions(adminUser, Scope.DEPARTMENT, boardId, operations, ADMIN_ACTIONS.get(State.ACCEPTED));
     }
-    
+
     private void verifyUnprivilegedDepartmentUser(List<String> departmentNames) {
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
@@ -363,16 +364,16 @@ public class DepartmentApiIT extends AbstractIT {
             new TestHelper.ExpectedActions()
                 .add(Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED))));
     }
-    
+
     private void verifyPrivilegedDepartmentUser(List<String> departmentNames, List<String> adminDepartmentNames) {
         List<Action> adminActions = Lists.newArrayList(ADMIN_ACTIONS.get(State.ACCEPTED));
-        
+
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
             adminDepartmentNames,
             new TestHelper.ExpectedActions()
                 .addAll(adminDepartmentNames, adminActions));
-        
+
         TestHelper.verifyResources(
             transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
             departmentNames,
