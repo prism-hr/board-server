@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.Action;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "resource_operation")
@@ -28,6 +29,9 @@ public class ResourceOperation extends BoardEntity {
     
     @Column(name = "comment")
     private String comment;
+    
+    @Column(name = "notified_timestamp")
+    private LocalDateTime notifiedTimestamp;
     
     public Resource getResource() {
         return resource;
@@ -71,6 +75,15 @@ public class ResourceOperation extends BoardEntity {
     
     public ResourceOperation setComment(String comment) {
         this.comment = comment;
+        return this;
+    }
+    
+    public LocalDateTime getNotifiedTimestamp() {
+        return notifiedTimestamp;
+    }
+    
+    public ResourceOperation setNotifiedTimestamp(LocalDateTime notifiedTimestamp) {
+        this.notifiedTimestamp = notifiedTimestamp;
         return this;
     }
     

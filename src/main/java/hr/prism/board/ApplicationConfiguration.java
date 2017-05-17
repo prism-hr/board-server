@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.sendgrid.SendGrid;
 import hr.prism.board.repository.MyRepositoryImpl;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -23,6 +25,10 @@ import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.spring4.SpringTemplateEngine;
+import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
+import org.thymeleaf.templatemode.StandardTemplateModeHandlers;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -41,6 +47,9 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     
     @Inject
     private Environment environment;
+    
+    @Inject
+    private ApplicationContext applicationContext;
     
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
@@ -74,6 +83,28 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         
         flyway.migrate();
         return flyway;
+    }
+    
+    @Bean
+    public SendGrid sendGrid() {
+        String sendGridKey = environment.getProperty("sendgrid.key");
+        if (sendGridKey == null) {
+            return null;
+        }
+        
+        return new SendGrid(sendGridKey);
+    }
+    
+    @Bean
+    public TemplateEngine templateEngine() {
+        SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
+        templateResolver.setApplicationContext(applicationContext);
+        templateResolver.setTemplateMode(StandardTemplateModeHandlers.HTML5.getTemplateModeName());
+        templateResolver.setPrefix("classpath:/notification/");
+        templateResolver.setSuffix(".html");
+        SpringTemplateEngine engine = new SpringTemplateEngine();
+        engine.setTemplateResolver(templateResolver);
+        return engine;
     }
     
     @Bean

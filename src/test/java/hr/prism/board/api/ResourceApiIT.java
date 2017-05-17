@@ -110,7 +110,7 @@ public class ResourceApiIT extends AbstractIT {
         
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.removeUserRole(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), Role
-                .ADMINISTRATOR), ExceptionCode.NON_EXISTING_USER_ROLE, status);
+                .ADMINISTRATOR), ExceptionCode.NONEXISTENT_USER_ROLE, status);
             return null;
         });
     }

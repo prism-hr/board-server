@@ -50,6 +50,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
         </dependency>
@@ -144,6 +149,18 @@
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
             <version>1.9.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sendgrid</groupId>
+            <artifactId>sendgrid-java</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.2</version>
         </dependency>
 
         <dependency>
@@ -280,6 +297,8 @@
             <properties>
                 <profile.app.url>http://localhost:4200</profile.app.url>
                 <profile.database.host>localhost:3306</profile.database.host>
+                <profile.facebook.key>tbc</profile.facebook.key>
+                <profile.linkedin.key>tbc</profile.linkedin.key>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -291,6 +310,9 @@
             <properties>
                 <profile.app.url>https://board-uat.prism.hr</profile.app.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
+                <profile.sendgrid.key>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</profile.sendgrid.key>
+                <profile.facebook.key>tbc</profile.facebook.key>
+                <profile.linkedin.key>tbc</profile.linkedin.key>
             </properties>
         </profile>
 
@@ -299,6 +321,9 @@
             <properties>
                 <profile.app.url>https://board.prism.hr</profile.app.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
+                <profile.sendgrid.key>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</profile.sendgrid.key>
+                <profile.facebook.key>tbc</profile.facebook.key>
+                <profile.linkedin.key>tbc</profile.linkedin.key>
             </properties>
         </profile>
     </profiles>

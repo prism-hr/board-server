@@ -1,10 +1,12 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
+import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
@@ -31,6 +33,9 @@ public class UserService {
     
     @Inject
     private DocumentService documentService;
+    
+    @Inject
+    private NotificationService notificationService;
     
     @Inject
     private ApplicationContext applicationContext;
@@ -82,22 +87,22 @@ public class UserService {
             .setSurname(registerDTO.getSurname()).setEmail(email).setPassword(DigestUtils.sha256Hex(registerDTO.getPassword())));
     }
     
-    public User signin(OauthDTO oauthDTO) {
-        Class<? extends OauthAdapter> oauthAdapterClass = oauthDTO.getProvider().getOauthAdapter();
+    public User signin(OauthProvider provider, OauthDTO oauthDTO) {
+        Class<? extends OauthAdapter> oauthAdapterClass = provider.getOauthAdapter();
         if (oauthAdapterClass == null) {
             throw new ApiForbiddenException(ExceptionCode.UNSUPPORTED_AUTHENTICATOR);
         }
-    
+        
         User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(oauthDTO);
         if (newUser.getEmail() == null) {
             throw new ApiForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER);
         }
-    
+        
         User oldUser = userRepository.findByOauthProviderAndOauthAccountId(newUser.getOauthProvider(), newUser.getOauthAccountId());
         if (oldUser == null) {
             return userRepository.save(newUser);
         }
-    
+        
         return oldUser;
     }
     
@@ -107,8 +112,8 @@ public class UserService {
             throw new ApiForbiddenException(ExceptionCode.UNREGISTERED_USER);
         }
         
-        // TODO: send email with temporary password
         String temporaryPassword = RandomStringUtils.randomAlphabetic(12);
+        notificationService.send(user, "reset_password", ImmutableMap.of("temporaryPassword", temporaryPassword));
         
         user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));

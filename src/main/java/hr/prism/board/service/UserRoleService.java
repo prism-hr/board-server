@@ -141,7 +141,7 @@ public class UserRoleService {
         
         Long deletedCount = userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
         if (deletedCount < 1) {
-            throw new ApiException(ExceptionCode.NON_EXISTING_USER_ROLE);
+            throw new ApiException(ExceptionCode.NONEXISTENT_USER_ROLE);
         }
         
         if (scope == Scope.DEPARTMENT) {
