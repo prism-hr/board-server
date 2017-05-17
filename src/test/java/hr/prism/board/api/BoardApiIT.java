@@ -120,17 +120,17 @@ public class BoardApiIT extends AbstractIT {
                 }
             }
         }
-
-        testUserService.setAuthentication(user11.getStormpathId());
+    
+        testUserService.setAuthentication(user11.getId());
         verifyPrivilegedBoardUser(boardNames, Arrays.asList("board11", "board1100", "board12", "board1200"), departmentBoardNames);
-
-        testUserService.setAuthentication(user12.getStormpathId());
+    
+        testUserService.setAuthentication(user12.getId());
         verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board12"), departmentBoardNames);
-
-        testUserService.setAuthentication(user21.getStormpathId());
+    
+        testUserService.setAuthentication(user21.getId());
         verifyPrivilegedBoardUser(boardNames, Arrays.asList("board21", "board2100", "board22", "board2200"), departmentBoardNames);
-
-        testUserService.setAuthentication(user22.getStormpathId());
+    
+        testUserService.setAuthentication(user22.getId());
         verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board22"), departmentBoardNames);
     }
 
@@ -413,7 +413,7 @@ public class BoardApiIT extends AbstractIT {
     }
 
     private BoardRepresentation verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
-        testUserService.setAuthentication(user.getStormpathId());
+        testUserService.setAuthentication(user.getId());
         return transactionTemplate.execute(status -> {
             Board board = boardService.getBoard(boardId);
             BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
