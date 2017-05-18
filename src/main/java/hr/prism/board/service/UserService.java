@@ -111,7 +111,8 @@ public class UserService {
         if (user == null) {
             throw new ApiForbiddenException(ExceptionCode.UNREGISTERED_USER);
         }
-        
+    
+        // TODO: send email with temporary password
         String temporaryPassword = RandomStringUtils.randomAlphabetic(12);
         notificationService.send(user, "reset_password", ImmutableMap.of("temporaryPassword", temporaryPassword));
         
