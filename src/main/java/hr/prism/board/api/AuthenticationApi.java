@@ -43,7 +43,7 @@ public class AuthenticationApi {
     }
     
     @RequestMapping(value = "/auth/resetPassword", method = RequestMethod.POST)
-    public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
+    public void resetPassword(@RequestBody @Valid ResetPasswordDTO resetPasswordDTO) {
         userService.resetPassword(resetPasswordDTO);
     }
     

@@ -29,6 +29,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templatemode.StandardTemplateModeHandlers;
+import org.thymeleaf.templateresolver.TemplateResolver;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -87,24 +88,24 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     
     @Bean
     public SendGrid sendGrid() {
-        String sendGridKey = environment.getProperty("sendgrid.key");
-        if (sendGridKey == null) {
-            return null;
-        }
-        
-        return new SendGrid(sendGridKey);
+        return new SendGrid(environment.getProperty("sendgrid.key"));
     }
     
     @Bean
     public TemplateEngine templateEngine() {
+        SpringTemplateEngine engine = new SpringTemplateEngine();
+        engine.setTemplateResolver(templateResolver());
+        return engine;
+    }
+    
+    @Bean
+    public TemplateResolver templateResolver() {
         SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
         templateResolver.setApplicationContext(applicationContext);
         templateResolver.setTemplateMode(StandardTemplateModeHandlers.HTML5.getTemplateModeName());
-        templateResolver.setPrefix("classpath:notification");
+        templateResolver.setPrefix("classpath:notification/");
         templateResolver.setSuffix(".html");
-        SpringTemplateEngine engine = new SpringTemplateEngine();
-        engine.setTemplateResolver(templateResolver);
-        return engine;
+        return templateResolver;
     }
     
     @Bean

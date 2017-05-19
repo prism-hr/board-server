@@ -5,7 +5,9 @@ import hr.prism.board.TestContext;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LoginDTO;
 import hr.prism.board.dto.RegisterDTO;
+import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserService;
 import hr.prism.board.service.UserService;
 import io.jsonwebtoken.Jwts;
@@ -21,6 +23,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @TestContext
@@ -38,6 +41,9 @@ public class AuthenticationApiIT {
     
     @Inject
     private TestUserService testUserService;
+    
+    @Inject
+    private TestNotificationService testNotificationService;
     
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {
@@ -108,6 +114,37 @@ public class AuthenticationApiIT {
         mockMvc.perform(
             MockMvcRequestBuilders.get("/api/user"))
             .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+    
+    @Test
+    public void shouldResetPasswordAndNotifyUser() throws Exception {
+        RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
+        UserRepresentation userR = objectMapper.readValue(
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            UserRepresentation.class);
+        
+        ResetPasswordDTO resetPasswordDTO = new ResetPasswordDTO().setEmail("alastair@prism.hr");
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/auth/resetPassword")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(resetPasswordDTO)))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn();
+        
+        User user = userService.findOne(userR.getId());
+        Assert.assertNotNull(user.getTemporaryPassword());
+        
+        LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
+        Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
+        Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
+//        testNotificationService.verify("", "");
     }
     
     private void verifyAccessToken(MockHttpServletResponse response, Long userId) {
