@@ -37,9 +37,9 @@ public class AuthenticationApi {
         return authorizeAndReturn(response, user);
     }
 
-    @RequestMapping(value = "/api/auth/signin/{provider}", method = RequestMethod.POST)
-    public Map<String, String> signin(HttpServletResponse response, @PathVariable OauthProvider provider, @RequestBody @Valid OauthDTO oauthDTO) {
-        User user = userService.signin(provider, oauthDTO);
+    @RequestMapping(value = "/api/auth/{provider}", method = RequestMethod.POST)
+    public Map<String, String> signin(HttpServletResponse response, @PathVariable String provider, @RequestBody @Valid OauthDTO oauthDTO) {
+        User user = userService.signin(OauthProvider.valueOf(provider.toUpperCase()), oauthDTO);
         return authorizeAndReturn(response, user);
     }
 

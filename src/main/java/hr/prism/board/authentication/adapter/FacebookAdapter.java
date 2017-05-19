@@ -13,20 +13,20 @@ import javax.inject.Inject;
 
 @Component
 public class FacebookAdapter implements OauthAdapter {
-    
+
     @Inject
     private Environment environment;
-    
+
     @Override
     public User exchangeForUser(OauthDTO oauthDTO) {
-        FacebookServiceProvider provider = new FacebookServiceProvider(oauthDTO.getClientId(), environment.getProperty("oauth.facebook.appSecret"), null);
+        FacebookServiceProvider provider = new FacebookServiceProvider(oauthDTO.getClientId(), environment.getProperty("auth.facebook.appSecret"), null);
         AccessGrant accessGrant = provider.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
-        
+
         FacebookTemplate template = new FacebookTemplate(accessGrant.getAccessToken());
         org.springframework.social.facebook.api.User user = template.userOperations().getUserProfile();
-        
+
         return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName())
             .setEmail(user.getEmail()).setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId());
     }
-    
+
 }

@@ -14,20 +14,20 @@ import javax.inject.Inject;
 
 @Component
 public class LinkedinAdapter implements OauthAdapter {
-    
+
     @Inject
     private Environment environment;
-    
+
     @Override
     public User exchangeForUser(OauthDTO oauthDTO) {
-        LinkedInServiceProvider provider = new LinkedInServiceProvider(oauthDTO.getClientId(), environment.getProperty("oauth.linkedin.appSecret"));
+        LinkedInServiceProvider provider = new LinkedInServiceProvider(oauthDTO.getClientId(), environment.getProperty("auth.linkedin.appSecret"));
         AccessGrant accessGrant = provider.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
-        
+
         LinkedInTemplate template = new LinkedInTemplate(accessGrant.getAccessToken());
         LinkedInProfile user = template.profileOperations().getUserProfile();
-        
+
         return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName())
             .setEmail(user.getEmailAddress()).setOauthProvider(OauthProvider.LINKEDIN).setOauthAccountId(user.getId());
     }
-    
+
 }
