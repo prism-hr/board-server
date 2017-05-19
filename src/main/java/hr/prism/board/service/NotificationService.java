@@ -6,6 +6,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,7 +39,7 @@ public class NotificationService {
     @Inject
     private TemplateEngine templateEngine;
     
-    public void send(User user, String notification, Map<String, String> parameters) {
+    public Pair<String, String> send(User user, String notification, Map<String, String> parameters) {
         Context context = new Context();
         context.setVariable("firstName", user.getGivenName());
         parameters.keySet().forEach(key -> context.setVariable(key, parameters.get(key)));
@@ -49,11 +50,7 @@ public class NotificationService {
         String subject = templateEngine.process("subject/" + notification, context);
         String content = templateEngine.process("content/" + notification, context);
         
-        if (sendGrid == null) {
-            // Local/Tests contexts
-            LOGGER.info("Sending notification:\n" + makeHeader(notification, sender, recipient)
-                + "\n\n" + "Subject:\n" + subject + "\n\n" + "Content:\n" + convertToPlainText(content));
-        } else {
+        if (environment.getProperty("mail.strategy").equals("send")) {
             // Production/UAT contexts
             Mail mail = new Mail();
             mail.setFrom(new Email(sender));
@@ -64,7 +61,7 @@ public class NotificationService {
             
             mail.setSubject(subject);
             mail.addContent(new Content("text/html", content));
-            mail.addContent(new Content("text/plain", convertToPlainText(content)));
+            mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
             
             try {
                 Request request = new Request();
@@ -73,18 +70,24 @@ public class NotificationService {
                 request.body = mail.build();
                 sendGrid.api(request);
                 
-                LOGGER.info("Sending notification:\n" + makeHeader(notification, sender, recipient));
+                LOGGER.info("Sending notification:\n" + makeLogHeader(notification, sender, recipient));
             } catch (IOException ex) {
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
+        } else {
+            // Local/Test contexts
+            LOGGER.info("Sending notification:\n" + makeLogHeader(notification, sender, recipient)
+                + "\n\n" + "Subject:\n" + subject + "\n\n" + "Content:\n" + makePlainTextVersion(content));
         }
+        
+        return Pair.of(subject, content);
     }
     
-    private String makeHeader(String notification, String sender, String recipient) {
+    private String makeLogHeader(String notification, String sender, String recipient) {
         return MoreObjects.toStringHelper(this).add("notification", notification).add("sender", sender).add("recipient", recipient).toString();
     }
     
-    private String convertToPlainText(String html) {
+    private String makePlainTextVersion(String html) {
         Document document = Jsoup.parse(html);
         Element body = document.select("body").first();
         

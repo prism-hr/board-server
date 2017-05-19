@@ -12,7 +12,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/auth/*");
+        web.ignoring().antMatchers("/auth/*", "/redirect");
     }
     
     @Override
@@ -20,7 +20,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
             .anonymous().disable()
             .authorizeRequests()
-            .antMatchers("/auth/*").permitAll()
+            .antMatchers("/auth/*", "/redirect").permitAll()
             .and().addFilterAt(new AuthenticationFilter(), BasicAuthenticationFilter.class);
     }
     
