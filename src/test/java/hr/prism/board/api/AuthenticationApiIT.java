@@ -23,9 +23,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
-import java.util.Map;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.Map;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -119,20 +118,29 @@ public class AuthenticationApiIT {
     @Test
     public void shouldResetPasswordAndNotifyUser() throws Exception {
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
-        UserRepresentation userR = objectMapper.readValue(
+        String accessToken = (String) objectMapper.readValue(
             mockMvc.perform(
-                MockMvcRequestBuilders.post("/auth/register")
+                MockMvcRequestBuilders.post("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .content(objectMapper.writeValueAsString(registerDTO)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString(),
-            UserRepresentation.class);
+            Map.class).get("token");
+
+        MockHttpServletResponse userResponse =
+            mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/user")
+                    .header("Authorization", "Bearer " + accessToken))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse();
+        UserRepresentation userR = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
 
         ResetPasswordDTO resetPasswordDTO = new ResetPasswordDTO().setEmail("alastair@prism.hr");
         mockMvc.perform(
-            MockMvcRequestBuilders.post("/auth/resetPassword")
+            MockMvcRequestBuilders.post("/api/auth/resetPassword")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(resetPasswordDTO)))
             .andExpect(MockMvcResultMatchers.status().isOk())
