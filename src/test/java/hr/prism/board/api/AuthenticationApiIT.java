@@ -68,7 +68,7 @@ public class AuthenticationApiIT {
     
         Assert.assertEquals(DigestUtils.sha256Hex("password"), user.getPassword());
     
-        Thread.currentThread().sleep(1000);
+        Thread.sleep(1000);
         LoginDTO loginDTO = new LoginDTO().setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse loginResponse =
             mockMvc.perform(
@@ -85,7 +85,7 @@ public class AuthenticationApiIT {
         UserRepresentation loginResponseBody = objectMapper.readValue(loginResponse.getContentAsString(), UserRepresentation.class);
         Assert.assertEquals("alastair@prism.hr", loginResponseBody.getEmail());
     
-        Thread.currentThread().sleep(1000);
+        Thread.sleep(1000);
         MockHttpServletResponse userResponse =
             mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/user")
