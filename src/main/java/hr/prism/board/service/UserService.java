@@ -97,10 +97,18 @@ public class UserService {
         if (newUser.getEmail() == null) {
             throw new ApiForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER);
         }
-        
-        User oldUser = userRepository.findByOauthProviderAndOauthAccountId(newUser.getOauthProvider(), newUser.getOauthAccountId());
+    
+        String accountId = newUser.getOauthAccountId();
+        User oldUser = userRepository.findByOauthProviderAndOauthAccountId(provider, accountId);
         if (oldUser == null) {
-            return userRepository.save(newUser);
+            String email = newUser.getEmail();
+            oldUser = userRepository.findByEmail(email);
+            if (oldUser == null) {
+                return userRepository.save(newUser);
+            } else {
+                oldUser.setOauthProvider(provider);
+                oldUser.setOauthAccountId(accountId);
+            }
         }
         
         return oldUser;

@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
-
+    
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
@@ -21,8 +21,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
             response.setHeader("Authorization", "Bearer " + UserService.makeAccessToken(userId));
         }
-
+        
         filterChain.doFilter(request, response);
     }
-
+    
 }
