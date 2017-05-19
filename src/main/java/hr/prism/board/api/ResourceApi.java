@@ -18,27 +18,27 @@ public class ResourceApi {
     @Inject
     private UserRoleService userRoleService;
 
-    @RequestMapping(value = "/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
     public List<ResourceUserRepresentation> getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
         return userRoleService.getResourceUsers(scope, resourceId);
     }
 
-    @RequestMapping(value = "/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
     public ResourceUserRepresentation addResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
         return userRoleService.addResourceUser(scope, resourceId, user);
     }
 
-    @RequestMapping(value = "/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.DELETE)
     public void removeResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId) {
         userRoleService.removeResourceUser(scope, resourceId, userId);
     }
 
-    @RequestMapping(value = "/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.PUT)
     public void addUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
         userRoleService.addUserRole(scope, resourceId, userId, role);
     }
 
-    @RequestMapping(value = "/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.DELETE)
     public void removeUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
         userRoleService.removeUserRole(scope, resourceId, userId, role);
     }

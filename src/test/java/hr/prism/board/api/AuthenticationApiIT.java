@@ -21,101 +21,98 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
-import java.util.Date;
+import java.util.Map;
 
 @TestContext
 @RunWith(SpringRunner.class)
 public class AuthenticationApiIT {
-    
+
     @Inject
     private MockMvc mockMvc;
-    
+
     @Inject
     private ObjectMapper objectMapper;
-    
+
     @Inject
     private UserService userService;
-    
+
     @Inject
     private TestUserService testUserService;
-    
+
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse registerResponse =
             mockMvc.perform(
-                MockMvcRequestBuilders.post("/auth/register")
+                MockMvcRequestBuilders.post("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .content(objectMapper.writeValueAsString(registerDTO)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse();
-    
-        UserRepresentation registerResponseBody = objectMapper.readValue(registerResponse.getContentAsString(), UserRepresentation.class);
-        User user = userService.findOne(registerResponseBody.getId());
+
+        String loginAccessToken = (String) objectMapper.readValue(registerResponse.getContentAsString(), Map.class).get("token");
+
+        MockHttpServletResponse userResponse =
+            mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/user")
+                    .header("Authorization", "Bearer " + loginAccessToken))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse();
+        UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
+
+        User user = userService.findOne(userRepresentation.getId());
         Long userId = user.getId();
-    
-        verifyAccessToken(registerResponse, userId);
-        Assert.assertEquals("alastair", registerResponseBody.getGivenName());
-        Assert.assertEquals("knowles", registerResponseBody.getSurname());
-        Assert.assertEquals("alastair@prism.hr", registerResponseBody.getEmail());
-    
+
+        verifyAccessToken(loginAccessToken, userId);
+        Assert.assertEquals("alastair", userRepresentation.getGivenName());
+        Assert.assertEquals("knowles", userRepresentation.getSurname());
+        Assert.assertEquals("alastair@prism.hr", userRepresentation.getEmail());
+
         Assert.assertEquals(DigestUtils.sha256Hex("password"), user.getPassword());
-    
+
         Thread.currentThread().sleep(1000);
         LoginDTO loginDTO = new LoginDTO().setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse loginResponse =
             mockMvc.perform(
-                MockMvcRequestBuilders.post("/auth/login")
+                MockMvcRequestBuilders.post("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .content(objectMapper.writeValueAsString(loginDTO)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse();
-    
-        verifyAccessToken(loginResponse, userId);
-        String loginAccessToken = loginResponse.getHeader("Authorization").replaceFirst("Bearer", "");
-    
-        UserRepresentation loginResponseBody = objectMapper.readValue(loginResponse.getContentAsString(), UserRepresentation.class);
-        Assert.assertEquals("alastair@prism.hr", loginResponseBody.getEmail());
-    
+
+        loginAccessToken = (String) objectMapper.readValue(loginResponse.getContentAsString(), Map.class).get("token");
+        verifyAccessToken(loginAccessToken, userId);
+
         Thread.currentThread().sleep(1000);
-        MockHttpServletResponse userResponse =
+        userResponse =
             mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/user")
-                    .header("Authorization", "Bearer" + loginAccessToken))
+                    .header("Authorization", "Bearer " + loginAccessToken))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse();
-    
-        verifyAccessToken(userResponse, userId);
-        String userAccessToken = userResponse.getHeader("Authorization").replaceFirst("Bearer", "");
-    
+
         UserRepresentation userResponseBody = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
         Assert.assertEquals("alastair@prism.hr", userResponseBody.getEmail());
-        Assert.assertNotEquals(loginAccessToken, userAccessToken);
-    
-        Date loginAccessTokenExpiration = Jwts.parser().setSigningKey("secret").parseClaimsJws(loginAccessToken).getBody().getExpiration();
-        Date userAccessTokenExpiration = Jwts.parser().setSigningKey("secret").parseClaimsJws(userAccessToken).getBody().getExpiration();
-        Assert.assertTrue(userAccessTokenExpiration.after(loginAccessTokenExpiration));
-    
+
         testUserService.unauthenticate();
-    
+
         mockMvc.perform(
             MockMvcRequestBuilders.get("/api/posts"))
             .andExpect(MockMvcResultMatchers.status().isOk());
-    
+
         mockMvc.perform(
             MockMvcRequestBuilders.get("/api/user"))
             .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
-    
-    private void verifyAccessToken(MockHttpServletResponse response, Long userId) {
-        String authorization = response.getHeader("Authorization");
-        Assert.assertNotNull(authorization);
-        Assert.assertTrue(authorization.startsWith("Bearer"));
+
+    private void verifyAccessToken(String loginAccessToken, Long userId) {
+        Assert.assertNotNull(loginAccessToken);
         Assert.assertEquals(userId,
-            new Long(Long.parseLong(Jwts.parser().setSigningKey("secret").parseClaimsJws(authorization.replaceFirst("Bearer", "")).getBody().getSubject())));
+            new Long(Long.parseLong(Jwts.parser().setSigningKey("secret").parseClaimsJws(loginAccessToken).getBody().getSubject())));
     }
-    
+
 }
