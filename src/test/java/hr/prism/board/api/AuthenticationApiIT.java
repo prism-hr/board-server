@@ -155,7 +155,16 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
         testNotificationService.verify(new NotificationService.Notification("reset_password", "admin@prism.hr", "alastair@prism.hr",
-            ImmutableMap.of("firstName", "alastair", "temporaryPassword", "defined", "redirectUrl", "http://http://localhost:8080/redirect?path=login")));
+            ImmutableMap.of("firstName", "alastair", "temporaryPassword", "defined", "redirectUrl", "http://localhost:8080/redirect?path=login")));
+    
+        // Set the temporary password to something that we know
+        transactionTemplate.execute(status -> user.setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
+    
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("temporary"))))
+            .andExpect(MockMvcResultMatchers.status().isOk());
     }
     
     private void verifyAccessToken(String loginAccessToken, Long userId) {
