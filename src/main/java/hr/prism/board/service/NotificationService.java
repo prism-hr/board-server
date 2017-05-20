@@ -5,7 +5,7 @@ import com.sendgrid.*;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -50,12 +51,12 @@ public class NotificationService {
     
     @PostConstruct
     public void postConstruct() throws IOException {
-//        Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
-//        Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
-//
-//        this.subjects = indexResources(subjects);
-//        this.contents = indexResources(contents);
-//        Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
+        Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
+        Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
+    
+        this.subjects = indexResources(subjects);
+        this.contents = indexResources(contents);
+        Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
     }
     
     public Pair<String, String> send(User user, String notification, Map<String, String> customParameters) {
@@ -68,8 +69,13 @@ public class NotificationService {
         StrSubstitutor parser = new StrSubstitutor(parameters);
         String subject = parser.replace(this.subjects.get(notification));
         String content = parser.replace(this.contents.get(notification));
-        
-        if (environment.getProperty("mail.strategy").equals("send")) {
+    
+    
+        if (environment.getProperty("mail.strategy").equals("log") || environment.getActiveProfiles()[0].equals("test")) {
+            // Local/Test contexts
+            LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
+                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
+        } else {
             // Production/UAT contexts
             Mail mail = new Mail();
             mail.setFrom(new Email(sender));
@@ -93,10 +99,6 @@ public class NotificationService {
             } catch (IOException ex) {
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
-        } else {
-            // Local/Test contexts
-            LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
-                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
         }
         
         return Pair.of(subject, content);
@@ -132,7 +134,7 @@ public class NotificationService {
         TreeMap<String, String> index = new TreeMap<>();
         for (Resource resource : resources) {
             String fileName = resource.getFilename();
-            index.put(fileName.replace(".html", ""), FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8).trim());
+            index.put(fileName.replace(".html", ""), IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8).trim());
         }
         
         return index;
