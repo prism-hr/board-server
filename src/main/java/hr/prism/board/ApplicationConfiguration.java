@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sendgrid.SendGrid;
 import hr.prism.board.repository.MyRepositoryImpl;
+import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 
@@ -46,8 +48,21 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     private Environment environment;
     
     public static void main(String[] args) {
-        SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
-        springApplication.run(args);
+        InputStream propertiesStream = null;
+        try {
+            Properties properties = new Properties();
+            ClassLoader classLoader = ApplicationConfiguration.class.getClassLoader();
+            propertiesStream = classLoader.getResourceAsStream("application.properties");
+            properties.load(propertiesStream);
+        
+            SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
+            springApplication.setAdditionalProfiles(properties.get("profile").toString());
+            springApplication.run(args);
+        } catch (Exception e) {
+            LOGGER.info("Unable to load properties", e);
+        } finally {
+            IOUtils.closeQuietly(propertiesStream);
+        }
     }
     
     @Bean

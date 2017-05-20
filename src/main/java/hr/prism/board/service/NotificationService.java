@@ -6,6 +6,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,6 +37,8 @@ public class NotificationService {
     
     private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
     
+    private MailStrategy mailStrategy;
+    
     private Map<String, String> subjects;
     
     private Map<String, String> contents;
@@ -51,6 +54,13 @@ public class NotificationService {
     
     @PostConstruct
     public void postConstruct() throws IOException {
+        String[] activeProfiles = environment.getActiveProfiles();
+        if (ArrayUtils.contains(activeProfiles, "local") || ArrayUtils.contains(activeProfiles, "test")) {
+            mailStrategy = MailStrategy.LOG;
+        } else {
+            mailStrategy = MailStrategy.SEND;
+        }
+        
         Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
         Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
     
@@ -70,8 +80,7 @@ public class NotificationService {
         String subject = parser.replace(this.subjects.get(notification));
         String content = parser.replace(this.contents.get(notification));
     
-    
-        if (environment.getProperty("mail.strategy").equals("log") || environment.getActiveProfiles()[0].equals("test")) {
+        if (mailStrategy == MailStrategy.LOG) {
             // Local/Test contexts
             LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
                 + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
@@ -96,7 +105,8 @@ public class NotificationService {
                 sendGrid.api(request);
     
                 LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient));
-            } catch (IOException ex) {
+            } catch (IOException e) {
+                LOGGER.error("Failed to send notification", e);
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         }
@@ -138,6 +148,10 @@ public class NotificationService {
         }
         
         return index;
+    }
+    
+    private enum MailStrategy {
+        LOG, SEND
     }
     
 }

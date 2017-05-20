@@ -290,10 +290,10 @@
         <profile>
             <id>local</id>
             <properties>
+                <profile.id>local</profile.id>
                 <profile.app.url>http://localhost:4200</profile.app.url>
                 <profile.server.url>http://localhost:8080</profile.server.url>
                 <profile.database.host>localhost:3306</profile.database.host>
-                <profile.mail.strategy>log</profile.mail.strategy>
                 <profile.auth.facebook.appSecret>881c44ef7bb5ae0ad0ccf729b054bb64</profile.auth.facebook.appSecret>
                 <profile.auth.linkedin.appSecret>S9rG2e7FWFRY5YFh</profile.auth.linkedin.appSecret>
             </properties>
@@ -305,10 +305,10 @@
         <profile>
             <id>uat</id>
             <properties>
+                <profile.id>uat</profile.id>
                 <profile.app.url>https://board-uat.prism.hr</profile.app.url>
                 <profile.server.url>https://board-uat.prism.hr</profile.server.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.mail.strategy>send</profile.mail.strategy>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
                 <profile.auth.linkedin.appSecret>tbc</profile.auth.linkedin.appSecret>
@@ -318,10 +318,10 @@
         <profile>
             <id>prod</id>
             <properties>
+                <profile.id>prod</profile.id>
                 <profile.app.url>https://board.prism.hr</profile.app.url>
                 <profile.server.url>https://board-uat.prism.hr</profile.server.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.mail.strategy>send</profile.mail.strategy>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
                 <profile.auth.linkedin.appSecret>tbc</profile.auth.linkedin.appSecret>
