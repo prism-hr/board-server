@@ -295,7 +295,9 @@
                 <profile.server.url>http://localhost:8080</profile.server.url>
                 <profile.database.host>localhost:3306</profile.database.host>
                 <profile.auth.facebook.appSecret>881c44ef7bb5ae0ad0ccf729b054bb64</profile.auth.facebook.appSecret>
+                <profile.auth.facebook.clientId>238053150013119</profile.auth.facebook.clientId>
                 <profile.auth.linkedin.appSecret>S9rG2e7FWFRY5YFh</profile.auth.linkedin.appSecret>
+                <profile.auth.linkedin.clientId>772yxzl30r2opy</profile.auth.linkedin.clientId>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -310,8 +312,10 @@
                 <profile.server.url>https://board-uat.prism.hr</profile.server.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
-                <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
-                <profile.auth.linkedin.appSecret>tbc</profile.auth.linkedin.appSecret>
+                <profile.auth.facebook.appSecret>d4da5d66c6d3e8a2cb2dc86552296b27</profile.auth.facebook.appSecret>
+                <profile.auth.facebook.clientId>238056723346095</profile.auth.facebook.clientId>
+                <profile.auth.linkedin.appSecret>qqbWOxibjsuCetzN</profile.auth.linkedin.appSecret>
+                <profile.auth.linkedin.clientId>77tm9xfc3d1bxd</profile.auth.linkedin.clientId>
             </properties>
         </profile>
 
