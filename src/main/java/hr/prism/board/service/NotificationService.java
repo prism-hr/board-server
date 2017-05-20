@@ -104,9 +104,10 @@ public class NotificationService {
     }
     
     private String makeLogHeader(String notification, String sender, String recipient) {
-        return "notification = " + notification + ", sender = " + sender + ", recipient = " + recipient;
+        return "notification=" + notification + ", sender=" + sender + ", recipient=" + recipient;
     }
     
+    // FIXME: remove trailing line break
     private String makePlainTextVersion(String html) {
         Document document = Jsoup.parse(html);
         Element body = document.select("body").first();
