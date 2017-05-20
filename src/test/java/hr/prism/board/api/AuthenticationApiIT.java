@@ -17,6 +17,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -46,6 +47,9 @@ public class AuthenticationApiIT extends AbstractIT {
     
     @Inject
     private TestNotificationService testNotificationService;
+    
+    @Inject
+    private Environment environment;
     
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {
@@ -156,8 +160,8 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
         testNotificationService.verify(new NotificationService.Notification("reset_password", "admin@prism.hr", "alastair@prism.hr",
-            ImmutableMap.of("firstName", "alastair", "temporaryPassword", "defined", "redirectUrl", "http://localhost:8080/redirect?path=login")));
-    
+            ImmutableMap.of("firstName", "alastair", "temporaryPassword", "defined", "redirectUrl", environment.getProperty("server.url") + "/redirect?path=login")));
+        
         // Set the temporary password to something that we know
         transactionTemplate.execute(status -> userService.findOne(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
         
