@@ -5,8 +5,10 @@ import com.google.common.collect.ImmutableMap;
 import hr.prism.board.TestContext;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LoginDTO;
+import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.TestNotificationService;
@@ -170,6 +172,49 @@ public class AuthenticationApiIT extends AbstractIT {
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("temporary"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+    
+    @Test
+    public void shouldSigninWithOauthProvider() throws Exception {
+        String accessToken = (String) objectMapper.readValue(
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/auth/facebook")
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .content(objectMapper.writeValueAsString(
+                        new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            Map.class).get("token");
+        
+        Long userId = objectMapper.readValue(
+            mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/user")
+                    .header("Authorization", "Bearer " + accessToken))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            UserRepresentation.class).getId();
+        
+        User user = userService.findOne(userId);
+        Assert.assertEquals("alastair", user.getGivenName());
+        Assert.assertEquals("knowles", user.getSurname());
+        Assert.assertEquals("alastair@prism.hr", user.getEmail());
+        Assert.assertEquals(OauthProvider.FACEBOOK, user.getOauthProvider());
+        Assert.assertEquals("facebookId", user.getOauthAccountId());
+        
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/auth/linkedin")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(
+                    new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
+            .andExpect(MockMvcResultMatchers.status().isOk());
+        
+        user = userService.findOne(userId);
+        Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
+        Assert.assertEquals("linkedinId", user.getOauthAccountId());
     }
     
     private void verifyAccessToken(String loginAccessToken, Long userId) {
