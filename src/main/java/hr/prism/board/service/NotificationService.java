@@ -90,14 +90,14 @@ public class NotificationService {
                 request.endpoint = "mail/send";
                 request.body = mail.build();
                 sendGrid.api(request);
-                
-                LOGGER.info("Sending notification:\n" + makeLogHeader(notification, sender, recipient));
+    
+                LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient));
             } catch (IOException ex) {
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         } else {
             // Local/Test contexts
-            LOGGER.info("Sending notification:\n" + makeLogHeader(notification, sender, recipient)
+            LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
                 + "\n\n" + "Subject:\n" + subject + "\n\n" + "Content:\n" + makePlainTextVersion(content));
         }
         
