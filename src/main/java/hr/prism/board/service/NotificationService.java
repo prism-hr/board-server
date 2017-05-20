@@ -94,8 +94,8 @@ public class NotificationService {
             mail.addPersonalization(personalization);
             
             mail.setSubject(subject);
-            mail.addContent(new Content("text/html", content));
             mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
+            mail.addContent(new Content("text/html", content));
             
             try {
                 Request request = new Request();
