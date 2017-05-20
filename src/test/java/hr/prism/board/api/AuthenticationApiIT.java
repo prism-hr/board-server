@@ -28,7 +28,7 @@ import java.util.Map;
 
 @TestContext
 @RunWith(SpringRunner.class)
-public class AuthenticationApiIT {
+public class AuthenticationApiIT extends AbstractIT {
 
     @Inject
     private MockMvc mockMvc;
