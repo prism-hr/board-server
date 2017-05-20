@@ -18,9 +18,9 @@ public interface UserRepository extends MyRepository<User, Long> {
         "select user " +
             "from User user " +
             "where user.email = :email " +
-            "and user.password = :password " +
+            "and (user.password = :password " +
             "or (user.temporaryPassword = :password " +
-            "and user.temporaryPasswordExpiryTimestamp <= :baseline)")
+            "and user.temporaryPasswordExpiryTimestamp <= :baseline))")
     User findByEmailAndPassword(@Param("email") String email, @Param("password") String password, @Param("baseline") LocalDateTime baseline);
     
 }
