@@ -1,6 +1,5 @@
 package hr.prism.board.service;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 import com.sendgrid.*;
 import hr.prism.board.domain.User;
@@ -91,21 +90,21 @@ public class NotificationService {
                 request.body = mail.build();
                 sendGrid.api(request);
     
-                LOGGER.info("Sending notification\n: " + makeLogHeader(notification, sender, recipient));
+                LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient));
             } catch (IOException ex) {
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         } else {
             // Local/Test contexts
-            LOGGER.info("Sending notification\n: " + makeLogHeader(notification, sender, recipient)
-                + "\n\n" + "Subject:\n" + subject + "\n\n" + "Content:\n" + makePlainTextVersion(content));
+            LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
+                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
         }
         
         return Pair.of(subject, content);
     }
     
     private String makeLogHeader(String notification, String sender, String recipient) {
-        return MoreObjects.toStringHelper(this).add("notification", notification).add("sender", sender).add("recipient", recipient).toString();
+        return "notification = " + notification + ", sender = " + sender + ", recipient = " + recipient;
     }
     
     private String makePlainTextVersion(String html) {
@@ -133,7 +132,7 @@ public class NotificationService {
         TreeMap<String, String> index = new TreeMap<>();
         for (Resource resource : resources) {
             String fileName = resource.getFilename();
-            index.put(fileName.replace(".html", ""), FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8));
+            index.put(fileName.replace(".html", ""), FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8).trim());
         }
         
         return index;
