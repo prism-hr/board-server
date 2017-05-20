@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.2.RELEASE</version>
+        <version>1.5.3.RELEASE</version>
     </parent>
 
     <properties>
@@ -294,7 +294,7 @@
                 <profile.server.url>http://localhost:8080</profile.server.url>
                 <profile.database.host>localhost:3306</profile.database.host>
                 <profile.mail.strategy>log</profile.mail.strategy>
-                <profile.auth.facebook.appSecret>b5c7321c5526298a5ba37db405b7d533</profile.auth.facebook.appSecret>
+                <profile.auth.facebook.appSecret>881c44ef7bb5ae0ad0ccf729b054bb64</profile.auth.facebook.appSecret>
                 <profile.auth.linkedin.appSecret>S9rG2e7FWFRY5YFh</profile.auth.linkedin.appSecret>
             </properties>
             <activation>
