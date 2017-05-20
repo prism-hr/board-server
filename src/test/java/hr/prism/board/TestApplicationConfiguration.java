@@ -35,8 +35,18 @@ public class TestApplicationConfiguration {
     @Primary
     public FacebookAdapter facebookAdapter() {
         FacebookAdapter facebookAdapter = Mockito.mock(FacebookAdapter.class);
-        Mockito.when(facebookAdapter.exchangeForUser(new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))).thenReturn(
-            new User().setGivenName("alastair").setPassword("knowles").setEmail("alastair@prism.hr").setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId("facebookId"));
+        Mockito.when(facebookAdapter.exchangeForUser(
+            new OauthDTO()
+                .setClientId("clientId")
+                .setCode("code")
+                .setRedirectUri("redirectUri")))
+            .thenReturn(
+                new User()
+                    .setGivenName("alastair")
+                    .setSurname("knowles")
+                    .setEmail("alastair@prism.hr")
+                    .setOauthProvider(OauthProvider.FACEBOOK)
+                    .setOauthAccountId("facebookId"));
         return facebookAdapter;
     }
     
@@ -44,8 +54,18 @@ public class TestApplicationConfiguration {
     @Primary
     public LinkedinAdapter linkedinAdapter() {
         LinkedinAdapter linkedinAdapter = Mockito.mock(LinkedinAdapter.class);
-        Mockito.when(linkedinAdapter.exchangeForUser(new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))).thenReturn(
-            new User().setGivenName("alastair").setPassword("knowles").setEmail("alastair@prism.hr").setOauthProvider(OauthProvider.LINKEDIN).setOauthAccountId("linkedinId"));
+        Mockito.when(linkedinAdapter.exchangeForUser(
+            new OauthDTO()
+                .setClientId("clientId")
+                .setCode("code")
+                .setRedirectUri("redirectUri")))
+            .thenReturn(
+                new User()
+                    .setGivenName("alastair")
+                    .setSurname("knowles")
+                    .setEmail("alastair@prism.hr")
+                    .setOauthProvider(OauthProvider.LINKEDIN)
+                    .setOauthAccountId("linkedinId"));
         return linkedinAdapter;
     }
     
