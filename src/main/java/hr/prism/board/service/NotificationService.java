@@ -25,7 +25,10 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -186,22 +189,6 @@ public class NotificationService {
         
         public Map<String, String> getParameters() {
             return parameters;
-        }
-        
-        @Override
-        public int hashCode() {
-            return Objects.hash(sender, recipient, parameters);
-        }
-        
-        @Override
-        public boolean equals(Object object) {
-            if (object == null || getClass() != object.getClass()) {
-                return false;
-            }
-            
-            Notification that = (Notification) object;
-            return Objects.equals(template, that.getTemplate()) && Objects.equals(sender, that.getSender())
-                && Objects.equals(recipient, that.getRecipient()) && Objects.equals(parameters, that.getParameters());
         }
         
     }
