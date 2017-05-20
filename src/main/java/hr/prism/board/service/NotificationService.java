@@ -18,7 +18,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -51,12 +50,12 @@ public class NotificationService {
     
     @PostConstruct
     public void postConstruct() throws IOException {
-        Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
-        Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
-        
-        this.subjects = indexResources(subjects);
-        this.contents = indexResources(contents);
-        Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
+//        Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
+//        Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
+//
+//        this.subjects = indexResources(subjects);
+//        this.contents = indexResources(contents);
+//        Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
     }
     
     public Pair<String, String> send(User user, String notification, Map<String, String> customParameters) {
