@@ -76,7 +76,7 @@ public class NotificationService {
     public void send(Notification notification) {
         String template = notification.getTemplate();
         String sender = notification.getSender();
-        String recipient = notification.getTemplate();
+        String recipient = notification.getRecipient();
         Map<String, String> parameters = notification.getParameters();
         
         StrSubstitutor parser = new StrSubstitutor(parameters);
