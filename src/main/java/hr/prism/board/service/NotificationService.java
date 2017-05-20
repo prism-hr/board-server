@@ -68,8 +68,8 @@ public class NotificationService {
         parameters.put("firstName", user.getGivenName());
         
         StrSubstitutor parser = new StrSubstitutor(parameters);
-        String subject = parser.replace(this.contents.get(notification));
-        String content = parser.replace(this.subjects.get(notification));
+        String subject = parser.replace(this.subjects.get(notification));
+        String content = parser.replace(this.contents.get(notification));
         
         if (environment.getProperty("mail.strategy").equals("send")) {
             // Production/UAT contexts
@@ -91,13 +91,13 @@ public class NotificationService {
                 request.body = mail.build();
                 sendGrid.api(request);
     
-                LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient));
+                LOGGER.info("Sending notification\n: " + makeLogHeader(notification, sender, recipient));
             } catch (IOException ex) {
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         } else {
             // Local/Test contexts
-            LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
+            LOGGER.info("Sending notification\n: " + makeLogHeader(notification, sender, recipient)
                 + "\n\n" + "Subject:\n" + subject + "\n\n" + "Content:\n" + makePlainTextVersion(content));
         }
         
