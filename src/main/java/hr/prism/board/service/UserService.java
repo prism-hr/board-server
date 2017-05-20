@@ -127,7 +127,8 @@ public class UserService {
         String temporaryPassword = RandomStringUtils.randomAlphabetic(12);
         user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
-    
+        userRepository.update(user);
+        
         String serverUrl = environment.getProperty("server.url");
         String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
         NotificationService.Notification notification = notificationService.makeNotification(

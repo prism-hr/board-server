@@ -147,8 +147,9 @@ public class AuthenticationApiIT extends AbstractIT {
                 .content(objectMapper.writeValueAsString(resetPasswordDTO)))
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andReturn();
-        
-        User user = userService.findOne(userR.getId());
+    
+        Long userId = userR.getId();
+        User user = userService.findOne(userId);
         Assert.assertNotNull(user.getTemporaryPassword());
         
         LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
@@ -158,8 +159,8 @@ public class AuthenticationApiIT extends AbstractIT {
             ImmutableMap.of("firstName", "alastair", "temporaryPassword", "defined", "redirectUrl", "http://localhost:8080/redirect?path=login")));
     
         // Set the temporary password to something that we know
-        transactionTemplate.execute(status -> user.setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
-    
+        transactionTemplate.execute(status -> userService.findOne(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
+        
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
