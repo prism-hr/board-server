@@ -1,34 +1,45 @@
 package hr.prism.board.service;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Maps;
 import com.sendgrid.*;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
     
-    Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
+    
+    private Map<String, String> subjects;
+    
+    private Map<String, String> contents;
     
     @Inject
     private Environment environment;
@@ -37,18 +48,28 @@ public class NotificationService {
     private SendGrid sendGrid;
     
     @Inject
-    private TemplateEngine templateEngine;
+    private ApplicationContext applicationContext;
     
-    public Pair<String, String> send(User user, String notification, Map<String, String> parameters) {
-        Context context = new Context();
-        context.setVariable("firstName", user.getGivenName());
-        parameters.keySet().forEach(key -> context.setVariable(key, parameters.get(key)));
+    @PostConstruct
+    public void postConstruct() throws IOException {
+        Resource[] subjects = applicationContext.getResources("classpath:notification/subject");
+        Resource[] contents = applicationContext.getResources("classpath:notification/content");
         
+        this.subjects = indexResources(subjects);
+        this.contents = indexResources(contents);
+        Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
+    }
+    
+    public Pair<String, String> send(User user, String notification, Map<String, String> customParameters) {
         String sender = environment.getProperty("system.email");
         String recipient = user.getEmail();
         
-        String subject = templateEngine.process("subject/" + notification, context);
-        String content = templateEngine.process("content/" + notification, context);
+        Map<String, String> parameters = Maps.newHashMap(customParameters);
+        parameters.put("firstName", user.getGivenName());
+        
+        StrSubstitutor parser = new StrSubstitutor(parameters);
+        String subject = parser.replace(this.contents.get(notification));
+        String content = parser.replace(this.subjects.get(notification));
         
         if (environment.getProperty("mail.strategy").equals("send")) {
             // Production/UAT contexts
@@ -106,6 +127,16 @@ public class NotificationService {
         }
         
         return plainText;
+    }
+    
+    private static Map<String, String> indexResources(Resource[] resources) throws IOException {
+        TreeMap<String, String> index = new TreeMap<>();
+        for (Resource resource : resources) {
+            String fileName = resource.getFilename();
+            index.put(fileName.replace(".html", ""), FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8));
+        }
+        
+        return index;
     }
     
 }

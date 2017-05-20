@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -22,20 +21,17 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.spring4.SpringTemplateEngine;
-import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
-import org.thymeleaf.templatemode.StandardTemplateModeHandlers;
-import org.thymeleaf.templateresolver.TemplateResolver;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Properties;
 
+@EnableAsync
 @EnableWebMvc
 @Configuration
 @EnableScheduling
@@ -48,9 +44,6 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     
     @Inject
     private Environment environment;
-    
-    @Inject
-    private ApplicationContext applicationContext;
     
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
@@ -89,23 +82,6 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
     @Bean
     public SendGrid sendGrid() {
         return new SendGrid(environment.getProperty("sendgrid.key"));
-    }
-    
-    @Bean
-    public TemplateEngine templateEngine() {
-        SpringTemplateEngine engine = new SpringTemplateEngine();
-        engine.setTemplateResolver(templateResolver());
-        return engine;
-    }
-    
-    @Bean
-    public TemplateResolver templateResolver() {
-        SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
-        templateResolver.setApplicationContext(applicationContext);
-        templateResolver.setTemplateMode(StandardTemplateModeHandlers.HTML5.getTemplateModeName());
-        templateResolver.setPrefix("classpath:notification/");
-        templateResolver.setSuffix(".html");
-        return templateResolver;
     }
     
     @Bean

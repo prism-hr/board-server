@@ -21,8 +21,8 @@ public class TestNotificationService extends NotificationService {
     }
     
     @Override
-    public Pair<String, String> send(User user, String notification, Map<String, String> parameters) {
-        Pair<String, String> mail = super.send(user, notification, parameters);
+    public Pair<String, String> send(User user, String notification, Map<String, String> customParameters) {
+        Pair<String, String> mail = super.send(user, notification, customParameters);
         sent.add(mail);
         return mail;
     }

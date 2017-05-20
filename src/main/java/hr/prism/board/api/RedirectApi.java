@@ -20,9 +20,9 @@ public class RedirectApi {
         if (path == null) {
             throw new IllegalArgumentException("redirect must specify a path");
         }
-        
-        String url = environment.getProperty("server.url");
-        return "redirect:" + url + "/" + path;
+    
+        String appUrl = environment.getProperty("app.url");
+        return "redirect:" + appUrl + "/" + path;
     }
     
 }

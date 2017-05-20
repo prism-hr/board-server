@@ -15,6 +15,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,9 @@ public class UserService {
     
     @Inject
     private ApplicationContext applicationContext;
+    
+    @Inject
+    private Environment environment;
     
     public User findOne(Long id) {
         return userRepository.findOne(id);
@@ -120,12 +124,13 @@ public class UserService {
             throw new ApiForbiddenException(ExceptionCode.UNREGISTERED_USER);
         }
     
-        // TODO: send email with temporary password
         String temporaryPassword = RandomStringUtils.randomAlphabetic(12);
-        notificationService.send(user, "reset_password", ImmutableMap.of("temporaryPassword", temporaryPassword));
-        
         user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
+    
+        String serverUrl = environment.getProperty("server.url");
+        String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
+        notificationService.send(user, "reset_password", ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
     }
     
     public User updateUser(UserPatchDTO userDTO) {
