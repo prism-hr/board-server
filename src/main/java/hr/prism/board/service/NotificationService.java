@@ -9,7 +9,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -26,10 +25,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,20 +65,27 @@ public class NotificationService {
         Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
     }
     
-    public Pair<String, String> send(User user, String notification, Map<String, String> customParameters) {
-        String sender = environment.getProperty("system.email");
-        String recipient = user.getEmail();
-        
-        Map<String, String> parameters = Maps.newHashMap(customParameters);
-        parameters.put("firstName", user.getGivenName());
+    public Notification makeNotification(String template, User recipient, Map<String, String> customParameters) {
+        String recipientEmail = recipient.getEmail();
+        String senderEmail = environment.getProperty("system.email");
+        Map<String, String> parameters = Maps.newLinkedHashMap(customParameters);
+        parameters.put("firstName", recipient.getGivenName());
+        return new Notification(template, senderEmail, recipientEmail, parameters);
+    }
+    
+    public void send(Notification notification) {
+        String template = notification.getTemplate();
+        String sender = notification.getSender();
+        String recipient = notification.getTemplate();
+        Map<String, String> parameters = notification.getParameters();
         
         StrSubstitutor parser = new StrSubstitutor(parameters);
-        String subject = parser.replace(this.subjects.get(notification));
-        String content = parser.replace(this.contents.get(notification));
-    
+        String subject = parser.replace(this.subjects.get(template));
+        String content = parser.replace(this.contents.get(template));
+        
         if (mailStrategy == MailStrategy.LOG) {
             // Local/Test contexts
-            LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient)
+            LOGGER.info("Sending notification: " + makeLogHeader(template, sender, recipient)
                 + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
         } else {
             // Production/UAT contexts
@@ -104,14 +107,12 @@ public class NotificationService {
                 request.body = mail.build();
                 sendGrid.api(request);
     
-                LOGGER.info("Sending notification: " + makeLogHeader(notification, sender, recipient));
+                LOGGER.info("Sending notification: " + makeLogHeader(template, sender, recipient));
             } catch (IOException e) {
                 LOGGER.error("Failed to send notification", e);
                 throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         }
-        
-        return Pair.of(subject, content);
     }
     
     private String makeLogHeader(String notification, String sender, String recipient) {
@@ -152,6 +153,57 @@ public class NotificationService {
     
     private enum MailStrategy {
         LOG, SEND
+    }
+    
+    public static class Notification {
+        
+        private String template;
+        
+        private String sender;
+        
+        private String recipient;
+        
+        private Map<String, String> parameters;
+        
+        public Notification(String template, String sender, String recipient, Map<String, String> parameters) {
+            this.template = template;
+            this.sender = sender;
+            this.recipient = recipient;
+            this.parameters = parameters;
+        }
+        
+        public String getTemplate() {
+            return template;
+        }
+        
+        public String getSender() {
+            return sender;
+        }
+        
+        public String getRecipient() {
+            return recipient;
+        }
+        
+        public Map<String, String> getParameters() {
+            return parameters;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(sender, recipient, parameters);
+        }
+        
+        @Override
+        public boolean equals(Object object) {
+            if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+            
+            Notification that = (Notification) object;
+            return Objects.equals(template, that.getTemplate()) && Objects.equals(sender, that.getSender())
+                && Objects.equals(recipient, that.getRecipient()) && Objects.equals(parameters, that.getParameters());
+        }
+        
     }
     
 }

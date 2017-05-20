@@ -1,5 +1,5 @@
-import hr.prism.board.ApplicationConfiguration;
-import hr.prism.board.SecurityConfiguration;
+package hr.prism.board;
+
 import hr.prism.board.repository.MyRepositoryImpl;
 import hr.prism.board.service.TestNotificationService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

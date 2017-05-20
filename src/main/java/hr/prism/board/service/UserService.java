@@ -130,7 +130,9 @@ public class UserService {
     
         String serverUrl = environment.getProperty("server.url");
         String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
-        notificationService.send(user, "reset_password", ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
+        NotificationService.Notification notification = notificationService.makeNotification(
+            "reset_password", user, ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
+        notificationService.send(notification);
     }
     
     public User updateUser(UserPatchDTO userDTO) {

@@ -1,7 +1,5 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.User;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.springframework.stereotype.Service;
 
@@ -12,19 +10,37 @@ import java.util.Map;
 @Service
 public class TestNotificationService extends NotificationService {
     
-    private List<Pair<String, String>> sent = new LinkedList<>();
+    private List<Notification> sent = new LinkedList<>();
     
-    public void verify(String expectedSubject, String expectedContent) {
+    public void verify(Notification expectedNotification) {
         Assert.assertEquals(1, sent.size());
-        Assert.assertEquals(sent.get(0), Pair.of(expectedSubject, expectedContent));
-        sent.clear();
+        
+        Notification actualNotification = sent.remove(0);
+        Assert.assertEquals(expectedNotification.getTemplate(), actualNotification.getTemplate());
+        Assert.assertEquals(expectedNotification.getSender(), actualNotification.getSender());
+        Assert.assertEquals(expectedNotification.getRecipient(), actualNotification.getRecipient());
+        
+        Map<String, String> actualParameters = actualNotification.getParameters();
+        Map<String, String> expectedParameters = expectedNotification.getParameters();
+        for (String expectedParameterKey : expectedParameters.keySet()) {
+            String expectedParameterValue = expectedParameters.get(expectedParameterKey);
+            if (expectedParameterValue.equals("defined")) {
+                // We can't easily compare dynamic values (e.g. temporaryPassword), so assert not null
+                Assert.assertNotNull(actualParameters.remove(expectedParameterKey));
+            } else {
+                // Parameters that are statically defined can be compared, assert equals
+                Assert.assertEquals(expectedParameterValue, actualParameters.remove(expectedParameterKey));
+            }
+        }
+        
+        // Any remaining parameters not defined in the expectations should have null values
+        actualParameters.keySet().forEach(actualParameterKey -> Assert.assertNull(actualParameters.get(actualParameterKey)));
     }
     
     @Override
-    public Pair<String, String> send(User user, String notification, Map<String, String> customParameters) {
-        Pair<String, String> mail = super.send(user, notification, customParameters);
-        sent.add(mail);
-        return mail;
+    public void send(Notification notification) {
+        super.send(notification);
+        sent.add(notification);
     }
     
 }
