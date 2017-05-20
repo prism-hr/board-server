@@ -52,8 +52,8 @@ public class NotificationService {
     
     @PostConstruct
     public void postConstruct() throws IOException {
-        Resource[] subjects = applicationContext.getResources("classpath:notification/subject");
-        Resource[] contents = applicationContext.getResources("classpath:notification/content");
+        Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
+        Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
         
         this.subjects = indexResources(subjects);
         this.contents = indexResources(contents);
