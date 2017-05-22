@@ -6,6 +6,7 @@ import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
+import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -86,9 +88,9 @@ public class UserService {
         if (user != null) {
             throw new ApiForbiddenException(ExceptionCode.DUPLICATE_USER);
         }
-        
-        return userRepository.save(new User().setGivenName(registerDTO.getGivenName())
-            .setSurname(registerDTO.getSurname()).setEmail(email).setPassword(DigestUtils.sha256Hex(registerDTO.getPassword())));
+    
+        return userRepository.save(new User().setGivenName(registerDTO.getGivenName()).setSurname(registerDTO.getSurname()).setEmail(email)
+            .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword())).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
     }
     
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {
@@ -138,22 +140,32 @@ public class UserService {
     
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured();
-        if (userDTO.getGivenName() != null) {
-            user.setGivenName(userDTO.getGivenName().orElse(null));
+        Optional<String> givenNameOptional = userDTO.getGivenName();
+        if (givenNameOptional != null) {
+            user.setGivenName(givenNameOptional.orElse(user.getGivenName()));
         }
-        
-        if (userDTO.getSurname() != null) {
-            user.setSurname(userDTO.getSurname().orElse(null));
+    
+        Optional<String> surnameOptional = userDTO.getSurname();
+        if (surnameOptional != null) {
+            user.setSurname(surnameOptional.orElse(user.getSurname()));
         }
-        
-        if (userDTO.getDocumentImage() != null) {
-            Document oldImage = user.getDocumentImage();
-            DocumentDTO newImage = userDTO.getDocumentImage().orElse(null);
-            if (oldImage != null && !oldImage.getId().equals(newImage.getId())) {
-                documentService.deleteDocument(oldImage);
+    
+        Optional<DocumentDTO> documentImageOptional = userDTO.getDocumentImage();
+        if (documentImageOptional != null) {
+            DocumentDTO newImage = documentImageOptional.orElse(null);
+            if (newImage != null) {
+                user.setDocumentImage(documentService.getOrCreateDocument(newImage));
             }
             
-            user.setDocumentImage(documentService.getOrCreateDocument(newImage));
+            Document oldImage = user.getDocumentImage();
+            if (oldImage != null && (newImage == null || !oldImage.getId().equals(newImage.getId()))) {
+                documentService.deleteDocument(oldImage);
+            }
+        }
+    
+        Optional<DocumentRequestState> documentRequestStateOptional = userDTO.getDocumentImageRequestState();
+        if (documentRequestStateOptional != null) {
+            user.setDocumentImageRequestState(documentRequestStateOptional.orElse(user.getDocumentImageRequestState()));
         }
         
         userRepository.update(user);

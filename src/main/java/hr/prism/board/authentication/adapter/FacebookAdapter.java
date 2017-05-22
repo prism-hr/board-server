@@ -2,6 +2,7 @@ package hr.prism.board.authentication.adapter;
 
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.social.facebook.api.impl.FacebookTemplate;
@@ -25,9 +26,9 @@ public class FacebookAdapter implements OauthAdapter {
         FacebookTemplate template = new FacebookTemplate(accessGrant.getAccessToken());
         org.springframework.social.facebook.api.User user = template.fetchObject(
             "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");
-        
-        return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName())
-            .setEmail(user.getEmail()).setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId());
+    
+        return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
+            .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
     }
     
 }

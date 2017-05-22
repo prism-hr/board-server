@@ -11,30 +11,27 @@ import javax.inject.Inject;
 @Service
 @Transactional
 public class DocumentService {
-
+    
     @Inject
     private DocumentRepository documentRepository;
-
-
+    
+    
     public Document getOrCreateDocument(DocumentDTO documentDTO) {
-        if (documentDTO == null) {
-            return null;
+        Long documentId = documentDTO.getId();
+        if (documentId == null) {
+            Document document = new Document();
+            document.setFileName(documentDTO.getFileName());
+            document.setCloudinaryId(documentDTO.getCloudinaryId());
+            document.setCloudinaryUrl(documentDTO.getCloudinaryUrl());
+            document = documentRepository.save(document);
+            return document;
         }
-
-        if (documentDTO.getId() != null) {
-            return documentRepository.findOne(documentDTO.getId());
-        }
-
-        Document document = new Document();
-        document.setFileName(documentDTO.getFileName());
-        document.setCloudinaryId(documentDTO.getCloudinaryId());
-        document.setCloudinaryUrl(documentDTO.getCloudinaryUrl());
-        document = documentRepository.save(document);
-        return document;
+        
+        return documentRepository.findOne(documentDTO.getId());
     }
-
+    
     public void deleteDocument(Document document) {
         documentRepository.delete(document);
     }
-
+    
 }

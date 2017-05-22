@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
+import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import org.hibernate.validator.constraints.Email;
 
@@ -42,6 +43,10 @@ public class User extends BoardEntity {
     @OneToOne
     @JoinColumn(name = "document_image_id")
     private Document documentImage;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_image_request_state")
+    private DocumentRequestState documentImageRequestState;
     
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
@@ -118,10 +123,6 @@ public class User extends BoardEntity {
         return this;
     }
     
-    public void setUserRoles(Set<UserRole> userRoles) {
-        this.userRoles = userRoles;
-    }
-    
     public Document getDocumentImage() {
         return documentImage;
     }
@@ -131,8 +132,22 @@ public class User extends BoardEntity {
         return this;
     }
     
+    public DocumentRequestState getDocumentImageRequestState() {
+        return documentImageRequestState;
+    }
+    
+    public User setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
+        this.documentImageRequestState = documentImageRequestState;
+        return this;
+    }
+    
     public Set<UserRole> getUserRoles() {
         return userRoles;
+    }
+    
+    public User setUserRoles(Set<UserRole> userRoles) {
+        this.userRoles = userRoles;
+        return this;
     }
     
     @Override
