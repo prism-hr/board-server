@@ -6,13 +6,13 @@ public enum Action {
     AUDIT(false),
     EDIT(true),
     EXTEND(true),
-    ACCEPT(true),
-    SUSPEND(true),
-    CORRECT(true),
-    REJECT(true),
+    ACCEPT(true), // Comment optional
+    SUSPEND(true), // Comment required
+    CORRECT(true), // Comment optional
+    REJECT(true), // Comment required
     PUBLISH(true),
     RETIRE(true),
-    RESTORE(true),
+    RESTORE(true), // Comment optional for restore from reject, no comment for restore from withdrawn
     WITHDRAW(true);
     
     private boolean resourceOperation;

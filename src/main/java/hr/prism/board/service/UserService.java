@@ -152,12 +152,12 @@ public class UserService {
     
         Optional<DocumentDTO> documentImageOptional = userDTO.getDocumentImage();
         if (documentImageOptional != null) {
+            Document oldImage = user.getDocumentImage();
             DocumentDTO newImage = documentImageOptional.orElse(null);
             if (newImage != null) {
                 user.setDocumentImage(documentService.getOrCreateDocument(newImage));
             }
             
-            Document oldImage = user.getDocumentImage();
             if (oldImage != null && (newImage == null || !oldImage.getId().equals(newImage.getId()))) {
                 documentService.deleteDocument(oldImage);
             }
