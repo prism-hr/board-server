@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 @Service
 public class DefinitionService {
     
-    @SuppressWarnings("unchecked")
     private TreeMap<String, Object> definitions;
     
     @Inject
@@ -49,12 +48,13 @@ public class DefinitionService {
         return definitions;
     }
     
+    @SuppressWarnings("unchecked")
     private Set<Class<? extends Enum<?>>> getDefinitionClasses() {
         Set<Class<? extends Enum<?>>> definitionClasses = new LinkedHashSet<>();
         try {
             ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
             scanner.addIncludeFilter(new AssignableTypeFilter(Enum.class));
-    
+            
             for (BeanDefinition beanDefinition : scanner.findCandidateComponents("hr.prism.board.enums")) {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
                 if (Enum.class.isAssignableFrom(clazz)) {
