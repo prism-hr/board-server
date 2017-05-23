@@ -11,6 +11,7 @@ import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
+import hr.prism.board.service.cache.UserCacheService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -33,6 +34,9 @@ public class UserService {
     
     @Inject
     private UserRepository userRepository;
+    
+    @Inject
+    private UserCacheService userCacheService;
     
     @Inject
     private DocumentService documentService;
@@ -60,8 +64,8 @@ public class UserService {
         if (userId == null) {
             return null;
         }
-        
-        return userRepository.findOne(userId);
+    
+        return userCacheService.findOne(userId);
     }
     
     public User getCurrentUserSecured() {

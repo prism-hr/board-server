@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
-import java.util.TreeMap;
+import java.util.Map;
 
 @RestController
 public class DefinitionApi {
@@ -15,7 +15,7 @@ public class DefinitionApi {
     private DefinitionService definitionService;
     
     @RequestMapping(value = "/api/definitions", method = RequestMethod.GET)
-    public TreeMap<String, Object> getDefinitions() {
+    public Map<String, Object> getDefinitions() {
         return definitionService.getDefinitions();
     }
     

@@ -14,10 +14,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.ehcache.EhCacheCacheManager;
+import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -35,6 +40,7 @@ import java.util.Properties;
 
 @EnableAsync
 @EnableWebMvc
+@EnableCaching
 @Configuration
 @EnableScheduling
 @SpringBootApplication
@@ -109,6 +115,19 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         hibernateProperties.put("hibernate.show_sql", true);
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
         return sessionFactoryBean;
+    }
+    
+    @Bean
+    public CacheManager cacheManager() {
+        return new EhCacheCacheManager(ehCacheCacheManager().getObject());
+    }
+    
+    @Bean
+    public EhCacheManagerFactoryBean ehCacheCacheManager() {
+        EhCacheManagerFactoryBean ehCacheManager = new EhCacheManagerFactoryBean();
+        ehCacheManager.setConfigLocation(new ClassPathResource("ehcache.xml"));
+        ehCacheManager.setShared(true);
+        return ehCacheManager;
     }
     
     @Bean

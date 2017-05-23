@@ -19,10 +19,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and().csrf().disable()
-            .anonymous().disable()
-            .authorizeRequests()
-            .antMatchers("/auth/*", "/redirect").permitAll()
+            .and().csrf().disable().anonymous().disable()
+            .authorizeRequests().antMatchers("/auth/*", "/redirect").permitAll()
             .and().addFilterAt(new AuthenticationFilter(), BasicAuthenticationFilter.class);
     }
 

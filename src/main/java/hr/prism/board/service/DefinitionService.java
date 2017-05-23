@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 @Service
 public class DefinitionService {
     
+    @SuppressWarnings("unchecked")
     private TreeMap<String, Object> definitions;
     
     @Inject
@@ -24,31 +25,33 @@ public class DefinitionService {
     
     @PostConstruct
     public TreeMap<String, Object> getDefinitions() {
-        definitions = new TreeMap<>();
-        getDefinitionClasses().forEach(definitionClass -> {
-            List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
-            definitions.put(getDefinitionKey(definitionClass), values);
-        });
+        if (this.definitions == null) {
+            this.definitions = new TreeMap<>();
+            getDefinitionClasses().forEach(definitionClass -> {
+                List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
+                this.definitions.put(getDefinitionKey(definitionClass), values);
+            });
         
-        definitions.put("applicationUrl", environment.getProperty("app.url"));
-        List<Map<String, Object>> clientIdMap = Stream.of(OauthProvider.values())
-            .map(provider -> {
-                Map<String, Object> providerMap = new HashMap<>();
-                providerMap.put("id", provider);
-                String clientId = environment.getProperty("auth." + provider.name().toLowerCase() + ".clientId");
-                if (clientId != null) {
-                    providerMap.put("clientId", clientId);
-                }
+            this.definitions.put("applicationUrl", environment.getProperty("app.url"));
+            List<Map<String, Object>> clientIdMap = Stream.of(OauthProvider.values())
+                .map(provider -> {
+                    Map<String, Object> providerMap = new HashMap<>();
+                    providerMap.put("id", provider);
+                    String clientId = environment.getProperty("auth." + provider.name().toLowerCase() + ".clientId");
+                    if (clientId != null) {
+                        providerMap.put("clientId", clientId);
+                    }
                 
-                return providerMap;
-            })
-            .collect(Collectors.toList());
+                    return providerMap;
+                })
+                .collect(Collectors.toList());
         
-        definitions.put("oauthProvider", clientIdMap);
-        return definitions;
+            this.definitions.put("oauthProvider", clientIdMap);
+        }
+    
+        return this.definitions;
     }
     
-    @SuppressWarnings("unchecked")
     private Set<Class<? extends Enum<?>>> getDefinitionClasses() {
         Set<Class<? extends Enum<?>>> definitionClasses = new LinkedHashSet<>();
         try {
