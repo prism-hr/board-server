@@ -50,7 +50,7 @@ public class UserRoleService {
                 resourceUsersMap.put(user, new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new TreeSet<>()));
             }
     
-            ResourceUserRepresentation representation = resourceUsersMap.get(user.getId());
+            ResourceUserRepresentation representation = resourceUsersMap.get(user);
             representation.getRoles().add(userRole.getRole());
         }
     

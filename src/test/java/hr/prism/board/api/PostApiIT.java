@@ -15,7 +15,6 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
@@ -88,9 +87,6 @@ public class PostApiIT extends AbstractIT {
     
     @Inject
     private TestUserService testUserService;
-    
-    @Inject
-    private UserRoleRepository userRoleRepository;
     
     @Test
     public void shouldCreateAndListPosts() {
@@ -498,7 +494,7 @@ public class PostApiIT extends AbstractIT {
         
         // Create post
         User postUser = testUserService.authenticate();
-        PostRepresentation postR = verifyPostPost(postUser, boardId, TestHelper.samplePost());
+        PostRepresentation postR = verifyPostPost(boardId, TestHelper.samplePost());
         Long postId = postR.getId();
         
         // Create unprivileged users
@@ -750,7 +746,7 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(17), Action.PUBLISH);
     }
     
-    private PostRepresentation verifyPostPost(User user, Long boardId, PostDTO postDTO) {
+    private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
         return transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
     
@@ -774,7 +770,6 @@ public class PostApiIT extends AbstractIT {
             assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
     
             Post post = postService.getPost(postR.getId());
-            Assert.assertNotNull(userRoleRepository.findByResourceAndUserAndRole(post, user, Role.ADMINISTRATOR));
             
             Board board = boardService.getBoard(postR.getBoard().getId());
             Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
@@ -885,7 +880,7 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int seconds) {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(user, k -> new LinkedHashMap<>());
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
-        PostRepresentation postR = verifyPostPost(user, boardId, postDTO);
+        PostRepresentation postR = verifyPostPost(boardId, postDTO);
         transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state).setUpdatedTimestamp(baseline.minusSeconds(seconds)));
         userStatePosts.put(state, postDTO.getName());
     }

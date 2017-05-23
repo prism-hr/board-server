@@ -17,7 +17,6 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
@@ -66,9 +65,6 @@ public class DepartmentApiIT extends AbstractIT {
     @Inject
     private UserRoleService userRoleService;
     
-    @Inject
-    private UserRoleRepository userRoleRepository;
-    
     @Test
     public void shouldCreateAndListDepartments() {
         Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
@@ -76,28 +72,28 @@ public class DepartmentApiIT extends AbstractIT {
         User user1 = testUserService.authenticate();
         BoardDTO boardDTO1 = TestHelper.sampleBoard();
         boardDTO1.getDepartment().setName("department1");
-        BoardRepresentation boardR1 = verifyPostDepartment(user1, boardDTO1, "department1");
+        BoardRepresentation boardR1 = verifyPostDepartment(boardDTO1, "department1");
         unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, 2,
             TestHelper.samplePost()));
     
         testUserService.setAuthentication(user1.getId());
         BoardDTO boardDTO2 = TestHelper.smallSampleBoard();
         boardDTO2.getDepartment().setName("department2");
-        BoardRepresentation boardR2 = verifyPostDepartment(user1, boardDTO2, "department2");
+        BoardRepresentation boardR2 = verifyPostDepartment(boardDTO2, "department2");
         unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, 2,
             TestHelper.smallSamplePost()));
     
         User user2 = testUserService.authenticate();
         BoardDTO boardDTO3 = TestHelper.sampleBoard();
         boardDTO3.getDepartment().setName("department3");
-        BoardRepresentation boardR3 = verifyPostDepartment(user2, boardDTO3, "department3");
+        BoardRepresentation boardR3 = verifyPostDepartment(boardDTO3, "department3");
         unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, 2,
             TestHelper.samplePost()));
     
         testUserService.setAuthentication(user2.getId());
         BoardDTO boardDTO4 = TestHelper.smallSampleBoard();
         boardDTO4.getDepartment().setName("department4");
-        BoardRepresentation boardR4 = verifyPostDepartment(user2, boardDTO4, "department4");
+        BoardRepresentation boardR4 = verifyPostDepartment(boardDTO4, "department4");
         unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2,
             TestHelper.smallSamplePost()));
     
@@ -128,15 +124,15 @@ public class DepartmentApiIT extends AbstractIT {
     
     @Test
     public void shouldNotCreateDuplicateDepartmentHandle() {
-        User user = testUserService.authenticate();
-        verifyPostDepartment(user,
+        testUserService.authenticate();
+        verifyPostDepartment(
             new BoardDTO()
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
                     .setName("new department with long name")),
             "new-department-with");
-        
-        Long departmentId = verifyPostDepartment(user,
+    
+        Long departmentId = verifyPostDepartment(
             new BoardDTO()
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
@@ -150,8 +146,8 @@ public class DepartmentApiIT extends AbstractIT {
             Assert.assertEquals("new-department-with-long", departmentR.getHandle());
             return null;
         });
-        
-        verifyPostDepartment(user,
+    
+        verifyPostDepartment(
             new BoardDTO()
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
@@ -190,7 +186,7 @@ public class DepartmentApiIT extends AbstractIT {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.smallSampleBoard();
-        BoardRepresentation boardR = verifyPostDepartment(departmentUser, boardDTO, "department");
+        BoardRepresentation boardR = verifyPostDepartment(boardDTO, "department");
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
         
@@ -296,9 +292,9 @@ public class DepartmentApiIT extends AbstractIT {
     }
     
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
-        User user = testUserService.authenticate();
-        DepartmentRepresentation departmentR1 = verifyPostDepartment(user, TestHelper.smallSampleBoard(), "department").getDepartment();
-        DepartmentRepresentation departmentR2 = verifyPostDepartment(user,
+        testUserService.authenticate();
+        DepartmentRepresentation departmentR1 = verifyPostDepartment(TestHelper.smallSampleBoard(), "department").getDepartment();
+        DepartmentRepresentation departmentR2 = verifyPostDepartment(
             new BoardDTO()
                 .setName("board")
                 .setDepartment(new DepartmentDTO()
@@ -308,7 +304,7 @@ public class DepartmentApiIT extends AbstractIT {
         return new Pair<>(departmentR1, departmentR2);
     }
     
-    private BoardRepresentation verifyPostDepartment(User user, BoardDTO boardDTO, String expectedHandle) {
+    private BoardRepresentation verifyPostDepartment(BoardDTO boardDTO, String expectedHandle) {
         return transactionTemplate.execute(status -> {
             BoardRepresentation boardR = boardApi.postBoard(boardDTO);
             DepartmentRepresentation departmentR = boardR.getDepartment();
@@ -322,7 +318,6 @@ public class DepartmentApiIT extends AbstractIT {
             Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
     
             Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
-            Assert.assertNotNull(userRoleRepository.findByResourceAndUserAndRole(department, user, Role.ADMINISTRATOR));
             return boardR;
         });
     }
