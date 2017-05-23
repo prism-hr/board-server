@@ -5,8 +5,10 @@ import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import org.springframework.core.env.Environment;
-import org.springframework.social.facebook.api.impl.FacebookTemplate;
-import org.springframework.social.facebook.connect.FacebookServiceProvider;
+import org.springframework.social.connect.Connection;
+import org.springframework.social.connect.ConnectionData;
+import org.springframework.social.facebook.api.Facebook;
+import org.springframework.social.facebook.connect.FacebookConnectionFactory;
 import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.stereotype.Component;
 
@@ -14,21 +16,21 @@ import javax.inject.Inject;
 
 @Component
 public class FacebookAdapter implements OauthAdapter {
-    
+
     @Inject
     private Environment environment;
-    
+
     @Override
     public User exchangeForUser(OauthDTO oauthDTO) {
-        FacebookServiceProvider provider = new FacebookServiceProvider(oauthDTO.getClientId(), environment.getProperty("auth.facebook.appSecret"), null);
-        AccessGrant accessGrant = provider.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
-        
-        FacebookTemplate template = new FacebookTemplate(accessGrant.getAccessToken());
-        org.springframework.social.facebook.api.User user = template.fetchObject(
+        FacebookConnectionFactory cf = new FacebookConnectionFactory(oauthDTO.getClientId(), environment.getProperty("auth.facebook.appSecret"));
+        AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
+        Connection<Facebook> connection = cf.createConnection(accessGrant);
+        ConnectionData data = connection.createData();
+        org.springframework.social.facebook.api.User user = connection.getApi().fetchObject(
             "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");
-    
+
         return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
             .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
     }
-    
+
 }
