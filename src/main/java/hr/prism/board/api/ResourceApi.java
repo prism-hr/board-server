@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
+import hr.prism.board.dto.ResourceUserBulkDTO;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.service.UserRoleService;
@@ -26,6 +27,11 @@ public class ResourceApi {
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
     public ResourceUserRepresentation addResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
         return userRoleService.addResourceUser(scope, resourceId, user);
+    }
+
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/bulk", method = RequestMethod.POST)
+    public void addResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserBulkDTO users) {
+        userRoleService.addResourceUsers(scope, resourceId, users);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.DELETE)
