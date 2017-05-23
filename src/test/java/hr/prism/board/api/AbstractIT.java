@@ -80,7 +80,7 @@ public abstract class AbstractIT {
     
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
             tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "permission").contains(tableName)).forEach(tableName -> {
-                Query truncateTable = entityManager.createNativeQuery("TRUNCATE TABLE " + tableName);
+                Query truncateTable = entityManager.createNativeQuery("DELETE FROM " + tableName);
                 truncateTable.executeUpdate();
             });
     
