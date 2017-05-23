@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
+import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
@@ -12,7 +13,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "user")
-public class User extends BoardEntity {
+public class User extends BoardEntity implements Comparable<User> {
     
     @Column(name = "given_name", nullable = false)
     private String givenName;
@@ -153,6 +154,13 @@ public class User extends BoardEntity {
     @Override
     public String toString() {
         return Joiner.on(" ").skipNulls().join(givenName, surname, email);
+    }
+    
+    @Override
+    public int compareTo(User other) {
+        int compare = ObjectUtils.compare(givenName, other.getGivenName());
+        compare = compare == 0 ? ObjectUtils.compare(surname, other.getSurname()) : compare;
+        return compare == 0 ? ObjectUtils.compare(getId(), other.getId()) : compare;
     }
     
 }

@@ -15,7 +15,7 @@ public class UserCacheService {
     @Inject
     private UserRepository userRepository;
     
-    @Cacheable("users")
+    @Cacheable(key = "#userId", value = "users")
     public User findOne(Long userId) {
         return userRepository.findOne(userId);
     }

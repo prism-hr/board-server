@@ -5,26 +5,28 @@ import hr.prism.board.domain.Role;
 import java.util.List;
 import java.util.Set;
 
-public class ResourceUserBulkDTO {
-
+public class ResourceUsersDTO {
+    
     private List<UserDTO> users;
-
+    
     private Set<Role> roles;
-
+    
     public List<UserDTO> getUsers() {
         return users;
     }
-
-    public void setUsers(List<UserDTO> users) {
+    
+    public ResourceUsersDTO setUsers(List<UserDTO> users) {
         this.users = users;
+        return this;
     }
-
+    
     public Set<Role> getRoles() {
         return roles;
     }
-
-    public ResourceUserBulkDTO setRoles(Set<Role> roles) {
+    
+    public ResourceUsersDTO setRoles(Set<Role> roles) {
         this.roles = roles;
         return this;
     }
+    
 }

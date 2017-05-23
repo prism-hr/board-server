@@ -2,8 +2,8 @@ package hr.prism.board.api;
 
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
-import hr.prism.board.dto.ResourceUserBulkDTO;
 import hr.prism.board.dto.ResourceUserDTO;
+import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.service.UserRoleService;
 import org.apache.commons.lang3.StringUtils;
@@ -25,28 +25,28 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
-    public ResourceUserRepresentation addResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
-        return userRoleService.addResourceUser(scope, resourceId, user);
+    public ResourceUserRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
+        return userRoleService.createResourceUser(scope, resourceId, user);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/bulk", method = RequestMethod.POST)
-    public void addResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserBulkDTO users) {
-        userRoleService.addResourceUsers(scope, resourceId, users);
+    public void createResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUsersDTO users) {
+        userRoleService.createResourceUsers(scope, resourceId, users);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.DELETE)
-    public void removeResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId) {
-        userRoleService.removeResourceUser(scope, resourceId, userId);
+    public void deleteResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId) {
+        userRoleService.deleteResourceUser(scope, resourceId, userId);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.PUT)
-    public void addUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
-        userRoleService.addUserRole(scope, resourceId, userId, role);
+    public void createUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
+        userRoleService.createUserRole(scope, resourceId, userId, role);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.DELETE)
-    public void removeUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
-        userRoleService.removeUserRole(scope, resourceId, userId, role);
+    public void deleteUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
+        userRoleService.deleteUserRole(scope, resourceId, userId, role);
     }
 
     @ModelAttribute

@@ -178,14 +178,15 @@ public class UserService {
     
     public User getOrCreateUser(UserDTO userDTO) {
         User user = userRepository.findByEmail(userDTO.getEmail());
-        if (user != null) {
-            return user;
+        if (user == null) {
+            user = new User();
+            user.setEmail(userDTO.getEmail());
+            user.setGivenName(userDTO.getGivenName());
+            user.setSurname(userDTO.getSurname());
+            return userRepository.save(user);
         }
-        user = new User();
-        user.setEmail(userDTO.getEmail());
-        user.setGivenName(userDTO.getGivenName());
-        user.setSurname(userDTO.getSurname());
-        return userRepository.save(user);
+    
+        return user;
     }
     
     public static String makeAccessToken(Long userId) {
