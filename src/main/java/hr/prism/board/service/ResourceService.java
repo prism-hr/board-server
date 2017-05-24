@@ -258,13 +258,13 @@ public class ResourceService {
             }
     
             Role rowRole = null;
-            Object column5 = row[5];
+            Object column5 = row[4];
             if (column5 != null) {
                 rowRole = Role.valueOf(column5.toString());
             }
     
             String rowNotification = null;
-            Object column6 = row[6];
+            Object column6 = row[5];
             if (column6 != null) {
                 rowNotification = column6.toString();
             }
