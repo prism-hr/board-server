@@ -50,7 +50,7 @@ public class ResourceService {
     
     private static final String PUBLIC_RESOURCE_ACTION =
         "select resource.id, permission.action, " +
-            "permission.resource3_scope, permission.resource3_state " +
+            "permission.resource3_scope, permission.resource3_state, " +
             "permission.role2, permission.notification " +
             "from resource " +
             "inner join permission " +
@@ -59,7 +59,7 @@ public class ResourceService {
     
     private static final String SECURE_RESOURCE_ACTION =
         "select resource.id, permission.action, " +
-            "permission.resource3_scope, permission.resource3_state " +
+            "permission.resource3_scope, permission.resource3_state, " +
             "permission.role2, permission.notification " +
             "from resource " +
             "inner join permission " +
