@@ -18,6 +18,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         if (authorization != null) {
             String accessToken = authorization.replaceFirst("Bearer ", "");
             Long userId = UserService.decodeAccessToken(accessToken);
+    
             SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
             response.setHeader("Authorization", "Bearer " + UserService.makeAccessToken(userId));
         }

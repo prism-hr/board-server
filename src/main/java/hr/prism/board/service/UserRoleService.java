@@ -8,6 +8,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
+import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,9 @@ public class UserRoleService {
     
     @Inject
     private UserService userService;
+    
+    @Inject
+    private UserCacheService userCacheService;
     
     @Inject
     private ActionService actionService;
@@ -80,9 +84,8 @@ public class UserRoleService {
             
             return resource;
         });
-        
-        ResourceUserRepresentation userRepresentation = new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(roles);
-        return userRepresentation;
+    
+        return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(roles);
     }
     
     // FIXME: make this asynchronous, likely to be slow for more than 20 or so users
@@ -105,14 +108,14 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            User user = userService.findOne(userId);
+            User user = userCacheService.findOne(userId);
             userRoleCacheService.deleteResourceUser(resource, user);
             return resource;
         });
     }
     
     public void createUserRole(Scope scope, Long resourceId, Long userId, Role role) {
-        User user = userService.findOne(userId);
+        User user = userCacheService.findOne(userId);
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
@@ -125,14 +128,14 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            User user = userService.findOne(userId);
+            User user = userCacheService.findOne(userId);
             userRoleCacheService.deleteUserRole(resource, user, role);
             return resource;
         });
     }
     
-    public List<UserRole> findInEnclosingScopeByResourceAndUserAndRole(Resource resource, Role role) {
-        return userRoleRepository.findInEnclosingScopeByResourceAndRole(resource, role);
+    public List<UserRole> findInParentScopesByResourceAndUserAndRole(Resource resource, Role role) {
+        return userRoleRepository.findInParentScopesByResourceAndRole(resource, role);
     }
     
 }

@@ -26,8 +26,9 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "inner join userRole.resource resource " +
             "inner join resource.children child " +
             "where userRole.role in (:roles) " +
-            "and child.resource2 = :resource")
-    List<UserRole> findInEnclosingScopeByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role);
+            "and child.resource2 = :resource " +
+            "and userRole.resource <> child.resource2")
+    List<UserRole> findInParentScopesByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role);
     
     Long deleteByResourceAndUser(Resource resource, User user);
     

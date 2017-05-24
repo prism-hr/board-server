@@ -12,6 +12,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,12 +35,14 @@ public class NotificationEventService {
         Resource resource = resourceService.findOne(notificationEvent.getResourceId());
         
         TreeMultimap<Scope, User> index = TreeMultimap.create();
-        List<UserRole> userRoles = userRoleService.findInEnclosingScopeByResourceAndUserAndRole(resource, notificationEvent.getRole());
+        List<UserRole> userRoles = userRoleService.findInParentScopesByResourceAndUserAndRole(resource, notificationEvent.getRole());
         userRoles.forEach(userRole -> index.put(userRole.getResource().getScope(), userRole.getUser()));
         
         Collection<User> recipients = null;
-        for (Scope scope : index.keySet()) {
-            recipients = index.get(scope);
+    
+        Iterator<Scope> scopeIterator = index.keySet().descendingIterator();
+        while (scopeIterator.hasNext()) {
+            recipients = index.get(scopeIterator.next());
             if (CollectionUtils.isNotEmpty(recipients)) {
                 break;
             }

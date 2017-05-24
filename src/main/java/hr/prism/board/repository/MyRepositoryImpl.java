@@ -24,8 +24,9 @@ public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializabl
     }
     
     @Override
-    public <T extends ENTITY> void update(T entity) {
+    public <T extends ENTITY> T update(T entity) {
         entity.setUpdatedTimestamp(LocalDateTime.now());
+        return entity;
     }
     
 }

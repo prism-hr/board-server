@@ -13,7 +13,7 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserService;
-import hr.prism.board.service.UserService;
+import hr.prism.board.service.cache.UserCacheService;
 import io.jsonwebtoken.Jwts;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
@@ -42,7 +42,7 @@ public class AuthenticationApiIT extends AbstractIT {
     private ObjectMapper objectMapper;
     
     @Inject
-    private UserService userService;
+    private UserCacheService userCacheService;
     
     @Inject
     private TestUserService testUserService;
@@ -75,8 +75,8 @@ public class AuthenticationApiIT extends AbstractIT {
                 .andReturn()
                 .getResponse();
         UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
-        
-        User user = userService.findOne(userRepresentation.getId());
+    
+        User user = userCacheService.findOne(userRepresentation.getId());
         Long userId = user.getId();
         
         verifyAccessToken(loginAccessToken, userId);
@@ -155,7 +155,7 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
     
         Long userId = userR.getId();
-        User user = userService.findOne(userId);
+        User user = userCacheService.findOne(userId);
         Assert.assertNotNull(user.getTemporaryPassword());
         
         LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
@@ -166,7 +166,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 "redirectUrl", environment.getProperty("server.url") + "/redirect?path=login")));
         
         // Set the temporary password to something that we know
-        transactionTemplate.execute(status -> userService.findOne(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
+        transactionTemplate.execute(status -> userCacheService.findOne(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
         
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/login")
@@ -198,8 +198,8 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse()
                 .getContentAsString(),
             UserRepresentation.class).getId();
-        
-        User user = userService.findOne(userId);
+    
+        User user = userCacheService.findOne(userId);
         Assert.assertEquals("alastair", user.getGivenName());
         Assert.assertEquals("knowles", user.getSurname());
         Assert.assertEquals("alastair@prism.hr", user.getEmail());
@@ -212,8 +212,8 @@ public class AuthenticationApiIT extends AbstractIT {
                 .content(objectMapper.writeValueAsString(
                     new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
-        
-        user = userService.findOne(userId);
+    
+        user = userCacheService.findOne(userId);
         Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
         Assert.assertEquals("linkedinId", user.getOauthAccountId());
     }

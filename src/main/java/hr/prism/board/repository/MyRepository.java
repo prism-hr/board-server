@@ -12,6 +12,6 @@ public interface MyRepository<ENTITY extends BoardEntity, ID extends Serializabl
     
     <T extends ENTITY> T save(T entity);
     
-    <T extends ENTITY> void update(T entity);
+    <T extends ENTITY> T update(T entity);
     
 }

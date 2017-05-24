@@ -50,22 +50,13 @@ public class UserService {
     @Inject
     private Environment environment;
     
-    public User findOne(Long id) {
-        return userRepository.findOne(id);
-    }
-    
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
         }
-        
-        Long userId = ((AuthenticationToken) authentication).getUserId();
-        if (userId == null) {
-            return null;
-        }
     
-        return userCacheService.findOne(userId);
+        return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
     }
     
     public User getCurrentUserSecured() {
@@ -144,6 +135,8 @@ public class UserService {
     
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured();
+        // User is probably cached here, so get the persistent version
+        user = userCacheService.findOneFresh(user.getId());
         Optional<String> givenNameOptional = userDTO.getGivenName();
         if (givenNameOptional != null) {
             user.setGivenName(givenNameOptional.orElse(user.getGivenName()));
@@ -171,9 +164,8 @@ public class UserService {
         if (documentRequestStateOptional != null) {
             user.setDocumentImageRequestState(documentRequestStateOptional.orElse(user.getDocumentImageRequestState()));
         }
-        
-        userRepository.update(user);
-        return user;
+    
+        return userCacheService.updateUser(user);
     }
     
     public User getOrCreateUser(UserDTO userDTO) {
