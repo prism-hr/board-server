@@ -168,7 +168,8 @@ public class PermissionInstaller {
             entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
     
             LOGGER.info("Inserting new permission definitions");
-            entityManager.createNativeQuery("INSERT INTO permission(resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state) " +
+            entityManager.createNativeQuery("INSERT INTO permission(" +
+                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, role2, notification) " +
                 "VALUES" + permissions.toString()).executeUpdate();
     
             return null;
