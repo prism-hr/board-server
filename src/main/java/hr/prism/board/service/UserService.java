@@ -55,29 +55,7 @@ public class UserService {
     }
     
     public User getCurrentUserSecured() {
-        return getCurrentUser(false);
-    }
-    
-    public User getCurrentUser(boolean fresh) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            return null;
-        }
-        
-        if (fresh) {
-            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
-        }
-        
-        return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
-    }
-    
-    public User getCurrentUserSecured(boolean fresh) {
-        User user = getCurrentUser(fresh);
-        if (user == null) {
-            throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
-        }
-        
-        return user;
+        return getCurrentUserSecured(false);
     }
     
     public User login(LoginDTO loginDTO) {
@@ -204,6 +182,28 @@ public class UserService {
     public static Long decodeAccessToken(String accessToken) {
         // FIXME: externalise the secret
         return Long.parseLong(Jwts.parser().setSigningKey("secret").parseClaimsJws(accessToken).getBody().getSubject());
+    }
+    
+    private User getCurrentUser(boolean fresh) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        
+        if (fresh) {
+            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+        }
+        
+        return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
+    }
+    
+    private User getCurrentUserSecured(boolean fresh) {
+        User user = getCurrentUser(fresh);
+        if (user == null) {
+            throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+        }
+        
+        return user;
     }
     
 }
