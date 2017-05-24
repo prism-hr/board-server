@@ -76,7 +76,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse();
         UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
     
-        User user = userCacheService.findOne(userRepresentation.getId());
+        User user = userCacheService.findOneFresh(userRepresentation.getId());
         Long userId = user.getId();
         
         verifyAccessToken(loginAccessToken, userId);
@@ -155,7 +155,7 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
     
         Long userId = userR.getId();
-        User user = userCacheService.findOne(userId);
+        User user = userCacheService.findOneFresh(userId);
         Assert.assertNotNull(user.getTemporaryPassword());
         
         LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
@@ -166,7 +166,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 "redirectUrl", environment.getProperty("server.url") + "/redirect?path=login")));
         
         // Set the temporary password to something that we know
-        transactionTemplate.execute(status -> userCacheService.findOne(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
+        transactionTemplate.execute(status -> userCacheService.findOneFresh(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
         
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/login")
@@ -199,7 +199,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getContentAsString(),
             UserRepresentation.class).getId();
     
-        User user = userCacheService.findOne(userId);
+        User user = userCacheService.findOneFresh(userId);
         Assert.assertEquals("alastair", user.getGivenName());
         Assert.assertEquals("knowles", user.getSurname());
         Assert.assertEquals("alastair@prism.hr", user.getEmail());
@@ -213,7 +213,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
     
-        user = userCacheService.findOne(userId);
+        user = userCacheService.findOneFresh(userId);
         Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
         Assert.assertEquals("linkedinId", user.getOauthAccountId());
     }

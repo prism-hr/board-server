@@ -51,16 +51,28 @@ public class UserService {
     private Environment environment;
     
     public User getCurrentUser() {
+        return getCurrentUser(false);
+    }
+    
+    public User getCurrentUserSecured() {
+        return getCurrentUser(false);
+    }
+    
+    public User getCurrentUser(boolean fresh) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
         }
-    
+        
+        if (fresh) {
+            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+        }
+        
         return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
     }
     
-    public User getCurrentUserSecured() {
-        User user = getCurrentUser();
+    public User getCurrentUserSecured(boolean fresh) {
+        User user = getCurrentUser(fresh);
         if (user == null) {
             throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
         }
@@ -109,6 +121,7 @@ public class UserService {
             } else {
                 oldUser.setOauthProvider(provider);
                 oldUser.setOauthAccountId(accountId);
+                userCacheService.updateUser(oldUser);
             }
         }
         
@@ -124,7 +137,7 @@ public class UserService {
         String temporaryPassword = RandomStringUtils.randomAlphabetic(12);
         user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
-        userRepository.update(user);
+        userCacheService.updateUser(user);
         
         String serverUrl = environment.getProperty("server.url");
         String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
@@ -134,9 +147,7 @@ public class UserService {
     }
     
     public User updateUser(UserPatchDTO userDTO) {
-        User user = getCurrentUserSecured();
-        // User is probably cached here, so get the persistent version
-        user = userCacheService.findOneFresh(user.getId());
+        User user = getCurrentUserSecured(true);
         Optional<String> givenNameOptional = userDTO.getGivenName();
         if (givenNameOptional != null) {
             user.setGivenName(givenNameOptional.orElse(user.getGivenName()));

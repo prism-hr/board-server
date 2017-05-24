@@ -13,14 +13,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/auth/*", "/redirect");
+        web.ignoring().antMatchers("/api/auth/*", "/api/redirect");
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and().csrf().disable().anonymous().disable()
-            .authorizeRequests().antMatchers("/auth/*", "/redirect").permitAll()
+            .authorizeRequests().antMatchers("/api/auth/*", "/api/redirect").permitAll()
             .and().addFilterAt(new AuthenticationFilter(), BasicAuthenticationFilter.class);
     }
 
