@@ -36,13 +36,13 @@ public class PermissionInstaller {
         Permissions permissions = new Permissions()
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED).notifying(ADMINISTRATOR).with("new_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, DEPARTMENT).inState(ACCEPTED)
     
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
+            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT).notifying(ADMINISTRATOR).with("new_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
@@ -166,11 +166,11 @@ public class PermissionInstaller {
         transactionTemplate.execute(transactionStatus -> {
             LOGGER.info("Deleting old permission definitions");
             entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
-        
+    
             LOGGER.info("Inserting new permission definitions");
             entityManager.createNativeQuery("INSERT INTO permission(resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state) " +
                 "VALUES" + permissions.toString()).executeUpdate();
-        
+    
             return null;
         });
     }

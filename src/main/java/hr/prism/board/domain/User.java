@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
@@ -149,6 +150,10 @@ public class User extends BoardEntity implements Comparable<User> {
     public User setUserRoles(Set<UserRole> userRoles) {
         this.userRoles = userRoles;
         return this;
+    }
+    
+    public String getFullName() {
+        return Joiner.on(StringUtils.SPACE).join(givenName, surname);
     }
     
     @Override

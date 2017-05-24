@@ -139,7 +139,7 @@ public class UserService {
         String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
         NotificationService.Notification notification = notificationService.makeNotification(
             "reset_password", user, ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
-        notificationService.send(notification);
+        notificationService.sendNotification(notification);
     }
     
     public User updateUser(UserPatchDTO userDTO) {

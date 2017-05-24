@@ -1,9 +1,11 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.Role;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
@@ -12,6 +14,7 @@ import hr.prism.board.representation.ActionRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,9 @@ public class ActionService {
     
     @Inject
     private ResourceService resourceService;
+    
+    @Inject
+    private ApplicationEventPublisher applicationEventPublisher;
     
     public Resource executeAction(User user, Resource resource, Action action, ActionExecutionTemplate executionTemplate) {
         List<ActionRepresentation> actions = resource.getActions();
@@ -55,6 +61,12 @@ public class ActionService {
                         resourceService.createResourceOperation(resource, action, user);
                     }
     
+                    Role role = actionRepresentation.getRole();
+                    if (role != null) {
+                        applicationEventPublisher.publishEvent(
+                            new NotificationEvent(this, user.getId(), user.getFullName(), resource.getId(), role, actionRepresentation.getNotification()));
+                    }
+                    
                     return resource;
                 }
             }

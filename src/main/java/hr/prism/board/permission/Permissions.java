@@ -38,6 +38,10 @@ public class Permissions extends ArrayList<Permissions.Permit> {
         return this;
     }
     
+    public Permissions.Permit notifying(Role role) {
+        return this.permit.setRole2(role);
+    }
+    
     @Override
     public boolean add(Permit permit) {
         return super.add(permit.setPermissions(this));
@@ -60,6 +64,10 @@ public class Permissions extends ArrayList<Permissions.Permit> {
         private Scope resource3Scope;
         
         private State resource3State;
+    
+        private Role role2;
+    
+        private String notification;
         
         public Permit setPermissions(Permissions permissions) {
             this.permissions = permissions;
@@ -89,6 +97,16 @@ public class Permissions extends ArrayList<Permissions.Permit> {
             this.resource3State = resource3State;
             return this;
         }
+    
+        public Permit setRole2(Role role2) {
+            this.role2 = role2;
+            return this;
+        }
+    
+        public Permit setNotification(String notification) {
+            this.notification = notification;
+            return this;
+        }
         
         public Permit can(Action action, Scope scope) {
             this.resource2Scope = scope;
@@ -109,18 +127,23 @@ public class Permissions extends ArrayList<Permissions.Permit> {
             
             return this.permissions;
         }
+    
+        public Permissions with(String notification) {
+            this.notification = notification;
+            return this.permissions;
+        }
         
         @Override
         public String toString() {
             List<String> values = new ArrayList<>();
-            for (Enum<?> value : new Enum<?>[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State}) {
+            for (Object value : new Object[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State, role2, notification}) {
                 String valueString;
                 if (value == null) {
                     valueString = "NULL";
                 } else {
-                    valueString = "'" + value.name() + "'";
+                    valueString = "'" + value.toString() + "'";
                 }
-    
+        
                 values.add(valueString);
             }
     

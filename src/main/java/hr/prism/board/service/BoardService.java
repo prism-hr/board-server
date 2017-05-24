@@ -70,7 +70,6 @@ public class BoardService {
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
     
-    // TODO: notify the department administrator if they are not the creator
     public Board createBoard(BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Department department = departmentService.getOrCreateDepartment(currentUser, boardDTO.getDepartment());

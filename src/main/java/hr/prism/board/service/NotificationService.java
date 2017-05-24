@@ -5,6 +5,7 @@ import com.sendgrid.*;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.ApiException;
 import hr.prism.board.exception.ExceptionCode;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,7 +20,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -43,10 +43,16 @@ public class NotificationService {
     private Map<String, String> contents;
     
     @Inject
-    private Environment environment;
+    private ResourceService resourceService;
+    
+    @Inject
+    private UserRoleService userRoleService;
     
     @Inject
     private SendGrid sendGrid;
+    
+    @Inject
+    private Environment environment;
     
     @Inject
     private ApplicationContext applicationContext;
@@ -72,11 +78,12 @@ public class NotificationService {
         String recipientEmail = recipient.getEmail();
         String senderEmail = environment.getProperty("system.email");
         Map<String, String> parameters = Maps.newLinkedHashMap(customParameters);
-        parameters.put("firstName", recipient.getGivenName());
+        parameters.put("environment", environment.getProperty("environment"));
+        parameters.put("recipient", recipient.getGivenName());
         return new Notification(template, senderEmail, recipientEmail, parameters);
     }
     
-    public void send(Notification notification) {
+    public void sendNotification(Notification notification) {
         String template = notification.getTemplate();
         String sender = notification.getSender();
         String recipient = notification.getRecipient();

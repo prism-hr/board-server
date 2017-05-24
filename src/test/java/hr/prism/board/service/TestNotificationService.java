@@ -38,8 +38,8 @@ public class TestNotificationService extends NotificationService {
     }
     
     @Override
-    public void send(Notification notification) {
-        super.send(notification);
+    public void sendNotification(Notification notification) {
+        super.sendNotification(notification);
         sent.add(notification);
     }
     

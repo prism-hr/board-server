@@ -131,4 +131,8 @@ public class UserRoleService {
         });
     }
     
+    public List<UserRole> findInEnclosingScopeByResourceAndUserAndRole(Resource resource, Role role) {
+        return userRoleRepository.findInEnclosingScopeByResourceAndRole(resource, role);
+    }
+    
 }

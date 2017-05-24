@@ -1,10 +1,13 @@
 package hr.prism.board.representation;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import org.apache.commons.lang3.ObjectUtils;
 
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"role", "notification"})
 public class ActionRepresentation implements Comparable<ActionRepresentation> {
     
     private Action action;
@@ -12,6 +15,10 @@ public class ActionRepresentation implements Comparable<ActionRepresentation> {
     private Scope scope;
     
     private State state;
+    
+    private Role role;
+    
+    private String notification;
     
     public Action getAction() {
         return action;
@@ -37,6 +44,24 @@ public class ActionRepresentation implements Comparable<ActionRepresentation> {
     
     public ActionRepresentation setState(State state) {
         this.state = state;
+        return this;
+    }
+    
+    public Role getRole() {
+        return role;
+    }
+    
+    public ActionRepresentation setRole(Role role) {
+        this.role = role;
+        return this;
+    }
+    
+    public String getNotification() {
+        return notification;
+    }
+    
+    public ActionRepresentation setNotification(String notification) {
+        this.notification = notification;
         return this;
     }
     
