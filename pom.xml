@@ -259,7 +259,8 @@
                             <outputFile>target/board.d.ts</outputFile>
                             <outputKind>global</outputKind>
                             <namespace>b</namespace>
-                            <mapEnum>asNumberBasedEnum</mapEnum>
+                            <stringQuotes>singleQuotes</stringQuotes>
+                            <mapEnum>asUnion</mapEnum>
                         </configuration>
                     </execution>
                 </executions>

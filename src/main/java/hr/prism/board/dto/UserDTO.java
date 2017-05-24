@@ -1,11 +1,18 @@
 package hr.prism.board.dto;
 
+import org.hibernate.validator.constraints.Email;
+
+import javax.validation.constraints.Size;
+
 public class UserDTO {
 
+    @Size(min = 1, max = 100)
     private String givenName;
 
+    @Size(min = 1, max = 100)
     private String surname;
 
+    @Email
     private String email;
 
     public String getGivenName() {

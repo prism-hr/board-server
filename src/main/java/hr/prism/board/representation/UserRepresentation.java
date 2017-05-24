@@ -1,6 +1,7 @@
 package hr.prism.board.representation;
 
 import com.google.common.base.MoreObjects;
+import hr.prism.board.enums.DocumentRequestState;
 
 public class UserRepresentation {
 
@@ -13,6 +14,8 @@ public class UserRepresentation {
     private String email;
 
     private DocumentRepresentation documentImage;
+
+    private DocumentRequestState documentImageRequestState;
 
     public Long getId() {
         return id;
@@ -56,6 +59,15 @@ public class UserRepresentation {
 
     public UserRepresentation setDocumentImage(DocumentRepresentation documentImage) {
         this.documentImage = documentImage;
+        return this;
+    }
+
+    public DocumentRequestState getDocumentImageRequestState() {
+        return documentImageRequestState;
+    }
+
+    public UserRepresentation setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
+        this.documentImageRequestState = documentImageRequestState;
         return this;
     }
 
