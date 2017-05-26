@@ -13,8 +13,8 @@ import java.lang.annotation.*;
 @Inherited
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = TestApplicationConfiguration.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {BoardApplication.class, TestApplicationConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public @interface TestContext {
-    
+
 }

@@ -56,9 +56,9 @@ import hr.prism.board.repository.MyRepositoryImpl;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 @Import(SecurityConfiguration.class)
-public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
+public class BoardApplication extends WebMvcConfigurerAdapter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
     @Inject
     private Environment environment;
@@ -68,7 +68,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         InputStream propertiesStream = null;
 
         try {
-            ClassLoader classLoader = ApplicationConfiguration.class.getClassLoader();
+            ClassLoader classLoader = BoardApplication.class.getClassLoader();
             Properties properties = new Properties();
             propertiesStream = classLoader.getResourceAsStream("application.properties");
             properties.load(propertiesStream);
@@ -84,7 +84,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
                 writer.write(jwsSecret);
             }
 
-            SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
+            SpringApplication springApplication = new SpringApplication(BoardApplication.class);
             springApplication.setAdditionalProfiles(properties.get("profile").toString());
             springApplication.setDefaultProperties(ImmutableMap.of("jws.secret", jwsSecret));
             springApplication.run(args);
