@@ -9,17 +9,27 @@ import java.util.Map;
 
 @Service
 public class TestNotificationService extends NotificationService {
-    
+
+    private boolean recording = false;
+
     private List<Notification> sent = new LinkedList<>();
-    
+
+    public void record() {
+        this.recording = true;
+    }
+
+    public void stop() {
+        this.recording = false;
+    }
+
     public void verify(Notification expectedNotification) {
         Assert.assertEquals(1, sent.size());
-        
+
         Notification actualNotification = sent.remove(0);
         Assert.assertEquals(expectedNotification.getTemplate(), actualNotification.getTemplate());
         Assert.assertEquals(expectedNotification.getSender(), actualNotification.getSender());
         Assert.assertEquals(expectedNotification.getRecipient(), actualNotification.getRecipient());
-        
+
         Map<String, String> actualParameters = actualNotification.getParameters();
         Map<String, String> expectedParameters = expectedNotification.getParameters();
         for (String expectedParameterKey : expectedParameters.keySet()) {
@@ -32,15 +42,17 @@ public class TestNotificationService extends NotificationService {
                 Assert.assertEquals(expectedParameterValue, actualParameters.remove(expectedParameterKey));
             }
         }
-        
+
         // Any remaining parameters not defined in the expectations should have null values
         actualParameters.keySet().forEach(actualParameterKey -> Assert.assertNull(actualParameters.get(actualParameterKey)));
     }
-    
+
     @Override
     public void sendNotification(Notification notification) {
         super.sendNotification(notification);
-        sent.add(notification);
+        if (recording) {
+            sent.add(notification);
+        }
     }
-    
+
 }

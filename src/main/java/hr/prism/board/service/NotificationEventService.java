@@ -5,6 +5,7 @@ import com.google.common.collect.TreeMultimap;
 import hr.prism.board.domain.*;
 import hr.prism.board.event.NotificationEvent;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -19,27 +20,30 @@ import java.util.Map;
 @Service
 @Transactional
 public class NotificationEventService {
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private NotificationService notificationService;
-    
+
+    @Inject
+    private Environment environment;
+
     @Async
     @TransactionalEventListener
     public void sendNotifications(NotificationEvent notificationEvent) {
         Resource resource = resourceService.findOne(notificationEvent.getResourceId());
-        
+
         TreeMultimap<Scope, User> index = TreeMultimap.create();
         List<UserRole> userRoles = userRoleService.findInParentScopesByResourceAndUserAndRole(resource, notificationEvent.getRole());
         userRoles.forEach(userRole -> index.put(userRole.getResource().getScope(), userRole.getUser()));
-        
+
         Collection<User> recipients = null;
-    
+
         Iterator<Scope> scopeIterator = index.keySet().descendingIterator();
         while (scopeIterator.hasNext()) {
             recipients = index.get(scopeIterator.next());
@@ -47,17 +51,18 @@ public class NotificationEventService {
                 break;
             }
         }
-        
+
         if (recipients == null) {
             return;
         }
-        
+
         ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.<String, String>builder()
-            .put("creator", notificationEvent.getCreator());
+            .put("creator", notificationEvent.getCreator())
+            .put("redirectUrl", RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource));
         resource.getParents().stream().map(ResourceRelation::getResource1).filter(parent -> !parent.equals(resource))
             .forEach(parent -> parameterBuilder.put(parent.getScope().name().toLowerCase(), parent.getName()));
         Map<String, String> parameters = parameterBuilder.build();
-        
+
         Long creatorId = notificationEvent.getCreatorId();
         for (User recipient : recipients) {
             if (!recipient.getId().equals(creatorId)) {

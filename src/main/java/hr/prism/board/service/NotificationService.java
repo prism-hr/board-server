@@ -32,7 +32,8 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Service
-public class NotificationService {
+public class
+NotificationService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
 
@@ -41,12 +42,6 @@ public class NotificationService {
     private Map<String, String> subjects;
 
     private Map<String, String> contents;
-
-    @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private UserRoleService userRoleService;
 
     @Inject
     private SendGrid sendGrid;
