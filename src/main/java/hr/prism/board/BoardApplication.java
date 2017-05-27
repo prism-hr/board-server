@@ -1,7 +1,5 @@
 package hr.prism.board;
 
-import com.google.common.collect.ImmutableMap;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -10,7 +8,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sendgrid.SendGrid;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,11 +32,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 
@@ -64,35 +57,20 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
     private Environment environment;
 
     public static void main(String[] args) {
-        BufferedWriter writer = null;
         InputStream propertiesStream = null;
-
         try {
             ClassLoader classLoader = BoardApplication.class.getClassLoader();
             Properties properties = new Properties();
             propertiesStream = classLoader.getResourceAsStream("application.properties");
             properties.load(propertiesStream);
 
-            String jwsSecret;
-            String userHome = System.getProperty("user.home");
-            File secretFile = new File(userHome + "/jws.secret");
-            if (secretFile.exists()) {
-                jwsSecret = IOUtils.toString(secretFile.toURI(), StandardCharsets.UTF_8);
-            } else {
-                writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"));
-                jwsSecret = RandomStringUtils.randomAlphanumeric(256);
-                writer.write(jwsSecret);
-            }
-
             SpringApplication springApplication = new SpringApplication(BoardApplication.class);
             springApplication.setAdditionalProfiles(properties.get("profile").toString());
-            springApplication.setDefaultProperties(ImmutableMap.of("jws.secret", jwsSecret));
             springApplication.run(args);
         } catch (Exception e) {
             LOGGER.error("Unable to start application", e);
         } finally {
             IOUtils.closeQuietly(propertiesStream);
-            IOUtils.closeQuietly(writer);
         }
     }
 

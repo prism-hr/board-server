@@ -10,6 +10,7 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserService;
@@ -49,6 +50,9 @@ public class AuthenticationApiIT extends AbstractIT {
 
     @Inject
     private TestNotificationService testNotificationService;
+
+    @Inject
+    private AuthenticationService authenticationService;
 
     @Inject
     private Environment environment;
@@ -223,7 +227,7 @@ public class AuthenticationApiIT extends AbstractIT {
     private void verifyAccessToken(String loginAccessToken, Long userId) {
         Assert.assertNotNull(loginAccessToken);
         Assert.assertEquals(userId,
-            new Long(Long.parseLong(Jwts.parser().setSigningKey("secret").parseClaimsJws(loginAccessToken).getBody().getSubject())));
+            new Long(Long.parseLong(Jwts.parser().setSigningKey(authenticationService.getJwsSecret()).parseClaimsJws(loginAccessToken).getBody().getSubject())));
     }
 
 }

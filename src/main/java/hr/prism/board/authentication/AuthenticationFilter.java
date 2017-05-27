@@ -10,14 +10,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import hr.prism.board.service.UserService;
+import hr.prism.board.service.AuthenticationService;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
     private String jwsSecret;
 
-    public AuthenticationFilter(String jwsSecret) {
-        this.jwsSecret = jwsSecret;
+    private AuthenticationService authenticationService;
+
+    public AuthenticationFilter(AuthenticationService authenticationService) {
+        this.jwsSecret = authenticationService.getJwsSecret();
+        this.authenticationService = authenticationService;
     }
 
     @Override
@@ -25,10 +28,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
         if (authorization != null) {
             String accessToken = authorization.replaceFirst("Bearer ", "");
-            Long userId = UserService.decodeAccessToken(accessToken, jwsSecret);
+            Long userId = authenticationService.decodeAccessToken(accessToken, jwsSecret);
 
             SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
-            response.setHeader("Authorization", "Bearer " + UserService.makeAccessToken(userId, jwsSecret));
+            response.setHeader("Authorization", "Bearer " + authenticationService.makeAccessToken(userId, jwsSecret));
         }
 
         filterChain.doFilter(request, response);
