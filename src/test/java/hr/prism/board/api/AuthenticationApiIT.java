@@ -10,6 +10,7 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserService;
@@ -34,25 +35,28 @@ import java.util.Map;
 @TestContext
 @RunWith(SpringRunner.class)
 public class AuthenticationApiIT extends AbstractIT {
-    
+
     @Inject
     private MockMvc mockMvc;
-    
+
     @Inject
     private ObjectMapper objectMapper;
-    
+
     @Inject
     private UserCacheService userCacheService;
-    
+
     @Inject
     private TestUserService testUserService;
-    
+
     @Inject
     private TestNotificationService testNotificationService;
-    
+
+    @Inject
+    private AuthenticationService authenticationService;
+
     @Inject
     private Environment environment;
-    
+
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
@@ -64,9 +68,9 @@ public class AuthenticationApiIT extends AbstractIT {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse();
-        
+
         String loginAccessToken = (String) objectMapper.readValue(registerResponse.getContentAsString(), Map.class).get("token");
-        
+
         MockHttpServletResponse userResponse =
             mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/user")
@@ -75,17 +79,17 @@ public class AuthenticationApiIT extends AbstractIT {
                 .andReturn()
                 .getResponse();
         UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
-    
+
         User user = userCacheService.findOneFresh(userRepresentation.getId());
         Long userId = user.getId();
-        
+
         verifyAccessToken(loginAccessToken, userId);
         Assert.assertEquals("alastair", userRepresentation.getGivenName());
         Assert.assertEquals("knowles", userRepresentation.getSurname());
         Assert.assertEquals("alastair@prism.hr", userRepresentation.getEmail());
-        
+
         Assert.assertEquals(DigestUtils.sha256Hex("password"), user.getPassword());
-        
+
         Thread.sleep(1000);
         LoginDTO loginDTO = new LoginDTO().setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse loginResponse =
@@ -96,10 +100,10 @@ public class AuthenticationApiIT extends AbstractIT {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse();
-        
+
         loginAccessToken = (String) objectMapper.readValue(loginResponse.getContentAsString(), Map.class).get("token");
         verifyAccessToken(loginAccessToken, userId);
-        
+
         Thread.sleep(1000);
         userResponse =
             mockMvc.perform(
@@ -108,23 +112,24 @@ public class AuthenticationApiIT extends AbstractIT {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse();
-        
+
         UserRepresentation userResponseBody = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
         Assert.assertEquals("alastair@prism.hr", userResponseBody.getEmail());
-        
+
         testUserService.unauthenticate();
-        
+
         mockMvc.perform(
             MockMvcRequestBuilders.get("/api/posts"))
             .andExpect(MockMvcResultMatchers.status().isOk());
-        
+
         mockMvc.perform(
             MockMvcRequestBuilders.get("/api/user"))
             .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
-    
+
     @Test
     public void shouldResetPasswordAndNotifyUser() throws Exception {
+        testNotificationService.record();
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
         String accessToken = (String) objectMapper.readValue(
             mockMvc.perform(
@@ -136,7 +141,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse()
                 .getContentAsString(),
             Map.class).get("token");
-        
+
         MockHttpServletResponse userResponse =
             mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/user")
@@ -145,7 +150,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .andReturn()
                 .getResponse();
         UserRepresentation userR = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
-        
+
         ResetPasswordDTO resetPasswordDTO = new ResetPasswordDTO().setEmail("alastair@prism.hr");
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/resetPassword")
@@ -153,28 +158,29 @@ public class AuthenticationApiIT extends AbstractIT {
                 .content(objectMapper.writeValueAsString(resetPasswordDTO)))
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andReturn();
-    
+
         Long userId = userR.getId();
         User user = userCacheService.findOneFresh(userId);
         Assert.assertNotNull(user.getTemporaryPassword());
-        
+
         LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
         Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
         testNotificationService.verify(new NotificationService.Notification("reset_password", "admin@prism.hr", "alastair@prism.hr",
             ImmutableMap.of("environment", environment.getProperty("environment"), "recipient", "alastair", "temporaryPassword", "defined",
                 "redirectUrl", environment.getProperty("server.url") + "/redirect?path=login")));
-        
+
         // Set the temporary password to something that we know
         transactionTemplate.execute(status -> userCacheService.findOneFresh(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
-        
+
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("temporary"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
+        testNotificationService.stop();
     }
-    
+
     @Test
     public void shouldSigninWithOauthProvider() throws Exception {
         String accessToken = (String) objectMapper.readValue(
@@ -188,7 +194,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse()
                 .getContentAsString(),
             Map.class).get("token");
-        
+
         Long userId = objectMapper.readValue(
             mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/user")
@@ -198,30 +204,30 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse()
                 .getContentAsString(),
             UserRepresentation.class).getId();
-    
+
         User user = userCacheService.findOneFresh(userId);
         Assert.assertEquals("alastair", user.getGivenName());
         Assert.assertEquals("knowles", user.getSurname());
         Assert.assertEquals("alastair@prism.hr", user.getEmail());
         Assert.assertEquals(OauthProvider.FACEBOOK, user.getOauthProvider());
         Assert.assertEquals("facebookId", user.getOauthAccountId());
-        
+
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/linkedin")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(
                     new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
-    
+
         user = userCacheService.findOneFresh(userId);
         Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
         Assert.assertEquals("linkedinId", user.getOauthAccountId());
     }
-    
+
     private void verifyAccessToken(String loginAccessToken, Long userId) {
         Assert.assertNotNull(loginAccessToken);
         Assert.assertEquals(userId,
-            new Long(Long.parseLong(Jwts.parser().setSigningKey("secret").parseClaimsJws(loginAccessToken).getBody().getSubject())));
+            new Long(Long.parseLong(Jwts.parser().setSigningKey(authenticationService.getJwsSecret()).parseClaimsJws(loginAccessToken).getBody().getSubject())));
     }
-    
+
 }

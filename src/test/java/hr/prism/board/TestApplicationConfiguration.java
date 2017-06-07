@@ -7,6 +7,7 @@ import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.repository.MyRepositoryImpl;
 import hr.prism.board.service.TestNotificationService;
+
 import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -17,20 +18,16 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-@EnableWebMvc
 @Configuration
-@EnableScheduling
-@SpringBootApplication
-@EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
-@Import({ApplicationConfiguration.class, SecurityConfiguration.class})
+@Import(BoardApplication.class)
 public class TestApplicationConfiguration {
-    
+
     @Bean
     @Primary
     public TestNotificationService notificationService() {
         return new TestNotificationService();
     }
-    
+
     @Bean
     @Primary
     public FacebookAdapter facebookAdapter() {
@@ -49,7 +46,7 @@ public class TestApplicationConfiguration {
                     .setOauthAccountId("facebookId"));
         return facebookAdapter;
     }
-    
+
     @Bean
     @Primary
     public LinkedinAdapter linkedinAdapter() {
@@ -68,5 +65,5 @@ public class TestApplicationConfiguration {
                     .setOauthAccountId("linkedinId"));
         return linkedinAdapter;
     }
-    
+
 }

@@ -16,5 +16,5 @@ import java.lang.annotation.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = TestApplicationConfiguration.class)
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public @interface TestContext {
-    
+
 }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sendgrid.SendGrid;
-import hr.prism.board.repository.MyRepositoryImpl;
+
 import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
@@ -32,11 +32,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
+
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import hr.prism.board.repository.MyRepositoryImpl;
 
 @EnableAsync
 @EnableWebMvc
@@ -46,36 +49,36 @@ import java.util.Properties;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 @Import(SecurityConfiguration.class)
-public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
-    
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
-    
+public class BoardApplication extends WebMvcConfigurerAdapter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
+
     @Inject
     private Environment environment;
-    
+
     public static void main(String[] args) {
         InputStream propertiesStream = null;
         try {
+            ClassLoader classLoader = BoardApplication.class.getClassLoader();
             Properties properties = new Properties();
-            ClassLoader classLoader = ApplicationConfiguration.class.getClassLoader();
             propertiesStream = classLoader.getResourceAsStream("application.properties");
             properties.load(propertiesStream);
-        
-            SpringApplication springApplication = new SpringApplication(ApplicationConfiguration.class);
+
+            SpringApplication springApplication = new SpringApplication(BoardApplication.class);
             springApplication.setAdditionalProfiles(properties.get("profile").toString());
             springApplication.run(args);
         } catch (Exception e) {
-            LOGGER.info("Unable to load properties", e);
+            LOGGER.error("Unable to start application", e);
         } finally {
             IOUtils.closeQuietly(propertiesStream);
         }
     }
-    
+
     @Bean
     public DataSource dataSource() {
         String host = environment.getProperty("database.host");
         LOGGER.info("Creating datasource using: " + host);
-        
+
         return DataSourceBuilder.create()
             .driverClassName("com.mysql.cj.jdbc.Driver")
             .url("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
@@ -84,27 +87,27 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
             .password("pgadmissions")
             .build();
     }
-    
+
     @Bean
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:database");
-        
+
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
             flyway.clean();
         }
-        
+
         flyway.migrate();
         return flyway;
     }
-    
+
     @Bean
     public SendGrid sendGrid() {
         return new SendGrid(environment.getProperty("sendgrid.key"));
     }
-    
+
     @Bean
     public LocalSessionFactoryBean sessionFactory() {
         LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
@@ -116,12 +119,12 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         sessionFactoryBean.setHibernateProperties(hibernateProperties);
         return sessionFactoryBean;
     }
-    
+
     @Bean
     public CacheManager cacheManager() {
         return new EhCacheCacheManager(ehCacheCacheManager().getObject());
     }
-    
+
     @Bean
     public EhCacheManagerFactoryBean ehCacheCacheManager() {
         EhCacheManagerFactoryBean ehCacheManager = new EhCacheManagerFactoryBean();
@@ -129,7 +132,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         ehCacheManager.setShared(true);
         return ehCacheManager;
     }
-    
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -141,10 +144,10 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return objectMapper;
     }
-    
+
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.add(new MappingJackson2HttpMessageConverter(objectMapper()));
     }
-    
+
 }
