@@ -79,7 +79,7 @@ public class ApplicationConfiguration extends WebMvcConfigurerAdapter {
         return DataSourceBuilder.create()
             .driverClassName("com.mysql.cj.jdbc.Driver")
             .url("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
-                "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
+                "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&autoReconnect=true")
             .username("prism")
             .password("pgadmissions")
             .build();
