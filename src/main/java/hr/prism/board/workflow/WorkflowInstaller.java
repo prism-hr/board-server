@@ -1,4 +1,6 @@
-package hr.prism.board.permission;
+package hr.prism.board.workflow;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,35 +16,60 @@ import javax.transaction.Transactional;
 
 import static hr.prism.board.domain.Role.ADMINISTRATOR;
 import static hr.prism.board.domain.Role.AUTHOR;
-import static hr.prism.board.domain.Scope.*;
-import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.State.*;
+import static hr.prism.board.domain.Scope.BOARD;
+import static hr.prism.board.domain.Scope.DEPARTMENT;
+import static hr.prism.board.domain.Scope.POST;
+import static hr.prism.board.enums.Action.ACCEPT;
+import static hr.prism.board.enums.Action.AUDIT;
+import static hr.prism.board.enums.Action.CORRECT;
+import static hr.prism.board.enums.Action.EDIT;
+import static hr.prism.board.enums.Action.EXTEND;
+import static hr.prism.board.enums.Action.REJECT;
+import static hr.prism.board.enums.Action.RESTORE;
+import static hr.prism.board.enums.Action.SUSPEND;
+import static hr.prism.board.enums.Action.VIEW;
+import static hr.prism.board.enums.Action.WITHDRAW;
+import static hr.prism.board.enums.State.ACCEPTED;
+import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.enums.State.EXPIRED;
+import static hr.prism.board.enums.State.PENDING;
+import static hr.prism.board.enums.State.PREVIOUS;
+import static hr.prism.board.enums.State.REJECTED;
+import static hr.prism.board.enums.State.SUSPENDED;
+import static hr.prism.board.enums.State.WITHDRAWN;
 
 @Service
 @Transactional
-public class PermissionInstaller {
-    
-    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionInstaller.class);
-    
+public class WorkflowInstaller {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowInstaller.class);
+
     @PersistenceContext
     private EntityManager entityManager;
-    
+
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-    
+
+    @Inject
+    private ObjectMapper objectMapper;
+
     @PostConstruct
     public void install() {
-        Permissions permissions = new Permissions()
+        Workflow workflow = new Workflow(objectMapper)
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED).notifying(ADMINISTRATOR).with("new_board")
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
+                    .notifying(DEPARTMENT, ADMINISTRATOR).with("new_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, DEPARTMENT).inState(ACCEPTED)
-    
+
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT).notifying(ADMINISTRATOR).with("new_post")
+            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
+                    .notifying(DEPARTMENT, ADMINISTRATOR).with("new_post_parent")
+                    .notifying(BOARD, ADMINISTRATOR).with("new_post_parent")
+                    .notifying(POST, ADMINISTRATOR).with("new_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
@@ -50,7 +77,9 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
-    
+                    .notifying(DEPARTMENT, ADMINISTRATOR).with("new_post_parent")
+                    .notifying(BOARD, ADMINISTRATOR).with("new_post_parent")
+
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
@@ -68,7 +97,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(DRAFT).transitioningTo(WITHDRAWN)
-    
+
             // Post pending state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
@@ -84,7 +113,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
-    
+
             // Post accepted state
             .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
@@ -98,7 +127,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
-    
+
             // Post suspended state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
@@ -115,7 +144,7 @@ public class PermissionInstaller {
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(CORRECT, POST).inState(SUSPENDED).transitioningTo(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(SUSPENDED).transitioningTo(WITHDRAWN)
-    
+
             // Post expired state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
@@ -131,7 +160,7 @@ public class PermissionInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(EXPIRED).transitioningTo(WITHDRAWN)
-    
+
             // Post rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
@@ -149,7 +178,7 @@ public class PermissionInstaller {
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(REJECTED).transitioningTo(WITHDRAWN)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, POST).inState(REJECTED).transitioningTo(PREVIOUS)
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(REJECTED).transitioningTo(PREVIOUS)
-    
+
             // Post withdrawn state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
@@ -161,19 +190,19 @@ public class PermissionInstaller {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS);
-    
+
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         transactionTemplate.execute(transactionStatus -> {
             LOGGER.info("Deleting old permission definitions");
             entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
-    
+
             LOGGER.info("Inserting new permission definitions");
             entityManager.createNativeQuery("INSERT INTO permission(" +
-                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, role2, notification) " +
-                "VALUES" + permissions.toString()).executeUpdate();
-    
+                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, notification) " +
+                "VALUES" + workflow.toString()).executeUpdate();
+
             return null;
         });
     }
-    
+
 }

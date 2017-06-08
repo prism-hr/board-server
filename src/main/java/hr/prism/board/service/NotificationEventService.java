@@ -66,8 +66,8 @@ public class NotificationEventService {
         Long creatorId = notificationEvent.getCreatorId();
         for (User recipient : recipients) {
             if (!recipient.getId().equals(creatorId)) {
-                NotificationService.Notification notification = notificationService.makeNotification(notificationEvent.getNotification(), recipient, parameters);
-                notificationService.sendNotification(notification);
+                NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(notificationEvent.getNotification(), recipient, parameters);
+                notificationService.sendNotification(notificationInstance);
             }
         }
     }

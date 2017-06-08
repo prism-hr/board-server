@@ -153,9 +153,9 @@ public class AuthenticationService {
 
         String serverUrl = environment.getProperty("server.url");
         String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
-        NotificationService.Notification notification = notificationService.makeNotification(
+        NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(
             "reset_password", user, ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
-        notificationService.sendNotification(notification);
+        notificationService.sendNotification(notificationInstance);
     }
 
     public String makeAccessToken(Long userId, String jwsSecret) {

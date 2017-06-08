@@ -12,7 +12,7 @@ public class TestNotificationService extends NotificationService {
 
     private boolean recording = false;
 
-    private List<Notification> sent = new LinkedList<>();
+    private List<NotificationInstance> sent = new LinkedList<>();
 
     public void record() {
         this.recording = true;
@@ -22,16 +22,16 @@ public class TestNotificationService extends NotificationService {
         this.recording = false;
     }
 
-    public void verify(Notification expectedNotification) {
+    public void verify(NotificationInstance expectedNotificationInstance) {
         Assert.assertEquals(1, sent.size());
 
-        Notification actualNotification = sent.remove(0);
-        Assert.assertEquals(expectedNotification.getTemplate(), actualNotification.getTemplate());
-        Assert.assertEquals(expectedNotification.getSender(), actualNotification.getSender());
-        Assert.assertEquals(expectedNotification.getRecipient(), actualNotification.getRecipient());
+        NotificationInstance actualNotificationInstance = sent.remove(0);
+        Assert.assertEquals(expectedNotificationInstance.getTemplate(), actualNotificationInstance.getTemplate());
+        Assert.assertEquals(expectedNotificationInstance.getSender(), actualNotificationInstance.getSender());
+        Assert.assertEquals(expectedNotificationInstance.getRecipient(), actualNotificationInstance.getRecipient());
 
-        Map<String, String> actualParameters = actualNotification.getParameters();
-        Map<String, String> expectedParameters = expectedNotification.getParameters();
+        Map<String, String> actualParameters = actualNotificationInstance.getParameters();
+        Map<String, String> expectedParameters = expectedNotificationInstance.getParameters();
         for (String expectedParameterKey : expectedParameters.keySet()) {
             String expectedParameterValue = expectedParameters.get(expectedParameterKey);
             if (expectedParameterValue.equals("defined")) {
@@ -48,10 +48,10 @@ public class TestNotificationService extends NotificationService {
     }
 
     @Override
-    public void sendNotification(Notification notification) {
-        super.sendNotification(notification);
+    public void sendNotification(NotificationInstance notificationInstance) {
+        super.sendNotification(notificationInstance);
         if (recording) {
-            sent.add(notification);
+            sent.add(notificationInstance);
         }
     }
 

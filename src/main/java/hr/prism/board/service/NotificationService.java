@@ -69,20 +69,20 @@ NotificationService {
         Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
     }
 
-    public Notification makeNotification(String template, User recipient, Map<String, String> customParameters) {
+    public NotificationInstance makeNotification(String template, User recipient, Map<String, String> customParameters) {
         String recipientEmail = recipient.getEmail();
         String senderEmail = environment.getProperty("system.email");
         Map<String, String> parameters = Maps.newLinkedHashMap(customParameters);
         parameters.put("environment", environment.getProperty("environment"));
         parameters.put("recipient", recipient.getGivenName());
-        return new Notification(template, senderEmail, recipientEmail, parameters);
+        return new NotificationInstance(template, senderEmail, recipientEmail, parameters);
     }
 
-    public void sendNotification(Notification notification) {
-        String template = notification.getTemplate();
-        String sender = notification.getSender();
-        String recipient = notification.getRecipient();
-        Map<String, String> parameters = notification.getParameters();
+    public void sendNotification(NotificationInstance notificationInstance) {
+        String template = notificationInstance.getTemplate();
+        String sender = notificationInstance.getSender();
+        String recipient = notificationInstance.getRecipient();
+        Map<String, String> parameters = notificationInstance.getParameters();
 
         StrSubstitutor parser = new StrSubstitutor(parameters);
         String subject = parser.replace(this.subjects.get(template));
@@ -160,7 +160,7 @@ NotificationService {
         LOG, SEND
     }
 
-    public static class Notification {
+    public static class NotificationInstance {
 
         private String template;
 
@@ -170,7 +170,7 @@ NotificationService {
 
         private Map<String, String> parameters;
 
-        public Notification(String template, String sender, String recipient, Map<String, String> parameters) {
+        public NotificationInstance(String template, String sender, String recipient, Map<String, String> parameters) {
             this.template = template;
             this.sender = sender;
             this.recipient = recipient;
