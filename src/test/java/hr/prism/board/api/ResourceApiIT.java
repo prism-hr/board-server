@@ -69,7 +69,7 @@ public class ResourceApiIT extends AbstractIT {
             resourceUserMatcher("board-manager@mail.com", Role.AUTHOR)));
 
         // add one role
-        resourceApi.createUserRole(scope, resourceId, boardManager.getUser().getId(), new UserRoleDTO().setRole(Role.MEMBER));
+        resourceApi.createUserRole(scope, resourceId, boardManager.getUser().getId(), new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")));
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR),
             resourceUserMatcher("board-manager@mail.com", Role.AUTHOR, Role.MEMBER)));
@@ -88,7 +88,7 @@ public class ResourceApiIT extends AbstractIT {
 
         UserDTO newUser = new UserDTO().setEmail("last-role@mail.com").setGivenName("Sample").setSurname("User");
         ResourceUserRepresentation boardManager = resourceApi.createResourceUser(Scope.BOARD, boardR.getId(),
-            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER))));
+            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")))));
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.deleteUserRole(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), Role.MEMBER),
@@ -105,7 +105,8 @@ public class ResourceApiIT extends AbstractIT {
 
         UserDTO newUser = new UserDTO().setEmail("non-existing-role@mail.com").setGivenName("Sample").setSurname("User");
         ResourceUserRepresentation boardManager = resourceApi.createResourceUser(Scope.BOARD, boardR.getId(),
-            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER), new UserRoleDTO().setRole(Role.AUTHOR))));
+            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(
+                new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")), new UserRoleDTO().setRole(Role.AUTHOR))));
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.deleteUserRole(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), Role
@@ -125,7 +126,8 @@ public class ResourceApiIT extends AbstractIT {
         // add another administrator
         UserDTO newUserDTO = new UserDTO().setEmail("last-admin-role@mail.com").setGivenName("Sample").setSurname("User");
         ResourceUserRepresentation boardManager = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(newUserDTO).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.ADMINISTRATOR), new UserRoleDTO().setRole(Role.MEMBER))));
+            new ResourceUserDTO().setUser(newUserDTO)
+                .setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.ADMINISTRATOR), new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")))));
 
         // remove current user as administrator
         resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId());
@@ -179,7 +181,7 @@ public class ResourceApiIT extends AbstractIT {
         for (int i = 1; i <= 200; i++) {
             bulkDTO.getUsers().add(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"));
         }
-        bulkDTO.setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)));
+        bulkDTO.setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2"))));
 
         resourceApi.createResourceUsers(Scope.BOARD, boardR.getId(), bulkDTO);
 
@@ -191,7 +193,7 @@ public class ResourceApiIT extends AbstractIT {
         for (int i = 101; i <= 300; i++) {
             bulkDTO.getUsers().add(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"));
         }
-        bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER), new UserRoleDTO().setRole(Role.AUTHOR)));
+        bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")), new UserRoleDTO().setRole(Role.AUTHOR)));
 
         resourceApi.createResourceUsers(Scope.BOARD, boardR.getId(), bulkDTO);
 
