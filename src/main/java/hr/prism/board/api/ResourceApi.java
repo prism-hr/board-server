@@ -4,6 +4,7 @@ import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
+import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.service.UserRoleService;
 import org.apache.commons.lang3.StringUtils;
@@ -39,9 +40,9 @@ public class ResourceApi {
         userRoleService.deleteResourceUser(scope, resourceId, userId);
     }
 
-    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.PUT)
-    public void createUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @PathVariable Role role) {
-        userRoleService.createUserRole(scope, resourceId, userId, role);
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles", method = RequestMethod.POST)
+    public void createUserRole(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
+        userRoleService.createUserRole(scope, resourceId, userId, userRoleDTO);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}/roles/{role}", method = RequestMethod.DELETE)

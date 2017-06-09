@@ -1,32 +1,28 @@
 package hr.prism.board.dto;
 
-import hr.prism.board.domain.Role;
-
 import java.util.List;
 import java.util.Set;
 
 public class ResourceUsersDTO {
-    
+
     private List<UserDTO> users;
-    
-    private Set<Role> roles;
-    
+
+    private Set<UserRoleDTO> roles;
+
     public List<UserDTO> getUsers() {
         return users;
     }
-    
+
     public ResourceUsersDTO setUsers(List<UserDTO> users) {
         this.users = users;
         return this;
     }
-    
-    public Set<Role> getRoles() {
+
+    public Set<UserRoleDTO> getRoles() {
         return roles;
     }
-    
-    public ResourceUsersDTO setRoles(Set<Role> roles) {
+
+    public void setRoles(Set<UserRoleDTO> roles) {
         this.roles = roles;
-        return this;
     }
-    
 }
