@@ -33,7 +33,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "from Resource resource " +
             "inner join resource.parents parent " +
             "inner join parent.resource1 enclosingResource " +
-            "inner join enclosingResource.userRole " +
+            "inner join enclosingResource.userRoles userRole " +
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role")
