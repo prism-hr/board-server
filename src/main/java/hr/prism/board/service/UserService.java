@@ -5,12 +5,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.inject.Inject;
 
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.Role;
+import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
@@ -86,6 +90,10 @@ public class UserService {
         }
 
         return user;
+    }
+
+    public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
+        return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role);
     }
 
     private User getCurrentUser(boolean fresh) {

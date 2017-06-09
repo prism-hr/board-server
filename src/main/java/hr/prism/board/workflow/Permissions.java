@@ -17,13 +17,13 @@ import hr.prism.board.exception.ExceptionCode;
 
 import static hr.prism.board.domain.Role.PUBLIC;
 
-public class Workflow extends ArrayList<Workflow.Permission> {
+public class Permissions extends ArrayList<Permissions.Permission> {
 
     private Permission permission;
 
     private ObjectMapper objectMapper;
 
-    public Workflow(ObjectMapper objectMapper) {
+    public Permissions(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -45,7 +45,7 @@ public class Workflow extends ArrayList<Workflow.Permission> {
         return this.permission.setResource3Scope(scope);
     }
 
-    public Workflow transitioningTo(State state) {
+    public Permissions transitioningTo(State state) {
         this.permission.setResource3State(state);
         return this;
     }
@@ -56,12 +56,12 @@ public class Workflow extends ArrayList<Workflow.Permission> {
 
     @Override
     public boolean add(Permission permission) {
-        return super.add(permission.setWorkflow(this));
+        return super.add(permission.setPermissions(this));
     }
 
     public class Permission {
 
-        private Workflow workflow;
+        private Permissions permissions;
 
         private Scope resource1Scope;
 
@@ -79,8 +79,8 @@ public class Workflow extends ArrayList<Workflow.Permission> {
 
         private List<Notification> notifications;
 
-        public Permission setWorkflow(Workflow workflow) {
-            this.workflow = workflow;
+        public Permission setPermissions(Permissions permissions) {
+            this.permissions = permissions;
             return this;
         }
 
@@ -113,7 +113,7 @@ public class Workflow extends ArrayList<Workflow.Permission> {
                 this.notifications = new ArrayList<>();
             }
 
-            Notification notification = new Notification().setWorkflow(this.workflow).setScope(scope).setRole(role);
+            Notification notification = new Notification().setPermissions(this.permissions).setScope(scope).setRole(role);
             this.notifications.add(notification);
             return notification;
         }
@@ -128,14 +128,14 @@ public class Workflow extends ArrayList<Workflow.Permission> {
             return this;
         }
 
-        public Workflow inState(State state) {
+        public Permissions inState(State state) {
             if (this.resource2State == null) {
                 this.resource2State = state;
             } else {
                 this.resource3State = state;
             }
 
-            return this.workflow;
+            return this.permissions;
         }
 
         @Override
@@ -163,16 +163,18 @@ public class Workflow extends ArrayList<Workflow.Permission> {
 
     public static class Notification {
 
-        private Workflow workflow;
+        private Permissions permissions;
 
         private Scope scope;
 
         private Role role;
 
-        private String notification;
+        private boolean excludingCreator = false;
 
-        public Notification setWorkflow(Workflow workflow) {
-            this.workflow = workflow;
+        private String template;
+
+        public Notification setPermissions(Permissions permissions) {
+            this.permissions = permissions;
             return this;
         }
 
@@ -194,13 +196,22 @@ public class Workflow extends ArrayList<Workflow.Permission> {
             return this;
         }
 
-        public String getNotification() {
-            return notification;
+        public boolean isExcludingCreator() {
+            return excludingCreator;
         }
 
-        public Workflow with(String notification) {
-            this.notification = notification;
-            return this.workflow;
+        public Notification excludingCreator() {
+            this.excludingCreator = true;
+            return this;
+        }
+
+        public String getTemplate() {
+            return template;
+        }
+
+        public Permissions with(String notification) {
+            this.template = notification;
+            return this.permissions;
         }
 
     }

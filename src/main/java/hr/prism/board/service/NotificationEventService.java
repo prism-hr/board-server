@@ -1,21 +1,29 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.TreeMultimap;
-import hr.prism.board.domain.*;
-import hr.prism.board.event.NotificationEvent;
-import org.apache.commons.collections.CollectionUtils;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-import java.util.Collection;
-import java.util.Iterator;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceRelation;
+import hr.prism.board.domain.User;
+import hr.prism.board.event.NotificationEvent;
+import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.workflow.Permissions;
 
 @Service
 @Transactional
@@ -25,50 +33,58 @@ public class NotificationEventService {
     private ResourceService resourceService;
 
     @Inject
-    private UserRoleService userRoleService;
+    private NotificationService notificationService;
 
     @Inject
-    private NotificationService notificationService;
+    private UserService userService;
+
+    @Inject
+    private UserCacheService userCacheService;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @Inject
     private Environment environment;
 
     @Async
     @TransactionalEventListener
-    public void sendNotifications(NotificationEvent notificationEvent) {
+    public void sendNotifications(NotificationEvent notificationEvent) throws IOException {
+        User creator = userCacheService.findOne(notificationEvent.getCreatorId());
         Resource resource = resourceService.findOne(notificationEvent.getResourceId());
+        String creatorFullName = creator.getFullName();
 
-        TreeMultimap<Scope, User> index = TreeMultimap.create();
-        List<UserRole> userRoles = userRoleService.findInParentScopesByResourceAndUserAndRole(resource, notificationEvent.getRole());
-        userRoles.forEach(userRole -> index.put(userRole.getResource().getScope(), userRole.getUser()));
-
-        Collection<User> recipients = null;
-
-        Iterator<Scope> scopeIterator = index.keySet().descendingIterator();
-        while (scopeIterator.hasNext()) {
-            recipients = index.get(scopeIterator.next());
-            if (CollectionUtils.isNotEmpty(recipients)) {
-                break;
+        HashMultimap<User, String> sent = HashMultimap.create();
+        List<Permissions.Notification> notifications =
+            objectMapper.readValue(notificationEvent.getNotification(), new TypeReference<Permissions.Notification>() {});
+        for (Permissions.Notification notification : notifications) {
+            List<User> recipients = userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification
+                .getRole());
+            if (notification.isExcludingCreator()) {
+                recipients.remove(creator);
             }
-        }
 
-        if (recipients == null) {
-            return;
-        }
+            if (recipients.size() > 0) {
+                String template = notification.getTemplate();
+                ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.<String, String>builder()
+                    .put("creator", creatorFullName)
+                    .put("redirectUrl", RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource));
+                resource.getParents()
+                    .stream()
+                    .map(ResourceRelation::getResource1)
+                    .filter(parent -> !parent.equals(resource))
+                    .forEach(parent -> parameterBuilder.put(parent.getScope().name().toLowerCase(), parent.getName()));
+                Map<String, String> parameters = parameterBuilder.build();
 
-        ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.<String, String>builder()
-            .put("creator", notificationEvent.getCreator())
-            .put("redirectUrl", RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource));
-        resource.getParents().stream().map(ResourceRelation::getResource1).filter(parent -> !parent.equals(resource))
-            .forEach(parent -> parameterBuilder.put(parent.getScope().name().toLowerCase(), parent.getName()));
-        Map<String, String> parameters = parameterBuilder.build();
-
-        Long creatorId = notificationEvent.getCreatorId();
-        for (User recipient : recipients) {
-            if (!recipient.getId().equals(creatorId)) {
-                NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(notificationEvent.getNotification(), recipient, parameters);
-                notificationService.sendNotification(notificationInstance);
+                for (User recipient : recipients) {
+                    if (!sent.containsEntry(recipient, template)) {
+                        NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(template, recipient, parameters);
+                        notificationService.sendNotification(notificationInstance);
+                        sent.put(recipient, template);
+                    }
+                }
             }
         }
     }
+
 }

@@ -1,18 +1,5 @@
 package hr.prism.board.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.User;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
-import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.exception.ApiForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.interceptor.StateChangeInterceptor;
-import hr.prism.board.workflow.WorkflowExecution;
-import hr.prism.board.representation.ActionRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -20,8 +7,20 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
 import java.util.List;
+
+import javax.inject.Inject;
+
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.State;
+import hr.prism.board.event.NotificationEvent;
+import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.interceptor.StateChangeInterceptor;
+import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.workflow.WorkflowExecution;
 
 @Service
 @Transactional
@@ -34,9 +33,6 @@ public class ActionService {
 
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
-
-    @Inject
-    private ObjectMapper objectMapper;
 
     public Resource executeAction(User user, Resource resource, Action action, WorkflowExecution executionTemplate) {
         List<ActionRepresentation> actions = resource.getActions();
@@ -69,7 +65,7 @@ public class ActionService {
                     String notification = actionRepresentation.getNotification();
                     if (notification != null) {
                         applicationEventPublisher.publishEvent(
-                            new NotificationEvent(this, user.getId(), user.getFullName(), resource.getId(), actionRepresentation.getNotification()));
+                            new NotificationEvent(this, user.getId(), resource.getId(), actionRepresentation.getNotification()));
                     }
 
                     return resource;

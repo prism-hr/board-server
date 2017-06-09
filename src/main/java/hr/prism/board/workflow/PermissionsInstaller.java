@@ -40,9 +40,9 @@ import static hr.prism.board.enums.State.WITHDRAWN;
 
 @Service
 @Transactional
-public class WorkflowInstaller {
+public class PermissionsInstaller {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowInstaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionsInstaller.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -56,20 +56,20 @@ public class WorkflowInstaller {
 
     @PostConstruct
     public void install() {
-        Workflow workflow = new Workflow(objectMapper)
+        Permissions permissions = new Permissions(objectMapper)
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
-                    .notifying(DEPARTMENT, ADMINISTRATOR).with("new_board")
+                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, DEPARTMENT).inState(ACCEPTED)
 
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
-                    .notifying(DEPARTMENT, ADMINISTRATOR).with("new_post_parent")
-                    .notifying(BOARD, ADMINISTRATOR).with("new_post_parent")
-                    .notifying(POST, ADMINISTRATOR).with("new_post")
+                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+                .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+            .notifying(POST, ADMINISTRATOR).with("new_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
@@ -77,8 +77,8 @@ public class WorkflowInstaller {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
-                    .notifying(DEPARTMENT, ADMINISTRATOR).with("new_post_parent")
-                    .notifying(BOARD, ADMINISTRATOR).with("new_post_parent")
+                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+                .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
 
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
@@ -193,13 +193,13 @@ public class WorkflowInstaller {
 
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         transactionTemplate.execute(transactionStatus -> {
-            LOGGER.info("Deleting old permission definitions");
+            LOGGER.info("Deleting old permissions");
             entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
 
-            LOGGER.info("Inserting new permission definitions");
+            LOGGER.info("Inserting new permissions");
             entityManager.createNativeQuery("INSERT INTO permission(" +
                 "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, notification) " +
-                "VALUES" + workflow.toString()).executeUpdate();
+                "VALUES" + permissions.toString()).executeUpdate();
 
             return null;
         });
