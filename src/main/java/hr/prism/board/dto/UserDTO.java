@@ -2,6 +2,7 @@ package hr.prism.board.dto;
 
 import org.hibernate.validator.constraints.Email;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 public class UserDTO {
@@ -13,6 +14,7 @@ public class UserDTO {
     private String surname;
 
     @Email
+    @NotNull
     private String email;
 
     public String getGivenName() {
