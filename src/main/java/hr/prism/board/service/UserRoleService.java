@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -17,6 +18,7 @@ import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.UserRoleCategory;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
@@ -28,12 +30,6 @@ import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.inject.Inject;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -114,8 +110,7 @@ public class UserRoleService {
 
         Set<UserRoleRepresentation> rolesRepresentation = roles.stream().map(r ->
             new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate()).setCategories(r.getCategories())).collect(Collectors.toSet());
-        return new ResourceUserRepresentation().setUser(userMapper.apply(user))
-            .setRoles(rolesRepresentation);
+        return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(rolesRepresentation);
     }
 
     // FIXME: make this asynchronous, likely to be slow for more than 20 or so users
