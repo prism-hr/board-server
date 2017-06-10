@@ -23,7 +23,7 @@ import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.domain.User;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.service.cache.UserCacheService;
-import hr.prism.board.workflow.Permissions;
+import hr.prism.board.workflow.Notification;
 
 @Service
 @Transactional
@@ -55,9 +55,9 @@ public class NotificationEventService {
         String creatorFullName = creator.getFullName();
 
         HashMultimap<User, String> sent = HashMultimap.create();
-        List<Permissions.Notification> notifications =
-            objectMapper.readValue(notificationEvent.getNotification(), new TypeReference<Permissions.Notification>() {});
-        for (Permissions.Notification notification : notifications) {
+        List<Notification> notifications =
+            objectMapper.readValue(notificationEvent.getNotification(), new TypeReference<List<Notification>>() {});
+        for (Notification notification : notifications) {
             List<User> recipients = userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification
                 .getRole());
             if (notification.isExcludingCreator()) {

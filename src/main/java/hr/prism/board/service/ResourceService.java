@@ -49,30 +49,30 @@ public class ResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
     private static final String PUBLIC_RESOURCE_ACTION =
-        "select resource.id, permission.action, " +
-            "permission.resource3_scope, permission.resource3_state, " +
-            "permission.notification " +
+        "select resource.id, workflow.action, " +
+            "workflow.resource3_scope, workflow.resource3_state, " +
+            "workflow.notification " +
             "from resource " +
-            "inner join permission " +
-            "on resource.scope = permission.resource2_scope " +
-            "and resource.state = permission.resource2_state";
+            "inner join workflow " +
+            "on resource.scope = workflow.resource2_scope " +
+            "and resource.state = workflow.resource2_state";
 
     private static final String SECURE_RESOURCE_ACTION =
-        "select resource.id, permission.action, " +
-            "permission.resource3_scope, permission.resource3_state, " +
-            "permission.notification " +
+        "select resource.id, workflow.action, " +
+            "workflow.resource3_scope, workflow.resource3_state, " +
+            "workflow.notification " +
             "from resource " +
-            "inner join permission " +
-            "on resource.scope = permission.resource2_scope " +
-            "and resource.state = permission.resource2_state " +
+            "inner join workflow " +
+            "on resource.scope = workflow.resource2_scope " +
+            "and resource.state = workflow.resource2_state " +
             "inner join resource_relation " +
             "on resource.id = resource_relation.resource2_id " +
             "inner join resource as parent " +
             "on resource_relation.resource1_id = parent.id " +
-            "and permission.resource1_scope = parent.scope " +
+            "and workflow.resource1_scope = parent.scope " +
             "inner join user_role " +
             "on parent.id = user_role.resource_id " +
-            "and permission.role = user_role.role";
+            "and workflow.role = user_role.role";
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -181,7 +181,7 @@ public class ResourceService {
     // TODO: implement paging / continuous scrolling mechanism
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         List<String> publicFilterStatements = new ArrayList<>();
-        publicFilterStatements.add("permission.role = :role");
+        publicFilterStatements.add("workflow.role = :role");
         Map<String, String> publicFilterParameters = new HashMap<>();
         publicFilterParameters.put("role", Role.PUBLIC.name());
 

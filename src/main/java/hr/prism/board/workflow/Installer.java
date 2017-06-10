@@ -40,9 +40,9 @@ import static hr.prism.board.enums.State.WITHDRAWN;
 
 @Service
 @Transactional
-public class PermissionsInstaller {
+public class Installer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionsInstaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Installer.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -56,7 +56,7 @@ public class PermissionsInstaller {
 
     @PostConstruct
     public void install() {
-        Permissions permissions = new Permissions(objectMapper)
+        Workflow workflow = new Workflow(objectMapper)
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
@@ -193,13 +193,13 @@ public class PermissionsInstaller {
 
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         transactionTemplate.execute(transactionStatus -> {
-            LOGGER.info("Deleting old permissions");
-            entityManager.createNativeQuery("TRUNCATE TABLE permission").executeUpdate();
+            LOGGER.info("Deleting old workflow definition");
+            entityManager.createNativeQuery("TRUNCATE TABLE workflow").executeUpdate();
 
-            LOGGER.info("Inserting new permissions");
-            entityManager.createNativeQuery("INSERT INTO permission(" +
+            LOGGER.info("Inserting new workflow definition");
+            entityManager.createNativeQuery("INSERT INTO workflow(" +
                 "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, notification) " +
-                "VALUES" + permissions.toString()).executeUpdate();
+                "VALUES" + workflow.toString()).executeUpdate();
 
             return null;
         });

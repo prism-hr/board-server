@@ -20,7 +20,7 @@ import hr.prism.board.exception.ApiForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.workflow.WorkflowExecution;
+import hr.prism.board.workflow.Execution;
 
 @Service
 @Transactional
@@ -34,12 +34,12 @@ public class ActionService {
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
-    public Resource executeAction(User user, Resource resource, Action action, WorkflowExecution executionTemplate) {
+    public Resource executeAction(User user, Resource resource, Action action, Execution execution) {
         List<ActionRepresentation> actions = resource.getActions();
         if (actions != null) {
             for (ActionRepresentation actionRepresentation : actions) {
                 if (actionRepresentation.getAction() == action) {
-                    resource = executionTemplate.executeWithAction();
+                    resource = execution.execute();
                     if (action.isResourceOperation()) {
                         State state = resource.getState();
                         State newState = actionRepresentation.getState();
