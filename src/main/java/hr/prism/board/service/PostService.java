@@ -16,7 +16,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -76,7 +75,7 @@ public class PostService {
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
         return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
     }
-    
+
     public List<Post> getByName(String name) {
         return postRepository.findByName(name);
     }
@@ -265,12 +264,12 @@ public class PostService {
     private void updateCategories(Post post, CategoryType type, List<String> categories, Resource reference) {
         // Validate the update
         if (type == CategoryType.POST) {
-            validateCategories(reference, type, categories,
+            resourceService.validateCategories(reference, type, categories,
                 ExceptionCode.MISSING_POST_POST_CATEGORIES,
                 ExceptionCode.INVALID_POST_POST_CATEGORIES,
                 ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
         } else {
-            validateCategories(reference, type, categories,
+            resourceService.validateCategories(reference, type, categories,
                 ExceptionCode.MISSING_POST_MEMBER_CATEGORIES,
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES,
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
@@ -333,19 +332,6 @@ public class PostService {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
             throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
-        }
-    }
-
-    private void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
-        List<ResourceCategory> referenceCategories = reference.getCategories(type);
-        if (!referenceCategories.isEmpty()) {
-            if (CollectionUtils.isEmpty(categories)) {
-                throw new ApiException(missing);
-            } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
-                throw new ApiException(invalid);
-            }
-        } else if (CollectionUtils.isNotEmpty(categories)) {
-            throw new ApiException(corrupted);
         }
     }
 

@@ -13,7 +13,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.service.ActionService;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.TestUserService;
@@ -45,9 +44,6 @@ public abstract class AbstractIT {
 
     @Inject
     PostApi postApi;
-
-    @Inject
-    ActionService actionService;
 
     @Inject
     BoardService boardService;

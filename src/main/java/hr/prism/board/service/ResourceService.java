@@ -454,6 +454,19 @@ public class ResourceService {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
     }
 
+    public void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
+        List<ResourceCategory> referenceCategories = reference.getCategories(type);
+        if (!referenceCategories.isEmpty()) {
+            if (CollectionUtils.isEmpty(categories)) {
+                throw new ApiException(missing);
+            } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
+                throw new ApiException(invalid);
+            }
+        } else if (CollectionUtils.isNotEmpty(categories)) {
+            throw new ApiException(corrupted);
+        }
+    }
+
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);

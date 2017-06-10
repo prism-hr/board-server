@@ -20,12 +20,20 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.inject.Inject;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -62,25 +70,32 @@ public class UserRoleService {
         for (UserRole userRole : userRoles) {
             User user = userRole.getUser();
             if (!resourceUsersMap.containsKey(user)) {
-                resourceUsersMap.put(user, new ResourceUserRepresentation().setUser(userMapper.apply(user))
-                    .setRoles(new TreeSet<>()));
+                resourceUsersMap.put(user, new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new TreeSet<>()));
             }
 
             ResourceUserRepresentation representation = resourceUsersMap.get(user);
-            representation.getRoles().add(userRole.getRole());
+            UserRoleRepresentation userRoleRepresentation = new UserRoleRepresentation()
+                .setRole(userRole.getRole())
+                .setExpiryDate(userRole.getExpiryDate())
+                .setCategories(userRole.getCategories().stream().map(UserRoleCategory::getName).collect(Collectors.toList()));
+            representation.getRoles().add(userRoleRepresentation);
         }
 
         return new ArrayList<>(resourceUsersMap.values());
     }
 
     public void createUserRole(Resource resource, User user, Role role) {
-        if (role == Role.PUBLIC) {
+        this.createUserRole(resource, user, new UserRoleDTO().setRole(role));
+    }
+
+    public void createUserRole(Resource resource, User user, UserRoleDTO roleDTO) {
+        if (roleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
 
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
+        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
         if (userRole == null) {
-            userRoleCacheService.createUserRole(resource, user, role);
+            userRoleCacheService.createUserRole(resource, user, roleDTO);
         }
     }
 
@@ -88,16 +103,19 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userService.getOrCreateUser(resourceUserDTO.getUser());
-        Set<Role> roles = resourceUserDTO.getRoles();
+        Set<UserRoleDTO> roles = resourceUserDTO.getRoles();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            for (Role role : roles) {
-                createUserRole(resource, user, role);
+            for (UserRoleDTO roleDTO : roles) {
+                createUserRole(resource, user, roleDTO);
             }
 
             return resource;
         });
 
-        return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(roles);
+        Set<UserRoleRepresentation> rolesRepresentation = roles.stream().map(r ->
+            new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate()).setCategories(r.getCategories())).collect(Collectors.toSet());
+        return new ResourceUserRepresentation().setUser(userMapper.apply(user))
+            .setRoles(rolesRepresentation);
     }
 
     // FIXME: make this asynchronous, likely to be slow for more than 20 or so users
@@ -107,7 +125,7 @@ public class UserRoleService {
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             for (UserDTO userDTO : resourceUsersDTO.getUsers()) {
                 User user = userService.getOrCreateUser(userDTO);
-                for (Role role : resourceUsersDTO.getRoles()) {
+                for (UserRoleDTO role : resourceUsersDTO.getRoles()) {
                     createUserRole(resource, user, role);
                 }
             }
@@ -126,7 +144,7 @@ public class UserRoleService {
         });
     }
 
-    public void createUserRole(Scope scope, Long resourceId, Long userId, Role role) {
+    public void createUserRole(Scope scope, Long resourceId, Long userId, UserRoleDTO role) {
         User user = userCacheService.findOne(userId);
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sendgrid.SendGrid;
-
+import hr.prism.board.repository.MyRepositoryImpl;
 import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
@@ -32,14 +32,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import javax.inject.Inject;
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
-
-import javax.inject.Inject;
-import javax.sql.DataSource;
-
-import hr.prism.board.repository.MyRepositoryImpl;
+import java.util.TimeZone;
 
 @EnableAsync
 @EnableWebMvc
@@ -79,10 +77,12 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         String host = environment.getProperty("database.host");
         LOGGER.info("Creating datasource using: " + host);
 
+        String timezone = TimeZone.getDefault().getID();
         return DataSourceBuilder.create()
             .driverClassName("com.mysql.cj.jdbc.Driver")
             .url("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
-                "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false")
+                "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci" +
+                "&useLegacyDatetimeCode=false&serverTimezone=" + timezone + "&useSSL=false&autoReconnect=true")
             .username("prism")
             .password("pgadmissions")
             .build();

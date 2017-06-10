@@ -1,7 +1,6 @@
 package hr.prism.board.representation;
 
 import com.google.common.base.MoreObjects;
-import hr.prism.board.domain.Role;
 
 import java.util.Set;
 
@@ -9,7 +8,7 @@ public class ResourceUserRepresentation {
 
     private UserRepresentation user;
 
-    private Set<Role> roles;
+    private Set<UserRoleRepresentation> roles;
 
     public UserRepresentation getUser() {
         return user;
@@ -20,11 +19,11 @@ public class ResourceUserRepresentation {
         return this;
     }
 
-    public Set<Role> getRoles() {
+    public Set<UserRoleRepresentation> getRoles() {
         return roles;
     }
 
-    public ResourceUserRepresentation setRoles(Set<Role> roles) {
+    public ResourceUserRepresentation setRoles(Set<UserRoleRepresentation> roles) {
         this.roles = roles;
         return this;
     }
