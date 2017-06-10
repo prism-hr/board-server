@@ -1,24 +1,6 @@
 package hr.prism.board.service;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.Scope;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
-import hr.prism.board.domain.UserRoleCategory;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
@@ -30,6 +12,12 @@ import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.inject.Inject;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -139,24 +127,20 @@ public class UserRoleService {
         });
     }
 
-    public void createUserRole(Scope scope, Long resourceId, Long userId, UserRoleDTO role) {
+    public ResourceUserRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, ResourceUserDTO resourceUserDTO) {
+        User currentUser = userService.getCurrentUserSecured();
+        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userCacheService.findOne(userId);
-        User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
+        Set<UserRoleDTO> roles = resourceUserDTO.getRoles();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            createUserRole(resource, user, role);
+            userRoleCacheService.updateResourceUser(resource, user, resourceUserDTO);
             return resource;
         });
-    }
 
-    public void deleteUserRole(Scope scope, Long resourceId, Long userId, Role role) {
-        User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            User user = userCacheService.findOne(userId);
-            userRoleCacheService.deleteUserRole(resource, user, role);
-            return resource;
-        });
+        Set<UserRoleRepresentation> rolesRepresentation = roles.stream().map(r ->
+            new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate()).setCategories(r.getCategories())).collect(Collectors.toSet());
+        return new ResourceUserRepresentation().setUser(userMapper.apply(user))
+            .setRoles(rolesRepresentation);
     }
 
 }

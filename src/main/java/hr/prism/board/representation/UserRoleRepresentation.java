@@ -1,5 +1,6 @@
 package hr.prism.board.representation;
 
+import com.google.common.base.MoreObjects;
 import hr.prism.board.domain.Role;
 
 import java.time.LocalDate;
@@ -38,5 +39,14 @@ public class UserRoleRepresentation {
     public UserRoleRepresentation setCategories(List<String> categories) {
         this.categories = categories;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+            .add("role", role)
+            .add("expiryDate", expiryDate)
+            .add("categories", categories)
+            .toString();
     }
 }

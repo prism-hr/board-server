@@ -1,6 +1,7 @@
 package hr.prism.board.service.cache;
 
 import hr.prism.board.domain.*;
+import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.exception.ApiException;
@@ -12,6 +13,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -28,6 +31,9 @@ public class UserRoleCacheService {
 
     @Inject
     private ResourceService resourceService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @CacheEvict(key = "#user.id", value = "users")
     public void createUserRole(Resource resource, User user, UserRoleDTO userRoleDTO) {
@@ -63,18 +69,16 @@ public class UserRoleCacheService {
     }
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void deleteUserRole(Resource resource, User user, Role role) {
-        List<UserRole> userRoles = userRoleRepository.findByResourceAndUser(resource, user);
-        if (userRoles.size() <= 1) {
+    public void updateResourceUser(Resource resource, User user, ResourceUserDTO resourceUserDTO) {
+        if(resourceUserDTO.getRoles().isEmpty()) {
             throw new ApiException(ExceptionCode.IRREMOVABLE_USER_ROLE);
         }
-
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
-        if(userRole == null) {
-            throw new ApiException(ExceptionCode.NONEXISTENT_USER_ROLE);
+        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
+        userRoleRepository.deleteByResourceAndUser(resource, user);
+        entityManager.flush();
+        for (UserRoleDTO userRoleDTO : resourceUserDTO.getRoles()) {
+            createUserRole(resource, user, userRoleDTO);
         }
-        userRoleCategoryRepository.deleteByUserRole(userRole);
-        userRoleRepository.delete(userRole);
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
     }
 

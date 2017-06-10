@@ -1,9 +1,12 @@
 package hr.prism.board.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.Set;
 
 public class ResourceUserDTO {
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private UserDTO user;
 
     private Set<UserRoleDTO> roles;

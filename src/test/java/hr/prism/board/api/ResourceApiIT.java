@@ -14,6 +14,7 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,32 +53,34 @@ public class ResourceApiIT extends AbstractIT {
 
     private void addAndRemoveUserRoles(User currentUser, Scope scope, Long resourceId) {
         List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
-        Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR)));
+        Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add resource user with two roles
         UserDTO newUser = new UserDTO().setEmail("board-manager@mail.com").setGivenName("Sample").setSurname("User");
         ResourceUserRepresentation boardManager = resourceApi.createResourceUser(scope, resourceId,
-            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m1")), new UserRoleDTO().setRole(Role.AUTHOR))));
+            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, "m1"), new UserRoleDTO(Role.AUTHOR))));
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
-        Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR),
-            resourceUserMatcher("board-manager@mail.com", Role.MEMBER, Role.AUTHOR)));
+        Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
+            resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.MEMBER, null, "m1"), new UserRoleDTO(Role.AUTHOR))));
 
         // remove one role
-        resourceApi.deleteUserRole(scope, resourceId, boardManager.getUser().getId(), Role.MEMBER);
+        resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
+            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO(Role.AUTHOR))));
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
-        Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR),
-            resourceUserMatcher("board-manager@mail.com", Role.AUTHOR)));
+        Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
+            resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // add one role
-        resourceApi.createUserRole(scope, resourceId, boardManager.getUser().getId(), new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")));
+        resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
+            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, "m2"), new UserRoleDTO(Role.AUTHOR))));
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
-        Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR),
-            resourceUserMatcher("board-manager@mail.com", Role.AUTHOR, Role.MEMBER)));
+        Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
+            resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR), new UserRoleDTO(Role.MEMBER, null, "m2"))));
 
         // remove user from resource
         resourceApi.deleteResourceUser(scope, resourceId, boardManager.getUser().getId());
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
-        Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR)));
+        Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
     @Test
@@ -91,26 +94,9 @@ public class ResourceApiIT extends AbstractIT {
             new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")))));
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.deleteUserRole(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), Role.MEMBER),
+            ExceptionUtils.verifyApiException(ApiException.class,
+                () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), new ResourceUserDTO().setUser(newUser).setRoles(Collections.emptySet())),
                 ExceptionCode.IRREMOVABLE_USER_ROLE, status);
-            return null;
-        });
-    }
-
-    @Test
-    public void shouldNotRemoveNonExistingRole() {
-        testUserService.authenticate();
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-
-        UserDTO newUser = new UserDTO().setEmail("non-existing-role@mail.com").setGivenName("Sample").setSurname("User");
-        ResourceUserRepresentation boardManager = resourceApi.createResourceUser(Scope.BOARD, boardR.getId(),
-            new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(
-                new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")), new UserRoleDTO().setRole(Role.AUTHOR))));
-
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.deleteUserRole(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), Role
-                .ADMINISTRATOR), ExceptionCode.NONEXISTENT_USER_ROLE, status);
             return null;
         });
     }
@@ -138,13 +124,16 @@ public class ResourceApiIT extends AbstractIT {
 
         // try to remove yourself as administrator
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.deleteUserRole(Scope.DEPARTMENT, departmentId, boardManager.getUser().getId(), Role
-                .ADMINISTRATOR), ExceptionCode.IRREMOVABLE_USER_ROLE, status);
+            ExceptionUtils.verifyApiException(ApiException.class,
+                () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, boardManager.getUser().getId(),
+                    new ResourceUserDTO().setUser(newUserDTO)
+                        .setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2"))))),
+                ExceptionCode.IRREMOVABLE_USER_ROLE, status);
             return null;
         });
 
         List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId);
-        Assert.assertThat(users, contains(resourceUserMatcher(newUserDTO.getEmail(), Role.ADMINISTRATOR, Role.MEMBER)));
+        Assert.assertThat(users, contains(resourceUserMatcher(newUserDTO.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR), new UserRoleDTO(Role.MEMBER, null, "m2"))));
     }
 
     @Test
@@ -162,7 +151,7 @@ public class ResourceApiIT extends AbstractIT {
         });
 
         List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId);
-        Assert.assertThat(users, contains(resourceUserMatcher(creator.getEmail(), Role.ADMINISTRATOR)));
+        Assert.assertThat(users, contains(resourceUserMatcher(creator.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
     @Test
@@ -173,7 +162,7 @@ public class ResourceApiIT extends AbstractIT {
         BoardRepresentation boardR = boardApi.postBoard(boardDTO);
 
         List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId());
-        Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), Role.ADMINISTRATOR)));
+        Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add 200 members
         ResourceUsersDTO bulkDTO = new ResourceUsersDTO();
@@ -230,20 +219,27 @@ public class ResourceApiIT extends AbstractIT {
         BoardDTO boardDTO = TestHelper.sampleBoard();
         BoardRepresentation boardR = boardApi.postBoard(boardDTO);
 
+        // try with a board
         ExceptionUtils.verifyApiException(ApiException.class,
-            () -> resourceApi.createUserRole(Scope.BOARD, boardR.getId(), currentUser.getId(),
-                new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("p1"))),
+            () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), currentUser.getId(),
+                new ResourceUserDTO().setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, "p1")))),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
 
+        // try with a department
         ExceptionUtils.verifyApiException(ApiException.class,
-            () -> resourceApi.createUserRole(Scope.DEPARTMENT, boardR.getDepartment().getId(), currentUser.getId(),
-                new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("p1"))),
+            () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, boardR.getDepartment().getId(), currentUser.getId(),
+                new ResourceUserDTO().setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, "p1")))),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
     }
 
-    public Matcher<ResourceUserRepresentation> resourceUserMatcher(String email, Role... roles) {
+    public Matcher<ResourceUserRepresentation> resourceUserMatcher(String email, UserRoleDTO... roleDTOs) {
         Matcher<Object> emailMatcher = hasProperty("user", hasProperty("email", equalTo(email)));
-        List<Matcher<? super Object>> roleMatchers = Stream.of(roles).map(r -> hasProperty("role", equalTo(r))).collect(Collectors.toList());
+        List<Matcher<? super Object>> roleMatchers = Stream.of(roleDTOs)
+            .map(roleDTO -> Matchers.allOf(
+                hasProperty("role", equalTo(roleDTO.getRole())),
+                hasProperty("expiryDate", equalTo(roleDTO.getExpiryDate())),
+                hasProperty("categories", equalTo(roleDTO.getCategories() != null ? roleDTO.getCategories() : Collections.emptyList()))))
+            .collect(Collectors.toList());
         return allOf(emailMatcher, hasProperty("roles", containsInAnyOrder(roleMatchers)));
     }
 
