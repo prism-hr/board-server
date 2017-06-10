@@ -4,11 +4,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -66,7 +66,7 @@ public class UserRoleService {
         for (UserRole userRole : userRoles) {
             User user = userRole.getUser();
             if (!resourceUsersMap.containsKey(user)) {
-                resourceUsersMap.put(user, new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new TreeSet<>()));
+                resourceUsersMap.put(user, new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new HashSet<>()));
             }
 
             ResourceUserRepresentation representation = resourceUsersMap.get(user);
