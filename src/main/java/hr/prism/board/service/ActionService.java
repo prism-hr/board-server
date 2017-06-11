@@ -1,26 +1,23 @@
 package hr.prism.board.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
-import javax.inject.Inject;
-
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
-import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Execution;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.inject.Inject;
+import java.util.List;
 
 @Service
 @Transactional
@@ -32,7 +29,7 @@ public class ActionService {
     private ResourceService resourceService;
 
     @Inject
-    private ApplicationEventPublisher applicationEventPublisher;
+    private NotificationEventService notificationEventService;
 
     public Resource executeAction(User user, Resource resource, Action action, Execution execution) {
         List<ActionRepresentation> actions = resource.getActions();
@@ -64,8 +61,7 @@ public class ActionService {
 
                     String notification = actionRepresentation.getNotification();
                     if (notification != null) {
-                        applicationEventPublisher.publishEvent(
-                            new NotificationEvent(this, user.getId(), resource.getId(), actionRepresentation.getNotification()));
+                        notificationEventService.publishEvent(this, user.getId(), resource.getId(), actionRepresentation.getNotification());
                     }
 
                     return resource;

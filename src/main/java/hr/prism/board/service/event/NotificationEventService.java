@@ -14,6 +14,7 @@ import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.workflow.Notification;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,13 @@ public class NotificationEventService {
 
     @Inject
     private Environment environment;
+
+    @Inject
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    public void publishEvent(Object source, Long creatorId, Long resourceId, String notification) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification));
+    }
 
     @Async
     @TransactionalEventListener

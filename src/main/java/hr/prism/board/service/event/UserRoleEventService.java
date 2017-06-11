@@ -5,6 +5,7 @@ import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.service.UserRoleService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -17,6 +18,13 @@ public class UserRoleEventService {
 
     @Inject
     private UserRoleService userRoleService;
+
+    @Inject
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    public void publishEvent(Object source, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
+        applicationEventPublisher.publishEvent(new UserRoleEvent(source, resourceId, resourceUsersDTO));
+    }
 
     @Async
     @TransactionalEventListener

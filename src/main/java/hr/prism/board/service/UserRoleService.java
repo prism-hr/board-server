@@ -6,14 +6,13 @@ import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import org.springframework.context.ApplicationEventPublisher;
+import hr.prism.board.service.event.UserRoleEventService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +46,7 @@ public class UserRoleService {
     private UserMapper userMapper;
 
     @Inject
-    private ApplicationEventPublisher applicationEventPublisher;
+    private UserRoleEventService userRoleEventService;
 
     public List<ResourceUserRepresentation> getResourceUsers(Scope scope, Long resourceId) {
         User currentUser = userService.getCurrentUserSecured();
@@ -97,7 +96,7 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            applicationEventPublisher.publishEvent(new UserRoleEvent(this, resourceId, resourceUsersDTO));
+            userRoleEventService.publishEvent(this, resourceId, resourceUsersDTO);
             return resource;
         });
     }
