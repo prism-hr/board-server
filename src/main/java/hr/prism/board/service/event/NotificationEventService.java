@@ -49,7 +49,11 @@ public class NotificationEventService {
 
     @Async
     @TransactionalEventListener
-    public void sendNotifications(NotificationEvent notificationEvent) {
+    public void sendNotificationsAsync(NotificationEvent notificationEvent) {
+        sendNotifications(notificationEvent);
+    }
+
+    protected void sendNotifications(NotificationEvent notificationEvent) {
         User creator = userCacheService.findOne(notificationEvent.getCreatorId());
         Resource resource = resourceService.findOne(notificationEvent.getResourceId());
         String creatorFullName = creator.getFullName();

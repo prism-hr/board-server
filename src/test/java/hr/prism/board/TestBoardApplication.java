@@ -66,13 +66,13 @@ public class TestBoardApplication {
 
     @Bean
     @Primary
-    private NotificationEventService notificationEventService() {
+    public NotificationEventService notificationEventService() {
         return new TestNotificationEventService();
     }
 
     @Bean
     @Primary
-    private UserRoleEventService userRoleEventService() {
+    public UserRoleEventService userRoleEventService() {
         return new TestUserRoleEventService();
     }
 

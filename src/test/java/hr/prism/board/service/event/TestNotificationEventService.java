@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 public class TestNotificationEventService extends NotificationEventService {
 
     @Override
-    public void sendNotifications(NotificationEvent notificationEvent) {
+    public void sendNotificationsAsync(NotificationEvent notificationEvent) {
         super.sendNotifications(notificationEvent);
     }
 
