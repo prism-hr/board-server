@@ -7,7 +7,7 @@ import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.BoardRepresentation;
@@ -94,7 +94,7 @@ public class ResourceApiIT extends AbstractIT {
             new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2")))));
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class,
+            ExceptionUtils.verifyApiException(BoardException.class,
                 () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), boardManager.getUser().getId(), new ResourceUserDTO().setUser(newUser).setRoles(Collections.emptySet())),
                 ExceptionCode.IRREMOVABLE_USER_ROLE, status);
             return null;
@@ -124,7 +124,7 @@ public class ResourceApiIT extends AbstractIT {
 
         // try to remove yourself as administrator
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class,
+            ExceptionUtils.verifyApiException(BoardException.class,
                 () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, boardManager.getUser().getId(),
                     new ResourceUserDTO().setUser(newUserDTO)
                         .setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList("m2"))))),
@@ -145,7 +145,7 @@ public class ResourceApiIT extends AbstractIT {
         Long departmentId = boardR.getDepartment().getId();
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(ApiException.class, () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode
+            ExceptionUtils.verifyApiException(BoardException.class, () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode
                 .IRREMOVABLE_USER, status);
             return null;
         });
@@ -155,7 +155,7 @@ public class ResourceApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldAddUsersInBulk() {
+    public void shouldAddUsersInBulk() throws InterruptedException {
         User currentUser = testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
@@ -199,14 +199,14 @@ public class ResourceApiIT extends AbstractIT {
         UserDTO newUser = new UserDTO().setEmail("board-manager@mail.com").setGivenName("Sample").setSurname("User");
 
         // try to add a user to a board
-        ExceptionUtils.verifyApiException(ApiException.class,
+        ExceptionUtils.verifyApiException(BoardException.class,
             () -> resourceApi.createResourceUser(Scope.BOARD, boardR.getId(),
                 new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER)
                     .setCategories(Collections.singletonList("p1")), new UserRoleDTO().setRole(Role.AUTHOR)))),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
 
         // try to add a user to a department
-        ExceptionUtils.verifyApiException(ApiException.class,
+        ExceptionUtils.verifyApiException(BoardException.class,
             () -> resourceApi.createResourceUser(Scope.DEPARTMENT, boardR.getDepartment().getId(),
                 new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER)
                     .setCategories(Collections.singletonList("p1")), new UserRoleDTO().setRole(Role.AUTHOR)))),
@@ -220,13 +220,13 @@ public class ResourceApiIT extends AbstractIT {
         BoardRepresentation boardR = boardApi.postBoard(boardDTO);
 
         // try with a board
-        ExceptionUtils.verifyApiException(ApiException.class,
+        ExceptionUtils.verifyApiException(BoardException.class,
             () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), currentUser.getId(),
                 new ResourceUserDTO().setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, "p1")))),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
 
         // try with a department
-        ExceptionUtils.verifyApiException(ApiException.class,
+        ExceptionUtils.verifyApiException(BoardException.class,
             () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, boardR.getDepartment().getId(), currentUser.getId(),
                 new ResourceUserDTO().setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, "p1")))),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);

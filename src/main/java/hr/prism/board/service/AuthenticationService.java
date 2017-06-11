@@ -31,7 +31,7 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.cache.UserCacheService;
@@ -92,7 +92,7 @@ public class AuthenticationService {
         User user = userRepository.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()), LocalDateTime
             .now());
         if (user == null) {
-            throw new ApiForbiddenException(ExceptionCode.UNREGISTERED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNREGISTERED_USER);
         }
 
         return user;
@@ -102,7 +102,7 @@ public class AuthenticationService {
         String email = registerDTO.getEmail();
         User user = userRepository.findByEmail(email);
         if (user != null) {
-            throw new ApiForbiddenException(ExceptionCode.DUPLICATE_USER);
+            throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER);
         }
 
         return userCacheService.saveUser(new User().setGivenName(registerDTO.getGivenName())
@@ -115,12 +115,12 @@ public class AuthenticationService {
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {
         Class<? extends OauthAdapter> oauthAdapterClass = provider.getOauthAdapter();
         if (oauthAdapterClass == null) {
-            throw new ApiForbiddenException(ExceptionCode.UNSUPPORTED_AUTHENTICATOR);
+            throw new BoardForbiddenException(ExceptionCode.UNSUPPORTED_AUTHENTICATOR);
         }
 
         User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(oauthDTO);
         if (newUser.getEmail() == null) {
-            throw new ApiForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER);
         }
 
         String accountId = newUser.getOauthAccountId();
@@ -143,7 +143,7 @@ public class AuthenticationService {
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
         User user = userRepository.findByEmail(resetPasswordDTO.getEmail());
         if (user == null) {
-            throw new ApiForbiddenException(ExceptionCode.UNREGISTERED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNREGISTERED_USER);
         }
 
         String temporaryPassword = RandomStringUtils.randomAlphanumeric(12);

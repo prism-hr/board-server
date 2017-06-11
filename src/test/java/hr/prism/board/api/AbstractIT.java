@@ -8,7 +8,7 @@ import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.ActionRepresentation;
@@ -160,7 +160,7 @@ public abstract class AbstractIT {
                     Runnable operation = operations.get(action);
                     if (operation != null) {
                         LOGGER.info("Verifying forbidden action: " + action.name().toLowerCase());
-                        ExceptionUtils.verifyApiException(ApiForbiddenException.class, operation, exceptionCode, status);
+                        ExceptionUtils.verifyApiException(BoardForbiddenException.class, operation, exceptionCode, status);
                     }
 
                     return null;

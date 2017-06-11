@@ -2,8 +2,8 @@ package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,21 +26,21 @@ import java.util.List;
 
 @RestControllerAdvice
 public class ApiAdvice extends ResponseEntityExceptionHandler {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiAdvice.class);
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> processException(Exception ex, WebRequest request) {
         ExceptionCode exceptionCode = ExceptionCode.PROBLEM;
         HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        if (ex instanceof ApiForbiddenException) {
-            exceptionCode = ((ApiForbiddenException) ex).getExceptionCode();
+        if (ex instanceof BoardForbiddenException) {
+            exceptionCode = ((BoardForbiddenException) ex).getExceptionCode();
             responseStatus = HttpStatus.FORBIDDEN;
-        } else if (ex instanceof ApiException) {
-            exceptionCode = ((ApiException) ex).getExceptionCode();
+        } else if (ex instanceof BoardException) {
+            exceptionCode = ((BoardException) ex).getExceptionCode();
             responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         }
-    
+
         LOGGER.error("Could not serve request", ex);
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
         ImmutableMap<String, Object> body = ImmutableMap.<String, Object>builder()
@@ -50,27 +50,27 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
             .put("error", responseStatus.getReasonPhrase())
             .put("exceptionCode", exceptionCode)
             .build();
-    
+
         return handleExceptionInternal(ex, body, new HttpHeaders(), responseStatus, request);
     }
-    
+
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
         return super.handleExceptionInternal(ex, body, headers, status, request);
     }
-    
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         List<String> errors = new ArrayList<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.add(error.getField() + ": " + error.getDefaultMessage());
         }
-        
+
         for (ObjectError error : ex.getBindingResult().getGlobalErrors()) {
             errors.add(error.getObjectName() + ": " + error.getDefaultMessage());
         }
-        
+
         return handleExceptionInternal(ex, errors, headers, HttpStatus.UNPROCESSABLE_ENTITY, request);
     }
-    
+
 }

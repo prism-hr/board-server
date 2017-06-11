@@ -20,7 +20,7 @@ import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.enums.DocumentRequestState;
-import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.cache.UserCacheService;
@@ -112,7 +112,7 @@ public class UserService {
     private User getCurrentUserSecured(boolean fresh) {
         User user = getCurrentUser(fresh);
         if (user == null) {
-            throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
         }
 
         return user;

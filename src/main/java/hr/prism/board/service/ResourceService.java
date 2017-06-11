@@ -48,7 +48,7 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
@@ -389,7 +389,7 @@ public class ResourceService {
         constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
 
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new ApiException(exceptionCode);
+            throw new BoardException(exceptionCode);
         }
     }
 
@@ -404,7 +404,7 @@ public class ResourceService {
             .setParameter("id", resource.getId());
 
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new ApiException(exceptionCode);
+            throw new BoardException(exceptionCode);
         }
     }
 
@@ -475,12 +475,12 @@ public class ResourceService {
         List<ResourceCategory> referenceCategories = reference.getCategories(type);
         if (!referenceCategories.isEmpty()) {
             if (CollectionUtils.isEmpty(categories)) {
-                throw new ApiException(missing);
+                throw new BoardException(missing);
             } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
-                throw new ApiException(invalid);
+                throw new BoardException(invalid);
             }
         } else if (CollectionUtils.isNotEmpty(categories)) {
-            throw new ApiException(corrupted);
+            throw new BoardException(corrupted);
         }
     }
 

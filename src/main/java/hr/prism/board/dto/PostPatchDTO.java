@@ -1,7 +1,7 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
@@ -198,7 +198,7 @@ public class PostPatchDTO {
                         return true;
                     }
                 } catch (IllegalAccessException e) {
-                    throw new ApiException(ExceptionCode.PROBLEM, e);
+                    throw new BoardException(ExceptionCode.PROBLEM, e);
                 }
             }
         }

@@ -11,7 +11,7 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
@@ -128,7 +128,7 @@ public class PostService {
         });
 
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
-            throw new ApiException(ExceptionCode.MISSING_POST_EXISTING_RELATION);
+            throw new BoardException(ExceptionCode.MISSING_POST_EXISTING_RELATION);
         }
 
         return createdPost;
@@ -173,7 +173,7 @@ public class PostService {
             return objectMapper.readValue(existingRelationExplanation, new TypeReference<LinkedHashMap<String, Object>>() {
             });
         } catch (IOException e) {
-            throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+            throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
         }
     }
 
@@ -331,16 +331,16 @@ public class PostService {
         try {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
-            throw new ApiException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+            throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
         }
     }
 
     private void validatePostApply(Post post) {
         long applyCount = Stream.of(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail()).filter(Objects::nonNull).count();
         if (applyCount == 0) {
-            throw new ApiException(ExceptionCode.MISSING_POST_APPLY);
+            throw new BoardException(ExceptionCode.MISSING_POST_APPLY);
         } else if (applyCount > 1) {
-            throw new ApiException(ExceptionCode.CORRUPTED_POST_APPLY);
+            throw new BoardException(ExceptionCode.CORRUPTED_POST_APPLY);
         }
     }
 

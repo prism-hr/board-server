@@ -16,7 +16,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.exception.ApiForbiddenException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
@@ -75,11 +75,11 @@ public class ActionService {
 
         if (user == null) {
             LOGGER.info("Public user cannot " + action.name().toLowerCase() + " " + resource.toString());
-            throw new ApiForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
         }
 
         LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
-        throw new ApiForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
+        throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
     }
 
 }

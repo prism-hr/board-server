@@ -4,7 +4,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.CategoryType;
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
@@ -71,7 +71,7 @@ public class UserRoleCacheService {
     @CacheEvict(key = "#user.id", value = "users")
     public void updateResourceUser(Resource resource, User user, ResourceUserDTO resourceUserDTO) {
         if(resourceUserDTO.getRoles().isEmpty()) {
-            throw new ApiException(ExceptionCode.IRREMOVABLE_USER_ROLE);
+            throw new BoardException(ExceptionCode.IRREMOVABLE_USER_ROLE);
         }
         userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
         userRoleRepository.deleteByResourceAndUser(resource, user);
@@ -86,7 +86,7 @@ public class UserRoleCacheService {
         if (resource.getScope() == Scope.DEPARTMENT) {
             List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, Role.ADMINISTRATOR);
             if (remainingAdminRoles.isEmpty()) {
-                throw new ApiException(exceptionCode);
+                throw new BoardException(exceptionCode);
             }
         }
     }

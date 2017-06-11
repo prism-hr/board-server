@@ -1,6 +1,6 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 
 import javax.persistence.AttributeConverter;
@@ -13,27 +13,27 @@ import java.util.Locale;
 
 @Converter(autoApply = true)
 public class BigDecimalConverter implements AttributeConverter<BigDecimal, String> {
-    
+
     @Override
     public String convertToDatabaseColumn(BigDecimal attribute) {
         return attribute == null ? null : attribute.stripTrailingZeros().toPlainString();
     }
-    
+
     @Override
     public BigDecimal convertToEntityAttribute(String dbData) {
         if (dbData == null) {
             return null;
         }
-    
+
         NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.UK);
         DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
         decimalFormat.setParseBigDecimal(true);
-        
+
         try {
             return ((BigDecimal) decimalFormat.parse(dbData)).stripTrailingZeros();
         } catch (ParseException e) {
-            throw new ApiException(ExceptionCode.PROBLEM, e);
+            throw new BoardException(ExceptionCode.PROBLEM, e);
         }
     }
-    
+
 }

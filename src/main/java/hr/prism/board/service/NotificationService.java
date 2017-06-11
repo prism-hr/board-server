@@ -3,7 +3,7 @@ package hr.prism.board.service;
 import com.google.common.collect.Maps;
 import com.sendgrid.*;
 import hr.prism.board.domain.User;
-import hr.prism.board.exception.ApiException;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -32,8 +32,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Service
-public class
-NotificationService {
+public class NotificationService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
 
@@ -115,7 +114,7 @@ NotificationService {
                 LOGGER.info("Sending notification: " + makeLogHeader(template, sender, recipient));
             } catch (IOException e) {
                 LOGGER.error("Failed to send notification", e);
-                throw new ApiException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
+                throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         }
     }

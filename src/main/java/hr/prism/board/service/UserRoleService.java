@@ -6,12 +6,14 @@ import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,9 @@ public class UserRoleService {
     @Inject
     private UserMapper userMapper;
 
+    @Inject
+    private ApplicationEventPublisher applicationEventPublisher;
+
     public List<ResourceUserRepresentation> getResourceUsers(Scope scope, Long resourceId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
@@ -58,9 +63,7 @@ public class UserRoleService {
             }
 
             ResourceUserRepresentation representation = resourceUsersMap.get(user);
-            UserRoleRepresentation userRoleRepresentation = new UserRoleRepresentation()
-                .setRole(userRole.getRole())
-                .setExpiryDate(userRole.getExpiryDate())
+            UserRoleRepresentation userRoleRepresentation = new UserRoleRepresentation().setRole(userRole.getRole()).setExpiryDate(userRole.getExpiryDate())
                 .setCategories(userRole.getCategories().stream().map(UserRoleCategory::getName).collect(Collectors.toList()));
             representation.getRoles().add(userRoleRepresentation);
         }
@@ -70,17 +73,6 @@ public class UserRoleService {
 
     public void createUserRole(Resource resource, User user, Role role) {
         this.createUserRole(resource, user, new UserRoleDTO().setRole(role));
-    }
-
-    public void createUserRole(Resource resource, User user, UserRoleDTO roleDTO) {
-        if (roleDTO.getRole() == Role.PUBLIC) {
-            throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
-        }
-
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
-        if (userRole == null) {
-            userRoleCacheService.createUserRole(resource, user, roleDTO);
-        }
     }
 
     public ResourceUserRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
@@ -101,20 +93,23 @@ public class UserRoleService {
         return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(rolesRepresentation);
     }
 
-    // FIXME: make this asynchronous, likely to be slow for more than 20 or so users
     public void createResourceUsers(Scope scope, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            for (UserDTO userDTO : resourceUsersDTO.getUsers()) {
-                User user = userService.getOrCreateUser(userDTO);
-                for (UserRoleDTO role : resourceUsersDTO.getRoles()) {
-                    createUserRole(resource, user, role);
-                }
-            }
-
+            applicationEventPublisher.publishEvent(new UserRoleEvent(this, resourceId, resourceUsersDTO));
             return resource;
         });
+    }
+
+    // Method is used by UserRoleEventService#createResourceUsers to process user creation in a series of small transactions
+    // Don't use it for anything else - there are no security checks applied to it, security checks are applied when we publish the producing event
+    public void createResourceUser(Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs) {
+        User user = userService.getOrCreateUser(userDTO);
+        Resource resource = resourceService.findOne(resourceId);
+        for (UserRoleDTO userRoleDTO : userRoleDTOs) {
+            createUserRole(resource, user, userRoleDTO);
+        }
     }
 
     public void deleteResourceUser(Scope scope, Long resourceId, Long userId) {
@@ -139,8 +134,18 @@ public class UserRoleService {
 
         Set<UserRoleRepresentation> rolesRepresentation = roles.stream().map(r ->
             new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate()).setCategories(r.getCategories())).collect(Collectors.toSet());
-        return new ResourceUserRepresentation().setUser(userMapper.apply(user))
-            .setRoles(rolesRepresentation);
+        return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(rolesRepresentation);
+    }
+
+    private void createUserRole(Resource resource, User user, UserRoleDTO roleDTO) {
+        if (roleDTO.getRole() == Role.PUBLIC) {
+            throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
+        }
+
+        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
+        if (userRole == null) {
+            userRoleCacheService.createUserRole(resource, user, roleDTO);
+        }
     }
 
 }

@@ -3,11 +3,8 @@ package hr.prism.board.workflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
-import hr.prism.board.exception.ApiException;
-import hr.prism.board.exception.ExceptionCode;
 
 public class Notification {
 
@@ -80,7 +77,7 @@ public class Notification {
         try {
             return this.objectMapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
-            throw new ApiException(ExceptionCode.PROBLEM, e);
+            throw new IllegalStateException("Could not serialize notification");
         }
     }
 

@@ -5,22 +5,20 @@ import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.repository.MyRepositoryImpl;
 import hr.prism.board.service.TestNotificationService;
-
+import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.service.event.TestNotificationEventService;
+import hr.prism.board.service.event.TestUserRoleEventService;
+import hr.prism.board.service.event.UserRoleEventService;
 import org.mockito.Mockito;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 @Configuration
 @Import(BoardApplication.class)
-public class TestApplicationConfiguration {
+public class TestBoardApplication {
 
     @Bean
     @Primary
@@ -64,6 +62,18 @@ public class TestApplicationConfiguration {
                     .setOauthProvider(OauthProvider.LINKEDIN)
                     .setOauthAccountId("linkedinId"));
         return linkedinAdapter;
+    }
+
+    @Bean
+    @Primary
+    private NotificationEventService notificationEventService() {
+        return new TestNotificationEventService();
+    }
+
+    @Bean
+    @Primary
+    private UserRoleEventService userRoleEventService() {
+        return new TestUserRoleEventService();
     }
 
 }
