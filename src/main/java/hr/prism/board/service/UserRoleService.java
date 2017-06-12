@@ -134,7 +134,9 @@ public class UserRoleService {
         });
 
         Set<UserRoleRepresentation> rolesRepresentation = roles.stream().map(r ->
-            new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate()).setCategories(r.getCategories())).collect(Collectors.toSet());
+            new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate())
+                .setCategories(Optional.ofNullable(r.getCategories()).orElse(Collections.emptyList())))
+            .collect(Collectors.toSet());
         return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(rolesRepresentation);
     }
 
