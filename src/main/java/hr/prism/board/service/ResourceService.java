@@ -485,7 +485,7 @@ public class ResourceService {
     }
 
     public ResourceOperation getLatestResourceOperation(Action action) {
-        return resourceOperationRepository.findFirstByActionByOrderByIdDesc(action);
+        return resourceOperationRepository.findFirstByActionOrderByIdDesc(action);
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {

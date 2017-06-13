@@ -5,6 +5,6 @@ import hr.prism.board.enums.Action;
 
 public interface ResourceOperationRepository extends MyRepository<ResourceOperation, Long> {
 
-    ResourceOperation findFirstByActionByOrderByIdDesc(Action action);
+    ResourceOperation findFirstByActionOrderByIdDesc(Action action);
 
 }
