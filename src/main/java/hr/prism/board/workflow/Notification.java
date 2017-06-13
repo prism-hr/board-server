@@ -74,6 +74,10 @@ public class Notification {
 
     @Override
     public String toString() {
+        if (this.objectMapper == null) {
+            return super.toString();
+        }
+
         try {
             return this.objectMapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
