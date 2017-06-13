@@ -17,6 +17,7 @@ import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -61,6 +62,7 @@ public class PostService {
     @Inject
     private ActionService actionService;
 
+    @Lazy
     @Inject
     private NotificationEventService notificationEventService;
 

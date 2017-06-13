@@ -505,9 +505,9 @@ public class PostApiIT extends AbstractIT {
             .put(Action.AUDIT, () -> postApi.getPostOperations(postId))
             .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
             .put(Action.ACCEPT, () -> postApi.acceptPost(postId, new PostPatchDTO()))
-            .put(Action.SUSPEND, () -> postApi.suspendPost(postId, new PostPatchDTO()))
+            .put(Action.SUSPEND, () -> postApi.suspendPost(postId, new PostPatchDTO().setComment("comment")))
             .put(Action.CORRECT, () -> postApi.correctPost(postId, new PostPatchDTO()))
-            .put(Action.REJECT, () -> postApi.rejectPost(postId, new PostPatchDTO()))
+            .put(Action.REJECT, () -> postApi.rejectPost(postId, new PostPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> postApi.restorePost(postId, new PostPatchDTO()))
             .put(Action.WITHDRAW, () -> postApi.withdrawPost(postId, new PostPatchDTO()))
             .build();
@@ -584,7 +584,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         // Suspend the post so that it can be accepted again
-        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.suspendPost(postId, new PostPatchDTO()), State.SUSPENDED);
+        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.suspendPost(postId, new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         // Check that the administrator can make further changes and accept the post in the pending state
@@ -719,7 +719,7 @@ public class PostApiIT extends AbstractIT {
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.ACCEPT, boardUser, "accepting without time constraints");
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.SUSPEND, boardUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.SUSPEND, boardUser, "comment");
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(9), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
