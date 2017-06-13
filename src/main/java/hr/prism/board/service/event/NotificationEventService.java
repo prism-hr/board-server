@@ -4,14 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceRelation;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
+import hr.prism.board.enums.Action;
 import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.service.NotificationService;
-import hr.prism.board.service.RedirectService;
-import hr.prism.board.service.ResourceService;
-import hr.prism.board.service.UserService;
+import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.workflow.Notification;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,6 +19,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +41,9 @@ public class NotificationEventService {
     private UserCacheService userCacheService;
 
     @Inject
+    private PostService postService;
+
+    @Inject
     private ObjectMapper objectMapper;
 
     @Inject
@@ -50,6 +51,10 @@ public class NotificationEventService {
 
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
+
+    public void publishEvent(Object source, Long resourceId, String notification) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notification));
+    }
 
     public void publishEvent(Object source, Long creatorId, Long resourceId, String notification) {
         applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification));
@@ -64,10 +69,9 @@ public class NotificationEventService {
     protected void sendNotifications(NotificationEvent notificationEvent) {
         User creator = userCacheService.findOne(notificationEvent.getCreatorId());
         Resource resource = resourceService.findOne(notificationEvent.getResourceId());
-        String creatorFullName = creator.getFullName();
 
-        HashMultimap<User, String> sent = HashMultimap.create();
         List<Notification> notifications;
+        HashMultimap<User, String> sent = HashMultimap.create();
         try {
             notifications = objectMapper.readValue(notificationEvent.getNotification(), new TypeReference<List<Notification>>() {
             });
@@ -77,18 +81,33 @@ public class NotificationEventService {
 
         for (Notification notification : notifications) {
             List<User> recipients = userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole());
-            if (notification.isExcludingCreator()) {
+            if (creator != null && notification.isExcludingCreator()) {
                 recipients.remove(creator);
             }
 
-            if (recipients.size() > 0) {
+            if (!recipients.isEmpty()) {
                 String template = notification.getTemplate();
-                ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.<String, String>builder()
-                    .put("creator", creatorFullName)
-                    .put("redirectUrl", RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource));
-                resource.getParents().stream()
-                    .map(ResourceRelation::getResource1).filter(parent -> !parent.equals(resource))
-                    .forEach(parent -> parameterBuilder.put(parent.getScope().name().toLowerCase(), parent.getName()));
+                ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.builder();
+
+                String redirectUrl = null;
+                resource.getParents().stream().map(ResourceRelation::getResource1).forEach(p -> parameterBuilder.put(p.getScope().name().toLowerCase(), p.getName()));
+                if ("approve_post".equals(template)) {
+                    LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
+                    parameterBuilder.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
+                } else if ("suspend_post".equals(template)) {
+                    ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
+                    parameterBuilder.put("comment", resourceOperation.getComment());
+                } else if ("reject_post".equals(template)) {
+                    redirectUrl = RedirectService.makeRedirectForLogin(environment.getProperty("server.url"));
+                    ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
+                    parameterBuilder.put("comment", resourceOperation.getComment());
+                }
+
+                if (redirectUrl == null) {
+                    redirectUrl = RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource);
+                }
+
+                parameterBuilder.put("redirectUrl", redirectUrl);
                 Map<String, String> parameters = parameterBuilder.build();
 
                 for (User recipient : recipients) {

@@ -484,6 +484,10 @@ public class ResourceService {
         }
     }
 
+    public ResourceOperation getLatestResourceOperation(Action action) {
+        return resourceOperationRepository.findFirstByActionByOrderByIdDesc(action);
+    }
+
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);

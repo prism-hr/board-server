@@ -10,6 +10,12 @@ public class NotificationEvent extends ApplicationEvent {
 
     private String notification;
 
+    public NotificationEvent(Object source, Long resourceId, String notification) {
+        super(source);
+        this.resourceId = resourceId;
+        this.notification = notification;
+    }
+
     public NotificationEvent(Object source, Long creatorId, Long resourceId, String notification) {
         super(source);
         this.creatorId = creatorId;

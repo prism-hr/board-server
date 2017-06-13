@@ -15,6 +15,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -59,6 +60,9 @@ public class PostService {
 
     @Inject
     private ActionService actionService;
+
+    @Inject
+    private NotificationEventService notificationEventService;
 
     @Inject
     private ObjectMapper objectMapper;
@@ -175,6 +179,12 @@ public class PostService {
         } catch (IOException e) {
             throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
         }
+    }
+
+    public LocalDateTime getEffectiveLiveTimestamp(Post post) {
+        LocalDateTime baseline = LocalDateTime.now();
+        LocalDateTime liveTimestamp = post.getLiveTimestamp();
+        return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -294,7 +304,7 @@ public class PostService {
 
     @SuppressWarnings("JpaQlInspection")
     private void executeActions(List<Long> postIds, Action action, State state, LocalDateTime baseline) {
-        if (postIds.size() > 0) {
+        if (!postIds.isEmpty()) {
             new TransactionTemplate(platformTransactionManager).execute(status -> {
                 entityManager.createQuery(
                     "update Post post " +
@@ -320,6 +330,9 @@ public class PostService {
                     .executeUpdate();
                 return null;
             });
+
+            String template = action == Action.PUBLISH ? "publish_post" : "retire_post";
+            postIds.forEach(postId -> notificationEventService.publishEvent(this, postId, template));
         }
     }
 
