@@ -1,10 +1,10 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.domain.Role;
+import hr.prism.board.enums.MemberCategory;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 public class UserRoleDTO {
@@ -14,19 +14,10 @@ public class UserRoleDTO {
 
     private LocalDate expiryDate;
 
-    private List<String> categories;
+    private List<MemberCategory> categories;
 
     public UserRoleDTO(Role role) {
         this.role = role;
-    }
-
-    public UserRoleDTO(Role role, LocalDate expiryDate, String... categories) {
-        this.role = role;
-        this.expiryDate = expiryDate;
-        this.categories = Arrays.asList(categories);
-    }
-
-    public UserRoleDTO() {
     }
 
     public Role getRole() {
@@ -47,12 +38,13 @@ public class UserRoleDTO {
         return this;
     }
 
-    public List<String> getCategories() {
+    public List<MemberCategory> getCategories() {
         return categories;
     }
 
-    public UserRoleDTO setCategories(List<String> categories) {
+    public UserRoleDTO setCategories(List<MemberCategory> categories) {
         this.categories = categories;
         return this;
     }
+
 }

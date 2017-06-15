@@ -1,14 +1,13 @@
 package hr.prism.board.representation;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.MemberCategory;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 public class PostRepresentation extends ResourceRepresentation {
-
-    private String summary;
 
     private String description;
 
@@ -22,7 +21,7 @@ public class PostRepresentation extends ResourceRepresentation {
 
     private List<String> postCategories;
 
-    private List<String> memberCategories;
+    private List<MemberCategory> memberCategories;
 
     private String applyWebsite;
 
@@ -35,15 +34,6 @@ public class PostRepresentation extends ResourceRepresentation {
     private LocalDateTime liveTimestamp;
 
     private LocalDateTime deadTimestamp;
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public PostRepresentation setSummary(String summary) {
-        this.summary = summary;
-        return this;
-    }
 
     public String getDescription() {
         return description;
@@ -99,11 +89,11 @@ public class PostRepresentation extends ResourceRepresentation {
         return this;
     }
 
-    public List<String> getMemberCategories() {
+    public List<MemberCategory> getMemberCategories() {
         return memberCategories;
     }
 
-    public PostRepresentation setMemberCategories(List<String> memberCategories) {
+    public PostRepresentation setMemberCategories(List<MemberCategory> memberCategories) {
         this.memberCategories = memberCategories;
         return this;
     }

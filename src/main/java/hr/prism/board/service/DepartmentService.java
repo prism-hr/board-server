@@ -21,40 +21,40 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DepartmentService {
-    
+
     @Inject
     private UserService userService;
-    
+
     @Inject
     private DocumentService documentService;
-    
+
     @Inject
     private DepartmentRepository departmentRepository;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private ResourcePatchService resourcePatchService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private ActionService actionService;
-    
+
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
-    
+
     public Department getDepartment(String handle) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, handle);
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
-    
+
     public List<Department> getDepartments(Boolean includePublicDepartments) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -64,24 +64,24 @@ public class DepartmentService {
                 .setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
-    
+
     public Department getOrCreateDepartment(User currentUser, DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
-        
+
         Department departmentById = null;
         Department departmentByName = null;
         for (Department department : departmentRepository.findByIdOrName(id, name)) {
             if (department.getId().equals(id)) {
                 departmentById = department;
             }
-    
+
             if (department.getName().equals(name)) {
                 departmentByName = department;
                 break;
             }
         }
-        
+
         if (departmentById != null) {
             return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentById.getId());
         } else if (departmentByName != null) {
@@ -90,17 +90,18 @@ public class DepartmentService {
             Department department = new Department();
             resourceService.updateState(department, State.ACCEPTED);
             department.setName(name);
+            department.setSummary(departmentDTO.getSummary());
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
-            
+
             String handle = ResourceService.suggestHandle(name);
             List<String> similarHandles = departmentRepository.findHandleByLikeSuggestedHandle(handle);
             handle = ResourceService.confirmHandle(handle, similarHandles);
-            
+
             resourceService.updateHandle(department, handle);
             List<String> memberCategories = departmentDTO.getMemberCategories();
-            
+
             department = departmentRepository.save(department);
             resourceService.updateCategories(department, CategoryType.MEMBER, memberCategories);
             resourceService.createResourceRelation(department, department);
@@ -109,13 +110,14 @@ public class DepartmentService {
             return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
         }
     }
-    
+
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.setChangeList(new ResourceChangeListRepresentation());
             resourcePatchService.patchName(department, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
+            resourcePatchService.patchProperty(department, "summary", department::getSummary, department::setSummary, departmentDTO.getSummary());
             resourcePatchService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
             resourcePatchService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
@@ -123,5 +125,5 @@ public class DepartmentService {
             return department;
         });
     }
-    
+
 }

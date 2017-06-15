@@ -9,13 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class BoardPatchDTO {
-
-    @Size(min = 3, max = 100)
-    private Optional<String> name;
-
-    @Size(min = 3, max = 1000)
-    private Optional<String> summary;
+public class BoardPatchDTO extends ResourcePatchDTO {
 
     @Valid
     private Optional<DocumentDTO> documentLogo;
@@ -27,24 +21,6 @@ public class BoardPatchDTO {
     private Optional<List<String>> postCategories;
 
     private Optional<PostVisibility> defaultPostVisibility;
-
-    public Optional<String> getName() {
-        return name;
-    }
-
-    public BoardPatchDTO setName(Optional<String> name) {
-        this.name = name;
-        return this;
-    }
-
-    public Optional<String> getSummary() {
-        return summary;
-    }
-
-    public BoardPatchDTO setSummary(Optional<String> summary) {
-        this.summary = summary;
-        return this;
-    }
 
     public Optional<DocumentDTO> getDocumentLogo() {
         return documentLogo;

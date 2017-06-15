@@ -1,8 +1,8 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.MemberCategory;
 import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.hibernate.validator.constraints.URL;
 
 import javax.validation.Valid;
@@ -11,14 +11,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class PostDTO {
-
-    @Size(min = 3, max = 100)
-    private String name;
-
-    @NotEmpty
-    @Size(min = 3, max = 1000)
-    private String summary;
+public class PostDTO extends ResourceDTO {
 
     private String description;
 
@@ -34,7 +27,7 @@ public class PostDTO {
 
     private List<String> postCategories;
 
-    private List<String> memberCategories;
+    private List<MemberCategory> memberCategories;
 
     @URL
     private String applyWebsite;
@@ -48,24 +41,6 @@ public class PostDTO {
     private LocalDateTime liveTimestamp;
 
     private LocalDateTime deadTimestamp;
-
-    public String getName() {
-        return name;
-    }
-
-    public PostDTO setName(String name) {
-        this.name = name;
-        return this;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public PostDTO setSummary(String summary) {
-        this.summary = summary;
-        return this;
-    }
 
     public String getDescription() {
         return description;
@@ -121,11 +96,11 @@ public class PostDTO {
         return this;
     }
 
-    public List<String> getMemberCategories() {
+    public List<MemberCategory> getMemberCategories() {
         return memberCategories;
     }
 
-    public PostDTO setMemberCategories(List<String> memberCategories) {
+    public PostDTO setMemberCategories(List<MemberCategory> memberCategories) {
         this.memberCategories = memberCategories;
         return this;
     }

@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.MemberCategory;
 import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
@@ -12,8 +13,9 @@ public class UserRoleCategory extends BoardEntity implements Comparable<UserRole
     @JoinColumn(name = "user_role_id", nullable = false)
     private UserRole userRole;
 
-    @Column(name = "name", nullable = false, length = 50)
-    private String name;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "name", nullable = false)
+    private MemberCategory name;
 
     @NaturalId
     @Column(name = "ordinal")
@@ -27,11 +29,11 @@ public class UserRoleCategory extends BoardEntity implements Comparable<UserRole
         this.userRole = userRole;
     }
 
-    public String getName() {
+    public MemberCategory getName() {
         return name;
     }
 
-    public UserRoleCategory setName(String name) {
+    public UserRoleCategory setName(MemberCategory name) {
         this.name = name;
         return this;
     }
@@ -46,7 +48,8 @@ public class UserRoleCategory extends BoardEntity implements Comparable<UserRole
     }
 
     @Override
-    public int compareTo(UserRoleCategory o) {
-        return ordinal.compareTo(o.getOrdinal());
+    public int compareTo(UserRoleCategory object) {
+        return ordinal.compareTo(object.getOrdinal());
     }
+
 }

@@ -15,13 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class PostPatchDTO {
-
-    @Size(min = 3, max = 100)
-    private Optional<String> name;
-
-    @Size(min = 3, max = 1000)
-    private Optional<String> summary;
+public class PostPatchDTO extends ResourcePatchDTO {
 
     private Optional<String> description;
 
@@ -53,24 +47,6 @@ public class PostPatchDTO {
     private Optional<LocalDateTime> deadTimestamp;
 
     private String comment;
-
-    public Optional<String> getName() {
-        return name;
-    }
-
-    public PostPatchDTO setName(Optional<String> name) {
-        this.name = name;
-        return this;
-    }
-
-    public Optional<String> getSummary() {
-        return summary;
-    }
-
-    public PostPatchDTO setSummary(Optional<String> summary) {
-        this.summary = summary;
-        return this;
-    }
 
     public Optional<String> getDescription() {
         return description;
@@ -192,7 +168,7 @@ public class PostPatchDTO {
     public boolean hasUpdates() {
         for (Field field : getClass().getDeclaredFields()) {
             field.setAccessible(true);
-            if (field.getName() != "comment") {
+            if (!field.getName().equals("comment")) {
                 try {
                     if (field.get(this) != null) {
                         return true;

@@ -1,33 +1,17 @@
 package hr.prism.board.dto;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Size;
 import java.util.List;
 
-public class BoardDTO {
-
-    @Size(min = 3, max = 100)
-    private String name;
+public class BoardDTO extends ResourceDTO {
 
     @Valid
     private DocumentDTO documentLogo;
-
-    @Size(min = 3, max = 1000)
-    private String summary;
 
     private List<String> postCategories;
 
     @Valid
     private DepartmentDTO department;
-
-    public String getName() {
-        return name;
-    }
-
-    public BoardDTO setName(String name) {
-        this.name = name;
-        return this;
-    }
 
     public DocumentDTO getDocumentLogo() {
         return documentLogo;
@@ -35,15 +19,6 @@ public class BoardDTO {
 
     public BoardDTO setDocumentLogo(DocumentDTO documentLogo) {
         this.documentLogo = documentLogo;
-        return this;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public BoardDTO setSummary(String summary) {
-        this.summary = summary;
         return this;
     }
 

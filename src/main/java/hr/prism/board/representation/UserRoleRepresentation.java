@@ -2,6 +2,7 @@ package hr.prism.board.representation;
 
 import com.google.common.base.MoreObjects;
 import hr.prism.board.domain.Role;
+import hr.prism.board.enums.MemberCategory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -12,7 +13,7 @@ public class UserRoleRepresentation {
 
     private LocalDate expiryDate;
 
-    private List<String> categories;
+    private List<MemberCategory> categories;
 
     public Role getRole() {
         return role;
@@ -32,11 +33,11 @@ public class UserRoleRepresentation {
         return this;
     }
 
-    public List<String> getCategories() {
+    public List<MemberCategory> getCategories() {
         return categories;
     }
 
-    public UserRoleRepresentation setCategories(List<String> categories) {
+    public UserRoleRepresentation setCategories(List<MemberCategory> categories) {
         this.categories = categories;
         return this;
     }
