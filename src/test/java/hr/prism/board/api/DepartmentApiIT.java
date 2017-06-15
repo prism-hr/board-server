@@ -230,6 +230,7 @@ public class DepartmentApiIT extends AbstractIT {
             new DepartmentPatchDTO()
                 .setName(Optional.of("department 3"))
                 .setHandle(Optional.of("department-3"))
+                .setSummary(Optional.of("department 3 summary"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
                 .setMemberCategories(Optional.of(ImmutableList.of("m1", "m2"))),
             State.ACCEPTED);
@@ -241,6 +242,7 @@ public class DepartmentApiIT extends AbstractIT {
             new DepartmentPatchDTO()
                 .setName(Optional.of("department 4"))
                 .setHandle(Optional.of("department-4"))
+                .setSummary(Optional.of("department 4 summary"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                 .setMemberCategories(Optional.of(ImmutableList.of("m2", "m1"))),
             State.ACCEPTED);
@@ -272,6 +274,7 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 2", "department 3")
+                .put("summary", null, "department 3 summary")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
                 .put("memberCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
@@ -279,6 +282,7 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("name", "department 3", "department 4")
+                .put("summary", "department 3 summary", "department 4 summary")
                 .put("handle", "department-3", "department-4")
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
@@ -326,10 +330,14 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.setAuthentication(user.getId());
         return transactionTemplate.execute(status -> {
             Department department = departmentService.getDepartment(departmentId);
-            DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId, departmentDTO);
+            departmentApi.updateDepartment(departmentId, departmentDTO);
+            DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
 
             Optional<String> nameOptional = departmentDTO.getName();
             Assert.assertEquals(nameOptional == null ? department.getName() : nameOptional.orElse(null), departmentR.getName());
+
+            Optional<String> summaryOptional = departmentDTO.getSummary();
+            Assert.assertEquals(summaryOptional == null ? department.getSummary() : summaryOptional.orElse(null), departmentR.getSummary());
 
             Optional<DocumentDTO> documentLogoOptional = departmentDTO.getDocumentLogo();
             verifyDocument(documentLogoOptional == null ? department.getDocumentLogo() : departmentDTO.getDocumentLogo().orElse(null), departmentR.getDocumentLogo());

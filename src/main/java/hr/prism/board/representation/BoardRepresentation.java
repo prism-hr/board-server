@@ -8,8 +8,6 @@ public class BoardRepresentation extends ResourceRepresentation {
 
     private DocumentRepresentation documentLogo;
 
-    private String summary;
-
     private String handle;
 
     private DepartmentRepresentation department;
@@ -24,15 +22,6 @@ public class BoardRepresentation extends ResourceRepresentation {
 
     public BoardRepresentation setDocumentLogo(DocumentRepresentation documentLogo) {
         this.documentLogo = documentLogo;
-        return this;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public BoardRepresentation setSummary(String summary) {
-        this.summary = summary;
         return this;
     }
 

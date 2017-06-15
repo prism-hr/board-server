@@ -8,8 +8,6 @@ import java.util.List;
 
 public class PostRepresentation extends ResourceRepresentation {
 
-    private String summary;
-
     private String description;
 
     private String organizationName;
@@ -35,15 +33,6 @@ public class PostRepresentation extends ResourceRepresentation {
     private LocalDateTime liveTimestamp;
 
     private LocalDateTime deadTimestamp;
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public PostRepresentation setSummary(String summary) {
-        this.summary = summary;
-        return this;
-    }
 
     public String getDescription() {
         return description;
