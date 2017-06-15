@@ -10,6 +10,7 @@ import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -127,7 +128,7 @@ public class PostService {
 
             post = postRepository.save(post);
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-            updateCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories(), department);
+            updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
             userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
             return post;
@@ -216,7 +217,7 @@ public class PostService {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
         patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-        patchCategories(post, CategoryType.MEMBER, postDTO.getMemberCategories(), department);
+        patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
 
         resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
         patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());

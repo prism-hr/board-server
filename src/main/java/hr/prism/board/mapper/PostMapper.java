@@ -3,6 +3,7 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
@@ -39,14 +40,13 @@ public class PostMapper implements Function<Post, PostRepresentation> {
         }
 
         return resourceMapper.apply(post, PostRepresentation.class)
-            .setSummary(post.getSummary())
             .setDescription(post.getDescription())
             .setOrganizationName(post.getOrganizationName())
             .setLocation(locationMapper.apply(post.getLocation()))
             .setExistingRelation(post.getExistingRelation())
             .setExistingRelationExplanation(postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
             .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
-            .setMemberCategories(resourceService.getCategories(post, CategoryType.MEMBER))
+            .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)))
             .setApplyWebsite(post.getApplyWebsite())
             .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
             .setApplyEmail(post.getApplyEmail())

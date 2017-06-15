@@ -1,6 +1,7 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.hibernate.validator.constraints.Email;
@@ -36,7 +37,7 @@ public class PostPatchDTO extends ResourcePatchDTO {
 
     private Optional<List<String>> postCategories;
 
-    private Optional<List<String>> memberCategories;
+    private Optional<List<MemberCategory>> memberCategories;
 
     private Optional<ExistingRelation> existingRelation;
 
@@ -129,11 +130,11 @@ public class PostPatchDTO extends ResourcePatchDTO {
         return this;
     }
 
-    public Optional<List<String>> getMemberCategories() {
+    public Optional<List<MemberCategory>> getMemberCategories() {
         return memberCategories;
     }
 
-    public PostPatchDTO setMemberCategories(Optional<List<String>> memberCategories) {
+    public PostPatchDTO setMemberCategories(Optional<List<MemberCategory>> memberCategories) {
         this.memberCategories = memberCategories;
         return this;
     }

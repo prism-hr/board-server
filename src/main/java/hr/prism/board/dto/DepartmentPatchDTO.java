@@ -1,5 +1,7 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.enums.MemberCategory;
+
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -16,7 +18,7 @@ public class DepartmentPatchDTO extends ResourcePatchDTO {
     @Pattern(regexp = "^[a-z0-9-]+$")
     private Optional<String> handle;
 
-    private Optional<List<String>> memberCategories;
+    private Optional<List<MemberCategory>> memberCategories;
 
     public Optional<DocumentDTO> getDocumentLogo() {
         return documentLogo;
@@ -36,11 +38,11 @@ public class DepartmentPatchDTO extends ResourcePatchDTO {
         return this;
     }
 
-    public Optional<List<String>> getMemberCategories() {
+    public Optional<List<MemberCategory>> getMemberCategories() {
         return memberCategories;
     }
 
-    public DepartmentPatchDTO setMemberCategories(Optional<List<String>> memberCategories) {
+    public DepartmentPatchDTO setMemberCategories(Optional<List<MemberCategory>> memberCategories) {
         this.memberCategories = memberCategories;
         return this;
     }

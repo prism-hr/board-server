@@ -1,11 +1,15 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Role;
+import hr.prism.board.domain.Scope;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
@@ -100,10 +104,8 @@ public class DepartmentService {
             handle = ResourceService.confirmHandle(handle, similarHandles);
 
             resourceService.updateHandle(department, handle);
-            List<String> memberCategories = departmentDTO.getMemberCategories();
-
             department = departmentRepository.save(department);
-            resourceService.updateCategories(department, CategoryType.MEMBER, memberCategories);
+            resourceService.updateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
             resourceService.createResourceRelation(department, department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
@@ -120,7 +122,7 @@ public class DepartmentService {
             resourcePatchService.patchProperty(department, "summary", department::getSummary, department::setSummary, departmentDTO.getSummary());
             resourcePatchService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
-            resourcePatchService.patchCategories(department, CategoryType.MEMBER, departmentDTO.getMemberCategories());
+            resourcePatchService.patchCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
             departmentRepository.update(department);
             return department;
         });

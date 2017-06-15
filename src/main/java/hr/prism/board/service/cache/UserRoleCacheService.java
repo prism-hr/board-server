@@ -4,6 +4,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleCategoryRepository;
@@ -42,16 +43,16 @@ public class UserRoleCacheService {
         UserRole savedUserRole = userRoleRepository.save(userRole);
 
         Department department = resource.getDepartment();
-        List<String> newCategories = userRoleDTO.getCategories();
+        List<MemberCategory> newCategories = userRoleDTO.getCategories();
         if (userRoleDTO.getRole() == Role.MEMBER) {
-            resourceService.validateCategories(department, CategoryType.MEMBER, newCategories,
+            resourceService.validateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(newCategories),
                 ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES,
                 ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES,
                 ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
 
             IntStream.range(0, newCategories.size())
                 .forEach(index -> {
-                    String newCategory = newCategories.get(index);
+                    MemberCategory newCategory = newCategories.get(index);
                     UserRoleCategory userRoleCategory = new UserRoleCategory();
                     userRoleCategory.setUserRole(savedUserRole);
                     userRoleCategory.setName(newCategory);
@@ -70,7 +71,7 @@ public class UserRoleCacheService {
 
     @CacheEvict(key = "#user.id", value = "users")
     public void updateResourceUser(Resource resource, User user, ResourceUserDTO resourceUserDTO) {
-        if(resourceUserDTO.getRoles().isEmpty()) {
+        if (resourceUserDTO.getRoles().isEmpty()) {
             throw new BoardException(ExceptionCode.IRREMOVABLE_USER_ROLE);
         }
         userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
