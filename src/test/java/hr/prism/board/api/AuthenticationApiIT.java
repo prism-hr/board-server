@@ -125,7 +125,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         mockMvc.perform(
             MockMvcRequestBuilders.get("/api/user"))
-            .andExpect(MockMvcResultMatchers.status().isForbidden());
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
     @Test
