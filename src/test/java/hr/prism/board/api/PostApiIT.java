@@ -8,10 +8,7 @@ import hr.prism.board.TestHelper;
 import hr.prism.board.definition.LocationDefinition;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.ExistingRelation;
-import hr.prism.board.enums.State;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
@@ -102,7 +99,7 @@ public class PostApiIT extends AbstractIT {
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
-            TestHelper.samplePost()
+            (PostDTO) TestHelper.samplePost()
                 .setName(board11PostName)));
         unprivilegedUserPosts.put(board11Id, board11PostName);
 
@@ -116,9 +113,9 @@ public class PostApiIT extends AbstractIT {
         Long board12Id = boardR12.getId();
         String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
-            TestHelper.smallSamplePost()
-                .setName(board12PostName)
-                .setMemberCategories(Collections.singletonList("m1"))));
+            ((PostDTO) TestHelper.smallSamplePost()
+                .setName(board12PostName))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))));
         unprivilegedUserPosts.put(board12Id, board12PostName);
 
         User user21 = testUserService.authenticate();
@@ -130,7 +127,7 @@ public class PostApiIT extends AbstractIT {
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
-            TestHelper.smallSamplePost()
+            (PostDTO) TestHelper.smallSamplePost()
                 .setName(board21PostName)));
         unprivilegedUserPosts.put(board21Id, board21PostName);
 
@@ -143,8 +140,8 @@ public class PostApiIT extends AbstractIT {
         Long board22Id = boardR22.getId();
         String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
-            TestHelper.smallSamplePost()
-                .setName(board22PostName)
+            ((PostDTO) TestHelper.smallSamplePost()
+                .setName(board22PostName))
                 .setPostCategories(Collections.singletonList("p1"))));
         unprivilegedUserPosts.put(board22Id, board22PostName);
 
@@ -167,7 +164,7 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR11.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board11Id,
-                    TestHelper.samplePost()
+                    (PostDTO) TestHelper.samplePost()
                         .setName(name),
                     state, posts, baseline, postCount);
                 boardPostNames11.put(state, name);
@@ -183,9 +180,9 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR12.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board12Id,
-                    TestHelper.smallSamplePost()
-                        .setName(name)
-                        .setMemberCategories(Collections.singletonList("m1")),
+                    ((PostDTO) TestHelper.smallSamplePost()
+                        .setName(name))
+                        .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE)),
                     state, posts, baseline, postCount);
                 boardPostNames12.put(state, name);
                 postCount++;
@@ -201,7 +198,7 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR21.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board21Id,
-                    TestHelper.smallSamplePost()
+                    (PostDTO) TestHelper.smallSamplePost()
                         .setName(name),
                     state, posts, baseline, postCount);
                 boardPostNames21.put(state, name);
@@ -217,8 +214,8 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board22Id,
-                    TestHelper.smallSamplePost()
-                        .setName(name)
+                    ((PostDTO) TestHelper.smallSamplePost()
+                        .setName(name))
                         .setPostCategories(Collections.singletonList("p1")),
                     state, posts, baseline, postCount);
                 boardPostNames22.put(state, name);
@@ -302,14 +299,14 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
+            PostDTO postDTO = ((PostDTO) new PostDTO()
                 .setName("post")
-                .setSummary("summary")
+                .setSummary("summary"))
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList("m1"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY, status);
@@ -322,14 +319,14 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
+            PostDTO postDTO = ((PostDTO) new PostDTO()
                 .setName("post")
-                .setSummary("summary")
+                .setSummary("summary"))
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList("m1"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))
                 .setApplyWebsite("http://www.google.com")
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
@@ -345,14 +342,14 @@ public class PostApiIT extends AbstractIT {
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
+            PostDTO postDTO = ((PostDTO) new PostDTO()
                 .setName("post")
-                .setSummary("summary")
+                .setSummary("summary"))
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList("m1"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
@@ -373,7 +370,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList("m1"));
+            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -385,7 +382,7 @@ public class PostApiIT extends AbstractIT {
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
 
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList("m1"));
+            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
             return null;
         });
@@ -409,7 +406,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList("m4"));
+            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -450,7 +447,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList("m4")))),
+                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH)))),
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -469,7 +466,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList("m1")))),
+                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE)))),
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -524,9 +521,9 @@ public class PostApiIT extends AbstractIT {
         LocalDateTime deadTimestampDelayed = LocalDateTime.now().plusWeeks(8L).truncatedTo(ChronoUnit.SECONDS);
 
         // Check that the author can update the post
-        PostPatchDTO updateDTO = new PostPatchDTO()
+        PostPatchDTO updateDTO = ((PostPatchDTO) new PostPatchDTO()
             .setName(Optional.of("post 2"))
-            .setSummary(Optional.of("summary 2"))
+            .setSummary(Optional.of("summary 2")))
             .setDescription(Optional.of("description"))
             .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
@@ -538,7 +535,7 @@ public class PostApiIT extends AbstractIT {
                     .setLongitude(BigDecimal.TEN)))
             .setApplyWebsite(Optional.of("http://www.facebook.com"))
             .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
-            .setMemberCategories(Optional.of(Arrays.asList("m2", "m1")))
+            .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.MASTER, MemberCategory.UNDERGRADUATE)))
             .setExistingRelation(Optional.of(ExistingRelation.STAFF))
             .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
@@ -568,7 +565,7 @@ public class PostApiIT extends AbstractIT {
                     .setLatitude(BigDecimal.ZERO)
                     .setLongitude(BigDecimal.ZERO)))
             .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-            .setMemberCategories(Optional.of(Arrays.asList("m1", "m2")))
+            .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER)))
             .setComment("i uploaded a document this time which explains that");
 
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.correctPost(postId, correctDTO), State.DRAFT);
@@ -800,12 +797,10 @@ public class PostApiIT extends AbstractIT {
             verifyLocation(locationOptional == null ? post.getLocation() : locationOptional.orElse(null), postR);
 
             Optional<List<String>> postCategoriesOptional = postDTO.getPostCategories();
-            assertEquals(postCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.POST) : postCategoriesOptional.orElse(null),
-                postR.getPostCategories());
+            assertEquals(postCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.POST) : postCategoriesOptional.orElse(null), postR.getPostCategories());
 
-            Optional<List<String>> memberCategoriesOptional = postDTO.getMemberCategories();
-            assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.MEMBER) : memberCategoriesOptional.orElse(null),
-                postR.getMemberCategories());
+            Optional<List<MemberCategory>> memberCategoriesOptional = postDTO.getMemberCategories();
+            assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.MEMBER) : memberCategoriesOptional.orElse(null), postR.getMemberCategories());
 
             Optional<ExistingRelation> existingRelationOptional = postDTO.getExistingRelation();
             assertEquals(existingRelationOptional == null ? post.getExistingRelation() : existingRelationOptional.orElse(null), postR.getExistingRelation());
@@ -877,7 +872,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     private void verifyPostPostAndSetState(User user, Long boardId, PostDTO postDTO, State state,
-        LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int seconds) {
+                                           LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts, LocalDateTime baseline, int seconds) {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(user, k -> new LinkedHashMap<>());
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
         PostRepresentation postR = verifyPostPost(boardId, postDTO);
@@ -927,7 +922,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     private void verifyPrivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames,
-        LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames, PostAdminContext adminContext) {
+                                          LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames, PostAdminContext adminContext) {
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(transactionTemplate.execute(status -> postApi.getPosts(null)));
         statePostNames.keySet().forEach(state ->

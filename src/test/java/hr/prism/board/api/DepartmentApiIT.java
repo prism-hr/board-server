@@ -13,6 +13,7 @@ import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -126,16 +127,16 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldNotCreateDuplicateDepartmentHandle() {
         testUserService.authenticate();
         verifyPostDepartment(
-            new BoardDTO()
-                .setName("new board")
-                .setDepartment(new DepartmentDTO()
+            ((BoardDTO) new BoardDTO()
+                .setName("new board"))
+                .setDepartment((DepartmentDTO) new DepartmentDTO()
                     .setName("new department with long name")),
             "new-department-with");
 
         Long departmentId = verifyPostDepartment(
-            new BoardDTO()
-                .setName("new board")
-                .setDepartment(new DepartmentDTO()
+            ((BoardDTO) new BoardDTO()
+                .setName("new board"))
+                .setDepartment((DepartmentDTO) new DepartmentDTO()
                     .setName("new department with long name too")),
             "new-department-with-2").getDepartment().getId();
 
@@ -148,9 +149,9 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyPostDepartment(
-            new BoardDTO()
-                .setName("new board")
-                .setDepartment(new DepartmentDTO()
+            ((BoardDTO) new BoardDTO()
+                .setName("new board"))
+                .setDepartment((DepartmentDTO) new DepartmentDTO()
                     .setName("new department with long name also")),
             "new-department-with-2");
     }
@@ -161,7 +162,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(BoardException.class, () ->
                     departmentApi.updateDepartment(departmentRs.getKey().getId(),
-                        new DepartmentPatchDTO()
+                        (DepartmentPatchDTO) new DepartmentPatchDTO()
                             .setName(Optional.of(departmentRs.getValue().getName()))),
                 ExceptionCode.DUPLICATE_DEPARTMENT, status);
             return null;
@@ -218,8 +219,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         // Check that we can make changes and leave nullable values null
         verifyPatchDepartment(departmentUser, departmentId,
-            new DepartmentPatchDTO()
-                .setName(Optional.of("department 2"))
+            ((DepartmentPatchDTO) new DepartmentPatchDTO()
+                .setName(Optional.of("department 2")))
                 .setHandle(Optional.of("department-2")),
             State.ACCEPTED);
 
@@ -227,22 +228,22 @@ public class DepartmentApiIT extends AbstractIT {
 
         // Check that we can make further changes and set nullable values
         verifyPatchDepartment(departmentUser, departmentId,
-            new DepartmentPatchDTO()
-                .setName(Optional.of("department 3"))
+            ((DepartmentPatchDTO) new DepartmentPatchDTO()
+                .setName(Optional.of("department 3")))
                 .setHandle(Optional.of("department-3"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-                .setMemberCategories(Optional.of(ImmutableList.of("m1", "m2"))),
+                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER))),
             State.ACCEPTED);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
         // Check that we can make further changes and change nullable values
         verifyPatchDepartment(departmentUser, departmentId,
-            new DepartmentPatchDTO()
-                .setName(Optional.of("department 4"))
+            ((DepartmentPatchDTO) new DepartmentPatchDTO()
+                .setName(Optional.of("department 4")))
                 .setHandle(Optional.of("department-4"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
-                .setMemberCategories(Optional.of(ImmutableList.of("m2", "m1"))),
+                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER, MemberCategory.UNDERGRADUATE))),
             State.ACCEPTED);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
@@ -295,9 +296,9 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.authenticate();
         DepartmentRepresentation departmentR1 = verifyPostDepartment(TestHelper.smallSampleBoard(), "department").getDepartment();
         DepartmentRepresentation departmentR2 = verifyPostDepartment(
-            new BoardDTO()
-                .setName("board")
-                .setDepartment(new DepartmentDTO()
+            ((BoardDTO) new BoardDTO()
+                .setName("board"))
+                .setDepartment((DepartmentDTO) new DepartmentDTO()
                     .setName("department 2")),
             "department-2").getDepartment();
 
@@ -337,10 +338,9 @@ public class DepartmentApiIT extends AbstractIT {
             Optional<String> handleOptional = departmentDTO.getHandle();
             Assert.assertEquals(handleOptional == null ? department.getHandle() : handleOptional.orElse(null), departmentR.getHandle());
 
-            Optional<List<String>> memberCategoriesOptional = departmentDTO.getMemberCategories();
-            Assert.assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(department, CategoryType.MEMBER) : memberCategoriesOptional.orElse(new
-                    ArrayList<>()),
-                departmentR.getMemberCategories());
+            Optional<List<MemberCategory>> memberCategoriesOptional = departmentDTO.getMemberCategories();
+            Assert.assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(department, CategoryType.MEMBER) :
+                memberCategoriesOptional.orElse(new ArrayList<>()), departmentR.getMemberCategories());
 
             Assert.assertEquals(expectedState, departmentR.getState());
             return departmentR;
