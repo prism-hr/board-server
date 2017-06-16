@@ -275,7 +275,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("name", "department 2", "department 3")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
-                .put("memberCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
+                .put("memberCategories", new ArrayList<>(), Arrays.asList("UNDERGRADUATE", "MASTER")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
@@ -284,12 +284,12 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
-                .put("memberCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
+                .put("memberCategories", Arrays.asList("UNDERGRADUATE", "MASTER"), Arrays.asList("MASTER", "UNDERGRADUATE")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
-                .put("memberCategories", Arrays.asList("m2", "m1"), null));
+                .put("memberCategories", Arrays.asList("MASTER", "UNDERGRADUATE"), null));
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
