@@ -229,9 +229,9 @@ public class DepartmentApiIT extends AbstractIT {
         // Check that we can make further changes and set nullable values
         verifyPatchDepartment(departmentUser, departmentId,
             ((DepartmentPatchDTO) new DepartmentPatchDTO()
-                .setName(Optional.of("department 3")))
+                .setName(Optional.of("department 3"))
+                .setSummary(Optional.of("department 3 summary")))
                 .setHandle(Optional.of("department-3"))
-                .setSummary(Optional.of("department 3 summary"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
                 .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER))),
             State.ACCEPTED);
@@ -241,9 +241,9 @@ public class DepartmentApiIT extends AbstractIT {
         // Check that we can make further changes and change nullable values
         verifyPatchDepartment(departmentUser, departmentId,
             ((DepartmentPatchDTO) new DepartmentPatchDTO()
-                .setName(Optional.of("department 4")))
+                .setName(Optional.of("department 4"))
+                .setSummary(Optional.of("department 4 summary")))
                 .setHandle(Optional.of("department-4"))
-                .setSummary(Optional.of("department 4 summary"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                 .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER, MemberCategory.UNDERGRADUATE))),
             State.ACCEPTED);
