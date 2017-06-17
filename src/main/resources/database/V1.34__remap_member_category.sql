@@ -2,7 +2,7 @@ DELIMITER //
 
 CREATE PROCEDURE remap_resource_category()
   BEGIN
-    CREATE TEMPORARY TABLE remap (
+    CREATE TABLE remap (
       id BIGINT UNSIGNED NOT NULL,
       PRIMARY KEY (id))
     ENGINE = MEMORY;
