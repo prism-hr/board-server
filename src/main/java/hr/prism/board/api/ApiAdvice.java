@@ -35,7 +35,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         if (ex instanceof BoardForbiddenException) {
             exceptionCode = ((BoardForbiddenException) ex).getExceptionCode();
-            responseStatus = HttpStatus.FORBIDDEN;
+            responseStatus = exceptionCode == ExceptionCode.UNAUTHENTICATED_USER ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;
         } else if (ex instanceof BoardException) {
             exceptionCode = ((BoardException) ex).getExceptionCode();
             responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;

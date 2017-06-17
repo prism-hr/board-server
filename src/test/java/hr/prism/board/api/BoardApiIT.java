@@ -413,9 +413,10 @@ public class BoardApiIT extends AbstractIT {
         testUserService.setAuthentication(user.getId());
         return transactionTemplate.execute(status -> {
             Board board = boardService.getBoard(boardId);
-            BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
+            boardApi.updateBoard(boardId, boardDTO);
+            BoardRepresentation boardR = boardApi.getBoard(boardId);
 
-            Optional<String> nameOptional = boardDTO.getName();
+                Optional<String> nameOptional = boardDTO.getName();
             Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
 
             Optional<DocumentDTO> documentLogoOptional = boardDTO.getDocumentLogo();
