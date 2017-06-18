@@ -1,7 +1,6 @@
 package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,27 +15,9 @@ import javax.transaction.Transactional;
 
 import static hr.prism.board.domain.Role.ADMINISTRATOR;
 import static hr.prism.board.domain.Role.AUTHOR;
-import static hr.prism.board.domain.Scope.BOARD;
-import static hr.prism.board.domain.Scope.DEPARTMENT;
-import static hr.prism.board.domain.Scope.POST;
-import static hr.prism.board.enums.Action.ACCEPT;
-import static hr.prism.board.enums.Action.AUDIT;
-import static hr.prism.board.enums.Action.CORRECT;
-import static hr.prism.board.enums.Action.EDIT;
-import static hr.prism.board.enums.Action.EXTEND;
-import static hr.prism.board.enums.Action.REJECT;
-import static hr.prism.board.enums.Action.RESTORE;
-import static hr.prism.board.enums.Action.SUSPEND;
-import static hr.prism.board.enums.Action.VIEW;
-import static hr.prism.board.enums.Action.WITHDRAW;
-import static hr.prism.board.enums.State.ACCEPTED;
-import static hr.prism.board.enums.State.DRAFT;
-import static hr.prism.board.enums.State.EXPIRED;
-import static hr.prism.board.enums.State.PENDING;
-import static hr.prism.board.enums.State.PREVIOUS;
-import static hr.prism.board.enums.State.REJECTED;
-import static hr.prism.board.enums.State.SUSPENDED;
-import static hr.prism.board.enums.State.WITHDRAWN;
+import static hr.prism.board.domain.Scope.*;
+import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.State.*;
 
 @Service
 @Transactional
@@ -248,7 +229,7 @@ public class Installer {
 
             LOGGER.info("Inserting new workflow definition");
             entityManager.createNativeQuery("INSERT INTO workflow(" +
-                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, notification) " +
+                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, notification) " +
                 "VALUES" + workflow.toString()).executeUpdate();
 
             return null;
