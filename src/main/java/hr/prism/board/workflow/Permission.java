@@ -1,16 +1,14 @@
 package hr.prism.board.workflow;
 
-import com.google.common.base.Joiner;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.base.Joiner;
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Permission {
 
@@ -110,7 +108,7 @@ public class Permission {
     @Override
     public String toString() {
         List<String> values = new ArrayList<>();
-        for (Object value : new Object[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State, notifications}) {
+        for (Object value : new Object[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State, resource4State, notifications}) {
             String valueString;
             if (value == null) {
                 valueString = "NULL";

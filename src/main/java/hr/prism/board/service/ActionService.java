@@ -12,7 +12,7 @@ import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Execution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +31,9 @@ public class ActionService {
     @Inject
     private NotificationEventService notificationEventService;
 
+    @Inject
+    private ApplicationContext applicationContext;
+
     public Resource executeAction(User user, Resource resource, Action action, Execution execution) {
         List<ActionRepresentation> actions = resource.getActions();
         if (actions != null) {
@@ -48,7 +51,7 @@ public class ActionService {
 
                         Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
                         if (interceptorClass != null) {
-                            newState = BeanUtils.instantiate(interceptorClass).intercept(resource, newState);
+                            newState = applicationContext.getBean(interceptorClass).intercept(user, resource, newState, action);
                         }
 
                         if (state != newState) {

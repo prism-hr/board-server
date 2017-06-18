@@ -53,6 +53,8 @@ public class ResourceService {
             "workflow.resource3_scope, workflow.resource3_state, " +
             "workflow.notification " +
             "from resource " +
+            "inner join resource as owner " +
+            "on resource.parent_id = owner.id " +
             "inner join workflow " +
             "on resource.scope = workflow.resource2_scope " +
             "and resource.state = workflow.resource2_state";
@@ -62,6 +64,8 @@ public class ResourceService {
             "workflow.resource3_scope, workflow.resource3_state, " +
             "workflow.notification " +
             "from resource " +
+            "inner join resource as owner " +
+            "on resource.parent_id = owner.id " +
             "inner join workflow " +
             "on resource.scope = workflow.resource2_scope " +
             "and resource.state = workflow.resource2_state " +
@@ -480,7 +484,9 @@ public class ResourceService {
     }
 
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
-        Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
+        Query query = entityManager.createNativeQuery(
+            Joiner.on(" where workflow.resource4_state is null or owner.state = workflow.resource4_state ")
+                .skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
     }

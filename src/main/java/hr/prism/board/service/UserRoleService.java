@@ -140,6 +140,10 @@ public class UserRoleService {
         return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(rolesRepresentation);
     }
 
+    public UserRole findbyResourceAndUserAndRole(Resource resource, User user, Role role) {
+        return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
+    }
+
     private void createUserRole(Resource resource, User user, UserRoleDTO roleDTO) {
         if (roleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
