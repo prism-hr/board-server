@@ -502,9 +502,9 @@ public class PostApiIT extends AbstractIT {
             .put(Action.AUDIT, () -> postApi.getPostOperations(postId))
             .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
             .put(Action.ACCEPT, () -> postApi.acceptPost(postId, new PostPatchDTO()))
-            .put(Action.SUSPEND, () -> postApi.suspendPost(postId, new PostPatchDTO().setComment("comment")))
+            .put(Action.SUSPEND, () -> postApi.suspendPost(postId, (PostPatchDTO) new PostPatchDTO().setComment("comment")))
             .put(Action.CORRECT, () -> postApi.correctPost(postId, new PostPatchDTO()))
-            .put(Action.REJECT, () -> postApi.rejectPost(postId, new PostPatchDTO().setComment("comment")))
+            .put(Action.REJECT, () -> postApi.rejectPost(postId, (PostPatchDTO) new PostPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> postApi.restorePost(postId, new PostPatchDTO()))
             .put(Action.WITHDRAW, () -> postApi.withdrawPost(postId, new PostPatchDTO()))
             .build();
@@ -545,7 +545,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         // Check that the administrator can make changes and suspend the post
-        PostPatchDTO suspendDTO = new PostPatchDTO()
+        PostPatchDTO suspendDTO = (PostPatchDTO) new PostPatchDTO()
             .setLiveTimestamp(Optional.of(liveTimestamp))
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
@@ -554,7 +554,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         // Check that the author can make changes and correct the post
-        PostPatchDTO correctDTO = new PostPatchDTO()
+        PostPatchDTO correctDTO = (PostPatchDTO) new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name"))
             .setDescription(Optional.of("description 2"))
             .setLocation(Optional.of(
@@ -572,7 +572,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         // Check that the administrator can accept post in the accepted state
-        PostPatchDTO acceptDTO = new PostPatchDTO()
+        PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
             .setLiveTimestamp(Optional.empty())
             .setDeadTimestamp(Optional.empty())
             .setComment("accepting without time constraints");
@@ -581,11 +581,11 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         // Suspend the post so that it can be accepted again
-        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.suspendPost(postId, new PostPatchDTO().setComment("comment")), State.SUSPENDED);
+        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.suspendPost(postId, (PostPatchDTO) new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         // Check that the administrator can make further changes and accept the post in the pending state
-        PostPatchDTO acceptPendingDTO = new PostPatchDTO()
+        PostPatchDTO acceptPendingDTO = (PostPatchDTO) new PostPatchDTO()
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
@@ -610,14 +610,14 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         // Check that the administrator can reject the post
-        PostPatchDTO rejectDTO = new PostPatchDTO()
+        PostPatchDTO rejectDTO = (PostPatchDTO) new PostPatchDTO()
             .setComment("we have received a complaint, we're closing down the post");
 
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.rejectPost(postId, rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
 
         // Check that the administrator can restore the post
-        PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
+        PostPatchDTO restoreFromRejectedDTO = (PostPatchDTO) new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.restorePost(postId, restoreFromRejectedDTO), State.ACCEPTED);
@@ -800,7 +800,6 @@ public class PostApiIT extends AbstractIT {
             assertEquals(postCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.POST) : postCategoriesOptional.orElse(null), postR.getPostCategories());
 
             Optional<List<MemberCategory>> memberCategoriesOptional = postDTO.getMemberCategories();
-            List<String> memberCategories = resourceService.getCategories(post, CategoryType.MEMBER);
             assertEquals(memberCategoriesOptional == null ? MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)) :
                 memberCategoriesOptional.orElse(null), postR.getMemberCategories());
 

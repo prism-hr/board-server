@@ -32,6 +32,8 @@ public class Permission {
 
     private State resource3State;
 
+    private State resource4State;
+
     private List<Notification> notifications;
 
     public Permission setWorkflow(Workflow workflow) {
@@ -68,6 +70,11 @@ public class Permission {
         return this;
     }
 
+    public Permission setResource4State(State resource4State) {
+        this.resource4State = resource4State;
+        return this;
+    }
+
     public Notification addNotification(Scope scope, Role role) {
         if (this.notifications == null) {
             this.notifications = new ArrayList<>();
@@ -91,8 +98,10 @@ public class Permission {
     public Workflow inState(State state) {
         if (this.resource2State == null) {
             this.resource2State = state;
-        } else {
+        } else if (this.resource3State == null) {
             this.resource3State = state;
+        } else {
+            this.resource4State = state;
         }
 
         return this.workflow;

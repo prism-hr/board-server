@@ -147,7 +147,7 @@ public class PostService {
         return (Post) actionService.executeAction(currentUser, post.setComment(postDTO.getComment()), action, () -> {
             if (action == Action.EDIT) {
                 updatePost(post, postDTO);
-            } else if (postDTO.hasUpdates()) {
+            } else if (BoardUtils.hasUpdates(postDTO)) {
                 actionService.executeAction(currentUser, post, Action.EDIT, () -> {
                     updatePost(post, postDTO);
                     return post;

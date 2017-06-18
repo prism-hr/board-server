@@ -2,14 +2,11 @@ package hr.prism.board.dto;
 
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,8 +43,6 @@ public class PostPatchDTO extends ResourcePatchDTO {
     private Optional<LocalDateTime> liveTimestamp;
 
     private Optional<LocalDateTime> deadTimestamp;
-
-    private String comment;
 
     public Optional<String> getDescription() {
         return description;
@@ -155,32 +150,6 @@ public class PostPatchDTO extends ResourcePatchDTO {
     public PostPatchDTO setDeadTimestamp(Optional<LocalDateTime> deadTimestamp) {
         this.deadTimestamp = deadTimestamp;
         return this;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public PostPatchDTO setComment(String comment) {
-        this.comment = comment;
-        return this;
-    }
-
-    public boolean hasUpdates() {
-        for (Field field : getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            if (!field.getName().equals("comment")) {
-                try {
-                    if (field.get(this) != null) {
-                        return true;
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new BoardException(ExceptionCode.PROBLEM, e);
-                }
-            }
-        }
-
-        return false;
     }
 
 }

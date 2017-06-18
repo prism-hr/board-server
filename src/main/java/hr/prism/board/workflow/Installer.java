@@ -59,10 +59,21 @@ public class Installer {
         Workflow workflow = new Workflow(objectMapper)
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
-                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_board")
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(DRAFT)
+                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_board_parent")
+                .notifying(BOARD, ADMINISTRATOR).with("new_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, DEPARTMENT).inState(ACCEPTED)
+
+            // Board draft state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
+            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, BOARD).inState(DRAFT).transitioningTo(ACCEPTED)
+                .notifying(BOARD, ADMINISTRATOR).with("accept_board")
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(DRAFT).transitioningTo(REJECTED)
+                .notifying(BOARD, ADMINISTRATOR).with("reject_board")
 
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
@@ -74,12 +85,20 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(ACCEPTED)
+                .notifying(BOARD, ADMINISTRATOR).with("reject_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
                 .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
                 .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
                 .notifying(POST, ADMINISTRATOR).with("accept_post")
+
+            // Board rejected state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, BOARD).inState(REJECTED).transitioningTo(ACCEPTED)
+            .notifying(BOARD, ADMINISTRATOR).with("accept_board")
 
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
@@ -126,7 +145,7 @@ public class Installer {
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
 
             // Post accepted state
-            .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED)
+            .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED).andParentState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)

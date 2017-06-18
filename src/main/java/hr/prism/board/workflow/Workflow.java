@@ -1,14 +1,12 @@
 package hr.prism.board.workflow;
 
-import com.google.common.base.Joiner;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.ArrayList;
-
+import com.google.common.base.Joiner;
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.State;
+
+import java.util.ArrayList;
 
 import static hr.prism.board.domain.Role.PUBLIC;
 
@@ -38,6 +36,11 @@ public class Workflow extends ArrayList<Permission> {
 
     public Permission creating(Scope scope) {
         return this.permission.setResource3Scope(scope);
+    }
+
+    public Workflow andParentState(State state) {
+        this.permission.setResource4State(state);
+        return this;
     }
 
     public Workflow transitioningTo(State state) {
