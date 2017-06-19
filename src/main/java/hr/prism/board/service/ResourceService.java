@@ -485,7 +485,7 @@ public class ResourceService {
 
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
         Query query = entityManager.createNativeQuery(
-            Joiner.on(" where workflow.resource4_state is null or owner.state = workflow.resource4_state and ")
+            Joiner.on(" where (workflow.resource4_state is null or owner.state = workflow.resource4_state) and ")
                 .skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
