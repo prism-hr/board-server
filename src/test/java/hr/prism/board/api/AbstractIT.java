@@ -1,10 +1,9 @@
 package hr.prism.board.api;
 
 import hr.prism.board.definition.DocumentDefinition;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.Scope;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
@@ -12,6 +11,7 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.ResourceService;
@@ -37,6 +37,8 @@ import static org.junit.Assert.*;
 
 public abstract class AbstractIT {
 
+    TransactionTemplate transactionTemplate;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
 
     @Inject
@@ -53,8 +55,6 @@ public abstract class AbstractIT {
 
     @Inject
     TestUserService testUserService;
-
-    TransactionTemplate transactionTemplate;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -99,18 +99,40 @@ public abstract class AbstractIT {
         });
 
         unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
-        transactionTemplate.execute(status -> {
-            boardApi.postBoard(
-                ((BoardDTO) new BoardDTO()
-                    .setName("board" + boardSuffix))
-                    .setDepartment(new DepartmentDTO()
-                        .setId(departmentId)));
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(
+            ((BoardDTO) new BoardDTO()
+                .setName("board" + boardSuffix))
+                .setDepartment(new DepartmentDTO()
+                    .setId(departmentId))));
+
+        User departmentAdmin = transactionTemplate.execute(status -> {
+            Resource department = resourceService.findOne(departmentId);
+            Set<UserRole> userRoles = department.getUserRoles();
+            for (UserRole userRole : userRoles) {
+                if (userRole.getRole() == Role.ADMINISTRATOR) {
+                    return userRole.getUser();
+                }
+            }
+
             return null;
         });
+
+        testUserService.setAuthentication(departmentAdmin.getId());
+        transactionTemplate.execute(status -> boardApi.acceptBoard(boardR.getId(), new BoardPatchDTO()));
 
         unprivilegedUsers.put(Scope.POST, testUserService.authenticate());
         transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;
+    }
+
+    void verifyDocument(DocumentDefinition expectedDocument, DocumentRepresentation actualDocument) {
+        if (expectedDocument == null) {
+            assertNull(actualDocument);
+        } else {
+            assertEquals(expectedDocument.getFileName(), actualDocument.getFileName());
+            assertEquals(expectedDocument.getCloudinaryId(), actualDocument.getCloudinaryId());
+            assertEquals(expectedDocument.getCloudinaryUrl(), actualDocument.getCloudinaryUrl());
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -137,7 +159,7 @@ public abstract class AbstractIT {
         users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
     }
 
-    void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
+    private void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         ExceptionCode exceptionCode;
         if (user == null) {
             testUserService.unauthenticate();
@@ -166,16 +188,6 @@ public abstract class AbstractIT {
                     return null;
                 });
             }
-        }
-    }
-
-    void verifyDocument(DocumentDefinition expectedDocument, DocumentRepresentation actualDocument) {
-        if (expectedDocument == null) {
-            assertNull(actualDocument);
-        } else {
-            assertEquals(expectedDocument.getFileName(), actualDocument.getFileName());
-            assertEquals(expectedDocument.getCloudinaryId(), actualDocument.getCloudinaryId());
-            assertEquals(expectedDocument.getCloudinaryUrl(), actualDocument.getCloudinaryUrl());
         }
     }
 

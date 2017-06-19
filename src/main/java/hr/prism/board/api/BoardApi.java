@@ -72,12 +72,12 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/boards/{id}/accept", method = RequestMethod.POST)
-    public BoardRepresentation acceptPost(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
+    public BoardRepresentation acceptBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
         return boardMapper.apply(boardService.executeAction(id, Action.ACCEPT, boardDTO));
     }
 
     @RequestMapping(value = "/api/boards/{id}/reject", method = RequestMethod.POST)
-    public BoardRepresentation rejectPost(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
+    public BoardRepresentation rejectBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
         Objects.requireNonNull(boardDTO.getComment());
         return boardMapper.apply(boardService.executeAction(id, Action.REJECT, boardDTO));
     }
