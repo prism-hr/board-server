@@ -109,6 +109,9 @@ public class PostApiIT extends AbstractIT {
         boardDTO12.getDepartment().setName("department1");
         boardDTO12.setName("board12");
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
+        testUserService.setAuthentication(user11.getId());
+        boardApi.acceptBoard(boardR12.getId(), new BoardPatchDTO());
+        testUserService.setAuthentication(user12.getId());
 
         Long board12Id = boardR12.getId();
         String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -136,6 +139,9 @@ public class PostApiIT extends AbstractIT {
         boardDTO22.getDepartment().setName("department2");
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
+        testUserService.setAuthentication(user21.getId());
+        boardApi.acceptBoard(boardR22.getId(), new BoardPatchDTO());
+        testUserService.setAuthentication(user22.getId());
 
         Long board22Id = boardR22.getId();
         String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
