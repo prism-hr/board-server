@@ -6,10 +6,8 @@ import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BoardUtils {
 
@@ -32,7 +30,14 @@ public class BoardUtils {
     }
 
     public static <T extends ResourcePatchDTO> boolean hasUpdates(T resourceDTO) {
-        for (Field field : resourceDTO.getClass().getFields()) {
+        List<Field> fields = new ArrayList<>();
+        Class<?> dtoClass = resourceDTO.getClass();
+        while (ResourcePatchDTO.class.isAssignableFrom(dtoClass)) {
+            fields.addAll(Arrays.stream(dtoClass.getDeclaredFields()).collect(Collectors.toList()));
+            dtoClass = dtoClass.getSuperclass();
+        }
+
+        for (Field field : fields) {
             field.setAccessible(true);
             if (!field.getName().equals("comment")) {
                 try {
