@@ -53,22 +53,30 @@ public class ResourceService {
             "workflow.resource3_scope, workflow.resource3_state, " +
             "workflow.notification " +
             "from resource " +
-            "inner join resource as owner " +
-            "on resource.parent_id = owner.id " +
             "inner join workflow " +
             "on resource.scope = workflow.resource2_scope " +
-            "and resource.state = workflow.resource2_state";
+            "and resource.state = workflow.resource2_state " +
+            "inner join resource_relation as owner_relation " +
+            "on resource.id = owner_relation.resource2_id " +
+            "and (resource.scope = 'DEPARTMENT' or owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "inner join resource as owner " +
+            "on owner_relation.resource1_id = owner.id " +
+            "and (workflow.resource4_state is null or workflow.resource4_state = owner.state)";
 
     private static final String SECURE_RESOURCE_ACTION =
         "select resource.id, workflow.action, " +
             "workflow.resource3_scope, workflow.resource3_state, " +
             "workflow.notification " +
             "from resource " +
-            "inner join resource as owner " +
-            "on resource.parent_id = owner.id " +
             "inner join workflow " +
             "on resource.scope = workflow.resource2_scope " +
             "and resource.state = workflow.resource2_state " +
+            "inner join resource_relation as owner_relation " +
+            "on resource.id = owner_relation.resource2_id " +
+            "and (resource.scope = 'DEPARTMENT' or owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "inner join resource as owner " +
+            "on owner_relation.resource1_id = owner.id " +
+            "and (workflow.resource4_state is null or workflow.resource4_state = owner.state) " +
             "inner join resource_relation " +
             "on resource.id = resource_relation.resource2_id " +
             "inner join resource as parent " +
@@ -484,9 +492,7 @@ public class ResourceService {
     }
 
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
-        Query query = entityManager.createNativeQuery(
-            Joiner.on(" where (workflow.resource4_state is null or owner.state = workflow.resource4_state) and ")
-                .skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
+        Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
     }
