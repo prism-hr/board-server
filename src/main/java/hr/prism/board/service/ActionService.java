@@ -39,10 +39,11 @@ public class ActionService {
         if (actions != null) {
             for (ActionRepresentation actionRepresentation : actions) {
                 if (actionRepresentation.getAction() == action) {
+                    State newState = null;
                     resource = execution.execute();
                     if (action.isResourceOperation()) {
                         State state = resource.getState();
-                        State newState = actionRepresentation.getState();
+                        newState = actionRepresentation.getState();
                         if (newState == null) {
                             newState = state;
                         } else if (newState == State.PREVIOUS) {
@@ -64,7 +65,7 @@ public class ActionService {
 
                     String notification = actionRepresentation.getNotification();
                     if (notification != null) {
-                        notificationEventService.publishEvent(this, user.getId(), resource.getId(), actionRepresentation.getNotification());
+                        notificationEventService.publishEvent(this, user.getId(), resource.getId(), actionRepresentation.getNotification(), newState);
                     }
 
                     return resource;

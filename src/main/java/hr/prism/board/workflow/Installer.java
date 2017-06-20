@@ -42,7 +42,8 @@ public class Installer {
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(DRAFT)
                 .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_board_parent")
-                .notifying(BOARD, ADMINISTRATOR).with("new_board")
+                .notifying(BOARD, ADMINISTRATOR).whenTransitioningTo(DRAFT).with("new_board")
+                .notifying(BOARD, ADMINISTRATOR).whenTransitioningTo(ACCEPTED).with("accept_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, DEPARTMENT).inState(ACCEPTED)
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
+import hr.prism.board.enums.State;
 
 public class Notification {
 
@@ -17,6 +18,8 @@ public class Notification {
     private Scope scope;
 
     private Role role;
+
+    private State state;
 
     private boolean excludingCreator = false;
 
@@ -50,8 +53,27 @@ public class Notification {
         return this;
     }
 
+    public State getState() {
+        return state;
+    }
+
+    public Notification setState(State state) {
+        this.state = state;
+        return this;
+    }
+
+    public Notification whenTransitioningTo(State state) {
+        this.state = state;
+        return this;
+    }
+
     public boolean isExcludingCreator() {
         return excludingCreator;
+    }
+
+    public Notification setExcludingCreator(boolean excludingCreator) {
+        this.excludingCreator = excludingCreator;
+        return this;
     }
 
     public Notification excludingCreator() {
@@ -63,12 +85,13 @@ public class Notification {
         return template;
     }
 
-    public void setTemplate(String template) {
+    public Notification setTemplate(String template) {
         this.template = template;
+        return this;
     }
 
-    public Workflow with(String notification) {
-        this.template = notification;
+    public Workflow with(String template) {
+        this.template = template;
         return this.workflow;
     }
 

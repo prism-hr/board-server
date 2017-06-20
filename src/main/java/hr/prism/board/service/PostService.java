@@ -335,7 +335,7 @@ public class PostService {
             });
 
             String template = action == Action.PUBLISH ? "publish_post" : "retire_post";
-            postIds.forEach(postId -> notificationEventService.publishEvent(this, postId, template));
+            postIds.forEach(postId -> notificationEventService.publishEvent(this, postId, template, state));
         }
     }
 

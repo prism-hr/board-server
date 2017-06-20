@@ -6,6 +6,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.State;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -52,12 +54,12 @@ public class NotificationEventService {
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishEvent(Object source, Long resourceId, String notification) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notification));
+    public void publishEvent(Object source, Long resourceId, String notification, State state) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notification, state));
     }
 
-    public void publishEvent(Object source, Long creatorId, Long resourceId, String notification) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, String notification, State state) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification, state));
     }
 
     @Async
@@ -79,42 +81,46 @@ public class NotificationEventService {
             throw new IllegalStateException("Could not deserialize notifications");
         }
 
+        State state = notificationEvent.getState();
         for (Notification notification : notifications) {
-            List<User> recipients = userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole());
-            if (creator != null && notification.isExcludingCreator()) {
-                recipients.remove(creator);
-            }
-
-            if (!recipients.isEmpty()) {
-                String template = notification.getTemplate();
-                ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.builder();
-
-                String redirectUrl = null;
-                resource.getParents().stream().map(ResourceRelation::getResource1).forEach(p -> parameterBuilder.put(p.getScope().name().toLowerCase(), p.getName()));
-                if ("approve_post".equals(template)) {
-                    LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
-                    parameterBuilder.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
-                } else if ("suspend_post".equals(template)) {
-                    ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
-                    parameterBuilder.put("comment", resourceOperation.getComment());
-                } else if ("reject_post".equals(template)) {
-                    redirectUrl = RedirectService.makeRedirectForLogin(environment.getProperty("server.url"));
-                    ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
-                    parameterBuilder.put("comment", resourceOperation.getComment());
+            State notificationState = notification.getState();
+            if (notificationState == null || Objects.equals(state, notificationState)) {
+                List<User> recipients = userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole());
+                if (creator != null && notification.isExcludingCreator()) {
+                    recipients.remove(creator);
                 }
 
-                if (redirectUrl == null) {
-                    redirectUrl = RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource);
-                }
+                if (!recipients.isEmpty()) {
+                    String template = notification.getTemplate();
+                    ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.builder();
 
-                parameterBuilder.put("redirectUrl", redirectUrl);
-                Map<String, String> parameters = parameterBuilder.build();
+                    String redirectUrl = null;
+                    resource.getParents().stream().map(ResourceRelation::getResource1).forEach(p -> parameterBuilder.put(p.getScope().name().toLowerCase(), p.getName()));
+                    if ("approve_post".equals(template)) {
+                        LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
+                        parameterBuilder.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
+                    } else if ("suspend_post".equals(template)) {
+                        ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
+                        parameterBuilder.put("comment", resourceOperation.getComment());
+                    } else if ("reject_post".equals(template)) {
+                        redirectUrl = RedirectService.makeRedirectForLogin(environment.getProperty("server.url"));
+                        ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
+                        parameterBuilder.put("comment", resourceOperation.getComment());
+                    }
 
-                for (User recipient : recipients) {
-                    if (!sent.containsEntry(recipient, template)) {
-                        NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(template, recipient, parameters);
-                        notificationService.sendNotification(notificationInstance);
-                        sent.put(recipient, template);
+                    if (redirectUrl == null) {
+                        redirectUrl = RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource);
+                    }
+
+                    parameterBuilder.put("redirectUrl", redirectUrl);
+                    Map<String, String> parameters = parameterBuilder.build();
+
+                    for (User recipient : recipients) {
+                        if (!sent.containsEntry(recipient, template)) {
+                            NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(template, recipient, parameters);
+                            notificationService.sendNotification(notificationInstance);
+                            sent.put(recipient, template);
+                        }
                     }
                 }
             }
