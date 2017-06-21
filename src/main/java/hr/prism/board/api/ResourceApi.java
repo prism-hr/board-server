@@ -4,7 +4,9 @@ import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.representation.ResourceUserRepresentation;
+import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.UserRoleService;
+import hr.prism.board.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,9 @@ public class ResourceApi {
 
     @Inject
     private UserRoleService userRoleService;
+
+    @Inject
+    private UserService userService;
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
     public List<ResourceUserRepresentation> getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
@@ -41,6 +46,11 @@ public class ResourceApi {
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.PUT)
     public ResourceUserRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid ResourceUserDTO user) {
         return userRoleService.updateResourceUser(scope, resourceId, userId, user);
+    }
+
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/similarUsers", method = RequestMethod.GET)
+    public List<UserRepresentation> getSimilarUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestParam String searchTerm) {
+        return userService.findBySimilarNameAndEmail(scope, resourceId, searchTerm);
     }
 
     @ModelAttribute

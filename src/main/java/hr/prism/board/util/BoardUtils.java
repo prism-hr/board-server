@@ -1,5 +1,6 @@
 package hr.prism.board.util;
 
+import com.google.common.base.Joiner;
 import hr.prism.board.dto.ResourcePatchDTO;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -51,6 +52,26 @@ public class BoardUtils {
         }
 
         return false;
+    }
+
+    public static String obfuscateEmail(String email) {
+        char hashChar = "#".charAt(0);
+        String[] emailParts = email.split("@");
+
+        List<String> newNameParts = new ArrayList<>();
+        for (String namePart : emailParts[0].split("\\.")) {
+            int subPartLength = namePart.length();
+            for (int i = 0; i < subPartLength; i++) {
+                if (i > 0 && !(i > 2 && i == (subPartLength - 1))) {
+                    StringBuilder addressPartBuilder = new StringBuilder(namePart);
+                    addressPartBuilder.setCharAt(i, hashChar);
+                    namePart = addressPartBuilder.toString();
+                }
+            }
+            newNameParts.add(namePart);
+        }
+
+        return Joiner.on(".").join(newNameParts) + "@" + emailParts[1];
     }
 
 }

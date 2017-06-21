@@ -21,13 +21,13 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
-    
+
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getCurrentUser() {
         User currentUser = userService.getCurrentUserSecured();
         return userMapper.apply(currentUser);
     }
-    
+
     @RequestMapping(value = "/api/user", method = RequestMethod.PATCH)
     public UserRepresentation updateUser(@RequestBody @Valid UserPatchDTO userDTO) {
         User currentUser = userService.updateUser(userDTO);
