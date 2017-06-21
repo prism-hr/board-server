@@ -483,6 +483,10 @@ public class ResourceService {
         return resourceOperationRepository.findFirstByActionOrderByIdDesc(action);
     }
 
+    public Resource findByResourceAndEnclosingScope(Resource resource, Scope scope) {
+        return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
+    }
+
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);

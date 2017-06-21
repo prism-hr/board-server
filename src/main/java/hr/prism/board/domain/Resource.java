@@ -228,12 +228,4 @@ public class Resource extends BoardEntity {
             .collect(Collectors.toList());
     }
 
-    public Department getDepartment() {
-        Resource r = this;
-        while(r != null && r.getScope() != Scope.DEPARTMENT) {
-            r = r.getParent();
-        }
-        return (Department) r;
-    }
-
 }

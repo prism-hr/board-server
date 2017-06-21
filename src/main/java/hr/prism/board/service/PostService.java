@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.PostDTO;
-import hr.prism.board.dto.PostPatchDTO;
-import hr.prism.board.dto.ResourceFilterDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
@@ -16,6 +13,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
 import org.springframework.context.annotation.Lazy;
@@ -56,6 +54,9 @@ public class PostService {
 
     @Inject
     private UserRoleService userRoleService;
+
+    @Inject
+    private UserRoleCacheService userRoleCacheService;
 
     @Inject
     private UserService userService;
@@ -147,11 +148,19 @@ public class PostService {
         return (Post) actionService.executeAction(currentUser, post.setComment(postDTO.getComment()), action, () -> {
             if (action == Action.EDIT) {
                 updatePost(post, postDTO);
-            } else if (BoardUtils.hasUpdates(postDTO)) {
-                actionService.executeAction(currentUser, post, Action.EDIT, () -> {
-                    updatePost(post, postDTO);
-                    return post;
-                });
+            } else {
+                if (action == Action.ACCEPT) {
+                    Resource board = post.getParent();
+                    userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, board, Role.AUTHOR)
+                        .forEach(user -> userRoleCacheService.createUserRole(board, user, new UserRoleDTO(Role.AUTHOR)));
+                }
+
+                if (BoardUtils.hasUpdates(postDTO)) {
+                    actionService.executeAction(currentUser, post, Action.EDIT, () -> {
+                        updatePost(post, postDTO);
+                        return post;
+                    });
+                }
             }
 
             return post;

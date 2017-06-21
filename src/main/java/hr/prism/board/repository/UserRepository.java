@@ -1,16 +1,15 @@
 package hr.prism.board.repository;
 
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.Role;
 import hr.prism.board.domain.Scope;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.OauthProvider;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
@@ -38,5 +37,18 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role")
     List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role);
+
+    @Query(value =
+        "select userRole.user " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.role = :role " +
+            "and userRole.user not in (" +
+            "select withoutUserRole.user " +
+            "from UserRole withoutUserRole " +
+            "where withoutUserRole.resource = :withoutResource " +
+            "and withoutUserRole.role = :withoutRole)")
+    List<User> findByRoleWithoutRole(
+        @Param("resource") Resource resource, @Param("role") Role role, @Param("withoutResource") Resource withoutResource, @Param("withoutRole") Role withoutRole);
 
 }

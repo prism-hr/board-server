@@ -38,13 +38,12 @@ public class UserRoleCacheService {
 
     @CacheEvict(key = "#user.id", value = "users")
     public void createUserRole(Resource resource, User user, UserRoleDTO userRoleDTO) {
-        UserRole userRole = new UserRole().setResource(resource).setUser(user).setRole(userRoleDTO.getRole())
-            .setExpiryDate(userRoleDTO.getExpiryDate());
-        UserRole savedUserRole = userRoleRepository.save(userRole);
+        UserRole userRole = userRoleRepository.save(
+            new UserRole().setResource(resource).setUser(user).setRole(userRoleDTO.getRole()).setExpiryDate(userRoleDTO.getExpiryDate()));
 
-        Department department = resource.getDepartment();
         List<MemberCategory> newCategories = userRoleDTO.getCategories();
         if (userRoleDTO.getRole() == Role.MEMBER) {
+            Resource department = resourceService.findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
             resourceService.validateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(newCategories),
                 ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES,
                 ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES,
@@ -54,7 +53,7 @@ public class UserRoleCacheService {
                 .forEach(index -> {
                     MemberCategory newCategory = newCategories.get(index);
                     UserRoleCategory userRoleCategory = new UserRoleCategory();
-                    userRoleCategory.setUserRole(savedUserRole);
+                    userRoleCategory.setUserRole(userRole);
                     userRoleCategory.setName(newCategory);
                     userRoleCategory.setOrdinal(index);
                     userRoleCategoryRepository.save(userRoleCategory);
@@ -74,12 +73,15 @@ public class UserRoleCacheService {
         if (resourceUserDTO.getRoles().isEmpty()) {
             throw new BoardException(ExceptionCode.IRREMOVABLE_USER_ROLE);
         }
+
         userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
         userRoleRepository.deleteByResourceAndUser(resource, user);
         entityManager.flush();
+
         for (UserRoleDTO userRoleDTO : resourceUserDTO.getRoles()) {
             createUserRole(resource, user, userRoleDTO);
         }
+
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
     }
 

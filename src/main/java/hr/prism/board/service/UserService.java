@@ -1,21 +1,7 @@
 package hr.prism.board.service;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-
-import javax.inject.Inject;
-
 import hr.prism.board.authentication.AuthenticationToken;
-import hr.prism.board.domain.Document;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.Scope;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPatchDTO;
@@ -24,6 +10,14 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.cache.UserCacheService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -94,6 +88,10 @@ public class UserService {
 
     public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role);
+    }
+
+    public List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {
+        return userRepository.findByRoleWithoutRole(resource, role, withoutResource, withoutRole);
     }
 
     private User getCurrentUser(boolean fresh) {
