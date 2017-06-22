@@ -31,6 +31,7 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
@@ -294,6 +295,12 @@ public class DepartmentApiIT extends AbstractIT {
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("MASTER", "UNDERGRADUATE"), null));
+    }
+
+    @Test
+    @Sql("classpath:data/department_autosuggest_setup.sql")
+    public void shouldSuggestDepartments() {
+
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
