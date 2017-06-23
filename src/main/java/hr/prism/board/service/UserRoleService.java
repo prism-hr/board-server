@@ -76,7 +76,7 @@ public class UserRoleService {
     }
 
     public void createUserRole(Resource resource, User user, Role role) {
-        this.createUserRole(resource, user, new UserRoleDTO().setRole(role));
+        this.createUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
     public ResourceUserRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
@@ -86,7 +86,7 @@ public class UserRoleService {
         Set<UserRoleDTO> roles = resourceUserDTO.getRoles();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             for (UserRoleDTO roleDTO : roles) {
-                createUserRole(resource, user, roleDTO);
+                createUserRole(currentUser, resource, user, roleDTO);
             }
 
             return resource;
@@ -102,18 +102,18 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            userRoleEventService.publishEvent(this, resourceId, resourceUsersDTO);
+            userRoleEventService.publishEvent(this, currentUser.getId(), resourceId, resourceUsersDTO);
             return resource;
         });
     }
 
     // Method is used by UserRoleEventService#createResourceUsers to process user creation in a series of small transactions
     // Don't use it for anything else - there are no security checks applied to it, security checks are applied when we publish the producing event
-    public void createResourceUser(Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs) {
+    public void createResourceUser(User currentUser, Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs) {
         User user = userService.getOrCreateUser(userDTO);
         Resource resource = resourceService.findOne(resourceId);
         for (UserRoleDTO userRoleDTO : userRoleDTOs) {
-            createUserRole(resource, user, userRoleDTO);
+            createUserRole(currentUser, resource, user, userRoleDTO);
         }
     }
 
@@ -133,7 +133,7 @@ public class UserRoleService {
         User user = userCacheService.findOne(userId);
         Set<UserRoleDTO> roles = resourceUserDTO.getRoles();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            userRoleCacheService.updateResourceUser(resource, user, resourceUserDTO);
+            userRoleCacheService.updateResourceUser(currentUser, resource, user, resourceUserDTO);
             return resource;
         });
 
@@ -148,14 +148,14 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }
 
-    private void createUserRole(Resource resource, User user, UserRoleDTO roleDTO) {
+    private void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO roleDTO) {
         if (roleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
 
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
         if (userRole == null) {
-            userRoleCacheService.createUserRole(resource, user, roleDTO);
+            userRoleCacheService.createUserRole(currentUser, resource, user, roleDTO);
         }
     }
 

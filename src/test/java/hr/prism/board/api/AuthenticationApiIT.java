@@ -29,7 +29,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
-import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -169,7 +168,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
         testNotificationService.verify(new NotificationService.NotificationInstance("reset_password", "admin@prism.hr", "alastair@prism.hr",
             ImmutableMap.of("environment", environment.getProperty("environment"), "recipient", "alastair", "temporaryPassword", "defined",
-                "redirectUrl", environment.getProperty("server.url") + "/redirect?path=" + URLEncoder.encode("?showLogin=true", "UTF-8"))));
+                "redirectUrl", environment.getProperty("server.url") + "/redirect?action=login")));
 
         // Set the temporary password to something that we know
         transactionTemplate.execute(status -> userCacheService.findOneFresh(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));

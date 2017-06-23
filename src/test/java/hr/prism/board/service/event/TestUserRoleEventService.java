@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 public class TestUserRoleEventService extends UserRoleEventService {
 
     @Override
-    public void publishEvent(Object source, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
-        super.createResourceUsers(new UserRoleEvent(source, resourceId, resourceUsersDTO));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
+        super.createResourceUsers(new UserRoleEvent(source, creatorId, resourceId, resourceUsersDTO));
     }
 
 }

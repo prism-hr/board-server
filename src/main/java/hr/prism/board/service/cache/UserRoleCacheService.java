@@ -15,6 +15,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.service.event.NotificationEventService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 @Service
@@ -38,13 +40,25 @@ public class UserRoleCacheService {
     @Inject
     private ResourceService resourceService;
 
+    @Inject
+    private NotificationEventService notificationEventService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void createUserRole(Resource resource, User user, UserRoleDTO userRoleDTO) {
+    public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
+        Role role = userRoleDTO.getRole();
+        Scope scope = resource.getScope();
+
+        boolean notify = true;
+        if (role == Role.MEMBER || scope == Scope.POST || Objects.equals(currentUser, user)
+            || !userRoleRepository.findByResourceAndUserAndNotRole(resource, user, Role.MEMBER).isEmpty()) {
+            notify = false;
+        }
+
         UserRole userRole = userRoleRepository.save(
-            new UserRole().setResource(resource).setUser(user).setRole(userRoleDTO.getRole()).setExpiryDate(userRoleDTO.getExpiryDate()));
+            new UserRole().setResource(resource).setUser(user).setRole(role).setExpiryDate(userRoleDTO.getExpiryDate()));
 
         List<MemberCategory> newCategories = userRoleDTO.getCategories();
         if (userRoleDTO.getRole() == Role.MEMBER) {
@@ -64,6 +78,11 @@ public class UserRoleCacheService {
                     userRoleCategoryRepository.save(userRoleCategory);
                 });
         }
+
+        if (notify) {
+            String template = "join_" + scope.name().toLowerCase();
+            notificationEventService.publishEvent(this, currentUser.getId(), resource.getId(), template);
+        }
     }
 
     @CacheEvict(key = "#user.id", value = "users")
@@ -74,7 +93,7 @@ public class UserRoleCacheService {
     }
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void updateResourceUser(Resource resource, User user, ResourceUserDTO resourceUserDTO) {
+    public void updateResourceUser(User currentUser, Resource resource, User user, ResourceUserDTO resourceUserDTO) {
         if (resourceUserDTO.getRoles().isEmpty()) {
             throw new BoardException(ExceptionCode.IRREMOVABLE_USER_ROLE);
         }
@@ -84,7 +103,7 @@ public class UserRoleCacheService {
         entityManager.flush();
 
         for (UserRoleDTO userRoleDTO : resourceUserDTO.getRoles()) {
-            createUserRole(resource, user, userRoleDTO);
+            createUserRole(currentUser, resource, user, userRoleDTO);
         }
 
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);

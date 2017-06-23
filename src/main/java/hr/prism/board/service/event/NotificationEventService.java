@@ -59,6 +59,10 @@ public class NotificationEventService {
         applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notification, state));
     }
 
+    public void publishEvent(Object source, Long creatorId, Long resourceId, String notification) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification, null));
+    }
+
     public void publishEvent(Object source, Long creatorId, Long resourceId, String notification, State state) {
         applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification, state));
     }
@@ -96,7 +100,7 @@ public class NotificationEventService {
                     String template = notification.getTemplate();
                     Map<String, String> parameters = new HashMap<>();
 
-                    resource.getParents().stream().map(ResourceRelation::getResource1).forEach(p -> parameters.put(p.getScope().name().toLowerCase(), p.getName()));
+                    resource.getParents().stream().map(ResourceRelation::getResource1).forEach(parent -> parameters.put(parent.getScope().name().toLowerCase(), parent.getName()));
                     if ("approve_post".equals(template)) {
                         LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
                         parameters.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));

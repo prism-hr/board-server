@@ -683,7 +683,7 @@ public class PostApiIT extends AbstractIT {
                         "latitude", BigDecimal.TEN.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.TEN.stripTrailingZeros().toPlainString()))
                 .put("applyWebsite", "http://www.google.co.uk", "http://www.facebook.com")
                 .put("postCategories", Arrays.asList("p1", "p2"), Arrays.asList("p2", "p1"))
-                .put("memberCategories", Arrays.asList("UNDERGRADUATE", "MASTER"), Arrays.asList("MASTER", "UNDERGRADUATE"))
+                .put("memberCategories", Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT"), Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"))
                 .put("existingRelation", "STUDENT", "STAFF")
                 .put("existingRelationExplanation",
                     ObjectUtils.orderedMap("studyLevel", "MASTER"),
@@ -710,7 +710,7 @@ public class PostApiIT extends AbstractIT {
                         "latitude", BigDecimal.ZERO.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.ZERO.stripTrailingZeros().toPlainString()))
                 .put("applyWebsite", "http://www.facebook.com", null)
                 .put("applyDocument", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
-                .put("memberCategories", Arrays.asList("MASTER", "UNDERGRADUATE"), Arrays.asList("UNDERGRADUATE", "MASTER")));
+                .put("memberCategories", Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"), Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(5), Action.CORRECT, postUser,
             "i uploaded a document this time which explains that");

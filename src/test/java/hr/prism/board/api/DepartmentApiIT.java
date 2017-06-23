@@ -279,7 +279,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("summary", null, "department 3 summary")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
-                .put("memberCategories", new ArrayList<>(), Arrays.asList("UNDERGRADUATE", "MASTER")));
+                .put("memberCategories", new ArrayList<>(), Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
@@ -289,12 +289,12 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
-                .put("memberCategories", Arrays.asList("UNDERGRADUATE", "MASTER"), Arrays.asList("MASTER", "UNDERGRADUATE")));
+                .put("memberCategories", Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT"), Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
-                .put("memberCategories", Arrays.asList("MASTER", "UNDERGRADUATE"), null));
+                .put("memberCategories", Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"), null));
     }
 
     @Test
