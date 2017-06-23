@@ -6,7 +6,10 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceRelation;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -80,7 +83,7 @@ public class BoardApiIT extends AbstractIT {
         testUserService.setAuthentication(user12.getId());
         unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))));
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         User user21 = testUserService.authenticate();
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();

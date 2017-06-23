@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.Scope;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
@@ -122,6 +123,11 @@ public class Post extends Resource {
 
     public void setDeadTimestamp(LocalDateTime deadTimestamp) {
         this.deadTimestamp = deadTimestamp;
+    }
+
+    @Override
+    public String getHandle() {
+        return getParent().getHandle() + "/" + getId();
     }
 
 }

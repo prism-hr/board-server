@@ -1,10 +1,15 @@
 package hr.prism.board.service.cache;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.UserRoleCategory;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleCategoryRepository;

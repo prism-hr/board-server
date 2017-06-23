@@ -1,7 +1,11 @@
 package hr.prism.board.interceptor;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.service.UserRoleService;
 import org.springframework.stereotype.Component;

@@ -6,15 +6,15 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceRelation;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.State;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
@@ -234,7 +234,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setSummary(Optional.of("department 3 summary")))
                 .setHandle(Optional.of("department-3"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER))),
+                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))),
             State.ACCEPTED);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
@@ -246,7 +246,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setSummary(Optional.of("department 4 summary")))
                 .setHandle(Optional.of("department-4"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
-                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER, MemberCategory.UNDERGRADUATE))),
+                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER_STUDENT, MemberCategory.UNDERGRADUATE_STUDENT))),
             State.ACCEPTED);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);

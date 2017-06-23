@@ -13,10 +13,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
-import static hr.prism.board.domain.Role.ADMINISTRATOR;
-import static hr.prism.board.domain.Role.AUTHOR;
-import static hr.prism.board.domain.Scope.*;
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Role.AUTHOR;
+import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.*;
 
 @Service

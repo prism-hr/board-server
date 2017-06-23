@@ -1,7 +1,7 @@
 package hr.prism.board.dto;
 
-import hr.prism.board.domain.Role;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;

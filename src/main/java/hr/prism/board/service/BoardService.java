@@ -1,13 +1,13 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.PostVisibility;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;

@@ -3,9 +3,9 @@ package hr.prism.board.service.event;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.RedirectAction;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.service.*;
@@ -22,6 +22,7 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,8 +70,9 @@ public class NotificationEventService {
     }
 
     protected void sendNotifications(NotificationEvent notificationEvent) {
+        Long resourceId = notificationEvent.getResourceId();
+        Resource resource = resourceService.findOne(resourceId);
         User creator = userCacheService.findOne(notificationEvent.getCreatorId());
-        Resource resource = resourceService.findOne(notificationEvent.getResourceId());
 
         List<Notification> notifications;
         HashMultimap<User, String> sent = HashMultimap.create();
@@ -92,31 +94,29 @@ public class NotificationEventService {
 
                 if (!recipients.isEmpty()) {
                     String template = notification.getTemplate();
-                    ImmutableMap.Builder<String, String> parameterBuilder = ImmutableMap.builder();
+                    Map<String, String> parameters = new HashMap<>();
 
-                    String redirectUrl = null;
-                    resource.getParents().stream().map(ResourceRelation::getResource1).forEach(p -> parameterBuilder.put(p.getScope().name().toLowerCase(), p.getName()));
+                    resource.getParents().stream().map(ResourceRelation::getResource1).forEach(p -> parameters.put(p.getScope().name().toLowerCase(), p.getName()));
                     if ("approve_post".equals(template)) {
                         LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
-                        parameterBuilder.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
+                        parameters.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
                     } else if ("suspend_post".equals(template)) {
                         ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
-                        parameterBuilder.put("comment", resourceOperation.getComment());
+                        parameters.put("comment", resourceOperation.getComment());
                     } else if ("reject_post".equals(template)) {
-                        redirectUrl = RedirectService.makeRedirectForLogin(environment.getProperty("server.url"));
                         ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
-                        parameterBuilder.put("comment", resourceOperation.getComment());
+                        parameters.put("comment", resourceOperation.getComment());
                     }
-
-                    if (redirectUrl == null) {
-                        redirectUrl = RedirectService.makeRedirectForResource(environment.getProperty("server.url"), resource);
-                    }
-
-                    parameterBuilder.put("redirectUrl", redirectUrl);
-                    Map<String, String> parameters = parameterBuilder.build();
 
                     for (User recipient : recipients) {
                         if (!sent.containsEntry(recipient, template)) {
+                            RedirectAction redirectAction = RedirectAction.makeForUser(recipient);
+                            if (template.startsWith("reject")) {
+                                parameters.put("redirectUrl", RedirectService.makeForHome(environment.getProperty("server.url"), redirectAction));
+                            } else {
+                                parameters.put("redirectUrl", RedirectService.makeForResource(environment.getProperty("server.url"), resourceId, redirectAction));
+                            }
+
                             NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(template, recipient, parameters);
                             notificationService.sendNotification(notificationInstance);
                             sent.put(recipient, template);

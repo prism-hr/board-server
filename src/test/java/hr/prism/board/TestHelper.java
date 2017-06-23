@@ -41,7 +41,7 @@ public class TestHelper {
             .setPostCategories(Arrays.asList("p1", "p2", "p3"))
             .setDepartment(((DepartmentDTO) new DepartmentDTO()
                 .setName("department"))
-                .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER)));
+                .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)));
     }
 
     public static PostDTO smallSamplePost() {
@@ -76,7 +76,7 @@ public class TestHelper {
                 .setLongitude(BigDecimal.ONE))
             .setApplyWebsite("http://www.google.co.uk")
             .setPostCategories(Arrays.asList("p1", "p2"))
-            .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER))
+            .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))
             .setExistingRelation(ExistingRelation.STUDENT)
             .setExistingRelationExplanation(ObjectUtils.orderedMap("studyLevel", "MASTER"))
             .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))

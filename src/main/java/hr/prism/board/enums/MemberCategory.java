@@ -9,9 +9,12 @@ import java.util.stream.Collectors;
 
 public enum MemberCategory {
 
-    UNDERGRADUATE,
-    MASTER,
-    RESEARCH;
+    UNDERGRADUATE_STUDENT,
+    MASTER_STUDENT,
+    RESEARCH_STUDENT,
+    RESEARCH_STAFF,
+    ACADEMIC_STAFF,
+    PROFESSIONAL_STAFF;
 
     public static List<String> toStrings(List<MemberCategory> categories) {
         if (CollectionUtils.isEmpty(categories)) {
@@ -21,6 +24,7 @@ public enum MemberCategory {
         return categories.stream().map(MemberCategory::name).collect(Collectors.toList());
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static Optional<List<String>> toStrings(Optional<List<MemberCategory>> categories) {
         if (categories == null) {
             return null;

@@ -1,7 +1,7 @@
 package hr.prism.board.repository;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.Scope;
+import hr.prism.board.enums.Scope;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

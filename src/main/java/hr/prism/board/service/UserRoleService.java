@@ -1,11 +1,16 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.UserRoleCategory;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
@@ -89,8 +94,7 @@ public class UserRoleService {
 
         Set<UserRoleRepresentation> rolesRepresentation = roles.stream().map(r ->
             new UserRoleRepresentation().setRole(r.getRole()).setExpiryDate(r.getExpiryDate())
-                .setCategories(Optional.ofNullable(r.getCategories()).orElse(Collections.emptyList())))
-            .collect(Collectors.toSet());
+                .setCategories(Optional.ofNullable(r.getCategories()).orElse(Collections.emptyList()))).collect(Collectors.toSet());
         return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(rolesRepresentation);
     }
 

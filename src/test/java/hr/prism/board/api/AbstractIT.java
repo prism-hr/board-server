@@ -1,12 +1,16 @@
 package hr.prism.board.api;
 
 import hr.prism.board.definition.DocumentDefinition;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;

@@ -1,8 +1,8 @@
 package hr.prism.board.representation;
 
 import com.google.common.base.MoreObjects;
-import hr.prism.board.domain.Role;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
 
 import java.time.LocalDate;
 import java.util.List;

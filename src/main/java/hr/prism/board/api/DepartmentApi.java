@@ -1,7 +1,7 @@
 package hr.prism.board.api;
 
-import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.DepartmentRepresentation;

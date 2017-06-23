@@ -2,9 +2,9 @@ package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 
 import java.util.ArrayList;

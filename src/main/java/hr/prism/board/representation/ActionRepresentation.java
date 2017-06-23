@@ -1,9 +1,8 @@
 package hr.prism.board.representation;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import org.apache.commons.lang3.ObjectUtils;
 

@@ -1,6 +1,6 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.domain.Scope;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 
 import java.time.LocalDateTime;

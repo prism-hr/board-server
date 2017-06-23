@@ -1,10 +1,10 @@
 package hr.prism.board.api;
 
 import hr.prism.board.domain.Post;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.PostRepresentation;

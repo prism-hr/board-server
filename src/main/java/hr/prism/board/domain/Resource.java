@@ -2,6 +2,7 @@ package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;

@@ -1,5 +1,9 @@
-package hr.prism.board.domain;
+package hr.prism.board.enums;
 
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Post;
+import hr.prism.board.domain.Resource;
 import hr.prism.board.interceptor.BoardStateChangeInterceptor;
 import hr.prism.board.interceptor.PostStateChangeInterceptor;
 import hr.prism.board.interceptor.StateChangeInterceptor;

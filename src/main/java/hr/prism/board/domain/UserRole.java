@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.Role;
 import org.hibernate.annotations.SortNatural;
 
 import javax.persistence.*;

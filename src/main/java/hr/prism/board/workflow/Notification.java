@@ -3,8 +3,8 @@ package hr.prism.board.workflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hr.prism.board.domain.Role;
-import hr.prism.board.domain.Scope;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 
 public class Notification {

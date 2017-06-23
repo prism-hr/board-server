@@ -1,7 +1,21 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableMap;
-
+import hr.prism.board.authentication.adapter.OauthAdapter;
+import hr.prism.board.domain.User;
+import hr.prism.board.dto.LoginDTO;
+import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.dto.RegisterDTO;
+import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.enums.DocumentRequestState;
+import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.enums.RedirectAction;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.repository.UserRepository;
+import hr.prism.board.service.cache.UserCacheService;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -11,6 +25,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -18,25 +35,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-
-import hr.prism.board.authentication.adapter.OauthAdapter;
-import hr.prism.board.domain.User;
-import hr.prism.board.dto.LoginDTO;
-import hr.prism.board.dto.OauthDTO;
-import hr.prism.board.dto.RegisterDTO;
-import hr.prism.board.dto.ResetPasswordDTO;
-import hr.prism.board.enums.DocumentRequestState;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.UserRepository;
-import hr.prism.board.service.cache.UserCacheService;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 @Service
 @Transactional
@@ -152,7 +150,7 @@ public class AuthenticationService {
         userCacheService.updateUser(user);
 
         String serverUrl = environment.getProperty("server.url");
-        String redirectUrl = RedirectService.makeRedirectForLogin(serverUrl);
+        String redirectUrl = RedirectService.makeForHome(serverUrl, RedirectAction.LOGIN);
         NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(
             "reset_password", user, ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
         notificationService.sendNotification(notificationInstance);

@@ -16,13 +16,13 @@ import java.util.stream.Stream;
 
 @Service
 public class DefinitionService {
-    
+
     @SuppressWarnings("unchecked")
     private TreeMap<String, Object> definitions;
-    
+
     @Inject
     private Environment environment;
-    
+
     @PostConstruct
     public TreeMap<String, Object> getDefinitions() {
         if (this.definitions == null) {
@@ -31,7 +31,7 @@ public class DefinitionService {
                 List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
                 this.definitions.put(getDefinitionKey(definitionClass), values);
             });
-        
+
             this.definitions.put("applicationUrl", environment.getProperty("app.url"));
             List<Map<String, Object>> clientIdMap = Stream.of(OauthProvider.values())
                 .map(provider -> {
@@ -41,23 +41,24 @@ public class DefinitionService {
                     if (clientId != null) {
                         providerMap.put("clientId", clientId);
                     }
-                
+
                     return providerMap;
                 })
                 .collect(Collectors.toList());
-        
+
             this.definitions.put("oauthProvider", clientIdMap);
         }
-    
+
         return this.definitions;
     }
-    
+
+    @SuppressWarnings("unchecked")
     private Set<Class<? extends Enum<?>>> getDefinitionClasses() {
         Set<Class<? extends Enum<?>>> definitionClasses = new LinkedHashSet<>();
         try {
             ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
             scanner.addIncludeFilter(new AssignableTypeFilter(Enum.class));
-            
+
             for (BeanDefinition beanDefinition : scanner.findCandidateComponents("hr.prism.board.enums")) {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
                 if (Enum.class.isAssignableFrom(clazz)) {
@@ -67,12 +68,12 @@ public class DefinitionService {
         } catch (Exception e) {
             throw new Error(e);
         }
-        
+
         return definitionClasses;
     }
-    
+
     private String getDefinitionKey(Class<? extends Enum<?>> definitionClass) {
         return WordUtils.uncapitalize(definitionClass.getSimpleName());
     }
-    
+
 }

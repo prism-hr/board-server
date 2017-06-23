@@ -118,7 +118,7 @@ public class PostApiIT extends AbstractIT {
         unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             ((PostDTO) TestHelper.smallSamplePost()
                 .setName(board12PostName))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))));
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUserPosts.put(board12Id, board12PostName);
 
         User user21 = testUserService.authenticate();
@@ -188,7 +188,7 @@ public class PostApiIT extends AbstractIT {
                 verifyPostPostAndSetState(postUser1, board12Id,
                     ((PostDTO) TestHelper.smallSamplePost()
                         .setName(name))
-                        .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE)),
+                        .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)),
                     state, posts, baseline, postCount);
                 boardPostNames12.put(state, name);
                 postCount++;
@@ -312,7 +312,7 @@ public class PostApiIT extends AbstractIT {
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY, status);
@@ -332,7 +332,7 @@ public class PostApiIT extends AbstractIT {
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 .setApplyWebsite("http://www.google.com")
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
@@ -355,7 +355,7 @@ public class PostApiIT extends AbstractIT {
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
@@ -376,7 +376,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE));
+            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -388,7 +388,7 @@ public class PostApiIT extends AbstractIT {
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
 
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE));
+            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
             return null;
         });
@@ -412,7 +412,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH));
+            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
             ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -453,7 +453,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH)))),
+                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -472,7 +472,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyApiException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE)))),
+                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
             return null;
         });
@@ -541,7 +541,7 @@ public class PostApiIT extends AbstractIT {
                     .setLongitude(BigDecimal.TEN)))
             .setApplyWebsite(Optional.of("http://www.facebook.com"))
             .setPostCategories(Optional.of(Arrays.asList("p2", "p1")))
-            .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.MASTER, MemberCategory.UNDERGRADUATE)))
+            .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.MASTER_STUDENT, MemberCategory.UNDERGRADUATE_STUDENT)))
             .setExistingRelation(Optional.of(ExistingRelation.STAFF))
             .setExistingRelationExplanation(Optional.of(ObjectUtils.orderedMap("jobTitle", "professor")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
@@ -571,7 +571,7 @@ public class PostApiIT extends AbstractIT {
                     .setLatitude(BigDecimal.ZERO)
                     .setLongitude(BigDecimal.ZERO)))
             .setApplyDocument(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-            .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE, MemberCategory.MASTER)))
+            .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))
             .setComment("i uploaded a document this time which explains that");
 
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.correctPost(postId, correctDTO), State.DRAFT);

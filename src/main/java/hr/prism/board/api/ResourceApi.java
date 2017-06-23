@@ -1,8 +1,8 @@
 package hr.prism.board.api;
 
-import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.UserRoleService;

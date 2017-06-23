@@ -1,10 +1,10 @@
 package hr.prism.board.api;
 
 import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Scope;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.BoardRepresentation;
