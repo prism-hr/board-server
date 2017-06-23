@@ -17,6 +17,7 @@ import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.event.NotificationEventService;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -40,6 +41,7 @@ public class UserRoleCacheService {
     @Inject
     private ResourceService resourceService;
 
+    @Lazy
     @Inject
     private NotificationEventService notificationEventService;
 

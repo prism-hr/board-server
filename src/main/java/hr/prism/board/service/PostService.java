@@ -340,6 +340,7 @@ public class PostService {
                 return null;
             });
 
+            // TODO: fix the supply of the notification data
             String template = action == Action.PUBLISH ? "publish_post" : "retire_post";
             postIds.forEach(postId -> notificationEventService.publishEvent(this, postId, template, state));
         }

@@ -5,6 +5,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
             "and userRole.role <> :role")
-    List<UserRole> findByResourceAndUserAndNotRole(Resource resource, User user, Role role);
+    List<UserRole> findByResourceAndUserAndNotRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
 
     Long deleteByResourceAndUser(Resource resource, User user);
 
