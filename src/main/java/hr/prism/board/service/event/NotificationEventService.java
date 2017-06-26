@@ -1,7 +1,5 @@
 package hr.prism.board.service.event;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
@@ -19,13 +17,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Transactional
@@ -47,24 +41,21 @@ public class NotificationEventService {
     private PostService postService;
 
     @Inject
-    private ObjectMapper objectMapper;
-
-    @Inject
     private Environment environment;
 
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishEvent(Object source, Long resourceId, String notification, State state) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notification, state));
+    public void publishEvent(Object source, Long resourceId, List<Notification> notifications, State state) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notifications, state));
     }
 
-    public void publishEvent(Object source, Long creatorId, Long resourceId, String notification) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification, null));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notifications, null));
     }
 
-    public void publishEvent(Object source, Long creatorId, Long resourceId, String notification, State state) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notification, state));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications, State state) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notifications, state));
     }
 
     @Async
@@ -78,20 +69,22 @@ public class NotificationEventService {
         Resource resource = resourceService.findOne(resourceId);
         User creator = userCacheService.findOne(notificationEvent.getCreatorId());
 
-        List<Notification> notifications;
         HashMultimap<User, String> sent = HashMultimap.create();
-        try {
-            notifications = objectMapper.readValue(notificationEvent.getNotification(), new TypeReference<List<Notification>>() {
-            });
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not deserialize notifications");
-        }
+        List<Notification> notifications = notificationEvent.getNotifications();
 
         State state = notificationEvent.getState();
         for (Notification notification : notifications) {
             State notificationState = notification.getState();
             if (notificationState == null || Objects.equals(state, notificationState)) {
-                List<User> recipients = userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole());
+                Long userId = notification.getUserId();
+                List<User> recipients = new ArrayList<>();
+                if (userId == null) {
+                    // TODO: filter by category for the publish notification
+                    recipients.addAll(userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole()));
+                } else {
+                    recipients.add(userCacheService.findOne(userId));
+                }
+
                 if (creator != null && notification.isExcludingCreator()) {
                     recipients.remove(creator);
                 }

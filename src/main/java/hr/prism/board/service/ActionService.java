@@ -1,5 +1,7 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
@@ -10,6 +12,7 @@ import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Execution;
+import hr.prism.board.workflow.Notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -30,6 +34,9 @@ public class ActionService {
 
     @Inject
     private NotificationEventService notificationEventService;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -63,9 +70,17 @@ public class ActionService {
                         resourceService.createResourceOperation(resource, action, user);
                     }
 
+                    List<Notification> notifications;
                     String notification = actionRepresentation.getNotification();
                     if (notification != null) {
-                        notificationEventService.publishEvent(this, user.getId(), resource.getId(), actionRepresentation.getNotification(), newState);
+                        try {
+                            notifications = objectMapper.readValue(notification, new TypeReference<List<Notification>>() {
+                            });
+                        } catch (IOException e) {
+                            throw new IllegalStateException("Could not deserialize notifications");
+                        }
+
+                        notificationEventService.publishEvent(this, user.getId(), resource.getId(), notifications, newState);
                     }
 
                     return resource;

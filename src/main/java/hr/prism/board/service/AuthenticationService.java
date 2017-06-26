@@ -149,6 +149,7 @@ public class AuthenticationService {
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
         userCacheService.updateUser(user);
 
+        // TODO: use notification event
         String serverUrl = environment.getProperty("server.url");
         String redirectUrl = RedirectService.makeForHome(serverUrl, RedirectAction.LOGIN);
         NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(

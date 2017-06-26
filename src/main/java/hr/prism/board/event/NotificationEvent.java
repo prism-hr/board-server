@@ -1,7 +1,10 @@
 package hr.prism.board.event;
 
 import hr.prism.board.enums.State;
+import hr.prism.board.workflow.Notification;
 import org.springframework.context.ApplicationEvent;
+
+import java.util.List;
 
 public class NotificationEvent extends ApplicationEvent {
 
@@ -9,22 +12,22 @@ public class NotificationEvent extends ApplicationEvent {
 
     private Long resourceId;
 
-    private String notification;
+    private List<Notification> notifications;
 
     private State state;
 
-    public NotificationEvent(Object source, Long resourceId, String notification, State state) {
+    public NotificationEvent(Object source, Long resourceId, List<Notification> notifications, State state) {
         super(source);
         this.resourceId = resourceId;
-        this.notification = notification;
+        this.notifications = notifications;
         this.state = state;
     }
 
-    public NotificationEvent(Object source, Long creatorId, Long resourceId, String notification, State state) {
+    public NotificationEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications, State state) {
         super(source);
         this.creatorId = creatorId;
         this.resourceId = resourceId;
-        this.notification = notification;
+        this.notifications = notifications;
         this.state = state;
     }
 
@@ -36,8 +39,8 @@ public class NotificationEvent extends ApplicationEvent {
         return resourceId;
     }
 
-    public String getNotification() {
-        return notification;
+    public List<Notification> getNotifications() {
+        return notifications;
     }
 
     public State getState() {

@@ -17,6 +17,8 @@ public class Notification {
 
     private Scope scope;
 
+    private Long userId;
+
     private Role role;
 
     private State state;
@@ -41,6 +43,15 @@ public class Notification {
 
     public Notification setScope(Scope scope) {
         this.scope = scope;
+        return this;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Notification setUserId(Long userId) {
+        this.userId = userId;
         return this;
     }
 

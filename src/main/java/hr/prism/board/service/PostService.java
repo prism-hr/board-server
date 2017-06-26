@@ -13,6 +13,7 @@ import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
+import hr.prism.board.workflow.Notification;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -340,9 +341,17 @@ public class PostService {
                 return null;
             });
 
-            // TODO: fix the supply of the notification data
-            String template = action == Action.PUBLISH ? "publish_post" : "retire_post";
-            postIds.forEach(postId -> notificationEventService.publishEvent(this, postId, template, state));
+            for (Long postId : postIds) {
+                List<Notification> notifications = new ArrayList<>();
+                if (action == Action.PUBLISH) {
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setTemplate("publish_post"));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.MEMBER).setTemplate("publish_post_member"));
+                } else {
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setTemplate("retire_post"));
+                }
+
+                notificationEventService.publishEvent(this, postId, notifications, state);
+            }
         }
     }
 

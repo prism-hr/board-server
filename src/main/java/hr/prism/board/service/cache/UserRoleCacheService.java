@@ -16,6 +16,7 @@ import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.workflow.Notification;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -82,8 +84,8 @@ public class UserRoleCacheService {
         }
 
         if (notify) {
-            String template = "join_" + scope.name().toLowerCase();
-            notificationEventService.publishEvent(this, currentUser.getId(), resource.getId(), template);
+            Notification notification = new Notification().setUserId(user.getId()).setExcludingCreator(true).setTemplate("join_" + scope.name().toLowerCase());
+            notificationEventService.publishEvent(this, currentUser.getId(), resource.getId(), Collections.singletonList(notification));
         }
     }
 
