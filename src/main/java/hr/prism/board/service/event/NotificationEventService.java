@@ -46,6 +46,10 @@ public class NotificationEventService {
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
+    public void publishEvent(Object source, List<Notification> notifications) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, null, notifications, null));
+    }
+
     public void publishEvent(Object source, Long resourceId, List<Notification> notifications, State state) {
         applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, notifications, state));
     }
@@ -65,9 +69,17 @@ public class NotificationEventService {
     }
 
     protected void sendNotifications(NotificationEvent notificationEvent) {
+        User creator = null;
+        Long creatorId = notificationEvent.getCreatorId();
+        if (creatorId != null) {
+            creator = userCacheService.findOne(notificationEvent.getCreatorId());
+        }
+
+        Resource resource = null;
         Long resourceId = notificationEvent.getResourceId();
-        Resource resource = resourceService.findOne(resourceId);
-        User creator = userCacheService.findOne(notificationEvent.getCreatorId());
+        if (resourceId != null) {
+            resource = resourceService.findOne(resourceId);
+        }
 
         HashMultimap<User, String> sent = HashMultimap.create();
         List<Notification> notifications = notificationEvent.getNotifications();
@@ -76,39 +88,16 @@ public class NotificationEventService {
         for (Notification notification : notifications) {
             State notificationState = notification.getState();
             if (notificationState == null || Objects.equals(state, notificationState)) {
-                Long userId = notification.getUserId();
-                List<User> recipients = new ArrayList<>();
-                if (userId == null) {
-                    // TODO: filter by category for the publish notification
-                    recipients.addAll(userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole()));
-                } else {
-                    recipients.add(userCacheService.findOne(userId));
-                }
-
-                if (creator != null && notification.isExcludingCreator()) {
-                    recipients.remove(creator);
-                }
+                List<User> recipients = makeRecipients(creator, resource, notification);
 
                 if (!recipients.isEmpty()) {
                     String template = notification.getTemplate();
-                    Map<String, String> parameters = new HashMap<>();
-
-                    resource.getParents().stream().map(ResourceRelation::getResource1).forEach(parent -> parameters.put(parent.getScope().name().toLowerCase(), parent.getName()));
-                    if ("approve_post".equals(template)) {
-                        LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
-                        parameters.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
-                    } else if ("suspend_post".equals(template)) {
-                        ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
-                        parameters.put("comment", resourceOperation.getComment());
-                    } else if ("reject_post".equals(template)) {
-                        ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
-                        parameters.put("comment", resourceOperation.getComment());
-                    }
+                    Map<String, String> parameters = makeParameters(resource, notification);
 
                     for (User recipient : recipients) {
                         if (!sent.containsEntry(recipient, template)) {
                             RedirectAction redirectAction = RedirectAction.makeForUser(recipient);
-                            if (template.startsWith("reject")) {
+                            if (template.startsWith("reset") || template.startsWith("reject")) {
                                 parameters.put("redirectUrl", RedirectService.makeForHome(environment.getProperty("server.url"), redirectAction));
                             } else {
                                 parameters.put("redirectUrl", RedirectService.makeForResource(environment.getProperty("server.url"), resourceId, redirectAction));
@@ -122,6 +111,49 @@ public class NotificationEventService {
                 }
             }
         }
+    }
+
+    private List<User> makeRecipients(User creator, Resource resource, Notification notification) {
+        Long userId = notification.getUserId();
+        List<User> recipients = new ArrayList<>();
+        if (userId != null) {
+            recipients.add(userCacheService.findOne(userId));
+        } else if (notification.isFilteringByCategory()) {
+            recipients.addAll(userService.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, notification.getScope(), notification.getRole()));
+        } else {
+            recipients.addAll(userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole()));
+        }
+
+        if (creator != null && notification.isExcludingCreator()) {
+            recipients.remove(creator);
+        }
+
+        return recipients;
+    }
+
+    private Map<String, String> makeParameters(Resource resource, Notification notification) {
+        String template = notification.getTemplate();
+        Map<String, String> parameters = new HashMap<>();
+        if (resource != null) {
+            resource.getParents().stream().map(ResourceRelation::getResource1).forEach(parent -> parameters.put(parent.getScope().name().toLowerCase(), parent.getName()));
+            if ("approve_post".equals(template)) {
+                LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
+                parameters.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
+            } else if ("suspend_post".equals(template)) {
+                ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
+                parameters.put("comment", resourceOperation.getComment());
+            } else if ("reject_post".equals(template)) {
+                ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
+                parameters.put("comment", resourceOperation.getComment());
+            }
+        }
+
+        Map<String, String> customParameters = notification.getCustomParameters();
+        if (customParameters != null) {
+            parameters.putAll(customParameters);
+        }
+
+        return parameters;
     }
 
 }

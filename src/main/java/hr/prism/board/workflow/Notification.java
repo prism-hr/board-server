@@ -7,6 +7,8 @@ import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 
+import java.util.Map;
+
 public class Notification {
 
     @JsonIgnore
@@ -24,6 +26,10 @@ public class Notification {
     private State state;
 
     private boolean excludingCreator = false;
+
+    private boolean filteringByCategory = false;
+
+    private Map<String, String> customParameters;
 
     private String template;
 
@@ -89,6 +95,24 @@ public class Notification {
 
     public Notification excludingCreator() {
         this.excludingCreator = true;
+        return this;
+    }
+
+    public boolean isFilteringByCategory() {
+        return filteringByCategory;
+    }
+
+    public Notification setFilteringByCategory(boolean filteringByCategory) {
+        this.filteringByCategory = filteringByCategory;
+        return this;
+    }
+
+    public Map<String, String> getCustomParameters() {
+        return customParameters;
+    }
+
+    public Notification setCustomParameters(Map<String, String> customParameters) {
+        this.customParameters = customParameters;
         return this;
     }
 

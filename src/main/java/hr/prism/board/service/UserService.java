@@ -7,10 +7,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPatchDTO;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.DocumentRequestState;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
@@ -126,6 +123,10 @@ public class UserService {
 
     public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role);
+    }
+
+    public List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
+        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, enclosingScope, role, CategoryType.MEMBER);
     }
 
     public List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {

@@ -9,11 +9,12 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.RedirectAction;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.workflow.Notification;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -34,6 +35,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Date;
 
 @Service
@@ -53,7 +55,7 @@ public class AuthenticationService {
     private UserCacheService userCacheService;
 
     @Inject
-    private NotificationService notificationService;
+    private NotificationEventService notificationEventService;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -149,12 +151,8 @@ public class AuthenticationService {
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
         userCacheService.updateUser(user);
 
-        // TODO: use notification event
-        String serverUrl = environment.getProperty("server.url");
-        String redirectUrl = RedirectService.makeForHome(serverUrl, RedirectAction.LOGIN);
-        NotificationService.NotificationInstance notificationInstance = notificationService.makeNotification(
-            "reset_password", user, ImmutableMap.of("temporaryPassword", temporaryPassword, "redirectUrl", redirectUrl));
-        notificationService.sendNotification(notificationInstance);
+        notificationEventService.publishEvent(this, Collections.singletonList(
+            new Notification().setUserId(user.getId()).setCustomParameters(ImmutableMap.of("temporaryPassword", temporaryPassword)).setTemplate("reset_password")));
     }
 
     public String makeAccessToken(Long userId, String jwsSecret) {

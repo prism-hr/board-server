@@ -28,8 +28,8 @@ public class UserRole extends BoardEntity {
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
-    @OneToMany(mappedBy = "userRole")
     @SortNatural
+    @OneToMany(mappedBy = "userRole")
     private SortedSet<UserRoleCategory> categories = new TreeSet<>();
 
     public Resource getResource() {

@@ -313,16 +313,16 @@ public class PostService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    private void executeActions(List<Long> postIds, Action action, State state, LocalDateTime baseline) {
+    private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
             new TransactionTemplate(platformTransactionManager).execute(status -> {
                 entityManager.createQuery(
                     "update Post post " +
                         "set post.previousState = post.state, " +
-                        "post.state = :state, " +
+                        "post.state = :newState, " +
                         "post.updatedTimestamp = :baseline " +
                         "where post.id in (:postIds)")
-                    .setParameter("state", state)
+                    .setParameter("newState", newState)
                     .setParameter("baseline", baseline)
                     .setParameter("postIds", postIds)
                     .executeUpdate();
@@ -345,12 +345,12 @@ public class PostService {
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
                     notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setTemplate("publish_post"));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.MEMBER).setTemplate("publish_post_member"));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.MEMBER).setTemplate("publish_post_member").setFilteringByCategory(true));
                 } else {
                     notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setTemplate("retire_post"));
                 }
 
-                notificationEventService.publishEvent(this, postId, notifications, state);
+                notificationEventService.publishEvent(this, postId, notifications, newState);
             }
         }
     }
