@@ -47,7 +47,7 @@ public class NotificationEventService {
     private ApplicationEventPublisher applicationEventPublisher;
 
     public void publishEvent(Object source, List<Notification> notifications) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, null, notifications, null));
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, notifications));
     }
 
     public void publishEvent(Object source, Long resourceId, List<Notification> notifications, State state) {
@@ -55,7 +55,7 @@ public class NotificationEventService {
     }
 
     public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notifications, null));
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notifications));
     }
 
     public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications, State state) {

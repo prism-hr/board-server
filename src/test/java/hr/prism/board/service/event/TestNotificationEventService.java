@@ -11,6 +11,21 @@ import java.util.List;
 public class TestNotificationEventService extends NotificationEventService {
 
     @Override
+    public void publishEvent(Object source, List<Notification> notifications) {
+        super.sendNotifications(new NotificationEvent(source, notifications));
+    }
+
+    @Override
+    public void publishEvent(Object source, Long resourceId, List<Notification> notifications, State state) {
+        super.publishEvent(source, resourceId, notifications, state);
+    }
+
+    @Override
+    public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications) {
+        super.sendNotifications(new NotificationEvent(source, creatorId, resourceId, notifications));
+    }
+
+    @Override
     public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications, State state) {
         super.sendNotifications(new NotificationEvent(source, creatorId, resourceId, notifications, state));
     }
