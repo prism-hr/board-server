@@ -54,7 +54,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and category.type = :categoryType " +
             "and category.name = userCategory.name")
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
-                                                                   @Param("role") Role role, @Param("type") CategoryType categoryType);
+                                                                   @Param("role") Role role, @Param("categoryType") CategoryType categoryType);
 
     @Query(value =
         "select userRole.user " +
