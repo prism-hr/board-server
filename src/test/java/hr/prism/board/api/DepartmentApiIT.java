@@ -18,10 +18,7 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
-import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.TestUserService;
 import hr.prism.board.service.UserRoleService;
@@ -300,7 +297,30 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/department_autosuggest_setup.sql")
     public void shouldSuggestDepartments() {
+        List<DepartmentRepresentation> departmentRs = departmentApi.getSimilarDepartments("Computer");
+        Assert.assertEquals(3, departmentRs.size());
 
+        verifySuggestedDepartment("Computer Science Department", departmentRs.get(0));
+        verifySuggestedDepartment("Department of Computer Science", departmentRs.get(1));
+        verifySuggestedDepartment("Laboratory for the Foundations of Computer Science", departmentRs.get(2));
+
+        departmentRs = departmentApi.getSimilarDepartments("Computer Science Laboratory");
+        Assert.assertEquals(3, departmentRs.size());
+
+        verifySuggestedDepartment("Laboratory for the Foundations of Computer Science", departmentRs.get(0));
+        verifySuggestedDepartment("Computer Science Department", departmentRs.get(1));
+        verifySuggestedDepartment("Department of Computer Science", departmentRs.get(2));
+
+        departmentRs = departmentApi.getSimilarDepartments("School of Informatics");
+        Assert.assertEquals(1, departmentRs.size());
+
+        verifySuggestedDepartment("School of Informatics", departmentRs.get(0));
+
+        departmentRs = departmentApi.getSimilarDepartments("Physics");
+        Assert.assertEquals(0, departmentRs.size());
+
+        departmentRs = departmentApi.getSimilarDepartments("Mathematics");
+        Assert.assertEquals(0, departmentRs.size());
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
@@ -396,6 +416,16 @@ public class DepartmentApiIT extends AbstractIT {
             new TestHelper.ExpectedActions()
                 .add(Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED)))
                 .addAll(adminDepartmentNames, adminActions));
+    }
+
+    private void verifySuggestedDepartment(String expectedName, DepartmentRepresentation departmentR) {
+        Assert.assertEquals(expectedName, departmentR.getName());
+
+        String departmentIdString = departmentR.getId().toString();
+        DocumentRepresentation documentLogoR = departmentR.getDocumentLogo();
+        Assert.assertEquals(departmentIdString, documentLogoR.getCloudinaryId());
+        Assert.assertEquals(departmentIdString, documentLogoR.getCloudinaryUrl());
+        Assert.assertEquals(departmentIdString, documentLogoR.getFileName());
     }
 
 }

@@ -9,15 +9,18 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,19 +29,19 @@ import java.util.stream.Collectors;
 public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
-        "select resource.id, resource.name, document_logo.cloudinary_id, " +
-            "document_logo.cloudinary_url, document_logo.file_name " +
-            "if(state = :state, 1, 0) as accepted " +
-            "if(resource.name like :searchTermHard, 1, 0) as similarityHard, " +
-            "match resource.name against(:searchTermSoft in boolean mode) as similaritySoft " +
-            "from resource " +
-            "left join document as document_logo " +
-            "on resource.document_logo_id = document_logo.id " +
-            "having accepted = 1 " +
-            "and (similarityHard = 1 " +
-            "or similaritySoft > 0) " +
-            "order by similarityHard, similaritySoft, resource.name " +
-            "limit 10";
+        "SELECT resource.id, resource.name, document_logo.cloudinary_id, " +
+            "document_logo.cloudinary_url, document_logo.file_name, " +
+            "if(state = :state, 1, 0) AS accepted, " +
+            "if(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
+            "match resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+            "FROM resource " +
+            "LEFT JOIN document AS document_logo " +
+            "ON resource.document_logo_id = document_logo.id " +
+            "HAVING accepted = 1 " +
+            "AND (similarityHard = 1 " +
+            "OR similaritySoft > 0) " +
+            "ORDER BY similarityHard desc, similaritySoft desc, resource.name " +
+            "LIMIT 10";
 
     @Inject
     private UserService userService;
@@ -150,7 +153,28 @@ public class DepartmentService {
     }
 
     public List<DepartmentRepresentation> getSimilarDepartments(String searchTerm) {
-        return null;
+        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
+            entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
+                .setParameter("searchTermHard", searchTerm + "%")
+                .setParameter("searchTermSoft", searchTerm)
+                .setParameter("state", State.ACCEPTED.name())
+                .getResultList());
+
+        List<DepartmentRepresentation> departmentRepresentations = new ArrayList<>();
+        for (Object[] row : rows) {
+            DepartmentRepresentation departmentRepresentation =
+                ((DepartmentRepresentation) new DepartmentRepresentation().setId(Long.parseLong(row[0].toString())).setName(row[1].toString()));
+            Object cloudinaryId = row[2];
+            if (cloudinaryId != null) {
+                DocumentRepresentation documentLogoRepresentation =
+                    new DocumentRepresentation().setCloudinaryId(cloudinaryId.toString()).setCloudinaryUrl(row[3].toString()).setFileName(row[4].toString());
+                departmentRepresentation.setDocumentLogo(documentLogoRepresentation);
+            }
+
+            departmentRepresentations.add(departmentRepresentation);
+        }
+
+        return departmentRepresentations;
     }
 
 }
