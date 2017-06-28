@@ -8,18 +8,37 @@ import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class DepartmentService {
+
+    private static final String SIMILAR_DEPARTMENT =
+        "select resource.id, resource.name, document_logo.cloudinary_id, " +
+            "document_logo.cloudinary_url, document_logo.file_name " +
+            "if(state = :state, 1, 0) as accepted " +
+            "if(resource.name like :searchTermHard, 1, 0) as similarityHard, " +
+            "match resource.name against(:searchTermSoft in boolean mode) as similaritySoft " +
+            "from resource " +
+            "left join document as document_logo " +
+            "on resource.document_logo_id = document_logo.id " +
+            "having accepted = 1 " +
+            "and (similarityHard = 1 " +
+            "or similaritySoft > 0) " +
+            "order by similarityHard, similaritySoft, resource.name " +
+            "limit 10";
 
     @Inject
     private UserService userService;
@@ -41,6 +60,13 @@ public class DepartmentService {
 
     @Inject
     private ActionService actionService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    private PlatformTransactionManager platformTransactionManager;
 
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -121,6 +147,10 @@ public class DepartmentService {
             departmentRepository.update(department);
             return department;
         });
+    }
+
+    public List<DepartmentRepresentation> getSimilarDepartments(String searchTerm) {
+        return null;
     }
 
 }
