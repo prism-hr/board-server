@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -66,36 +65,10 @@ public class PostApi {
         return postMapper.apply(postService.executeAction(id, Action.EDIT, postDTO));
     }
 
-    @RequestMapping(value = "/api/posts/{id}/accept", method = RequestMethod.POST)
-    public PostRepresentation acceptPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(id, Action.ACCEPT, postDTO));
-    }
-
-    @RequestMapping(value = "/api/posts/{id}/suspend", method = RequestMethod.POST)
-    public PostRepresentation suspendPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        Objects.requireNonNull(postDTO.getComment());
-        return postMapper.apply(postService.executeAction(id, Action.SUSPEND, postDTO));
-    }
-
-    @RequestMapping(value = "/api/posts/{id}/correct", method = RequestMethod.POST)
-    public PostRepresentation correctPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(id, Action.CORRECT, postDTO));
-    }
-
-    @RequestMapping(value = "/api/posts/{id}/reject", method = RequestMethod.POST)
-    public PostRepresentation rejectPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        Objects.requireNonNull(postDTO.getComment());
-        return postMapper.apply(postService.executeAction(id, Action.REJECT, postDTO));
-    }
-
-    @RequestMapping(value = "/api/posts/{id}/withdraw", method = RequestMethod.POST)
-    public PostRepresentation withdrawPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(id, Action.WITHDRAW, postDTO));
-    }
-
-    @RequestMapping(value = "/api/posts/{id}/restore", method = RequestMethod.POST)
-    public PostRepresentation restorePost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(id, Action.RESTORE, postDTO));
+    @RequestMapping(value = "/api/posts/{id}/{action}", method = RequestMethod.POST)
+    public PostRepresentation executeAction(@PathVariable Long id, @PathVariable String action, @RequestBody @Valid PostPatchDTO postDTO) {
+        Action actionEnum = Action.valueOf(action.toUpperCase());
+        return postMapper.apply(postService.executeAction(id, actionEnum, postDTO));
     }
 
 }

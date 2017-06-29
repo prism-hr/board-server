@@ -110,7 +110,7 @@ public class PostApiIT extends AbstractIT {
         boardDTO12.setName("board12");
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
         testUserService.setAuthentication(user11.getId());
-        boardApi.acceptBoard(boardR12.getId(), new BoardPatchDTO());
+        boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user12.getId());
 
         Long board12Id = boardR12.getId();
@@ -140,7 +140,7 @@ public class PostApiIT extends AbstractIT {
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
         testUserService.setAuthentication(user21.getId());
-        boardApi.acceptBoard(boardR22.getId(), new BoardPatchDTO());
+        boardApi.executeAction(boardR22.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user22.getId());
 
         Long board22Id = boardR22.getId();
@@ -507,12 +507,12 @@ public class PostApiIT extends AbstractIT {
             .put(Action.VIEW, () -> postApi.getPost(postId))
             .put(Action.AUDIT, () -> postApi.getPostOperations(postId))
             .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
-            .put(Action.ACCEPT, () -> postApi.acceptPost(postId, new PostPatchDTO()))
-            .put(Action.SUSPEND, () -> postApi.suspendPost(postId, (PostPatchDTO) new PostPatchDTO().setComment("comment")))
-            .put(Action.CORRECT, () -> postApi.correctPost(postId, new PostPatchDTO()))
-            .put(Action.REJECT, () -> postApi.rejectPost(postId, (PostPatchDTO) new PostPatchDTO().setComment("comment")))
-            .put(Action.RESTORE, () -> postApi.restorePost(postId, new PostPatchDTO()))
-            .put(Action.WITHDRAW, () -> postApi.withdrawPost(postId, new PostPatchDTO()))
+            .put(Action.ACCEPT, () -> postApi.executeAction(postId, "accept", new PostPatchDTO()))
+            .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
+            .put(Action.CORRECT, () -> postApi.executeAction(postId, "correct", new PostPatchDTO()))
+            .put(Action.REJECT, () -> postApi.executeAction(postId, "reject", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
+            .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", new PostPatchDTO()))
+            .put(Action.WITHDRAW, () -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()))
             .build();
 
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
@@ -556,7 +556,7 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
 
-        verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.suspendPost(postId, suspendDTO), State.SUSPENDED);
+        verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         // Check that the author can make changes and correct the post
@@ -574,7 +574,7 @@ public class PostApiIT extends AbstractIT {
             .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))
             .setComment("i uploaded a document this time which explains that");
 
-        verifyPatchPost(postUser, postId, correctDTO, () -> postApi.correctPost(postId, correctDTO), State.DRAFT);
+        verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeAction(postId, "correct", correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         // Check that the administrator can accept post in the accepted state
@@ -583,11 +583,11 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.empty())
             .setComment("accepting without time constraints");
 
-        verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.acceptPost(postId, acceptDTO), State.ACCEPTED);
+        verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         // Suspend the post so that it can be accepted again
-        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.suspendPost(postId, (PostPatchDTO) new PostPatchDTO().setComment("comment")), State.SUSPENDED);
+        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         // Check that the administrator can make further changes and accept the post in the pending state
@@ -598,7 +598,7 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.of(deadTimestampDelayed))
             .setComment("this looks good now - i replaced the document with the complete website for the opportunity");
 
-        verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.acceptPost(postId, acceptPendingDTO), State.PENDING);
+        verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.executeAction(postId, "accept", acceptPendingDTO), State.PENDING);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
 
         // Check that the post stays in pending state when the update job runs
@@ -619,14 +619,14 @@ public class PostApiIT extends AbstractIT {
         PostPatchDTO rejectDTO = (PostPatchDTO) new PostPatchDTO()
             .setComment("we have received a complaint, we're closing down the post");
 
-        verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.rejectPost(postId, rejectDTO), State.REJECTED);
+        verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeAction(postId, "reject", rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
 
         // Check that the administrator can restore the post
         PostPatchDTO restoreFromRejectedDTO = (PostPatchDTO) new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
-        verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.restorePost(postId, restoreFromRejectedDTO), State.ACCEPTED);
+        verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         transactionTemplate.execute(status -> {
@@ -642,14 +642,14 @@ public class PostApiIT extends AbstractIT {
         // Check that the author can withdraw the post
         // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO withdrawDTO = new PostPatchDTO();
-        verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.withdrawPost(postId, withdrawDTO), State.WITHDRAWN);
+        verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeAction(postId, "withdraw",  withdrawDTO), State.WITHDRAWN);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.WITHDRAWN, operations);
 
         // Check that the author can restore the post
         // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO();
 
-        verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.restorePost(postId, restoreFromWithdrawnDTO), State.EXPIRED);
+        verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeAction(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
         transactionTemplate.execute(status -> {

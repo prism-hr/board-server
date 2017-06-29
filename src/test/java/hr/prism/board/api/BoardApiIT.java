@@ -79,7 +79,7 @@ public class BoardApiIT extends AbstractIT {
         ((BoardDTO) boardDTO12.setName("board12")).setDocumentLogo(new DocumentDTO().setCloudinaryId("board2logo").setCloudinaryUrl("board2logo").setFileName("board2logo"));
         BoardRepresentation boardR12 = verifyPostBoard(boardDTO12, "board12");
         testUserService.setAuthentication(user11.getId());
-        boardApi.acceptBoard(boardR12.getId(), new BoardPatchDTO());
+        boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user12.getId());
         unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
             TestHelper.smallSamplePost()
@@ -99,7 +99,7 @@ public class BoardApiIT extends AbstractIT {
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = verifyPostBoard(boardDTO22, "board22");
         testUserService.setAuthentication(user21.getId());
-        boardApi.acceptBoard(boardR22.getId(), new BoardPatchDTO());
+        boardApi.executeAction(boardR22.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user22.getId());
         unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()

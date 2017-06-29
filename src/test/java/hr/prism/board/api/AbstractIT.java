@@ -41,10 +41,8 @@ import static org.junit.Assert.*;
 
 public abstract class AbstractIT {
 
-    TransactionTemplate transactionTemplate;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
-
+    TransactionTemplate transactionTemplate;
     @Inject
     BoardApi boardApi;
 
@@ -122,7 +120,7 @@ public abstract class AbstractIT {
         });
 
         testUserService.setAuthentication(departmentAdmin.getId());
-        transactionTemplate.execute(status -> boardApi.acceptBoard(boardR.getId(), new BoardPatchDTO()));
+        transactionTemplate.execute(status -> boardApi.executeAction(boardR.getId(), "accept", new BoardPatchDTO()));
 
         unprivilegedUsers.put(Scope.POST, testUserService.authenticate());
         transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
