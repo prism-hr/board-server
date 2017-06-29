@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -71,15 +70,10 @@ public class BoardApi {
         return boardMapper.apply(boardService.executeAction(id, Action.EDIT, boardDTO));
     }
 
-    @RequestMapping(value = "/api/boards/{id}/accept", method = RequestMethod.POST)
-    public BoardRepresentation acceptBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
-        return boardMapper.apply(boardService.executeAction(id, Action.ACCEPT, boardDTO));
-    }
-
-    @RequestMapping(value = "/api/boards/{id}/reject", method = RequestMethod.POST)
-    public BoardRepresentation rejectBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
-        Objects.requireNonNull(boardDTO.getComment());
-        return boardMapper.apply(boardService.executeAction(id, Action.REJECT, boardDTO));
+    @RequestMapping(value = "/api/boards/{id}/{action}", method = RequestMethod.POST)
+    public BoardRepresentation executeAction(@PathVariable Long id, @PathVariable String action, @RequestBody @Valid BoardPatchDTO boardDTO) {
+        Action actionEnum = Action.valueOf(action.toUpperCase());
+        return boardMapper.apply(boardService.executeAction(id, actionEnum, boardDTO));
     }
 
 }
