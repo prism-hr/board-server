@@ -73,7 +73,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/similarDepartments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getSimilarDepartments(@RequestParam @NotEmpty String searchTerm) {
-        return departmentService.getSimilarDepartments(searchTerm);
+        return departmentService.findBySimilarName(searchTerm);
     }
 
 }

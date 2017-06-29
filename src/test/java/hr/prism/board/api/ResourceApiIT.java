@@ -19,6 +19,7 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
@@ -239,6 +240,12 @@ public class ResourceApiIT extends AbstractIT {
             () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, boardR.getDepartment().getId(), currentUser.getId(),
                 new ResourceUserDTO().setRoles(ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, MemberCategory.RESEARCH_STUDENT)))),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
+    }
+
+    @Test
+    @Sql("classpath:data/user_autosuggest_setup.sql")
+    public void shouldGetSimilarUsers() {
+
     }
 
     public Matcher<ResourceUserRepresentation> resourceUserMatcher(String email, UserRoleDTO... roleDTOs) {
