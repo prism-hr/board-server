@@ -139,10 +139,10 @@ public class NotificationEventService {
             if ("approve_post".equals(template)) {
                 LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
                 parameters.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
-            } else if ("suspend_post".equals(template)) {
+            } else if (template.startsWith("suspend")) {
                 ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
                 parameters.put("comment", resourceOperation.getComment());
-            } else if ("reject_post".equals(template)) {
+            } else if (template.startsWith("reject")) {
                 ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
                 parameters.put("comment", resourceOperation.getComment());
             }
