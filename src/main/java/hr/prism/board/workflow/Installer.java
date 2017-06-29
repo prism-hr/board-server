@@ -41,9 +41,9 @@ public class Installer {
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(DRAFT)
-                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_board_parent")
-                .notifying(BOARD, ADMINISTRATOR).whenTransitioningTo(DRAFT).with("new_board")
-                .notifying(BOARD, ADMINISTRATOR).whenTransitioningTo(ACCEPTED).with("accept_board")
+            .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_board_parent")
+            .notifying(BOARD, ADMINISTRATOR).whenTransitioningTo(DRAFT).with("new_board")
+            .notifying(BOARD, ADMINISTRATOR).whenTransitioningTo(ACCEPTED).with("accept_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, DEPARTMENT).inState(ACCEPTED)
 
@@ -53,33 +53,33 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, BOARD).inState(DRAFT).transitioningTo(ACCEPTED)
-                .notifying(BOARD, ADMINISTRATOR).with("accept_board")
+            .notifying(BOARD, ADMINISTRATOR).with("accept_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(DRAFT).transitioningTo(REJECTED)
-                .notifying(BOARD, ADMINISTRATOR).with("reject_board")
+            .notifying(BOARD, ADMINISTRATOR).with("reject_board")
 
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
-                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
-                .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
-                .notifying(POST, ADMINISTRATOR).with("new_post")
+            .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+            .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+            .notifying(POST, ADMINISTRATOR).with("new_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(ACCEPTED)
-                .notifying(BOARD, ADMINISTRATOR).with("reject_board")
+            .notifying(BOARD, ADMINISTRATOR).with("reject_board")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
-                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
-                .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+            .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("new_post_parent")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
 
             // Board rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, BOARD).inState(REJECTED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(ACCEPTED)
             .notifying(BOARD, ADMINISTRATOR).with("accept_board")
 
             // Post draft state
@@ -93,17 +93,17 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(DRAFT).transitioningTo(ACCEPTED)
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
             .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(DRAFT).transitioningTo(ACCEPTED)
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(DRAFT).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(DRAFT).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(DRAFT).transitioningTo(WITHDRAWN)
 
             // Post pending state
@@ -117,13 +117,13 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(PENDING)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(PENDING)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(PENDING).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(PENDING).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
 
             // Post accepted state
@@ -135,13 +135,13 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(ACCEPTED)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(ACCEPTED).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(ACCEPTED).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
 
             // Post expired state
@@ -155,13 +155,13 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(EXPIRED)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(EXPIRED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(EXPIRED).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(EXPIRED).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(EXPIRED).transitioningTo(WITHDRAWN)
 
             // Post suspended state
@@ -175,16 +175,16 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(SUSPENDED)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(SUSPENDED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(SUSPENDED).transitioningTo(ACCEPTED)
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
             .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(SUSPENDED).transitioningTo(ACCEPTED)
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
-                .notifying(POST, ADMINISTRATOR).with("reject_post")
+            .notifying(POST, ADMINISTRATOR).with("reject_post")
             .permitThat(POST, ADMINISTRATOR).can(CORRECT, POST).inState(SUSPENDED).transitioningTo(DRAFT)
-                .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("correct_post")
-                .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("correct_post")
+            .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with("correct_post")
+            .notifying(BOARD, ADMINISTRATOR).excludingCreator().with("correct_post")
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(SUSPENDED).transitioningTo(WITHDRAWN)
 
             // Post rejected state
@@ -198,18 +198,18 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(REJECTED).transitioningTo(ACCEPTED)
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
             .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(REJECTED).transitioningTo(ACCEPTED)
-                .notifying(POST, ADMINISTRATOR).with("accept_post")
+            .notifying(POST, ADMINISTRATOR).with("accept_post")
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
-                .notifying(POST, ADMINISTRATOR).with("suspend_post")
+            .notifying(POST, ADMINISTRATOR).with("suspend_post")
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(REJECTED).transitioningTo(WITHDRAWN)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, POST).inState(REJECTED).transitioningTo(PREVIOUS)
-                .notifying(POST, ADMINISTRATOR).with("restore_post")
+            .notifying(POST, ADMINISTRATOR).with("restore_post")
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(REJECTED).transitioningTo(PREVIOUS)
-                .notifying(POST, ADMINISTRATOR).with("restore_post")
+            .notifying(POST, ADMINISTRATOR).with("restore_post")
 
             // Post withdrawn state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
@@ -223,8 +223,7 @@ public class Installer {
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS);
 
-        TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        transactionTemplate.execute(transactionStatus -> {
+        new TransactionTemplate(platformTransactionManager).execute(transactionStatus -> {
             LOGGER.info("Deleting old workflow definition");
             entityManager.createNativeQuery("TRUNCATE TABLE workflow").executeUpdate();
 
@@ -232,7 +231,6 @@ public class Installer {
             entityManager.createNativeQuery("INSERT INTO workflow(" +
                 "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, notification) " +
                 "VALUES" + workflow.toString()).executeUpdate();
-
             return null;
         });
     }

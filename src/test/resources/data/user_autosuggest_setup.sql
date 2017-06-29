@@ -1,15 +1,15 @@
-INSERT INTO resource(scope, state, name, created_timestamp)
-VALUES('DEPARTMENT', 'ACCEPTED', 'Computer Science Department', NOW()),
-  ('DEPARTMENT', 'ACCEPTED', 'Department of Computer Science', NOW()),
-  ('DEPARTMENT', 'ACCEPTED', 'Laboratory for the Foundations of Computer Science', NOW()),
-  ('DEPARTMENT', 'ACCEPTED', 'School of Informatics', NOW()),
-  ('DEPARTMENT', 'REJECTED', 'Physics Department', NOW());
+INSERT INTO user(given_name, surname, email, created_timestamp)
+VALUES('alastair', 'knowles', 'alastair@knowles.com', NOW()),
+  ('alastair', 'fibinger', 'alastair@fibinger.com', NOW()),
+  ('jakub', 'knowles', 'jakub@knowles.com', NOW()),
+  ('juan', 'mingo', 'juan@mingo.com', NOW()),
+  ('alastair', 'knowles', 'alastair@knowles.net', NOW());
 
 INSERT INTO document(cloudinary_id, cloudinary_url, file_name, created_timestamp)
   SELECT id, id, id, now()
-  FROM resource;
+  FROM user;
 
-UPDATE resource
-INNER JOIN document
-  ON resource.id = document.cloudinary_id
-SET resource.document_logo_id = document.id;
+UPDATE user
+  INNER JOIN document
+    ON user.id = document.cloudinary_id
+SET user.document_image_id = document.id;

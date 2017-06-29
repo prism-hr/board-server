@@ -1,4 +1,4 @@
-package hr.prism.board.domain;
+package hr.prism.board.domain.converter;
 
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;

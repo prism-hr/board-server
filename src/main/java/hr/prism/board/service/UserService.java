@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -42,7 +43,7 @@ public class UserService {
             "OR user.surname LIKE :searchTerm " +
             "OR CONCAT(user.given_name, ' ', user.surname) LIKE :searchTerm " +
             "OR user.email LIKE :searchTerm " +
-            "ORDER BY USER.given_name, USER.surname, USER.email " +
+            "ORDER BY user.given_name, user.surname, user.email " +
             "LIMIT 10";
 
     @Inject
@@ -140,9 +141,10 @@ public class UserService {
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
 
-        List<Object[]> results = entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
-            .setParameter("searchTerm", searchTerm + "%")
-            .getResultList();
+        List<Object[]> results = new TransactionTemplate(platformTransactionManager).execute(status ->
+            entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
+                .setParameter("searchTerm", searchTerm + "%")
+                .getResultList());
 
         List<UserRepresentation> userRepresentations = new ArrayList<>();
         for (Object[] result : results) {

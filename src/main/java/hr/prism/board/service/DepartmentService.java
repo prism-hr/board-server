@@ -152,7 +152,7 @@ public class DepartmentService {
         });
     }
 
-    public List<DepartmentRepresentation> getSimilarDepartments(String searchTerm) {
+    public List<DepartmentRepresentation> findBySimilarName(String searchTerm) {
         List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
                 .setParameter("searchTermHard", searchTerm + "%")
