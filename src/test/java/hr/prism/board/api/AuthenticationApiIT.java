@@ -12,15 +12,12 @@ import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.NotificationService;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestUserService;
 import hr.prism.board.service.cache.UserCacheService;
 import io.jsonwebtoken.Jwts;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -46,16 +43,7 @@ public class AuthenticationApiIT extends AbstractIT {
     private UserCacheService userCacheService;
 
     @Inject
-    private TestUserService testUserService;
-
-    @Inject
-    private TestNotificationService testNotificationService;
-
-    @Inject
     private AuthenticationService authenticationService;
-
-    @Inject
-    private Environment environment;
 
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {

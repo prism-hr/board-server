@@ -17,9 +17,7 @@ import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.service.BoardService;
-import hr.prism.board.service.ResourceService;
-import hr.prism.board.service.TestUserService;
+import hr.prism.board.service.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -27,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -42,12 +41,20 @@ import static org.junit.Assert.*;
 public abstract class AbstractIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
+
     TransactionTemplate transactionTemplate;
+
+    @Inject
+    DepartmentApi departmentApi;
+
     @Inject
     BoardApi boardApi;
 
     @Inject
     PostApi postApi;
+
+    @Inject
+    DepartmentService departmentService;
 
     @Inject
     BoardService boardService;
@@ -56,7 +63,16 @@ public abstract class AbstractIT {
     ResourceService resourceService;
 
     @Inject
+    UserRoleService userRoleService;
+
+    @Inject
     TestUserService testUserService;
+
+    @Inject
+    TestNotificationService testNotificationService;
+
+    @Inject
+    Environment environment;
 
     @PersistenceContext
     private EntityManager entityManager;

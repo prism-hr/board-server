@@ -13,10 +13,8 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.PostService;
-import hr.prism.board.service.TestUserService;
-import hr.prism.board.service.UserRoleService;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.hamcrest.Matchers;
@@ -65,25 +63,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Inject
-    private PostApi postApi;
-
-    @Inject
-    private BoardApi boardApi;
-
-    @Inject
-    private DepartmentApi departmentApi;
-
-    @Inject
     private PostService postService;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private UserRoleService userRoleService;
-
-    @Inject
-    private TestUserService testUserService;
 
     @Test
     public void shouldCreateAndListPosts() {
@@ -496,9 +476,34 @@ public class PostApiIT extends AbstractIT {
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
 
         // Create post
+        testNotificationService.record();
         User postUser = testUserService.authenticate();
         PostRepresentation postR = verifyPostPost(boardId, TestHelper.samplePost());
         Long postId = postR.getId();
+
+        String departmentName = boardR.getDepartment().getName();
+        String boardName = boardR.getName();
+        String postName = postR.getName();
+
+        String departmentUserEmail = departmentUser.getEmail();
+        String departmentUserGivenName = departmentUser.getGivenName();
+
+        String boardUserEmail = boardUser.getEmail();
+        String boardUserGivenName = boardUser.getGivenName();
+
+        String postUserEmail = postUser.getEmail();
+        String postUserGivenName = postUser.getGivenName();
+
+        String environmentName = environment.getProperty("environment");
+        String redirectUrl = environment.getProperty("server.url") + "/redirect?resourceId=" + postId + "&action=login";
+        testNotificationService.verify(
+            new NotificationService.NotificationInstance("new_post_parent", "admin@prism.hr", departmentUserEmail,
+                ImmutableMap.of("environment", environmentName, "recipient", departmentUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", redirectUrl)),
+            new NotificationService.NotificationInstance("new_post_parent", "admin@prism.hr", boardUserEmail,
+                ImmutableMap.of("environment", environmentName, "recipient", boardUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", redirectUrl)),
+            new NotificationService.NotificationInstance("new_post", "admin@prism.hr", postUserEmail,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
+                    .put("board", boardName).put("post", postName).put("redirectUrl", redirectUrl).build()));
 
         // Create unprivileged users
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
@@ -556,6 +561,11 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
 
+        testNotificationService.verify(new NotificationService.NotificationInstance("suspend_post", "admin@prism.hr", postUserEmail,
+            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
+                .put("board", boardName).put("post", postName).put("comment", resourceService.getLatestResourceOperation(Action.SUSPEND).getComment())
+                .put("redirectUrl", redirectUrl).build()));
+
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
@@ -577,7 +587,15 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeAction(postId, "correct", correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
-        // Check that the administrator can accept post in the accepted state
+        testNotificationService.verify(
+            new NotificationService.NotificationInstance("correct_post", "admin@prism.hr", departmentUserEmail,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
+                    .put("board", boardName).put("post", postName).put("redirectUrl", redirectUrl).build()),
+            new NotificationService.NotificationInstance("new_post_parent", "admin@prism.hr", boardUserEmail,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("department", departmentName)
+                    .put("board", boardName).put("post", postName).put("redirectUrl", redirectUrl).build()));
+
+        // Check that the administrator can accept post in the suspended state
         PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
             .setLiveTimestamp(Optional.empty())
             .setDeadTimestamp(Optional.empty())
@@ -642,7 +660,7 @@ public class PostApiIT extends AbstractIT {
         // Check that the author can withdraw the post
         // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO withdrawDTO = new PostPatchDTO();
-        verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeAction(postId, "withdraw",  withdrawDTO), State.WITHDRAWN);
+        verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeAction(postId, "withdraw", withdrawDTO), State.WITHDRAWN);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.WITHDRAWN, operations);
 
         // Check that the author can restore the post

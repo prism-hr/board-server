@@ -22,29 +22,30 @@ public class TestNotificationService extends NotificationService {
         this.recording = false;
     }
 
-    public void verify(NotificationInstance expectedNotificationInstance) {
-        Assert.assertEquals(1, sent.size());
+    public void verify(NotificationInstance... expectedNotificationInstances) {
+        Assert.assertEquals(1, expectedNotificationInstances.length);
+        for (NotificationInstance expectedNotificationInstance : expectedNotificationInstances) {
+            NotificationInstance actualNotificationInstance = sent.remove(0);
+            Assert.assertEquals(expectedNotificationInstance.getTemplate(), actualNotificationInstance.getTemplate());
+            Assert.assertEquals(expectedNotificationInstance.getSender(), actualNotificationInstance.getSender());
+            Assert.assertEquals(expectedNotificationInstance.getRecipient(), actualNotificationInstance.getRecipient());
 
-        NotificationInstance actualNotificationInstance = sent.remove(0);
-        Assert.assertEquals(expectedNotificationInstance.getTemplate(), actualNotificationInstance.getTemplate());
-        Assert.assertEquals(expectedNotificationInstance.getSender(), actualNotificationInstance.getSender());
-        Assert.assertEquals(expectedNotificationInstance.getRecipient(), actualNotificationInstance.getRecipient());
-
-        Map<String, String> actualParameters = actualNotificationInstance.getParameters();
-        Map<String, String> expectedParameters = expectedNotificationInstance.getParameters();
-        for (String expectedParameterKey : expectedParameters.keySet()) {
-            String expectedParameterValue = expectedParameters.get(expectedParameterKey);
-            if (expectedParameterValue.equals("defined")) {
-                // We can't easily compare dynamic values (e.g. temporaryPassword), so assert not null
-                Assert.assertNotNull(actualParameters.remove(expectedParameterKey));
-            } else {
-                // Parameters that are statically defined can be compared, assert equals
-                Assert.assertEquals(expectedParameterValue, actualParameters.remove(expectedParameterKey));
+            Map<String, String> actualParameters = actualNotificationInstance.getParameters();
+            Map<String, String> expectedParameters = expectedNotificationInstance.getParameters();
+            for (String expectedParameterKey : expectedParameters.keySet()) {
+                String expectedParameterValue = expectedParameters.get(expectedParameterKey);
+                if (expectedParameterValue.equals("defined")) {
+                    // We can't easily compare dynamic values (e.g. temporaryPassword), so assert not null
+                    Assert.assertNotNull(actualParameters.remove(expectedParameterKey));
+                } else {
+                    // Parameters that are statically defined can be compared, assert equals
+                    Assert.assertEquals(expectedParameterValue, actualParameters.remove(expectedParameterKey));
+                }
             }
-        }
 
-        // Any remaining parameters not defined in the expectations should have null values
-        actualParameters.keySet().forEach(actualParameterKey -> Assert.assertNull(actualParameters.get(actualParameterKey)));
+            // Any remaining parameters not defined in the expectations should have null values
+            actualParameters.keySet().forEach(actualParameterKey -> Assert.assertNull(actualParameters.get(actualParameterKey)));
+        }
     }
 
     @Override

@@ -19,9 +19,6 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.service.BoardService;
-import hr.prism.board.service.DepartmentService;
-import hr.prism.board.service.UserRoleService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.apache.commons.collections.ListUtils;
@@ -31,7 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,18 +44,6 @@ public class BoardApiIT extends AbstractIT {
         BOARD_ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
-
-    @Inject
-    private DepartmentApi departmentApi;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private BoardService boardService;
-
-    @Inject
-    private UserRoleService userRoleService;
 
     @Test
     public void shouldCreateAndListBoards() {

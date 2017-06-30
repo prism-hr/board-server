@@ -4,7 +4,6 @@ import hr.prism.board.TestContext;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.service.TestUserService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,9 +18,6 @@ public class UserApiIT extends AbstractIT {
 
     @Inject
     private UserApi userApi;
-
-    @Inject
-    private TestUserService testUserService;
 
     @Test
     public void shouldCreateAndUpdateUser() {

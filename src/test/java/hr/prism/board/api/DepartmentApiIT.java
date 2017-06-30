@@ -19,9 +19,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.DepartmentService;
-import hr.prism.board.service.TestUserService;
-import hr.prism.board.service.UserRoleService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
@@ -31,7 +28,6 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,21 +44,6 @@ public class DepartmentApiIT extends AbstractIT {
         ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
-
-    @Inject
-    private DepartmentApi departmentApi;
-
-    @Inject
-    private BoardApi boardApi;
-
-    @Inject
-    private TestUserService testUserService;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private UserRoleService userRoleService;
 
     @Test
     public void shouldCreateAndListDepartments() {
