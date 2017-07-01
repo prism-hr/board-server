@@ -18,7 +18,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -58,8 +57,8 @@ public class NotificationEventService {
         applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notifications));
     }
 
-    public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications, State state) {
-        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, notifications, state));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, Action action, List<Notification> notifications, State state) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, creatorId, resourceId, action, notifications, state));
     }
 
     @Async
@@ -85,6 +84,7 @@ public class NotificationEventService {
         List<Notification> notifications = notificationEvent.getNotifications();
 
         State state = notificationEvent.getState();
+        Action action  = notificationEvent.getAction();
         for (Notification notification : notifications) {
             State notificationState = notification.getState();
             if (notificationState == null || Objects.equals(state, notificationState)) {
@@ -92,7 +92,7 @@ public class NotificationEventService {
 
                 if (!recipients.isEmpty()) {
                     String template = notification.getTemplate();
-                    Map<String, String> parameters = makeParameters(resource, notification);
+                    Map<String, String> parameters = makeParameters(resource, state, action, notification);
 
                     for (User recipient : recipients) {
                         if (!sent.containsEntry(recipient, template)) {
@@ -131,20 +131,25 @@ public class NotificationEventService {
         return recipients;
     }
 
-    private Map<String, String> makeParameters(Resource resource, Notification notification) {
+    private Map<String, String> makeParameters(Resource resource, State state, Action action, Notification notification) {
         String template = notification.getTemplate();
         Map<String, String> parameters = new HashMap<>();
         if (resource != null) {
             resource.getParents().stream().map(ResourceRelation::getResource1).forEach(parent -> parameters.put(parent.getScope().name().toLowerCase(), parent.getName()));
-            if ("approve_post".equals(template)) {
-                LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
-                parameters.put("liveTimestamp", liveTimestamp.format(BoardUtils.DATETIME_FORMATTER));
-            } else if (template.startsWith("suspend")) {
-                ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
-                parameters.put("comment", resourceOperation.getComment());
-            } else if (template.startsWith("reject")) {
-                ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.REJECT);
-                parameters.put("comment", resourceOperation.getComment());
+            if (action != null) {
+                if (action == Action.ACCEPT) {
+                    if (state == State.ACCEPTED) {
+                        parameters.put("publicationSchedule", "immediately");
+                    } else {
+                        String liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource).format(BoardUtils.DATETIME_FORMATTER);
+                        parameters.put("publicationSchedule", "on or around " + liveTimestamp + ". We will send you a follow-up message when your post has gone live");
+                    }
+                }
+
+                if (action.isRequireComment()) {
+                    ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(action);
+                    parameters.put("comment", resourceOperation.getComment());
+                }
             }
         }
 

@@ -1,5 +1,6 @@
 package hr.prism.board.service.event;
 
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.workflow.Notification;
@@ -26,8 +27,8 @@ public class TestNotificationEventService extends NotificationEventService {
     }
 
     @Override
-    public void publishEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications, State state) {
-        super.sendNotifications(new NotificationEvent(source, creatorId, resourceId, notifications, state));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, Action action, List<Notification> notifications, State state) {
+        super.sendNotifications(new NotificationEvent(source, creatorId, resourceId, action, notifications, state));
     }
 
 }
