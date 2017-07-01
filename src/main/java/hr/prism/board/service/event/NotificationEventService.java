@@ -8,6 +8,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.util.BoardUtils;
 import hr.prism.board.workflow.Notification;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
@@ -18,7 +19,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -138,7 +138,7 @@ public class NotificationEventService {
             resource.getParents().stream().map(ResourceRelation::getResource1).forEach(parent -> parameters.put(parent.getScope().name().toLowerCase(), parent.getName()));
             if ("approve_post".equals(template)) {
                 LocalDateTime liveTimestamp = postService.getEffectiveLiveTimestamp((Post) resource);
-                parameters.put("liveTimestamp", liveTimestamp.format(DateTimeFormatter.ofPattern("dd/MM/YYYY")));
+                parameters.put("liveTimestamp", liveTimestamp.format(BoardUtils.DATETIME_FORMATTER));
             } else if (template.startsWith("suspend")) {
                 ResourceOperation resourceOperation = resourceService.getLatestResourceOperation(Action.SUSPEND);
                 parameters.put("comment", resourceOperation.getComment());

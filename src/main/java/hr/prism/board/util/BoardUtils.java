@@ -7,10 +7,13 @@ import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.lang.reflect.Field;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class BoardUtils {
+
+    public static DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/YYYY");
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static boolean isPresent(Optional<?> optional) {

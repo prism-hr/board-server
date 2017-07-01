@@ -15,6 +15,7 @@ import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.PostService;
+import hr.prism.board.util.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.hamcrest.Matchers;
@@ -496,6 +497,7 @@ public class PostApiIT extends AbstractIT {
 
         String environmentName = environment.getProperty("environment");
         String redirectUrl = environment.getProperty("server.url") + "/redirect?resourceId=" + postId + "&action=login";
+
         testNotificationService.verify(
             new NotificationService.NotificationInstance("new_post_parent", "admin@prism.hr", departmentUserEmail,
                 ImmutableMap.of("environment", environmentName, "recipient", departmentUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", redirectUrl)),
@@ -604,11 +606,22 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
+        testNotificationService.verify(
+            new NotificationService.NotificationInstance("accept_post", "admin@prism.hr", postUserEmail,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
+                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", redirectUrl).build()));
+
         // Suspend the post so that it can be accepted again
-        verifyPatchPost(boardUser, postId, new PostPatchDTO(), () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")), State.SUSPENDED);
+        verifyPatchPost(boardUser, postId, new PostPatchDTO(),
+            () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
-        // Check that the administrator can make further changes and accept the post in the pending state
+        testNotificationService.verify(new NotificationService.NotificationInstance("suspend_post", "admin@prism.hr", postUserEmail,
+            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
+                .put("board", boardName).put("post", postName).put("comment", resourceService.getLatestResourceOperation(Action.SUSPEND).getComment())
+                .put("redirectUrl", redirectUrl).build()));
+
+        // Check that the administrator can make further changes and accept the post again
         PostPatchDTO acceptPendingDTO = (PostPatchDTO) new PostPatchDTO()
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
@@ -618,6 +631,11 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.executeAction(postId, "accept", acceptPendingDTO), State.PENDING);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
+
+        testNotificationService.verify(
+            new NotificationService.NotificationInstance("accept_post", "admin@prism.hr", postUserEmail,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
+                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", redirectUrl).build()));
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
@@ -679,6 +697,7 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
+        testNotificationService.stop();
 
         testUserService.setAuthentication(postUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
