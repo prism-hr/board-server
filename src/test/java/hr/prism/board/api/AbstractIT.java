@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.BoardDTO;
@@ -175,6 +176,13 @@ public abstract class AbstractIT {
 
     void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
+    }
+
+    ResourceOperation getLatestResourceOperation(Long resourceId, Action action) {
+        return transactionTemplate.execute(status -> {
+           Resource resource = resourceService.findOne(resourceId);
+           return resourceService.getLatestResourceOperation(resource, action);
+        });
     }
 
     private void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {

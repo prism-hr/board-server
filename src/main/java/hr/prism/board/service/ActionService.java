@@ -80,7 +80,7 @@ public class ActionService {
                             throw new IllegalStateException("Could not deserialize notifications");
                         }
 
-                        notificationEventService.publishEvent(this, user.getId(), resource.getId(), action, notifications, newState);
+                        notificationEventService.publishEvent(this, resource.getId(), action, newState, notifications);
                     }
 
                     return resource;

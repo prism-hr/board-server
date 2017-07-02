@@ -1,12 +1,14 @@
 package hr.prism.board.notification.property;
 
-import hr.prism.board.domain.Resource;
-import hr.prism.board.enums.Action;
+import hr.prism.board.service.NotificationService;
+import org.apache.commons.lang3.StringUtils;
 
 public interface NotificationProperty {
 
-    String getKey();
+    default String getKey() {
+        return getClass().getSimpleName().replace("Property", StringUtils.EMPTY).toLowerCase();
+    }
 
-    String getValue(Resource resource, Action action);
+    String getValue(NotificationService.NotificationInstance notificationInstance);
 
 }

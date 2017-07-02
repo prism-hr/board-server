@@ -9,46 +9,38 @@ import java.util.List;
 
 public class NotificationEvent extends ApplicationEvent {
 
-    private Long creatorId;
-
     private Long resourceId;
 
     private Action action;
 
-    private List<Notification> notifications;
-
     private State state;
+
+    private List<Notification> notifications;
 
     public NotificationEvent(Object source, List<Notification> notifications) {
         super(source);
         this.notifications = notifications;
     }
 
-    public NotificationEvent(Object source, Long resourceId, List<Notification> notifications, State state) {
+    public NotificationEvent(Object source, Long resourceId, List<Notification> notifications) {
         super(source);
         this.resourceId = resourceId;
         this.notifications = notifications;
+    }
+
+    public NotificationEvent(Object source, Long resourceId, State state, List<Notification> notifications) {
+        super(source);
+        this.resourceId = resourceId;
         this.state = state;
-    }
-
-    public NotificationEvent(Object source, Long creatorId, Long resourceId, List<Notification> notifications) {
-        super(source);
-        this.creatorId = creatorId;
-        this.resourceId = resourceId;
         this.notifications = notifications;
     }
 
-    public NotificationEvent(Object source, Long creatorId, Long resourceId, Action action, List<Notification> notifications, State state) {
+    public NotificationEvent(Object source, Long resourceId, Action action, State state, List<Notification> notifications) {
         super(source);
-        this.creatorId = creatorId;
         this.resourceId = resourceId;
         this.action = action;
-        this.notifications = notifications;
         this.state = state;
-    }
-
-    public Long getCreatorId() {
-        return creatorId;
+        this.notifications = notifications;
     }
 
     public Long getResourceId() {
@@ -59,12 +51,12 @@ public class NotificationEvent extends ApplicationEvent {
         return action;
     }
 
-    public List<Notification> getNotifications() {
-        return notifications;
-    }
-
     public State getState() {
         return state;
+    }
+
+    public List<Notification> getNotifications() {
+        return notifications;
     }
 
 }

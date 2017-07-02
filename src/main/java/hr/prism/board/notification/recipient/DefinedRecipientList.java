@@ -2,21 +2,22 @@ package hr.prism.board.notification.recipient;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.service.UserService;
+import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 
 @Component
-public class AuthorizedCategorizedRecipientList implements NotificationRecipientList {
+public class DefinedRecipientList implements NotificationRecipientList {
 
     @Inject
-    private UserService userService;
+    private UserCacheService userCacheService;
 
     public List<User> list(Resource resource, Notification notification) {
-        return userService.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, notification.getScope(), notification.getRole());
+        return Collections.singletonList(userCacheService.findOne(notification.getUserId()));
     }
 
 }

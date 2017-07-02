@@ -30,8 +30,8 @@ public class TestNotificationService extends NotificationService {
             Assert.assertEquals(expectedNotificationInstance.getSender(), actualNotificationInstance.getSender());
             Assert.assertEquals(expectedNotificationInstance.getRecipient(), actualNotificationInstance.getRecipient());
 
-            Map<String, String> actualParameters = actualNotificationInstance.getParameters();
-            Map<String, String> expectedParameters = expectedNotificationInstance.getParameters();
+            Map<String, String> actualParameters = actualNotificationInstance.getProperties();
+            Map<String, String> expectedParameters = expectedNotificationInstance.getProperties();
             for (String expectedParameterKey : expectedParameters.keySet()) {
                 String expectedParameterValue = expectedParameters.get(expectedParameterKey);
                 if (expectedParameterValue.equals("defined")) {

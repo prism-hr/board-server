@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface NotificationRecipientList {
 
-    List<User> getList(Resource resource, Notification notification);
+    List<User> list(Resource resource, Notification notification);
 
 }

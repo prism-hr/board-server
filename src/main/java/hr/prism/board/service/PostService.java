@@ -344,13 +344,13 @@ public class PostService {
             for (Long postId : postIds) {
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setTemplate("publish_post"));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.MEMBER).setTemplate("publish_post_member").setFilteringByCategory(true));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER));
                 } else {
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setTemplate("retire_post"));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.RETIRE_POST));
                 }
 
-                notificationEventService.publishEvent(this, postId, notifications, newState);
+                notificationEventService.publishEvent(this, postId, newState, notifications);
             }
         }
     }

@@ -153,8 +153,8 @@ public class AuthenticationService {
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
         userCacheService.updateUser(user);
 
-        notificationEventService.publishEvent(this, Collections.singletonList(
-            new Notification().setUserId(user.getId()).setCustomParameters(ImmutableMap.of("temporaryPassword", temporaryPassword)).setTemplate("reset_password")));
+        notificationEventService.publishEvent(this, Collections.singletonList(new Notification().setUserId(user.getId())
+            .setCustomProperties(ImmutableMap.of("temporaryPassword", temporaryPassword)).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD)));
     }
 
     public String makeAccessToken(Long userId, String jwsSecret) {

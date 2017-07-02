@@ -1,19 +1,20 @@
 package hr.prism.board.notification.property;
 
 import hr.prism.board.service.NotificationService;
-import hr.prism.board.service.ResourceService;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
 @Component
-public class CommentProperty implements NotificationProperty {
+public class HomeRedirectProperty implements NotificationProperty {
 
     @Inject
-    private ResourceService resourceService;
+    private Environment environment;
 
+    @Override
     public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        return resourceService.getLatestResourceOperation(notificationInstance.getResource(), notificationInstance.getAction()).getComment();
+        return environment.getProperty("server.url") + "/redirect";
     }
 
 }

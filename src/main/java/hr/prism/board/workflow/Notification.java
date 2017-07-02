@@ -27,11 +27,9 @@ public class Notification {
 
     private boolean excludingCreator = false;
 
-    private boolean filteringByCategory = false;
+    private hr.prism.board.enums.Notification notification;
 
-    private Map<String, String> customParameters;
-
-    private String template;
+    private Map<String, String> customProperties;
 
     public Notification setWorkflow(Workflow workflow) {
         this.workflow = workflow;
@@ -98,36 +96,27 @@ public class Notification {
         return this;
     }
 
-    public boolean isFilteringByCategory() {
-        return filteringByCategory;
+    public hr.prism.board.enums.Notification getNotification() {
+        return notification;
     }
 
-    public Notification setFilteringByCategory(boolean filteringByCategory) {
-        this.filteringByCategory = filteringByCategory;
+    public Notification setNotification(hr.prism.board.enums.Notification notification) {
+        this.notification = notification;
         return this;
     }
 
-    public Map<String, String> getCustomParameters() {
-        return customParameters;
-    }
-
-    public Notification setCustomParameters(Map<String, String> customParameters) {
-        this.customParameters = customParameters;
-        return this;
-    }
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public Notification setTemplate(String template) {
-        this.template = template;
-        return this;
-    }
-
-    public Workflow with(String template) {
-        this.template = template;
+    public Workflow with(hr.prism.board.enums.Notification notification) {
+        this.notification = notification;
         return this.workflow;
+    }
+
+    public Map<String, String> getCustomProperties() {
+        return customProperties;
+    }
+
+    public Notification setCustomProperties(Map<String, String> customProperties) {
+        this.customProperties = customProperties;
+        return this;
     }
 
     @Override

@@ -84,7 +84,7 @@ public class UserRoleCacheService {
         }
 
         if (notify) {
-            Notification notification = new Notification().setUserId(user.getId()).setExcludingCreator(true).setTemplate("join_" + scope.name().toLowerCase());
+            Notification notification = new Notification().setUserId(user.getId()).setExcludingCreator(true).setNotification("join_" + scope.name().toLowerCase());
             notificationEventService.publishEvent(this, currentUser.getId(), resource.getId(), Collections.singletonList(notification));
         }
     }

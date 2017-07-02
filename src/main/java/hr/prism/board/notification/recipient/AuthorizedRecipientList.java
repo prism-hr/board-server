@@ -15,7 +15,7 @@ public class AuthorizedRecipientList implements NotificationRecipientList {
     @Inject
     private UserService userService;
 
-    public List<User> getList(Resource resource, Notification notification) {
+    public List<User> list(Resource resource, Notification notification) {
         return userService.findByResourceAndEnclosingScopeAndRole(resource, notification.getScope(), notification.getRole());
     }
 

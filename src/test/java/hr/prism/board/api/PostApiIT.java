@@ -488,10 +488,8 @@ public class PostApiIT extends AbstractIT {
 
         String departmentUserEmail = departmentUser.getEmail();
         String departmentUserGivenName = departmentUser.getGivenName();
-
         String boardUserEmail = boardUser.getEmail();
         String boardUserGivenName = boardUser.getGivenName();
-
         String postUserEmail = postUser.getEmail();
         String postUserGivenName = postUser.getGivenName();
 
@@ -565,7 +563,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new NotificationService.NotificationInstance("suspend_post", "admin@prism.hr", postUserEmail,
             ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("comment", resourceService.getLatestResourceOperation(Action.SUSPEND).getComment())
+                .put("board", boardName).put("post", postName).put("comment", getLatestResourceOperation(postId, Action.SUSPEND).getComment())
                 .put("redirectUrl", redirectUrl).build()));
 
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
@@ -618,7 +616,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new NotificationService.NotificationInstance("suspend_post", "admin@prism.hr", postUserEmail,
             ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("comment", resourceService.getLatestResourceOperation(Action.SUSPEND).getComment())
+                .put("board", boardName).put("post", postName).put("comment", getLatestResourceOperation(postId, Action.SUSPEND).getComment())
                 .put("redirectUrl", redirectUrl).build()));
 
         // Check that the administrator can make further changes and accept the post again

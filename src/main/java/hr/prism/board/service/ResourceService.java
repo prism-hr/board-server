@@ -477,8 +477,8 @@ public class ResourceService {
         }
     }
 
-    public ResourceOperation getLatestResourceOperation(Action action) {
-        return resourceOperationRepository.findFirstByActionOrderByIdDesc(action);
+    public ResourceOperation getLatestResourceOperation(Resource resource, Action action) {
+        return resourceOperationRepository.findFirstByResourceAndActionOrderByIdDesc(resource, action);
     }
 
     public Resource findByResourceAndEnclosingScope(Resource resource, Scope scope) {

@@ -1,10 +1,13 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.Maps;
 import com.sendgrid.*;
+import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Notification;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.notification.property.NotificationProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -17,18 +20,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,9 +38,9 @@ public class NotificationService {
 
     private MailStrategy mailStrategy;
 
-    private Map<String, String> subjects;
+    private Map<String, NotificationTemplate> subjects;
 
-    private Map<String, String> contents;
+    private Map<String, NotificationTemplate> contents;
 
     @Inject
     private SendGrid sendGrid;
@@ -60,44 +60,36 @@ public class NotificationService {
             mailStrategy = MailStrategy.SEND;
         }
 
-        Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
-        Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
+        org.springframework.core.io.Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
+        org.springframework.core.io.Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
 
-        this.subjects = indexResources(subjects);
-        this.contents = indexResources(contents);
+        Map<String, NotificationProperty> propertiesMap =
+            applicationContext.getBeansOfType(NotificationProperty.class).values().stream().collect(Collectors.toMap(NotificationProperty::getKey, property -> property));
+
+        this.subjects = indexTemplates(subjects, propertiesMap);
+        this.contents = indexTemplates(contents, propertiesMap);
         Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
     }
 
-    public NotificationInstance makeNotification(String template, User recipient, Map<String, String> customParameters) {
-        String recipientEmail = recipient.getEmail();
-        String senderEmail = environment.getProperty("system.email");
-        Map<String, String> parameters = Maps.newLinkedHashMap(customParameters);
-        parameters.put("environment", environment.getProperty("environment"));
-        parameters.put("recipient", recipient.getGivenName());
-        return new NotificationInstance(template, senderEmail, recipientEmail, parameters);
-    }
-
     public void sendNotification(NotificationInstance notificationInstance) {
-        String template = notificationInstance.getTemplate();
-        String sender = notificationInstance.getSender();
-        String recipient = notificationInstance.getRecipient();
-        Map<String, String> parameters = notificationInstance.getParameters();
+        String senderEmail = environment.getProperty("system.email");
+        String recipientEmail = notificationInstance.getRecipient().getEmail();
+        String notification = notificationInstance.getNotification().toString();
 
-        StrSubstitutor parser = new StrSubstitutor(parameters);
-        String subject = parser.replace(this.subjects.get(template));
-        String content = parser.replace(this.contents.get(template));
+        String subject = parseTemplate(this.subjects.get(notification), notificationInstance);
+        String content = parseTemplate(this.contents.get(notification), notificationInstance);
 
         if (mailStrategy == MailStrategy.LOG) {
             // Local/Test contexts
-            LOGGER.info("Sending notification: " + makeLogHeader(template, sender, recipient)
+            LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail)
                 + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
         } else {
             // Production/UAT contexts
             Mail mail = new Mail();
-            mail.setFrom(new Email(sender));
+            mail.setFrom(new Email(senderEmail));
 
             Personalization personalization = new Personalization();
-            personalization.addTo(new Email(recipient));
+            personalization.addTo(new Email(recipientEmail));
             mail.addPersonalization(personalization);
 
             mail.setSubject(subject);
@@ -111,7 +103,7 @@ public class NotificationService {
                 request.setBody(mail.build());
                 sendGrid.api(request);
 
-                LOGGER.info("Sending notification: " + makeLogHeader(template, sender, recipient));
+                LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
             } catch (IOException e) {
                 LOGGER.error("Failed to send notification", e);
                 throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
@@ -119,11 +111,44 @@ public class NotificationService {
         }
     }
 
+    private static Map<String, NotificationTemplate> indexTemplates(org.springframework.core.io.Resource[] resources, Map<String, NotificationProperty> propertiesMap) throws IOException {
+        TreeMap<String, NotificationTemplate> index = new TreeMap<>();
+        for (org.springframework.core.io.Resource resource : resources) {
+            String fileName = resource.getFilename().replace(".html", "");
+            Assert.notNull(Notification.valueOf(fileName), "Every template must have a related definition");
+            InputStream inputStream = resource.getInputStream();
+
+            Map<String, NotificationProperty> properties = new LinkedHashMap<>();
+            String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
+            String[] placeholders = StringUtils.substringsBetween(template, "${", "}");
+            for (String placeholder : placeholders) {
+                properties.put(placeholder, propertiesMap.get(placeholder));
+            }
+
+            Assert.isTrue(properties.size() == placeholders.length, "Every placeholder must have a property accessor");
+            index.put(fileName, new NotificationTemplate(template, properties));
+            IOUtils.closeQuietly(inputStream);
+        }
+
+        return index;
+    }
+
+    private String parseTemplate(NotificationTemplate notificationTemplate, NotificationInstance notificationInstance) {
+        Map<String, String> properties = new LinkedHashMap<>();
+        Map<String, NotificationProperty> subjectProperties = notificationTemplate.getProperties();
+        for (String placeholder : subjectProperties.keySet()) {
+            properties.put(placeholder, subjectProperties.get(placeholder).getValue(notificationInstance));
+        }
+
+        properties.putAll(notificationInstance.getCustomProperties());
+        StrSubstitutor subjectParser = new StrSubstitutor(properties);
+        return subjectParser.replace(notificationTemplate.getTemplate());
+    }
+
     private String makeLogHeader(String notification, String sender, String recipient) {
         return "notification=" + notification + ", sender=" + sender + ", recipient=" + recipient;
     }
 
-    // FIXME: remove trailing line break
     private String makePlainTextVersion(String html) {
         Document document = Jsoup.parse(html);
         Element body = document.select("body").first();
@@ -133,63 +158,86 @@ public class NotificationService {
             List<Element> as = p.select("a");
             if (CollectionUtils.isEmpty(as)) {
                 String[] lines = p.html().split("<br>");
-                plainText = plainText + Arrays.stream(lines).map(String::trim).collect(Collectors.joining("\n")) + "\n\n";
+                plainText += Arrays.stream(lines).map(String::trim).collect(Collectors.joining("\n")) + "\n\n";
             } else {
                 for (Element a : p.select("a")) {
-                    plainText = plainText + "\t- " + a.text() + ": " + a.attr("abs:href") + "\n";
+                    plainText += "\t- " + a.text() + ": " + a.attr("abs:href") + "\n";
                 }
-                plainText = plainText + "\n";
+
+                plainText += "\\n";
             }
         }
 
-        return plainText;
-    }
-
-    private static Map<String, String> indexResources(Resource[] resources) throws IOException {
-        TreeMap<String, String> index = new TreeMap<>();
-        for (Resource resource : resources) {
-            String fileName = resource.getFilename();
-            index.put(fileName.replace(".html", ""), IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8).trim());
-        }
-
-        return index;
+        return plainText.replaceAll("\n$", StringUtils.EMPTY);
     }
 
     private enum MailStrategy {
         LOG, SEND
     }
 
-    public static class NotificationInstance {
+    public static class NotificationTemplate {
 
         private String template;
 
-        private String sender;
+        private Map<String, NotificationProperty> properties;
 
-        private String recipient;
-
-        private Map<String, String> parameters;
-
-        public NotificationInstance(String template, String sender, String recipient, Map<String, String> parameters) {
+        public NotificationTemplate(String template, Map<String, NotificationProperty> properties) {
             this.template = template;
-            this.sender = sender;
-            this.recipient = recipient;
-            this.parameters = parameters;
+            this.properties = properties;
         }
 
         public String getTemplate() {
             return template;
         }
 
-        public String getSender() {
-            return sender;
+        public Map<String, NotificationProperty> getProperties() {
+            return properties;
         }
 
-        public String getRecipient() {
+        @Override
+        public String toString() {
+            return template;
+        }
+    }
+
+    public static class NotificationInstance {
+
+        private Notification notification;
+
+        private User recipient;
+
+        private Resource resource;
+
+        private Action action;
+
+        private Map<String, String> customProperties;
+
+        public NotificationInstance(Notification notification, User recipient, Resource resource, Action action, Map<String, String> customProperties) {
+            this.notification = notification;
+            this.recipient = recipient;
+            this.resource = resource;
+            this.action = action;
+            this.customProperties = customProperties;
+        }
+
+        public Notification getNotification() {
+            return notification;
+        }
+
+        public User getRecipient() {
             return recipient;
         }
 
-        public Map<String, String> getParameters() {
-            return parameters;
+        public Resource getResource() {
+            return resource;
+        }
+
+        public Action getAction() {
+            return action;
+        }
+
+        public Map<String, String> getCustomProperties() {
+            return customProperties;
         }
 
     }
