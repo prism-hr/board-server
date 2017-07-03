@@ -13,7 +13,7 @@ public class TestNotificationService extends NotificationService {
 
     private boolean recording = false;
 
-    private List<NotificationInstance> sent = new LinkedList<>();
+    private List<NotificationInstance> instances = new LinkedList<>();
 
     public void record() {
         this.recording = true;
@@ -26,7 +26,7 @@ public class TestNotificationService extends NotificationService {
     public void verify(NotificationInstance... expectedNotificationInstances) {
         Assert.assertEquals(1, expectedNotificationInstances.length);
         for (NotificationInstance expectedNotificationInstance : expectedNotificationInstances) {
-            NotificationInstance actualNotificationInstance = sent.remove(0);
+            NotificationInstance actualNotificationInstance = instances.remove(0);
             Assert.assertEquals(expectedNotificationInstance.getNotification(), actualNotificationInstance.getNotification());
             Assert.assertEquals(expectedNotificationInstance.getRecipient(), actualNotificationInstance.getRecipient());
 
@@ -52,7 +52,7 @@ public class TestNotificationService extends NotificationService {
     public Map<String, String> sendNotification(NotificationRequest request) {
         Map<String, String> properties = super.sendNotification(request);
         if (recording) {
-            sent.add(new NotificationInstance(request, properties));
+            instances.add(new NotificationInstance(request, properties));
         }
 
         return properties;
