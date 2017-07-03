@@ -70,7 +70,7 @@ public class BoardApi {
         return boardMapper.apply(boardService.executeAction(id, Action.EDIT, boardDTO));
     }
 
-    @RequestMapping(value = "/api/boards/{id}/{action}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/boards/{id}/actions/{action}", method = RequestMethod.POST)
     public BoardRepresentation executeAction(@PathVariable Long id, @PathVariable String action, @RequestBody @Valid BoardPatchDTO boardDTO) {
         Action actionEnum = Action.valueOf(action.toUpperCase());
         return boardMapper.apply(boardService.executeAction(id, actionEnum, boardDTO));

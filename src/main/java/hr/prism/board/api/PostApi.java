@@ -65,7 +65,7 @@ public class PostApi {
         return postMapper.apply(postService.executeAction(id, Action.EDIT, postDTO));
     }
 
-    @RequestMapping(value = "/api/posts/{id}/{action}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{id}/actions/{action}", method = RequestMethod.POST)
     public PostRepresentation executeAction(@PathVariable Long id, @PathVariable String action, @RequestBody @Valid PostPatchDTO postDTO) {
         Action actionEnum = Action.valueOf(action.toUpperCase());
         return postMapper.apply(postService.executeAction(id, actionEnum, postDTO));
