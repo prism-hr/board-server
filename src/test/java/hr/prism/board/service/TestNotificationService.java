@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class TestNotificationService extends NotificationService {
@@ -26,8 +27,7 @@ public class TestNotificationService extends NotificationService {
         Assert.assertEquals(1, expectedNotificationInstances.length);
         for (NotificationInstance expectedNotificationInstance : expectedNotificationInstances) {
             NotificationInstance actualNotificationInstance = sent.remove(0);
-            Assert.assertEquals(expectedNotificationInstance.getTemplate(), actualNotificationInstance.getTemplate());
-            Assert.assertEquals(expectedNotificationInstance.getSender(), actualNotificationInstance.getSender());
+            Assert.assertEquals(expectedNotificationInstance.getNotification(), actualNotificationInstance.getNotification());
             Assert.assertEquals(expectedNotificationInstance.getRecipient(), actualNotificationInstance.getRecipient());
 
             Map<String, String> actualParameters = actualNotificationInstance.getProperties();
@@ -49,11 +49,44 @@ public class TestNotificationService extends NotificationService {
     }
 
     @Override
-    public void sendNotification(NotificationInstance notificationInstance) {
-        super.sendNotification(notificationInstance);
+    public Map<String, String> sendNotification(NotificationRequest request) {
+        Map<String, String> properties = super.sendNotification(request);
         if (recording) {
-            sent.add(notificationInstance);
+            sent.add(new NotificationInstance(request, properties));
         }
+
+        return properties;
+    }
+
+    public static class NotificationInstance extends NotificationRequest {
+
+        private Map<String, String> properties;
+
+        public NotificationInstance(NotificationRequest request, Map<String, String> properties) {
+            super(request.getNotification(), request.getRecipient(), request.getResource(), request.getAction(), null);
+            this.properties = properties;
+        }
+
+        public Map<String, String> getProperties() {
+            return properties;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getNotification(), getRecipient(), getResource(), getAction(), properties);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (object == null || object.getClass() != getClass()) {
+                return false;
+            }
+
+            NotificationInstance that = (NotificationInstance) object;
+            return Objects.equals(getNotification(), that.getNotification()) && Objects.equals(getRecipient(), that.getRecipient())
+                && Objects.equals(getResource(), that.getResource()) && Objects.equals(getAction(), that.getAction()) && Objects.equals(properties, that.getProperties());
+        }
+
     }
 
 }

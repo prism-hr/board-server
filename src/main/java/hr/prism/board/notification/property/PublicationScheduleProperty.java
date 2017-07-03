@@ -15,8 +15,8 @@ public class PublicationScheduleProperty implements NotificationProperty {
     @Inject
     private PostService postService;
 
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        Post post = (Post) notificationInstance.getResource();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        Post post = (Post) notificationRequest.getResource();
         if (post.getState() == State.ACCEPTED) {
             return "immediately";
         }

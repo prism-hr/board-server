@@ -65,24 +65,22 @@ public class NotificationEventService {
             resource = resourceService.findOne(resourceId);
         }
 
-        List<Notification> notifications = notificationEvent.getNotifications();
-        HashMultimap<User, hr.prism.board.enums.Notification> sent = HashMultimap.create();
-
         State state = notificationEvent.getState();
         Action action = notificationEvent.getAction();
+
+        List<Notification> notifications = notificationEvent.getNotifications();
+        HashMultimap<User, hr.prism.board.enums.Notification> sent = HashMultimap.create();
         for (Notification notification : notifications) {
             State notificationState = notification.getState();
             if (notificationState == null || Objects.equals(state, notificationState)) {
                 hr.prism.board.enums.Notification template = notification.getNotification();
-                List<User> recipients = applicationContext.getBean(template.getRecipients()).list(resource, notification);
 
-                if (!recipients.isEmpty()) {
-                    for (User recipient : recipients) {
-                        if (!sent.containsEntry(recipient, template)) {
-                            notificationService.sendNotification(
-                                new NotificationService.NotificationInstance(template, recipient, resource, action, notification.getCustomProperties()));
-                            sent.put(recipient, template);
-                        }
+                List<User> recipients = applicationContext.getBean(template.getRecipients()).list(resource, notification);
+                for (User recipient : recipients) {
+                    if (!sent.containsEntry(recipient, template)) {
+                        notificationService.sendNotification(
+                            new NotificationService.NotificationRequest(template, recipient, resource, action, notification.getCustomProperties()));
+                        sent.put(recipient, template);
                     }
                 }
             }

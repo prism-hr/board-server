@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 public class AuthenticationProperty implements NotificationProperty {
 
     @Override
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        User recipient = notificationInstance.getRecipient();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        User recipient = notificationRequest.getRecipient();
         if (recipient.getPassword() == null && recipient.getOauthProvider() == null) {
             return "register";
         }

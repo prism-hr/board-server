@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -38,9 +37,11 @@ public class NotificationService {
 
     private MailStrategy mailStrategy;
 
-    private Map<String, NotificationTemplate> subjects;
+    private Map<Notification, String> subjects = new TreeMap<>();
 
-    private Map<String, NotificationTemplate> contents;
+    private Map<Notification, String> contents = new TreeMap<>();
+
+    private Map<Notification, Map<String, NotificationProperty>> properties = new TreeMap<>();
 
     @Inject
     private SendGrid sendGrid;
@@ -60,24 +61,49 @@ public class NotificationService {
             mailStrategy = MailStrategy.SEND;
         }
 
-        org.springframework.core.io.Resource[] subjects = applicationContext.getResources("classpath:notification/subject/*.html");
-        org.springframework.core.io.Resource[] contents = applicationContext.getResources("classpath:notification/content/*.html");
-
         Map<String, NotificationProperty> propertiesMap =
             applicationContext.getBeansOfType(NotificationProperty.class).values().stream().collect(Collectors.toMap(NotificationProperty::getKey, property -> property));
 
-        this.subjects = indexTemplates(subjects, propertiesMap);
-        this.contents = indexTemplates(contents, propertiesMap);
-        Assert.isTrue(this.subjects.keySet().equals(this.contents.keySet()), "Every template must have a subject and content");
+        for (Notification notification : Notification.values()) {
+            org.springframework.core.io.Resource subject = applicationContext.getResource("classpath:notification/subject/" + notification + ".html");
+            org.springframework.core.io.Resource content = applicationContext.getResource("classpath:notification/content/" + notification + ".html");
+            if (!subject.exists() || !content.exists()) {
+                throw new BoardException(ExceptionCode.MISSING_NOTIFICATION);
+            }
+
+            Set<String> placeholders = new HashSet<>();
+            placeholders.addAll(indexTemplate(notification, subject, this.subjects));
+            placeholders.addAll(indexTemplate(notification, content, this.contents));
+
+            Map<String, NotificationProperty> properties = new TreeMap<>();
+            for (String placeholder : placeholders) {
+                NotificationProperty property = propertiesMap.get(placeholder);
+                if (property == null) {
+                    throw new BoardException(ExceptionCode.MISSING_NOTIFICATION_PROPERTY);
+                }
+
+                properties.put(placeholder, property);
+            }
+
+            this.properties.put(notification, properties);
+        }
     }
 
-    public void sendNotification(NotificationInstance notificationInstance) {
+    public Map<String, String> sendNotification(NotificationRequest request) {
         String senderEmail = environment.getProperty("system.email");
-        String recipientEmail = notificationInstance.getRecipient().getEmail();
-        String notification = notificationInstance.getNotification().toString();
+        String recipientEmail = request.getRecipient().getEmail();
+        Notification notification = request.getNotification();
 
-        String subject = parseTemplate(this.subjects.get(notification), notificationInstance);
-        String content = parseTemplate(this.contents.get(notification), notificationInstance);
+        Map<String, String> properties = this.properties.get(notification).entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getValue(request)));
+        Map<String, String> customProperties = request.getCustomProperties();
+        if (customProperties != null) {
+            properties.putAll(customProperties);
+        }
+
+        StrSubstitutor parser = new StrSubstitutor(properties);
+        String subject = parser.replace(this.subjects.get(notification));
+        String content = parser.replace(this.contents.get(notification));
 
         if (mailStrategy == MailStrategy.LOG) {
             // Local/Test contexts
@@ -97,11 +123,11 @@ public class NotificationService {
             mail.addContent(new Content("text/html", content));
 
             try {
-                Request request = new Request();
-                request.setMethod(Method.POST);
-                request.setEndpoint("mail/send");
-                request.setBody(mail.build());
-                sendGrid.api(request);
+                Request sendGridRequest = new Request();
+                sendGridRequest.setMethod(Method.POST);
+                sendGridRequest.setEndpoint("mail/send");
+                sendGridRequest.setBody(mail.build());
+                sendGrid.api(sendGridRequest);
 
                 LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
             } catch (IOException e) {
@@ -109,43 +135,19 @@ public class NotificationService {
                 throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
             }
         }
+
+        return properties;
     }
 
-    private static Map<String, NotificationTemplate> indexTemplates(org.springframework.core.io.Resource[] resources, Map<String, NotificationProperty> propertiesMap) throws IOException {
-        TreeMap<String, NotificationTemplate> index = new TreeMap<>();
-        for (org.springframework.core.io.Resource resource : resources) {
-            String fileName = resource.getFilename().replace(".html", "");
-            Assert.notNull(Notification.valueOf(fileName), "Every template must have a related definition");
-            InputStream inputStream = resource.getInputStream();
-
-            Map<String, NotificationProperty> properties = new LinkedHashMap<>();
-            String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
-            String[] placeholders = StringUtils.substringsBetween(template, "${", "}");
-            for (String placeholder : placeholders) {
-                properties.put(placeholder, propertiesMap.get(placeholder));
-            }
-
-            Assert.isTrue(properties.size() == placeholders.length, "Every placeholder must have a property accessor");
-            index.put(fileName, new NotificationTemplate(template, properties));
-            IOUtils.closeQuietly(inputStream);
-        }
-
-        return index;
+    private List<String> indexTemplate(Notification notification, org.springframework.core.io.Resource resource, Map<Notification, String> index) throws IOException {
+        InputStream inputStream = resource.getInputStream();
+        String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
+        index.put(notification, template);
+        IOUtils.closeQuietly(inputStream);
+        return Arrays.asList(StringUtils.substringsBetween(template, "${", "}"));
     }
 
-    private String parseTemplate(NotificationTemplate notificationTemplate, NotificationInstance notificationInstance) {
-        Map<String, String> properties = new LinkedHashMap<>();
-        Map<String, NotificationProperty> subjectProperties = notificationTemplate.getProperties();
-        for (String placeholder : subjectProperties.keySet()) {
-            properties.put(placeholder, subjectProperties.get(placeholder).getValue(notificationInstance));
-        }
-
-        properties.putAll(notificationInstance.getCustomProperties());
-        StrSubstitutor subjectParser = new StrSubstitutor(properties);
-        return subjectParser.replace(notificationTemplate.getTemplate());
-    }
-
-    private String makeLogHeader(String notification, String sender, String recipient) {
+    private String makeLogHeader(Notification notification, String sender, String recipient) {
         return "notification=" + notification + ", sender=" + sender + ", recipient=" + recipient;
     }
 
@@ -164,43 +166,18 @@ public class NotificationService {
                     plainText += "\t- " + a.text() + ": " + a.attr("abs:href") + "\n";
                 }
 
-                plainText += "\\n";
+                plainText += "\n";
             }
         }
 
-        return plainText.replaceAll("\n$", StringUtils.EMPTY);
+        return plainText.replaceAll("\\n$", StringUtils.EMPTY);
     }
 
     private enum MailStrategy {
         LOG, SEND
     }
 
-    public static class NotificationTemplate {
-
-        private String template;
-
-        private Map<String, NotificationProperty> properties;
-
-        public NotificationTemplate(String template, Map<String, NotificationProperty> properties) {
-            this.template = template;
-            this.properties = properties;
-        }
-
-        public String getTemplate() {
-            return template;
-        }
-
-        public Map<String, NotificationProperty> getProperties() {
-            return properties;
-        }
-
-        @Override
-        public String toString() {
-            return template;
-        }
-    }
-
-    public static class NotificationInstance {
+    public static class NotificationRequest {
 
         private Notification notification;
 
@@ -212,7 +189,7 @@ public class NotificationService {
 
         private Map<String, String> customProperties;
 
-        public NotificationInstance(Notification notification, User recipient, Resource resource, Action action, Map<String, String> customProperties) {
+        public NotificationRequest(Notification notification, User recipient, Resource resource, Action action, Map<String, String> customProperties) {
             this.notification = notification;
             this.recipient = recipient;
             this.resource = resource;

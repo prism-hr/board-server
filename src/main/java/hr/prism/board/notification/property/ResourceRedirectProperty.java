@@ -13,8 +13,8 @@ public class ResourceRedirectProperty implements NotificationProperty {
     private Environment environment;
 
     @Override
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        return environment.getProperty("server.url") + "/redirect?resource=" + notificationInstance.getResource().getId();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        return environment.getProperty("server.url") + "/redirect?resource=" + notificationRequest.getResource().getId();
     }
 
 }

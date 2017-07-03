@@ -13,8 +13,8 @@ public class PostProperty implements NotificationProperty {
     @Inject
     private ResourceService resourceService;
 
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        return resourceService.findByResourceAndEnclosingScope(notificationInstance.getResource(), Scope.POST).getName();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), Scope.POST).getName();
     }
 
 }

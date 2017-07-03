@@ -13,7 +13,7 @@ public class EnvironmentProperty implements NotificationProperty {
     private Environment environment;
 
     @Override
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
         return environment.getProperty("environment");
     }
 

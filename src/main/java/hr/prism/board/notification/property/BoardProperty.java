@@ -13,8 +13,8 @@ public class BoardProperty implements NotificationProperty {
     @Inject
     private ResourceService resourceService;
 
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        return resourceService.findByResourceAndEnclosingScope(notificationInstance.getResource(), Scope.BOARD).getName();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), Scope.BOARD).getName();
     }
 
 }

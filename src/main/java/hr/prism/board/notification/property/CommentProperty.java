@@ -12,8 +12,8 @@ public class CommentProperty implements NotificationProperty {
     @Inject
     private ResourceService resourceService;
 
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        return resourceService.getLatestResourceOperation(notificationInstance.getResource(), notificationInstance.getAction()).getComment();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        return resourceService.getLatestResourceOperation(notificationRequest.getResource(), notificationRequest.getAction()).getComment();
     }
 
 }

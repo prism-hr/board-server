@@ -84,8 +84,9 @@ public class UserRoleCacheService {
         }
 
         if (notify) {
-            Notification notification = new Notification().setUserId(user.getId()).setExcludingCreator(true).setNotification("join_" + scope.name().toLowerCase());
-            notificationEventService.publishEvent(this, currentUser.getId(), resource.getId(), Collections.singletonList(notification));
+            Notification notification = new Notification().setUserId(user.getId())
+                .setExcludingCreator(true).setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scope.name()));
+            notificationEventService.publishEvent(this, resource.getId(), Collections.singletonList(notification));
         }
     }
 

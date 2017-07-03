@@ -21,6 +21,8 @@ public enum Notification {
     REJECT_BOARD(AuthorizedRecipientList.class),
     REJECT_POST(AuthorizedRecipientList.class),
     RESET_PASSWORD(DefinedRecipientList.class),
+    RESTORE_BOARD(AuthorizedRecipientList.class),
+    RESTORE_POST(AuthorizedRecipientList.class),
     RETIRE_POST(AuthorizedRecipientList.class),
     SUSPEND_POST(AuthorizedRecipientList.class);
 

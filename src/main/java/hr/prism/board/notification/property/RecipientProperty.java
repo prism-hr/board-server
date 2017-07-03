@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 public class RecipientProperty implements NotificationProperty {
 
     @Override
-    public String getValue(NotificationService.NotificationInstance notificationInstance) {
-        return notificationInstance.getRecipient().getGivenName();
+    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+        return notificationRequest.getRecipient().getGivenName();
     }
 
 }

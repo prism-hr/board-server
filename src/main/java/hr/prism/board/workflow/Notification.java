@@ -19,6 +19,7 @@ public class Notification {
 
     private Scope scope;
 
+    @JsonIgnore
     private Long userId;
 
     private Role role;
@@ -29,6 +30,7 @@ public class Notification {
 
     private hr.prism.board.enums.Notification notification;
 
+    @JsonIgnore
     private Map<String, String> customProperties;
 
     public Notification setWorkflow(Workflow workflow) {
