@@ -8,10 +8,11 @@ import hr.prism.board.dto.LoginDTO;
 import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.enums.Notification;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.AuthenticationService;
-import hr.prism.board.service.NotificationService;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.cache.UserCacheService;
 import io.jsonwebtoken.Jwts;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -154,9 +155,9 @@ public class AuthenticationApiIT extends AbstractIT {
         LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
         Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
-        testNotificationService.verify(new NotificationService.NotificationRequest("reset_password", "admin@prism.hr", "alastair@prism.hr",
-            ImmutableMap.of("environment", environment.getProperty("environment"), "recipient", "alastair", "temporaryPassword", "defined",
-                "redirectUrl", environment.getProperty("server.url") + "/redirect?action=login")));
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD, user,
+            ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "temporaryPassword", "defined", "homeRedirect",
+                environment.getProperty("server.url") + "/redirect", "authentication", "register")));
 
         // Set the temporary password to something that we know
         transactionTemplate.execute(status -> userCacheService.findOneFresh(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));

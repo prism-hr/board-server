@@ -15,6 +15,7 @@ import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.PostService;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
@@ -494,16 +495,17 @@ public class PostApiIT extends AbstractIT {
         String postUserGivenName = postUser.getGivenName();
 
         String environmentName = environment.getProperty("environment");
-        String redirectUrl = environment.getProperty("server.url") + "/redirect?resourceId=" + postId + "&action=login";
+        String resourceRedirect = environment.getProperty("server.url") + "/redirect?resourceId=" + postId;
 
         testNotificationService.verify(
-            new NotificationService.NotificationRequest("new_post_parent", "admin@prism.hr", departmentUserEmail,
-                ImmutableMap.of("environment", environmentName, "recipient", departmentUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", redirectUrl)),
+            new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT, departmentUser,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
+                    .put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new NotificationService.NotificationRequest("new_post_parent", "admin@prism.hr", boardUserEmail,
-                ImmutableMap.of("environment", environmentName, "recipient", boardUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", redirectUrl)),
+                ImmutableMap.of("environment", environmentName, "recipient", boardUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", resourceRedirect)),
             new NotificationService.NotificationRequest("new_post", "admin@prism.hr", postUserEmail,
                 ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("redirectUrl", redirectUrl).build()));
+                    .put("board", boardName).put("post", postName).put("redirectUrl", resourceRedirect).build()));
 
         // Create unprivileged users
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
@@ -564,7 +566,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(new NotificationService.NotificationRequest("suspend_post", "admin@prism.hr", postUserEmail,
             ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
                 .put("board", boardName).put("post", postName).put("comment", getLatestResourceOperation(postId, Action.SUSPEND).getComment())
-                .put("redirectUrl", redirectUrl).build()));
+                .put("redirectUrl", resourceRedirect).build()));
 
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
@@ -590,10 +592,10 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new NotificationService.NotificationRequest("correct_post", "admin@prism.hr", departmentUserEmail,
                 ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("redirectUrl", redirectUrl).build()),
+                    .put("board", boardName).put("post", postName).put("redirectUrl", resourceRedirect).build()),
             new NotificationService.NotificationRequest("new_post_parent", "admin@prism.hr", boardUserEmail,
                 ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("redirectUrl", redirectUrl).build()));
+                    .put("board", boardName).put("post", postName).put("redirectUrl", resourceRedirect).build()));
 
         // Check that the administrator can accept post in the suspended state
         PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
@@ -607,7 +609,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new NotificationService.NotificationRequest("accept_post", "admin@prism.hr", postUserEmail,
                 ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
-                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", redirectUrl).build()));
+                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", resourceRedirect).build()));
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
@@ -617,7 +619,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(new NotificationService.NotificationRequest("suspend_post", "admin@prism.hr", postUserEmail,
             ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
                 .put("board", boardName).put("post", postName).put("comment", getLatestResourceOperation(postId, Action.SUSPEND).getComment())
-                .put("redirectUrl", redirectUrl).build()));
+                .put("redirectUrl", resourceRedirect).build()));
 
         // Check that the administrator can make further changes and accept the post again
         PostPatchDTO acceptPendingDTO = (PostPatchDTO) new PostPatchDTO()
@@ -633,7 +635,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new NotificationService.NotificationRequest("accept_post", "admin@prism.hr", postUserEmail,
                 ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
-                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", redirectUrl).build()));
+                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", resourceRedirect).build()));
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);

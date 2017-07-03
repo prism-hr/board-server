@@ -24,9 +24,9 @@ public class RedirectApi {
 
     @RequestMapping(value = "/api/redirect", method = RequestMethod.GET)
     public void redirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String action = request.getParameter("action");
-        if (action == null) {
-            throw new IllegalArgumentException("redirect must specify an action");
+        String modal = request.getParameter("modal");
+        if (modal == null) {
+            throw new IllegalArgumentException("redirect must specify a modal action");
         }
 
         String handle = StringUtils.EMPTY;
@@ -36,7 +36,7 @@ public class RedirectApi {
         }
 
         String appUrl = environment.getProperty("app.url");
-        response.sendRedirect(appUrl + "/" + handle + "?show" + WordUtils.capitalize(action) + "=true");
+        response.sendRedirect(appUrl + "/" + handle + "?show" + WordUtils.capitalize(modal) + "=true");
     }
 
 }

@@ -5,7 +5,7 @@ import hr.prism.board.service.NotificationService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthenticationProperty implements NotificationProperty {
+public class ModalProperty implements NotificationProperty {
 
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {

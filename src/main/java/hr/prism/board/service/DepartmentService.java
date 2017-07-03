@@ -31,13 +31,13 @@ public class DepartmentService {
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, " +
             "document_logo.cloudinary_url, document_logo.file_name, " +
-            "if(state = :state, 1, 0) AS accepted, " +
+            "if(resource.scope = :scope and resource.state = :state, 1, 0) AS valid, " +
             "if(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
             "match resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
             "LEFT JOIN document AS document_logo " +
             "ON resource.document_logo_id = document_logo.id " +
-            "HAVING accepted = 1 " +
+            "HAVING valid = 1 " +
             "AND (similarityHard = 1 " +
             "OR similaritySoft > 0) " +
             "ORDER BY similarityHard desc, similaritySoft desc, resource.name " +
@@ -157,6 +157,7 @@ public class DepartmentService {
             entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
                 .setParameter("searchTermHard", searchTerm + "%")
                 .setParameter("searchTermSoft", searchTerm)
+                .setParameter("scope", Scope.DEPARTMENT.name())
                 .setParameter("state", State.ACCEPTED.name())
                 .getResultList());
 
