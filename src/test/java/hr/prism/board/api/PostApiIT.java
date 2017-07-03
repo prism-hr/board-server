@@ -561,10 +561,10 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
 
-        testNotificationService.verify(new NotificationService.NotificationRequest("suspend_post", "admin@prism.hr", postUserEmail,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST, postUser,
             ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("comment", getLatestResourceOperation(postId, Action.SUSPEND).getComment())
-                .put("redirectUrl", resourceRedirect).build()));
+                .put("board", boardName).put("post", postName).put("comment", "could you please explain what you will pay the successful applicant")
+                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
@@ -588,12 +588,12 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         testNotificationService.verify(
-            new NotificationService.NotificationRequest("correct_post", "admin@prism.hr", departmentUserEmail,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("redirectUrl", resourceRedirect).build()),
-            new NotificationService.NotificationRequest("new_post_parent", "admin@prism.hr", boardUserEmail,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("redirectUrl", resourceRedirect).build()));
+            new TestNotificationService.NotificationInstance(Notification.CORRECT_POST, departmentUser,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("post", postName)
+                    .put("department", departmentName).put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+            new TestNotificationService.NotificationInstance(Notification.CORRECT_POST, boardUser,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("post", postName)
+                    .put("department", departmentName).put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the administrator can accept post in the suspended state
         PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
@@ -604,10 +604,10 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        testNotificationService.verify(
-            new NotificationService.NotificationRequest("accept_post", "admin@prism.hr", postUserEmail,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
-                    .put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER)).put("redirectUrl", resourceRedirect).build()));
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST, postUser,
+            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
+                .put("board", boardName).put("post", postName).put("comment", "could you please explain what you will pay the successful applicant")
+                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
