@@ -487,11 +487,8 @@ public class PostApiIT extends AbstractIT {
         String boardName = boardR.getName();
         String postName = postR.getName();
 
-        String departmentUserEmail = departmentUser.getEmail();
         String departmentUserGivenName = departmentUser.getGivenName();
-        String boardUserEmail = boardUser.getEmail();
         String boardUserGivenName = boardUser.getGivenName();
-        String postUserEmail = postUser.getEmail();
         String postUserGivenName = postUser.getGivenName();
 
         String environmentName = environment.getProperty("environment");
@@ -501,11 +498,12 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT, departmentUser,
                 ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
                     .put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
-            new NotificationService.NotificationRequest("new_post_parent", "admin@prism.hr", boardUserEmail,
-                ImmutableMap.of("environment", environmentName, "recipient", boardUserGivenName, "department", departmentName, "board", boardName, "redirectUrl", resourceRedirect)),
-            new NotificationService.NotificationRequest("new_post", "admin@prism.hr", postUserEmail,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("redirectUrl", resourceRedirect).build()));
+            new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT, boardUser,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("department", departmentName)
+                    .put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+            new TestNotificationService.NotificationInstance(Notification.NEW_POST, postUser,
+                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
+                    .put("board", boardName).put("post", postName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Create unprivileged users
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
