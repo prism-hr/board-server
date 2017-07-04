@@ -12,7 +12,6 @@ import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserService;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -50,6 +49,11 @@ public class DepartmentApi {
         return departmentService.getDepartments(includePublic).stream().map(department -> departmentMapper.apply(department)).collect(Collectors.toList());
     }
 
+    @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "query")
+    public List<DepartmentRepresentation> lookupDepartments(@RequestParam String query) {
+        return departmentService.findBySimilarName(query);
+    }
+
     @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long id) {
         return departmentMapper.apply(departmentService.getDepartment(id));
@@ -69,11 +73,6 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.PATCH)
     public DepartmentRepresentation updateDepartment(@PathVariable Long id, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
         return departmentMapper.apply(departmentService.updateDepartment(id, departmentDTO));
-    }
-
-    @RequestMapping(value = "/api/departments/similarDepartments", method = RequestMethod.GET)
-    public List<DepartmentRepresentation> getSimilarDepartments(@RequestParam @NotEmpty String searchTerm) {
-        return departmentService.findBySimilarName(searchTerm);
     }
 
 }

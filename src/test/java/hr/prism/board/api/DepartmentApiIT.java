@@ -297,29 +297,29 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/department_autosuggest_setup.sql")
     public void shouldSuggestDepartments() {
-        List<DepartmentRepresentation> departmentRs = departmentApi.getSimilarDepartments("Computer");
+        List<DepartmentRepresentation> departmentRs = departmentApi.lookupDepartments("Computer");
         Assert.assertEquals(3, departmentRs.size());
 
         verifySuggestedDepartment("Computer Science Department", departmentRs.get(0));
         verifySuggestedDepartment("Department of Computer Science", departmentRs.get(1));
         verifySuggestedDepartment("Laboratory for the Foundations of Computer Science", departmentRs.get(2));
 
-        departmentRs = departmentApi.getSimilarDepartments("Computer Science Laboratory");
+        departmentRs = departmentApi.lookupDepartments("Computer Science Laboratory");
         Assert.assertEquals(3, departmentRs.size());
 
         verifySuggestedDepartment("Laboratory for the Foundations of Computer Science", departmentRs.get(0));
         verifySuggestedDepartment("Computer Science Department", departmentRs.get(1));
         verifySuggestedDepartment("Department of Computer Science", departmentRs.get(2));
 
-        departmentRs = departmentApi.getSimilarDepartments("School of Informatics");
+        departmentRs = departmentApi.lookupDepartments("School of Informatics");
         Assert.assertEquals(1, departmentRs.size());
 
         verifySuggestedDepartment("School of Informatics", departmentRs.get(0));
 
-        departmentRs = departmentApi.getSimilarDepartments("Physics");
+        departmentRs = departmentApi.lookupDepartments("Physics");
         Assert.assertEquals(0, departmentRs.size());
 
-        departmentRs = departmentApi.getSimilarDepartments("Mathematics");
+        departmentRs = departmentApi.lookupDepartments("Mathematics");
         Assert.assertEquals(0, departmentRs.size());
     }
 
