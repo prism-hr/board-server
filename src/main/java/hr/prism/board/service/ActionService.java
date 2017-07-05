@@ -61,7 +61,7 @@ public class ActionService {
                         newState = applicationContext.getBean(interceptorClass).intercept(user, newResource, newState, action);
                     }
 
-                    boolean stateChanged = state != newState;
+                    boolean stateChanged = newState != state;
                     if (stateChanged) {
                         resourceService.updateState(newResource, newState);
                         newResource = resourceService.getResource(user, newResource.getScope(), newResource.getId());
