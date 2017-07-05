@@ -16,7 +16,6 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.util.BoardUtils;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -26,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,12 +38,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @SuppressWarnings("unchecked")
 public class ResourceApiIT extends AbstractIT {
-
-    @Inject
-    private ResourceApi resourceApi;
-
-    @Inject
-    private UserCacheService userCacheService;
 
     @Test
     public void shouldAddAndRemoveRoles() {

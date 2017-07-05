@@ -18,6 +18,7 @@ import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.*;
+import hr.prism.board.service.cache.UserCacheService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -45,6 +46,9 @@ public abstract class AbstractIT {
     TransactionTemplate transactionTemplate;
 
     @Inject
+    ResourceApi resourceApi;
+
+    @Inject
     DepartmentApi departmentApi;
 
     @Inject
@@ -61,6 +65,9 @@ public abstract class AbstractIT {
 
     @Inject
     ResourceService resourceService;
+
+    @Inject
+    UserCacheService userCacheService;
 
     @Inject
     UserRoleService userRoleService;

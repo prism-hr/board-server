@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -645,9 +646,79 @@ public class PostApiIT extends AbstractIT {
             return null;
         });
 
+        // Should be notified
+        testUserService.setAuthentication(departmentUser.getId());
+        Long departmentMember1Id = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(
+                new UserDTO()
+                    .setGivenName("student1")
+                    .setSurname("student1")
+                    .setEmail("student1@student1.com"))
+                .setRoles(Collections.singleton(
+                    new UserRoleDTO()
+                        .setRole(Role.MEMBER)
+                        .setExpiryDate(LocalDate.now().plusDays(1))
+                        .setCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT))
+                ))).getUser().getId();
+
+        // Should be notified
+        Long departmentMember2Id = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(
+                new UserDTO()
+                    .setGivenName("student2")
+                    .setSurname("student2")
+                    .setEmail("student2@student2.com"))
+                .setRoles(Collections.singleton(
+                    new UserRoleDTO()
+                        .setRole(Role.MEMBER)
+                        .setExpiryDate(LocalDate.now().plusDays(1))
+                        .setCategories(Arrays.asList(MemberCategory.MASTER_STUDENT))
+                ))).getUser().getId();
+
+        // Should not be notified
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(
+                new UserDTO()
+                    .setGivenName("student3")
+                    .setSurname("student3")
+                    .setEmail("student3@student3.com"))
+                .setRoles(Collections.singleton(
+                    new UserRoleDTO()
+                        .setRole(Role.MEMBER)
+                        .setExpiryDate(LocalDate.now().plusDays(1))
+                        .setCategories(Arrays.asList(MemberCategory.RESEARCH_STUDENT))
+                )));
+
+        // Should not be notified
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(
+                new UserDTO()
+                    .setGivenName("student4")
+                    .setSurname("student4")
+                    .setEmail("student4@student4.com"))
+                .setRoles(Collections.singleton(
+                    new UserRoleDTO()
+                        .setRole(Role.MEMBER)
+                        .setExpiryDate(LocalDate.now().minusDays(1))
+                        .setCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT))
+                )));
+
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
+
+        String parentRedirect = environment.getProperty("server.url") + "/redirect?resource=" + boardId;
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember1Id),
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
+                    .put("parentRedirect", parentRedirect).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember2Id),
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
+                    .put("parentRedirect", parentRedirect).build()));
 
         // Check that the administrator can reject the post
         PostPatchDTO rejectDTO = (PostPatchDTO) new PostPatchDTO()
@@ -656,12 +727,21 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeAction(postId, "reject", rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
 
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST, postUser,
+            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", environment.getProperty("server.url") + "/redirect" + postId)
+                .put("modal", "Login").build()));
+
         // Check that the administrator can restore the post
         PostPatchDTO restoreFromRejectedDTO = (PostPatchDTO) new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_POST, postUser,
+            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                .put("comment", "sorry we made a mistake, we're restoring the post").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
@@ -674,13 +754,11 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
         // Check that the author can withdraw the post
-        // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO withdrawDTO = new PostPatchDTO();
         verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeAction(postId, "withdraw", withdrawDTO), State.WITHDRAWN);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.WITHDRAWN, operations);
 
         // Check that the author can restore the post
-        // It is likely that the comment would be empty in this case - we can make it optional
         PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO();
 
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeAction(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
@@ -695,6 +773,18 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember1Id),
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
+                    .put("parentRedirect", parentRedirect).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember2Id),
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
+                    .put("parentRedirect", parentRedirect).build()));
         testNotificationService.clear();
 
         testUserService.setAuthentication(postUser.getId());
