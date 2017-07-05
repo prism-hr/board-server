@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.3.RELEASE</version>
+        <version>1.5.4.RELEASE</version>
     </parent>
 
     <properties>
@@ -118,7 +118,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>21.0</version>
+            <version>22.0</version>
         </dependency>
 
         <dependency>
@@ -142,7 +142,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
+            <version>3.6</version>
         </dependency>
 
         <dependency>
@@ -160,7 +160,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.10.2</version>
+            <version>1.10.3</version>
         </dependency>
 
         <dependency>
