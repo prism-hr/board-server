@@ -142,7 +142,7 @@ public class TestHelper {
 
         baseline = baseline.truncatedTo(ChronoUnit.SECONDS);
         int seconds = baseline.getSecond();
-        if (seconds > 9) {
+        if (seconds > 0) {
             return baseline.toString();
         }
 

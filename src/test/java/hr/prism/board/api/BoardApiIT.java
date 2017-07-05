@@ -404,11 +404,10 @@ public class BoardApiIT extends AbstractIT {
 
     private BoardRepresentation verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        return transactionTemplate.execute(status -> {
-            Board board = boardService.getBoard(boardId);
-            boardApi.updateBoard(boardId, boardDTO);
-            BoardRepresentation boardR = boardApi.getBoard(boardId);
+        Board board = transactionTemplate.execute(status -> boardService.getBoard(boardId));
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.updateBoard(boardId, boardDTO));
 
+        return transactionTemplate.execute(status -> {
             Optional<String> nameOptional = boardDTO.getName();
             Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
 

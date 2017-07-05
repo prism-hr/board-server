@@ -8,32 +8,21 @@ public enum Action {
 
     VIEW(false),
     AUDIT(false),
-    EDIT(true),
-    EXTEND(true),
-    ACCEPT(true), // Comment optional
-    SUSPEND(true, true), // Comment required
-    CORRECT(true), // Comment optional
-    REJECT(true, true), // Comment required
-    PUBLISH(true),
-    RETIRE(true),
-    RESTORE(true), // Comment optional for restore from reject, no comment for restore from withdrawn
-    WITHDRAW(true);
-
-    private boolean resourceOperation;
+    EDIT(false),
+    EXTEND(false),
+    ACCEPT(false), // Comment optional
+    SUSPEND(true), // Comment required
+    CORRECT(false), // Comment optional
+    REJECT(true), // Comment required
+    PUBLISH(false),
+    RETIRE(false),
+    RESTORE(false), // Comment optional for restore from reject, no comment for restore from withdrawn
+    WITHDRAW(false);
 
     private boolean requireComment;
 
-    Action(boolean resourceOperation) {
-        this.resourceOperation = resourceOperation;
-    }
-
-    Action(boolean resourceOperation, boolean requireComment) {
-        this.resourceOperation = resourceOperation;
+    Action(boolean requireComment) {
         this.requireComment = requireComment;
-    }
-
-    public boolean isResourceOperation() {
-        return resourceOperation;
     }
 
     public boolean isRequireComment() {

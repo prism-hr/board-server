@@ -915,10 +915,10 @@ public class PostApiIT extends AbstractIT {
 
     private PostRepresentation verifyPatchPost(User user, Long postId, PostPatchDTO postDTO, PostOperation operation, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        return transactionTemplate.execute(status -> {
-            Post post = postService.getPost(postId);
-            PostRepresentation postR = operation.execute();
+        Post post = transactionTemplate.execute(status -> postService.getPost(postId));
+        PostRepresentation postR = transactionTemplate.execute(status -> operation.execute());
 
+        return transactionTemplate.execute(status -> {
             Optional<String> nameOptional = postDTO.getName();
             assertEquals(nameOptional == null ? post.getName() : nameOptional.orElse(null), postR.getName());
 
@@ -949,13 +949,16 @@ public class PostApiIT extends AbstractIT {
                 existingRelationExplanationOptional.orElse(null), postR.getExistingRelationExplanation());
 
             Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
-            assertEquals(applyWebsiteOptional == null ? post.getApplyWebsite() : applyWebsiteOptional.orElse(null), postR.getApplyWebsite());
-
             Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
-            verifyDocument(applyDocumentOptional == null ? post.getApplyDocument() : applyDocumentOptional.orElse(null), postR.getApplyDocument());
+            Optional<String> applyEmailOptional = postDTO.getApplyEmail();
+            boolean applyNotPatched = applyWebsiteOptional == null && applyDocumentOptional == null && applyEmailOptional == null;
 
-            Optional<String> applyEmail = postDTO.getApplyEmail();
-            assertEquals(applyEmail == null ? post.getApplyEmail() : applyEmail.orElse(null), postR.getApplyEmail());
+            assertEquals(applyNotPatched ? post.getApplyWebsite() :
+                applyWebsiteOptional == null ? null : applyWebsiteOptional.orElse(null), postR.getApplyWebsite());
+            verifyDocument(applyNotPatched ? post.getApplyDocument() :
+                applyDocumentOptional == null ? null : applyDocumentOptional.orElse(null), postR.getApplyDocument());
+            assertEquals(applyNotPatched ? post.getApplyEmail() :
+                applyEmailOptional == null ? null : applyEmailOptional.orElse(null), postR.getApplyEmail());
 
             Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
             assertEquals(liveTimestampOptional == null ? post.getLiveTimestamp() : liveTimestampOptional.orElse(null), postR.getLiveTimestamp());

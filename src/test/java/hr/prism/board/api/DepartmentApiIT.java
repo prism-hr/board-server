@@ -268,7 +268,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.clear();
 
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
-        Assert.assertEquals(7, resourceOperationRs.size());
+        Assert.assertEquals(5, resourceOperationRs.size());
 
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
@@ -365,11 +365,10 @@ public class DepartmentApiIT extends AbstractIT {
 
     private DepartmentRepresentation verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        return transactionTemplate.execute(status -> {
-            Department department = departmentService.getDepartment(departmentId);
-            departmentApi.updateDepartment(departmentId, departmentDTO);
-            DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
+        Department department = transactionTemplate.execute(status -> departmentService.getDepartment(departmentId));
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.updateDepartment(departmentId, departmentDTO));
 
+        return transactionTemplate.execute(status -> {
             Optional<String> nameOptional = departmentDTO.getName();
             Assert.assertEquals(nameOptional == null ? department.getName() : nameOptional.orElse(null), departmentR.getName());
 

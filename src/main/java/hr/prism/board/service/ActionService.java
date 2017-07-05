@@ -13,6 +13,7 @@ import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Execution;
 import hr.prism.board.workflow.Notification;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -46,28 +47,28 @@ public class ActionService {
         if (actions != null) {
             for (ActionRepresentation actionRepresentation : actions) {
                 if (actionRepresentation.getAction() == action) {
-                    State newState = null;
-                    resource = execution.execute();
-                    if (action.isResourceOperation()) {
-                        State state = resource.getState();
-                        newState = actionRepresentation.getState();
-                        if (newState == null) {
-                            newState = state;
-                        } else if (newState == State.PREVIOUS) {
-                            newState = resource.getPreviousState();
-                        }
+                    Resource newResource = execution.execute();
+                    State state = newResource.getState();
+                    State newState = actionRepresentation.getState();
+                    if (newState == null) {
+                        newState = state;
+                    } else if (newState == State.PREVIOUS) {
+                        newState = newResource.getPreviousState();
+                    }
 
-                        Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
-                        if (interceptorClass != null) {
-                            newState = applicationContext.getBean(interceptorClass).intercept(user, resource, newState, action);
-                        }
+                    Class<? extends StateChangeInterceptor> interceptorClass = newResource.getScope().stateChangeInterceptorClass;
+                    if (interceptorClass != null) {
+                        newState = applicationContext.getBean(interceptorClass).intercept(user, newResource, newState, action);
+                    }
 
-                        if (state != newState) {
-                            resourceService.updateState(resource, newState);
-                            resource = resourceService.getResource(user, resource.getScope(), resource.getId());
-                        }
+                    boolean stateChanged = state != newState;
+                    if (stateChanged) {
+                        resourceService.updateState(newResource, newState);
+                        newResource = resourceService.getResource(user, newResource.getScope(), newResource.getId());
+                    }
 
-                        resourceService.createResourceOperation(resource, action, user);
+                    if (!resource.equals(newResource) || stateChanged || CollectionUtils.isNotEmpty(newResource.getChangeList())) {
+                        resourceService.createResourceOperation(newResource, action, user);
                     }
 
                     List<Notification> notifications;
@@ -80,10 +81,10 @@ public class ActionService {
                             throw new IllegalStateException("Could not deserialize notifications");
                         }
 
-                        notificationEventService.publishEvent(this, resource.getId(), action, newState, notifications);
+                        notificationEventService.publishEvent(this, newResource.getId(), action, newState, notifications);
                     }
 
-                    return resource;
+                    return newResource;
                 }
             }
         }
