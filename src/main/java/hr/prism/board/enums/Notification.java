@@ -14,7 +14,7 @@ public enum Notification {
     JOIN_DEPARTMENT(DefinedRecipientList.class),
     NEW_BOARD(AuthorizedRecipientList.class),
     NEW_BOARD_PARENT(AuthorizedRecipientList.class),
-    NEW_POST(DefinedRecipientList.class),
+    NEW_POST(AuthorizedRecipientList.class),
     NEW_POST_PARENT(AuthorizedRecipientList.class),
     PUBLISH_POST(AuthorizedRecipientList.class),
     PUBLISH_POST_MEMBER(AuthorizedCategorizedRecipientList.class),

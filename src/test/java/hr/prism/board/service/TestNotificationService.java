@@ -20,12 +20,12 @@ public class TestNotificationService extends NotificationService {
         this.recording = true;
     }
 
-    public void stop() {
+    public void clear() {
         this.recording = false;
     }
 
     public void verify(NotificationInstance... expectedNotificationInstances) {
-        Assert.assertEquals(1, expectedNotificationInstances.length);
+        Assert.assertEquals(instances.size(), expectedNotificationInstances.length);
         for (NotificationInstance expectedNotificationInstance : expectedNotificationInstances) {
             NotificationInstance actualNotificationInstance = instances.remove(0);
             Assert.assertEquals(expectedNotificationInstance.getNotification(), actualNotificationInstance.getNotification());

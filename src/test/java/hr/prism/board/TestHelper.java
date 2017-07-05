@@ -126,17 +126,36 @@ public class TestHelper {
     }
 
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
-        ResourceChangeListRepresentation expectedChanges) {
+                                               ResourceChangeListRepresentation expectedChanges) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, expectedChanges, null);
     }
 
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
-        String expectedComment) {
+                                               String expectedComment) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, expectedComment);
     }
 
+    public static String toString(LocalDateTime baseline) {
+        if (baseline == null) {
+            return null;
+        }
+
+        baseline = baseline.truncatedTo(ChronoUnit.SECONDS);
+        int seconds = baseline.getSecond();
+        if (seconds > 9) {
+            return baseline.toString();
+        }
+
+        if (seconds > 0) {
+            return baseline.toString() + ":0" + seconds;
+        }
+
+        return baseline.toString() + ":00";
+    }
+
+
     private static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
-        ResourceChangeListRepresentation expectedChanges, String expectedComment) {
+                                                ResourceChangeListRepresentation expectedChanges, String expectedComment) {
         Assert.assertEquals(expectedAction, resourceOperationR.getAction());
 
         if (expectedUser == null) {

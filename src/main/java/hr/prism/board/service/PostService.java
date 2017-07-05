@@ -122,8 +122,8 @@ public class PostService {
 
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
             LocalDateTime deadTimestamp = postDTO.getDeadTimestamp();
-            post.setLiveTimestamp(liveTimestamp != null ? liveTimestamp.truncatedTo(ChronoUnit.SECONDS) : null);
-            post.setDeadTimestamp(deadTimestamp != null ? deadTimestamp.truncatedTo(ChronoUnit.SECONDS) : null);
+            post.setLiveTimestamp(liveTimestamp == null ? null : liveTimestamp.truncatedTo(ChronoUnit.SECONDS));
+            post.setDeadTimestamp(deadTimestamp == null ? null : deadTimestamp.truncatedTo(ChronoUnit.SECONDS));
 
             post = postRepository.save(post);
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);

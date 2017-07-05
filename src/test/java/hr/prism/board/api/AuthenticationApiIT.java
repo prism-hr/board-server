@@ -157,7 +157,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "temporaryPassword", "defined", "homeRedirect",
-                environment.getProperty("server.url") + "/redirect", "authentication", "register")));
+                environment.getProperty("server.url") + "/redirect", "modal", "Login")));
 
         // Set the temporary password to something that we know
         transactionTemplate.execute(status -> userCacheService.findOneFresh(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
@@ -167,7 +167,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("temporary"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
-        testNotificationService.stop();
+        testNotificationService.clear();
     }
 
     @Test

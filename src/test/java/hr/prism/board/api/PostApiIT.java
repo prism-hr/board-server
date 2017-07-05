@@ -485,27 +485,26 @@ public class PostApiIT extends AbstractIT {
         String departmentName = boardR.getDepartment().getName();
         String boardName = boardR.getName();
         String postName = postR.getName();
-
         String departmentUserGivenName = departmentUser.getGivenName();
         String boardUserGivenName = boardUser.getGivenName();
         String postUserGivenName = postUser.getGivenName();
-
-        String environmentName = environment.getProperty("environment");
-        String resourceRedirect = environment.getProperty("server.url") + "/redirect?resourceId=" + postId;
+        String resourceRedirect = environment.getProperty("server.url") + "/redirect?resource=" + postId;
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT, departmentUser,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+                ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT, boardUser,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+                ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", boardName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
             new TestNotificationService.NotificationInstance(Notification.NEW_POST, postUser,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("department", departmentName)
-                    .put("board", boardName).put("post", postName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Create unprivileged users
+        testNotificationService.clear();
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
+        testNotificationService.record();
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId))
@@ -551,8 +550,9 @@ public class PostApiIT extends AbstractIT {
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
             .setDeadTimestamp(Optional.of(deadTimestampDelayed));
 
-        verifyPatchPost(postUser, postId, updateDTO, () -> postApi.updatePost(postId, updateDTO), State.DRAFT);
+        postR = verifyPatchPost(postUser, postId, updateDTO, () -> postApi.updatePost(postId, updateDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
+        postName = postR.getName();
 
         // Check that the administrator can make changes and suspend the post
         PostPatchDTO suspendDTO = (PostPatchDTO) new PostPatchDTO()
@@ -564,9 +564,8 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST, postUser,
-            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("comment", "could you please explain what you will pay the successful applicant")
-                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                .put("comment", "could you please explain what you will pay the successful applicant").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = (PostPatchDTO) new PostPatchDTO()
@@ -588,11 +587,11 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.CORRECT_POST, departmentUser,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", departmentUserGivenName).put("post", postName)
-                    .put("department", departmentName).put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+                ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("post", postName).put("department", departmentName).put("board", boardName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
             new TestNotificationService.NotificationInstance(Notification.CORRECT_POST, boardUser,
-                ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", boardUserGivenName).put("post", postName)
-                    .put("department", departmentName).put("board", boardName).put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+                ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("post", postName).put("department", departmentName).put("board", boardName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the administrator can accept post in the suspended state
         PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
@@ -603,10 +602,12 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST, postUser,
-            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("comment", "could you please explain what you will pay the successful applicant")
-                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_BOARD, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName)
+                    .put("resourceRedirect", environment.getProperty("server.url") + "/redirect?resource=" + boardId).put("modal", "Login").build()),
+            new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("publicationSchedule", "immediately").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
@@ -614,8 +615,8 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST, postUser,
-            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                .put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the administrator can make further changes and accept the post again
         PostPatchDTO acceptPendingDTO = (PostPatchDTO) new PostPatchDTO()
@@ -629,9 +630,10 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST, postUser,
-            ImmutableMap.<String, String>builder().put("environment", environmentName).put("recipient", postUserGivenName).put("department", departmentName)
-                .put("board", boardName).put("post", postName).put("liveTimestamp", postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER))
-                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                .put("publicationSchedule",
+                    "on or around " + postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER) + ". We will send you a follow-up message when your post has gone live")
+                .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
@@ -693,7 +695,7 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
-        testNotificationService.stop();
+        testNotificationService.clear();
 
         testUserService.setAuthentication(postUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
@@ -721,13 +723,13 @@ public class PostApiIT extends AbstractIT {
                 .put("existingRelationExplanation",
                     ObjectUtils.orderedMap("studyLevel", "MASTER"),
                     ObjectUtils.orderedMap("jobTitle", "professor"))
-                .put("liveTimestamp", liveTimestamp.toString(), liveTimestampDelayed.toString())
-                .put("deadTimestamp", deadTimestamp.toString(), deadTimestampDelayed.toString()));
+                .put("liveTimestamp", TestHelper.toString(liveTimestamp), TestHelper.toString(liveTimestampDelayed))
+                .put("deadTimestamp", TestHelper.toString(deadTimestamp), TestHelper.toString(deadTimestampDelayed)));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
-                .put("liveTimestamp", liveTimestampDelayed.toString(), liveTimestamp.toString())
-                .put("deadTimestamp", deadTimestampDelayed.toString(), deadTimestamp.toString()));
+                .put("liveTimestamp", TestHelper.toString(liveTimestampDelayed), TestHelper.toString(liveTimestamp))
+                .put("deadTimestamp", TestHelper.toString(deadTimestampDelayed), TestHelper.toString(deadTimestamp)));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.SUSPEND, departmentUser,
             "could you please explain what you will pay the successful applicant");
@@ -762,8 +764,8 @@ public class PostApiIT extends AbstractIT {
                 .put("applyWebsite", null, "http://www.twitter.com")
                 .put("applyDocument", ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"), null)
                 .put("postCategories", Arrays.asList("p2", "p1"), Arrays.asList("p1", "p2"))
-                .put("liveTimestamp", null, liveTimestampDelayed.toString())
-                .put("deadTimestamp", null, deadTimestampDelayed.toString()));
+                .put("liveTimestamp", null, TestHelper.toString(liveTimestampDelayed))
+                .put("deadTimestamp", null, TestHelper.toString(deadTimestampDelayed)));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(10), Action.ACCEPT, boardUser,
             "this looks good now - i replaced the document with the complete website for the opportunity");

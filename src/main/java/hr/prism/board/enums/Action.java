@@ -41,7 +41,7 @@ public enum Action {
     }
 
     public static Action exchangeAndValidate(String actionName, ResourcePatchDTO resourcePatchDTO) {
-        Action action = valueOf(actionName);
+        Action action = valueOf(actionName.toUpperCase());
         if (action.isRequireComment() && resourcePatchDTO.getComment() == null) {
             throw new BoardException(ExceptionCode.MISSING_COMMENT);
         }
