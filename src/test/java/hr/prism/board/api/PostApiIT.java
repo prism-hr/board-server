@@ -752,6 +752,10 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RETIRE_POST, postUser,
+            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+
         // Check that the author can withdraw the post
         PostPatchDTO withdrawDTO = new PostPatchDTO();
         verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeAction(postId, "withdraw", withdrawDTO), State.WITHDRAWN);
