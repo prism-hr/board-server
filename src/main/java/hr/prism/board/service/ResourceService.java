@@ -8,7 +8,6 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceFilterDTO;
-import hr.prism.board.dto.ResourcePatchDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -482,28 +481,12 @@ public class ResourceService {
         }
     }
 
-    public ResourceOperation getLatestResourceOperation(Resource resource, Action... actions) {
-        List<ResourceOperation> resourceOperations = resourceOperationRepository.findFirstByResourceAndActionOrderByIdDesc(resource, actions);
-        return resourceOperations.isEmpty() ? null : resourceOperations.get(0);
+    public ResourceOperation getLatestResourceOperation(Resource resource, Action action) {
+        return resourceOperationRepository.findFirstByResourceAndActionOrderByIdDesc(resource, action);
     }
 
     public Resource findByResourceAndEnclosingScope(Resource resource, Scope scope) {
         return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
-    }
-
-    public void validateResourceOperation(Resource resource, Action action, ResourcePatchDTO resourceDTO) {
-        if (resourceDTO.getComment() == null) {
-            if (action == Action.SUSPEND || action == Action.REJECT) {
-                throw new BoardException(ExceptionCode.MISSING_COMMENT);
-            }
-
-            if (action == Action.RESTORE) {
-                ResourceOperation termination = getLatestResourceOperation(resource, Action.REJECT, Action.WITHDRAW);
-                if (termination != null && termination.getAction() == Action.REJECT) {
-                    throw new BoardException(ExceptionCode.MISSING_COMMENT);
-                }
-            }
-        }
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {

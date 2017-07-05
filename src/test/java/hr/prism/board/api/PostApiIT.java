@@ -519,7 +519,7 @@ public class PostApiIT extends AbstractIT {
             .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
             .put(Action.CORRECT, () -> postApi.executeAction(postId, "correct", new PostPatchDTO()))
             .put(Action.REJECT, () -> postApi.executeAction(postId, "reject", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
-            .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", new PostPatchDTO()))
+            .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", (PostPatchDTO) new PostPatchDTO()))
             .put(Action.WITHDRAW, () -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()))
             .build();
 
@@ -711,11 +711,11 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember1Id),
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
                     .put("parentRedirect", parentRedirect).build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember2Id),
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
                     .put("parentRedirect", parentRedirect).build()));
 
@@ -728,7 +728,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", environment.getProperty("server.url") + "/redirect" + postId)
+                .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", environment.getProperty("server.url") + "/redirect")
                 .put("modal", "Login").build()));
 
         // Check that the administrator can restore the post
@@ -740,7 +740,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_POST, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("comment", "sorry we made a mistake, we're restoring the post").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
@@ -781,11 +781,11 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember1Id),
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
                     .put("parentRedirect", parentRedirect).build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember2Id),
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
                     .put("parentRedirect", parentRedirect).build()));
         testNotificationService.clear();

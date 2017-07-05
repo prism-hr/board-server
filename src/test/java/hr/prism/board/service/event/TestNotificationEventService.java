@@ -23,7 +23,7 @@ public class TestNotificationEventService extends NotificationEventService {
 
     @Override
     public void publishEvent(Object source, Long resourceId, State state, List<Notification> notifications) {
-        super.publishEvent(source, resourceId, state, notifications);
+        super.sendNotifications(new NotificationEvent(source, resourceId, state, notifications));
     }
 
     @Override

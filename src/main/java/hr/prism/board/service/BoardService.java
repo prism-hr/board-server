@@ -104,7 +104,6 @@ public class BoardService {
     public Board executeAction(Long id, Action action, BoardPatchDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
-        resourceService.validateResourceOperation(board, action, boardDTO);
         return (Board) actionService.executeAction(currentUser, board.setComment(boardDTO.getComment()), action, () -> {
             if (action == Action.EDIT) {
                 updateBoard(board, boardDTO);

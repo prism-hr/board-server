@@ -143,7 +143,6 @@ public class PostService {
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
-        resourceService.validateResourceOperation(post, action, postDTO);
         return (Post) actionService.executeAction(currentUser, post.setComment(postDTO.getComment()), action, () -> {
             if (action == Action.EDIT) {
                 updatePost(post, postDTO);
