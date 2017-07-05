@@ -499,7 +499,7 @@ public class ResourceService {
 
             if (action == Action.RESTORE) {
                 ResourceOperation termination = getLatestResourceOperation(resource, Action.REJECT, Action.WITHDRAW);
-                if (termination.getAction() == Action.REJECT) {
+                if (termination != null && termination.getAction() == Action.REJECT) {
                     throw new BoardException(ExceptionCode.MISSING_COMMENT);
                 }
             }
