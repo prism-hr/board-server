@@ -146,10 +146,6 @@ public class TestHelper {
             return baseline.toString();
         }
 
-        if (seconds > 0) {
-            return baseline.toString() + ":0" + seconds;
-        }
-
         return baseline.toString() + ":00";
     }
 

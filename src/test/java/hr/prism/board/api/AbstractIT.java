@@ -79,7 +79,7 @@ public abstract class AbstractIT {
 
     @Inject
     private PlatformTransactionManager platformTransactionManager;
-    
+
     @Before
     public void before() {
         transactionTemplate = new TransactionTemplate(platformTransactionManager);
