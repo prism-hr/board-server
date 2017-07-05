@@ -25,7 +25,7 @@ public class TestNotificationService extends NotificationService {
     }
 
     public void verify(NotificationInstance... expectedNotificationInstances) {
-        Assert.assertEquals(instances.size(), expectedNotificationInstances.length);
+        Assert.assertEquals(expectedNotificationInstances.length, instances.size());
         for (NotificationInstance expectedNotificationInstance : expectedNotificationInstances) {
             NotificationInstance actualNotificationInstance = instances.remove(0);
             Assert.assertEquals(expectedNotificationInstance.getNotification(), actualNotificationInstance.getNotification());

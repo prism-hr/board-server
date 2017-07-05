@@ -468,6 +468,10 @@ public class PostApiIT extends AbstractIT {
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
 
+        // Allow department to have research students
+        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(
+            Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT, MemberCategory.RESEARCH_STUDENT))));
+
         User boardUser = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             Board board = boardService.getBoard(boardId);
@@ -658,8 +662,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                ))).getUser().getId();
+                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))).getUser().getId();
 
         // Should be notified
         Long departmentMember2Id = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
@@ -671,9 +674,7 @@ public class PostApiIT extends AbstractIT {
                 .setRoles(Collections.singleton(
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))
-                ))).getUser().getId();
+                        .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))))).getUser().getId();
 
         // Should not be notified
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
@@ -686,8 +687,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))
-                )));
+                        .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))));
 
         // Should not be notified
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
@@ -700,8 +700,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().minusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                )));
+                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))));
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
