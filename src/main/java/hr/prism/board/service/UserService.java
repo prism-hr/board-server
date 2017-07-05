@@ -25,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -123,11 +124,11 @@ public class UserService {
     }
 
     public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
-        return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role);
+        return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role, LocalDate.now());
     }
 
     public List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
-        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, enclosingScope, role, CategoryType.MEMBER);
+        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, enclosingScope, role, CategoryType.MEMBER, LocalDate.now());
     }
 
     public List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {

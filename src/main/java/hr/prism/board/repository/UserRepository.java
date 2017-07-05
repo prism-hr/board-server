@@ -9,6 +9,7 @@ import hr.prism.board.enums.Scope;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,8 +37,11 @@ public interface UserRepository extends MyRepository<User, Long> {
             "inner join enclosingResource.userRoles userRole " +
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
-            "and userRole.role = :role")
-    List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role);
+            "and userRole.role = :role " +
+            "and (userRole.expiryDate is null " +
+            "or userRole.expiryDate >= :baseline)")
+    List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
+                                                      @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select distinct userRole.user " +
@@ -52,9 +56,12 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and category.type = :categoryType " +
-            "and category.name = userCategory.name")
+            "and category.name = userCategory.name " +
+            "and (userRole.expiryDate is null " +
+            "or userRole.expiryDate >= :baseline)")
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
-                                                                   @Param("role") Role role, @Param("categoryType") CategoryType categoryType);
+                                                                   @Param("role") Role role, @Param("categoryType") CategoryType categoryType,
+                                                                   @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select userRole.user " +

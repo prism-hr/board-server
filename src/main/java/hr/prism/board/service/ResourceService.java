@@ -36,6 +36,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -83,7 +84,9 @@ public class ResourceService {
             "and workflow.resource1_scope = parent.scope " +
             "inner join user_role " +
             "on parent.id = user_role.resource_id " +
-            "and workflow.role = user_role.role";
+            "and workflow.role = user_role.role " +
+            "and (user_role.expiry_date is null " +
+            "or user_role.expiry_date >= :baseline) ";
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -193,13 +196,14 @@ public class ResourceService {
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role");
-        Map<String, String> publicFilterParameters = new HashMap<>();
+        Map<String, Object> publicFilterParameters = new HashMap<>();
         publicFilterParameters.put("role", Role.PUBLIC.name());
 
         List<String> secureFilterStatements = new ArrayList<>();
         secureFilterStatements.add("user_role.user_id = :userId");
-        Map<String, String> secureFilterParameters = new HashMap<>();
+        Map<String, Object> secureFilterParameters = new HashMap<>();
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
+        secureFilterParameters.put("baseline", LocalDate.now());
 
         // Unwrap the filters
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
@@ -510,7 +514,7 @@ public class ResourceService {
         resource2.getParents().add(resourceRelation);
     }
 
-    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, String> filterParameters) {
+    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
         Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();

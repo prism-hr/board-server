@@ -658,7 +658,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT))
+                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 ))).getUser().getId();
 
         // Should be notified
@@ -672,7 +672,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Arrays.asList(MemberCategory.MASTER_STUDENT))
+                        .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))
                 ))).getUser().getId();
 
         // Should not be notified
@@ -686,7 +686,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Arrays.asList(MemberCategory.RESEARCH_STUDENT))
+                        .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))
                 )));
 
         // Should not be notified
@@ -700,7 +700,7 @@ public class PostApiIT extends AbstractIT {
                     new UserRoleDTO()
                         .setRole(Role.MEMBER)
                         .setExpiryDate(LocalDate.now().minusDays(1))
-                        .setCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT))
+                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 )));
 
         // Check that the post now moves to the accepted state when the update job runs
