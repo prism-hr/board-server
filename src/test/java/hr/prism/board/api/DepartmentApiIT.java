@@ -10,15 +10,13 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
@@ -238,9 +236,39 @@ public class DepartmentApiIT extends AbstractIT {
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
+        testNotificationService.record();
         testUserService.setAuthentication(departmentUser.getId());
+        Long departmentUser2Id = transactionTemplate.execute(status ->
+            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+                new ResourceUserDTO()
+                    .setUser(new UserDTO()
+                        .setGivenName("admin1")
+                        .setSurname("admin1")
+                        .setEmail("admin1@admin1.com"))
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.ADMINISTRATOR)))).getUser().getId());
+
+        verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT, userCacheService.findOne(departmentUser2Id),
+            ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4")
+                .put("resourceRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId).put("modal", "Register").build()));
+
+
+        transactionTemplate.execute(status ->
+            resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, departmentUser2Id,
+                new ResourceUserDTO()
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.AUTHOR)))));
+
+        verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
+        testNotificationService.verify();
+        testNotificationService.clear();
+
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
-        Assert.assertEquals(5, resourceOperationRs.size());
+        Assert.assertEquals(7, resourceOperationRs.size());
 
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);

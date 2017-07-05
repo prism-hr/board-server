@@ -150,7 +150,7 @@ public class PostService {
                 if (action == Action.ACCEPT) {
                     Resource board = post.getParent();
                     userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, board, Role.AUTHOR)
-                        .forEach(user -> userRoleCacheService.createUserRole(currentUser, board, user, new UserRoleDTO(Role.AUTHOR)));
+                        .forEach(user -> userRoleCacheService.createUserRole(currentUser, board, user, new UserRoleDTO(Role.AUTHOR), true));
                 }
 
                 if (BoardUtils.hasUpdates(postDTO)) {

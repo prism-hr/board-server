@@ -76,7 +76,7 @@ public class UserRoleService {
     }
 
     public void createUserRole(Resource resource, User user, Role role) {
-        this.createUserRole(user, resource, user, new UserRoleDTO().setRole(role));
+        createUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
     public ResourceUserRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
@@ -155,7 +155,7 @@ public class UserRoleService {
 
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
         if (userRole == null) {
-            userRoleCacheService.createUserRole(currentUser, resource, user, roleDTO);
+            userRoleCacheService.createUserRole(currentUser, resource, user, roleDTO, true);
         }
     }
 

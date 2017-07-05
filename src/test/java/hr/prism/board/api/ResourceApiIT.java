@@ -130,7 +130,6 @@ public class ResourceApiIT extends AbstractIT {
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
         BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-
         List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId());
         Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
@@ -140,8 +139,8 @@ public class ResourceApiIT extends AbstractIT {
         for (int i = 1; i <= 200; i++) {
             bulkDTO.getUsers().add(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"));
         }
-        bulkDTO.setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
 
+        bulkDTO.setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
         resourceApi.createResourceUsers(Scope.BOARD, boardR.getId(), bulkDTO);
 
         int usersCount = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId()).size();
@@ -152,9 +151,9 @@ public class ResourceApiIT extends AbstractIT {
         for (int i = 101; i <= 300; i++) {
             bulkDTO.getUsers().add(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"));
         }
+
         bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(
             Collections.singletonList(MemberCategory.MASTER_STUDENT)), new UserRoleDTO().setRole(Role.AUTHOR)));
-
         resourceApi.createResourceUsers(Scope.BOARD, boardR.getId(), bulkDTO);
 
         usersCount = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId()).size();

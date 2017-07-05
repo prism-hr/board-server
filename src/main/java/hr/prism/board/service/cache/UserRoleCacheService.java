@@ -51,13 +51,12 @@ public class UserRoleCacheService {
     private EntityManager entityManager;
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
+    public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
-        boolean notify = true;
-        if (role == Role.MEMBER || scope == Scope.POST || Objects.equals(currentUser, user)
-            || !userRoleRepository.findByResourceAndUserAndNotRole(resource, user, Role.MEMBER).isEmpty()) {
+        if (notify && (role == Role.MEMBER || Objects.equals(currentUser, user)
+            || !userRoleRepository.findByResourceAndUserAndNotRole(resource, user, Role.MEMBER).isEmpty())) {
             notify = false;
         }
 
@@ -108,7 +107,7 @@ public class UserRoleCacheService {
         entityManager.flush();
 
         for (UserRoleDTO userRoleDTO : resourceUserDTO.getRoles()) {
-            createUserRole(currentUser, resource, user, userRoleDTO);
+            createUserRole(currentUser, resource, user, userRoleDTO, false);
         }
 
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);

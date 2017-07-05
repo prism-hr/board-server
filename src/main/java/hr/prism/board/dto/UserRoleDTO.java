@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class UserRoleDTO {
 
@@ -55,6 +56,20 @@ public class UserRoleDTO {
     public UserRoleDTO setCategories(List<MemberCategory> categories) {
         this.categories = categories;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(role);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || object.getClass() != getClass()) {
+            return false;
+        }
+
+        return Objects.equals(role, ((UserRoleDTO) object).getRole());
     }
 
 }

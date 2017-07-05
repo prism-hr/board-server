@@ -519,7 +519,7 @@ public class PostApiIT extends AbstractIT {
             .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
             .put(Action.CORRECT, () -> postApi.executeAction(postId, "correct", new PostPatchDTO()))
             .put(Action.REJECT, () -> postApi.executeAction(postId, "reject", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
-            .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", (PostPatchDTO) new PostPatchDTO()))
+            .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", new PostPatchDTO()))
             .put(Action.WITHDRAW, () -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()))
             .build();
 
@@ -652,55 +652,59 @@ public class PostApiIT extends AbstractIT {
 
         // Should be notified
         testUserService.setAuthentication(departmentUser.getId());
-        Long departmentMember1Id = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(
-                new UserDTO()
-                    .setGivenName("student1")
-                    .setSurname("student1")
-                    .setEmail("student1@student1.com"))
-                .setRoles(Collections.singleton(
-                    new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))).getUser().getId();
+        Long departmentMember1Id = transactionTemplate.execute(status ->
+            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+                new ResourceUserDTO().setUser(
+                    new UserDTO()
+                        .setGivenName("student1")
+                        .setSurname("student1")
+                        .setEmail("student1@student1.com"))
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.MEMBER)
+                            .setExpiryDate(LocalDate.now().plusDays(1))
+                            .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))).getUser().getId());
 
         // Should be notified
-        Long departmentMember2Id = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(
-                new UserDTO()
-                    .setGivenName("student2")
-                    .setSurname("student2")
-                    .setEmail("student2@student2.com"))
-                .setRoles(Collections.singleton(
-                    new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))))).getUser().getId();
+        Long departmentMember2Id = transactionTemplate.execute(status ->
+            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+                new ResourceUserDTO().setUser(
+                    new UserDTO()
+                        .setGivenName("student2")
+                        .setSurname("student2")
+                        .setEmail("student2@student2.com"))
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.MEMBER)
+                            .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))))).getUser().getId());
 
         // Should not be notified
-        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(
-                new UserDTO()
-                    .setGivenName("student3")
-                    .setSurname("student3")
-                    .setEmail("student3@student3.com"))
-                .setRoles(Collections.singleton(
-                    new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))));
+        transactionTemplate.execute(status ->
+            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+                new ResourceUserDTO().setUser(
+                    new UserDTO()
+                        .setGivenName("student3")
+                        .setSurname("student3")
+                        .setEmail("student3@student3.com"))
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.MEMBER)
+                            .setExpiryDate(LocalDate.now().plusDays(1))
+                            .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))))));
 
         // Should not be notified
-        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(
-                new UserDTO()
-                    .setGivenName("student4")
-                    .setSurname("student4")
-                    .setEmail("student4@student4.com"))
-                .setRoles(Collections.singleton(
-                    new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().minusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))));
+        transactionTemplate.execute(status ->
+            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+                new ResourceUserDTO().setUser(
+                    new UserDTO()
+                        .setGivenName("student4")
+                        .setSurname("student4")
+                        .setEmail("student4@student4.com"))
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.MEMBER)
+                            .setExpiryDate(LocalDate.now().minusDays(1))
+                            .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))));
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
