@@ -48,9 +48,9 @@ public class ResourceApi {
         return userRoleService.updateResourceUser(scope, resourceId, userId, user);
     }
 
-    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/similarUsers", method = RequestMethod.GET)
-    public List<UserRepresentation> getSimilarUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestParam String searchTerm) {
-        return userService.findBySimilarNameAndEmail(scope, resourceId, searchTerm);
+    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/lookupUsers", method = RequestMethod.GET)
+    public List<UserRepresentation> getSimilarUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestParam String query) {
+        return userService.findBySimilarNameAndEmail(scope, resourceId, query);
     }
 
     @ModelAttribute

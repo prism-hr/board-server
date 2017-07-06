@@ -2,10 +2,11 @@ package hr.prism.board.dto;
 
 import org.hibernate.validator.constraints.Email;
 
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 public class UserDTO {
+
+    private Long id;
 
     @Size(min = 1, max = 100)
     private String givenName;
@@ -14,8 +15,15 @@ public class UserDTO {
     private String surname;
 
     @Email
-    @NotNull
     private String email;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getGivenName() {
         return givenName;
