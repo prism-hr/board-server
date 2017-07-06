@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class PostStateChangeInterceptor implements StateChangeInterceptor {
 
     @Override
-    public State intercept(User user, Resource resource, State state, Action action) {
+    public State intercept(User user, Resource resource, Action action, State state) {
         if (Arrays.asList(State.PENDING, State.EXPIRED, State.ACCEPTED).contains(state)) {
             Post post = (Post) resource;
             LocalDateTime baseline = LocalDateTime.now();

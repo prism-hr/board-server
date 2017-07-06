@@ -24,6 +24,8 @@ public class ResourceRepresentation {
 
     private List<ActionRepresentation> actions;
 
+    private Boolean created;
+
     public Long getId() {
         return id;
     }
@@ -93,6 +95,15 @@ public class ResourceRepresentation {
 
     public ResourceRepresentation setActions(List<ActionRepresentation> actions) {
         this.actions = actions;
+        return this;
+    }
+
+    public Boolean getCreated() {
+        return created;
+    }
+
+    public ResourceRepresentation setCreated(Boolean created) {
+        this.created = created;
         return this;
     }
 

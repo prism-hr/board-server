@@ -58,7 +58,7 @@ public class ActionService {
 
                     Class<? extends StateChangeInterceptor> interceptorClass = newResource.getScope().stateChangeInterceptorClass;
                     if (interceptorClass != null) {
-                        newState = applicationContext.getBean(interceptorClass).intercept(user, newResource, newState, action);
+                        newState = applicationContext.getBean(interceptorClass).intercept(user, newResource, action, newState);
                     }
 
                     boolean stateChanged = newState != state;

@@ -133,7 +133,10 @@ public class DepartmentService {
             resourceService.createResourceRelation(department, department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
-            return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
+
+            department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
+            department.setCreated(true);
+            return department;
         }
     }
 

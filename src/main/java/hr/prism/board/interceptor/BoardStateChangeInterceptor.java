@@ -19,7 +19,7 @@ public class BoardStateChangeInterceptor implements StateChangeInterceptor {
     private UserRoleService userRoleService;
 
     @Override
-    public State intercept(User user, Resource resource, State state, Action action) {
+    public State intercept(User user, Resource resource, Action action, State state) {
         if (action == Action.EXTEND) {
             Board board = (Board) resource;
             Department department = (Department) board.getParent();

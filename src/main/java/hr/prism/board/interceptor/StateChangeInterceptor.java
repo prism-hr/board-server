@@ -7,6 +7,6 @@ import hr.prism.board.enums.State;
 
 public interface StateChangeInterceptor {
 
-    State intercept(User user, Resource resource, State state, Action action);
+    State intercept(User user, Resource resource, Action action, State state);
 
 }
