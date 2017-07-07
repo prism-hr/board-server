@@ -5,7 +5,8 @@ import org.springframework.transaction.TransactionStatus;
 
 public class ExceptionUtils {
 
-    public static <T extends BoardException> void verifyApiException(Class<T> exceptionClass, Runnable operation, ExceptionCode exceptionCode, TransactionStatus status) {
+    @SuppressWarnings("unchecked")
+    public static <T extends BoardException> T verifyException(Class<T> exceptionClass, Runnable operation, ExceptionCode exceptionCode, TransactionStatus status) {
         BoardException boardException = null;
         try {
             operation.run();
@@ -19,6 +20,13 @@ public class ExceptionUtils {
         if (status != null) {
             status.setRollbackOnly();
         }
+
+        return (T) boardException;
+    }
+
+    public static void verifyDuplicateException(Runnable operation, ExceptionCode exceptionCode, Long id, TransactionStatus status) {
+        BoardDuplicateException boardDuplicateException = verifyException(BoardDuplicateException.class, operation, exceptionCode, status);
+        Assert.assertEquals(id, boardDuplicateException.getId());
     }
 
 }

@@ -297,7 +297,7 @@ public class PostApiIT extends AbstractIT {
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY, status);
             return null;
         });
     }
@@ -319,7 +319,7 @@ public class PostApiIT extends AbstractIT {
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_APPLY, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_APPLY, status);
             return null;
         });
     }
@@ -341,7 +341,7 @@ public class PostApiIT extends AbstractIT {
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
             return null;
         });
     }
@@ -353,13 +353,13 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
             return null;
         });
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
             return null;
         });
     }
@@ -371,13 +371,13 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
             return null;
         });
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
             return null;
         });
     }
@@ -389,13 +389,13 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
             return null;
         });
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
+            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
     }
@@ -409,7 +409,7 @@ public class PostApiIT extends AbstractIT {
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
+            ExceptionUtils.verifyException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setPostCategories(Optional.empty())),
                 ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
@@ -417,7 +417,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
+            ExceptionUtils.verifyException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.empty())),
                 ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
@@ -425,7 +425,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
+            ExceptionUtils.verifyException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setPostCategories(Optional.of(Collections.singletonList("p4")))),
                 ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
@@ -433,7 +433,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
+            ExceptionUtils.verifyException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
@@ -444,7 +444,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> boardApi.updateBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty())));
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
+            ExceptionUtils.verifyException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setPostCategories(Optional.of(Collections.singletonList("p1")))),
                 ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
@@ -452,7 +452,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
+            ExceptionUtils.verifyException(BoardException.class, () ->
                     postApi.updatePost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
@@ -849,8 +849,8 @@ public class PostApiIT extends AbstractIT {
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(6), Action.EDIT, boardUser,
             new ResourceChangeListRepresentation()
-                .put("liveTimestamp", liveTimestamp.toString(), null)
-                .put("deadTimestamp", deadTimestamp.toString(), null));
+                .put("liveTimestamp", TestHelper.toString(liveTimestamp), null)
+                .put("deadTimestamp", TestHelper.toString(deadTimestamp), null));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.ACCEPT, boardUser, "accepting without time constraints");
 

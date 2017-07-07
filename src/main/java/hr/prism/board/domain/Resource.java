@@ -77,9 +77,6 @@ public class Resource extends BoardEntity {
     @Transient
     private String comment;
 
-    @Transient
-    private Boolean created;
-
     public Scope getScope() {
         return scope;
     }
@@ -213,15 +210,6 @@ public class Resource extends BoardEntity {
 
     public Resource setComment(String comment) {
         this.comment = comment;
-        return this;
-    }
-
-    public Boolean getCreated() {
-        return created;
-    }
-
-    public Resource setCreated(Boolean created) {
-        this.created = created;
         return this;
     }
 

@@ -33,12 +33,17 @@ public class TestHelper {
             .setName("department");
     }
 
-
     public static BoardDTO smallSampleBoard() {
         return ((BoardDTO) new BoardDTO()
             .setName("board"))
             .setDepartment((DepartmentDTO) new DepartmentDTO()
                 .setName("department"));
+    }
+
+    public static DepartmentDTO sampleDepartment() {
+        return ((DepartmentDTO) new DepartmentDTO()
+            .setName("department"))
+            .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT));
     }
 
     public static BoardDTO sampleBoard() {

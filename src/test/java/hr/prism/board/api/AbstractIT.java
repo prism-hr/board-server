@@ -207,7 +207,7 @@ public abstract class AbstractIT {
                     Runnable operation = operations.get(action);
                     if (operation != null) {
                         LOGGER.info("Verifying forbidden action: " + action.name().toLowerCase());
-                        ExceptionUtils.verifyApiException(BoardForbiddenException.class, operation, exceptionCode, status);
+                        ExceptionUtils.verifyException(BoardForbiddenException.class, operation, exceptionCode, status);
                     }
 
                     return null;

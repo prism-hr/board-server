@@ -5,6 +5,8 @@ import hr.prism.board.dto.ResourcePatchDTO;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.Range;
+import org.apache.commons.text.RandomStringGenerator;
 
 import java.lang.reflect.Field;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +16,12 @@ import java.util.stream.Collectors;
 public class BoardUtils {
 
     public static DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/YYYY");
+
+    public static RandomStringGenerator RANDOM_STRING_GENERATOR =
+        new RandomStringGenerator.Builder()
+            .withinRange('0', 'z')
+            .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122).contains(codePoint))
+            .build();
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static boolean isPresent(Optional<?> optional) {
@@ -75,6 +83,10 @@ public class BoardUtils {
         }
 
         return Joiner.on(".").join(newNameParts) + "@" + emailParts[1];
+    }
+
+    public static String randomAlphanumericString(int length) {
+        return RANDOM_STRING_GENERATOR.generate(length);
     }
 
 }

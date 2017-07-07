@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.*;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceCategoryRepository;
@@ -364,10 +365,11 @@ public class ResourceService {
 
     @SuppressWarnings("JpaQlInspection")
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
-        String statement = "select resource.id " +
-            "from Resource resource " +
-            "where resource.scope = :scope " +
-            "and resource.name = :name";
+        String statement =
+            "select resource.id " +
+                "from Resource resource " +
+                "where resource.scope = :scope " +
+                "and resource.name = :name";
 
         Map<String, Object> constraints = new HashMap<>();
         if (id != null) {
@@ -375,7 +377,7 @@ public class ResourceService {
             constraints.put("id", id);
         }
 
-        if (!Objects.equals(scope, parent.getScope())) {
+        if (parent != null && !Objects.equals(scope, parent.getScope())) {
             statement += " and resource.parent = :parent";
             constraints.put("parent", parent);
         }
@@ -385,8 +387,9 @@ public class ResourceService {
             .setParameter("name", name);
         constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
 
-        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new BoardException(exceptionCode);
+        List<Long> resourceIds = query.getResultList();
+        if (!resourceIds.isEmpty()) {
+            throw new BoardDuplicateException(exceptionCode, resourceIds.get(0));
         }
     }
 

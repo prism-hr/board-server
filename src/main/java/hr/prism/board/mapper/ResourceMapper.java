@@ -18,8 +18,7 @@ public class ResourceMapper {
             .setState(resource.getState())
             .setCreatedTimestamp(resource.getCreatedTimestamp())
             .setUpdatedTimestamp(resource.getUpdatedTimestamp())
-            .setActions(resource.getActions())
-            .setCreated(resource.getCreated());
+            .setActions(resource.getActions());
     }
 
 }

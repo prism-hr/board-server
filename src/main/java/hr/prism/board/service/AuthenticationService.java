@@ -14,12 +14,12 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.util.BoardUtils;
 import hr.prism.board.workflow.Notification;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -76,7 +76,7 @@ public class AuthenticationService {
                 jwsSecret = IOUtils.toString(secretFile.toURI(), StandardCharsets.UTF_8);
             } else {
                 writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"));
-                jwsSecret = RandomStringUtils.randomAlphanumeric(256);
+                jwsSecret = BoardUtils.randomAlphanumericString(256);
                 writer.write(jwsSecret);
             }
         } catch (IOException e) {
@@ -148,7 +148,7 @@ public class AuthenticationService {
             throw new BoardForbiddenException(ExceptionCode.UNREGISTERED_USER);
         }
 
-        String temporaryPassword = RandomStringUtils.randomAlphanumeric(12);
+        String temporaryPassword = BoardUtils.randomAlphanumericString(12);
         user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
         user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
         userCacheService.updateUser(user);

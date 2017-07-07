@@ -1,7 +1,5 @@
 package hr.prism.board.api;
 
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.User;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.Scope;
@@ -11,7 +9,6 @@ import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -26,9 +23,6 @@ public class DepartmentApi {
     private DepartmentService departmentService;
 
     @Inject
-    private UserService userService;
-
-    @Inject
     private DepartmentMapper departmentMapper;
 
     @Inject
@@ -39,9 +33,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.POST)
     public DepartmentRepresentation postDepartment(@RequestBody @Valid DepartmentDTO departmentDTO) {
-        User user = userService.getCurrentUserSecured();
-        Department department = departmentService.getOrCreateDepartment(user, departmentDTO);
-        return departmentMapper.apply(department);
+        return departmentMapper.apply(departmentService.createDepartment(departmentDTO));
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET)

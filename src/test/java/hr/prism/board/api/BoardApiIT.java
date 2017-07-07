@@ -130,13 +130,9 @@ public class BoardApiIT extends AbstractIT {
         testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO));
         transactionTemplate.execute(status -> {
-            boardApi.postBoard(boardDTO);
-            return null;
-        });
-
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, status);
+            ExceptionUtils.verifyDuplicateException(() -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId(), status);
             return null;
         });
     }
@@ -168,7 +164,8 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setName(Optional.of(boardRs.getValue().getName()));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, status);
+            ExceptionUtils.verifyDuplicateException(() ->
+                boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId(), status);
             return null;
         });
     }
@@ -179,7 +176,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-            ExceptionUtils.verifyApiException(BoardException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
+            ExceptionUtils.verifyException(BoardException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
                 status);
             return null;
         });

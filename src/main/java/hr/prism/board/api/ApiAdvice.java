@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -30,28 +31,36 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiAdvice.class);
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> processException(Exception ex, WebRequest request) {
+    public ResponseEntity<Object> processException(Exception exception, WebRequest request) {
+        Long id = null;
         ExceptionCode exceptionCode = ExceptionCode.PROBLEM;
         HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        if (ex instanceof BoardForbiddenException) {
-            exceptionCode = ((BoardForbiddenException) ex).getExceptionCode();
+        if (exception instanceof BoardForbiddenException) {
+            exceptionCode = ((BoardForbiddenException) exception).getExceptionCode();
             responseStatus = exceptionCode == ExceptionCode.UNAUTHENTICATED_USER ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;
-        } else if (ex instanceof BoardException) {
-            exceptionCode = ((BoardException) ex).getExceptionCode();
+        } else if (exception instanceof BoardDuplicateException) {
+            BoardDuplicateException duplicateException = (BoardDuplicateException) exception;
+            id = duplicateException.getId();
+            exceptionCode = duplicateException.getExceptionCode();
+            responseStatus = HttpStatus.CONFLICT;
+        } else if (exception instanceof BoardException) {
+            exceptionCode = ((BoardException) exception).getExceptionCode();
             responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         }
 
-        LOGGER.error("Could not serve request", ex);
+        LOGGER.error("Could not serve request", exception);
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
-        ImmutableMap<String, Object> body = ImmutableMap.<String, Object>builder()
+        ImmutableMap.Builder<String, Object> bodyBuilder = ImmutableMap.<String, Object>builder()
             .put("timestamp", LocalDateTime.now())
             .put("uri", Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString()))
             .put("status", responseStatus.value())
             .put("error", responseStatus.getReasonPhrase())
-            .put("exceptionCode", exceptionCode)
-            .build();
+            .put("exceptionCode", exceptionCode);
+        if (id != null) {
+            bodyBuilder.put("id", id);
+        }
 
-        return handleExceptionInternal(ex, body, new HttpHeaders(), responseStatus, request);
+        return handleExceptionInternal(exception, bodyBuilder.build(), new HttpHeaders(), responseStatus, request);
     }
 
     @Override

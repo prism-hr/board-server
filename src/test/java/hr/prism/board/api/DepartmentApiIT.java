@@ -44,6 +44,34 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
+    public void shouldCreateDepartment() {
+        testUserService.authenticate();
+        DepartmentDTO department =
+            ((DepartmentDTO) TestHelper.sampleDepartment()
+                .setSummary("summary")).setDocumentLogo(
+                new DocumentDTO()
+                    .setCloudinaryId("c")
+                    .setCloudinaryUrl("u")
+                    .setFileName("f"));
+
+        DepartmentRepresentation departmentR = departmentApi.postDepartment(department);
+
+        String departmentName = department.getName();
+        Assert.assertEquals(departmentName, departmentR.getName());
+        Assert.assertEquals(departmentName, departmentR.getHandle());
+        Assert.assertEquals("summary", departmentR.getSummary());
+        Assert.assertEquals(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT), departmentR.getMemberCategories());
+
+        DocumentRepresentation documentR = departmentR.getDocumentLogo();
+        Assert.assertEquals("c", documentR.getCloudinaryId());
+        Assert.assertEquals("u", documentR.getCloudinaryUrl());
+        Assert.assertEquals("f", documentR.getFileName());
+
+        Long departmentId = departmentR.getId();
+        ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
+    }
+
+    @Test
     public void shouldCreateAndListDepartments() {
         Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
 
@@ -137,11 +165,11 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldNotCreateDuplicateDepartmentsByUpdating() {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
-                    departmentApi.updateDepartment(departmentRs.getKey().getId(),
-                        (DepartmentPatchDTO) new DepartmentPatchDTO()
-                            .setName(Optional.of(departmentRs.getValue().getName()))),
-                ExceptionCode.DUPLICATE_DEPARTMENT, status);
+            ExceptionUtils.verifyDuplicateException(
+                () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
+                    (DepartmentPatchDTO) new DepartmentPatchDTO()
+                        .setName(Optional.of(departmentRs.getValue().getName()))),
+                ExceptionCode.DUPLICATE_DEPARTMENT, departmentRs.getValue().getId(), status);
             return null;
         });
     }
@@ -150,10 +178,11 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldNotCreateDuplicateDepartmentHandlesByUpdating() {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyApiException(BoardException.class, () ->
-                    departmentApi.updateDepartment(departmentRs.getKey().getId(),
-                        new DepartmentPatchDTO()
-                            .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
+            ExceptionUtils.verifyException(
+                BoardException.class,
+                () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
+                    new DepartmentPatchDTO()
+                        .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
                 ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, status);
             return null;
         });

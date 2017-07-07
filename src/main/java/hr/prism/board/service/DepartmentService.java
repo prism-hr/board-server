@@ -31,7 +31,7 @@ public class DepartmentService {
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, " +
             "document_logo.cloudinary_url, document_logo.file_name, " +
-            "if(resource.scope = :scope and resource.state = :state, 1, 0) AS valid, " +
+            "if(resource.scope = :scope AND resource.state = :state, 1, 0) AS valid, " +
             "if(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
             "match resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
@@ -40,7 +40,7 @@ public class DepartmentService {
             "HAVING valid = 1 " +
             "AND (similarityHard = 1 " +
             "OR similaritySoft > 0) " +
-            "ORDER BY similarityHard desc, similaritySoft desc, resource.name " +
+            "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
             "LIMIT 10";
 
     @Inject
@@ -93,6 +93,12 @@ public class DepartmentService {
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
 
+    public Department createDepartment(DepartmentDTO departmentDTO) {
+        User currentUser = userService.getCurrentUserSecured();
+        resourceService.validateUniqueName(Scope.DEPARTMENT, null, null, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
+        return getOrCreateDepartment(currentUser, departmentDTO);
+    }
+
     public Department getOrCreateDepartment(User currentUser, DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
@@ -133,10 +139,7 @@ public class DepartmentService {
             resourceService.createResourceRelation(department, department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
-
-            department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
-            department.setCreated(true);
-            return department;
+            return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
         }
     }
 
