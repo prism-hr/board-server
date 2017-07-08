@@ -51,6 +51,8 @@ public class Installer {
             // Board draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(DRAFT)
+            .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, BOARD).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, BOARD).inState(DRAFT).transitioningTo(ACCEPTED)
@@ -64,6 +66,8 @@ public class Installer {
             .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with(NEW_POST_PARENT)
             .notifying(BOARD, ADMINISTRATOR).excludingCreator().with(NEW_POST_PARENT)
             .notifying(POST, ADMINISTRATOR).with(NEW_POST)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(ACCEPTED)
@@ -80,7 +84,9 @@ public class Installer {
             // Board rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, BOARD).inState(REJECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, BOARD).inState(REJECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(PREVIOUS)
             .notifying(BOARD, ADMINISTRATOR).with(RESTORE_BOARD)
 
             // Post draft state

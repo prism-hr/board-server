@@ -40,6 +40,7 @@ public class DepartmentApiIT extends AbstractIT {
 
     static {
         ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.EXTEND));
+
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
 
