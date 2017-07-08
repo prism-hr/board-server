@@ -274,19 +274,14 @@ public class BoardApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
                     .put("modal", "Login").build()));
 
-        // Create post
-        User postUser = testUserService.authenticate();
-        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-
         // Create unprivileged users
-        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.smallSamplePost()).values());
-        unprivilegedUsers.add(postUser);
+        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, 2, 2, TestHelper.smallSamplePost()).values());
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.AUDIT, () -> boardApi.getBoardOperations(boardId))
             .put(Action.EDIT, () -> boardApi.updateBoard(boardId, new BoardPatchDTO()))
             .put(Action.ACCEPT, () -> boardApi.executeAction(boardId, "accept", new BoardPatchDTO()))
-            .put(Action.REJECT, () -> boardApi.executeAction(boardId, "reject", new BoardPatchDTO()))
+            .put(Action.REJECT, () -> boardApi.executeAction(boardId, "reject", (BoardPatchDTO) new BoardPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> boardApi.executeAction(boardId, "restore", new BoardPatchDTO()))
             .build();
 
@@ -334,9 +329,14 @@ public class BoardApiIT extends AbstractIT {
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
         testNotificationService.stop();
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD, boardUser,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
                 .put("modal", "Login").build()));
+
+        // Create post
+        User postUser = testUserService.authenticate();
+        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        unprivilegedUsers.add(postUser);
 
         // Check that we can make changes and leave nullable values null
         verifyPatchBoard(departmentUser, boardId,
@@ -386,18 +386,18 @@ public class BoardApiIT extends AbstractIT {
 
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, departmentUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, boardUser);
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.REJECT, departmentUser, "we cannot accept this");
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.RESTORE, departmentUser, "we made a mistake");
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.ACCEPT, departmentUser);
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.REJECT, departmentUser, "we really cannot accept this");
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(5), Action.ACCEPT, departmentUser, "we made another mistake");
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(5), Action.RESTORE, departmentUser, "we made another mistake");
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(6), Action.EDIT, departmentUser,
             new ResourceChangeListRepresentation()
-                .put("name", "board", "board 2")
-                .put("handle", "board", "board-2")
+                .put("name", "board 1", "board 2")
+                .put("handle", "board-1", "board-2")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.EDIT, boardUser,
