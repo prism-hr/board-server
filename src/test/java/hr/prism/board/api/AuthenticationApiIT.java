@@ -167,7 +167,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("temporary"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
-        testNotificationService.clear();
+        testNotificationService.stop();
     }
 
     @Test

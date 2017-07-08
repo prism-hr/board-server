@@ -295,7 +295,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify();
-        testNotificationService.clear();
+        testNotificationService.stop();
 
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(5, resourceOperationRs.size());

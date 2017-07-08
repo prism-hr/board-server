@@ -19,6 +19,7 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
@@ -243,12 +244,35 @@ public class BoardApiIT extends AbstractIT {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         BoardRepresentation boardR = verifyPostBoard(TestHelper.smallSampleBoard(), "board");
-        Long departmentId = boardR.getDepartment().getId();
+        DepartmentRepresentation departmentR = boardR.getDepartment();
+        Long departmentId = departmentR.getId();
 
         // Create a board in the draft state
+        testNotificationService.record();
         User boardUser = testUserService.authenticate();
-        boardR = verifyPostBoard((BoardDTO) TestHelper.smallSampleBoard().setName("board 1"), "board-1");
+        boardR = verifyPostBoard(
+            ((BoardDTO) TestHelper.smallSampleBoard()
+                .setName("board 1"))
+                .setDepartment(
+                    new DepartmentDTO()
+                        .setId(departmentId)),
+            "board-1");
         Long boardId = boardR.getId();
+        testNotificationService.stop();
+
+        String departmentUserGivenName = departmentUser.getGivenName();
+        String departmentName = departmentR.getName();
+        String boardUserGivenName = boardUser.getGivenName();
+        String resourceRedirect = environment.getProperty("server.url") + "/redirect?resource=" + boardId;
+        String homeRedirect = environment.getProperty("server.url") + "/redirect";
+
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_PARENT, departmentUser,
+                ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
+                    .put("modal", "Login").build()),
+            new TestNotificationService.NotificationInstance(Notification.NEW_BOARD, boardUser,
+                ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
+                    .put("modal", "Login").build()));
 
         // Create post
         User postUser = testUserService.authenticate();
@@ -272,25 +296,47 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> boardApi.getBoard(boardId));
 
         // Check that department user can reject the board
+        testNotificationService.record();
         Long departmentUserId = departmentUser.getId();
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD, boardUser,
+                ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we cannot accept this")
+                    .put("homeRedirect", homeRedirect).put("modal", "Login").build()));
 
         // Check that the department user can restore the board to draft
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made a mistake", State.DRAFT);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.DRAFT, operations);
 
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD, boardUser,
+            ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
+                .put("modal", "Login").build()));
+
         // Check that the department user can accept the board
-        verifyExecuteBoard(boardId, departmentUserId, "accept", State.ACCEPTED);
+        verifyExecuteBoard(boardId, departmentUserId, "accept", null, State.ACCEPTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD, boardUser,
+            ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
+                .put("modal", "Login").build()));
 
         // Check that the department user can reject the board
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we really cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
 
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD, boardUser,
+            ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we really cannot accept this")
+                .put("homeRedirect", homeRedirect).put("modal", "Login").build()));
+
         // Check that the department user can restore the board to accepted
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made another mistake", State.ACCEPTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        testNotificationService.stop();
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD, boardUser,
+            ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
+                .put("modal", "Login").build()));
 
         // Check that we can make changes and leave nullable values null
         verifyPatchBoard(departmentUser, boardId,
@@ -433,10 +479,6 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
             return boardR;
         });
-    }
-
-    private void verifyExecuteBoard(Long boardId, Long departmentUserId, String action, State expectedState) {
-        verifyExecuteBoard(boardId, departmentUserId, action, null, expectedState);
     }
 
     private void verifyExecuteBoard(Long boardId, Long departmentUserId, String action, String comment, State expectedState) {

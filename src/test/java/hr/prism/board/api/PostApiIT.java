@@ -507,7 +507,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Create unprivileged users
-        testNotificationService.clear();
+        testNotificationService.stop();
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
         testNotificationService.record();
 
@@ -792,7 +792,7 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
                     .put("parentRedirect", parentRedirect).build()));
-        testNotificationService.clear();
+        testNotificationService.stop();
 
         testUserService.setAuthentication(postUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));

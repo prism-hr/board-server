@@ -20,7 +20,7 @@ public class TestNotificationService extends NotificationService {
         this.recording = true;
     }
 
-    public void clear() {
+    public void stop() {
         this.recording = false;
     }
 
