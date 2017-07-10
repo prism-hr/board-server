@@ -16,6 +16,8 @@ import java.util.List;
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
 
+    User findByUuid(String uuid);
+
     User findByEmail(String email);
 
     User findByOauthProviderAndOauthAccountId(OauthProvider provider, String oauthAccountId);

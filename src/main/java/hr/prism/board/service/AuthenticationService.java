@@ -108,11 +108,14 @@ public class AuthenticationService {
             throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER);
         }
 
-        return userCacheService.saveUser(new User().setGivenName(registerDTO.getGivenName())
-            .setSurname(registerDTO.getSurname())
-            .setEmail(email)
-            .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
-            .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
+        return userCacheService.saveUser(
+            new User()
+                .setUuid(UUID.randomUUID().toString())
+                .setGivenName(registerDTO.getGivenName())
+                .setSurname(registerDTO.getSurname())
+                .setEmail(email)
+                .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
+                .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
     }
 
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {

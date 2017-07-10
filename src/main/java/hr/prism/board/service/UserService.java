@@ -78,6 +78,10 @@ public class UserService {
         return getCurrentUserSecured(false);
     }
 
+    public User findByUuid(String uuid) {
+        return userRepository.findByUuid(uuid);
+    }
+
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured(true);
         Optional<String> givenNameOptional = userDTO.getGivenName();

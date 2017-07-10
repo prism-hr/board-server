@@ -710,18 +710,23 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
+        User departmentMember1 = userCacheService.findOne(departmentMember1Id);
+        User departmentMember2 = userCacheService.findOne(departmentMember2Id);
+
+        String departmentMember1Uuid = departmentMember1.getUuid();
+        String departmentMember2Uuid = departmentMember2.getUuid();
         String parentRedirect = environment.getProperty("server.url") + "/redirect?resource=" + boardId;
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember1Id),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
-                    .put("parentRedirect", parentRedirect).build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember2Id),
+                    .put("parentRedirect", parentRedirect).put("recipientUuid", departmentMember1Uuid).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
-                    .put("parentRedirect", parentRedirect).build()));
+                    .put("parentRedirect", parentRedirect).put("recipientUuid", departmentMember2Uuid).build()));
 
         // Check that the administrator can reject the post
         PostPatchDTO rejectDTO = (PostPatchDTO) new PostPatchDTO()
@@ -784,14 +789,14 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember1Id),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
-                    .put("parentRedirect", parentRedirect).build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, userCacheService.findOne(departmentMember2Id),
+                    .put("parentRedirect", parentRedirect).put("recipientUuid", departmentMember1Uuid).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "Register")
-                    .put("parentRedirect", parentRedirect).build()));
+                    .put("parentRedirect", parentRedirect).put("recipientUuid", departmentMember2Uuid).build()));
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUser.getId());
