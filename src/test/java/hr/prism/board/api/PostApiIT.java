@@ -68,6 +68,7 @@ public class PostApiIT extends AbstractIT {
     private PostService postService;
 
     @Test
+    // FIXME: find out why this occasionally fails and fix it
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
