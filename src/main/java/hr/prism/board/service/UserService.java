@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -112,17 +113,20 @@ public class UserService {
 
     public User getOrCreateUser(UserDTO userDTO) {
         User user = null;
-        if(userDTO.getId() != null) {
+        if (userDTO.getId() != null) {
             user = userRepository.findOne(userDTO.getId());
         }
+
         if (user == null) {
             user = userRepository.findByEmail(userDTO.getEmail());
         }
+
         if (user == null) {
             user = new User();
-            user.setEmail(userDTO.getEmail());
+            user.setUuid(UUID.randomUUID().toString());
             user.setGivenName(userDTO.getGivenName());
             user.setSurname(userDTO.getSurname());
+            user.setEmail(userDTO.getEmail());
             return userRepository.save(user);
         }
 

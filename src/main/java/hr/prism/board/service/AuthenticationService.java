@@ -38,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -131,6 +132,7 @@ public class AuthenticationService {
             String email = newUser.getEmail();
             oldUser = userRepository.findByEmail(email);
             if (oldUser == null) {
+                newUser.setUuid(UUID.randomUUID().toString());
                 return userCacheService.saveUser(newUser);
             } else {
                 oldUser.setOauthProvider(provider);

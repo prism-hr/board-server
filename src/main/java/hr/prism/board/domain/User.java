@@ -15,6 +15,9 @@ import java.util.Set;
 @Table(name = "user")
 public class User extends BoardEntity implements Comparable<User> {
 
+    @Column(name = "uuid", nullable = false)
+    private String uuid;
+
     @Column(name = "given_name", nullable = false)
     private String givenName;
 
@@ -51,6 +54,15 @@ public class User extends BoardEntity implements Comparable<User> {
 
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public User setUuid(String uuid) {
+        this.uuid = uuid;
+        return this;
+    }
 
     public String getGivenName() {
         return givenName;
