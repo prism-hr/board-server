@@ -16,6 +16,12 @@ import java.util.List;
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
 
+    String SUPPRESSION_CONSTRAINT =
+        "and userRole.user not in (" +
+            "select userNotificationSuppression.user " +
+            "from UserNotificationSuppression userNotificationSuppression " +
+            "where userNotificationSuppression.resource <> :resource)";
+
     User findByUuid(String uuid);
 
     User findByEmail(String email);
@@ -41,7 +47,8 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and (userRole.expiryDate is null " +
-            "or userRole.expiryDate >= :baseline)")
+            "or userRole.expiryDate >= :baseline) " +
+            SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
                                                       @Param("baseline") LocalDate baseline);
 
@@ -60,7 +67,8 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and category.type = :categoryType " +
             "and category.name = userCategory.name " +
             "and (userRole.expiryDate is null " +
-            "or userRole.expiryDate >= :baseline)")
+            "or userRole.expiryDate >= :baseline) " +
+            SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
                                                                    @Param("role") Role role, @Param("categoryType") CategoryType categoryType,
                                                                    @Param("baseline") LocalDate baseline);

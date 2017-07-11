@@ -26,19 +26,22 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
     @Query(value =
         "delete from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.user = :user " +
-            "and userNotificationSuppression.resource = :resource")
-    void deleteByUserAndResource(@Param("user") User user, @Param("resource") Resource resource);
+            "and userNotificationSuppression.resource.id = :resourceId")
+    void deleteByUserAndResourceId(@Param("user") User user, @Param("resourceId") Long resourceId);
 
     @Modifying
     @Query(value =
         "INSERT INTO user_notification_suppression(user_id, resource_id, created_timestamp) " +
-            "SELECT user_role.user_id, user_role.resource_id " +
+            "SELECT user_role.user_id, user_role.resource_id, NOW() " +
             "FROM user_role " +
+            "INNER JOIN resource " +
+            "ON user_role.resource_id = resource.id " +
             "LEFT JOIN user_notification_suppression " +
             "ON user_role.user_id = user_notification_suppression.user_id " +
             "AND user_role.resource_id = user_notification_suppression.resource_id " +
-            "WHERE user_notificiation_suppression_id IS NULL",
+            "WHERE resource.scope = :scope " +
+            "AND user_notificiation_suppression.id IS NULL",
         nativeQuery = true)
-    void insertByUserId(@Param("userId") Long userId);
+    void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope);
 
 }

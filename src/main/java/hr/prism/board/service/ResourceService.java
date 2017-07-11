@@ -492,6 +492,10 @@ public class ResourceService {
         return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
     }
 
+    public List<Resource> findByUserAndScope(User user, Scope scope) {
+        return resourceRepository.findByUserAndScope(user, scope);
+    }
+
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);
