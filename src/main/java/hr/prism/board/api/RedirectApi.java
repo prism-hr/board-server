@@ -34,8 +34,14 @@ public class RedirectApi {
             handle = resourceService.findOne(Long.parseLong(resource)).getHandle();
         }
 
+        String uuidParameter = StringUtils.EMPTY;
+        String uuid = request.getParameter("uuid");
+        if (uuid != null) {
+            uuidParameter = "&uuid=" + uuid;
+        }
+
         String appUrl = environment.getProperty("app.url");
-        response.sendRedirect(appUrl + "/" + handle + "?show" + modal + "=true");
+        response.sendRedirect(appUrl + "/" + handle + "?show" + modal + "=true" + uuidParameter);
     }
 
 }
