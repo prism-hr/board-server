@@ -39,7 +39,8 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
             "LEFT JOIN user_notification_suppression " +
             "ON user_role.user_id = user_notification_suppression.user_id " +
             "AND user_role.resource_id = user_notification_suppression.resource_id " +
-            "WHERE resource.scope = :scope " +
+            "WHERE user_role.user_id = :userId " +
+            "AND resource.scope = :scope " +
             "AND user_notificiation_suppression.id IS NULL",
         nativeQuery = true)
     void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope);
