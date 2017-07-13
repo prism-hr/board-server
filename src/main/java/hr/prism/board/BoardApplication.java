@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sendgrid.SendGrid;
+import freemarker.template.TemplateException;
 import hr.prism.board.repository.MyRepositoryImpl;
+import no.api.freemarker.java8.Java8ObjectWrapper;
 import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
@@ -31,9 +33,11 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
@@ -145,9 +149,24 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         return objectMapper;
     }
 
+    @Bean
+    public FreeMarkerConfigurer freemarkerConfig() {
+        FreeMarkerConfigurer freeMarkerConfigurer = new CustomFreeMarkerConfigurer();
+        freeMarkerConfigurer.setTemplateLoaderPath("classpath:badge");
+        return freeMarkerConfigurer;
+    }
+
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.add(new MappingJackson2HttpMessageConverter(objectMapper()));
+    }
+
+    private class CustomFreeMarkerConfigurer extends FreeMarkerConfigurer {
+        @Override
+        public void afterPropertiesSet() throws IOException, TemplateException {
+            super.afterPropertiesSet();
+            this.getConfiguration().setObjectWrapper(new Java8ObjectWrapper(freemarker.template.Configuration.VERSION_2_3_23));
+        }
     }
 
 }

@@ -2,7 +2,7 @@ package hr.prism.board.notification.property;
 
 import hr.prism.board.service.NotificationService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 
 public interface NotificationProperty extends Comparable<NotificationProperty> {
 

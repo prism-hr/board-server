@@ -1,23 +1,28 @@
 package hr.prism.board.service;
 
+import freemarker.template.TemplateException;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.ResourceFilterDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +52,15 @@ public class BoardService {
 
     @Inject
     private DocumentService documentService;
+
+    @Inject
+    private PostService postService;
+
+    @Inject
+    private FreeMarkerConfig freemarkerConfig;
+
+    @Inject
+    private Environment environment;
 
     public Board getBoard(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -116,6 +130,32 @@ public class BoardService {
 
             return board;
         });
+    }
+
+    public String getBoardBadge(Board board, WidgetOptionsDTO options) {
+        Department department = departmentService.getDepartment(board.getParent().getId());
+        Map<String, Object> model = createBoardBadgeModel(board, department, options);
+
+        List<Post> posts = postService.getPosts(board.getId(), true);
+        posts = posts.subList(0, options.getPostCount()); // FIXME use query params in order to limit results
+        model.put("posts", posts);
+
+        StringWriter stringWriter = new StringWriter();
+        try {
+            freemarkerConfig.getConfiguration().getTemplate("board_badge.ftl").process(model, stringWriter);
+        } catch (IOException | TemplateException e) {
+            throw new Error(e);
+        }
+        return stringWriter.toString();
+    }
+
+    private Map<String, Object> createBoardBadgeModel(Board board, Department department, WidgetOptionsDTO options) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("options", options);
+        model.put("board", board);
+        model.put("department", department);
+        model.put("applicationUrl", environment.getProperty("app.url"));
+        return model;
     }
 
     @SuppressWarnings("unchecked")
