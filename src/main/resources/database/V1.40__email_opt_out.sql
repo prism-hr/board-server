@@ -3,7 +3,7 @@ CREATE TABLE user_notification_suppression (
   user_id           BIGINT UNSIGNED NOT NULL,
   resource_id       BIGINT UNSIGNED NOT NULL,
   created_timestamp DATETIME        NOT NULL,
-  updated_timestamp DATETIME        NOT NULL,
+  updated_timestamp DATETIME,
   PRIMARY KEY (id),
   UNIQUE INDEX (user_id, resource_id),
   INDEX (resource_id),

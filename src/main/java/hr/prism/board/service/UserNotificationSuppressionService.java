@@ -72,7 +72,7 @@ public class UserNotificationSuppressionService {
             throw new BoardException(ExceptionCode.UNSUPPRESSABLE_RESOURCE);
         }
 
-        if (!userRoleService.findByResourceAndUser(resource, user).isEmpty()) {
+        if (userRoleService.findByResourceAndUser(resource, user).isEmpty()) {
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE);
         }
 

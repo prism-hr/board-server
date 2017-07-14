@@ -112,6 +112,7 @@ public class UserApiIT extends AbstractIT {
         Assert.assertEquals(6, memberUser1Suppressions.size());
         memberUser1Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
+        testUserService.unauthenticate();
         transactionTemplate.execute(status -> userApi.postSuppression(board11id, memberUser2.getUuid()));
         testUserService.setAuthentication(memberUser2Id);
         transactionTemplate.execute(status -> userApi.postSuppression(board12id, null));
@@ -120,6 +121,7 @@ public class UserApiIT extends AbstractIT {
         memberUser2Suppressions.subList(0, 2).forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
         memberUser2Suppressions.subList(2, 6).forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
+        testUserService.unauthenticate();
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(
             BoardForbiddenException.class, () -> userApi.postSuppression(board11id, memberUser3.getUuid()), ExceptionCode.FORBIDDEN_RESOURCE, status));
         testUserService.setAuthentication(memberUser3Id);
