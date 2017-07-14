@@ -71,15 +71,17 @@ public class UserRoleCacheService {
                 ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES,
                 ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
 
-            IntStream.range(0, newCategories.size())
-                .forEach(index -> {
-                    MemberCategory newCategory = newCategories.get(index);
-                    UserRoleCategory userRoleCategory = new UserRoleCategory();
-                    userRoleCategory.setUserRole(userRole);
-                    userRoleCategory.setName(newCategory);
-                    userRoleCategory.setOrdinal(index);
-                    userRoleCategoryRepository.save(userRoleCategory);
-                });
+            if (newCategories != null) {
+                IntStream.range(0, newCategories.size())
+                    .forEach(index -> {
+                        MemberCategory newCategory = newCategories.get(index);
+                        UserRoleCategory userRoleCategory = new UserRoleCategory();
+                        userRoleCategory.setUserRole(userRole);
+                        userRoleCategory.setName(newCategory);
+                        userRoleCategory.setOrdinal(index);
+                        userRoleCategoryRepository.save(userRoleCategory);
+                    });
+            }
         }
 
         if (notify) {
