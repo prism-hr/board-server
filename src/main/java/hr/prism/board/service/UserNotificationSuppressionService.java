@@ -31,6 +31,9 @@ public class UserNotificationSuppressionService {
     private ResourceService resourceService;
 
     @Inject
+    private UserRoleService userRoleService;
+
+    @Inject
     private UserService userService;
 
     @PersistenceContext
@@ -67,6 +70,10 @@ public class UserNotificationSuppressionService {
         Resource resource = resourceService.findOne(resourceId);
         if (resource.getScope() != Scope.BOARD) {
             throw new BoardException(ExceptionCode.UNSUPPRESSABLE_RESOURCE);
+        }
+
+        if (!userRoleService.findByResourceAndUser(resource, user).isEmpty()) {
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE);
         }
 
         if (userNotificationSuppressionRepository.findByUserAndResource(user, resource) == null) {

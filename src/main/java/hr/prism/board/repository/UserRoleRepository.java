@@ -14,6 +14,8 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
 
     List<UserRole> findByResource(Resource resource);
 
+    List<UserRole> findByResourceAndUser(Resource resource, User user);
+
     List<UserRole> findByResourceAndRole(Resource resource, Role role);
 
     UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);

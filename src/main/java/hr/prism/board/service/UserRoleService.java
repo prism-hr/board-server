@@ -53,6 +53,10 @@ public class UserRoleService {
     @Inject
     private UserRoleEventService userRoleEventService;
 
+    public List<UserRole> findByResourceAndUser(Resource resource, User user) {
+        return userRoleRepository.findByResourceAndUser(resource, user);
+    }
+
     public List<ResourceUserRepresentation> getResourceUsers(Scope scope, Long resourceId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
