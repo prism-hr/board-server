@@ -23,9 +23,11 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
     Resource findByResourceAndEnclosingScope(@Param("resource") Resource resource, @Param("scope") Scope scope);
 
     @Query(value =
-    "select userRole.resource " +
-        "from UserRole userRole " +
-        "inner join userRole.resource resource " +
+    "select distinct resource " +
+        "from Resource resource " +
+        "inner join resource.parents parentRelation " +
+        "inner join parentRelation.resource1 parent " +
+        "inner join parent.userRoles userRole " +
         "inner join resource.parent parent " +
         "left join resource.categories category " +
         "where userRole.user = :user " +
@@ -35,9 +37,11 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
     List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope);
 
     @Query(value =
-        "select userRole.resource " +
-            "from UserRole userRole " +
-            "inner join userRole.resource resource " +
+        "select distinct resource " +
+            "from Resource resource " +
+            "inner join resource.parents parentRelation " +
+            "inner join parentRelation.resource1 parent " +
+            "inner join parent.userRoles userRole " +
             "inner join resource.parent parent " +
             "inner join resource.categories category " +
             "inner join userRole.categories userCategory " +

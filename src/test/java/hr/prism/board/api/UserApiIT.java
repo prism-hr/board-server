@@ -54,11 +54,11 @@ public class UserApiIT extends AbstractIT {
             boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board12")).setDepartment(new DepartmentDTO().setId(department1id)))).getId();
 
         transactionTemplate.execute(status ->
-            boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board13")).setDepartment(new DepartmentDTO().setId(department1id)))).getId();
+            boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board13")).setDepartment(new DepartmentDTO().setId(department1id))));
 
         Long department2id = transactionTemplate.execute(status ->
-            departmentApi.postDepartment((DepartmentDTO) new DepartmentDTO().setName("department2"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
+            departmentApi.postDepartment(((DepartmentDTO) new DepartmentDTO().setName("department2"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
 
         Long board21id = transactionTemplate.execute(status ->
             boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board21")).setDepartment(new DepartmentDTO().setId(department2id)))).getId();
@@ -67,7 +67,7 @@ public class UserApiIT extends AbstractIT {
             boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board22")).setDepartment(new DepartmentDTO().setId(department2id)))).getId();
 
         transactionTemplate.execute(status ->
-            boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board23")).setDepartment(new DepartmentDTO().setId(department2id)))).getId();
+            boardApi.postBoard(((BoardDTO) new BoardDTO().setName("board23")).setDepartment(new DepartmentDTO().setId(department2id))));
 
         User memberUser1 = testUserService.authenticate();
         User memberUser2 = testUserService.authenticate();

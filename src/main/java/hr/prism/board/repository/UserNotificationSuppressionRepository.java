@@ -32,20 +32,21 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
     @Modifying
     @Query(value =
         "INSERT INTO user_notification_suppression(user_id, resource_id, created_timestamp) " +
-            "SELECT user_role.user_id, user_role.resource_id, NOW() " +
+            "SELECT user_role.user_id, suppressed.id, NOW() " +
             "FROM user_role " +
             "INNER JOIN resource " +
             "ON user_role.resource_id = resource.id " +
             "INNER JOIN resource_relation " +
             "ON resource.id = resource_relation.resource1_id " +
             "INNER JOIN resource as suppressed " +
-            "ON resource_relation.resource2_id = board.id " +
+            "ON resource_relation.resource2_id = suppressed.id " +
             "LEFT JOIN user_notification_suppression " +
             "ON user_role.user_id = user_notification_suppression.user_id " +
             "AND suppressed.id = user_notification_suppression.resource_id " +
             "WHERE user_role.user_id = :userId " +
             "AND suppressed.scope = :scope " +
-            "AND user_notification_suppression.id IS NULL",
+            "AND user_notification_suppression.id IS NULL " +
+            "GROUP BY user_role.user_id, suppressed.id",
         nativeQuery = true)
     void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope);
 
