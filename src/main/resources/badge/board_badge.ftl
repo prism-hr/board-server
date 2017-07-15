@@ -19,7 +19,7 @@
                 src="${applicationUrl}/assets/prism-white.png" alt="PRiSM"></a>
         </div>
         <div class="sub-header">Jobs & Work Experience</div>
-    [#if options.badgeType == "SLIDER_LIST"]
+    [#if options.badgeListType == "SLIDER"]
         <div class="control">
             <a class="btn control_prev"> &#60 </a>
             <span class="position-number"></span> /
@@ -35,7 +35,7 @@
     </div>
 [#else] [#-- LIST --]
 
-    <div class="prism-main ${options.badgeType?replace("_", "-")?lower_case}">
+    <div class="prism-main ${options.badgeListType?lower_case}">
         <ul>
             [#list posts as post]
                 <li>
