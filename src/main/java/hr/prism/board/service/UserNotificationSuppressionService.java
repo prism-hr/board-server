@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,9 @@ public class UserNotificationSuppressionService {
 
     @Inject
     private UserNotificationSuppressionRepository userNotificationSuppressionRepository;
+
+    @Inject
+    private ActionService actionService;
 
     @Inject
     private ResourceService resourceService;
@@ -45,9 +49,9 @@ public class UserNotificationSuppressionService {
     }
 
     public List<UserNotificationSuppressionRepresentation> getSuppressions(User user) {
-        List<Resource> resources = resourceService.findByUserAndScope(user, Scope.BOARD);
+        Collection<Resource> resources = resourceService.getSuppressableResources(user, Scope.BOARD);
         List<Resource> suppressedResources =
-            userNotificationSuppressionRepository.findByUser(user).stream().map(suppression -> suppression.getResource()).collect(Collectors.toList());
+            userNotificationSuppressionRepository.findByUser(user).stream().map(UserNotificationSuppression::getResource).collect(Collectors.toList());
 
         List<UserNotificationSuppressionRepresentation> representations = new ArrayList<>();
         for (Resource resource : resources) {

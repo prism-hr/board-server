@@ -23,6 +23,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -492,8 +493,11 @@ public class ResourceService {
         return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
     }
 
-    public List<Resource> findByUserAndScope(User user, Scope scope) {
-        return resourceRepository.findByUserAndScope(user, scope);
+    public Collection<Resource> getSuppressableResources(User user, Scope scope) {
+        Map<Pair<String, String>, Resource> index = new TreeMap<>();
+        resourceRepository.findByUserAndScope(user, scope).forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
+        resourceRepository.findByUserAndScopeAndCategories(user, scope).forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
+        return index.values();
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {

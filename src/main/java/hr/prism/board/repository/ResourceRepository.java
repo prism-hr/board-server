@@ -27,10 +27,25 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
         "from UserRole userRole " +
         "inner join userRole.resource resource " +
         "inner join resource.parent parent " +
+        "left join resource.categories category " +
         "where userRole.user = :user " +
         "and resource.scope = :scope " +
+        "and category.id is null " +
         "order by parent.name, resource.name")
     List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope);
+
+    @Query(value =
+        "select userRole.resource " +
+            "from UserRole userRole " +
+            "inner join userRole.resource resource " +
+            "inner join resource.parent parent " +
+            "inner join resource.categories category " +
+            "inner join userRole.categories userCategory " +
+            "where userRole.user = :user " +
+            "and resource.scope = :scope " +
+            "and category.name = userCategory.name " +
+            "order by parent.name, resource.name")
+    List<Resource> findByUserAndScopeAndCategories(@Param("user") User user, @Param("scope") Scope scope);
 
     @Modifying
     @Query(value =

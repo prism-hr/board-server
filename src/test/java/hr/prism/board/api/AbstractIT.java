@@ -58,6 +58,9 @@ public abstract class AbstractIT {
     PostApi postApi;
 
     @Inject
+    UserApi userApi;
+
+    @Inject
     DepartmentService departmentService;
 
     @Inject

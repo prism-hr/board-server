@@ -652,7 +652,8 @@ public class PostApiIT extends AbstractIT {
         });
 
         // Should be notified
-        testUserService.setAuthentication(departmentUser.getId());
+        Long departmentUserId = departmentUser.getId();
+        testUserService.setAuthentication(departmentUserId);
         Long departmentMember1Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new ResourceUserDTO().setUser(
@@ -679,7 +680,24 @@ public class PostApiIT extends AbstractIT {
                             .setRole(Role.MEMBER)
                             .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))))).getUser().getId());
 
+        // Should not be notified - suppressed
+        Long departmentMember3Id = transactionTemplate.execute(status ->
+            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+                new ResourceUserDTO().setUser(
+                    new UserDTO()
+                        .setGivenName("student3")
+                        .setSurname("student3")
+                        .setEmail("student3@student3.com"))
+                    .setRoles(Collections.singleton(
+                        new UserRoleDTO()
+                            .setRole(Role.MEMBER)
+                            .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))))).getUser().getId());
+
+        testUserService.setAuthentication(departmentMember3Id);
+        userApi.postSuppressions();
+
         // Should not be notified
+        testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new ResourceUserDTO().setUser(
