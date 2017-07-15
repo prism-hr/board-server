@@ -6,10 +6,7 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.domain.UserRoleCategory;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleCategoryRepository;
@@ -52,6 +49,11 @@ public class UserRoleCacheService {
 
     @CacheEvict(key = "#user.id", value = "users")
     public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
+        createUserRole(currentUser, resource, user, userRoleDTO, State.ACCEPTED, notify);
+    }
+
+    @CacheEvict(key = "#user.id", value = "users")
+    public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, State state, boolean notify) {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
@@ -61,7 +63,7 @@ public class UserRoleCacheService {
         }
 
         UserRole userRole = userRoleRepository.save(
-            new UserRole().setResource(resource).setUser(user).setRole(role).setExpiryDate(userRoleDTO.getExpiryDate()));
+            new UserRole().setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
 
         List<MemberCategory> newCategories = userRoleDTO.getCategories();
         if (userRoleDTO.getRole() == Role.MEMBER) {

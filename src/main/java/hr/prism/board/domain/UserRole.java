@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.State;
 import org.hibernate.annotations.SortNatural;
 
 import javax.persistence.*;
@@ -24,6 +25,10 @@ public class UserRole extends BoardEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false)
+    private State state;
 
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
@@ -56,6 +61,15 @@ public class UserRole extends BoardEntity {
 
     public UserRole setRole(Role role) {
         this.role = role;
+        return this;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public UserRole setState(State state) {
+        this.state = state;
         return this;
     }
 

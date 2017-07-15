@@ -1,0 +1,8 @@
+ALTER TABLE user_role
+  ADD COLUMN state VARCHAR(20) AFTER role;
+
+UPDATE user_role
+SET state = 'ACCEPTED';
+
+ALTER TABLE user_role
+  MODIFY COLUMN state VARCHAR(20) NOT NULL;
