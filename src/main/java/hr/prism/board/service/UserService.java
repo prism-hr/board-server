@@ -141,7 +141,7 @@ public class UserService {
         return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role, State.ACCEPTED, LocalDate.now());
     }
 
-    public List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role, State state) {
+    public List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, enclosingScope, role, State.ACCEPTED, CategoryType.MEMBER, LocalDate.now());
     }
 
