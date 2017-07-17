@@ -194,7 +194,7 @@ public class ResourceService {
     // TODO: implement paging / continuous scrolling mechanism
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         List<String> publicFilterStatements = new ArrayList<>();
-        publicFilterStatements.add("where workflow.role = :role ");
+        publicFilterStatements.add("workflow.role = :role ");
 
         String departmentScope = Scope.DEPARTMENT.name();
         Map<String, Object> publicFilterParameters = new HashMap<>();
@@ -202,7 +202,7 @@ public class ResourceService {
         publicFilterParameters.put("departmentScope", departmentScope);
 
         List<String> secureFilterStatements = new ArrayList<>();
-        secureFilterStatements.add("where user_role.user_id = :userId ");
+        secureFilterStatements.add("user_role.user_id = :userId ");
 
         Map<String, Object> secureFilterParameters = new HashMap<>();
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
