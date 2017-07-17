@@ -18,6 +18,7 @@ import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import hr.prism.board.service.event.NotificationEventService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -28,6 +29,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,6 +72,9 @@ public class DepartmentService {
 
     @Inject
     private ActionService actionService;
+
+    @Inject
+    private NotificationEventService notificationEventService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -209,7 +214,21 @@ public class DepartmentService {
 
         userRoleDTO.setRole(Role.MEMBER);
         userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
-        // TODO: administrator notification
+
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.JOIN_DEPARTMENT_REQUEST);
+        notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+        // TODO: register the user activity
+    }
+
+    public void processMembershipRequest(Long departmentId, Long userId, State state) {
+        User user = userService.getCurrentUserSecured();
+        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> {
+            UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
+            userRole.setState(state);
+            return department;
+        });
     }
 
 }

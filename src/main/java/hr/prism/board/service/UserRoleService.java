@@ -178,6 +178,10 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }
 
+    public UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
+        return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
+    }
+
     public UserRole findByResourceAndUserAndRoleAndState(Resource resource, User user, Role role, State state) {
         return userRoleRepository.findByResourceAndUserAndRoleAndState(resource, user, role, state);
     }

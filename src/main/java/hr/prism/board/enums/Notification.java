@@ -12,6 +12,7 @@ public enum Notification {
     CORRECT_POST(AuthorizedRecipientList.class),
     JOIN_BOARD(DefinedRecipientList.class),
     JOIN_DEPARTMENT(DefinedRecipientList.class),
+    JOIN_DEPARTMENT_REQUEST(AuthorizedRecipientList.class),
     NEW_BOARD(AuthorizedRecipientList.class),
     NEW_BOARD_PARENT(AuthorizedRecipientList.class),
     NEW_POST(AuthorizedRecipientList.class),
