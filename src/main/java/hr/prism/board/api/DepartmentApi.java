@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
@@ -65,6 +66,11 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.PATCH)
     public DepartmentRepresentation updateDepartment(@PathVariable Long id, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
         return departmentMapper.apply(departmentService.updateDepartment(id, departmentDTO));
+    }
+
+    @RequestMapping(value = "/api/departments/{id}/membership", method = RequestMethod.POST)
+    public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
+        departmentService.createMembershipRequest(departmentId, userRoleDTO);
     }
 
 }

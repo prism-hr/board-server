@@ -2,10 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.*;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -46,11 +43,12 @@ public interface UserRepository extends MyRepository<User, Long> {
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
+            "and userRole.state = :userRoleState " +
             "and (userRole.expiryDate is null " +
             "or userRole.expiryDate >= :baseline) " +
             SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
-                                                      @Param("baseline") LocalDate baseline);
+                                                      @Param("userRoleState") State userRoleState, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select distinct userRole.user " +
@@ -64,14 +62,15 @@ public interface UserRepository extends MyRepository<User, Long> {
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
+            "and userRole.state = :userRoleState " +
             "and category.type = :categoryType " +
             "and category.name = userCategory.name " +
             "and (userRole.expiryDate is null " +
             "or userRole.expiryDate >= :baseline) " +
             SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
-                                                                   @Param("role") Role role, @Param("categoryType") CategoryType categoryType,
-                                                                   @Param("baseline") LocalDate baseline);
+                                                                   @Param("role") Role role, @Param("userRoleState") State userRoleState,
+                                                                   @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select userRole.user " +

@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,11 +31,12 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
         "inner join parent.userRoles userRole " +
         "inner join resource.parent parent " +
         "left join resource.categories category " +
-        "where userRole.user = :user " +
-        "and resource.scope = :scope " +
+        "where resource.scope = :scope " +
+        "and userRole.user = :user " +
+        "and userRole.state = :userRoleState " +
         "and category.id is null " +
         "order by parent.name, resource.name")
-    List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope);
+    List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleState") State userRoleState);
 
     @Query(value =
         "select distinct resource " +
@@ -45,11 +47,12 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "inner join resource.parent parent " +
             "inner join resource.categories category " +
             "inner join userRole.categories userCategory " +
-            "where userRole.user = :user " +
-            "and resource.scope = :scope " +
+            "where resource.scope = :scope " +
+            "and userRole.user = :user " +
+            "and userRole.state = :userRoleState " +
             "and category.name = userCategory.name " +
             "order by parent.name, resource.name")
-    List<Resource> findByUserAndScopeAndCategories(@Param("user") User user, @Param("scope") Scope scope);
+    List<Resource> findByUserAndScopeAndCategories(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleState") State userRoleState);
 
     @Modifying
     @Query(value =

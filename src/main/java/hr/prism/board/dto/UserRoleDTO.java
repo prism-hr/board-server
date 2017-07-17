@@ -3,7 +3,6 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Objects;
 
 public class UserRoleDTO {
 
-    @NotNull
     private Role role;
 
     private LocalDate expiryDate;

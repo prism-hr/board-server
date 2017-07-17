@@ -95,8 +95,6 @@ public class ResourceFilterDTO {
 
         String statement();
 
-        boolean secured() default false;
-
     }
 
 }

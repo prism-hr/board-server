@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -27,9 +28,6 @@ public class UserNotificationSuppressionService {
 
     @Inject
     private UserNotificationSuppressionRepository userNotificationSuppressionRepository;
-
-    @Inject
-    private ActionService actionService;
 
     @Inject
     private ResourceService resourceService;
@@ -89,7 +87,7 @@ public class UserNotificationSuppressionService {
 
     public List<UserNotificationSuppressionRepresentation> postSuppressions() {
         User user = userService.getCurrentUserSecured();
-        userNotificationSuppressionRepository.insertByUserId(user.getId(), Scope.BOARD.name());
+        userNotificationSuppressionRepository.insertByUserId(user.getId(), Scope.BOARD.name(), State.ACCEPTED.name());
         entityManager.flush();
         return getSuppressions(user);
     }

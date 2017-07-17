@@ -59,10 +59,10 @@ public class ResourceService {
             "and resource.state = workflow.resource2_state " +
             "inner join resource_relation as owner_relation " +
             "on resource.id = owner_relation.resource2_id " +
-            "and (resource.scope = 'DEPARTMENT' or owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "and (resource.scope = :departmentScope or owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "inner join resource as owner " +
             "on owner_relation.resource1_id = owner.id " +
-            "and (workflow.resource4_state is null or workflow.resource4_state = owner.state)";
+            "and (workflow.resource4_state is null or workflow.resource4_state = owner.state) ";
 
     private static final String SECURE_RESOURCE_ACTION =
         "select resource.id, workflow.action, " +
@@ -74,7 +74,7 @@ public class ResourceService {
             "and resource.state = workflow.resource2_state " +
             "inner join resource_relation as owner_relation " +
             "on resource.id = owner_relation.resource2_id " +
-            "and (resource.scope = 'DEPARTMENT' or owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "and (resource.scope = :departmentScope or owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "inner join resource as owner " +
             "on owner_relation.resource1_id = owner.id " +
             "and (workflow.resource4_state is null or workflow.resource4_state = owner.state) " +
@@ -85,9 +85,7 @@ public class ResourceService {
             "and workflow.resource1_scope = parent.scope " +
             "inner join user_role " +
             "on parent.id = user_role.resource_id " +
-            "and workflow.role = user_role.role " +
-            "and (user_role.expiry_date is null " +
-            "or user_role.expiry_date >= :baseline) ";
+            "and workflow.role = user_role.role and user_role.state = :userRoleState and (user_role.expiry_date is null or user_role.expiry_date >= :baseline) ";
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -196,14 +194,20 @@ public class ResourceService {
     // TODO: implement paging / continuous scrolling mechanism
     public List<Resource> getResources(User user, ResourceFilterDTO filter) {
         List<String> publicFilterStatements = new ArrayList<>();
-        publicFilterStatements.add("workflow.role = :role");
+        publicFilterStatements.add("where workflow.role = :role ");
+
+        String departmentScope = Scope.DEPARTMENT.name();
         Map<String, Object> publicFilterParameters = new HashMap<>();
         publicFilterParameters.put("role", Role.PUBLIC.name());
+        publicFilterParameters.put("departmentScope", departmentScope);
 
         List<String> secureFilterStatements = new ArrayList<>();
-        secureFilterStatements.add("user_role.user_id = :userId");
+        secureFilterStatements.add("where user_role.user_id = :userId ");
+
         Map<String, Object> secureFilterParameters = new HashMap<>();
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
+        secureFilterParameters.put("departmentScope", departmentScope);
+        secureFilterParameters.put("userRoleState", State.ACCEPTED.name());
         secureFilterParameters.put("baseline", LocalDate.now());
 
         // Unwrap the filters
@@ -220,10 +224,8 @@ public class ResourceService {
                         secureFilterStatements.add(statement);
                         secureFilterParameters.put(parameter, value.toString());
 
-                        if (!resourceFilter.secured()) {
-                            publicFilterStatements.add(statement);
-                            publicFilterParameters.put(parameter, value.toString());
-                        }
+                        publicFilterStatements.add(statement);
+                        publicFilterParameters.put(parameter, value.toString());
                     }
                 }
             } catch (IllegalAccessException e) {
@@ -495,8 +497,10 @@ public class ResourceService {
 
     public Collection<Resource> getSuppressableResources(User user, Scope scope) {
         Map<Pair<String, String>, Resource> index = new TreeMap<>();
-        resourceRepository.findByUserAndScope(user, scope).forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
-        resourceRepository.findByUserAndScopeAndCategories(user, scope).forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
+        resourceRepository.findByUserAndScope(user, scope, State.ACCEPTED)
+            .forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
+        resourceRepository.findByUserAndScopeAndCategories(user, scope, State.ACCEPTED)
+            .forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
         return index.values();
     }
 

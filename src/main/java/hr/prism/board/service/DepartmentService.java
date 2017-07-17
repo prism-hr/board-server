@@ -1,16 +1,21 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
+import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.service.cache.UserRoleCacheService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -60,6 +65,9 @@ public class DepartmentService {
 
     @Inject
     private UserRoleService userRoleService;
+
+    @Inject
+    private UserRoleCacheService userRoleCacheService;
 
     @Inject
     private ActionService actionService;
@@ -182,6 +190,18 @@ public class DepartmentService {
         }
 
         return departmentRepresentations;
+    }
+
+    public void createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
+        User user = userService.getCurrentUserSecured();
+        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        if (CollectionUtils.isNotEmpty(department.getActions())) {
+            throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION);
+        }
+
+        userRoleDTO.setRole(Role.MEMBER);
+        userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
+        // TODO: administrator notification
     }
 
 }
