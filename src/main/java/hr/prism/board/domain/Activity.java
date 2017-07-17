@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
 
@@ -15,6 +16,10 @@ public class Activity extends BoardEntity {
     @ManyToOne
     @JoinColumn(name = "user_role_id")
     private UserRole userRole;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scope", nullable = false)
+    private Scope scope;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
@@ -35,6 +40,15 @@ public class Activity extends BoardEntity {
 
     public Activity setUserRole(UserRole userRole) {
         this.userRole = userRole;
+        return this;
+    }
+
+    public Scope getScope() {
+        return scope;
+    }
+
+    public Activity setScope(Scope scope) {
+        this.scope = scope;
         return this;
     }
 

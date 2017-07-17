@@ -76,6 +76,9 @@ public class DepartmentService {
     @Inject
     private NotificationEventService notificationEventService;
 
+    @Inject
+    private ActivityService activityService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -218,7 +221,7 @@ public class DepartmentService {
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
             .setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.JOIN_DEPARTMENT_REQUEST);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
-        // TODO: register the user activity
+        activityService.getOrCreateActivity(userRole, Scope.DEPARTMENT, Role.ADMINISTRATOR);
     }
 
     public void processMembershipRequest(Long departmentId, Long userId, State state) {
