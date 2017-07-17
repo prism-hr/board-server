@@ -18,7 +18,7 @@ import java.util.Map;
 
 @TestContext
 @RunWith(SpringRunner.class)
-public class ApiExceptionHandlerIT {
+public class ApiAdviceIT {
 
     @Inject
     private MockMvc mockMvc;

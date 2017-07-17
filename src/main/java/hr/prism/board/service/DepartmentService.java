@@ -3,19 +3,21 @@ package hr.prism.board.service;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,17 +36,14 @@ import java.util.stream.Collectors;
 public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
-        "SELECT resource.id, resource.name, document_logo.cloudinary_id, " +
-            "document_logo.cloudinary_url, document_logo.file_name, " +
-            "if(resource.scope = :scope AND resource.state = :state, 1, 0) AS valid, " +
-            "if(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "match resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+        "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
+            "IF(resource.scope = :scope AND resource.state = :state, 1, 0) AS valid, " +
+            "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
+            "MATCH resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
             "LEFT JOIN document AS document_logo " +
             "ON resource.document_logo_id = document_logo.id " +
-            "HAVING valid = 1 " +
-            "AND (similarityHard = 1 " +
-            "OR similaritySoft > 0) " +
+            "HAVING valid = 1 AND (similarityHard = 1 OR similaritySoft > 0) " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
             "LIMIT 10";
 
@@ -195,8 +194,17 @@ public class DepartmentService {
     public void createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        if (CollectionUtils.isNotEmpty(department.getActions())) {
+
+        List<ActionRepresentation> actions = department.getActions();
+        if (actions != null && actions.stream().anyMatch(action -> action.getAction() == Action.PURSUE)) {
+            // User can already do what they want to do, membership would be redundant
             throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION);
+        }
+
+        UserRole userRole = userRoleService.findByResourceAndUserAndRoleAndState(department, user, Role.MEMBER, State.REJECTED);
+        if (userRole != null) {
+            // User has been rejected already, don't let them be a nuisance by repeatedly retrying
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION);
         }
 
         userRoleDTO.setRole(Role.MEMBER);

@@ -11,6 +11,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @Entity
+@NamedEntityGraph(
+    name = "userRole.extended",
+    attributeNodes = @NamedAttributeNode(value = "categories"))
 @Table(name = "user_role", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_id", "role"}))
 public class UserRole extends BoardEntity {
 

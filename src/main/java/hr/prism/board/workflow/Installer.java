@@ -15,8 +15,7 @@ import javax.transaction.Transactional;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Notification.*;
-import static hr.prism.board.enums.Role.ADMINISTRATOR;
-import static hr.prism.board.enums.Role.AUTHOR;
+import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.*;
 
@@ -150,6 +149,10 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, MEMBER).can(PURSUE, POST).inState(ACCEPTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
+            .permitThat(POST, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
 
             // Post expired state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)

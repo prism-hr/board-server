@@ -7,6 +7,7 @@ import hr.prism.board.exception.ExceptionCode;
 public enum Action {
 
     VIEW(false),
+    PURSUE(false),
     AUDIT(false),
     EDIT(false),
     EXTEND(false),

@@ -3,6 +3,7 @@ package hr.prism.board.representation;
 import com.google.common.base.MoreObjects;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.State;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.List;
 public class UserRoleRepresentation {
 
     private Role role;
+
+    private State state;
 
     private LocalDate expiryDate;
 
@@ -21,6 +24,15 @@ public class UserRoleRepresentation {
 
     public UserRoleRepresentation setRole(Role role) {
         this.role = role;
+        return this;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public UserRoleRepresentation setState(State state) {
+        this.state = state;
         return this;
     }
 
@@ -46,8 +58,10 @@ public class UserRoleRepresentation {
     public String toString() {
         return MoreObjects.toStringHelper(this)
             .add("role", role)
+            .add("state", state)
             .add("expiryDate", expiryDate)
             .add("categories", categories)
             .toString();
     }
+
 }

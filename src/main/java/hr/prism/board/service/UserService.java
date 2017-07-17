@@ -36,8 +36,7 @@ import java.util.UUID;
 public class UserService {
 
     private static final String USER_SEARCH_STATEMENT =
-        "SELECT user.id, user.given_name, user.surname, user.email, " +
-            "document_image.cloudinary_id, document_image.cloudinary_url, document_image.file_name " +
+        "SELECT user.id, user.given_name, user.surname, user.email, document_image.cloudinary_id, document_image.cloudinary_url, document_image.file_name " +
             "FROM user " +
             "LEFT JOIN document AS document_image " +
             "ON user.document_image_id = document_image.id " +

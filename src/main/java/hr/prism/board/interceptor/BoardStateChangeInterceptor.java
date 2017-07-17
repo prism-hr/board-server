@@ -23,7 +23,7 @@ public class BoardStateChangeInterceptor implements StateChangeInterceptor {
         if (action == Action.EXTEND) {
             Board board = (Board) resource;
             Department department = (Department) board.getParent();
-            if (userRoleService.findbyResourceAndUserAndRole(department, user, Role.ADMINISTRATOR) == null) {
+            if (userRoleService.findByResourceAndUserAndRole(department, user, Role.ADMINISTRATOR) == null) {
                 return State.DRAFT;
             }
 

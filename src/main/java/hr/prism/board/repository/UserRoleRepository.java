@@ -4,6 +4,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,13 +13,13 @@ import java.util.List;
 @SuppressWarnings("JpaQlInspection")
 public interface UserRoleRepository extends MyRepository<UserRole, Long> {
 
-    List<UserRole> findByResource(Resource resource);
-
     List<UserRole> findByResourceAndUser(Resource resource, User user);
 
     List<UserRole> findByResourceAndRole(Resource resource, Role role);
 
     UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);
+
+    UserRole findByResourceAndUserAndRoleAndState(Resource resource, User user, Role role, State state);
 
     @Query(value =
         "select userRole " +
