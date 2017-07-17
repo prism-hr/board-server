@@ -207,7 +207,7 @@ public class ResourceService {
         Map<String, Object> secureFilterParameters = new HashMap<>();
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
         secureFilterParameters.put("departmentScope", departmentScope);
-        secureFilterParameters.put("userRoleState", State.ACTIVE_USER_ROLE_STATE_STRINGS);
+        secureFilterParameters.put("userRoleStates", State.ACTIVE_USER_ROLE_STATE_STRINGS);
         secureFilterParameters.put("baseline", LocalDate.now());
 
         // Unwrap the filters
