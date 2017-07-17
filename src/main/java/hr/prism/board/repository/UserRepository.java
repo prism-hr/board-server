@@ -43,12 +43,12 @@ public interface UserRepository extends MyRepository<User, Long> {
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
-            "and userRole.state = :userRoleState " +
+            "and userRole.state in (:userRoleStates) " +
             "and (userRole.expiryDate is null " +
             "or userRole.expiryDate >= :baseline) " +
             SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
-                                                      @Param("userRoleState") State userRoleState, @Param("baseline") LocalDate baseline);
+                                                      @Param("userRoleStates") State[] userRoleStates, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select distinct userRole.user " +
@@ -62,14 +62,14 @@ public interface UserRepository extends MyRepository<User, Long> {
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
-            "and userRole.state = :userRoleState " +
+            "and userRole.state in (:userRoleStates) " +
             "and category.type = :categoryType " +
             "and category.name = userCategory.name " +
             "and (userRole.expiryDate is null " +
             "or userRole.expiryDate >= :baseline) " +
             SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
-                                                                   @Param("role") Role role, @Param("userRoleState") State userRoleState,
+                                                                   @Param("role") Role role, @Param("userRoleStates") State[] userRoleStates,
                                                                    @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
 
     @Query(value =

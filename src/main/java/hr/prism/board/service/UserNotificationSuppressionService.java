@@ -87,7 +87,7 @@ public class UserNotificationSuppressionService {
 
     public List<UserNotificationSuppressionRepresentation> postSuppressions() {
         User user = userService.getCurrentUserSecured();
-        userNotificationSuppressionRepository.insertByUserId(user.getId(), Scope.BOARD.name(), State.ACCEPTED.name());
+        userNotificationSuppressionRepository.insertByUserId(user.getId(), Scope.BOARD.name(), State.ACTIVE_USER_ROLE_STATE_STRINGS);
         entityManager.flush();
         return getSuppressions(user);
     }

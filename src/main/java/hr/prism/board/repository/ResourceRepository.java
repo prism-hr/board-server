@@ -33,10 +33,10 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
         "left join resource.categories category " +
         "where resource.scope = :scope " +
         "and userRole.user = :user " +
-        "and userRole.state = :userRoleState " +
+        "and userRole.state in (:userRoleStates) " +
         "and category.id is null " +
         "order by parent.name, resource.name")
-    List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleState") State userRoleState);
+    List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleStates") State[] userRoleStates);
 
     @Query(value =
         "select distinct resource " +
@@ -49,10 +49,10 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "inner join userRole.categories userCategory " +
             "where resource.scope = :scope " +
             "and userRole.user = :user " +
-            "and userRole.state = :userRoleState " +
+            "and userRole.state in (:userRoleStates) " +
             "and category.name = userCategory.name " +
             "order by parent.name, resource.name")
-    List<Resource> findByUserAndScopeAndCategories(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleState") State userRoleState);
+    List<Resource> findByUserAndScopeAndCategories(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleStates") State[] userRoleStates);
 
     @Modifying
     @Query(value =

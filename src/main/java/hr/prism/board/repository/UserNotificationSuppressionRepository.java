@@ -44,11 +44,11 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
             "ON user_role.user_id = user_notification_suppression.user_id " +
             "AND suppressed.id = user_notification_suppression.resource_id " +
             "WHERE user_role.user_id = :userId " +
-            "AND user_role.state = :userRoleState " +
+            "AND user_role.state IN (:userRoleStates) " +
             "AND suppressed.scope = :scope " +
             "AND user_notification_suppression.id IS NULL " +
             "GROUP BY user_role.user_id, suppressed.id",
         nativeQuery = true)
-    void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope, @Param("userRoleState") String userRoleState);
+    void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope, @Param("userRoleStates") String[] userRoleStates);
 
 }

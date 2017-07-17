@@ -85,7 +85,7 @@ public class ResourceService {
             "and workflow.resource1_scope = parent.scope " +
             "inner join user_role " +
             "on parent.id = user_role.resource_id " +
-            "and workflow.role = user_role.role and user_role.state = :userRoleState and (user_role.expiry_date is null or user_role.expiry_date >= :baseline) ";
+            "and workflow.role = user_role.role and user_role.state in (:userRoleStates) and (user_role.expiry_date is null or user_role.expiry_date >= :baseline) ";
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -207,7 +207,7 @@ public class ResourceService {
         Map<String, Object> secureFilterParameters = new HashMap<>();
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
         secureFilterParameters.put("departmentScope", departmentScope);
-        secureFilterParameters.put("userRoleState", State.ACCEPTED.name());
+        secureFilterParameters.put("userRoleState", State.ACTIVE_USER_ROLE_STATE_STRINGS);
         secureFilterParameters.put("baseline", LocalDate.now());
 
         // Unwrap the filters
@@ -497,9 +497,9 @@ public class ResourceService {
 
     public Collection<Resource> getSuppressableResources(User user, Scope scope) {
         Map<Pair<String, String>, Resource> index = new TreeMap<>();
-        resourceRepository.findByUserAndScope(user, scope, State.ACCEPTED)
+        resourceRepository.findByUserAndScope(user, scope, State.ACTIVE_USER_ROLE_STATES)
             .forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
-        resourceRepository.findByUserAndScopeAndCategories(user, scope, State.ACCEPTED)
+        resourceRepository.findByUserAndScopeAndCategories(user, scope, State.ACTIVE_USER_ROLE_STATES)
             .forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
         return index.values();
     }
