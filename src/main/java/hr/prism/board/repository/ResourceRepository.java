@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,28 +32,14 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "inner join parent.userRoles userRole " +
             "inner join resource.parent parent " +
             "left join resource.categories category " +
+            "left join userRole.categories userCategory " +
             "where resource.scope = :scope " +
             "and userRole.user = :user " +
             "and userRole.state in (:userRoleStates) " +
-            "and category.id is null " +
+            "and (category.id is null or userRole.role in (:roles) or category.name = userCategory.name) " +
             "order by parent.name, resource.name")
-    List<Resource> findByUserAndScope(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleStates") List<State> userRoleStates);
-
-    @Query(value =
-        "select distinct resource " +
-            "from Resource resource " +
-            "inner join resource.parents parentRelation " +
-            "inner join parentRelation.resource1 parent " +
-            "inner join parent.userRoles userRole " +
-            "inner join resource.parent parent " +
-            "inner join resource.categories category " +
-            "inner join userRole.categories userCategory " +
-            "where resource.scope = :scope " +
-            "and userRole.user = :user " +
-            "and userRole.state in (:userRoleStates) " +
-            "and category.name = userCategory.name " +
-            "order by parent.name, resource.name")
-    List<Resource> findByUserAndScopeAndCategories(@Param("user") User user, @Param("scope") Scope scope, @Param("userRoleStates") List<State> userRoleStates);
+    List<Resource> findByScopeAndUserAndRolesOrCategories(@Param("scope") Scope scope, @Param("user") User user, @Param("roles") List<Role> roles,
+                                                          @Param("userRoleStates") List<State> userRoleStates);
 
     @Modifying
     @Query(value =

@@ -58,7 +58,7 @@ public class PostApiIT extends AbstractIT {
         AUTHOR_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW, Action.CORRECT));
         AUTHOR_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
-        AUTHOR_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
+        AUTHOR_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.PURSUE, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.AUDIT, Action.EDIT, Action.RESTORE));

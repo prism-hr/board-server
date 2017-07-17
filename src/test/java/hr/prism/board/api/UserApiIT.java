@@ -103,9 +103,15 @@ public class UserApiIT extends AbstractIT {
                 new UserDTO().setEmail(memberUser1Email)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)
                 .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))));
 
+        Long adminUserId = adminUser.getId();
         Long memberUser1Id = memberUser1.getId();
         Long memberUser2Id = memberUser2.getId();
         Long memberUser3Id = memberUser3.getId();
+
+        testUserService.setAuthentication(adminUserId);
+        List<UserNotificationSuppressionRepresentation> adminUserSuppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
+        Assert.assertEquals(6, adminUserSuppressions.size());
+        adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.setAuthentication(memberUser1Id);
         transactionTemplate.execute(status -> userApi.postSuppressions());

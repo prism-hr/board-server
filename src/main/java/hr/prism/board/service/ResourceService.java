@@ -23,7 +23,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -491,13 +490,8 @@ public class ResourceService {
         return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
     }
 
-    public Collection<Resource> getSuppressableResources(User user, Scope scope) {
-        Map<Pair<String, String>, Resource> index = new TreeMap<>();
-        resourceRepository.findByUserAndScope(user, scope, State.ACTIVE_USER_ROLE_STATES)
-            .forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
-        resourceRepository.findByUserAndScopeAndCategories(user, scope, State.ACTIVE_USER_ROLE_STATES)
-            .forEach(resource -> index.put(Pair.of(resource.getParent().getName(), resource.getName()), resource));
-        return index.values();
+    public List<Resource> getSuppressableResources(Scope scope, User user) {
+        return resourceRepository.findByScopeAndUserAndRolesOrCategories(scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACTIVE_USER_ROLE_STATES);
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {

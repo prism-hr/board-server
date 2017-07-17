@@ -96,7 +96,7 @@ public class UserRoleService {
             entityManager.createQuery(RESOURCE_USER_ROLE)
                 .setParameter("resource", resource)
                 .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
-                .setHint("javax.persistence.loadgraph", "userRole.extended")
+                .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList());
 
         Map<User, ResourceUserRepresentation> resourceUsersMap = new TreeMap<>();
@@ -200,7 +200,7 @@ public class UserRoleService {
                 .setParameter("resource", resource)
                 .setParameter("user", user)
                 .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
-                .setHint("javax.persistence.loadgraph", "userRole.extended")
+                .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList());
         return userRoles.stream().map(userRoleMapper).collect(Collectors.toSet());
     }

@@ -47,7 +47,7 @@ public class UserNotificationSuppressionService {
     }
 
     public List<UserNotificationSuppressionRepresentation> getSuppressions(User user) {
-        Collection<Resource> resources = resourceService.getSuppressableResources(user, Scope.BOARD);
+        Collection<Resource> resources = resourceService.getSuppressableResources(Scope.BOARD, user);
         List<Resource> suppressedResources =
             userNotificationSuppressionRepository.findByUser(user).stream().map(UserNotificationSuppression::getResource).collect(Collectors.toList());
 
