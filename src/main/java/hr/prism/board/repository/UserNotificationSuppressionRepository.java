@@ -49,6 +49,6 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
             "AND user_notification_suppression.id IS NULL " +
             "GROUP BY user_role.user_id, suppressed.id",
         nativeQuery = true)
-    void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope, @Param("userRoleStates") String[] userRoleStates);
+    void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope, @Param("userRoleStates") List<String> userRoleStates);
 
 }

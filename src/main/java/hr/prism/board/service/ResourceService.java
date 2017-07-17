@@ -50,42 +50,38 @@ public class ResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
     private static final String PUBLIC_RESOURCE_ACTION =
-        "select resource.id, workflow.action, " +
-            "workflow.resource3_scope, workflow.resource3_state, " +
-            "workflow.notification " +
-            "from resource " +
-            "inner join workflow " +
-            "on resource.scope = workflow.resource2_scope " +
-            "and resource.state = workflow.resource2_state " +
-            "inner join resource_relation as owner_relation " +
-            "on resource.id = owner_relation.resource2_id " +
-            "and (resource.scope = :departmentScope or owner_relation.resource1_id <> owner_relation.resource2_id) " +
-            "inner join resource as owner " +
-            "on owner_relation.resource1_id = owner.id " +
-            "and (workflow.resource4_state is null or workflow.resource4_state = owner.state) ";
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.notification " +
+            "FROM resource " +
+            "INNER join workflow " +
+            "ON resource.scope = workflow.resource2_scope " +
+            "AND resource.state = workflow.resource2_state " +
+            "INNER JOIN resource_relation AS owner_relation " +
+            "ON resource.id = owner_relation.resource2_id " +
+            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "INNER JOIN resource as owner " +
+            "ON owner_relation.resource1_id = owner.id " +
+            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) ";
 
     private static final String SECURE_RESOURCE_ACTION =
-        "select resource.id, workflow.action, " +
-            "workflow.resource3_scope, workflow.resource3_state, " +
-            "workflow.notification " +
-            "from resource " +
-            "inner join workflow " +
-            "on resource.scope = workflow.resource2_scope " +
-            "and resource.state = workflow.resource2_state " +
-            "inner join resource_relation as owner_relation " +
-            "on resource.id = owner_relation.resource2_id " +
-            "and (resource.scope = :departmentScope or owner_relation.resource1_id <> owner_relation.resource2_id) " +
-            "inner join resource as owner " +
-            "on owner_relation.resource1_id = owner.id " +
-            "and (workflow.resource4_state is null or workflow.resource4_state = owner.state) " +
-            "inner join resource_relation " +
-            "on resource.id = resource_relation.resource2_id " +
-            "inner join resource as parent " +
-            "on resource_relation.resource1_id = parent.id " +
-            "and workflow.resource1_scope = parent.scope " +
-            "inner join user_role " +
-            "on parent.id = user_role.resource_id " +
-            "and workflow.role = user_role.role and user_role.state in (:userRoleStates) and (user_role.expiry_date is null or user_role.expiry_date >= :baseline) ";
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.notification " +
+            "FROM resource " +
+            "INNER JOIN workflow " +
+            "ON resource.scope = workflow.resource2_scope " +
+            "AND resource.state = workflow.resource2_state " +
+            "INNER JOIN resource_relation AS owner_relation " +
+            "ON resource.id = owner_relation.resource2_id " +
+            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "INNER JOIN resource as owner " +
+            "ON owner_relation.resource1_id = owner.id " +
+            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) " +
+            "INNER JOIN resource_relation " +
+            "ON resource.id = resource_relation.resource2_id " +
+            "INNER JOIN resource as parent " +
+            "ON resource_relation.resource1_id = parent.id " +
+            "AND workflow.resource1_scope = parent.scope " +
+            "INNER JOIN user_role " +
+            "ON parent.id = user_role.resource_id " +
+            "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline) ";
 
     @Inject
     private ResourceRepository resourceRepository;
