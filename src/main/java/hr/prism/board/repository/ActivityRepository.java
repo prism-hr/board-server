@@ -6,6 +6,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,11 +36,13 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
 
     Activity findByResourceAndUserRoleAndScopeAndRole(Resource resource, UserRole userRole, Scope scope, Role role);
 
+    @Modifying
     @Query(value =
         "delete from Activity activity " +
             "where activity.resource = :resource")
     void deleteByResource(@Param("resource") Resource resource);
 
+    @Modifying
     @Query(value =
         "delete from Activity activity " +
             "where activity.userRole = :userRole")

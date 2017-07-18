@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.*;
+import hr.prism.board.enums.ActivityCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.repository.ActivityDismissalRepository;
@@ -30,13 +31,13 @@ public class ActivityService {
     }
 
     // TODO: update views for logged in users (long polling)
-    public Activity getOrCreateActivity(Resource resource, Scope scope, Role role) {
-        return getOrCreateActivity(resource, null, scope, role);
+    public Activity getOrCreateActivity(Resource resource, Scope scope, Role role, ActivityCategory category) {
+        return getOrCreateActivity(resource, null, scope, role, category);
     }
 
     // TODO: update views for logged in users (long polling)
     public Activity getOrCreateActivity(UserRole userRole, Scope scope, Role role) {
-        return getOrCreateActivity(userRole.getResource(), userRole, scope, role);
+        return getOrCreateActivity(userRole.getResource(), userRole, scope, role, ActivityCategory.NEW_MEMBERSHIP);
     }
 
     public void dismissActivity(Long activityId) {
@@ -60,7 +61,7 @@ public class ActivityService {
         activityRepository.deleteByUserRole(userRole);
     }
 
-    private Activity getOrCreateActivity(Resource resource, UserRole userRole, Scope scope, Role role) {
+    private Activity getOrCreateActivity(Resource resource, UserRole userRole, Scope scope, Role role, ActivityCategory category) {
         Activity activity;
         if (userRole == null) {
             activity = activityRepository.findByResourceAndScopeAndRole(resource, scope, role);
@@ -69,7 +70,7 @@ public class ActivityService {
         }
 
         if (activity == null) {
-            activity = activityRepository.save(new Activity().setResource(resource).setUserRole(userRole).setScope(scope).setRole(role));
+            activity = activityRepository.save(new Activity().setResource(resource).setUserRole(userRole).setScope(scope).setRole(role).setCategory(category));
         }
 
         return activity;

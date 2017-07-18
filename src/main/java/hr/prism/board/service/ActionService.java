@@ -31,6 +31,9 @@ public class ActionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
 
     @Inject
+    private ActivityService activityService;
+
+    @Inject
     private ResourceService resourceService;
 
     @Inject
@@ -65,6 +68,8 @@ public class ActionService {
                     if (stateChanged) {
                         resourceService.updateState(newResource, newState);
                         newResource = resourceService.getResource(user, newResource.getScope(), newResource.getId());
+                        activityService.deleteActivities(resource);
+                        // TODO: Register the new activities
                     }
 
                     if (!resource.equals(newResource) || stateChanged || CollectionUtils.isNotEmpty(newResource.getChangeList())) {
