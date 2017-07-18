@@ -20,7 +20,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "inner join activity.resource resource " +
             "inner join resource.parents parentRelation " +
             "inner join parentRelation.resource1 parent " +
-            "inner join parent.userRoles usersRole " +
+            "inner join parent.userRoles userRole " +
             "where activity.scope = parent.scope " +
             "and activity.role = userRole.role " +
             "and userRole.user = :user " +
