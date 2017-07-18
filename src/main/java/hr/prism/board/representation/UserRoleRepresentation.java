@@ -10,6 +10,8 @@ import java.util.List;
 
 public class UserRoleRepresentation {
 
+    private UserRepresentation user;
+
     private Role role;
 
     private State state;
@@ -17,6 +19,15 @@ public class UserRoleRepresentation {
     private LocalDate expiryDate;
 
     private List<MemberCategory> categories;
+
+    public UserRepresentation getUser() {
+        return user;
+    }
+
+    public UserRoleRepresentation setUser(UserRepresentation user) {
+        this.user = user;
+        return this;
+    }
 
     public Role getRole() {
         return role;

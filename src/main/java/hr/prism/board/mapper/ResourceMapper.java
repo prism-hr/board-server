@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 public class ResourceMapper {
 
     @SuppressWarnings("unchecked")
+    // FIXME: move logo mapping into this class
     public <T extends ResourceRepresentation> T apply(Resource resource, Class<T> representationClass) {
         return (T) BeanUtils.instantiate(representationClass)
             .setId(resource.getId())

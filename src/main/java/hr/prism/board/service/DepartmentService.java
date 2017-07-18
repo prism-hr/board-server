@@ -230,6 +230,7 @@ public class DepartmentService {
         actionService.executeAction(user, department, Action.EDIT, () -> {
             UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
             userRole.setState(state);
+            activityService.deleteActivities(userRole);
             return department;
         });
     }
