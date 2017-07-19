@@ -2,10 +2,7 @@ package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
+import hr.prism.board.enums.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +28,8 @@ public class Permission {
     private State resource3State;
 
     private State resource4State;
+
+    private ActivityCategory activity;
 
     private List<Notification> notifications;
 
@@ -73,6 +72,11 @@ public class Permission {
         return this;
     }
 
+    public Permission setActivity(ActivityCategory activity) {
+        this.activity = activity;
+        return this;
+    }
+
     public Notification addNotification(Scope scope, Role role) {
         if (this.notifications == null) {
             this.notifications = new ArrayList<>();
@@ -108,7 +112,7 @@ public class Permission {
     @Override
     public String toString() {
         List<String> values = new ArrayList<>();
-        for (Object value : new Object[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State, resource4State, notifications}) {
+        for (Object value : new Object[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State, resource4State, activity, notifications}) {
             String valueString;
             if (value == null) {
                 valueString = "NULL";

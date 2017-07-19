@@ -2,6 +2,7 @@ package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
+import hr.prism.board.enums.ActivityCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
@@ -45,6 +46,11 @@ public class Workflow extends ArrayList<Permission> {
 
     public Workflow transitioningTo(State state) {
         this.permission.setResource3State(state);
+        return this;
+    }
+
+    public Workflow highlightedAs(ActivityCategory activity) {
+        this.permission.setActivity(activity);
         return this;
     }
 

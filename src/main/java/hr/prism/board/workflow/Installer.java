@@ -14,6 +14,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.ActivityCategory.*;
 import static hr.prism.board.enums.Notification.*;
 import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.*;
@@ -55,8 +56,10 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, BOARD).inState(DRAFT).transitioningTo(ACCEPTED)
+            .highlightedAs(REVIEW_NEW_BOARD)
             .notifying(BOARD, ADMINISTRATOR).with(ACCEPT_BOARD)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(DRAFT).transitioningTo(REJECTED)
+            .highlightedAs(REVIEW_NEW_BOARD)
             .notifying(BOARD, ADMINISTRATOR).with(REJECT_BOARD)
 
             // Board accepted state
@@ -99,16 +102,22 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(DRAFT).transitioningTo(ACCEPTED)
+            .highlightedAs(REVIEW_NEW_POST)
             .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST)
             .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(DRAFT).transitioningTo(ACCEPTED)
+            .highlightedAs(REVIEW_NEW_POST)
             .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(DRAFT).transitioningTo(SUSPENDED)
+            .highlightedAs(REVIEW_NEW_POST)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST)
             .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(DRAFT).transitioningTo(SUSPENDED)
+            .highlightedAs(REVIEW_NEW_POST)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
+            .highlightedAs(REVIEW_NEW_POST)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
+            .highlightedAs(REVIEW_NEW_POST)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(DRAFT).transitioningTo(WITHDRAWN)
 
@@ -151,6 +160,7 @@ public class Installer {
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, MEMBER).can(PURSUE, POST).inState(ACCEPTED)
+            .highlightedAs(PURSUE_PUBLISHED_POST)
             .permitThat(BOARD, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
             .permitThat(POST, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
 
@@ -192,10 +202,41 @@ public class Installer {
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
             .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
-            .permitThat(POST, ADMINISTRATOR).can(CORRECT, POST).inState(SUSPENDED).transitioningTo(DRAFT)
+            .permitThat(POST, ADMINISTRATOR).can(CORRECT, POST).inState(SUSPENDED).transitioningTo(CORRECTED)
+            .highlightedAs(REVISE_SUSPENDED_POST)
             .notifying(DEPARTMENT, ADMINISTRATOR).excludingCreator().with(CORRECT_POST)
             .notifying(BOARD, ADMINISTRATOR).excludingCreator().with(CORRECT_POST)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(SUSPENDED).transitioningTo(WITHDRAWN)
+
+            // Post corrected state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(CORRECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(CORRECTED)
+            .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(CORRECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(CORRECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(CORRECTED)
+            .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(CORRECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(AUDIT, POST).inState(CORRECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(AUDIT, POST).inState(CORRECTED)
+            .permitThat(POST, ADMINISTRATOR).can(AUDIT, POST).inState(CORRECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(CORRECTED).transitioningTo(ACCEPTED)
+            .highlightedAs(REVIEW_CORRECTED_POST)
+            .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST)
+            .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(CORRECTED).transitioningTo(ACCEPTED)
+            .highlightedAs(REVIEW_CORRECTED_POST)
+            .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(CORRECTED).transitioningTo(SUSPENDED)
+            .highlightedAs(REVIEW_CORRECTED_POST)
+            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST)
+            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(CORRECTED).transitioningTo(SUSPENDED)
+            .highlightedAs(REVIEW_CORRECTED_POST)
+            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(CORRECTED).transitioningTo(REJECTED)
+            .highlightedAs(REVIEW_CORRECTED_POST)
+            .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
+            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(CORRECTED).transitioningTo(REJECTED)
+            .highlightedAs(REVIEW_CORRECTED_POST)
+            .notifying(POST, ADMINISTRATOR).with(REJECT_POST)
+            .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(CORRECTED).transitioningTo(WITHDRAWN)
 
             // Post rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
@@ -239,7 +280,7 @@ public class Installer {
 
             LOGGER.info("Inserting new workflow definition");
             entityManager.createNativeQuery("INSERT INTO workflow(" +
-                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, notification) " +
+                "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, activity, notification) " +
                 "VALUES" + workflow.toString()).executeUpdate();
             return null;
         });
