@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public enum State {
 
-    DRAFT, SUSPENDED, CORRECTED, PENDING, ACCEPTED, EXPIRED, REJECTED, WITHDRAWN, PREVIOUS;
+    DRAFT, SUSPENDED, PENDING, ACCEPTED, EXPIRED, REJECTED, WITHDRAWN, PREVIOUS;
 
     public static final List<State> ACTIVE_USER_ROLE_STATES = Arrays.asList(PENDING, ACCEPTED);
 

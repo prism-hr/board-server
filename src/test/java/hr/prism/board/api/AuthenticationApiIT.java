@@ -155,7 +155,7 @@ public class AuthenticationApiIT extends AbstractIT {
         LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
         Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
         Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD, user,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "temporaryPassword", "defined", "homeRedirect",
                 environment.getProperty("server.url") + "/redirect", "modal", "Login")));
 

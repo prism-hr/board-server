@@ -1,6 +1,5 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.ActivityCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 
@@ -27,8 +26,8 @@ public class Activity extends BoardEntity {
     private Role role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false)
-    private ActivityCategory category;
+    @Column(name = "activity", nullable = false)
+    private hr.prism.board.enums.Activity activity;
 
     public Resource getResource() {
         return resource;
@@ -66,12 +65,12 @@ public class Activity extends BoardEntity {
         return this;
     }
 
-    public ActivityCategory getCategory() {
-        return category;
+    public hr.prism.board.enums.Activity getActivity() {
+        return activity;
     }
 
-    public Activity setCategory(ActivityCategory category) {
-        this.category = category;
+    public Activity setActivity(hr.prism.board.enums.Activity activity) {
+        this.activity = activity;
         return this;
     }
 

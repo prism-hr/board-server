@@ -31,7 +31,8 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
         return new ActivityRepresentation()
             .setId(activity.getId())
             .setResource(resourceMapper.apply(activity.getResource(), ResourceRepresentation.class))
-            .setUserRole(mapUserRole(activity.getUserRole()));
+            .setUserRole(mapUserRole(activity.getUserRole()))
+            .setCategory(activity.getActivity());
     }
 
     private UserRoleRepresentation mapUserRole(UserRole userRole) {

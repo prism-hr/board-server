@@ -267,10 +267,10 @@ public class BoardApiIT extends AbstractIT {
         String homeRedirect = environment.getProperty("server.url") + "/redirect";
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_PARENT, departmentUser,
+            new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_PARENT_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
                     .put("modal", "Login").build()),
-            new TestNotificationService.NotificationInstance(Notification.NEW_BOARD, boardUser,
+            new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
                     .put("modal", "Login").build()));
 
@@ -296,7 +296,7 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD, boardUser,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we cannot accept this")
                     .put("homeRedirect", homeRedirect).put("modal", "Login").build()));
 
@@ -304,7 +304,7 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made a mistake", State.DRAFT);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.DRAFT, operations);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD, boardUser,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
                 .put("modal", "Login").build()));
 
@@ -312,7 +312,7 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "accept", null, State.ACCEPTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD, boardUser,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
                 .put("modal", "Login").build()));
 
@@ -320,7 +320,7 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we really cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD, boardUser,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we really cannot accept this")
                 .put("homeRedirect", homeRedirect).put("modal", "Login").build()));
 
@@ -329,7 +329,7 @@ public class BoardApiIT extends AbstractIT {
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
         testNotificationService.stop();
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD, boardUser,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
                 .put("modal", "Login").build()));
 
