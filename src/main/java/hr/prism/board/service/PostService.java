@@ -313,6 +313,7 @@ public class PostService {
     }
 
     @SuppressWarnings("JpaQlInspection")
+    // TODO: Register the prompts
     private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
             new TransactionTemplate(platformTransactionManager).execute(status -> {
