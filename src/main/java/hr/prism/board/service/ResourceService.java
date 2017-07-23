@@ -494,6 +494,10 @@ public class ResourceService {
         return resourceRepository.findByScopeAndUserAndRolesOrCategories(scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACTIVE_USER_ROLE_STATES);
     }
 
+    public List<String> lookupOrganizations(String query) {
+        return resourceRepository.findOrganizationNamesByQuery(query);
+    }
+
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);
