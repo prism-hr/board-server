@@ -70,6 +70,9 @@ public abstract class AbstractIT {
     ResourceService resourceService;
 
     @Inject
+    UserService userService;
+
+    @Inject
     UserCacheService userCacheService;
 
     @Inject

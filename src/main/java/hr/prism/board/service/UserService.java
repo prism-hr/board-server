@@ -8,6 +8,7 @@ import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.enums.*;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
@@ -15,6 +16,7 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.util.BoardUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -91,6 +93,19 @@ public class UserService {
         Optional<String> surnameOptional = userDTO.getSurname();
         if (surnameOptional != null) {
             user.setSurname(surnameOptional.orElse(user.getSurname()));
+        }
+
+        Optional<String> emailOptional = userDTO.getEmail();
+        if (emailOptional != null) {
+            user.setEmail(emailOptional.orElse(user.getEmail()));
+        }
+
+        Optional<String> passwordOptional = userDTO.getPassword();
+        if (passwordOptional != null) {
+            if (userDTO.getOldPassword() == null || !user.getPassword().equals(DigestUtils.sha256Hex(userDTO.getOldPassword()))) {
+                throw new BoardException(ExceptionCode.INVALID_OLD_PASSWORD);
+            }
+            user.setPassword(DigestUtils.sha256Hex(passwordOptional.orElse(user.getPassword())));
         }
 
         Optional<DocumentDTO> documentImageOptional = userDTO.getDocumentImage();
