@@ -2,20 +2,20 @@ package hr.prism.board.api;
 
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.UserPatchDTO;
-import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ActivityService;
+import hr.prism.board.service.UserActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 public class UserApi {
@@ -30,10 +30,10 @@ public class UserApi {
     private UserNotificationSuppressionService userNotificationSuppressionService;
 
     @Inject
-    private UserMapper userMapper;
+    private UserActivityService userActivityService;
 
     @Inject
-    private ActivityMapper activityMapper;
+    private UserMapper userMapper;
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getCurrentUser() {
@@ -72,10 +72,18 @@ public class UserApi {
         userNotificationSuppressionService.deleteSuppressions();
     }
 
-    // TODO: long polling implementation
-    @RequestMapping(value = "api/user/activity", method = RequestMethod.GET)
+    @RequestMapping(value = "api/user/activities", method = RequestMethod.GET)
     public List<ActivityRepresentation> getActivities() {
-        return activityService.getActivities().stream().map(activityMapper).collect(Collectors.toList());
+        return activityService.getActivities();
+    }
+
+    @RequestMapping(value = "api/user/activities/refresh", method = RequestMethod.GET)
+    public DeferredResult<List<ActivityRepresentation>> refreshActivities() {
+        Long userId = userService.getCurrentUserSecured().getId();
+        DeferredResult<List<ActivityRepresentation>> request = new DeferredResult<>(55000L);
+        request.onTimeout(() -> userActivityService.processRequestTimeout(userId, request));
+        userActivityService.storeRequest(userId, request);
+        return request;
     }
 
     @RequestMapping(value = "api/user/activity/{activityId}/dismiss", method = RequestMethod.POST)

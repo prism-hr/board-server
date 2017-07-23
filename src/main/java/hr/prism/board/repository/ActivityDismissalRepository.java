@@ -16,7 +16,8 @@ public interface ActivityDismissalRepository extends MyRepository<ActivityDismis
             "where activityDismissal.activity in (" +
             "select activity " +
             "from Activity activity " +
-            "where activity.resource = :resource)")
+            "where activity.resource = :resource " +
+            "and activity.userRole is null)")
     void deleteByResource(@Param("resource") Resource resource);
 
     @Modifying

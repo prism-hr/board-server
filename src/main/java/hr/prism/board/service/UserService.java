@@ -26,10 +26,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -134,6 +131,10 @@ public class UserService {
         }
 
         return user;
+    }
+
+    public List<Long> findByResourceAndUserIds(Resource resource, Collection<Long> userIds) {
+        return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
 
     public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {

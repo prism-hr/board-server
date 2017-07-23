@@ -7,13 +7,16 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.repository.ActivityDismissalRepository;
 import hr.prism.board.repository.ActivityRepository;
+import hr.prism.board.representation.ActivityRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -28,19 +31,27 @@ public class ActivityService {
     @Inject
     private UserService userService;
 
-    public List<hr.prism.board.domain.Activity> getActivities() {
+    @Inject
+    private UserActivityService userActivityService;
+
+    @Inject
+    private ActivityMapper activityMapper;
+
+    public List<ActivityRepresentation> getActivities() {
         User user = userService.getCurrentUserSecured();
-        return activityRepository.findByUser(user);
+        return getActivities(user.getId());
     }
 
-    // TODO: update views for logged in users (long polling)
-    public hr.prism.board.domain.Activity getOrCreateActivity(Resource resource, Scope scope, Role role, Activity category) {
-        return getOrCreateActivity(resource, null, scope, role, category);
+    public List<ActivityRepresentation> getActivities(Long userId) {
+        return activityRepository.findByUserId(userId).stream().map(activityMapper).collect(Collectors.toList());
     }
 
-    // TODO: update views for logged in users (long polling)
-    public hr.prism.board.domain.Activity getOrCreateActivity(UserRole userRole, Scope scope, Role role) {
-        return getOrCreateActivity(userRole.getResource(), userRole, scope, role, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
+    public hr.prism.board.domain.Activity getOrCreateActivity(Resource resource, Scope scope, Role role, Activity activity) {
+        return getOrCreateActivity(resource, null, scope, role, activity);
+    }
+
+    public hr.prism.board.domain.Activity getOrCreateActivity(UserRole userRole, Scope scope, Role role, Activity activity) {
+        return getOrCreateActivity(userRole.getResource(), userRole, scope, role, activity);
     }
 
     public void dismissActivity(Long activityId) {
@@ -49,16 +60,16 @@ public class ActivityService {
         ActivityDismissal activityDismissal = activityDismissalRepository.findByActivityAndUser(activity, user);
         if (activityDismissal == null) {
             activityDismissalRepository.save(new ActivityDismissal().setActivity(activity).setUser(user));
+            Long userId = user.getId();
+            userActivityService.processRequests(userId, getActivities(userId));
         }
     }
 
-    // TODO: update views for logged in users (long polling)
     public void deleteActivities(Resource resource) {
         activityDismissalRepository.deleteByResource(resource);
         activityRepository.deleteByResource(resource);
     }
 
-    // TODO: update views for logged in users (long polling)
     public void deleteActivities(UserRole userRole) {
         activityDismissalRepository.deleteByUserRole(userRole);
         activityRepository.deleteByUserRole(userRole);

@@ -2,10 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.exception.BoardDuplicateException;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -43,6 +40,8 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
             id = duplicateException.getId();
             exceptionCode = duplicateException.getExceptionCode();
             responseStatus = HttpStatus.CONFLICT;
+        } else if (exception instanceof BoardNotModifiedException) {
+
         } else if (exception instanceof BoardException) {
             exceptionCode = ((BoardException) exception).getExceptionCode();
             responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;

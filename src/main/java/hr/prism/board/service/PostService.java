@@ -11,8 +11,10 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
+import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -61,6 +63,10 @@ public class PostService {
 
     @Inject
     private ActionService actionService;
+
+    @Lazy
+    @Inject
+    private ActivityEventService activityEventService;
 
     @Lazy
     @Inject
@@ -343,14 +349,19 @@ public class PostService {
             });
 
             for (Long postId : postIds) {
+                List<Activity> activities = new ArrayList<>();
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
+                    activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
+                    activities.add(new Activity().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
                     notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
                     notifications.add(new Notification().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
+                    activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
                     notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
 
+                activityEventService.publishEvent(this, postId, activities);
                 notificationEventService.publishEvent(this, postId, notifications);
             }
         }

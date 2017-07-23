@@ -37,7 +37,6 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
         Department department = departmentService.getDepartment(board.getParent().getId());
         return resourceMapper.apply(board, BoardRepresentation.class)
-            .setDocumentLogo(documentMapper.apply(board.getDocumentLogo()))
             .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
             .setPostCategories(resourceService.getCategories(board, CategoryType.POST))
             .setDepartment(departmentMapper.apply(department))

@@ -16,6 +16,8 @@ public class ResourceRepresentation {
 
     private String summary;
 
+    private DocumentRepresentation documentLogo;
+
     private State state;
 
     private LocalDateTime createdTimestamp;
@@ -66,6 +68,15 @@ public class ResourceRepresentation {
 
     public ResourceRepresentation setState(State state) {
         this.state = state;
+        return this;
+    }
+
+    public DocumentRepresentation getDocumentLogo() {
+        return documentLogo;
+    }
+
+    public ResourceRepresentation setDocumentLogo(DocumentRepresentation documentLogo) {
+        this.documentLogo = documentLogo;
         return this;
     }
 

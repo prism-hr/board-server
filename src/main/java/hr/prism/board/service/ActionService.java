@@ -10,13 +10,17 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Execution;
 import hr.prism.board.workflow.Notification;
+import hr.prism.board.workflow.Update;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +35,13 @@ public class ActionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
 
     @Inject
-    private ActivityService activityService;
-
-    @Inject
     private ResourceService resourceService;
 
+    @Lazy
+    @Inject
+    private ActivityEventService activityEventService;
+
+    @Lazy
     @Inject
     private NotificationEventService notificationEventService;
 
@@ -68,25 +74,22 @@ public class ActionService {
                     if (stateChanged) {
                         resourceService.updateState(newResource, newState);
                         newResource = resourceService.getResource(user, newResource.getScope(), newResource.getId());
-                        activityService.deleteActivities(resource);
-                        // TODO: Register the new activities
                     }
 
                     if (!resource.equals(newResource) || stateChanged || CollectionUtils.isNotEmpty(newResource.getChangeList())) {
                         resourceService.createResourceOperation(newResource, action, user);
                     }
 
-                    List<Notification> notifications;
-                    String notification = actionRepresentation.getNotification();
-                    if (notification != null) {
-                        try {
-                            notifications = objectMapper.readValue(notification, new TypeReference<List<Notification>>() {
-                            });
-                        } catch (IOException e) {
-                            throw new IllegalStateException("Could not deserialize notifications");
-                        }
+                    Long newResourceId = newResource.getId();
 
-                        notificationEventService.publishEvent(this, newResource.getId(), action, notifications);
+                    List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
+                    if (activities != null) {
+                        activityEventService.publishEvent(this, newResourceId, activities);
+                    }
+
+                    List<Notification> notifications = deserializeUpdates(actionRepresentation.getNotification(), Notification.class);
+                    if (notifications != null) {
+                        notificationEventService.publishEvent(this, newResourceId, action, notifications);
                     }
 
                     return newResource;
@@ -101,6 +104,19 @@ public class ActionService {
 
         LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
         throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
+    }
+
+    private <T extends Update<T>> List<T> deserializeUpdates(String serializedUpdates, Class<T> updateClass) {
+        if (serializedUpdates != null) {
+            try {
+                return objectMapper.readValue(serializedUpdates, new TypeReference<List<T>>() {
+                });
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not deserialize " + updateClass.getSimpleName().toLowerCase() + "s");
+            }
+        }
+
+        return null;
     }
 
 }

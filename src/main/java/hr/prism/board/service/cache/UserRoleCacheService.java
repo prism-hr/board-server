@@ -48,12 +48,12 @@ public class UserRoleCacheService {
     private EntityManager entityManager;
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
-        createUserRole(currentUser, resource, user, userRoleDTO, State.ACCEPTED, notify);
+    public UserRole createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
+        return createUserRole(currentUser, resource, user, userRoleDTO, State.ACCEPTED, notify);
     }
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, State state, boolean notify) {
+    public UserRole createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, State state, boolean notify) {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
@@ -91,6 +91,8 @@ public class UserRoleCacheService {
                 .setExcludingCreator(true).setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scope.name()));
             notificationEventService.publishEvent(this, resource.getId(), Collections.singletonList(notification));
         }
+
+        return userRole;
     }
 
     @CacheEvict(key = "#user.id", value = "users")

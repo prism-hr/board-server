@@ -76,7 +76,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/membership/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)
     public void patchMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
-        departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state));
+        departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
     }
 
 }

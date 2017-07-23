@@ -6,8 +6,6 @@ import java.util.List;
 
 public class BoardRepresentation extends ResourceRepresentation {
 
-    private DocumentRepresentation documentLogo;
-
     private String handle;
 
     private DepartmentRepresentation department;
@@ -15,15 +13,6 @@ public class BoardRepresentation extends ResourceRepresentation {
     private List<String> postCategories;
 
     private PostVisibility defaultPostVisibility;
-
-    public DocumentRepresentation getDocumentLogo() {
-        return documentLogo;
-    }
-
-    public BoardRepresentation setDocumentLogo(DocumentRepresentation documentLogo) {
-        this.documentLogo = documentLogo;
-        return this;
-    }
 
     public String getHandle() {
         return handle;

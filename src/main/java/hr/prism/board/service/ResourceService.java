@@ -49,7 +49,7 @@ public class ResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
     private static final String PUBLIC_RESOURCE_ACTION =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.notification " +
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.action, workflow.notification " +
             "FROM resource " +
             "INNER join workflow " +
             "ON resource.scope = workflow.resource2_scope " +
@@ -62,7 +62,7 @@ public class ResourceService {
             "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) ";
 
     private static final String SECURE_RESOURCE_ACTION =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.notification " +
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.action, workflow.notification " +
             "FROM resource " +
             "INNER JOIN workflow " +
             "ON resource.scope = workflow.resource2_scope " +
@@ -270,17 +270,24 @@ public class ResourceService {
                 rowState = State.valueOf(column4.toString());
             }
 
-            String rowNotification = null;
+            String rowActivity = null;
             Object column5 = row[4];
             if (column5 != null) {
-                rowNotification = column5.toString();
+                rowActivity = column5.toString();
+            }
+
+            String rowNotification = null;
+            Object column6 = row[5];
+            if (column6 != null) {
+                rowNotification = column6.toString();
             }
 
             // Find the mapping that provides the most direct state transition, varies by role
             ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
             ActionRepresentation rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
-                rowIndex.put(rowKey, new ActionRepresentation().setAction(rowAction).setScope(rowScope).setState(rowState).setNotification(rowNotification));
+                rowIndex.put(rowKey,
+                    new ActionRepresentation().setAction(rowAction).setScope(rowScope).setState(rowState).setActivity(rowActivity).setNotification(rowNotification));
             }
         }
 

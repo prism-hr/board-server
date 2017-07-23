@@ -8,6 +8,8 @@ public class ActivityRepresentation {
 
     private ResourceRepresentation resource;
 
+    private ResourceRepresentation parentResource;
+
     private UserRoleRepresentation userRole;
 
     private Activity category;
@@ -27,6 +29,15 @@ public class ActivityRepresentation {
 
     public ActivityRepresentation setResource(ResourceRepresentation resource) {
         this.resource = resource;
+        return this;
+    }
+
+    public ResourceRepresentation getParentResource() {
+        return parentResource;
+    }
+
+    public ActivityRepresentation setParentResource(ResourceRepresentation parentResource) {
+        this.parentResource = parentResource;
         return this;
     }
 

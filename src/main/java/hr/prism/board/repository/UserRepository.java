@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -33,6 +34,17 @@ public interface UserRepository extends MyRepository<User, Long> {
             "or (user.temporaryPassword = :password " +
             "and user.temporaryPasswordExpiryTimestamp >= :baseline))")
     User findByEmailAndPassword(@Param("email") String email, @Param("password") String password, @Param("baseline") LocalDateTime baseline);
+
+    @Query(value =
+        "select distinct userRole.user.id " +
+            "from Resource resource " +
+            "inner join resource.parents parent " +
+            "inner join parent.resource1 enclosingResource " +
+            "inner join enclosingResource.userRoles userRole " +
+            "where parent.resource2 = :resource " +
+            "and userRole.user.id in (:userIds) " +
+            "and userRole.state in (:userRoleStates)")
+    List<Long> findByResourceAndUserIds(@Param("resource") Resource resource, @Param("userIds") Collection<Long> userIds, @Param("userRoleStates") List<State> userRoleStates);
 
     @Query(value =
         "select distinct userRole.user " +

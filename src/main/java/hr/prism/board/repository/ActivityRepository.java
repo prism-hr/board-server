@@ -2,7 +2,6 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Activity;
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -28,9 +27,9 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and activity.id not in (" +
             "select activityDismissal.activity.id " +
             "from ActivityDismissal activityDismissal " +
-            "where activityDismissal.user = :user) " +
+            "where activityDismissal.user.id = :userId) " +
             "order by activity.id desc")
-    List<Activity> findByUser(@Param("user") User user);
+    List<Activity> findByUserId(@Param("userId") Long userId);
 
     Activity findByResourceAndScopeAndRole(Resource resource, Scope scope, Role role);
 
@@ -39,7 +38,8 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     @Modifying
     @Query(value =
         "delete from Activity activity " +
-            "where activity.resource = :resource")
+            "where activity.resource = :resource " +
+            "and activity.userRole is null")
     void deleteByResource(@Param("resource") Resource resource);
 
     @Modifying

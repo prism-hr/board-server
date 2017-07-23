@@ -1,6 +1,7 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Activity;
+import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.ResourceRepresentation;
@@ -28,9 +29,11 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
             return null;
         }
 
+        Resource resource = activity.getResource();
         return new ActivityRepresentation()
             .setId(activity.getId())
-            .setResource(resourceMapper.apply(activity.getResource(), ResourceRepresentation.class))
+            .setResource(resourceMapper.apply(resource, ResourceRepresentation.class))
+            .setParentResource(resourceMapper.mapParentResource(resource))
             .setUserRole(mapUserRole(activity.getUserRole()))
             .setCategory(activity.getActivity());
     }

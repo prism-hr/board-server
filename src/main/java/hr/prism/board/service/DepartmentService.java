@@ -13,13 +13,14 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
-import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +74,11 @@ public class DepartmentService {
     @Inject
     private ActionService actionService;
 
+    @Lazy
+    @Inject
+    private ActivityEventService activityEventService;
+
+    @Lazy
     @Inject
     private NotificationEventService notificationEventService;
 
@@ -201,27 +207,28 @@ public class DepartmentService {
 
     public void createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
-        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        Resource department = resourceService.findOne(departmentId);
 
-        List<ActionRepresentation> actions = department.getActions();
-        if (actions != null && actions.stream().anyMatch(action -> action.getAction() == Action.PURSUE)) {
-            // User can already do what they want to do, membership would be redundant
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+        if (userRole != null) {
+            if (userRole.getState() == State.REJECTED) {
+                // User has been rejected already, don't let them be a nuisance by repeatedly retrying
+                throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION);
+            }
+
             throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION);
         }
 
-        UserRole userRole = userRoleService.findByResourceAndUserAndRoleAndState(department, user, Role.MEMBER, State.REJECTED);
-        if (userRole != null) {
-            // User has been rejected already, don't let them be a nuisance by repeatedly retrying
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION);
-        }
-
         userRoleDTO.setRole(Role.MEMBER);
-        userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
+        userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
+
+        hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
+        activityEventService.publishEvent(this, departmentId, userRole.getId(), Collections.singletonList(activity));
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
-        activityService.getOrCreateActivity(userRole, Scope.DEPARTMENT, Role.ADMINISTRATOR);
     }
 
     public void processMembershipRequest(Long departmentId, Long userId, State state) {

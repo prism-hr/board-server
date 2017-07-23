@@ -1,15 +1,15 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserNotificationSuppression;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.mapper.UserNotificationSuppressionMapper;
 import hr.prism.board.repository.UserNotificationSuppressionRepository;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +38,9 @@ public class UserNotificationSuppressionService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private UserNotificationSuppressionMapper userNotificationSuppressionMapper;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -53,7 +56,7 @@ public class UserNotificationSuppressionService {
 
         List<UserNotificationSuppressionRepresentation> representations = new ArrayList<>();
         for (Resource resource : resources) {
-            representations.add(map((Board) resource, suppressedResources.contains(resource)));
+            representations.add(userNotificationSuppressionMapper.apply(resource, suppressedResources.contains(resource)));
         }
 
         return representations;
@@ -82,7 +85,7 @@ public class UserNotificationSuppressionService {
             userNotificationSuppressionRepository.save(new UserNotificationSuppression().setUser(user).setResource(resource));
         }
 
-        return map((Board) resource, true);
+        return userNotificationSuppressionMapper.apply(resource, true);
     }
 
     public List<UserNotificationSuppressionRepresentation> postSuppressions() {
@@ -100,33 +103,6 @@ public class UserNotificationSuppressionService {
     public void deleteSuppression(Long resourceId) {
         User user = userService.getCurrentUserSecured();
         userNotificationSuppressionRepository.deleteByUserAndResourceId(user, resourceId);
-    }
-
-    private UserNotificationSuppressionRepresentation map(Board board, Boolean suppressed) {
-        Document documentLogo = board.getDocumentLogo();
-        DocumentRepresentation documentLogoRepresentation = null;
-        if (documentLogo != null) {
-            documentLogoRepresentation =
-                new DocumentRepresentation()
-                    .setCloudinaryId(documentLogo.getCloudinaryId())
-                    .setCloudinaryUrl(documentLogo.getCloudinaryUrl())
-                    .setFileName(documentLogo.getFileName());
-        }
-
-        Resource parent = board.getParent();
-        BoardRepresentation representation =
-            ((BoardRepresentation) new BoardRepresentation()
-                .setId(board.getId())
-                .setName(board.getName()))
-                .setDocumentLogo(documentLogoRepresentation)
-                .setDepartment(
-                    (DepartmentRepresentation) new DepartmentRepresentation()
-                        .setId(parent.getId())
-                        .setName(parent.getName()));
-
-        return new UserNotificationSuppressionRepresentation()
-            .setResource(representation)
-            .setSuppressed(suppressed);
     }
 
 }

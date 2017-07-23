@@ -2,19 +2,19 @@ package hr.prism.board.workflow;
 
 public class Activity extends Update<Activity> {
 
-    private hr.prism.board.enums.Activity category;
+    private hr.prism.board.enums.Activity activity;
 
-    public hr.prism.board.enums.Activity getCategory() {
-        return category;
+    public hr.prism.board.enums.Activity getActivity() {
+        return activity;
     }
 
-    public Activity setCategory(hr.prism.board.enums.Activity category) {
-        this.category = category;
+    public Activity setActivity(hr.prism.board.enums.Activity activity) {
+        this.activity = activity;
         return this;
     }
 
     public Workflow with(hr.prism.board.enums.Activity category) {
-        this.category = category;
+        this.activity = category;
         return getWorkflow();
     }
 

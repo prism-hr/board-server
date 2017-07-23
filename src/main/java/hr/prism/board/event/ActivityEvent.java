@@ -1,7 +1,9 @@
 package hr.prism.board.event;
 
-import hr.prism.board.enums.Activity;
+import hr.prism.board.workflow.Activity;
 import org.springframework.context.ApplicationEvent;
+
+import java.util.List;
 
 public class ActivityEvent extends ApplicationEvent {
 
@@ -9,19 +11,19 @@ public class ActivityEvent extends ApplicationEvent {
 
     private Long userRoleId;
 
-    private Activity type;
+    private List<Activity> activities;
 
-    public ActivityEvent(Object source, Long resourceId, Activity type) {
+    public ActivityEvent(Object source, Long resourceId, List<Activity> activities) {
         super(source);
         this.resourceId = resourceId;
-        this.type = type;
+        this.activities = activities;
     }
 
-    public ActivityEvent(Object source, Long resourceId, Long userRoleId, Activity type) {
+    public ActivityEvent(Object source, Long resourceId, Long userRoleId, List<Activity> activities) {
         super(source);
         this.resourceId = resourceId;
         this.userRoleId = userRoleId;
-        this.type = type;
+        this.activities = activities;
     }
 
     public Long getResourceId() {
@@ -32,8 +34,8 @@ public class ActivityEvent extends ApplicationEvent {
         return userRoleId;
     }
 
-    public Activity getType() {
-        return type;
+    public List<Activity> getActivities() {
+        return activities;
     }
 
 }

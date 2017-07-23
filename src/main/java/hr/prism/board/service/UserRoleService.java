@@ -83,6 +83,10 @@ public class UserRoleService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
+    public UserRole fineOne(Long userRoleId) {
+        return userRoleRepository.findOne(userRoleId);
+    }
+
     public List<UserRole> findByResourceAndUser(Resource resource, User user) {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
@@ -182,10 +186,6 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
     }
 
-    public UserRole findByResourceAndUserAndRoleAndState(Resource resource, User user, Role role, State state) {
-        return userRoleRepository.findByResourceAndUserAndRoleAndState(resource, user, role, state);
-    }
-
     private void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO roleDTO) {
         if (roleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
@@ -194,6 +194,8 @@ public class UserRoleService {
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
         if (userRole == null) {
             userRoleCacheService.createUserRole(currentUser, resource, user, roleDTO, true);
+        } else if (userRole.getState() == State.REJECTED) {
+            userRole.setState(State.ACCEPTED);
         }
     }
 
