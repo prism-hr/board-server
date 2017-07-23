@@ -6,7 +6,8 @@ import hr.prism.board.enums.State;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class ResourceRepresentation {
+@SuppressWarnings("unchecked")
+public class ResourceRepresentation<T extends ResourceRepresentation> {
 
     private Long id;
 
@@ -15,8 +16,6 @@ public class ResourceRepresentation {
     private String name;
 
     private String summary;
-
-    private DocumentRepresentation documentLogo;
 
     private State state;
 
@@ -30,81 +29,72 @@ public class ResourceRepresentation {
         return id;
     }
 
-    public ResourceRepresentation setId(Long id) {
+    public T setId(Long id) {
         this.id = id;
-        return this;
+        return (T) this;
     }
 
     public Scope getScope() {
         return scope;
     }
 
-    public ResourceRepresentation setScope(Scope scope) {
+    public T setScope(Scope scope) {
         this.scope = scope;
-        return this;
+        return (T) this;
     }
 
     public String getName() {
         return name;
     }
 
-    public ResourceRepresentation setName(String name) {
+    public T setName(String name) {
         this.name = name;
-        return this;
+        return (T) this;
     }
 
     public String getSummary() {
         return summary;
     }
 
-    public ResourceRepresentation setSummary(String summary) {
+    public T setSummary(String summary) {
         this.summary = summary;
-        return this;
+        return (T) this;
     }
 
     public State getState() {
         return state;
     }
 
-    public ResourceRepresentation setState(State state) {
+    public T setState(State state) {
         this.state = state;
-        return this;
-    }
-
-    public DocumentRepresentation getDocumentLogo() {
-        return documentLogo;
-    }
-
-    public ResourceRepresentation setDocumentLogo(DocumentRepresentation documentLogo) {
-        this.documentLogo = documentLogo;
-        return this;
+        return (T) this;
     }
 
     public LocalDateTime getCreatedTimestamp() {
         return createdTimestamp;
     }
 
-    public ResourceRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
+    public T setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
-        return this;
+        return (T) this;
     }
 
     public LocalDateTime getUpdatedTimestamp() {
         return updatedTimestamp;
     }
 
-    public ResourceRepresentation setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
+    public T setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
         this.updatedTimestamp = updatedTimestamp;
-        return this;
+        return (T) this;
     }
 
     public List<ActionRepresentation> getActions() {
         return actions;
     }
 
-    public ResourceRepresentation setActions(List<ActionRepresentation> actions) {
+    public T setActions(List<ActionRepresentation> actions) {
         this.actions = actions;
-        return this;
+        return (T) this;
     }
 
 }

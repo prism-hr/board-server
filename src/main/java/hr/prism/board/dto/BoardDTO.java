@@ -3,7 +3,7 @@ package hr.prism.board.dto;
 import javax.validation.Valid;
 import java.util.List;
 
-public class BoardDTO extends ResourceDTO {
+public class BoardDTO extends ResourceDTO<BoardDTO> {
 
     @Valid
     private DocumentDTO documentLogo;

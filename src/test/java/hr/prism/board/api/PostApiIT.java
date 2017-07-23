@@ -86,7 +86,7 @@ public class PostApiIT extends AbstractIT {
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
-            (PostDTO) TestHelper.samplePost()
+            TestHelper.samplePost()
                 .setName(board11PostName)));
         unprivilegedUserPosts.put(board11Id, board11PostName);
 
@@ -103,8 +103,8 @@ public class PostApiIT extends AbstractIT {
         Long board12Id = boardR12.getId();
         String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
-            ((PostDTO) TestHelper.smallSamplePost()
-                .setName(board12PostName))
+            TestHelper.smallSamplePost()
+                .setName(board12PostName)
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUserPosts.put(board12Id, board12PostName);
 
@@ -117,7 +117,7 @@ public class PostApiIT extends AbstractIT {
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
-            (PostDTO) TestHelper.smallSamplePost()
+            TestHelper.smallSamplePost()
                 .setName(board21PostName)));
         unprivilegedUserPosts.put(board21Id, board21PostName);
 
@@ -133,8 +133,8 @@ public class PostApiIT extends AbstractIT {
         Long board22Id = boardR22.getId();
         String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
-            ((PostDTO) TestHelper.smallSamplePost()
-                .setName(board22PostName))
+            TestHelper.smallSamplePost()
+                .setName(board22PostName)
                 .setPostCategories(Collections.singletonList("p1"))));
         unprivilegedUserPosts.put(board22Id, board22PostName);
 
@@ -157,7 +157,7 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR11.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board11Id,
-                    (PostDTO) TestHelper.samplePost()
+                    TestHelper.samplePost()
                         .setName(name),
                     state, posts, baseline, postCount);
                 boardPostNames11.put(state, name);
@@ -173,8 +173,8 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR12.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser1, board12Id,
-                    ((PostDTO) TestHelper.smallSamplePost()
-                        .setName(name))
+                    TestHelper.smallSamplePost()
+                        .setName(name)
                         .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)),
                     state, posts, baseline, postCount);
                 boardPostNames12.put(state, name);
@@ -191,7 +191,7 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR21.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board21Id,
-                    (PostDTO) TestHelper.smallSamplePost()
+                    TestHelper.smallSamplePost()
                         .setName(name),
                     state, posts, baseline, postCount);
                 boardPostNames21.put(state, name);
@@ -207,8 +207,8 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board22Id,
-                    ((PostDTO) TestHelper.smallSamplePost()
-                        .setName(name))
+                    TestHelper.smallSamplePost()
+                        .setName(name)
                         .setPostCategories(Collections.singletonList("p1")),
                     state, posts, baseline, postCount);
                 boardPostNames22.put(state, name);
@@ -292,9 +292,9 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = ((PostDTO) new PostDTO()
+            PostDTO postDTO = new PostDTO()
                 .setName("post")
-                .setSummary("summary"))
+                .setSummary("summary")
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
@@ -312,9 +312,9 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = ((PostDTO) new PostDTO()
+            PostDTO postDTO = new PostDTO()
                 .setName("post")
-                .setSummary("summary"))
+                .setSummary("summary")
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
@@ -335,9 +335,9 @@ public class PostApiIT extends AbstractIT {
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = ((PostDTO) new PostDTO()
+            PostDTO postDTO = new PostDTO()
                 .setName("post")
-                .setSummary("summary"))
+                .setSummary("summary")
                 .setOrganizationName("organization name")
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
@@ -521,9 +521,9 @@ public class PostApiIT extends AbstractIT {
             .put(Action.AUDIT, () -> postApi.getPostOperations(postId))
             .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
             .put(Action.ACCEPT, () -> postApi.executeAction(postId, "accept", new PostPatchDTO()))
-            .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
+            .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")))
             .put(Action.CORRECT, () -> postApi.executeAction(postId, "correct", new PostPatchDTO()))
-            .put(Action.REJECT, () -> postApi.executeAction(postId, "reject", (PostPatchDTO) new PostPatchDTO().setComment("comment")))
+            .put(Action.REJECT, () -> postApi.executeAction(postId, "reject", new PostPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", new PostPatchDTO()))
             .put(Action.WITHDRAW, () -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()))
             .build();
@@ -540,9 +540,9 @@ public class PostApiIT extends AbstractIT {
         LocalDateTime deadTimestampDelayed = LocalDateTime.now().plusWeeks(8L).truncatedTo(ChronoUnit.SECONDS);
 
         // Check that the author can update the post
-        PostPatchDTO updateDTO = ((PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO updateDTO = new PostPatchDTO()
             .setName(Optional.of("post 2"))
-            .setSummary(Optional.of("summary 2")))
+            .setSummary(Optional.of("summary 2"))
             .setDescription(Optional.of("description"))
             .setOrganizationName(Optional.of("organization name 2"))
             .setLocation(Optional.of(
@@ -565,7 +565,7 @@ public class PostApiIT extends AbstractIT {
         postName = postR.getName();
 
         // Check that the administrator can make changes and suspend the post
-        PostPatchDTO suspendDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO suspendDTO = new PostPatchDTO()
             .setLiveTimestamp(Optional.of(liveTimestamp))
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
@@ -578,7 +578,7 @@ public class PostApiIT extends AbstractIT {
                 .put("comment", "could you please explain what you will pay the successful applicant").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the author can make changes and correct the post
-        PostPatchDTO correctDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO correctDTO = new PostPatchDTO()
             .setOrganizationName(Optional.of("organization name"))
             .setDescription(Optional.of("description 2"))
             .setLocation(Optional.of(
@@ -604,7 +604,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the administrator can accept post in the suspended state
-        PostPatchDTO acceptDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO acceptDTO = new PostPatchDTO()
             .setLiveTimestamp(Optional.empty())
             .setDeadTimestamp(Optional.empty())
             .setComment("accepting without time constraints");
@@ -621,7 +621,7 @@ public class PostApiIT extends AbstractIT {
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
-            () -> postApi.executeAction(postId, "suspend", (PostPatchDTO) new PostPatchDTO().setComment("comment")), State.SUSPENDED);
+            () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
@@ -629,7 +629,7 @@ public class PostApiIT extends AbstractIT {
                 .put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
         // Check that the administrator can make further changes and accept the post again
-        PostPatchDTO acceptPendingDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO acceptPendingDTO = new PostPatchDTO()
             .setApplyWebsite(Optional.of("http://www.twitter.com"))
             .setPostCategories(Optional.of(Arrays.asList("p1", "p2")))
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
@@ -752,7 +752,7 @@ public class PostApiIT extends AbstractIT {
                     .put("parentRedirect", parentRedirect).put("recipientUuid", departmentMember2Uuid).build()));
 
         // Check that the administrator can reject the post
-        PostPatchDTO rejectDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO rejectDTO = new PostPatchDTO()
             .setComment("we have received a complaint, we're closing down the post");
 
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeAction(postId, "reject", rejectDTO), State.REJECTED);
@@ -764,7 +764,7 @@ public class PostApiIT extends AbstractIT {
                 .put("modal", "Login").build()));
 
         // Check that the administrator can restore the post
-        PostPatchDTO restoreFromRejectedDTO = (PostPatchDTO) new PostPatchDTO()
+        PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.ACCEPTED);

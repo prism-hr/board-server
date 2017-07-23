@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class PostDTO extends ResourceDTO {
+public class PostDTO extends ResourceDTO<PostDTO> {
 
     private String description;
 

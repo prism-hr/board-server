@@ -119,17 +119,17 @@ public abstract class AbstractIT {
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
         transactionTemplate.execute(status -> {
             boardApi.postBoard(
-                ((BoardDTO) new BoardDTO()
-                    .setName("board" + departmentSuffix))
-                    .setDepartment((DepartmentDTO) new DepartmentDTO()
+                new BoardDTO()
+                    .setName("board" + departmentSuffix)
+                    .setDepartment(new DepartmentDTO()
                         .setName("department" + departmentSuffix)));
             return null;
         });
 
         unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(
-            ((BoardDTO) new BoardDTO()
-                .setName("board" + boardSuffix))
+            new BoardDTO()
+                .setName("board" + boardSuffix)
                 .setDepartment(new DepartmentDTO()
                     .setId(departmentId))));
 

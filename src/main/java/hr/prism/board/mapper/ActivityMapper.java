@@ -1,10 +1,8 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.representation.ActivityRepresentation;
-import hr.prism.board.representation.ResourceRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +13,7 @@ import java.util.function.Function;
 public class ActivityMapper implements Function<Activity, ActivityRepresentation> {
 
     @Inject
-    private ResourceMapper resourceMapper;
+    private ResourceMapperFactory resourceMapperFactory;
 
     @Inject
     private UserRoleMapper userRoleMapper;
@@ -29,11 +27,9 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
             return null;
         }
 
-        Resource resource = activity.getResource();
         return new ActivityRepresentation()
             .setId(activity.getId())
-            .setResource(resourceMapper.apply(resource, ResourceRepresentation.class))
-            .setParentResource(resourceMapper.mapParentResource(resource))
+            .setResource(resourceMapperFactory.applySmall(activity.getResource()))
             .setUserRole(mapUserRole(activity.getUserRole()))
             .setCategory(activity.getActivity());
     }

@@ -3,7 +3,8 @@ package hr.prism.board.dto;
 import javax.validation.constraints.Size;
 import java.util.Optional;
 
-public class ResourcePatchDTO {
+@SuppressWarnings("unchecked")
+public class ResourcePatchDTO<T extends ResourcePatchDTO> {
 
     @Size(min = 3, max = 100)
     private Optional<String> name;
@@ -17,27 +18,27 @@ public class ResourcePatchDTO {
         return name;
     }
 
-    public ResourcePatchDTO setName(Optional<String> name) {
+    public T setName(Optional<String> name) {
         this.name = name;
-        return this;
+        return (T) this;
     }
 
     public Optional<String> getSummary() {
         return summary;
     }
 
-    public ResourcePatchDTO setSummary(Optional<String> summary) {
+    public T setSummary(Optional<String> summary) {
         this.summary = summary;
-        return this;
+        return (T) this;
     }
 
     public String getComment() {
         return comment;
     }
 
-    public ResourcePatchDTO setComment(String comment) {
+    public T setComment(String comment) {
         this.comment = comment;
-        return this;
+        return (T) this;
     }
 
 }

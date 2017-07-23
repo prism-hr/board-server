@@ -21,44 +21,32 @@ import java.util.stream.Collectors;
 
 public class TestHelper {
 
-    public static void verifyUser(User user, UserRepresentation userRepresentation) {
-        Assert.assertEquals(user.getId(), userRepresentation.getId());
-        Assert.assertEquals(user.getGivenName(), userRepresentation.getGivenName());
-        Assert.assertEquals(user.getSurname(), userRepresentation.getSurname());
-        Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
-    }
-
-    public static DepartmentDTO smallSampleDepartment() {
-        return (DepartmentDTO) new DepartmentDTO()
-            .setName("department");
-    }
-
     public static BoardDTO smallSampleBoard() {
-        return ((BoardDTO) new BoardDTO()
-            .setName("board"))
-            .setDepartment((DepartmentDTO) new DepartmentDTO()
+        return new BoardDTO()
+            .setName("board")
+            .setDepartment(new DepartmentDTO()
                 .setName("department"));
     }
 
     public static DepartmentDTO sampleDepartment() {
-        return ((DepartmentDTO) new DepartmentDTO()
-            .setName("department"))
+        return new DepartmentDTO()
+            .setName("department")
             .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT));
     }
 
     public static BoardDTO sampleBoard() {
-        return ((BoardDTO) new BoardDTO()
-            .setName("board"))
+        return new BoardDTO()
+            .setName("board")
             .setPostCategories(Arrays.asList("p1", "p2", "p3"))
-            .setDepartment(((DepartmentDTO) new DepartmentDTO()
-                .setName("department"))
+            .setDepartment(new DepartmentDTO()
+                .setName("department")
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)));
     }
 
     public static PostDTO smallSamplePost() {
-        return ((PostDTO) new PostDTO()
+        return new PostDTO()
             .setName("post")
-            .setSummary("summary"))
+            .setSummary("summary")
             .setDescription("description")
             .setOrganizationName("organization name")
             .setLocation(new LocationDTO()
@@ -75,9 +63,9 @@ public class TestHelper {
     }
 
     public static PostDTO samplePost() {
-        return ((PostDTO) new PostDTO()
+        return new PostDTO()
             .setName("post")
-            .setSummary("summary"))
+            .setSummary("summary")
             .setOrganizationName("organization name")
             .setLocation(new LocationDTO()
                 .setName("krakow")
@@ -94,7 +82,7 @@ public class TestHelper {
             .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
     }
 
-    public static <T extends ResourceRepresentation> void verifyResources(List<T> resources, List<String> expectedNames, ExpectedActions expectedActions) {
+    public static <T extends ResourceRepresentation<T>> void verifyResources(List<T> resources, List<String> expectedNames, ExpectedActions expectedActions) {
         int resourcesSize = resources.size();
         Assert.assertEquals(expectedNames.size(), resourcesSize);
         if (expectedActions == null) {
@@ -173,6 +161,13 @@ public class TestHelper {
 
         Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
+    }
+
+    private static void verifyUser(User user, UserRepresentation userRepresentation) {
+        Assert.assertEquals(user.getId(), userRepresentation.getId());
+        Assert.assertEquals(user.getGivenName(), userRepresentation.getGivenName());
+        Assert.assertEquals(user.getSurname(), userRepresentation.getSurname());
+        Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
     }
 
     public static class ExpectedActions extends LinkedHashMap<String, List<Action>> {

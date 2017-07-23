@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class PostPatchDTO extends ResourcePatchDTO {
+public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     private Optional<String> description;
 

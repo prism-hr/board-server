@@ -48,8 +48,8 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldCreateDepartment() {
         testUserService.authenticate();
         DepartmentDTO department =
-            ((DepartmentDTO) TestHelper.sampleDepartment()
-                .setSummary("summary")).setDocumentLogo(
+            TestHelper.sampleDepartment()
+                .setSummary("summary").setDocumentLogo(
                 new DocumentDTO()
                     .setCloudinaryId("c")
                     .setCloudinaryUrl("u")
@@ -133,16 +133,16 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldNotCreateDuplicateDepartmentHandle() {
         testUserService.authenticate();
         verifyPostDepartment(
-            ((BoardDTO) new BoardDTO()
-                .setName("new board"))
-                .setDepartment((DepartmentDTO) new DepartmentDTO()
+            new BoardDTO()
+                .setName("new board")
+                .setDepartment(new DepartmentDTO()
                     .setName("new department with long name")),
             "new-department-with");
 
         Long departmentId = verifyPostDepartment(
-            ((BoardDTO) new BoardDTO()
-                .setName("new board"))
-                .setDepartment((DepartmentDTO) new DepartmentDTO()
+            new BoardDTO()
+                .setName("new board")
+                .setDepartment(new DepartmentDTO()
                     .setName("new department with long name too")),
             "new-department-with-2").getDepartment().getId();
 
@@ -155,9 +155,9 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyPostDepartment(
-            ((BoardDTO) new BoardDTO()
-                .setName("new board"))
-                .setDepartment((DepartmentDTO) new DepartmentDTO()
+            new BoardDTO()
+                .setName("new board")
+                .setDepartment(new DepartmentDTO()
                     .setName("new department with long name also")),
             "new-department-with-2");
     }
@@ -168,7 +168,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyDuplicateException(
                 () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
-                    (DepartmentPatchDTO) new DepartmentPatchDTO()
+                    new DepartmentPatchDTO()
                         .setName(Optional.of(departmentRs.getValue().getName()))),
                 ExceptionCode.DUPLICATE_DEPARTMENT, departmentRs.getValue().getId(), status);
             return null;
@@ -226,8 +226,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         // Check that we can make changes and leave nullable values null
         verifyPatchDepartment(departmentUser, departmentId,
-            ((DepartmentPatchDTO) new DepartmentPatchDTO()
-                .setName(Optional.of("department 2")))
+            new DepartmentPatchDTO()
+                .setName(Optional.of("department 2"))
                 .setHandle(Optional.of("department-2")),
             State.ACCEPTED);
 
@@ -235,9 +235,9 @@ public class DepartmentApiIT extends AbstractIT {
 
         // Check that we can make further changes and set nullable values
         verifyPatchDepartment(departmentUser, departmentId,
-            ((DepartmentPatchDTO) new DepartmentPatchDTO()
+            new DepartmentPatchDTO()
                 .setName(Optional.of("department 3"))
-                .setSummary(Optional.of("department 3 summary")))
+                .setSummary(Optional.of("department 3 summary"))
                 .setHandle(Optional.of("department-3"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
                 .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))),
@@ -247,9 +247,9 @@ public class DepartmentApiIT extends AbstractIT {
 
         // Check that we can make further changes and change nullable values
         verifyPatchDepartment(departmentUser, departmentId,
-            ((DepartmentPatchDTO) new DepartmentPatchDTO()
+            new DepartmentPatchDTO()
                 .setName(Optional.of("department 4"))
-                .setSummary(Optional.of("department 4 summary")))
+                .setSummary(Optional.of("department 4 summary"))
                 .setHandle(Optional.of("department-4"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                 .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER_STUDENT, MemberCategory.UNDERGRADUATE_STUDENT))),
@@ -366,9 +366,9 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.authenticate();
         DepartmentRepresentation departmentR1 = verifyPostDepartment(TestHelper.smallSampleBoard(), "department").getDepartment();
         DepartmentRepresentation departmentR2 = verifyPostDepartment(
-            ((BoardDTO) new BoardDTO()
-                .setName("board"))
-                .setDepartment((DepartmentDTO) new DepartmentDTO()
+            new BoardDTO()
+                .setName("board")
+                .setDepartment(new DepartmentDTO()
                     .setName("department 2")),
             "department-2").getDepartment();
 

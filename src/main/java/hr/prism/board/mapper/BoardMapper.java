@@ -4,7 +4,6 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
@@ -24,9 +23,6 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
     private ResourceService resourceService;
 
     @Inject
-    private DepartmentService departmentService;
-
-    @Inject
     private DocumentMapper documentMapper;
 
     @Override
@@ -35,12 +31,29 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             return null;
         }
 
-        Department department = departmentService.getDepartment(board.getParent().getId());
+        Department department = (Department) board.getParent();
         return resourceMapper.apply(board, BoardRepresentation.class)
-            .setHandle(board.getHandle().replaceFirst(department.getHandle() + "/", ""))
+            .setDocumentLogo(documentMapper.apply(board.getDocumentLogo()))
+            .setHandle(getHandle(board, department))
             .setPostCategories(resourceService.getCategories(board, CategoryType.POST))
             .setDepartment(departmentMapper.apply(department))
             .setDefaultPostVisibility(board.getDefaultPostVisibility());
+    }
+
+    public BoardRepresentation applySmall(Board board) {
+        if (board == null) {
+            return null;
+        }
+
+        Department department = (Department) board.getParent();
+        return resourceMapper.applySmall(board, BoardRepresentation.class)
+            .setDocumentLogo(documentMapper.apply(board.getDocumentLogo()))
+            .setHandle(getHandle(board, department))
+            .setDepartment(departmentMapper.applySmall(department));
+    }
+
+    private String getHandle(Board board, Department department) {
+        return board.getHandle().replaceFirst(department.getHandle() + "/", "");
     }
 
 }

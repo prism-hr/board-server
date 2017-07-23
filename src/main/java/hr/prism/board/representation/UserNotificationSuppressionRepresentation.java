@@ -4,8 +4,6 @@ public class UserNotificationSuppressionRepresentation {
 
     private ResourceRepresentation resource;
 
-    private ResourceRepresentation parentResource;
-
     private Boolean suppressed;
 
     public ResourceRepresentation getResource() {
@@ -14,15 +12,6 @@ public class UserNotificationSuppressionRepresentation {
 
     public UserNotificationSuppressionRepresentation setResource(ResourceRepresentation resource) {
         this.resource = resource;
-        return this;
-    }
-
-    public ResourceRepresentation getParentResource() {
-        return parentResource;
-    }
-
-    public UserNotificationSuppressionRepresentation setParentResource(ResourceRepresentation parentResource) {
-        this.parentResource = parentResource;
         return this;
     }
 

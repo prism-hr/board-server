@@ -55,4 +55,15 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setDeadTimestamp(post.getDeadTimestamp());
     }
 
+    public PostRepresentation applySmall(Post post) {
+        if (post == null) {
+            return null;
+        }
+
+        return resourceMapper.applySmall(post, PostRepresentation.class)
+            .setOrganizationName(post.getOrganizationName())
+            .setLocation(locationMapper.apply(post.getLocation()))
+            .setBoard(boardMapper.applySmall((Board) post.getParent()));
+    }
+
 }

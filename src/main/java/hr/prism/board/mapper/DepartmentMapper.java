@@ -29,8 +29,19 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         }
 
         return resourceMapper.apply(department, DepartmentRepresentation.class)
+            .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(department.getHandle())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)));
+    }
+
+    public DepartmentRepresentation applySmall(Department department) {
+        if (department == null) {
+            return null;
+        }
+
+        return resourceMapper.applySmall(department, DepartmentRepresentation.class)
+            .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
+            .setHandle(department.getHandle());
     }
 
 }

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class DepartmentPatchDTO extends ResourcePatchDTO {
+public class DepartmentPatchDTO extends ResourcePatchDTO<DepartmentPatchDTO> {
 
     @Valid
     private Optional<DocumentDTO> documentLogo;

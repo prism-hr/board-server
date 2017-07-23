@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class PostRepresentation extends ResourceRepresentation {
+public class PostRepresentation extends ResourceRepresentation<PostRepresentation> {
 
     private String description;
 

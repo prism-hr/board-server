@@ -5,7 +5,7 @@ import hr.prism.board.enums.MemberCategory;
 import javax.validation.Valid;
 import java.util.List;
 
-public class DepartmentDTO extends ResourceDTO {
+public class DepartmentDTO extends ResourceDTO<DepartmentDTO> {
 
     private Long id;
 

@@ -191,7 +191,7 @@ public class DepartmentService {
         List<DepartmentRepresentation> departmentRepresentations = new ArrayList<>();
         for (Object[] row : rows) {
             DepartmentRepresentation departmentRepresentation =
-                ((DepartmentRepresentation) new DepartmentRepresentation().setId(Long.parseLong(row[0].toString())).setName(row[1].toString()));
+                new DepartmentRepresentation().setId(Long.parseLong(row[0].toString())).setName(row[1].toString());
             Object cloudinaryId = row[2];
             if (cloudinaryId != null) {
                 DocumentRepresentation documentLogoRepresentation =

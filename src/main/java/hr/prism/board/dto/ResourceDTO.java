@@ -2,7 +2,8 @@ package hr.prism.board.dto;
 
 import javax.validation.constraints.Size;
 
-public class ResourceDTO {
+@SuppressWarnings("unchecked")
+public class ResourceDTO<T extends ResourceDTO> {
 
     @Size(min = 3, max = 100)
     private String name;
@@ -14,18 +15,18 @@ public class ResourceDTO {
         return name;
     }
 
-    public ResourceDTO setName(String name) {
+    public T setName(String name) {
         this.name = name;
-        return this;
+        return (T) this;
     }
 
     public String getSummary() {
         return summary;
     }
 
-    public ResourceDTO setSummary(String summary) {
+    public T setSummary(String summary) {
         this.summary = summary;
-        return this;
+        return (T) this;
     }
 
 }
