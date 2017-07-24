@@ -35,7 +35,7 @@ public class UserApiIT extends AbstractIT {
             .setGivenName(Optional.of("first"))
             .setSurname(Optional.of("second"))
             .setEmail(Optional.of("changed@email.com"))
-            .setPassword(Optional.of("newPassword"))
+            .setPassword("newPassword")
             .setOldPassword("password")
             .setDocumentImage(Optional.of(imageDTO));
         userApi.updateUser(userDTO);
@@ -54,7 +54,7 @@ public class UserApiIT extends AbstractIT {
     public void shouldNotUpdatePasswordIfOldOneInvalid() {
         testUserService.authenticate();
 
-        UserPatchDTO userDTO = new UserPatchDTO().setPassword(Optional.of("newPassword"));
+        UserPatchDTO userDTO = new UserPatchDTO().setPassword("newPassword");
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class,
@@ -63,7 +63,7 @@ public class UserApiIT extends AbstractIT {
             return null;
         });
 
-        UserPatchDTO userDTO2 = new UserPatchDTO().setPassword(Optional.of("newPassword")).setOldPassword("incorrect");
+        UserPatchDTO userDTO2 = new UserPatchDTO().setPassword("newPassword").setOldPassword("incorrect");
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class,
