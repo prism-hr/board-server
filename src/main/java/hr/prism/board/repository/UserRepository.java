@@ -14,8 +14,11 @@ import java.util.List;
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
 
+    String ACTIVE_CONSTRAINT =
+        "(userRole.expiryDate is null or userRole.expiryDate >= :baseline)";
+
     String SUPPRESSION_CONSTRAINT =
-        "and userRole.user not in (" +
+        "userRole.user not in (" +
             "select userNotificationSuppression.user " +
             "from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.resource <> :resource)";
@@ -37,49 +40,45 @@ public interface UserRepository extends MyRepository<User, Long> {
 
     @Query(value =
         "select distinct userRole.user.id " +
-            "from Resource resource " +
-            "inner join resource.parents parent " +
-            "inner join parent.resource1 enclosingResource " +
+            "from ResourceRelation relation " +
+            "inner join relation.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
-            "where parent.resource2 = :resource " +
+            "where relation.resource2 = :resource " +
             "and userRole.user.id in (:userIds) " +
-            "and userRole.state in (:userRoleStates)")
+            "and userRole.state in (:userRoleStates) " +
+            "and " + ACTIVE_CONSTRAINT)
     List<Long> findByResourceAndUserIds(@Param("resource") Resource resource, @Param("userIds") Collection<Long> userIds, @Param("userRoleStates") List<State> userRoleStates);
 
     @Query(value =
         "select distinct userRole.user " +
-            "from Resource resource " +
-            "inner join resource.parents parent " +
-            "inner join parent.resource1 enclosingResource " +
+            "from ResourceRelation relation " +
+            "inner join relation.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
-            "where parent.resource2 = :resource " +
+            "where relation.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
-            "and (userRole.expiryDate is null " +
-            "or userRole.expiryDate >= :baseline) " +
-            SUPPRESSION_CONSTRAINT)
+            "and " + ACTIVE_CONSTRAINT + " " +
+            "and " + SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
                                                       @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select distinct userRole.user " +
-            "from Resource resource " +
-            "inner join resource.parents parent " +
-            "inner join parent.resource2 resource " +
-            "inner join resource.categories resourceCategory " +
-            "inner join parent.resource1 enclosingResource " +
+            "from ResourceRelation relation " +
+            "inner join relation.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
             "inner join userRole.categories userRoleCategory " +
-            "where parent.resource2 = :resource " +
+            "inner join relation.resource2 resource " +
+            "inner join resource.categories resourceCategory " +
+            "where relation.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
             "and resourceCategory.type = :categoryType " +
             "and resourceCategory.name = userRoleCategory.name " +
-            "and (userRole.expiryDate is null " +
-            "or userRole.expiryDate >= :baseline) " +
-            SUPPRESSION_CONSTRAINT)
+            "and " + ACTIVE_CONSTRAINT + " " +
+            "and " + SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
                                                                    @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
                                                                    @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);

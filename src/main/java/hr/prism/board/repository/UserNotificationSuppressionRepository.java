@@ -34,10 +34,8 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
         "INSERT INTO user_notification_suppression(user_id, resource_id, created_timestamp) " +
             "SELECT user_role.user_id, suppressed.id, NOW() " +
             "FROM user_role " +
-            "INNER JOIN resource " +
-            "ON user_role.resource_id = resource.id " +
             "INNER JOIN resource_relation " +
-            "ON resource.id = resource_relation.resource1_id " +
+            "ON user_role.resource_id = resource_relation.resource1_id " +
             "INNER JOIN resource as suppressed " +
             "ON resource_relation.resource2_id = suppressed.id " +
             "LEFT JOIN user_notification_suppression " +
