@@ -28,8 +28,7 @@ import java.time.LocalDateTime;
             name = "department",
             attributeNodes = {
                 @NamedAttributeNode(value = "categories"),
-                @NamedAttributeNode(value = "documentLogo")})
-    })
+                @NamedAttributeNode(value = "documentLogo")})})
 public class Post extends Resource {
 
     @Column(name = "description")
