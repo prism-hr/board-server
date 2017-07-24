@@ -1,10 +1,7 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.ActivityDismissal;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
-import hr.prism.board.enums.Activity;
+import hr.prism.board.domain.*;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.ActivityMapper;
@@ -43,14 +40,14 @@ public class ActivityService {
     }
 
     public List<ActivityRepresentation> getActivities(Long userId) {
-        return activityRepository.findByUserId(userId).stream().map(activityMapper).collect(Collectors.toList());
+        return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
     }
 
-    public hr.prism.board.domain.Activity getOrCreateActivity(Resource resource, Scope scope, Role role, Activity activity) {
+    public Activity getOrCreateActivity(Resource resource, Scope scope, Role role, hr.prism.board.enums.Activity activity) {
         return getOrCreateActivity(resource, null, scope, role, activity);
     }
 
-    public hr.prism.board.domain.Activity getOrCreateActivity(UserRole userRole, Scope scope, Role role, Activity activity) {
+    public Activity getOrCreateActivity(UserRole userRole, Scope scope, Role role, hr.prism.board.enums.Activity activity) {
         return getOrCreateActivity(userRole.getResource(), userRole, scope, role, activity);
     }
 
@@ -75,19 +72,21 @@ public class ActivityService {
         activityRepository.deleteByUserRole(userRole);
     }
 
-    private hr.prism.board.domain.Activity getOrCreateActivity(Resource resource, UserRole userRole, Scope scope, Role role, Activity category) {
-        hr.prism.board.domain.Activity activity;
+    private Activity getOrCreateActivity(Resource resource, UserRole userRole, Scope scope, Role role, hr.prism.board.enums.Activity activity) {
+        Activity entity;
         if (userRole == null) {
-            activity = activityRepository.findByResourceAndScopeAndRole(resource, scope, role);
+            entity = activityRepository.findByResourceAndScopeAndRoleAndActivity(resource, scope, role, activity);
         } else {
-            activity = activityRepository.findByResourceAndUserRoleAndScopeAndRole(resource, userRole, scope, role);
+            entity = activityRepository.findByUserRoleAndScopeAndRoleAndActivity(userRole, scope, role, activity);
         }
 
-        if (activity == null) {
-            activity = activityRepository.save(new hr.prism.board.domain.Activity().setResource(resource).setUserRole(userRole).setScope(scope).setRole(role).setActivity(category));
+        if (entity == null) {
+            entity = activityRepository.save(
+                new hr.prism.board.domain.Activity().setResource(resource).setUserRole(userRole)
+                    .setScope(scope).setRole(role).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));
         }
 
-        return activity;
+        return entity;
     }
 
 }

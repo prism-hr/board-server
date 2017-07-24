@@ -6,22 +6,13 @@ import java.util.Map;
 
 public class Notification extends Update<Notification> {
 
-    @JsonIgnore
-    private Long userId;
-
     private hr.prism.board.enums.Notification notification;
 
     @JsonIgnore
+    private Long userId;
+
+    @JsonIgnore
     private Map<String, String> customProperties;
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public Notification setUserId(Long userId) {
-        this.userId = userId;
-        return this;
-    }
 
     public hr.prism.board.enums.Notification getNotification() {
         return notification;
@@ -35,6 +26,15 @@ public class Notification extends Update<Notification> {
     public Workflow with(hr.prism.board.enums.Notification notification) {
         this.notification = notification;
         return getWorkflow();
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Notification setUserId(Long userId) {
+        this.userId = userId;
+        return this;
     }
 
     public Map<String, String> getCustomProperties() {

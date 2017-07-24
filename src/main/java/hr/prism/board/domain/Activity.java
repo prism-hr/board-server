@@ -29,6 +29,9 @@ public class Activity extends BoardEntity {
     @Column(name = "activity", nullable = false)
     private hr.prism.board.enums.Activity activity;
 
+    @Column(name = "filter_by_category", nullable = false)
+    private Boolean filterByCategory;
+
     public Resource getResource() {
         return resource;
     }
@@ -71,6 +74,15 @@ public class Activity extends BoardEntity {
 
     public Activity setActivity(hr.prism.board.enums.Activity activity) {
         this.activity = activity;
+        return this;
+    }
+
+    public Boolean getFilterByCategory() {
+        return filterByCategory;
+    }
+
+    public Activity setFilterByCategory(Boolean filterByCategory) {
+        this.filterByCategory = filterByCategory;
         return this;
     }
 

@@ -67,16 +67,16 @@ public interface UserRepository extends MyRepository<User, Long> {
             "from Resource resource " +
             "inner join resource.parents parent " +
             "inner join parent.resource2 resource " +
-            "inner join resource.categories category " +
+            "inner join resource.categories resourceCategory " +
             "inner join parent.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
-            "inner join userRole.categories userCategory " +
+            "inner join userRole.categories userRoleCategory " +
             "where parent.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
-            "and category.type = :categoryType " +
-            "and category.name = userCategory.name " +
+            "and resourceCategory.type = :categoryType " +
+            "and resourceCategory.name = userRoleCategory.name " +
             "and (userRole.expiryDate is null " +
             "or userRole.expiryDate >= :baseline) " +
             SUPPRESSION_CONSTRAINT)

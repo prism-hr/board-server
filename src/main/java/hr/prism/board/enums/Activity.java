@@ -2,20 +2,30 @@ package hr.prism.board.enums;
 
 public enum Activity {
 
-    ACCEPT_BOARD_ACTIVITY,
-    ACCEPT_POST_ACTIVITY,
-    CORRECT_POST_ACTIVITY,
-    JOIN_DEPARTMENT_REQUEST_ACTIVITY,
-    NEW_BOARD_PARENT_ACTIVITY,
-    NEW_POST_PARENT_ACTIVITY,
-    PUBLISH_POST_ACTIVITY,
-    PUBLISH_POST_MEMBER_ACTIVITY,
-    REJECT_BOARD_ACTIVITY,
-    REJECT_POST_ACTIVITY,
-    RESET_PASSWORD_ACTIVITY,
-    RESTORE_BOARD_ACTIVITY,
-    RESTORE_POST_ACTIVITY,
-    RETIRE_POST_ACTIVITY,
-    SUSPEND_POST_ACTIVITY
+    ACCEPT_BOARD_ACTIVITY(false),
+    ACCEPT_POST_ACTIVITY(false),
+    CORRECT_POST_ACTIVITY(false),
+    JOIN_DEPARTMENT_REQUEST_ACTIVITY(false),
+    NEW_BOARD_PARENT_ACTIVITY(false),
+    NEW_POST_PARENT_ACTIVITY(false),
+    PUBLISH_POST_ACTIVITY(false),
+    PUBLISH_POST_MEMBER_ACTIVITY(true),
+    REJECT_BOARD_ACTIVITY(false),
+    REJECT_POST_ACTIVITY(false),
+    RESET_PASSWORD_ACTIVITY(false),
+    RESTORE_BOARD_ACTIVITY(false),
+    RESTORE_POST_ACTIVITY(false),
+    RETIRE_POST_ACTIVITY(false),
+    SUSPEND_POST_ACTIVITY(false);
+
+    private boolean filterByCategory;
+
+    Activity(boolean filterByCategory) {
+        this.filterByCategory = filterByCategory;
+    }
+
+    public boolean isFilterByCategory() {
+        return filterByCategory;
+    }
 
 }

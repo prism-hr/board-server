@@ -59,7 +59,6 @@ public class ActivityEventService {
             activityService.deleteActivities(resource);
             activityEvent.getActivities().forEach(activity ->
                 activityService.getOrCreateActivity(resource, activity.getScope(), activity.getRole(), activity.getActivity()));
-
         } else {
             UserRole userRole = userRoleService.fineOne(userRoleId);
             activityEvent.getActivities().forEach(activity ->
