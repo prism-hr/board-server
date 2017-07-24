@@ -21,9 +21,8 @@ public class UserPatchDTO {
     private Optional<String> email;
 
     @Size(min = 8, max = 30)
-    private Optional<String> password;
+    private String password;
 
-    @Size(min = 8, max = 30)
     private String oldPassword;
 
     @Valid
@@ -58,11 +57,11 @@ public class UserPatchDTO {
         return this;
     }
 
-    public Optional<String> getPassword() {
+    public String getPassword() {
         return password;
     }
 
-    public UserPatchDTO setPassword(Optional<String> password) {
+    public UserPatchDTO setPassword(String password) {
         this.password = password;
         return this;
     }

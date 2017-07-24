@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import com.google.common.base.Strings;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Resource;
@@ -97,12 +98,12 @@ public class UserService {
             user.setEmail(emailOptional.orElse(user.getEmail()));
         }
 
-        Optional<String> passwordOptional = userDTO.getPassword();
-        if (passwordOptional != null) {
+        String password = userDTO.getPassword();
+        if (!Strings.isNullOrEmpty(password)) {
             if (userDTO.getOldPassword() == null || !user.getPassword().equals(DigestUtils.sha256Hex(userDTO.getOldPassword()))) {
                 throw new BoardException(ExceptionCode.INVALID_OLD_PASSWORD);
             }
-            user.setPassword(DigestUtils.sha256Hex(passwordOptional.orElse(user.getPassword())));
+            user.setPassword(DigestUtils.sha256Hex(password));
         }
 
         Optional<DocumentDTO> documentImageOptional = userDTO.getDocumentImage();
