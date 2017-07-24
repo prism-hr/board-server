@@ -1,19 +1,31 @@
 package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 
 @SuppressWarnings("unchecked")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = Activity.class, name = Update.ACTIVITY),
+    @JsonSubTypes.Type(value = Notification.class, name = Update.NOTIFICATION)})
 public abstract class Update<T extends Update> {
+
+    protected static final String ACTIVITY = "activity";
+
+    protected static final String NOTIFICATION = "notification";
 
     @JsonIgnore
     private Workflow workflow;
 
     @JsonIgnore
     private ObjectMapper objectMapper;
+
+    private String type;
 
     private Scope scope;
 
@@ -36,6 +48,15 @@ public abstract class Update<T extends Update> {
 
     public T setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+        return (T) this;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public T setType(String type) {
+        this.type = type;
         return (T) this;
     }
 

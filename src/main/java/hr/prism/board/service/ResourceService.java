@@ -49,7 +49,7 @@ public class ResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
     private static final String PUBLIC_RESOURCE_ACTION =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.action, workflow.notification " +
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification " +
             "FROM resource " +
             "INNER join workflow " +
             "ON resource.scope = workflow.resource2_scope " +
@@ -62,7 +62,7 @@ public class ResourceService {
             "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) ";
 
     private static final String SECURE_RESOURCE_ACTION =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.action, workflow.notification " +
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification " +
             "FROM resource " +
             "INNER JOIN workflow " +
             "ON resource.scope = workflow.resource2_scope " +

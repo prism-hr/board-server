@@ -112,7 +112,7 @@ public class ActionService {
                 return objectMapper.readValue(serializedUpdates, new TypeReference<List<T>>() {
                 });
             } catch (IOException e) {
-                throw new IllegalStateException("Could not deserialize " + updateClass.getSimpleName().toLowerCase() + "s");
+                throw new IllegalStateException("Could not deserialize " + updateClass.getSimpleName().toLowerCase() + " definitions", e);
             }
         }
 

@@ -14,6 +14,10 @@ public class Notification extends Update<Notification> {
     @JsonIgnore
     private Map<String, String> customProperties;
 
+    public Notification() {
+        setType(Update.NOTIFICATION);
+    }
+
     public hr.prism.board.enums.Notification getNotification() {
         return notification;
     }
