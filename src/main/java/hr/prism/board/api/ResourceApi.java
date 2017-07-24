@@ -5,6 +5,7 @@ import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.ResourceUserRepresentation;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,9 @@ public class ResourceApi {
 
     @Inject
     private UserService userService;
+
+    @Inject
+    private ResourceService resourceService;
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
     public List<ResourceUserRepresentation> getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
@@ -53,8 +57,16 @@ public class ResourceApi {
         return userService.findBySimilarNameAndEmail(scope, resourceId, query);
     }
 
+    @RequestMapping(value = "/api/lookupOrganizations", method = RequestMethod.GET)
+    public List<String> lookupOrganizations(@RequestParam String query) {
+        return resourceService.lookupOrganizations(query);
+    }
+
     @ModelAttribute
-    public Scope getScope(@PathVariable String scopePlural) {
+    public Scope getScope(@PathVariable(required = false) String scopePlural) {
+        if (scopePlural == null) {
+            return null;
+        }
         return Scope.valueOf(StringUtils.removeEnd(scopePlural, "s").toUpperCase());
     }
 

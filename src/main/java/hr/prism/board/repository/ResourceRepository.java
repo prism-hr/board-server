@@ -43,10 +43,17 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
 
     @Modifying
     @Query(value =
-        "update resource " +
-            "set handle = concat(:newHandle, substring(handle, length(:handle) + 1)) " +
-            "where handle like concat(:handle, '/%')",
+        "UPDATE resource " +
+            "SET handle = concat(:newHandle, substring(handle, length(:handle) + 1)) " +
+            "WHERE handle LIKE concat(:handle, '/%')",
         nativeQuery = true)
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
+
+    @Query(value =
+        "select distinct resource.organizationName " +
+            "from Resource resource " +
+            "where resource.scope = 'POST' " +
+            "and resource.organizationName like %:query%")
+    List<String> findOrganizationNamesByQuery(@Param("query") String query);
 
 }
