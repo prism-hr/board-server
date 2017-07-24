@@ -17,9 +17,19 @@ import java.time.LocalDateTime;
         @NamedAttributeNode(value = "location"),
         @NamedAttributeNode(value = "categories"),
         @NamedAttributeNode(value = "applyDocument")},
-    subgraphs = @NamedSubgraph(
-        name = "board",
-        attributeNodes = @NamedAttributeNode("parent")))
+    subgraphs = {
+        @NamedSubgraph(
+            name = "board",
+            attributeNodes = {
+                @NamedAttributeNode(value = "parent", subgraph = "department"),
+                @NamedAttributeNode(value = "categories"),
+                @NamedAttributeNode(value = "documentLogo")}),
+        @NamedSubgraph(
+            name = "department",
+            attributeNodes = {
+                @NamedAttributeNode(value = "categories"),
+                @NamedAttributeNode(value = "documentLogo")})
+    })
 public class Post extends Resource {
 
     @Column(name = "description")

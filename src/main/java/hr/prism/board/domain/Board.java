@@ -10,9 +10,15 @@ import javax.persistence.*;
 @NamedEntityGraph(
     name = "board.extended",
     attributeNodes = {
-        @NamedAttributeNode(value = "parent"),
+        @NamedAttributeNode(value = "parent", subgraph = "department"),
         @NamedAttributeNode(value = "categories"),
-        @NamedAttributeNode(value = "documentLogo")})
+        @NamedAttributeNode(value = "documentLogo")},
+    subgraphs = {
+        @NamedSubgraph(
+            name = "department",
+            attributeNodes = {
+                @NamedAttributeNode(value = "categories"),
+                @NamedAttributeNode(value = "documentLogo")})})
 public class Board extends Resource {
 
     @Column(name = "default_post_visibility")
