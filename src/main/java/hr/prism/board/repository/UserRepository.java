@@ -47,7 +47,10 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and userRole.user.id in (:userIds) " +
             "and userRole.state in (:userRoleStates) " +
             "and " + ACTIVE_CONSTRAINT)
-    List<Long> findByResourceAndUserIds(@Param("resource") Resource resource, @Param("userIds") Collection<Long> userIds, @Param("userRoleStates") List<State> userRoleStates);
+    List<Long> findByResourceAndUserIds(@Param("resource") Resource resource,
+                                        @Param("userIds") Collection<Long> userIds,
+                                        @Param("userRoleStates") List<State> userRoleStates,
+                                        @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select distinct userRole.user " +

@@ -26,7 +26,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "left join userRole.categories userRoleCategory " +
             "where activity.scope = parent.scope " +
             "and activity.role = userRole.role " +
-            "and userRole.user = :user " +
+            "and userRole.user.id = :userId " +
             "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name)" +
             "and activity.id not in (" +
             "select activityDismissal.activity.id " +

@@ -150,7 +150,7 @@ public class UserService {
     }
 
     public List<Long> findByResourceAndUserIds(Resource resource, Collection<Long> userIds) {
-        return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
+        return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
     }
 
     public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {

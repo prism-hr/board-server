@@ -90,7 +90,7 @@ public class UserApi {
         return request;
     }
 
-    @RequestMapping(value = "api/user/activity/{activityId}/dismiss", method = RequestMethod.POST)
+    @RequestMapping(value = "api/user/activities/{activityId}/dismiss", method = RequestMethod.POST)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);
     }
