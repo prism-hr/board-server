@@ -32,19 +32,20 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         Long id = null;
         ExceptionCode exceptionCode = ExceptionCode.PROBLEM;
         HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        if (exception instanceof BoardForbiddenException) {
-            exceptionCode = ((BoardForbiddenException) exception).getExceptionCode();
-            responseStatus = exceptionCode == ExceptionCode.UNAUTHENTICATED_USER ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;
-        } else if (exception instanceof BoardDuplicateException) {
-            BoardDuplicateException duplicateException = (BoardDuplicateException) exception;
-            id = duplicateException.getId();
-            exceptionCode = duplicateException.getExceptionCode();
-            responseStatus = HttpStatus.CONFLICT;
-        } else if (exception instanceof BoardNotModifiedException) {
 
-        } else if (exception instanceof BoardException) {
+        Class<? extends Exception> exceptionClass = exception.getClass();
+        if (BoardException.class.isAssignableFrom(exceptionClass)) {
             exceptionCode = ((BoardException) exception).getExceptionCode();
-            responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            if (exceptionClass == BoardForbiddenException.class) {
+                responseStatus = exceptionCode == ExceptionCode.UNAUTHENTICATED_USER ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;
+            } else if (exceptionClass == BoardDuplicateException.class) {
+                id = ((BoardDuplicateException) exception).getId();
+                responseStatus = HttpStatus.CONFLICT;
+            } else if (exceptionClass == BoardNotModifiedException.class) {
+                responseStatus = HttpStatus.NOT_MODIFIED;
+            } else {
+                responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            }
         }
 
         LOGGER.error("Could not serve request", exception);

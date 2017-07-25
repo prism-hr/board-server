@@ -24,12 +24,19 @@ public class UserActivityService {
     }
 
     public void processRequests(Long userId, List<ActivityRepresentation> result) {
-        requests.removeAll(userId).forEach(request -> request.setResult(result));
+        requests.get(userId).forEach(request -> {
+            removeRequest(userId, request);
+            request.setResult(result);
+        });
     }
 
     public void processRequestTimeout(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
-        this.requests.remove(userId, request);
+        removeRequest(userId, request);
         request.setErrorResult(new BoardNotModifiedException(ExceptionCode.USER_ACTIVITY_NOT_MODIFIED));
+    }
+
+    protected void removeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
+        requests.remove(userId, request);
     }
 
 }

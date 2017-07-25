@@ -1,0 +1,2 @@
+ALTER TABLE activity
+  MODIFY COLUMN activity VARCHAR(50) NOT NULL;

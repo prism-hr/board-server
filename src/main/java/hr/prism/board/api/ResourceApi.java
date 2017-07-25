@@ -64,10 +64,7 @@ public class ResourceApi {
 
     @ModelAttribute
     public Scope getScope(@PathVariable(required = false) String scopePlural) {
-        if (scopePlural == null) {
-            return null;
-        }
-        return Scope.valueOf(StringUtils.removeEnd(scopePlural, "s").toUpperCase());
+        return scopePlural == null ? null : Scope.valueOf(StringUtils.removeEnd(scopePlural, "s").toUpperCase());
     }
 
 }

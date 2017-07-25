@@ -10,6 +10,7 @@ import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.UserActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
@@ -34,6 +35,9 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
+
+    @Inject
+    private Environment environment;
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getCurrentUser() {
@@ -80,7 +84,7 @@ public class UserApi {
     @RequestMapping(value = "api/user/activities/refresh", method = RequestMethod.GET)
     public DeferredResult<List<ActivityRepresentation>> refreshActivities() {
         Long userId = userService.getCurrentUserSecured().getId();
-        DeferredResult<List<ActivityRepresentation>> request = new DeferredResult<>(55000L);
+        DeferredResult<List<ActivityRepresentation>> request = new DeferredResult<>(Long.parseLong(environment.getProperty("deferred.request.timeout.millis")));
         request.onTimeout(() -> userActivityService.processRequestTimeout(userId, request));
         userActivityService.storeRequest(userId, request);
         return request;

@@ -6,10 +6,8 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.service.event.TestNotificationEventService;
-import hr.prism.board.service.event.TestUserRoleEventService;
-import hr.prism.board.service.event.UserRoleEventService;
+import hr.prism.board.service.TestUserActivityService;
+import hr.prism.board.service.event.*;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,12 +17,6 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 @Import(BoardApplication.class)
 public class TestBoardApplication {
-
-    @Bean
-    @Primary
-    public TestNotificationService notificationService() {
-        return new TestNotificationService();
-    }
 
     @Bean
     @Primary
@@ -72,8 +64,26 @@ public class TestBoardApplication {
 
     @Bean
     @Primary
+    public TestNotificationService notificationService() {
+        return new TestNotificationService();
+    }
+
+    @Bean
+    @Primary
     public UserRoleEventService userRoleEventService() {
         return new TestUserRoleEventService();
+    }
+
+    @Bean
+    @Primary
+    public TestActivityEventService activityEventService() {
+        return new TestActivityEventService();
+    }
+
+    @Bean
+    @Primary
+    public TestUserActivityService userActivityService() {
+        return new TestUserActivityService();
     }
 
 }
