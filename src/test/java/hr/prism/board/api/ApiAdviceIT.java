@@ -32,6 +32,11 @@ public class ApiAdviceIT {
     }
 
     @Test
+    public void shouldHandleRuntimeException() throws Exception {
+        doRequest("runtimeException", MockMvcResultMatchers.status().isInternalServerError(), ExceptionCode.PROBLEM);
+    }
+
+    @Test
     public void shouldHandleApiException() throws Exception {
         doRequest("apiException", MockMvcResultMatchers.status().isUnprocessableEntity(), ExceptionCode.DUPLICATE_DEPARTMENT);
     }

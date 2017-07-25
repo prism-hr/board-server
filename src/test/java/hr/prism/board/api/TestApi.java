@@ -15,6 +15,11 @@ public class TestApi {
         throw new Throwable();
     }
 
+    @RequestMapping(value = "/test/runtimeException", method = RequestMethod.GET)
+    public void throwRuntimeException() {
+        throw new RuntimeException();
+    }
+
     @RequestMapping(value = "/test/apiException")
     public void throwApiException() {
         throw new BoardException(ExceptionCode.DUPLICATE_DEPARTMENT);
