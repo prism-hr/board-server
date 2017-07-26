@@ -501,7 +501,9 @@ public class ResourceService {
         return resourceRepository.findByScopeAndUserAndRolesOrCategories(scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACTIVE_USER_ROLE_STATES);
     }
 
+    //FIXME should be in Post Service
     public List<String> lookupOrganizations(String query) {
+        //FIXME use a fulltext query to get contextual (as well as exact) matches
         return resourceRepository.findOrganizationNamesByQuery(query);
     }
 

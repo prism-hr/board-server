@@ -9,6 +9,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserActivityService {
@@ -23,20 +24,15 @@ public class UserActivityService {
         requests.put(userId, request);
     }
 
-    public void processRequests(Long userId, List<ActivityRepresentation> result) {
-        requests.get(userId).forEach(request -> {
-            removeRequest(userId, request);
-            request.setResult(result);
-        });
+    public Set<DeferredResult<List<ActivityRepresentation>>> processRequests(Long userId, List<ActivityRepresentation> result) {
+        Set<DeferredResult<List<ActivityRepresentation>>> userRequests = requests.removeAll(userId);
+        userRequests.forEach(userRequest -> userRequest.setResult(result));
+        return userRequests;
     }
 
     public void processRequestTimeout(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
-        removeRequest(userId, request);
-        request.setErrorResult(new BoardNotModifiedException(ExceptionCode.USER_ACTIVITY_NOT_MODIFIED));
-    }
-
-    protected void removeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
         requests.remove(userId, request);
+        request.setErrorResult(new BoardNotModifiedException(ExceptionCode.USER_ACTIVITY_NOT_MODIFIED));
     }
 
 }

@@ -57,6 +57,7 @@ public class ResourceApi {
         return userService.findBySimilarNameAndEmail(scope, resourceId, query);
     }
 
+    // FIXME: wrong API, should be in PostApi
     @RequestMapping(value = "/api/lookupOrganizations", method = RequestMethod.GET)
     public List<String> lookupOrganizations(@RequestParam String query) {
         return resourceService.lookupOrganizations(query);

@@ -93,11 +93,14 @@ public class UserService {
             user.setSurname(surnameOptional.orElse(user.getSurname()));
         }
 
+        // FIXME: needs a unique check (and test coverage) to ensure that email cannot be set to another user's email
         Optional<String> emailOptional = userDTO.getEmail();
         if (emailOptional != null) {
             user.setEmail(emailOptional.orElse(user.getEmail()));
         }
 
+        // FIXME: make this a separate API
+        // FIXME: user will authenticate to reset password by triggering an email to their inbox
         String password = userDTO.getPassword();
         if (!Strings.isNullOrEmpty(password)) {
             if (userDTO.getOldPassword() == null || !user.getPassword().equals(DigestUtils.sha256Hex(userDTO.getOldPassword()))) {

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class TestUserActivityService extends UserActivityService {
@@ -23,8 +24,18 @@ public class TestUserActivityService extends UserActivityService {
     }
 
     @Override
-    protected void removeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
-        super.removeRequest(userId, request);
+    public Set<DeferredResult<List<ActivityRepresentation>>> processRequests(Long userId, List<ActivityRepresentation> result) {
+        Set<DeferredResult<List<ActivityRepresentation>>> userRequests = super.processRequests(userId, result);
+        if (recording) {
+            sentRequests.putAll(userId, userRequests);
+        }
+
+        return userRequests;
+    }
+
+    @Override
+    public void processRequestTimeout(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
+        super.processRequestTimeout(userId, request);
         if (recording) {
             sentRequests.put(userId, request);
         }
