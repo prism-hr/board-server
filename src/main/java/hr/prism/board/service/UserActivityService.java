@@ -1,6 +1,8 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import hr.prism.board.exception.BoardNotModifiedException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.ActivityRepresentation;
@@ -13,7 +15,7 @@ import java.util.List;
 @Service
 public class UserActivityService {
 
-    private HashMultimap<Long, DeferredResult<List<ActivityRepresentation>>> requests = HashMultimap.create();
+    private SetMultimap<Long, DeferredResult<List<ActivityRepresentation>>> requests = Multimaps.synchronizedSetMultimap(HashMultimap.create());
 
     public Collection<Long> getUserIds() {
         return requests.keySet();
