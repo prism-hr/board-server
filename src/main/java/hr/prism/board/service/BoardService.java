@@ -137,7 +137,7 @@ public class BoardService {
         Map<String, Object> model = createBoardBadgeModel(board, department, options);
 
         List<Post> posts = postService.getPosts(board.getId(), true);
-        posts = posts.subList(0, options.getPostCount()); // FIXME use query params in order to limit results
+        posts = posts.subList(0, Math.min(posts.size(), options.getPostCount())); // FIXME use query params in order to limit results
         model.put("posts", posts);
 
         StringWriter stringWriter = new StringWriter();
