@@ -17,8 +17,12 @@ CREATE TABLE activity_role (
   activity_id BIGINT UNSIGNED NOT NULL,
   scope       VARCHAR(20)     NOT NULL,
   role        VARCHAR(20)     NOT NULL,
+  created_timestamp DATETIME        NOT NULL,
+  updated_timestamp DATETIME,
   PRIMARY KEY (id),
   UNIQUE INDEX (activity_id, scope, role),
+  INDEX (created_timestamp),
+  INDEX (updated_timestamp),
   FOREIGN KEY (activity_id) REFERENCES activity (id)
 )
   COLLATE = utf8_general_ci
