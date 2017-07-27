@@ -7,6 +7,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.repository.ActivityDismissalRepository;
 import hr.prism.board.repository.ActivityRepository;
+import hr.prism.board.repository.ActivityRoleRepository;
 import hr.prism.board.representation.ActivityRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,9 @@ public class ActivityService {
 
     @Inject
     private ActivityRepository activityRepository;
+
+    @Inject
+    private ActivityRoleRepository activityRoleRepository;
 
     @Inject
     private ActivityDismissalRepository activityDismissalRepository;
@@ -43,12 +47,31 @@ public class ActivityService {
         return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
     }
 
-    public Activity getOrCreateActivity(Resource resource, Scope scope, Role role, hr.prism.board.enums.Activity activity) {
-        return getOrCreateActivity(resource, null, scope, role, activity);
+    public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
+        Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
+        if (entity == null) {
+            entity = createActivity(resource, null, activity);
+        }
+
+        return entity;
     }
 
-    public Activity getOrCreateActivity(UserRole userRole, Scope scope, Role role, hr.prism.board.enums.Activity activity) {
-        return getOrCreateActivity(userRole.getResource(), userRole, scope, role, activity);
+    public Activity getOrCreateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
+        Activity entity = activityRepository.findByUserRoleAndActivity(userRole, activity);
+        if (entity == null) {
+            entity = createActivity(userRole.getResource(), userRole, activity);
+        }
+
+        return entity;
+    }
+
+    public ActivityRole getOrCreateActivityRole(Activity activity, Scope scope, Role role) {
+        ActivityRole activityRole = activityRoleRepository.findByActivityAndScopeAndRole(activity, scope, role);
+        if (activityRole == null) {
+            activityRole = activityRoleRepository.save(new ActivityRole().setActivity(activity).setScope(scope).setRole(role));
+        }
+
+        return activityRole;
     }
 
     public void dismissActivity(Long activityId) {
@@ -64,29 +87,19 @@ public class ActivityService {
 
     public void deleteActivities(Resource resource) {
         activityDismissalRepository.deleteByResource(resource);
+        activityRoleRepository.deleteByResource(resource);
         activityRepository.deleteByResource(resource);
     }
 
     public void deleteActivities(UserRole userRole) {
         activityDismissalRepository.deleteByUserRole(userRole);
+        activityRoleRepository.deleteByUserRole(userRole);
         activityRepository.deleteByUserRole(userRole);
     }
 
-    private Activity getOrCreateActivity(Resource resource, UserRole userRole, Scope scope, Role role, hr.prism.board.enums.Activity activity) {
-        Activity entity;
-        if (userRole == null) {
-            entity = activityRepository.findByResourceAndScopeAndRoleAndActivity(resource, scope, role, activity);
-        } else {
-            entity = activityRepository.findByUserRoleAndScopeAndRoleAndActivity(userRole, scope, role, activity);
-        }
-
-        if (entity == null) {
-            entity = activityRepository.save(
-                new hr.prism.board.domain.Activity().setResource(resource).setUserRole(userRole)
-                    .setScope(scope).setRole(role).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));
-        }
-
-        return entity;
+    private Activity createActivity(Resource resource, UserRole userRole, hr.prism.board.enums.Activity activity) {
+        return activityRepository.save(new hr.prism.board.domain.Activity()
+            .setResource(resource).setUserRole(userRole).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));
     }
 
 }

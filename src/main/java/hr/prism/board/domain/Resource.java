@@ -213,6 +213,13 @@ public class Resource extends BoardEntity {
         return this;
     }
 
+    public List<ResourceCategory> getCategories(CategoryType type) {
+        return categories.stream()
+            .filter(category -> category.getType() == type && category.getOrdinal() != null)
+            .sorted(Comparator.comparingInt(ResourceCategory::getOrdinal))
+            .collect(Collectors.toList());
+    }
+
     @Override
     public String toString() {
         if (scope == null) {
@@ -220,13 +227,6 @@ public class Resource extends BoardEntity {
         }
 
         return Joiner.on(" ").skipNulls().join(scope.name().toLowerCase(), getId());
-    }
-
-    public List<ResourceCategory> getCategories(CategoryType type) {
-        return categories.stream()
-            .filter(category -> category.getType() == type && category.getOrdinal() != null)
-            .sorted(Comparator.comparingInt(ResourceCategory::getOrdinal))
-            .collect(Collectors.toList());
     }
 
 }

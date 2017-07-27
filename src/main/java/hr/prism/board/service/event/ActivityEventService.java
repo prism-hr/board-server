@@ -1,10 +1,12 @@
 package hr.prism.board.service.event;
 
+import hr.prism.board.domain.BoardEntity;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.service.*;
 import hr.prism.board.workflow.Activity;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -54,15 +58,25 @@ public class ActivityEventService {
     protected void sendActivities(ActivityEvent activityEvent) {
         Resource resource;
         Long userRoleId = activityEvent.getUserRoleId();
+        Map<Pair<BoardEntity, hr.prism.board.enums.Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity = new HashMap<>();
         if (userRoleId == null) {
             resource = resourceService.findOne(activityEvent.getResourceId());
             activityService.deleteActivities(resource);
-            activityEvent.getActivities().forEach(activity ->
-                activityService.getOrCreateActivity(resource, activity.getScope(), activity.getRole(), activity.getActivity()));
+            activityEvent.getActivities().forEach(activity -> {
+                hr.prism.board.enums.Activity activityEnum = activity.getActivity();
+                hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
+                    .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.getOrCreateActivity(resource, activityEnum));
+                activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+            });
         } else {
             UserRole userRole = userRoleService.fineOne(userRoleId);
-            activityEvent.getActivities().forEach(activity ->
-                activityService.getOrCreateActivity(userRole, activity.getScope(), activity.getRole(), activity.getActivity()));
+            activityEvent.getActivities().forEach(activity -> {
+                hr.prism.board.enums.Activity activityEnum = activity.getActivity();
+                hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
+                    .computeIfAbsent(Pair.of(userRole, activityEnum), value -> activityService.getOrCreateActivity(userRole, activityEnum));
+                activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+            });
+
             resource = userRole.getResource();
         }
 

@@ -1,12 +1,11 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "activity", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_role_id", "role"}))
+@Table(name = "activity", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_role_id", "activity"}))
 public class Activity extends BoardEntity {
 
     @ManyToOne
@@ -18,19 +17,14 @@ public class Activity extends BoardEntity {
     private UserRole userRole;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "scope", nullable = false)
-    private Scope scope;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "activity", nullable = false)
     private hr.prism.board.enums.Activity activity;
 
     @Column(name = "filter_by_category", nullable = false)
     private Boolean filterByCategory;
+
+    @OneToMany(mappedBy = "activity")
+    private Set<ActivityRole> activityRoles = new HashSet<>();
 
     public Resource getResource() {
         return resource;
@@ -50,24 +44,6 @@ public class Activity extends BoardEntity {
         return this;
     }
 
-    public Scope getScope() {
-        return scope;
-    }
-
-    public Activity setScope(Scope scope) {
-        this.scope = scope;
-        return this;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public Activity setRole(Role role) {
-        this.role = role;
-        return this;
-    }
-
     public hr.prism.board.enums.Activity getActivity() {
         return activity;
     }
@@ -84,6 +60,10 @@ public class Activity extends BoardEntity {
     public Activity setFilterByCategory(Boolean filterByCategory) {
         this.filterByCategory = filterByCategory;
         return this;
+    }
+
+    public Set<ActivityRole> getActivityRoles() {
+        return activityRoles;
     }
 
 }
