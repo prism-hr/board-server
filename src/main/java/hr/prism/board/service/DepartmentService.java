@@ -13,8 +13,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
@@ -24,12 +22,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,18 +33,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DepartmentService {
-
-    private static final String SIMILAR_DEPARTMENT =
-        "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
-            "IF(resource.scope = :scope AND resource.state = :state, 1, 0) AS valid, " +
-            "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "MATCH resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
-            "FROM resource " +
-            "LEFT JOIN document AS document_logo " +
-            "ON resource.document_logo_id = document_logo.id " +
-            "HAVING valid = 1 AND (similarityHard = 1 OR similaritySoft > 0) " +
-            "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
-            "LIMIT 10";
 
     @Inject
     private UserService userService;
@@ -177,32 +161,6 @@ public class DepartmentService {
             departmentRepository.update(department);
             return department;
         });
-    }
-
-    public List<DepartmentRepresentation> findBySimilarName(String searchTerm) {
-        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
-                .setParameter("searchTermHard", searchTerm + "%")
-                .setParameter("searchTermSoft", searchTerm)
-                .setParameter("scope", Scope.DEPARTMENT.name())
-                .setParameter("state", State.ACCEPTED.name())
-                .getResultList());
-
-        List<DepartmentRepresentation> departmentRepresentations = new ArrayList<>();
-        for (Object[] row : rows) {
-            DepartmentRepresentation departmentRepresentation =
-                new DepartmentRepresentation().setId(Long.parseLong(row[0].toString())).setName(row[1].toString());
-            Object cloudinaryId = row[2];
-            if (cloudinaryId != null) {
-                DocumentRepresentation documentLogoRepresentation =
-                    new DocumentRepresentation().setCloudinaryId(cloudinaryId.toString()).setCloudinaryUrl(row[3].toString()).setFileName(row[4].toString());
-                departmentRepresentation.setDocumentLogo(documentLogoRepresentation);
-            }
-
-            departmentRepresentations.add(departmentRepresentation);
-        }
-
-        return departmentRepresentations;
     }
 
     public void createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
