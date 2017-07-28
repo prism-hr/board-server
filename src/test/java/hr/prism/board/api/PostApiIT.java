@@ -838,9 +838,9 @@ public class PostApiIT extends AbstractIT {
                 .put("organizationName", "organization name", "organization name 2")
                 .put("location",
                     ObjectUtils.orderedMap("name", "krakow", "domicile", "PL", "googleId", "sss",
-                        "latitude", BigDecimal.ONE.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.ONE.stripTrailingZeros().toPlainString()),
+                        "latitude", BigDecimal.ONE.stripTrailingZeros(), "longitude", BigDecimal.ONE.stripTrailingZeros()),
                     ObjectUtils.orderedMap("name", "london", "domicile", "GB", "googleId", "ttt",
-                        "latitude", BigDecimal.TEN.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.TEN.stripTrailingZeros().toPlainString()))
+                        "latitude", BigDecimal.TEN.stripTrailingZeros(), "longitude", BigDecimal.TEN.stripTrailingZeros()))
                 .put("applyWebsite", "http://www.google.co.uk", "http://www.facebook.com")
                 .put("postCategories", Arrays.asList("p1", "p2"), Arrays.asList("p2", "p1"))
                 .put("memberCategories", Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT"), Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"))
@@ -865,9 +865,9 @@ public class PostApiIT extends AbstractIT {
                 .put("organizationName", "organization name 2", "organization name")
                 .put("location",
                     ObjectUtils.orderedMap("name", "london", "domicile", "GB", "googleId", "ttt",
-                        "latitude", BigDecimal.TEN.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.TEN.stripTrailingZeros().toPlainString()),
+                        "latitude", BigDecimal.TEN.stripTrailingZeros(), "longitude", BigDecimal.TEN.stripTrailingZeros()),
                     ObjectUtils.orderedMap("name", "birmingham", "domicile", "GB", "googleId", "uuu",
-                        "latitude", BigDecimal.ZERO.stripTrailingZeros().toPlainString(), "longitude", BigDecimal.ZERO.stripTrailingZeros().toPlainString()))
+                        "latitude", BigDecimal.ZERO.stripTrailingZeros(), "longitude", BigDecimal.ZERO.stripTrailingZeros()))
                 .put("applyWebsite", "http://www.facebook.com", null)
                 .put("applyDocument", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
                 .put("memberCategories", Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"), Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT")));

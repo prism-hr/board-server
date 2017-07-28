@@ -1,5 +1,7 @@
 package hr.prism.board;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -20,6 +22,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestHelper {
+
+    private static ObjectMapper OBJECT_MAPPER = BoardApplication.getObjectMapper();
 
     public static BoardDTO smallSampleBoard() {
         return new BoardDTO()
@@ -159,7 +163,12 @@ public class TestHelper {
             verifyUser(expectedUser, resourceOperationR.getUser());
         }
 
-        Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
+        try {
+            Assert.assertEquals(OBJECT_MAPPER.writeValueAsString(expectedChanges), OBJECT_MAPPER.writeValueAsString(resourceOperationR.getChangeList()));
+        } catch (JsonProcessingException e) {
+            Assert.fail();
+        }
+
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
     }
 
