@@ -17,7 +17,7 @@ public class DefinedRecipientList implements NotificationRecipientList {
     private UserCacheService userCacheService;
 
     public List<User> list(Resource resource, Notification notification) {
-        return Collections.singletonList(userCacheService.findOne(notification.getUserId()));
+        return Collections.singletonList(userCacheService.findOneFresh(notification.getUserId()));
     }
 
 }

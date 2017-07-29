@@ -16,6 +16,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -41,6 +43,9 @@ public class AuthenticationApiIT extends AbstractIT {
 
     @Inject
     private AuthenticationService authenticationService;
+
+    @Inject
+    private Environment environment;
 
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {
@@ -153,24 +158,75 @@ public class AuthenticationApiIT extends AbstractIT {
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
                 environment.getProperty("server.url") + "/redirect", "modal", "ResetPassword")));
+        testNotificationService.stop();
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
-        testNotificationService.stop();
 
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
-        testNotificationService.stop();
 
         user = transactionTemplate.execute(status -> userCacheService.findOneFresh(userId));
         Assert.assertNull(user.getPasswordResetUuid());
         Assert.assertNull(user.getPasswordResetTimestamp());
+    }
+
+    @Test
+    public void shouldExpirePasswordReset() throws Exception {
+        testNotificationService.record();
+        RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
+        String accessToken = (String) objectMapper.readValue(
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON_UTF8)
+                    .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            Map.class).get("token");
+
+        MockHttpServletResponse userResponse =
+            mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/user")
+                    .header("Authorization", "Bearer " + accessToken))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse();
+        UserRepresentation userR = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
+
+        ResetPasswordDTO resetPasswordDTO = new ResetPasswordDTO().setEmail("alastair@prism.hr");
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/auth/resetPassword")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(resetPasswordDTO)))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn();
+
+        Long userId = userR.getId();
+        User user = transactionTemplate.execute(status -> userCacheService.findOneFresh(userId));
+        String passwordResetUuid = user.getPasswordResetUuid();
+        Assert.assertNotNull(passwordResetUuid);
+        Assert.assertNotNull(user.getPasswordResetTimestamp());
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
+            ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
+                environment.getProperty("server.url") + "/redirect", "modal", "ResetPassword")));
+        testNotificationService.stop();
+
+        TimeUnit.SECONDS.sleep(Long.parseLong(environment.getProperty("password.reset.timeout.seconds")) + 1);
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch("/api/user/password")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
+            .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 
     @Test

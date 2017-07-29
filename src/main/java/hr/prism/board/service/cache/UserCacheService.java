@@ -2,7 +2,6 @@ package hr.prism.board.service.cache;
 
 import hr.prism.board.domain.User;
 import hr.prism.board.repository.UserRepository;
-
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
