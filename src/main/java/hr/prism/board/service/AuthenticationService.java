@@ -1,6 +1,5 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LoginDTO;
@@ -157,8 +156,8 @@ public class AuthenticationService {
         user.setPasswordResetTimestamp(LocalDateTime.now());
         userCacheService.updateUser(user);
 
-        notificationEventService.publishEvent(this, Collections.singletonList(new Notification().setUserId(user.getId())
-            .setCustomProperties(ImmutableMap.of("resetUuid", resetUuid)).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
+        notificationEventService.publishEvent(this,
+            Collections.singletonList(new Notification().setUserId(user.getId()).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
     public String makeAccessToken(Long userId, String jwsSecret) {

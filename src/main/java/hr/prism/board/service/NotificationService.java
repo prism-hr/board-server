@@ -96,10 +96,6 @@ public class NotificationService {
 
         Map<String, String> properties = this.properties.get(notification).entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getValue(request)));
-        Map<String, String> customProperties = request.getCustomProperties();
-        if (customProperties != null) {
-            properties.putAll(customProperties);
-        }
 
         StrSubstitutor parser = new StrSubstitutor(properties);
         String subject = parser.replace(this.subjects.get(notification));
@@ -189,12 +185,11 @@ public class NotificationService {
 
         private Map<String, String> customProperties;
 
-        public NotificationRequest(Notification notification, User recipient, Resource resource, Action action, Map<String, String> customProperties) {
+        public NotificationRequest(Notification notification, User recipient, Resource resource, Action action) {
             this.notification = notification;
             this.recipient = recipient;
             this.resource = resource;
             this.action = action;
-            this.customProperties = customProperties;
         }
 
         public Notification getNotification() {
@@ -211,10 +206,6 @@ public class NotificationService {
 
         public Action getAction() {
             return action;
-        }
-
-        public Map<String, String> getCustomProperties() {
-            return customProperties;
         }
 
     }

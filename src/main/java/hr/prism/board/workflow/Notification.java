@@ -2,17 +2,12 @@ package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.Map;
-
 public class Notification extends Update<Notification> {
 
     private hr.prism.board.enums.Notification notification;
 
     @JsonIgnore
     private Long userId;
-
-    @JsonIgnore
-    private Map<String, String> customProperties;
 
     public Notification() {
         setType(Update.NOTIFICATION);
@@ -38,15 +33,6 @@ public class Notification extends Update<Notification> {
 
     public Notification setUserId(Long userId) {
         this.userId = userId;
-        return this;
-    }
-
-    public Map<String, String> getCustomProperties() {
-        return customProperties;
-    }
-
-    public Notification setCustomProperties(Map<String, String> customProperties) {
-        this.customProperties = customProperties;
         return this;
     }
 
