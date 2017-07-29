@@ -6,13 +6,11 @@ import hr.prism.board.dto.*;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
-import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,14 +27,11 @@ public class UserApiIT extends AbstractIT {
     @Test
     public void shouldCreateAndUpdateUser() {
         testUserService.authenticate();
-
         DocumentDTO imageDTO = new DocumentDTO().setCloudinaryId("userImage").setCloudinaryUrl("userImage").setFileName("userImage");
         UserPatchDTO userDTO = new UserPatchDTO()
             .setGivenName(Optional.of("first"))
             .setSurname(Optional.of("second"))
             .setEmail(Optional.of("changed@email.com"))
-            .setPassword("newPassword")
-            .setOldPassword("password")
             .setDocumentImage(Optional.of(imageDTO));
         userApi.updateUser(userDTO);
 
@@ -45,32 +40,6 @@ public class UserApiIT extends AbstractIT {
         Assert.assertEquals("second", user.getSurname());
         Assert.assertEquals("changed@email.com", user.getEmail());
         verifyDocument(imageDTO, user.getDocumentImage());
-
-        User currentUser = userService.getCurrentUser();
-        Assert.assertEquals(DigestUtils.sha256Hex("newPassword"), currentUser.getPassword());
-    }
-
-    @Test
-    public void shouldNotUpdatePasswordIfOldOneInvalid() {
-        testUserService.authenticate();
-
-        UserPatchDTO userDTO = new UserPatchDTO().setPassword("newPassword");
-
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class,
-                () -> userApi.updateUser(userDTO),
-                ExceptionCode.INVALID_OLD_PASSWORD, status);
-            return null;
-        });
-
-        UserPatchDTO userDTO2 = new UserPatchDTO().setPassword("newPassword").setOldPassword("incorrect");
-
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class,
-                () -> userApi.updateUser(userDTO2),
-                ExceptionCode.INVALID_OLD_PASSWORD, status);
-            return null;
-        });
     }
 
     @Test
