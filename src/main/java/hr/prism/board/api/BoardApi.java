@@ -73,11 +73,6 @@ public class BoardApi {
         return boardMapper.apply(boardService.getBoard(handle));
     }
 
-    @RequestMapping(value = "/api/boards", method = RequestMethod.GET, params = "query")
-    public List<BoardRepresentation> lookupBoards(@RequestParam String query) {
-        return resourceService.findBySimilarName(BoardRepresentation.class, query);
-    }
-
     @RequestMapping(value = "/api/boards/{id}/operations", method = RequestMethod.GET)
     public List<ResourceOperationRepresentation> getBoardOperations(@PathVariable Long id) {
         return resourceService.getResourceOperations(Scope.BOARD, id).stream()

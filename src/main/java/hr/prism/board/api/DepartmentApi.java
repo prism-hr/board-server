@@ -45,7 +45,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "query")
     public List<DepartmentRepresentation> lookupDepartments(@RequestParam String query) {
-        return resourceService.findBySimilarName(DepartmentRepresentation.class, query);
+        return departmentService.findBySimilarName(query);
     }
 
     @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.GET)
