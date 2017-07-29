@@ -31,7 +31,7 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "pasword_reset_uuid")
+    @Column(name = "password_reset_uuid")
     private String passwordResetUuid;
 
     @Column(name = "password_reset_timestamp")
