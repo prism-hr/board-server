@@ -38,14 +38,7 @@ public class TestNotificationService extends NotificationService {
             Map<String, String> actualParameters = actualNotificationInstance.getProperties();
             Map<String, String> expectedParameters = expectedNotificationInstance.getProperties();
             for (String expectedParameterKey : expectedParameters.keySet()) {
-                String expectedParameterValue = expectedParameters.get(expectedParameterKey);
-                if (expectedParameterValue.equals("defined")) {
-                    // We can't easily compare dynamic values (e.g. temporaryPassword), so assert not null
-                    Assert.assertNotNull(actualParameters.remove(expectedParameterKey));
-                } else {
-                    // Parameters that are statically defined can be compared, assert equals
-                    Assert.assertEquals(expectedParameterValue, actualParameters.remove(expectedParameterKey));
-                }
+                Assert.assertEquals(expectedParameters.get(expectedParameterKey), actualParameters.remove(expectedParameterKey));
             }
 
             // Any remaining parameters not defined in the expectations should have null values

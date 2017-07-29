@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.TestContext;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.LoginDTO;
-import hr.prism.board.dto.OauthDTO;
-import hr.prism.board.dto.RegisterDTO;
-import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
@@ -27,7 +24,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @TestContext
@@ -149,25 +145,32 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
 
         Long userId = userR.getId();
-        User user = userCacheService.findOneFresh(userId);
-        Assert.assertNotNull(user.getTemporaryPassword());
+        User user = transactionTemplate.execute(status -> userCacheService.findOneFresh(userId));
+        String passwordResetUuid = user.getPasswordResetUuid();
+        Assert.assertNotNull(passwordResetUuid);
+        Assert.assertNotNull(user.getPasswordResetTimestamp());
 
-        LocalDateTime temporaryPasswordExpiryTimestamp = user.getTemporaryPasswordExpiryTimestamp();
-        Assert.assertNotNull(temporaryPasswordExpiryTimestamp);
-        Assert.assertTrue(temporaryPasswordExpiryTimestamp.isAfter(LocalDateTime.now()));
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
-            ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "temporaryPassword", "defined", "homeRedirect",
-                environment.getProperty("server.url") + "/redirect", "modal", "Login")));
+            ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
+                environment.getProperty("server.url") + "/redirect", "modal", "ResetPassword")));
 
-        // Set the temporary password to something that we know
-        transactionTemplate.execute(status -> userCacheService.findOneFresh(userId).setTemporaryPassword(DigestUtils.sha256Hex("temporary")));
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch("/api/user/password")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
+            .andExpect(MockMvcResultMatchers.status().isOk());
+        testNotificationService.stop();
 
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("temporary"))))
+                .content(objectMapper.writeValueAsString(new LoginDTO().setEmail("alastair@prism.hr").setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
         testNotificationService.stop();
+
+        user = transactionTemplate.execute(status -> userCacheService.findOneFresh(userId));
+        Assert.assertNull(user.getPasswordResetUuid());
+        Assert.assertNull(user.getPasswordResetTimestamp());
     }
 
     @Test

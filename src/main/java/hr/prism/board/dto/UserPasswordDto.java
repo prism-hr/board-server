@@ -16,16 +16,18 @@ public class UserPasswordDto {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public UserPasswordDto setUuid(String uuid) {
         this.uuid = uuid;
+        return this;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public UserPasswordDto setPassword(String password) {
         this.password = password;
+        return this;
     }
 
 }
