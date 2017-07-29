@@ -92,10 +92,9 @@ public class AuthenticationService {
     }
 
     public User login(LoginDTO loginDTO) {
-        User user = userRepository.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()), LocalDateTime
-            .now());
+        User user = userRepository.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNREGISTERED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
         }
 
         return user;
@@ -150,16 +149,16 @@ public class AuthenticationService {
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
         User user = userRepository.findByEmail(resetPasswordDTO.getEmail());
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNREGISTERED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
         }
 
-        String temporaryPassword = BoardUtils.randomAlphanumericString(12);
-        user.setTemporaryPassword(DigestUtils.sha256Hex(temporaryPassword));
-        user.setTemporaryPasswordExpiryTimestamp(LocalDateTime.now().plusHours(1));
+        String resetUuid = UUID.randomUUID().toString();
+        user.setPasswordResetUuid(resetUuid);
+        user.setPasswordResetTimestamp(LocalDateTime.now());
         userCacheService.updateUser(user);
 
         notificationEventService.publishEvent(this, Collections.singletonList(new Notification().setUserId(user.getId())
-            .setCustomProperties(ImmutableMap.of("temporaryPassword", temporaryPassword)).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
+            .setCustomProperties(ImmutableMap.of("resetUuid", resetUuid)).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
     public String makeAccessToken(Long userId, String jwsSecret) {

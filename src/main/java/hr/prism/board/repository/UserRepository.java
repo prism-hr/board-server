@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,16 +26,18 @@ public interface UserRepository extends MyRepository<User, Long> {
 
     User findByEmail(String email);
 
-    User findByOauthProviderAndOauthAccountId(OauthProvider provider, String oauthAccountId);
-
     @Query(value =
         "select user " +
             "from User user " +
             "where user.email = :email " +
-            "and (user.password = :password " +
-            "or (user.temporaryPassword = :password " +
-            "and user.temporaryPasswordExpiryTimestamp >= :baseline))")
-    User findByEmailAndPassword(@Param("email") String email, @Param("password") String password, @Param("baseline") LocalDateTime baseline);
+            "and user.id <> :id")
+    User findByEmailAndNotId(@Param("email") String email, @Param("id") Long id);
+
+    User findByOauthProviderAndOauthAccountId(OauthProvider provider, String oauthAccountId);
+
+    User findByPasswordResetUuid(String passwordResetUuid);
+
+    User findByEmailAndPassword(String email, String password);
 
     @Query(value =
         "select distinct userRole.user.id " +

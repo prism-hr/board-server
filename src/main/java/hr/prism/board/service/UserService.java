@@ -1,12 +1,12 @@
 package hr.prism.board.service;
 
-import com.google.common.base.Strings;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserPasswordDto;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -18,6 +18,7 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -62,6 +64,9 @@ public class UserService {
     @Inject
     private ActionService actionService;
 
+    @Inject
+    private Environment environment;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -93,20 +98,21 @@ public class UserService {
             user.setSurname(surnameOptional.orElse(user.getSurname()));
         }
 
-        // FIXME: needs a unique check (and test coverage) to ensure that email cannot be set to another user's email
+        // TODO: test coverage
+        // TODO: remember the original email as key for uploads
         Optional<String> emailOptional = userDTO.getEmail();
         if (emailOptional != null) {
-            user.setEmail(emailOptional.orElse(user.getEmail()));
-        }
-
-        // FIXME: make this a separate API
-        // FIXME: user will authenticate to reset password by triggering an email to their inbox
-        String password = userDTO.getPassword();
-        if (!Strings.isNullOrEmpty(password)) {
-            if (userDTO.getOldPassword() == null || !user.getPassword().equals(DigestUtils.sha256Hex(userDTO.getOldPassword()))) {
-                throw new BoardException(ExceptionCode.INVALID_OLD_PASSWORD);
+            if (emailOptional.isPresent()) {
+                String email = emailOptional.get();
+                User duplicateUser = userRepository.findByEmailAndNotId(email, user.getId());
+                if (duplicateUser == null) {
+                    user.setEmail(email);
+                } else {
+                    throw new BoardException(ExceptionCode.DUPLICATE_USER);
+                }
+            } else {
+                throw new BoardException(ExceptionCode.MISSING_USER_EMAIL);
             }
-            user.setPassword(DigestUtils.sha256Hex(password));
         }
 
         Optional<DocumentDTO> documentImageOptional = userDTO.getDocumentImage();
@@ -128,6 +134,24 @@ public class UserService {
         }
 
         return userCacheService.updateUser(user);
+    }
+
+    public void resetPassword(UserPasswordDto userPasswordDto) {
+        String uuid = userPasswordDto.getUuid();
+        User user = userRepository.findByPasswordResetUuid(uuid);
+        if (user == null) {
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
+        }
+
+        LocalDateTime baseline = LocalDateTime.now();
+        Long passwordResetTimeout = Long.parseLong(environment.getProperty("password.reset.timeout.seconds"));
+        if (user.getPasswordResetTimestamp().plusSeconds(passwordResetTimeout).isBefore(baseline)) {
+            throw new BoardForbiddenException(ExceptionCode.EXPIRED_PASSWORD_RESET);
+        }
+
+        user.setPassword(DigestUtils.sha256Hex(userPasswordDto.getPassword()));
+        user.setPasswordResetUuid(null);
+        user.setPasswordResetTimestamp(null);
     }
 
     public User getOrCreateUser(UserDTO userDTO) {

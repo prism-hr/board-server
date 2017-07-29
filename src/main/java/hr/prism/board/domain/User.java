@@ -31,11 +31,11 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "temporary_password")
-    private String temporaryPassword;
+    @Column(name = "pasword_reset_uuid")
+    private String passwordResetUuid;
 
-    @Column(name = "temporary_password_expiry_timestamp")
-    private LocalDateTime temporaryPasswordExpiryTimestamp;
+    @Column(name = "password_reset_timestamp")
+    private LocalDateTime passwordResetTimestamp;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "oauth_provider")
@@ -100,22 +100,20 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
-    public String getTemporaryPassword() {
-        return temporaryPassword;
+    public String getPasswordResetUuid() {
+        return passwordResetUuid;
     }
 
-    public User setTemporaryPassword(String temporaryPassword) {
-        this.temporaryPassword = temporaryPassword;
-        return this;
+    public void setPasswordResetUuid(String passwordResetUuid) {
+        this.passwordResetUuid = passwordResetUuid;
     }
 
-    public LocalDateTime getTemporaryPasswordExpiryTimestamp() {
-        return temporaryPasswordExpiryTimestamp;
+    public LocalDateTime getPasswordResetTimestamp() {
+        return passwordResetTimestamp;
     }
 
-    public User setTemporaryPasswordExpiryTimestamp(LocalDateTime temporaryPasswordExpiryTimestamp) {
-        this.temporaryPasswordExpiryTimestamp = temporaryPasswordExpiryTimestamp;
-        return this;
+    public void setPasswordResetTimestamp(LocalDateTime passwordResetTimestamp) {
+        this.passwordResetTimestamp = passwordResetTimestamp;
     }
 
     public OauthProvider getOauthProvider() {

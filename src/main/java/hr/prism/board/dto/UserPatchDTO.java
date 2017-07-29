@@ -20,11 +20,6 @@ public class UserPatchDTO {
     @Size(max = 255)
     private Optional<String> email;
 
-    @Size(min = 8, max = 30)
-    private String password;
-
-    private String oldPassword;
-
     @Valid
     private Optional<DocumentDTO> documentImage;
 
@@ -54,24 +49,6 @@ public class UserPatchDTO {
 
     public UserPatchDTO setEmail(Optional<String> email) {
         this.email = email;
-        return this;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public UserPatchDTO setPassword(String password) {
-        this.password = password;
-        return this;
-    }
-
-    public String getOldPassword() {
-        return oldPassword;
-    }
-
-    public UserPatchDTO setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
         return this;
     }
 

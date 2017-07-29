@@ -1,5 +1,6 @@
 package hr.prism.board.exception;
 
+// TODO - define log level for code
 public enum ExceptionCode {
 
     PROBLEM,
@@ -10,7 +11,7 @@ public enum ExceptionCode {
     MISSING_NOTIFICATION,
     MISSING_NOTIFICATION_PROPERTY,
     UNIDENTIFIABLE_USER,
-    UNREGISTERED_USER,
+    UNKNOWN_USER,
     UNAUTHENTICATED_USER,
     DUPLICATE_USER,
     DUPLICATE_DEPARTMENT,
@@ -36,7 +37,8 @@ public enum ExceptionCode {
     FORBIDDEN_RESOURCE,
     DUPLICATE_PERMISSION,
     FORBIDDEN_PERMISSION,
-    INVALID_OLD_PASSWORD,
-    USER_ACTIVITY_NOT_MODIFIED
+    USER_ACTIVITY_NOT_MODIFIED,
+    EXPIRED_PASSWORD_RESET,
+    MISSING_USER_EMAIL
 
 }
