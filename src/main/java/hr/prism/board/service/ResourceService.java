@@ -16,8 +16,7 @@ import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -109,6 +108,61 @@ public class ResourceService {
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
+
+    public static String suggestHandle(String name) {
+        String suggestion = "";
+        name = name.toLowerCase();
+        String[] parts = name.split(" ");
+        for (int i = 0; i < parts.length; i++) {
+            String newSuggestion;
+            String part = parts[i];
+            if (suggestion.length() > 0) {
+                newSuggestion = suggestion + "-" + part;
+            } else {
+                newSuggestion = part;
+            }
+
+            if (newSuggestion.length() > 20) {
+                if (i == 0) {
+                    return newSuggestion.substring(0, 20);
+                }
+
+                return suggestion;
+            }
+
+            suggestion = newSuggestion;
+        }
+
+        return suggestion;
+    }
+
+    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
+        if (similarHandles.contains(suggestedHandle)) {
+
+            int ordinal = 2;
+            int suggestedHandleLength = suggestedHandle.length();
+            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
+            for (String similarHandleSuffix : similarHandleSuffixes) {
+                if (similarHandleSuffix.startsWith("-")) {
+                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
+
+                    // We only care about creating a unique value in a formatted sequence
+                    // We can ignore anything else that has been reformatted by an end user
+                    if (parts.length == 1) {
+                        String firstPart = parts[0];
+                        if (StringUtils.isNumeric(firstPart)) {
+                            ordinal = Integer.parseInt(firstPart) + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return suggestedHandle + "-" + ordinal;
+        }
+
+        return suggestedHandle;
+    }
 
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
@@ -368,6 +422,50 @@ public class ResourceService {
             .getResultList());
     }
 
+    public <T extends ResourceRepresentation> List<T> findBySimilarName(Class<T> clazz, String searchTerm) {
+        Scope scope = Scope.valueOf(clazz.getSimpleName().replace("Representation", "").toUpperCase());
+        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
+            entityManager.createNativeQuery(
+                "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
+                    "IF(resource.scope = :scope AND resource.state = :state, 1, 0) AS valid, " +
+                    "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
+                    "MATCH resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+                    "FROM resource " +
+                    "LEFT JOIN document AS document_logo " +
+                    "ON resource.document_logo_id = document_logo.id " +
+                    "HAVING valid = 1 AND (similarityHard = 1 OR similaritySoft > 0) " +
+                    "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
+                    "LIMIT 10")
+                .setParameter("searchTermHard", searchTerm + "%")
+                .setParameter("searchTermSoft", searchTerm)
+                .setParameter("scope", scope.name())
+                .setParameter("state", State.ACCEPTED.name())
+                .getResultList());
+
+        return rows.stream().map(row -> {
+            ResourceRepresentation resourceRepresentation;
+            if (scope == Scope.BOARD) {
+                resourceRepresentation = new BoardRepresentation();
+            } else if (scope == Scope.DEPARTMENT) {
+                resourceRepresentation = new DepartmentRepresentation();
+            } else {
+                throw new Error();
+            }
+            resourceRepresentation.setId(Long.parseLong(row[0].toString())).setName(row[1].toString());
+            Object cloudinaryId = row[2];
+            if (cloudinaryId != null) {
+                DocumentRepresentation documentLogoRepresentation =
+                    new DocumentRepresentation().setCloudinaryId(cloudinaryId.toString()).setCloudinaryUrl(row[3].toString()).setFileName(row[4].toString());
+                if (scope == Scope.BOARD) {
+                    ((BoardRepresentation) resourceRepresentation).setDocumentLogo(documentLogoRepresentation);
+                } else {
+                    ((DepartmentRepresentation) resourceRepresentation).setDocumentLogo(documentLogoRepresentation);
+                }
+            }
+            return (T)resourceRepresentation;
+        }).collect(Collectors.toList());
+    }
+
     @SuppressWarnings("JpaQlInspection")
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement =
@@ -411,61 +509,6 @@ public class ResourceService {
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
             throw new BoardException(exceptionCode);
         }
-    }
-
-    public static String suggestHandle(String name) {
-        String suggestion = "";
-        name = name.toLowerCase();
-        String[] parts = name.split(" ");
-        for (int i = 0; i < parts.length; i++) {
-            String newSuggestion;
-            String part = parts[i];
-            if (suggestion.length() > 0) {
-                newSuggestion = suggestion + "-" + part;
-            } else {
-                newSuggestion = part;
-            }
-
-            if (newSuggestion.length() > 20) {
-                if (i == 0) {
-                    return newSuggestion.substring(0, 20);
-                }
-
-                return suggestion;
-            }
-
-            suggestion = newSuggestion;
-        }
-
-        return suggestion;
-    }
-
-    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
-        if (similarHandles.contains(suggestedHandle)) {
-
-            int ordinal = 2;
-            int suggestedHandleLength = suggestedHandle.length();
-            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
-            for (String similarHandleSuffix : similarHandleSuffixes) {
-                if (similarHandleSuffix.startsWith("-")) {
-                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
-
-                    // We only care about creating a unique value in a formatted sequence
-                    // We can ignore anything else that has been reformatted by an end user
-                    if (parts.length == 1) {
-                        String firstPart = parts[0];
-                        if (StringUtils.isNumeric(firstPart)) {
-                            ordinal = Integer.parseInt(firstPart) + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return suggestedHandle + "-" + ordinal;
-        }
-
-        return suggestedHandle;
     }
 
     public ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {
