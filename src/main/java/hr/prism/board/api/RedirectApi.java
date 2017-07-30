@@ -38,14 +38,11 @@ public class RedirectApi {
         }
 
         List<String> parameters = new ArrayList<>();
-        String filter = request.getParameter("filter");
-        if (filter != null) {
-            parameters.add("filter=" + filter);
-        }
-
-        String uuid = request.getParameter("uuid");
-        if (uuid != null) {
-            parameters.add("uuid=" + uuid);
+        for (String parameter : new String[]{"view", "filter", "uuid"}) {
+            String value = request.getParameter(parameter);
+            if (value != null) {
+                parameters.add(parameter + "=" + value);
+            }
         }
 
         parameters.add("show" + modal + "=true");

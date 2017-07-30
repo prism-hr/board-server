@@ -369,6 +369,10 @@ public class DepartmentApiIT extends AbstractIT {
         User boardUser = testUserService.authenticate();
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
         Long departmentId = departmentR.getId();
+        
+        List<ActivityRepresentation> activityRs = userApi.getActivities();
+        Assert.assertTrue(activityRs.isEmpty());
+        userApi.refreshActivities();
 
         testUserActivityService.record();
         testNotificationService.record();
@@ -381,9 +385,10 @@ public class DepartmentApiIT extends AbstractIT {
         testUserActivityService.verify(boardUser.getId(),
             new TestUserActivityService.ActivityInstance(departmentId, boardMember.getId(), Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, boardMember,
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId).put("modal", "Login").build()));
+                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=user")
+                .put("modal", "Login").build()));
 
         testUserActivityService.stop();
         testNotificationService.stop();
