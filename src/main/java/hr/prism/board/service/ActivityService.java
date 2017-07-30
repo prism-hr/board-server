@@ -47,6 +47,14 @@ public class ActivityService {
         return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
     }
 
+    public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
+        return activityRepository.findByResourceAndActivity(resource, activity);
+    }
+
+    public Activity findByUserAndRoleAndActivity(User user, Role role, hr.prism.board.enums.Activity activity) {
+        return activityRepository.findByUserAndRoleAndActivity(user, role, activity);
+    }
+
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
         if (entity == null) {

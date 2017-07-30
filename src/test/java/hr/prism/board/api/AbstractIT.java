@@ -61,6 +61,9 @@ public abstract class AbstractIT {
     UserApi userApi;
 
     @Inject
+    ActivityService activityService;
+
+    @Inject
     DepartmentService departmentService;
 
     @Inject

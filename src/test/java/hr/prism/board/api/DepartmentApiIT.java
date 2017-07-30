@@ -6,13 +6,12 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.ResourceRelation;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
+import hr.prism.board.enums.Activity;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
@@ -365,11 +364,11 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldRequestAndAccessMembership() {
+    public void shouldRequestAndAcceptMembership() {
         User boardUser = testUserService.authenticate();
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
         Long departmentId = departmentR.getId();
-        
+
         List<ActivityRepresentation> activityRs = userApi.getActivities();
         Assert.assertTrue(activityRs.isEmpty());
         userApi.refreshActivities();
@@ -382,13 +381,29 @@ public class DepartmentApiIT extends AbstractIT {
                 .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 .setExpiryDate(LocalDate.now().plusYears(2)));
 
+        Long boardMemberId = boardMember.getId();
         testUserActivityService.verify(boardUser.getId(),
-            new TestUserActivityService.ActivityInstance(departmentId, boardMember.getId(), Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
                 .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=user")
                 .put("modal", "Login").build()));
+
+        testUserService.setAuthentication(boardMemberId);
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(
+            BoardForbiddenException.class,
+            () -> departmentApi.patchMembershipRequest(departmentId, boardMemberId, "accepted"),
+            ExceptionCode.FORBIDDEN_ACTION,
+            status));
+
+        Long boardUserId = boardUser.getId();
+        testUserService.setAuthentication(boardUserId);
+        departmentApi.patchMembershipRequest(departmentId, boardMemberId, "accepted");
+
+        Resource department = resourceService.findOne(departmentId);
+        UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
+        Assert.assertEquals(State.ACCEPTED, userRole.getState());
 
         testUserActivityService.stop();
         testNotificationService.stop();

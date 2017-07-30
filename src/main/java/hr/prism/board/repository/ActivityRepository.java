@@ -2,8 +2,10 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Activity;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Role;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,9 +36,24 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "order by activity.id desc")
     List<Activity> findByUserId(@Param("userId") Long userId, @Param("categoryType") CategoryType categoryType);
 
-    Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity);
+    @Query(value =
+        "select activity " +
+            "from Activity activity " +
+            "where activity.resource = :resource " +
+            "and activity.activity = :activity " +
+            "and activity.userRole is null")
+    Activity findByResourceAndActivity(@Param("resource") Resource resource, @Param("activity") hr.prism.board.enums.Activity activity);
 
     Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity);
+
+    @Query(value =
+        "select activity " +
+            "from Activity activity " +
+            "inner join activity.userRole userRole " +
+            "where userRole.user = :user " +
+            "and userRole.role = :role " +
+            "and activity.activity = :activity")
+    Activity findByUserAndRoleAndActivity(@Param("user") User user, @Param("role") Role role, @Param("activity") hr.prism.board.enums.Activity activity);
 
     @Modifying
     @Query(value =

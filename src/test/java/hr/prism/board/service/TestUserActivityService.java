@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -26,33 +26,28 @@ public class TestUserActivityService extends UserActivityService {
     }
 
     public void stop() {
-        this.sentRequests.clear();
         this.recording = false;
     }
 
     @SuppressWarnings("unchecked")
     public Set<ActivityInstance> verify(Long userId, ActivityInstance... expectedActivityInstances) {
-        if (expectedActivityInstances == null) {
-            Assert.assertEquals(0, ((List<ActivityRepresentation>) sentRequests.get(userId).iterator().next().getResult()).size());
-            return Collections.emptySet();
-        } else {
-            Set<ActivityInstance> actualActivityInstances = ((List<ActivityRepresentation>) sentRequests.removeAll(userId).iterator().next().getResult())
-                .stream().map(representation ->
-                    new ActivityInstance(
-                        representation.getId(),
-                        representation.getResource().getId(),
-                        representation.getUserRole().getUser().getId(),
-                        representation.getUserRole().getRole(),
-                        representation.getActivity()))
-                .collect(Collectors.toSet());
+        Iterator<DeferredResult<List<ActivityRepresentation>>> iterator = sentRequests.removeAll(userId).iterator();
+        Set<ActivityInstance> actualActivityInstances = ((List<ActivityRepresentation>) iterator.next().getResult())
+            .stream().map(representation ->
+                new ActivityInstance(
+                    representation.getId(),
+                    representation.getResource().getId(),
+                    representation.getUserRole().getUser().getId(),
+                    representation.getUserRole().getRole(),
+                    representation.getActivity()))
+            .collect(Collectors.toSet());
 
-            Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
-            for (ActivityInstance expectedActivityInstance : expectedActivityInstances) {
-                Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
-            }
-
-            return actualActivityInstances;
+        Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
+        for (ActivityInstance expectedActivityInstance : expectedActivityInstances) {
+            Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
         }
+
+        return actualActivityInstances;
     }
 
     @Override
