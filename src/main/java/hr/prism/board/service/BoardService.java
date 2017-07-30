@@ -95,8 +95,9 @@ public class BoardService {
             board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
 
             Document departmentLogo = department.getDocumentLogo();
-            if (boardDTO.getDocumentLogo() != null) {
-                board.setDocumentLogo(documentService.getOrCreateDocument(boardDTO.getDocumentLogo()));
+            DocumentDTO documentLogoDTO = boardDTO.getDocumentLogo();
+            if (documentLogoDTO != null) {
+                board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
             } else if (departmentLogo != null) {
                 board.setDocumentLogo(documentService.getOrCreateDocument(new DocumentDTO().setId(departmentLogo.getId())));
             }
