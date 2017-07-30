@@ -37,6 +37,17 @@ import java.util.stream.Stream;
 @Transactional
 public class PostService {
 
+    private static final String SIMILAR_ORGANIZATION =
+        "SELECT resource.organization_name, " +
+            "IF(resource.scope = :scope, 1, 0) AS valid, " +
+            "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
+            "MATCH resource.organization_name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+            "FROM resource " +
+            "GROUP BY resource.organization_name " +
+            "HAVING valid = 1 AND (similarityHard = 1 OR similaritySoft > 0) " +
+            "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
+            "LIMIT 10";
+
     @Inject
     private PostRepository postRepository;
 
@@ -201,6 +212,16 @@ public class PostService {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime liveTimestamp = post.getLiveTimestamp();
         return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
+    }
+
+    public List<String> findOrganizationsBySimilarName(String searchTerm) {
+        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
+            entityManager.createNativeQuery(SIMILAR_ORGANIZATION)
+                .setParameter("searchTermHard", searchTerm + "%")
+                .setParameter("searchTermSoft", searchTerm)
+                .setParameter("scope", Scope.POST.name())
+                .getResultList());
+        return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

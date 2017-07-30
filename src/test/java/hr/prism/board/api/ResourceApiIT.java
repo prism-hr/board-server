@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +33,6 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -256,21 +254,6 @@ public class ResourceApiIT extends AbstractIT {
         testUserService.unauthenticate();
         ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> resourceApi.getSimilarUsers(Scope.BOARD, boardId, "alastair"), ExceptionCode.UNAUTHENTICATED_USER, null);
-    }
-
-    @Test
-    @Transactional
-    public void shouldLookupOrganizations() {
-        testUserService.authenticate();
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-
-        postApi.postPost(boardR.getId(), TestHelper.samplePost().setOrganizationName("lookupOrganization1"));
-        postApi.postPost(boardR.getId(), TestHelper.samplePost().setOrganizationName("otherOrganization"));
-        postApi.postPost(boardR.getId(), TestHelper.samplePost().setOrganizationName("lookupOrganization2"));
-
-        List<String> results = resourceApi.lookupOrganizations("loo");
-        assertThat(results, containsInAnyOrder("lookupOrganization1", "lookupOrganization2"));
     }
 
     public Matcher<ResourceUserRepresentation> resourceUserMatcher(String email, UserRoleDTO... roleDTOs) {

@@ -70,4 +70,9 @@ public class PostApi {
         return postMapper.apply(postService.executeAction(id, Action.exchangeAndValidate(action, postDTO), postDTO));
     }
 
+    @RequestMapping(value = "/api/posts/organizations", method = RequestMethod.GET)
+    public List<String> lookupOrganizations(@RequestParam String query) {
+        return postService.findOrganizationsBySimilarName(query);
+    }
+
 }

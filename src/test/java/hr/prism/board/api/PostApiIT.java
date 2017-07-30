@@ -22,6 +22,7 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
@@ -907,6 +908,36 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(15), Action.WITHDRAW, postUser);
         TestHelper.verifyResourceOperation(resourceOperationRs.get(16), Action.RESTORE, postUser);
         TestHelper.verifyResourceOperation(resourceOperationRs.get(17), Action.PUBLISH);
+    }
+
+
+    @Test
+    @Sql("classpath:data/organization_autosuggest_setup.sql")
+    public void shouldSuggestOrganizations() {
+        List<String> organizations = postApi.lookupOrganizations("Computer");
+        Assert.assertEquals(3, organizations.size());
+
+        Assert.assertEquals("Computer Science Department", organizations.get(0));
+        Assert.assertEquals("Department of Computer Science", organizations.get(1));
+        Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(2));
+
+        organizations = postApi.lookupOrganizations("Computer Science Laboratory");
+        Assert.assertEquals(3, organizations.size());
+
+        Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(0));
+        Assert.assertEquals("Computer Science Department", organizations.get(1));
+        Assert.assertEquals("Department of Computer Science", organizations.get(2));
+
+        organizations = postApi.lookupOrganizations("School of Informatics");
+        Assert.assertEquals(1, organizations.size());
+
+        Assert.assertEquals("School of Informatics", organizations.get(0));
+
+        organizations = postApi.lookupOrganizations("Physics");
+        Assert.assertEquals(1, organizations.size());
+
+        organizations = postApi.lookupOrganizations("Mathematics");
+        Assert.assertEquals(0, organizations.size());
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
