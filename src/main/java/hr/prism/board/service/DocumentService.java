@@ -11,11 +11,10 @@ import javax.inject.Inject;
 @Service
 @Transactional
 public class DocumentService {
-    
+
     @Inject
     private DocumentRepository documentRepository;
-    
-    
+
     public Document getOrCreateDocument(DocumentDTO documentDTO) {
         Long documentId = documentDTO.getId();
         if (documentId == null) {
@@ -26,12 +25,12 @@ public class DocumentService {
             document = documentRepository.save(document);
             return document;
         }
-        
+
         return documentRepository.findOne(documentDTO.getId());
     }
-    
+
     public void deleteDocument(Document document) {
         documentRepository.delete(document);
     }
-    
+
 }

@@ -362,6 +362,11 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(0, departmentRs.size());
     }
 
+    @Test
+    public void shouldRequestAndAccessMembership() {
+
+    }
+
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
         testUserService.authenticate();
         DepartmentRepresentation departmentR1 = verifyPostDepartment(TestHelper.smallSampleBoard(), "department").getDepartment();

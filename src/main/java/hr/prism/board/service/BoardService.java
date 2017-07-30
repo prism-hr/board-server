@@ -1,10 +1,7 @@
 package hr.prism.board.service;
 
 import freemarker.template.TemplateException;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
@@ -97,10 +94,11 @@ public class BoardService {
             board.setSummary(boardDTO.getSummary());
             board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
 
+            Document departmentLogo = department.getDocumentLogo();
             if (boardDTO.getDocumentLogo() != null) {
                 board.setDocumentLogo(documentService.getOrCreateDocument(boardDTO.getDocumentLogo()));
-            } else if (department.getDocumentLogo() != null) {
-                board.setDocumentLogo(documentService.getOrCreateDocument(new DocumentDTO().setCloudinaryId(department.getDocumentLogo().getCloudinaryId())));
+            } else if (departmentLogo != null) {
+                board.setDocumentLogo(documentService.getOrCreateDocument(new DocumentDTO().setId(departmentLogo.getId())));
             }
 
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
