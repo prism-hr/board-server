@@ -10,7 +10,7 @@ public class ActivityRepresentation {
 
     private UserRoleRepresentation userRole;
 
-    private Activity category;
+    private Activity activity;
 
     public Long getId() {
         return id;
@@ -39,12 +39,12 @@ public class ActivityRepresentation {
         return this;
     }
 
-    public Activity getCategory() {
-        return category;
+    public Activity getActivity() {
+        return activity;
     }
 
-    public ActivityRepresentation setCategory(Activity category) {
-        this.category = category;
+    public ActivityRepresentation setActivity(Activity activity) {
+        this.activity = activity;
         return this;
     }
 

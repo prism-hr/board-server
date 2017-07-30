@@ -82,6 +82,9 @@ public abstract class AbstractIT {
     TestUserService testUserService;
 
     @Inject
+    TestUserActivityService testUserActivityService;
+
+    @Inject
     TestNotificationService testNotificationService;
 
     @Inject

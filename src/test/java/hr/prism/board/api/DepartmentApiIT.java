@@ -17,6 +17,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.TestUserActivityService;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
@@ -27,6 +28,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -364,7 +366,27 @@ public class DepartmentApiIT extends AbstractIT {
 
     @Test
     public void shouldRequestAndAccessMembership() {
+        User boardUser = testUserService.authenticate();
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
+        Long departmentId = departmentR.getId();
 
+        testUserActivityService.record();
+        testNotificationService.record();
+        User boardMember = testUserService.authenticate();
+        departmentApi.postMembershipRequest(departmentId,
+            new UserRoleDTO()
+                .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                .setExpiryDate(LocalDate.now().plusYears(2)));
+
+        testUserActivityService.verify(boardUser.getId(),
+            new TestUserActivityService.ActivityInstance(departmentId, boardMember.getId(), Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, boardMember,
+            ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
+                .put("resourceRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId).put("modal", "Login").build()));
+
+        testUserActivityService.stop();
+        testNotificationService.stop();
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
