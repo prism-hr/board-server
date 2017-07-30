@@ -99,7 +99,7 @@ public class BoardService {
             if (documentLogoDTO != null) {
                 board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
             } else if (departmentLogo != null) {
-                board.setDocumentLogo(documentService.getOrCreateDocument(new DocumentDTO().setId(departmentLogo.getId())));
+                board.setDocumentLogo(departmentLogo);
             }
 
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
