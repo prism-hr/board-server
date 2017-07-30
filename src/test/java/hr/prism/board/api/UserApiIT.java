@@ -6,6 +6,7 @@ import hr.prism.board.dto.*;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
@@ -40,6 +41,21 @@ public class UserApiIT extends AbstractIT {
         Assert.assertEquals("second", user.getSurname());
         Assert.assertEquals("changed@email.com", user.getEmail());
         verifyDocument(imageDTO, user.getDocumentImage());
+    }
+
+    @Test
+    public void shouldNotCreateDuplicateUserByUpdating() {
+        User user1 = testUserService.authenticate();
+        User user2 = testUserService.authenticate();
+
+        testUserService.setAuthentication(user1.getId());
+        transactionTemplate.execute(status ->
+            ExceptionUtils.verifyException(
+                BoardException.class,
+                () -> userApi.updateUser(
+                    new UserPatchDTO().setEmail(Optional.of(user2.getEmail()))),
+                ExceptionCode.DUPLICATE_USER,
+                status));
     }
 
     @Test

@@ -98,7 +98,6 @@ public class UserService {
             user.setSurname(surnameOptional.orElse(user.getSurname()));
         }
 
-        // TODO: test coverage
         // TODO: remember the original email as key for uploads
         Optional<String> emailOptional = userDTO.getEmail();
         if (emailOptional != null) {
