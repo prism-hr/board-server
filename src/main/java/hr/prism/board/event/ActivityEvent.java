@@ -26,6 +26,12 @@ public class ActivityEvent extends ApplicationEvent {
         this.activities = activities;
     }
 
+    public ActivityEvent(Object source, Long resourceId, Long userRoleId) {
+        super(source);
+        this.resourceId = resourceId;
+        this.userRoleId = userRoleId;
+    }
+
     public Long getResourceId() {
         return resourceId;
     }

@@ -19,4 +19,9 @@ public class TestActivityEventService extends ActivityEventService {
         super.sendActivities(new ActivityEvent(source, resourceId, userRoleId, activities));
     }
 
+    @Override
+    public void publishEvent(Object source, Long resourceId, Long userRoleId) {
+        super.sendActivities(new ActivityEvent(source, resourceId, userRoleId));
+    }
+
 }

@@ -83,22 +83,25 @@ public class UserApi {
     }
 
     @RequestMapping(value = "api/user/activities", method = RequestMethod.GET)
-    public List<ActivityRepresentation> getActivities() {
-        return activityService.getActivities();
+    public List<ActivityRepresentation> getActivities(@RequestParam(required = false) Long resourceId, @RequestParam(required = false) String filter) {
+        return activityService.getActivities(resourceId, filter);
     }
 
     @RequestMapping(value = "api/user/activities/refresh", method = RequestMethod.GET)
     public DeferredResult<List<ActivityRepresentation>> refreshActivities() {
-        Long userId = userService.getCurrentUserSecured().getId();
-        DeferredResult<List<ActivityRepresentation>> request = new DeferredResult<>(Long.parseLong(environment.getProperty("deferred.request.timeout.millis")));
-        request.onTimeout(() -> userActivityService.processRequestTimeout(userId, request));
-        userActivityService.storeRequest(userId, request);
-        return request;
+        return refreshActivities(userService.getCurrentUserSecured().getId());
     }
 
     @RequestMapping(value = "api/user/activities/{activityId}", method = RequestMethod.DELETE)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);
+    }
+
+    public DeferredResult<List<ActivityRepresentation>> refreshActivities(Long userId) {
+        DeferredResult<List<ActivityRepresentation>> request = new DeferredResult<>(Long.parseLong(environment.getProperty("deferred.request.timeout.millis")));
+        request.onTimeout(() -> userActivityService.processRequestTimeout(userId, request));
+        userActivityService.storeRequest(userId, request);
+        return request;
     }
 
 }

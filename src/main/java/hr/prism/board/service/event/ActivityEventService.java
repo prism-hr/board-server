@@ -3,6 +3,7 @@ package hr.prism.board.service.event;
 import hr.prism.board.domain.BoardEntity;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.UserRole;
+import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.service.*;
 import hr.prism.board.workflow.Activity;
@@ -49,6 +50,10 @@ public class ActivityEventService {
         applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, userRoleId, activities));
     }
 
+    public void publishEvent(Object source, Long resourceId, Long userRoleId) {
+        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, userRoleId));
+    }
+
     @Async
     @TransactionalEventListener
     public void sendActivitiesAsync(ActivityEvent activityEvent) {
@@ -70,12 +75,16 @@ public class ActivityEventService {
             });
         } else {
             UserRole userRole = userRoleService.fineOne(userRoleId);
-            activityEvent.getActivities().forEach(activity -> {
-                hr.prism.board.enums.Activity activityEnum = activity.getActivity();
-                hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
-                    .computeIfAbsent(Pair.of(userRole, activityEnum), value -> activityService.getOrCreateActivity(userRole, activityEnum));
-                activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
-            });
+            if (userRole.getState() == State.PENDING) {
+                activityEvent.getActivities().forEach(activity -> {
+                    hr.prism.board.enums.Activity activityEnum = activity.getActivity();
+                    hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
+                        .computeIfAbsent(Pair.of(userRole, activityEnum), value -> activityService.getOrCreateActivity(userRole, activityEnum));
+                    activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+                });
+            } else {
+                activityService.deleteActivities(userRole);
+            }
 
             resource = userRole.getResource();
         }

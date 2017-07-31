@@ -38,21 +38,24 @@ public class ActivityService {
     @Inject
     private ActivityMapper activityMapper;
 
-    public List<ActivityRepresentation> getActivities() {
-        User user = userService.getCurrentUserSecured();
-        return getActivities(user.getId());
-    }
-
     public List<ActivityRepresentation> getActivities(Long userId) {
-        return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
+        return getActivities(userId, null, null);
     }
 
-    public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
-        return activityRepository.findByResourceAndActivity(resource, activity);
+    public List<ActivityRepresentation> getActivities(Long resourceId, String filter) {
+        return getActivities(userService.getCurrentUserSecured().getId(), resourceId, filter);
     }
 
-    public Activity findByUserAndRoleAndActivity(User user, Role role, hr.prism.board.enums.Activity activity) {
-        return activityRepository.findByUserAndRoleAndActivity(user, role, activity);
+    public List<ActivityRepresentation> getActivities(Long userId, Long resourceId, String filter) {
+        if (resourceId == null) {
+            return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
+        }
+
+        if ("userRole".equals(filter)) {
+            return activityRepository.findByUserIdAndResourceIdAndUserRoleNotNull(userId, resourceId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
+        }
+
+        throw new UnsupportedOperationException("Unsupported filter type: " + filter);
     }
 
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {

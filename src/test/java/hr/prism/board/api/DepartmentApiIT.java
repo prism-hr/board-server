@@ -369,8 +369,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
         Long departmentId = departmentR.getId();
 
-        List<ActivityRepresentation> activityRs = userApi.getActivities();
-        Assert.assertTrue(activityRs.isEmpty());
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
         userApi.refreshActivities();
 
         testUserActivityService.record();
@@ -387,7 +386,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=user")
+                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
                 .put("modal", "Login").build()));
 
         testUserService.setAuthentication(boardMemberId);
@@ -400,6 +399,9 @@ public class DepartmentApiIT extends AbstractIT {
         Long boardUserId = boardUser.getId();
         testUserService.setAuthentication(boardUserId);
         departmentApi.patchMembershipRequest(departmentId, boardMemberId, "accepted");
+
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        testUserActivityService.verify(boardUserId);
 
         Resource department = resourceService.findOne(departmentId);
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));

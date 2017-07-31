@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.HashMultimap;
+import hr.prism.board.api.UserApi;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.Role;
 import hr.prism.board.representation.ActivityRepresentation;
@@ -8,6 +9,7 @@ import org.junit.Assert;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import javax.inject.Inject;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -20,6 +22,9 @@ public class TestUserActivityService extends UserActivityService {
     private boolean recording = false;
 
     private HashMultimap<Long, DeferredResult<List<ActivityRepresentation>>> sentRequests = HashMultimap.create();
+
+    @Inject
+    private UserApi userApi;
 
     public void record() {
         this.recording = true;
@@ -47,6 +52,7 @@ public class TestUserActivityService extends UserActivityService {
             Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
         }
 
+        userApi.refreshActivities(userId);
         return actualActivityInstances;
     }
 

@@ -82,9 +82,6 @@ public class DepartmentService {
     @Inject
     private NotificationEventService notificationEventService;
 
-    @Inject
-    private ActivityService activityService;
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -236,8 +233,11 @@ public class DepartmentService {
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
             UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
-            userRole.setState(state);
-            activityService.deleteActivities(userRole);
+            if (userRole.getState() == State.PENDING) {
+                userRole.setState(state);
+                activityEventService.publishEvent(this, departmentId, userRole.getId());
+            }
+
             return department;
         });
     }
