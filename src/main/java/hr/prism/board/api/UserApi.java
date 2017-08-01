@@ -1,7 +1,7 @@
 package hr.prism.board.api;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.UserPassword2DTO;
+import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.representation.ActivityRepresentation;
@@ -53,8 +53,8 @@ public class UserApi {
     }
 
     @RequestMapping(value = "/api/user/password", method = RequestMethod.PATCH)
-    public void resetPassword(@RequestBody @Valid UserPassword2DTO userPasswordDto) {
-        userService.resetPassword(userPasswordDto);
+    public void resetPassword(@RequestBody @Valid UserPasswordDTO userPasswordDTO) {
+        userService.resetPassword(userPasswordDTO);
     }
 
     @RequestMapping(value = "api/user/suppressions", method = RequestMethod.GET)

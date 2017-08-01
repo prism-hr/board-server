@@ -6,7 +6,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPassword2DTO;
+import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -135,8 +135,8 @@ public class UserService {
         return userCacheService.updateUser(user);
     }
 
-    public void resetPassword(UserPassword2DTO userPasswordDto) {
-        String uuid = userPasswordDto.getUuid();
+    public void resetPassword(UserPasswordDTO userPasswordDTO) {
+        String uuid = userPasswordDTO.getUuid();
         User user = userRepository.findByPasswordResetUuid(uuid);
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
@@ -148,7 +148,7 @@ public class UserService {
             throw new BoardForbiddenException(ExceptionCode.EXPIRED_PASSWORD_RESET);
         }
 
-        user.setPassword(DigestUtils.sha256Hex(userPasswordDto.getPassword()));
+        user.setPassword(DigestUtils.sha256Hex(userPasswordDTO.getPassword()));
         user.setPasswordResetUuid(null);
         user.setPasswordResetTimestamp(null);
     }
