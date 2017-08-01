@@ -18,6 +18,7 @@ public class TestNotificationService extends NotificationService {
 
     public void record() {
         this.recording = true;
+        this.instances.clear();
     }
 
     public void stop() {

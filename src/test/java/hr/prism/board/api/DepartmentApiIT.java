@@ -375,13 +375,17 @@ public class DepartmentApiIT extends AbstractIT {
         testUserActivityService.record();
         testNotificationService.record();
         User boardMember = testUserService.authenticate();
-        departmentApi.postMembershipRequest(departmentId,
-            new UserRoleDTO()
-                .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                .setExpiryDate(LocalDate.now().plusYears(2)));
+        transactionTemplate.execute(status -> {
+            departmentApi.postMembershipRequest(departmentId,
+                new UserRoleDTO()
+                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                    .setExpiryDate(LocalDate.now().plusYears(2)));
+            return null;
+        });
 
+        Long boardUserId = boardUser.getId();
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(boardUser.getId(),
+        testUserActivityService.verify(boardUserId,
             new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
@@ -396,9 +400,11 @@ public class DepartmentApiIT extends AbstractIT {
             ExceptionCode.FORBIDDEN_ACTION,
             status));
 
-        Long boardUserId = boardUser.getId();
         testUserService.setAuthentication(boardUserId);
-        departmentApi.patchMembershipRequest(departmentId, boardMemberId, "accepted");
+        transactionTemplate.execute(status -> {
+            departmentApi.patchMembershipRequest(departmentId, boardMemberId, "accepted");
+            return null;
+        });
 
         Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
         testUserActivityService.verify(boardUserId);
@@ -406,6 +412,124 @@ public class DepartmentApiIT extends AbstractIT {
         Resource department = resourceService.findOne(departmentId);
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.ACCEPTED, userRole.getState());
+
+        testUserActivityService.stop();
+        testNotificationService.stop();
+
+        testUserService.setAuthentication(boardMemberId);
+        transactionTemplate.execute(status ->
+            ExceptionUtils.verifyException(
+                BoardException.class,
+                () -> departmentApi.postMembershipRequest(departmentId,
+                    new UserRoleDTO()
+                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                        .setExpiryDate(LocalDate.now().plusYears(2))),
+                ExceptionCode.DUPLICATE_PERMISSION,
+                status));
+    }
+
+    @Test
+    public void shouldRequestAndRejectMembership() {
+        User boardUser = testUserService.authenticate();
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
+        Long departmentId = departmentR.getId();
+
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        userApi.refreshActivities();
+
+        testUserActivityService.record();
+        testNotificationService.record();
+        User boardMember = testUserService.authenticate();
+        transactionTemplate.execute(status -> {
+            departmentApi.postMembershipRequest(departmentId,
+                new UserRoleDTO()
+                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                    .setExpiryDate(LocalDate.now().plusYears(2)));
+            return null;
+        });
+
+        Long boardUserId = boardUser.getId();
+        Long boardMemberId = boardMember.getId();
+        testUserActivityService.verify(boardUserId,
+            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
+            ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
+                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
+                .put("modal", "Login").build()));
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> {
+            departmentApi.patchMembershipRequest(departmentId, boardMemberId, "rejected");
+            return null;
+        });
+
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        testUserActivityService.verify(boardUserId);
+
+        Resource department = resourceService.findOne(departmentId);
+        UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
+        Assert.assertEquals(State.REJECTED, userRole.getState());
+
+        testUserActivityService.stop();
+        testNotificationService.stop();
+
+        testUserService.setAuthentication(boardMemberId);
+        transactionTemplate.execute(status ->
+            ExceptionUtils.verifyException(
+                BoardForbiddenException.class,
+                () -> departmentApi.postMembershipRequest(departmentId,
+                    new UserRoleDTO()
+                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                        .setExpiryDate(LocalDate.now().plusYears(2))),
+                ExceptionCode.FORBIDDEN_PERMISSION,
+                status));
+    }
+
+    @Test
+    public void shouldRequestAndDismissMembership() {
+        User boardUser = testUserService.authenticate();
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
+        Long departmentId = departmentR.getId();
+
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        userApi.refreshActivities();
+
+        testUserActivityService.record();
+        testNotificationService.record();
+        User boardMember = testUserService.authenticate();
+        transactionTemplate.execute(status -> {
+            departmentApi.postMembershipRequest(departmentId,
+                new UserRoleDTO()
+                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                    .setExpiryDate(LocalDate.now().plusYears(2)));
+            return null;
+        });
+
+        Long boardUserId = boardUser.getId();
+        Long boardMemberId = boardMember.getId();
+        testUserActivityService.verify(boardUserId,
+            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
+            ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
+                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
+                .put("modal", "Login").build()));
+
+        Long activityId = transactionTemplate.execute(status -> {
+            Resource department = resourceService.findOne(departmentId);
+            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER);
+            return activityService.findByUserRoleAndActivity(userRole, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY).getId();
+        });
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> {
+            userApi.dismissActivity(activityId);
+            return null;
+        });
+
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        testUserActivityService.verify(boardUserId);
 
         testUserActivityService.stop();
         testNotificationService.stop();

@@ -40,6 +40,12 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     @Query(value =
         ACTIVITY_STATEMENT + " " +
             "and resource.id = :resourceId " +
+            "order by activity.id desc")
+    List<Activity> findByUserIdAndResourceId(@Param("userId") Long userId, @Param("resourceId") Long resourceId, @Param("categoryType") CategoryType categoryType);
+
+    @Query(value =
+        ACTIVITY_STATEMENT + " " +
+            "and resource.id = :resourceId " +
             "and activity.userRole is not null " +
             "order by activity.id desc")
     List<Activity> findByUserIdAndResourceIdAndUserRoleNotNull(@Param("userId") Long userId, @Param("resourceId") Long resourceId, @Param("categoryType") CategoryType categoryType);

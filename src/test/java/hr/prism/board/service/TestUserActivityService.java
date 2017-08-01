@@ -28,6 +28,7 @@ public class TestUserActivityService extends UserActivityService {
 
     public void record() {
         this.recording = true;
+        this.sentRequests.clear();
     }
 
     public void stop() {
