@@ -200,6 +200,18 @@ public abstract class AbstractIT {
         users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
     }
 
+    void listenForNewActivities(Long userId) {
+        testUserService.setAuthentication(userId);
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        userApi.refreshActivities();
+    }
+
+    void verifyActivitiesEmpty(Long userId) {
+        testUserService.setAuthentication(userId);
+        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        testUserActivityService.verify(userId);
+    }
+
     private void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         ExceptionCode exceptionCode;
         if (user == null) {

@@ -5,6 +5,7 @@ import hr.prism.board.api.UserApi;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.Role;
 import hr.prism.board.representation.ActivityRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
 import org.junit.Assert;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -39,14 +40,7 @@ public class TestUserActivityService extends UserActivityService {
     public Set<ActivityInstance> verify(Long userId, ActivityInstance... expectedActivityInstances) {
         Iterator<DeferredResult<List<ActivityRepresentation>>> iterator = sentRequests.removeAll(userId).iterator();
         Set<ActivityInstance> actualActivityInstances = ((List<ActivityRepresentation>) iterator.next().getResult())
-            .stream().map(representation ->
-                new ActivityInstance(
-                    representation.getId(),
-                    representation.getResource().getId(),
-                    representation.getUserRole().getUser().getId(),
-                    representation.getUserRole().getRole(),
-                    representation.getActivity()))
-            .collect(Collectors.toSet());
+            .stream().map(ActivityInstance::fromActivityRepresentation).collect(Collectors.toSet());
 
         Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
         for (ActivityInstance expectedActivityInstance : expectedActivityInstances) {
@@ -77,8 +71,6 @@ public class TestUserActivityService extends UserActivityService {
 
     public static class ActivityInstance {
 
-        private Long id;
-
         private Long resourceId;
 
         private Long userId;
@@ -99,16 +91,14 @@ public class TestUserActivityService extends UserActivityService {
             this.activity = activity;
         }
 
-        public ActivityInstance(Long id, Long resourceId, Long userId, Role role, Activity activity) {
-            this.id = id;
-            this.resourceId = resourceId;
-            this.userId = userId;
-            this.role = role;
-            this.activity = activity;
-        }
+        public static ActivityInstance fromActivityRepresentation(ActivityRepresentation activityRepresentation) {
+            UserRoleRepresentation userRoleRepresentation = activityRepresentation.getUserRole();
+            if (userRoleRepresentation == null) {
+                return new ActivityInstance(activityRepresentation.getResource().getId(), activityRepresentation.getActivity());
+            }
 
-        public Long getId() {
-            return id;
+            return new ActivityInstance(
+                activityRepresentation.getResource().getId(), userRoleRepresentation.getUser().getId(), userRoleRepresentation.getRole(), activityRepresentation.getActivity());
         }
 
         public Long getResourceId() {

@@ -38,6 +38,10 @@ public class ActivityService {
     @Inject
     private ActivityMapper activityMapper;
 
+    public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
+        return activityRepository.findByResourceAndActivity(resource, activity);
+    }
+
     public Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         return activityRepository.findByUserRoleAndActivity(userRole, activity);
     }
@@ -55,9 +59,9 @@ public class ActivityService {
             return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
         } else if ("userRole".equals(filter)) {
             return activityRepository.findByUserIdAndResourceIdAndUserRoleNotNull(userId, resourceId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
-        } else {
-            return activityRepository.findByUserIdAndResourceId(userId, resourceId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
         }
+
+        return activityRepository.findByUserIdAndResourceId(userId, resourceId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
     }
 
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {

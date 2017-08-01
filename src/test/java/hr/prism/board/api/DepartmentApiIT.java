@@ -369,8 +369,8 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
         Long departmentId = departmentR.getId();
 
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
-        userApi.refreshActivities();
+        Long boardUserId = boardUser.getId();
+        listenForNewActivities(boardUserId);
 
         testUserActivityService.record();
         testNotificationService.record();
@@ -383,7 +383,6 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Long boardUserId = boardUser.getId();
         Long boardMemberId = boardMember.getId();
         testUserActivityService.verify(boardUserId,
             new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
@@ -406,9 +405,7 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
-        testUserActivityService.verify(boardUserId);
-
+        verifyActivitiesEmpty(boardUserId);
         Resource department = resourceService.findOne(departmentId);
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.ACCEPTED, userRole.getState());
@@ -434,8 +431,8 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
         Long departmentId = departmentR.getId();
 
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
-        userApi.refreshActivities();
+        Long boardUserId = boardUser.getId();
+        listenForNewActivities(boardUserId);
 
         testUserActivityService.record();
         testNotificationService.record();
@@ -448,7 +445,6 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Long boardUserId = boardUser.getId();
         Long boardMemberId = boardMember.getId();
         testUserActivityService.verify(boardUserId,
             new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
@@ -464,9 +460,7 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
-        testUserActivityService.verify(boardUserId);
-
+        verifyActivitiesEmpty(boardUserId);
         Resource department = resourceService.findOne(departmentId);
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.REJECTED, userRole.getState());
@@ -492,8 +486,8 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard())).getDepartment();
         Long departmentId = departmentR.getId();
 
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
-        userApi.refreshActivities();
+        Long boardUserId = boardUser.getId();
+        listenForNewActivities(boardUserId);
 
         testUserActivityService.record();
         testNotificationService.record();
@@ -506,7 +500,6 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Long boardUserId = boardUser.getId();
         Long boardMemberId = boardMember.getId();
         testUserActivityService.verify(boardUserId,
             new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
@@ -528,9 +521,7 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
-        testUserActivityService.verify(boardUserId);
-
+        verifyActivitiesEmpty(boardUserId);
         testUserActivityService.stop();
         testNotificationService.stop();
     }
