@@ -269,10 +269,10 @@ public class BoardApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_PARENT_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
-                    .put("modal", "Login").build()),
+                    .put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("resourceRedirect", resourceRedirect)
-                    .put("modal", "Login").build()));
+                    .put("modal", "login").build()));
 
         // Create unprivileged users
         List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, 2, 2, TestHelper.smallSamplePost()).values());
@@ -298,7 +298,7 @@ public class BoardApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we cannot accept this")
-                    .put("homeRedirect", homeRedirect).put("modal", "Login").build()));
+                    .put("homeRedirect", homeRedirect).put("modal", "login").build()));
 
         // Check that the department user can restore the board to draft
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made a mistake", State.DRAFT);
@@ -306,7 +306,7 @@ public class BoardApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
-                .put("modal", "Login").build()));
+                .put("modal", "login").build()));
 
         // Check that the department user can accept the board
         verifyExecuteBoard(boardId, departmentUserId, "accept", null, State.ACCEPTED);
@@ -314,7 +314,7 @@ public class BoardApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
-                .put("modal", "Login").build()));
+                .put("modal", "login").build()));
 
         // Check that the department user can reject the board
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we really cannot accept this", State.REJECTED);
@@ -322,7 +322,7 @@ public class BoardApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we really cannot accept this")
-                .put("homeRedirect", homeRedirect).put("modal", "Login").build()));
+                .put("homeRedirect", homeRedirect).put("modal", "login").build()));
 
         // Check that the department user can restore the board to accepted
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made another mistake", State.ACCEPTED);
@@ -331,7 +331,7 @@ public class BoardApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
-                .put("modal", "Login").build()));
+                .put("modal", "login").build()));
 
         // Create post
         User postUser = testUserService.authenticate();
