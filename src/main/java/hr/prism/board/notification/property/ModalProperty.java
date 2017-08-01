@@ -12,12 +12,12 @@ public class ModalProperty implements NotificationProperty {
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         User recipient = notificationRequest.getRecipient();
         if (recipient.getPassword() == null && recipient.getOauthProvider() == null) {
-            return "Register";
+            return "register";
         } else if (notificationRequest.getNotification() == Notification.RESET_PASSWORD_NOTIFICATION) {
-            return "ResetPassword";
+            return "resetPassword";
         }
 
-        return "Login";
+        return "login";
     }
 
 }

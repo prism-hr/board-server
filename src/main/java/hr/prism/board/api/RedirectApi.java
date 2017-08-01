@@ -3,7 +3,6 @@ package hr.prism.board.api;
 import com.google.common.base.Joiner;
 import hr.prism.board.service.ResourceService;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -12,8 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 public class RedirectApi {
@@ -31,22 +31,18 @@ public class RedirectApi {
             throw new IllegalArgumentException("redirect must specify a modal action");
         }
 
-        String contextPath = StringUtils.EMPTY;
+        String contextPath = "home";
         String resource = request.getParameter("resource");
         if (resource != null) {
             contextPath = Joiner.on("/").skipNulls().join(resourceService.findOne(Long.parseLong(resource)).getHandle(), request.getParameter("view"));
         }
 
-        List<String> parameters = new ArrayList<>();
-        for (String parameter : new String[]{"view", "filter", "uuid"}) {
-            String value = request.getParameter(parameter);
-            if (value != null) {
-                parameters.add(parameter + "=" + value);
-            }
-        }
+        List<String> parameters = Stream.of("modal", "view", "filter", "uuid")
+            .filter(param -> request.getParameter(param) != null)
+            .map(param -> param + "=" + request.getParameter(param))
+            .collect(Collectors.toList());
 
-        parameters.add("show" + modal + "=true");
-        response.sendRedirect(environment.getProperty("app.url") + "/" + contextPath + "?" + Joiner.on("&").join(parameters));
+        response.sendRedirect(environment.getProperty("app.url") + "/" + contextPath + ";" + Joiner.on("&").join(parameters));
     }
 
 }

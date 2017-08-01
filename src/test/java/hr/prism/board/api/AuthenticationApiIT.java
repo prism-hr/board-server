@@ -157,13 +157,13 @@ public class AuthenticationApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
-                environment.getProperty("server.url") + "/redirect", "modal", "ResetPassword")));
+                environment.getProperty("server.url") + "/redirect", "modal", "resetPassword")));
         testNotificationService.stop();
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
+                .content(objectMapper.writeValueAsString(new UserPasswordDTO().setUuid(passwordResetUuid).setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
         mockMvc.perform(
@@ -217,7 +217,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
-                environment.getProperty("server.url") + "/redirect", "modal", "ResetPassword")));
+                environment.getProperty("server.url") + "/redirect", "modal", "resetPassword")));
         testNotificationService.stop();
 
         TimeUnit.SECONDS.sleep(Long.parseLong(environment.getProperty("password.reset.timeout.seconds")) + 1);
@@ -225,7 +225,7 @@ public class AuthenticationApiIT extends AbstractIT {
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
+                .content(objectMapper.writeValueAsString(new UserPasswordDTO().setUuid(passwordResetUuid).setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 
