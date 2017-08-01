@@ -6,7 +6,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPasswordDto;
+import hr.prism.board.dto.UserPassword2DTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -135,7 +135,7 @@ public class UserService {
         return userCacheService.updateUser(user);
     }
 
-    public void resetPassword(UserPasswordDto userPasswordDto) {
+    public void resetPassword(UserPassword2DTO userPasswordDto) {
         String uuid = userPasswordDto.getUuid();
         User user = userRepository.findByPasswordResetUuid(uuid);
         if (user == null) {

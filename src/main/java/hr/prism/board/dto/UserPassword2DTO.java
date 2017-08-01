@@ -3,7 +3,7 @@ package hr.prism.board.dto;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-public class UserPasswordDto {
+public class UserPassword2DTO {
 
     @NotNull
     private String uuid;
@@ -16,7 +16,7 @@ public class UserPasswordDto {
         return uuid;
     }
 
-    public UserPasswordDto setUuid(String uuid) {
+    public UserPassword2DTO setUuid(String uuid) {
         this.uuid = uuid;
         return this;
     }
@@ -25,7 +25,7 @@ public class UserPasswordDto {
         return password;
     }
 
-    public UserPasswordDto setPassword(String password) {
+    public UserPassword2DTO setPassword(String password) {
         this.password = password;
         return this;
     }

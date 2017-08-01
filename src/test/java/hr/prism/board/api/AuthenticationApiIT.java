@@ -163,7 +163,7 @@ public class AuthenticationApiIT extends AbstractIT {
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
+                .content(objectMapper.writeValueAsString(new UserPassword2DTO().setUuid(passwordResetUuid).setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
         mockMvc.perform(
@@ -225,7 +225,7 @@ public class AuthenticationApiIT extends AbstractIT {
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(new UserPasswordDto().setUuid(passwordResetUuid).setPassword("newpassword"))))
+                .content(objectMapper.writeValueAsString(new UserPassword2DTO().setUuid(passwordResetUuid).setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 
