@@ -139,13 +139,13 @@ public class UserService {
         String uuid = userPasswordDTO.getUuid();
         User user = userRepository.findByPasswordResetUuid(uuid);
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET);
         }
 
         LocalDateTime baseline = LocalDateTime.now();
         Long passwordResetTimeout = Long.parseLong(environment.getProperty("password.reset.timeout.seconds"));
         if (user.getPasswordResetTimestamp().plusSeconds(passwordResetTimeout).isBefore(baseline)) {
-            throw new BoardForbiddenException(ExceptionCode.EXPIRED_PASSWORD_RESET);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET);
         }
 
         user.setPassword(DigestUtils.sha256Hex(userPasswordDTO.getPassword()));
