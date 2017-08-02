@@ -42,7 +42,7 @@ public class RedirectApi {
             .map(param -> param + "=" + request.getParameter(param))
             .collect(Collectors.toList());
 
-        response.sendRedirect(environment.getProperty("app.url") + "/" + contextPath + ";" + Joiner.on("&").join(parameters));
+        response.sendRedirect(environment.getProperty("app.url") + "/" + contextPath + ";" + Joiner.on(";").join(parameters));
     }
 
 }
