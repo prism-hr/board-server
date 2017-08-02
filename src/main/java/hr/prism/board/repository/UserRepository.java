@@ -46,12 +46,10 @@ public interface UserRepository extends MyRepository<User, Long> {
             "inner join enclosingResource.userRoles userRole " +
             "where relation.resource2 = :resource " +
             "and userRole.user.id in (:userIds) " +
-            "and userRole.state in (:userRoleStates) " +
-            "and " + ACTIVE_CONSTRAINT)
+            "and userRole.state in (:userRoleStates)")
     List<Long> findByResourceAndUserIds(@Param("resource") Resource resource,
                                         @Param("userIds") Collection<Long> userIds,
-                                        @Param("userRoleStates") List<State> userRoleStates,
-                                        @Param("baseline") LocalDate baseline);
+                                        @Param("userRoleStates") List<State> userRoleStates);
 
     @Query(value =
         "select distinct userRole.user " +
