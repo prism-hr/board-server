@@ -4,6 +4,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.repository.ActivityDismissalRepository;
 import hr.prism.board.repository.ActivityRepository;
@@ -56,12 +57,14 @@ public class ActivityService {
 
     public List<ActivityRepresentation> getActivities(Long userId, Long resourceId, String filter) {
         if (resourceId == null) {
-            return activityRepository.findByUserId(userId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
+            return activityRepository.findByUserId(userId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
         } else if ("userRole".equals(filter)) {
-            return activityRepository.findByUserIdAndResourceIdAndUserRoleNotNull(userId, resourceId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
+            return activityRepository.findByUserIdAndResourceIdAndUserRoleNotNull(userId, resourceId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER)
+                .stream().map(activityMapper).collect(Collectors.toList());
         }
 
-        return activityRepository.findByUserIdAndResourceId(userId, resourceId, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
+        return activityRepository.findByUserIdAndResourceId(userId, resourceId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER)
+            .stream().map(activityMapper).collect(Collectors.toList());
     }
 
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {

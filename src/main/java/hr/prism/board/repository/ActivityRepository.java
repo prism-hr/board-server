@@ -4,6 +4,7 @@ import hr.prism.board.domain.Activity;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,6 +27,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "where activityRole.scope = parent.scope " +
             "and activityRole.role = userRole.role " +
             "and userRole.user.id = :userId " +
+            "and userRole.state in (:userRoleStates) " +
             "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name)" +
             "and activity.id not in (" +
             "select activityDismissal.activity.id " +
@@ -35,20 +37,22 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     @Query(value =
         ACTIVITY_STATEMENT + " " +
             "order by activity.id desc")
-    List<Activity> findByUserId(@Param("userId") Long userId, @Param("categoryType") CategoryType categoryType);
+    List<Activity> findByUserId(@Param("userId") Long userId, @Param("userRoleStates") List<State> state, @Param("categoryType") CategoryType categoryType);
 
     @Query(value =
         ACTIVITY_STATEMENT + " " +
             "and resource.id = :resourceId " +
             "order by activity.id desc")
-    List<Activity> findByUserIdAndResourceId(@Param("userId") Long userId, @Param("resourceId") Long resourceId, @Param("categoryType") CategoryType categoryType);
+    List<Activity> findByUserIdAndResourceId(@Param("userId") Long userId, @Param("resourceId") Long resourceId, @Param("userRoleStates") List<State> state,
+                                             @Param("categoryType") CategoryType categoryType);
 
     @Query(value =
         ACTIVITY_STATEMENT + " " +
             "and resource.id = :resourceId " +
             "and activity.userRole is not null " +
             "order by activity.id desc")
-    List<Activity> findByUserIdAndResourceIdAndUserRoleNotNull(@Param("userId") Long userId, @Param("resourceId") Long resourceId, @Param("categoryType") CategoryType categoryType);
+    List<Activity> findByUserIdAndResourceIdAndUserRoleNotNull(@Param("userId") Long userId, @Param("resourceId") Long resourceId, @Param("userRoleStates") List<State> state,
+                                                               @Param("categoryType") CategoryType categoryType);
 
     @Query(value =
         "select activity " +

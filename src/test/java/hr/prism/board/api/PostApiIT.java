@@ -9,12 +9,14 @@ import hr.prism.board.definition.LocationDefinition;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
+import hr.prism.board.enums.Activity;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.TestUserActivityService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
@@ -488,7 +490,15 @@ public class PostApiIT extends AbstractIT {
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
 
         // Create post
+        testUserActivityService.record();
         testNotificationService.record();
+
+        Long departmentUserId = departmentUser.getId();
+        listenForNewActivities(departmentUserId);
+
+        Long boardUserId = boardUser.getId();
+        listenForNewActivities(boardUserId);
+
         User postUser = testUserService.authenticate();
         PostRepresentation postR = verifyPostPost(boardId, TestHelper.samplePost());
         Long postId = postR.getId();
@@ -501,6 +511,9 @@ public class PostApiIT extends AbstractIT {
         String postUserGivenName = postUser.getGivenName();
         String resourceRedirect = environment.getProperty("server.url") + "/redirect?resource=" + postId;
 
+        testUserActivityService.verify(departmentUserId, new TestUserActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
+        testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
+
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
@@ -512,9 +525,21 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
-        // Create unprivileged users
+        Resource board = resourceService.findOne(boardId);
+        Long activityId = activityService.findByResourceAndActivity(board, Activity.NEW_POST_PARENT_ACTIVITY).getId();
+
+        testUserService.setAuthentication(departmentUserId);
+        userApi.dismissActivity(activityId);
+
+        testUserService.setAuthentication(boardUserId);
+        userApi.dismissActivity(activityId);
+
+        testUserActivityService.stop();
         testNotificationService.stop();
+
+        // Create unprivileged users
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
+        testUserActivityService.record();
         testNotificationService.record();
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
@@ -574,6 +599,9 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
+        Long postUserId = postUser.getId();
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
+
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                 .put("comment", "could you please explain what you will pay the successful applicant").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
@@ -596,6 +624,9 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeAction(postId, "correct", correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
+        testUserActivityService.verify(departmentUserId, new TestUserActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
+        testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
+
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("post", postName).put("department", departmentName).put("board", boardName)
@@ -613,9 +644,9 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_BOARD_NOTIFICATION, postUser,
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName)
-                    .put("resourceRedirect", environment.getProperty("server.url") + "/redirect?resource=" + boardId).put("modal", "login").build()),
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+
+        testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("publicationSchedule", "immediately").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
@@ -624,6 +655,8 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
             () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
+
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -639,6 +672,8 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.executeAction(postId, "accept", acceptPendingDTO), State.PENDING);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
+
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -657,7 +692,6 @@ public class PostApiIT extends AbstractIT {
         });
 
         // Should be notified
-        Long departmentUserId = departmentUser.getId();
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember1Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
@@ -703,7 +737,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should not be notified
         testUserService.setAuthentication(departmentUserId);
-        transactionTemplate.execute(status ->
+        Long departmentMember4Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new ResourceUserDTO().setUser(
                     new UserDTO()
@@ -714,10 +748,10 @@ public class PostApiIT extends AbstractIT {
                         new UserRoleDTO()
                             .setRole(Role.MEMBER)
                             .setExpiryDate(LocalDate.now().plusDays(1))
-                            .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))))));
+                            .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))))).getUser().getId());
 
         // Should not be notified
-        transactionTemplate.execute(status ->
+        Long departmentMember5Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new ResourceUserDTO().setUser(
                     new UserDTO()
@@ -728,7 +762,7 @@ public class PostApiIT extends AbstractIT {
                         new UserRoleDTO()
                             .setRole(Role.MEMBER)
                             .setExpiryDate(LocalDate.now().minusDays(1))
-                            .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))));
+                            .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))).getUser().getId());
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
@@ -740,6 +774,14 @@ public class PostApiIT extends AbstractIT {
         String departmentMember1Uuid = departmentMember1.getUuid();
         String departmentMember2Uuid = departmentMember2.getUuid();
         String parentRedirect = environment.getProperty("server.url") + "/redirect?resource=" + boardId;
+
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testUserActivityService.verify(departmentMember1Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember2Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember3Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember4Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember5Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
@@ -759,6 +801,8 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeAction(postId, "reject", rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
 
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.REJECT_POST_ACTIVITY));
+
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                 .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", environment.getProperty("server.url") + "/redirect")
@@ -770,6 +814,8 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
+
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -784,6 +830,8 @@ public class PostApiIT extends AbstractIT {
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
+
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.RETIRE_POST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RETIRE_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -810,6 +858,13 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testUserActivityService.verify(departmentMember1Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember2Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember3Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember4Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testUserActivityService.verify(departmentMember5Id, new TestUserActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
@@ -821,6 +876,7 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect).put("modal", "register")
                     .put("parentRedirect", parentRedirect).put("recipientUuid", departmentMember2Uuid).build()));
+        testUserActivityService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUser.getId());
