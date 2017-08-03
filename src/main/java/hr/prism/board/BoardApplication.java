@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sendgrid.SendGrid;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import freemarker.template.TemplateException;
 import hr.prism.board.repository.MyRepositoryImpl;
 import no.api.freemarker.java8.Java8ObjectWrapper;
@@ -15,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
@@ -81,15 +82,22 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         String host = environment.getProperty("database.host");
         LOGGER.info("Creating datasource using: " + host);
 
+        HikariConfig hikariConfig = new HikariConfig();
         String timezone = TimeZone.getDefault().getID();
-        return DataSourceBuilder.create()
-            .driverClassName("com.mysql.cj.jdbc.Driver")
-            .url("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
-                "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci" +
-                "&useLegacyDatetimeCode=false&serverTimezone=" + timezone + "&useSSL=false&autoReconnect=true")
-            .username("prism")
-            .password("pgadmissions")
-            .build();
+        hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        hikariConfig.setJdbcUrl("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
+            "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci" +
+            "&useLegacyDatetimeCode=false&serverTimezone=" + timezone + "&useSSL=false");
+        hikariConfig.setUsername("prism");
+        hikariConfig.setPassword("pgadmissions");
+
+        hikariConfig.setPoolName("database-connection-pool");
+        hikariConfig.setMaximumPoolSize(20);
+        hikariConfig.setIdleTimeout(80000);
+        hikariConfig.setConnectionTimeout(600000);
+        hikariConfig.setAutoCommit(false);
+        hikariConfig.setLeakDetectionThreshold(120000);
+        return new HikariDataSource(hikariConfig);
     }
 
     @Bean
