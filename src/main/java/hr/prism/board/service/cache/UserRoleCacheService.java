@@ -81,6 +81,7 @@ public class UserRoleCacheService {
                         userRoleCategory.setUserRole(userRole);
                         userRoleCategory.setName(newCategory);
                         userRoleCategory.setOrdinal(index);
+                        userRole.getCategories().add(userRoleCategory);
                         userRoleCategoryRepository.save(userRoleCategory);
                     });
             }
