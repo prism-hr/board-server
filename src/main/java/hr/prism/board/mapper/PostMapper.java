@@ -50,6 +50,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setApplyWebsite(post.getApplyWebsite())
             .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
             .setApplyEmail(post.getApplyEmail())
+            .setForwardCandidates(post.getForwardCandidates())
             .setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp());

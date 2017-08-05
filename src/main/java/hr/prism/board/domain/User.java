@@ -52,6 +52,13 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
 
+    @OneToOne
+    @JoinColumn(name = "document_resume_id")
+    private Document documentResume;
+
+    @Column(name = "website")
+    private String website;
+
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
 
@@ -149,6 +156,24 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
+        return this;
+    }
+
+    public Document getDocumentResume() {
+        return documentResume;
+    }
+
+    public User setDocumentResume(Document documentResume) {
+        this.documentResume = documentResume;
+        return this;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public User setWebsite(String website) {
+        this.website = website;
         return this;
     }
 

@@ -129,6 +129,7 @@ public class PostService {
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
             post.setApplyWebsite(postDTO.getApplyWebsite());
             post.setApplyEmail(postDTO.getApplyEmail());
+            post.setForwardCandidates(postDTO.getForwardCandidates());
 
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
@@ -233,6 +234,14 @@ public class PostService {
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
 
+        resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
+        patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
+
+        Board board = (Board) post.getParent();
+        Department department = (Department) board.getParent();
+        patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
+        patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
+
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (BoardUtils.isPresent(applyWebsite)) {
             patchPostApply(post, applyWebsite, Optional.empty(), Optional.empty());
@@ -248,13 +257,7 @@ public class PostService {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
         }
 
-        Board board = (Board) post.getParent();
-        Department department = (Department) board.getParent();
-        patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-        patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
-
-        resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
-        patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
+        resourcePatchService.patchProperty(post, "forwardCandidates", post::getForwardCandidates, post::setForwardCandidates, postDTO.getForwardCandidates());
 
         Optional<LocalDateTime> liveTimestamp = postDTO.getLiveTimestamp();
         Optional<LocalDateTime> deadTimestamp = postDTO.getDeadTimestamp();

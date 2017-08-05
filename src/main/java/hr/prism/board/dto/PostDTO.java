@@ -38,6 +38,8 @@ public class PostDTO extends ResourceDTO<PostDTO> {
     @Email
     private String applyEmail;
 
+    private Boolean forwardCandidates;
+
     private LocalDateTime liveTimestamp;
 
     private LocalDateTime deadTimestamp;
@@ -129,6 +131,15 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     public PostDTO setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
+        return this;
+    }
+
+    public Boolean getForwardCandidates() {
+        return forwardCandidates;
+    }
+
+    public PostDTO setForwardCandidates(Boolean forwardCandidates) {
+        this.forwardCandidates = forwardCandidates;
         return this;
     }
 

@@ -56,6 +56,9 @@ public class Post extends Resource {
     @Column(name = "apply_email")
     private String applyEmail;
 
+    @Column(name = "forward_candidates")
+    private Boolean forwardCandidates;
+
     @Column(name = "live_timestamp", nullable = false)
     private LocalDateTime liveTimestamp;
 
@@ -116,6 +119,14 @@ public class Post extends Resource {
 
     public void setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
+    }
+
+    public Boolean getForwardCandidates() {
+        return forwardCandidates;
+    }
+
+    public void setForwardCandidates(Boolean forwardCandidates) {
+        this.forwardCandidates = forwardCandidates;
     }
 
     public LocalDateTime getLiveTimestamp() {

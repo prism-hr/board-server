@@ -23,6 +23,14 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
     @Valid
     private Optional<LocationDTO> location;
 
+    private Optional<ExistingRelation> existingRelation;
+
+    private Optional<LinkedHashMap<String, Object>> existingRelationExplanation;
+
+    private Optional<List<String>> postCategories;
+
+    private Optional<List<MemberCategory>> memberCategories;
+
     @URL
     private Optional<String> applyWebsite;
 
@@ -32,13 +40,7 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
     @Email
     private Optional<String> applyEmail;
 
-    private Optional<List<String>> postCategories;
-
-    private Optional<List<MemberCategory>> memberCategories;
-
-    private Optional<ExistingRelation> existingRelation;
-
-    private Optional<LinkedHashMap<String, Object>> existingRelationExplanation;
+    private Optional<Boolean> forwardCandidates;
 
     private Optional<LocalDateTime> liveTimestamp;
 
@@ -68,33 +70,6 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     public PostPatchDTO setLocation(Optional<LocationDTO> location) {
         this.location = location;
-        return this;
-    }
-
-    public Optional<String> getApplyWebsite() {
-        return applyWebsite;
-    }
-
-    public PostPatchDTO setApplyWebsite(Optional<String> applyWebsite) {
-        this.applyWebsite = applyWebsite;
-        return this;
-    }
-
-    public Optional<DocumentDTO> getApplyDocument() {
-        return applyDocument;
-    }
-
-    public PostPatchDTO setApplyDocument(Optional<DocumentDTO> applyDocument) {
-        this.applyDocument = applyDocument;
-        return this;
-    }
-
-    public Optional<String> getApplyEmail() {
-        return applyEmail;
-    }
-
-    public PostPatchDTO setApplyEmail(Optional<String> applyEmail) {
-        this.applyEmail = applyEmail;
         return this;
     }
 
@@ -131,6 +106,42 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     public PostPatchDTO setMemberCategories(Optional<List<MemberCategory>> memberCategories) {
         this.memberCategories = memberCategories;
+        return this;
+    }
+
+    public Optional<String> getApplyWebsite() {
+        return applyWebsite;
+    }
+
+    public PostPatchDTO setApplyWebsite(Optional<String> applyWebsite) {
+        this.applyWebsite = applyWebsite;
+        return this;
+    }
+
+    public Optional<DocumentDTO> getApplyDocument() {
+        return applyDocument;
+    }
+
+    public PostPatchDTO setApplyDocument(Optional<DocumentDTO> applyDocument) {
+        this.applyDocument = applyDocument;
+        return this;
+    }
+
+    public Optional<String> getApplyEmail() {
+        return applyEmail;
+    }
+
+    public PostPatchDTO setApplyEmail(Optional<String> applyEmail) {
+        this.applyEmail = applyEmail;
+        return this;
+    }
+
+    public Optional<Boolean> getForwardCandidates() {
+        return forwardCandidates;
+    }
+
+    public PostPatchDTO setForwardCandidates(Optional<Boolean> forwardCandidates) {
+        this.forwardCandidates = forwardCandidates;
         return this;
     }
 
