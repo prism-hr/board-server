@@ -44,7 +44,7 @@ public class ResourceEventService {
             resourceEvent = resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(resource, hr.prism.board.enums.ResourceEvent.VIEW, user);
         }
 
-        if (resourceEvent == null || LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(resourceEvent.getCreatedTimestamp())) {
+        if (resourceEvent == null || isNewEvent(resourceEvent)) {
             return resourceEventRepository.save(new ResourceEvent().setResource(resource).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user));
         }
 
@@ -52,12 +52,22 @@ public class ResourceEventService {
     }
 
     public ResourceEvent getOrCreateResourceResponse(Long resourceId, hr.prism.board.enums.ResourceEvent event, DocumentDTO resumeDTO, String website, String coveringNote) {
-        User user = userService.getCurrentUserSecured();
-        if (hr.prism.board.enums.ResourceEvent.REFERRAL_EVENTS.contains(event)) {
+        if (hr.prism.board.enums.ResourceEvent.RESPONSE_EVENTS.contains(event)) {
+            User user = userService.getCurrentUserSecured();
+            Resource resource = resourceService.findOne(resourceId);
+            ResourceEvent resourceEvent = resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(resource, event, user);
+            if (resourceEvent == null || hr.prism.board.enums.ResourceEvent.REFERRAL_EVENTS.contains(event) && isNewEvent(resourceEvent)) {
+                return resourceEventRepository.save(new ResourceEvent().setResource(resource).setEvent(event).setUser(user));
+            }
 
+            return resourceEvent;
         }
 
-        return null;
+        throw new UnsupportedOperationException("Event: " + event + " not a valid response event");
+    }
+
+    private boolean isNewEvent(ResourceEvent resourceEvent) {
+        return LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(resourceEvent.getCreatedTimestamp());
     }
 
 }

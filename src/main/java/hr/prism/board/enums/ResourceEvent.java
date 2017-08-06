@@ -13,4 +13,6 @@ public enum ResourceEvent {
 
     public static List<ResourceEvent> REFERRAL_EVENTS = Arrays.asList(CLICK, DOWNLOAD);
 
+    public static List<ResourceEvent> RESPONSE_EVENTS = Arrays.asList(CLICK, DOWNLOAD, EMAIL);
+
 }
