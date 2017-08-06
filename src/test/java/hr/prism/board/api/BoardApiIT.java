@@ -271,8 +271,8 @@ public class BoardApiIT extends AbstractIT {
         String departmentUserGivenName = departmentUser.getGivenName();
         String departmentName = departmentR.getName();
         String boardUserGivenName = boardUser.getGivenName();
-        String resourceRedirect = environment.getProperty("server.url") + "/redirect?resource=" + boardId;
-        String homeRedirect = environment.getProperty("server.url") + "/redirect";
+        String resourceRedirect = serverUrl + "/redirect?resource=" + boardId;
+        String homeRedirect = serverUrl + "/redirect";
 
         testUserActivityService.verify(departmentUserId, new TestUserActivityService.ActivityInstance(boardId, Activity.NEW_BOARD_PARENT_ACTIVITY));
 
@@ -280,8 +280,8 @@ public class BoardApiIT extends AbstractIT {
         Long activityId = activityService.findByResourceAndActivity(board, Activity.NEW_BOARD_PARENT_ACTIVITY).getId();
         testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> {
-           userApi.dismissActivity(activityId);
-           return null;
+            userApi.dismissActivity(activityId);
+            return null;
         });
 
         testNotificationService.verify(
@@ -323,8 +323,8 @@ public class BoardApiIT extends AbstractIT {
         testUserActivityService.verify(departmentUserId);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
-                ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we cannot accept this")
-                    .put("homeRedirect", homeRedirect).put("modal", "login").build()));
+            ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we cannot accept this")
+                .put("homeRedirect", homeRedirect).put("modal", "login").build()));
 
         // Check that the department user can restore the board to draft
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made a mistake", State.DRAFT);

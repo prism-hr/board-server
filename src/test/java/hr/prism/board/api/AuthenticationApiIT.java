@@ -10,13 +10,12 @@ import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.cache.UserCacheService;
 import io.jsonwebtoken.Jwts;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -39,13 +38,13 @@ public class AuthenticationApiIT extends AbstractIT {
     private ObjectMapper objectMapper;
 
     @Inject
-    private UserCacheService userCacheService;
-
-    @Inject
     private AuthenticationService authenticationService;
 
-    @Inject
-    private Environment environment;
+    @Value("${environment}")
+    String environment;
+
+    @Value("${password.reset.timeout.seconds}")
+    private Long passwordResetTimeoutSeconds;
 
     @Test
     public void shouldRegisterAndAuthenticateUser() throws Exception {
@@ -156,8 +155,8 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(user.getPasswordResetTimestamp());
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
-            ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
-                environment.getProperty("server.url") + "/redirect", "modal", "resetPassword")));
+            ImmutableMap.of("recipient", "alastair", "environment", environment, "resetUuid", passwordResetUuid, "homeRedirect",
+                serverUrl + "/redirect", "modal", "resetPassword")));
         testNotificationService.stop();
 
         mockMvc.perform(
@@ -216,11 +215,11 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(user.getPasswordResetTimestamp());
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
-            ImmutableMap.of("recipient", "alastair", "environment", environment.getProperty("environment"), "resetUuid", passwordResetUuid, "homeRedirect",
-                environment.getProperty("server.url") + "/redirect", "modal", "resetPassword")));
+            ImmutableMap.of("recipient", "alastair", "environment", environment, "resetUuid", passwordResetUuid, "homeRedirect",
+                serverUrl + "/redirect", "modal", "resetPassword")));
         testNotificationService.stop();
 
-        TimeUnit.SECONDS.sleep(Long.parseLong(environment.getProperty("password.reset.timeout.seconds")) + 1);
+        TimeUnit.SECONDS.sleep(passwordResetTimeoutSeconds + 1);
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")

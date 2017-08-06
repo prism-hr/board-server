@@ -18,7 +18,7 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -64,15 +64,15 @@ public class UserService {
     @Inject
     private ActionService actionService;
 
-    @Inject
-    private Environment environment;
-
     @PersistenceContext
     private EntityManager entityManager;
 
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
+
+    @Value("${password.reset.timeout.seconds}")
+    private Long passwordResetTimeoutSeconds;
 
     public User getCurrentUser() {
         return getCurrentUser(false);
@@ -143,8 +143,7 @@ public class UserService {
         }
 
         LocalDateTime baseline = LocalDateTime.now();
-        Long passwordResetTimeout = Long.parseLong(environment.getProperty("password.reset.timeout.seconds"));
-        if (user.getPasswordResetTimestamp().plusSeconds(passwordResetTimeout).isBefore(baseline)) {
+        if (user.getPasswordResetTimestamp().plusSeconds(passwordResetTimeoutSeconds).isBefore(baseline)) {
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET);
         }
 

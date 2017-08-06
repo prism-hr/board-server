@@ -15,6 +15,7 @@ import org.apache.commons.io.IOUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.CacheManager;
@@ -59,6 +60,15 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
     @Inject
     private Environment environment;
 
+    @Value("${database.host}")
+    private String datbaseHost;
+
+    @Value("${database.schema}")
+    private String datbaseSchema;
+
+    @Value("${sendgrid.key}")
+    private String sendgridKey;
+
     public static void main(String[] args) {
         InputStream propertiesStream = null;
         try {
@@ -79,13 +89,12 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
 
     @Bean
     public DataSource dataSource() {
-        String host = environment.getProperty("database.host");
-        LOGGER.info("Creating datasource using: " + host);
+        LOGGER.info("Creating datasource using: " + datbaseHost);
 
         HikariConfig hikariConfig = new HikariConfig();
         String timezone = TimeZone.getDefault().getID();
         hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        hikariConfig.setJdbcUrl("jdbc:mysql://" + host + "/" + environment.getProperty("database.schema") +
+        hikariConfig.setJdbcUrl("jdbc:mysql://" + datbaseHost + "/" + datbaseSchema +
             "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci" +
             "&useLegacyDatetimeCode=false&serverTimezone=" + timezone + "&useSSL=false");
         hikariConfig.setUsername("prism");
@@ -117,7 +126,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
 
     @Bean
     public SendGrid sendGrid() {
-        return new SendGrid(environment.getProperty("sendgrid.key"));
+        return new SendGrid(sendgridKey);
     }
 
     @Bean

@@ -3,7 +3,7 @@ package hr.prism.board.api;
 import com.google.common.base.Joiner;
 import hr.prism.board.service.ResourceService;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,10 +19,10 @@ import java.util.stream.Stream;
 public class RedirectApi {
 
     @Inject
-    private Environment environment;
-
-    @Inject
     private ResourceService resourceService;
+
+    @Value("${app.url}")
+    private String appUrl;
 
     @RequestMapping(value = "/api/redirect", method = RequestMethod.GET)
     public void redirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -42,7 +42,7 @@ public class RedirectApi {
             .map(param -> param + "=" + request.getParameter(param))
             .collect(Collectors.toList());
 
-        response.sendRedirect(environment.getProperty("app.url") + "/" + contextPath + ";" + Joiner.on(";").join(parameters));
+        response.sendRedirect(appUrl + "/" + contextPath + ";" + Joiner.on(";").join(parameters));
     }
 
 }

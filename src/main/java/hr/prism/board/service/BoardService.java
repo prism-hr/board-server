@@ -12,7 +12,7 @@ import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
@@ -59,8 +59,8 @@ public class BoardService {
     @Inject
     private FreeMarkerConfig freemarkerConfig;
 
-    @Inject
-    private Environment environment;
+    @Value("${app.url}")
+    private String appUrl;
 
     public Board getBoard(Long id) {
         User currentUser = userService.getCurrentUser();
@@ -155,7 +155,7 @@ public class BoardService {
         model.put("options", options);
         model.put("board", board);
         model.put("department", department);
-        model.put("applicationUrl", environment.getProperty("app.url"));
+        model.put("applicationUrl", appUrl);
         return model;
     }
 

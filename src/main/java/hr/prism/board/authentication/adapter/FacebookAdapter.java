@@ -4,7 +4,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionData;
 import org.springframework.social.facebook.api.Facebook;
@@ -12,17 +12,15 @@ import org.springframework.social.facebook.connect.FacebookConnectionFactory;
 import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-
 @Component
 public class FacebookAdapter implements OauthAdapter {
 
-    @Inject
-    private Environment environment;
+    @Value("${auth.facebook.appSecret]")
+    private String facebookAppSecret;
 
     @Override
     public User exchangeForUser(OauthDTO oauthDTO) {
-        FacebookConnectionFactory cf = new FacebookConnectionFactory(oauthDTO.getClientId(), environment.getProperty("auth.facebook.appSecret"));
+        FacebookConnectionFactory cf = new FacebookConnectionFactory(oauthDTO.getClientId(), facebookAppSecret);
         AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
         Connection<Facebook> connection = cf.createConnection(accessGrant);
         ConnectionData data = connection.createData();

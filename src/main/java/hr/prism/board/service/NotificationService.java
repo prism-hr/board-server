@@ -18,6 +18,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -47,10 +48,13 @@ public class NotificationService {
     private SendGrid sendGrid;
 
     @Inject
-    private Environment environment;
+    private ApplicationContext applicationContext;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Environment environment;
+
+    @Value("${system.email}")
+    private String senderEmail;
 
     @PostConstruct
     public void postConstruct() throws IOException {
@@ -90,7 +94,6 @@ public class NotificationService {
     }
 
     public Map<String, String> sendNotification(NotificationRequest request) {
-        String senderEmail = environment.getProperty("system.email");
         String recipientEmail = request.getRecipient().getEmail();
         Notification notification = request.getNotification();
 

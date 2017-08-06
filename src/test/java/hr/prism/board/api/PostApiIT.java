@@ -509,7 +509,7 @@ public class PostApiIT extends AbstractIT {
         String departmentUserGivenName = departmentUser.getGivenName();
         String boardUserGivenName = boardUser.getGivenName();
         String postUserGivenName = postUser.getGivenName();
-        String resourceRedirect = environment.getProperty("server.url") + "/redirect?resource=" + postId;
+        String resourceRedirect = serverUrl + "/redirect?resource=" + postId;
 
         testUserActivityService.verify(departmentUserId, new TestUserActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
         testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
@@ -778,11 +778,11 @@ public class PostApiIT extends AbstractIT {
                             .setExpiryDate(LocalDate.now().minusDays(1))
                             .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))))).getUser().getId());
 
-       listenForNewActivities(departmentMember1Id);
-       listenForNewActivities(departmentMember2Id);
-       listenForNewActivities(departmentMember3Id);
-       listenForNewActivities(departmentMember4Id);
-       listenForNewActivities(departmentMember5Id);
+        listenForNewActivities(departmentMember1Id);
+        listenForNewActivities(departmentMember2Id);
+        listenForNewActivities(departmentMember3Id);
+        listenForNewActivities(departmentMember4Id);
+        listenForNewActivities(departmentMember5Id);
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
@@ -793,7 +793,7 @@ public class PostApiIT extends AbstractIT {
 
         String departmentMember1Uuid = departmentMember1.getUuid();
         String departmentMember2Uuid = departmentMember2.getUuid();
-        String parentRedirect = environment.getProperty("server.url") + "/redirect?resource=" + boardId;
+        String parentRedirect = serverUrl + "/redirect?resource=" + boardId;
 
         testUserActivityService.verify(departmentUserId);
         testUserActivityService.verify(boardUserId);
@@ -834,7 +834,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", environment.getProperty("server.url") + "/redirect")
+                .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", serverUrl + "/redirect")
                 .put("modal", "login").build()));
 
         // Check that the administrator can restore the post

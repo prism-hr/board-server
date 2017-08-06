@@ -1,18 +1,17 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.enums.OauthProvider;
 import org.apache.commons.text.WordUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class DefinitionService {
@@ -20,8 +19,14 @@ public class DefinitionService {
     @SuppressWarnings("unchecked")
     private TreeMap<String, Object> definitions;
 
-    @Inject
-    private Environment environment;
+    @Value("${app.url}")
+    private String appUrl;
+
+    @Value("${auth.facebook.clientId]")
+    private String facebookClientId;
+
+    @Value("${auth.linkedin.clientId]")
+    private String linkedinClientId;
 
     @PostConstruct
     public TreeMap<String, Object> getDefinitions() {
@@ -32,21 +37,11 @@ public class DefinitionService {
                 this.definitions.put(getDefinitionKey(definitionClass), values);
             });
 
-            this.definitions.put("applicationUrl", environment.getProperty("app.url"));
-            List<Map<String, Object>> clientIdMap = Stream.of(OauthProvider.values())
-                .map(provider -> {
-                    Map<String, Object> providerMap = new HashMap<>();
-                    providerMap.put("id", provider);
-                    String clientId = environment.getProperty("auth." + provider.name().toLowerCase() + ".clientId");
-                    if (clientId != null) {
-                        providerMap.put("clientId", clientId);
-                    }
-
-                    return providerMap;
-                })
-                .collect(Collectors.toList());
-
-            this.definitions.put("oauthProvider", clientIdMap);
+            this.definitions.put("applicationUrl", appUrl);
+            List<Map<String, Object>> oauthProviders = new ArrayList<>();
+            oauthProviders.add(ImmutableMap.of("id", OauthProvider.FACEBOOK, "clientId", facebookClientId));
+            oauthProviders.add(ImmutableMap.of("id", OauthProvider.LINKEDIN, "clientId", linkedinClientId));
+            this.definitions.put("oauthProvider", oauthProviders);
         }
 
         return this.definitions;

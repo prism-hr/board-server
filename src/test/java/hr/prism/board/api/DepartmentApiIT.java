@@ -284,7 +284,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
             ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4")
-                .put("resourceRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId).put("modal", "register").build()));
+                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").build()));
 
 
         transactionTemplate.execute(status ->
@@ -389,7 +389,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
+                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
                 .put("modal", "login").build()));
 
         testUserService.setAuthentication(boardMemberId);
@@ -451,7 +451,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
+                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
                 .put("modal", "login").build()));
 
         testUserService.setAuthentication(boardUserId);
@@ -506,7 +506,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", environment.getProperty("server.url") + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
+                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=activity&filter=userRole")
                 .put("modal", "login").build()));
 
         Long activityId = transactionTemplate.execute(status -> {

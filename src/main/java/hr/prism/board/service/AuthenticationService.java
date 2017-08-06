@@ -21,9 +21,9 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -47,8 +47,6 @@ public class AuthenticationService {
 
     private String jwsSecret;
 
-    private Long jwsSessionDuration;
-
     @Inject
     private UserRepository userRepository;
 
@@ -62,13 +60,12 @@ public class AuthenticationService {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Inject
-    private Environment environment;
+    @Value("${session.duration.millis}")
+    private Long sessionDurationMillis;
 
     @PostConstruct
     public void postConstruct() {
         BufferedWriter writer = null;
-        jwsSessionDuration = Long.parseLong(environment.getProperty("session.duration.millis"));
         try {
             String userHome = System.getProperty("user.home");
             File secretFile = new File(userHome + "/jws.secret");
@@ -163,7 +160,7 @@ public class AuthenticationService {
     public String makeAccessToken(Long userId, String jwsSecret) {
         return Jwts.builder()
             .setSubject(userId.toString())
-            .setExpiration(new Date(System.currentTimeMillis() + jwsSessionDuration))
+            .setExpiration(new Date(System.currentTimeMillis() + sessionDurationMillis))
             .signWith(SignatureAlgorithm.HS512, jwsSecret)
             .compact();
     }
