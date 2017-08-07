@@ -1,9 +1,10 @@
 package hr.prism.board.service;
 
+import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.repository.ResourceEventRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,42 +33,47 @@ public class ResourceEventService {
     private Integer viewIntervalSeconds;
 
     public ResourceEvent getOrCreateResourceView(Resource resource, User user, String ipAddress) {
-        ResourceEvent resourceEvent;
+        ResourceEvent lastResourceEvent;
         if (user == null) {
             if (ipAddress == null) {
-                // No user or IP address, no way to throttle events, return null
                 return null;
             }
 
-            resourceEvent = resourceEventRepository.findFirstByResourceAndEventAndIpAddressOrderByIdDesc(resource, hr.prism.board.enums.ResourceEvent.VIEW, ipAddress);
+            lastResourceEvent = resourceEventRepository.findFirstByResourceAndEventAndIpAddressOrderByIdDesc(resource, hr.prism.board.enums.ResourceEvent.VIEW, ipAddress);
         } else {
-            resourceEvent = resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(resource, hr.prism.board.enums.ResourceEvent.VIEW, user);
+            lastResourceEvent = resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(resource, hr.prism.board.enums.ResourceEvent.VIEW, user);
         }
 
-        if (resourceEvent == null || isNewEvent(resourceEvent)) {
+        if (lastResourceEvent == null || isNewEvent(lastResourceEvent)) {
             return resourceEventRepository.save(new ResourceEvent().setResource(resource).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user));
         }
 
-        return resourceEvent;
+        return lastResourceEvent;
     }
 
-    public ResourceEvent getOrCreateResourceResponse(Long resourceId, hr.prism.board.enums.ResourceEvent event, DocumentDTO resumeDTO, String website, String coveringNote) {
-        if (hr.prism.board.enums.ResourceEvent.RESPONSE_EVENTS.contains(event)) {
-            User user = userService.getCurrentUserSecured();
-            Resource resource = resourceService.findOne(resourceId);
-            ResourceEvent resourceEvent = resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(resource, event, user);
-            if (resourceEvent == null || hr.prism.board.enums.ResourceEvent.REFERRAL_EVENTS.contains(event) && isNewEvent(resourceEvent)) {
-                return resourceEventRepository.save(new ResourceEvent().setResource(resource).setEvent(event).setUser(user));
-            }
-
-            return resourceEvent;
+    public ResourceEvent getOrCreatePostResponse(Long resourceId, ResourceEventDTO resourceEventDTO) {
+        hr.prism.board.enums.ResourceEvent event;
+        Post post = (Post) resourceService.findOne(resourceId);
+        if (post.getApplyWebsite() != null) {
+            event = hr.prism.board.enums.ResourceEvent.CLICK;
+        } else if (post.getApplyDocument() != null) {
+            event = hr.prism.board.enums.ResourceEvent.DOWNLOAD;
+        } else {
+            event = hr.prism.board.enums.ResourceEvent.EMAIL;
         }
 
-        throw new UnsupportedOperationException("Event: " + event + " not a valid response event");
+        User user = userService.getCurrentUserSecured();
+        ResourceEvent lastResourceEvent = resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(post, event, user);
+        if (lastResourceEvent == null || isNewEvent(lastResourceEvent)) {
+            return resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(event).setUser(user));
+        }
+
+        return lastResourceEvent;
     }
 
-    private boolean isNewEvent(ResourceEvent resourceEvent) {
-        return LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(resourceEvent.getCreatedTimestamp());
+    private boolean isNewEvent(ResourceEvent lastResourceEvent) {
+        return LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(lastResourceEvent.getCreatedTimestamp())
+            || lastResourceEvent.getDocumentResume() == null && lastResourceEvent.getWebsite() == null;
     }
 
 }

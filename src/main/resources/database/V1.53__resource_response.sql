@@ -24,11 +24,13 @@ CREATE TABLE resource_event (
   ENGINE = innodb;
 
 ALTER TABLE user
-  ADD COLUMN document_resume_id BIGINT UNSIGNED
+  ADD COLUMN share_resume INT(1) UNSIGNED
   AFTER document_image_request_state,
+  ADD COLUMN document_resume_id BIGINT UNSIGNED
+  AFTER share_resume,
   ADD INDEX (document_resume_id),
   ADD FOREIGN KEY (document_resume_id) REFERENCES document (id),
-  ADD COLUMN website VARCHAR(2048)
+  ADD COLUMN website_resume VARCHAR(2048)
   AFTER document_resume_id;
 
 ALTER TABLE resource

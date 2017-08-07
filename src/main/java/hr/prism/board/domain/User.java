@@ -52,12 +52,15 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
 
+    @Column(name = "share_resume")
+    private Boolean shareResume;
+
     @OneToOne
     @JoinColumn(name = "document_resume_id")
     private Document documentResume;
 
     @Column(name = "website")
-    private String website;
+    private String websiteResume;
 
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
@@ -111,16 +114,18 @@ public class User extends BoardEntity implements Comparable<User> {
         return passwordResetUuid;
     }
 
-    public void setPasswordResetUuid(String passwordResetUuid) {
+    public User setPasswordResetUuid(String passwordResetUuid) {
         this.passwordResetUuid = passwordResetUuid;
+        return this;
     }
 
     public LocalDateTime getPasswordResetTimestamp() {
         return passwordResetTimestamp;
     }
 
-    public void setPasswordResetTimestamp(LocalDateTime passwordResetTimestamp) {
+    public User setPasswordResetTimestamp(LocalDateTime passwordResetTimestamp) {
         this.passwordResetTimestamp = passwordResetTimestamp;
+        return this;
     }
 
     public OauthProvider getOauthProvider() {
@@ -159,6 +164,15 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    public Boolean getShareResume() {
+        return shareResume;
+    }
+
+    public User setShareResume(Boolean shareResume) {
+        this.shareResume = shareResume;
+        return this;
+    }
+
     public Document getDocumentResume() {
         return documentResume;
     }
@@ -168,12 +182,12 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
-    public String getWebsite() {
-        return website;
+    public String getWebsiteResume() {
+        return websiteResume;
     }
 
-    public User setWebsite(String website) {
-        this.website = website;
+    public User setWebsiteResume(String websiteResume) {
+        this.websiteResume = websiteResume;
         return this;
     }
 
