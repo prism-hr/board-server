@@ -11,6 +11,7 @@ import org.springframework.social.facebook.api.Facebook;
 import org.springframework.social.facebook.connect.FacebookConnectionFactory;
 import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 
 import javax.inject.Inject;
 
@@ -23,14 +24,18 @@ public class FacebookAdapter implements OauthAdapter {
     @Override
     public User exchangeForUser(OauthDTO oauthDTO) {
         FacebookConnectionFactory cf = new FacebookConnectionFactory(oauthDTO.getClientId(), environment.getProperty("auth.facebook.appSecret"));
-        AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
-        Connection<Facebook> connection = cf.createConnection(accessGrant);
-        ConnectionData data = connection.createData();
-        org.springframework.social.facebook.api.User user = connection.getApi().fetchObject(
-            "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");
+        try {
+            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
+            Connection<Facebook> connection = cf.createConnection(accessGrant);
+            ConnectionData data = connection.createData();
+            org.springframework.social.facebook.api.User user = connection.getApi().fetchObject(
+                "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");
 
-        return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
-            .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
+            return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
+                .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
+        } catch (ResourceAccessException e) {
+            throw new Error(e); // TODO I experienced this exception couple of times, need exception code for that
+        }
     }
 
 }
