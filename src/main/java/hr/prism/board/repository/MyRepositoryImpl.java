@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
 
 public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializable>
     extends SimpleJpaRepository<ENTITY, ID> implements MyRepository<ENTITY, ID> {
-    
+
     public MyRepositoryImpl(JpaEntityInformation<ENTITY, ID> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
     }
-    
+
     @Override
     public <T extends ENTITY> T save(T entity) {
         LocalDateTime baseline = LocalDateTime.now();
@@ -22,11 +22,11 @@ public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializabl
         entity.setUpdatedTimestamp(baseline);
         return super.save(entity);
     }
-    
+
     @Override
     public <T extends ENTITY> T update(T entity) {
         entity.setUpdatedTimestamp(LocalDateTime.now());
         return entity;
     }
-    
+
 }

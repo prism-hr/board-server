@@ -17,6 +17,12 @@ public class UserRepresentation {
 
     private DocumentRequestState documentImageRequestState;
 
+    private Boolean shareResume;
+
+    private DocumentRepresentation documentResume;
+
+    private String websiteResume;
+
     public Long getId() {
         return id;
     }
@@ -71,6 +77,33 @@ public class UserRepresentation {
         return this;
     }
 
+    public Boolean getShareResume() {
+        return shareResume;
+    }
+
+    public UserRepresentation setShareResume(Boolean shareResume) {
+        this.shareResume = shareResume;
+        return this;
+    }
+
+    public DocumentRepresentation getDocumentResume() {
+        return documentResume;
+    }
+
+    public UserRepresentation setDocumentResume(DocumentRepresentation documentResume) {
+        this.documentResume = documentResume;
+        return this;
+    }
+
+    public String getWebsiteResume() {
+        return websiteResume;
+    }
+
+    public UserRepresentation setWebsiteResume(String websiteResume) {
+        this.websiteResume = websiteResume;
+        return this;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
@@ -78,4 +111,5 @@ public class UserRepresentation {
             .add("email", email)
             .toString();
     }
+
 }

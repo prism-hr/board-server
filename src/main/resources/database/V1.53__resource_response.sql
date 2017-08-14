@@ -7,7 +7,6 @@ CREATE TABLE resource_event (
   document_resume_id BIGINT UNSIGNED,
   website            VARCHAR(2048),
   covering_note      VARCHAR(1000)   NOT NULL,
-  social_network     VARCHAR(20)     NOT NULL,
   created_timestamp  DATETIME        NOT NULL,
   updated_timestamp  DATETIME,
   PRIMARY KEY (id),

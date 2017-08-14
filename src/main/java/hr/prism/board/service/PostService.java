@@ -75,6 +75,9 @@ public class PostService {
     @Inject
     private ActionService actionService;
 
+    @Inject
+    private ResourceEventService resourceEventService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -94,9 +97,14 @@ public class PostService {
     private PlatformTransactionManager platformTransactionManager;
 
     public Post getPost(Long id) {
-        User currentUser = userService.getCurrentUser();
-        Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
-        return (Post) actionService.executeAction(currentUser, post, Action.VIEW, () -> post);
+        return getPost(id, null);
+    }
+
+    public Post getPost(Long id, String ipAddress) {
+        User user = userService.getCurrentUser();
+        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        resourceEventService.getOrCreatePostView(post, user, ipAddress);
+        return (Post) actionService.executeAction(user, post, Action.VIEW, () -> post);
     }
 
     public List<Post> getByName(String name) {
@@ -179,6 +187,16 @@ public class PostService {
                 }
             }
 
+            return post;
+        });
+    }
+
+    // TODO: return response object and flag whether new or not
+    public void postResponse(Long postId, String ipAddress, ResourceEventDTO resourceEvent) {
+        Post post = getPost(postId);
+        User user = userService.getCurrentUser();
+        actionService.executeAction(user, post, Action.PURSUE, () -> {
+            resourceEventService.getOrCreatePostResponse(post, user, ipAddress, resourceEvent);
             return post;
         });
     }

@@ -48,7 +48,6 @@ public class UserRoleService {
             "and userRole.user = :user " +
             "and userRole.state in (:userRoleStates) ";
 
-
     @Inject
     private UserRoleRepository userRoleRepository;
 

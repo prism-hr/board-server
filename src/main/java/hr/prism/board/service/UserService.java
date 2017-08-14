@@ -135,6 +135,12 @@ public class UserService {
         return userCacheService.updateUser(user);
     }
 
+    public void updateUserResume(User user, Document documentResume, String websiteResume) {
+        user.setShareResume(true);
+        user.setDocumentResume(documentResume);
+        user.setWebsiteResume(websiteResume);
+    }
+
     public void resetPassword(UserPasswordDTO userPasswordDTO) {
         String uuid = userPasswordDTO.getUuid();
         User user = userRepository.findByPasswordResetUuid(uuid);

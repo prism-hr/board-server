@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 @Service
 public class LocationMapper implements Function<Location, LocationRepresentation> {
-    
+
     @Override
     public LocationRepresentation apply(Location location) {
         if (location == null) {
@@ -21,5 +21,5 @@ public class LocationMapper implements Function<Location, LocationRepresentation
             .setLatitude(location.getLatitude())
             .setLongitude(location.getLongitude());
     }
-    
+
 }

@@ -1,7 +1,5 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.SocialNetwork;
-
 import javax.persistence.*;
 
 @Entity
@@ -32,10 +30,6 @@ public class ResourceEvent extends BoardEntity {
 
     @Column(name = "covering_note")
     private String coveringNote;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "social_network")
-    private SocialNetwork socialNetwork;
 
     public Resource getResource() {
         return resource;
@@ -97,15 +91,6 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setCoveringNote(String coveringNote) {
         this.coveringNote = coveringNote;
-        return this;
-    }
-
-    public SocialNetwork getSocialNetwork() {
-        return socialNetwork;
-    }
-
-    public ResourceEvent setSocialNetwork(SocialNetwork socialNetwork) {
-        this.socialNetwork = socialNetwork;
         return this;
     }
 

@@ -25,7 +25,10 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setSurname(user.getSurname())
             .setEmail(user.getEmail())
             .setDocumentImage(documentMapper.apply(user.getDocumentImage()))
-            .setDocumentImageRequestState(user.getDocumentImageRequestState());
+            .setDocumentImageRequestState(user.getDocumentImageRequestState())
+            .setShareResume(user.getShareResume())
+            .setDocumentResume(documentMapper.apply(user.getDocumentResume()))
+            .setWebsiteResume(user.getWebsiteResume());
     }
 
 }

@@ -10,13 +10,13 @@ import java.util.TreeMap;
 
 @RestController
 public class DefinitionApi {
-    
+
     @Inject
     private DefinitionService definitionService;
-    
+
     @RequestMapping(value = "/api/definitions", method = RequestMethod.GET)
     public TreeMap<String, Object> getDefinitions() {
         return definitionService.getDefinitions();
     }
-    
+
 }

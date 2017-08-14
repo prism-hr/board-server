@@ -14,21 +14,21 @@ import java.util.function.Function;
 
 @Service
 public class ResourceOperationMapper implements Function<ResourceOperation, ResourceOperationRepresentation> {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceOperationMapper.class);
-    
+
     @Inject
     private UserMapper userMapper;
-    
+
     @Inject
     private ObjectMapper objectMapper;
-    
+
     @Override
     public ResourceOperationRepresentation apply(ResourceOperation resourceOperation) {
         if (resourceOperation == null) {
             return null;
         }
-        
+
         String changeList = resourceOperation.getChangeList();
         ResourceChangeListRepresentation changeListRepresentation = null;
         if (changeList != null) {
@@ -38,7 +38,7 @@ public class ResourceOperationMapper implements Function<ResourceOperation, Reso
                 LOGGER.info("Could not deserialize change list", e);
             }
         }
-        
+
         return new ResourceOperationRepresentation()
             .setAction(resourceOperation.getAction())
             .setUser(userMapper.apply(resourceOperation.getUser()))
@@ -46,5 +46,5 @@ public class ResourceOperationMapper implements Function<ResourceOperation, Reso
             .setComment(resourceOperation.getComment())
             .setCreatedTimestamp(resourceOperation.getCreatedTimestamp());
     }
-    
+
 }

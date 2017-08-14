@@ -8,6 +8,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.text.RandomStringGenerator;
 
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -87,6 +88,15 @@ public class BoardUtils {
 
     public static String randomAlphanumericString(int length) {
         return RANDOM_STRING_GENERATOR.generate(length);
+    }
+
+    public static String getClientIpAddress(HttpServletRequest request) {
+        String chain = request.getHeader("X-Forwarded-For");
+        if (chain == null) {
+            return request.getRemoteAddr();
+        }
+
+        return chain.split(", ")[0];
     }
 
 }

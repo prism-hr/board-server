@@ -1,16 +1,14 @@
 package hr.prism.board.authentication;
 
+import hr.prism.board.service.AuthenticationService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import hr.prism.board.service.AuthenticationService;
+import java.io.IOException;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 

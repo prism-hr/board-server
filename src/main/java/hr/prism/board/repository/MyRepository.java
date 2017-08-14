@@ -9,9 +9,9 @@ import java.io.Serializable;
 @NoRepositoryBean
 public interface MyRepository<ENTITY extends BoardEntity, ID extends Serializable>
     extends PagingAndSortingRepository<ENTITY, ID> {
-    
+
     <T extends ENTITY> T save(T entity);
-    
+
     <T extends ENTITY> T update(T entity);
-    
+
 }
