@@ -9,7 +9,7 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -169,7 +169,8 @@ public class PostService {
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
-        return (Post) actionService.executeAction(currentUser, post.setComment(postDTO.getComment()), action, () -> {
+        post.setComment(postDTO.getComment());
+        return (Post) actionService.executeAction(currentUser, post, action, () -> {
             if (action == Action.EDIT) {
                 updatePost(post, postDTO);
             } else {
@@ -245,7 +246,7 @@ public class PostService {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
-        post.setChangeList(new ResourceChangeListRepresentation());
+        post.setChangeList(new ChangeListRepresentation());
         resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
         resourcePatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
         resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());

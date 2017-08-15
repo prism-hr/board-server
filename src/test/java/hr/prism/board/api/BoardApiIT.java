@@ -14,8 +14,8 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
@@ -433,13 +433,13 @@ public class BoardApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(5), Action.RESTORE, departmentUser, "we made another mistake");
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(6), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "board 1", "board 2")
                 .put("handle", "board-1", "board-2")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.EDIT, boardUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "board 2", "board 3")
                 .put("handle", "board-2", "board-3")
                 .put("documentLogo",
@@ -450,7 +450,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("postCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "board 3", "board 4")
                 .put("handle", "board-3", "board-4")
                 .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
@@ -458,7 +458,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(9), Action.EDIT, boardUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("summary", "summary 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
     }

@@ -2,7 +2,7 @@ package hr.prism.board.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.ResourceOperation;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +30,10 @@ public class ResourceOperationMapper implements Function<ResourceOperation, Reso
         }
 
         String changeList = resourceOperation.getChangeList();
-        ResourceChangeListRepresentation changeListRepresentation = null;
+        ChangeListRepresentation changeListRepresentation = null;
         if (changeList != null) {
             try {
-                changeListRepresentation = objectMapper.readValue(changeList, ResourceChangeListRepresentation.class);
+                changeListRepresentation = objectMapper.readValue(changeList, ChangeListRepresentation.class);
             } catch (IOException e) {
                 LOGGER.info("Could not deserialize change list", e);
             }

@@ -29,9 +29,8 @@ public class Board extends Resource {
         return defaultPostVisibility;
     }
 
-    public Board setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
+    public void setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
         this.defaultPostVisibility = defaultPostVisibility;
-        return this;
     }
 
 }

@@ -9,7 +9,7 @@ import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -119,7 +119,8 @@ public class BoardService {
     public Board executeAction(Long id, Action action, BoardPatchDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
-        return (Board) actionService.executeAction(currentUser, board.setComment(boardDTO.getComment()), action, () -> {
+        board.setComment(boardDTO.getComment());
+        return (Board) actionService.executeAction(currentUser, board, action, () -> {
             if (action == Action.EDIT) {
                 updateBoard(board, boardDTO);
             } else if (BoardUtils.hasUpdates(boardDTO)) {
@@ -161,7 +162,7 @@ public class BoardService {
 
     @SuppressWarnings("unchecked")
     private void updateBoard(Board board, BoardPatchDTO boardDTO) {
-        board.setChangeList(new ResourceChangeListRepresentation());
+        board.setChangeList(new ChangeListRepresentation());
         resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.DUPLICATE_BOARD);
         resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.DUPLICATE_BOARD_HANDLE);
         resourcePatchService.patchDocument(board, "documentLogo", board::getDocumentLogo, board::setDocumentLogo, boardDTO.getDocumentLogo());

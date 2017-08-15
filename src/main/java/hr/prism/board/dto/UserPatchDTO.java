@@ -25,6 +25,13 @@ public class UserPatchDTO {
 
     private Optional<DocumentRequestState> documentImageRequestState;
 
+    private Optional<Boolean> shareResume;
+
+    @Valid
+    private Optional<DocumentDTO> documentResume;
+
+    private Optional<String> websiteResume;
+
     public Optional<String> getGivenName() {
         return givenName;
     }
@@ -67,6 +74,33 @@ public class UserPatchDTO {
 
     public UserPatchDTO setDocumentImageRequestState(Optional<DocumentRequestState> documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
+        return this;
+    }
+
+    public Optional<Boolean> getShareResume() {
+        return shareResume;
+    }
+
+    public UserPatchDTO setShareResume(Optional<Boolean> shareResume) {
+        this.shareResume = shareResume;
+        return this;
+    }
+
+    public Optional<DocumentDTO> getDocumentResume() {
+        return documentResume;
+    }
+
+    public UserPatchDTO setDocumentResume(Optional<DocumentDTO> documentResume) {
+        this.documentResume = documentResume;
+        return this;
+    }
+
+    public Optional<String> getWebsiteResume() {
+        return websiteResume;
+    }
+
+    public UserPatchDTO setWebsiteResume(Optional<String> websiteResume) {
+        this.websiteResume = websiteResume;
         return this;
     }
 

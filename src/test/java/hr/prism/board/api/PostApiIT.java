@@ -933,7 +933,7 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, postUser);
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, postUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "post", "post 2")
                 .put("summary", "summary", "summary 2")
                 .put("description", null, "description")
@@ -954,7 +954,7 @@ public class PostApiIT extends AbstractIT {
                 .put("deadTimestamp", TestHelper.toString(deadTimestamp), TestHelper.toString(deadTimestampDelayed)));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("liveTimestamp", TestHelper.toString(liveTimestampDelayed), TestHelper.toString(liveTimestamp))
                 .put("deadTimestamp", TestHelper.toString(deadTimestampDelayed), TestHelper.toString(deadTimestamp)));
 
@@ -962,7 +962,7 @@ public class PostApiIT extends AbstractIT {
             "could you please explain what you will pay the successful applicant");
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, postUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("description", "description", "description 2")
                 .put("organizationName", "organization name 2", "organization name")
                 .put("location",
@@ -978,7 +978,7 @@ public class PostApiIT extends AbstractIT {
             "i uploaded a document this time which explains that");
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(6), Action.EDIT, boardUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("liveTimestamp", TestHelper.toString(liveTimestamp), null)
                 .put("deadTimestamp", TestHelper.toString(deadTimestamp), null));
 
@@ -987,7 +987,7 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.SUSPEND, boardUser, "comment");
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(9), Action.EDIT, boardUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("applyWebsite", null, "http://www.twitter.com")
                 .put("applyDocument", ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"), null)
                 .put("postCategories", Arrays.asList("p2", "p1"), Arrays.asList("p1", "p2"))
@@ -1178,7 +1178,14 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> userPosts = posts.computeIfAbsent(user, k -> new LinkedHashMap<>());
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
         PostRepresentation postR = verifyPostPost(boardId, postDTO);
-        transactionTemplate.execute(status -> postService.getPost(postR.getId()).setState(state).setUpdatedTimestamp(baseline.minusSeconds(seconds)));
+
+        transactionTemplate.execute(status -> {
+            Post post = postService.getPost(postR.getId());
+            post.setState(state);
+            post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
+            return post;
+        });
+
         userStatePosts.put(state, postDTO.getName());
     }
 

@@ -25,8 +25,8 @@ public class ResourceEvent extends BoardEntity {
     @JoinColumn(name = "document_resume_id")
     private Document documentResume;
 
-    @Column(name = "website")
-    private String website;
+    @Column(name = "website_resume")
+    private String websiteResume;
 
     @Column(name = "covering_note")
     private String coveringNote;
@@ -76,12 +76,12 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
-    public String getWebsite() {
-        return website;
+    public String getWebsiteResume() {
+        return websiteResume;
     }
 
-    public ResourceEvent setWebsite(String website) {
-        this.website = website;
+    public ResourceEvent setWebsiteResume(String websiteResume) {
+        this.websiteResume = websiteResume;
         return this;
     }
 

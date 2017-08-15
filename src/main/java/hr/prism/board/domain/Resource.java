@@ -5,7 +5,7 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.ResourceChangeListRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
 
 import javax.persistence.*;
 import java.util.Comparator;
@@ -72,7 +72,7 @@ public class Resource extends BoardEntity {
     private List<ActionRepresentation> actions;
 
     @Transient
-    private ResourceChangeListRepresentation changeList;
+    private ChangeListRepresentation changeList;
 
     @Transient
     private String comment;
@@ -85,77 +85,68 @@ public class Resource extends BoardEntity {
         return parent;
     }
 
-    public Resource setParent(Resource parent) {
+    public void setParent(Resource parent) {
         this.parent = parent;
-        return this;
     }
 
-    public Resource setScope(Scope scope) {
+    public void setScope(Scope scope) {
         this.scope = scope;
-        return this;
     }
 
     public State getState() {
         return state;
     }
 
-    public Resource setState(State state) {
+    public void setState(State state) {
         this.state = state;
-        return this;
     }
 
     public State getPreviousState() {
         return previousState;
     }
 
-    public Resource setPreviousState(State previousState) {
+    public void setPreviousState(State previousState) {
         this.previousState = previousState;
-        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public Resource setName(String name) {
+    public void setName(String name) {
         this.name = name;
-        return this;
     }
 
     public String getSummary() {
         return summary;
     }
 
-    public Resource setSummary(String summary) {
+    public void setSummary(String summary) {
         this.summary = summary;
-        return this;
     }
 
     public Document getDocumentLogo() {
         return documentLogo;
     }
 
-    public Resource setDocumentLogo(Document documentLogo) {
+    public void setDocumentLogo(Document documentLogo) {
         this.documentLogo = documentLogo;
-        return this;
     }
 
     public Location getLocation() {
         return location;
     }
 
-    public Resource setLocation(Location location) {
+    public void setLocation(Location location) {
         this.location = location;
-        return this;
     }
 
     public String getHandle() {
         return handle;
     }
 
-    public Resource setHandle(String handle) {
+    public void setHandle(String handle) {
         this.handle = handle;
-        return this;
     }
 
     public Set<ResourceCategory> getCategories() {
@@ -190,27 +181,24 @@ public class Resource extends BoardEntity {
         return actions;
     }
 
-    public Resource setActions(List<ActionRepresentation> actions) {
+    public void setActions(List<ActionRepresentation> actions) {
         this.actions = actions;
-        return this;
     }
 
-    public ResourceChangeListRepresentation getChangeList() {
+    public ChangeListRepresentation getChangeList() {
         return changeList;
     }
 
-    public Resource setChangeList(ResourceChangeListRepresentation changeList) {
+    public void setChangeList(ChangeListRepresentation changeList) {
         this.changeList = changeList;
-        return this;
     }
 
     public String getComment() {
         return comment;
     }
 
-    public Resource setComment(String comment) {
+    public void setComment(String comment) {
         this.comment = comment;
-        return this;
     }
 
     public List<ResourceCategory> getCategories(CategoryType type) {

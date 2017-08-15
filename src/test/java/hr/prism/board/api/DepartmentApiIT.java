@@ -306,12 +306,12 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(0), Action.EXTEND, departmentUser);
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(1), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "department", "department 2")
                 .put("handle", "department", "department-2"));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "department 2", "department 3")
                 .put("summary", null, "department 3 summary")
                 .put("handle", "department-2", "department-3")
@@ -319,7 +319,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("memberCategories", new ArrayList<>(), Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("name", "department 3", "department 4")
                 .put("summary", "department 3 summary", "department 4 summary")
                 .put("handle", "department-3", "department-4")
@@ -329,7 +329,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("memberCategories", Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT"), Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,
-            new ResourceChangeListRepresentation()
+            new ChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"), null));
     }

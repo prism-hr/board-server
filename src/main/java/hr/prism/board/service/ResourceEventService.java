@@ -67,7 +67,7 @@ public class ResourceEventService {
                 }
 
                 resourceEvent.setDocumentResume(documentResume);
-                resourceEvent.setWebsite(websiteResume);
+                resourceEvent.setWebsiteResume(websiteResume);
                 resourceEvent.setCoveringNote(coveringNote);
 
                 if (BooleanUtils.isTrue(resourceEventDTO.getShareAsDefault())) {
@@ -94,7 +94,7 @@ public class ResourceEventService {
     }
 
     private boolean isNewEvent(hr.prism.board.enums.ResourceEvent event, ResourceEvent lastResourceEvent) {
-        return event.isResponse() && lastResourceEvent.getDocumentResume() == null && lastResourceEvent.getWebsite() == null
+        return event.isResponse() && lastResourceEvent.getDocumentResume() == null && lastResourceEvent.getWebsiteResume() == null
             || LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(lastResourceEvent.getCreatedTimestamp());
     }
 

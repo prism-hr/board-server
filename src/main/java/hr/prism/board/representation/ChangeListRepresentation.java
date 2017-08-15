@@ -5,14 +5,14 @@ import com.google.common.base.MoreObjects;
 import java.util.LinkedList;
 import java.util.Objects;
 
-public class ResourceChangeListRepresentation extends LinkedList<ResourceChangeListRepresentation.ResourceChangeRepresentation> {
+public class ChangeListRepresentation extends LinkedList<ChangeListRepresentation.ChangeRepresentation> {
 
-    public ResourceChangeListRepresentation put(String property, Object oldValue, Object newValue) {
-        super.add(new ResourceChangeRepresentation().setProperty(property).setOldValue(oldValue).setNewValue(newValue));
+    public ChangeListRepresentation put(String property, Object oldValue, Object newValue) {
+        super.add(new ChangeRepresentation().setProperty(property).setOldValue(oldValue).setNewValue(newValue));
         return this;
     }
 
-    public static class ResourceChangeRepresentation {
+    public static class ChangeRepresentation {
 
         private String property;
 
@@ -24,7 +24,7 @@ public class ResourceChangeListRepresentation extends LinkedList<ResourceChangeL
             return property;
         }
 
-        public ResourceChangeRepresentation setProperty(String property) {
+        public ChangeRepresentation setProperty(String property) {
             this.property = property;
             return this;
         }
@@ -33,7 +33,7 @@ public class ResourceChangeListRepresentation extends LinkedList<ResourceChangeL
             return oldValue;
         }
 
-        public ResourceChangeRepresentation setOldValue(Object oldValue) {
+        public ChangeRepresentation setOldValue(Object oldValue) {
             this.oldValue = oldValue;
             return this;
         }
@@ -42,7 +42,7 @@ public class ResourceChangeListRepresentation extends LinkedList<ResourceChangeL
             return newValue;
         }
 
-        public ResourceChangeRepresentation setNewValue(Object newValue) {
+        public ChangeRepresentation setNewValue(Object newValue) {
             this.newValue = newValue;
             return this;
         }
@@ -56,7 +56,7 @@ public class ResourceChangeListRepresentation extends LinkedList<ResourceChangeL
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            ResourceChangeRepresentation that = (ResourceChangeRepresentation) o;
+            ChangeRepresentation that = (ChangeRepresentation) o;
             return Objects.equals(property, that.property) &&
                 Objects.equals(oldValue, that.oldValue) &&
                 Objects.equals(newValue, that.newValue);
@@ -70,6 +70,7 @@ public class ResourceChangeListRepresentation extends LinkedList<ResourceChangeL
                 .add("newValue", newValue)
                 .toString();
         }
+
     }
 
 }

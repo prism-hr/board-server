@@ -4,7 +4,6 @@ import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
@@ -64,6 +63,9 @@ public class UserService {
     @Inject
     private ActionService actionService;
 
+    @Inject
+    private UserPatchService userPatchService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -88,15 +90,8 @@ public class UserService {
 
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured(true);
-        Optional<String> givenNameOptional = userDTO.getGivenName();
-        if (givenNameOptional != null) {
-            user.setGivenName(givenNameOptional.orElse(user.getGivenName()));
-        }
-
-        Optional<String> surnameOptional = userDTO.getSurname();
-        if (surnameOptional != null) {
-            user.setSurname(surnameOptional.orElse(user.getSurname()));
-        }
+        userPatchService.patchProperty(user, user::getGivenName, user::setGivenName, userDTO.getGivenName());
+        userPatchService.patchProperty(user, user::getSurname, user::setSurname, userDTO.getSurname());
 
         // TODO: remember the original email as key for uploads
         Optional<String> emailOptional = userDTO.getEmail();
@@ -114,24 +109,11 @@ public class UserService {
             }
         }
 
-        Optional<DocumentDTO> documentImageOptional = userDTO.getDocumentImage();
-        if (documentImageOptional != null) {
-            Document oldImage = user.getDocumentImage();
-            DocumentDTO newImage = documentImageOptional.orElse(null);
-            if (newImage != null) {
-                user.setDocumentImage(documentService.getOrCreateDocument(newImage));
-            }
-
-            if (oldImage != null && (newImage == null || !oldImage.getId().equals(newImage.getId()))) {
-                documentService.deleteDocument(oldImage);
-            }
-        }
-
-        Optional<DocumentRequestState> documentRequestStateOptional = userDTO.getDocumentImageRequestState();
-        if (documentRequestStateOptional != null) {
-            user.setDocumentImageRequestState(documentRequestStateOptional.orElse(user.getDocumentImageRequestState()));
-        }
-
+        userPatchService.patchDocument(user, user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
+        userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState, userDTO.getDocumentImageRequestState());
+        userPatchService.patchProperty(user, user::getShareResume, user::setShareResume, userDTO.getShareResume());
+        userPatchService.patchDocument(user, user::getDocumentResume, user::setDocumentResume, userDTO.getDocumentResume());
+        userPatchService.patchProperty(user, user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
         return userCacheService.updateUser(user);
     }
 
