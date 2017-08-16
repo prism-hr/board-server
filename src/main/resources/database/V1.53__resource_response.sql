@@ -5,14 +5,15 @@ CREATE TABLE resource_event (
   user_id            BIGINT UNSIGNED,
   ip_address         VARCHAR(50),
   document_resume_id BIGINT UNSIGNED,
-  website            VARCHAR(2048),
+  website_resume     VARCHAR(2048),
   covering_note      VARCHAR(1000)   NOT NULL,
   created_timestamp  DATETIME        NOT NULL,
   updated_timestamp  DATETIME,
   PRIMARY KEY (id),
-  INDEX (resource_id, event, user_id, ip_address, social_network),
+  INDEX (resource_id, event, user_id, ip_address),
   INDEX (user_id),
   INDEX (document_resume_id),
+  INDEX (website_resume),
   INDEX (created_timestamp),
   INDEX (updated_timestamp),
   FOREIGN KEY (resource_id) REFERENCES resource (id),
@@ -23,10 +24,8 @@ CREATE TABLE resource_event (
   ENGINE = innodb;
 
 ALTER TABLE user
-  ADD COLUMN share_resume INT(1) UNSIGNED
-  AFTER document_image_request_state,
   ADD COLUMN document_resume_id BIGINT UNSIGNED
-  AFTER share_resume,
+  AFTER document_image_request_state,
   ADD INDEX (document_resume_id),
   ADD FOREIGN KEY (document_resume_id) REFERENCES document (id),
   ADD COLUMN website_resume VARCHAR(2048)

@@ -1,5 +1,6 @@
 package hr.prism.board;
 
+import com.google.common.base.Joiner;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
@@ -12,7 +13,9 @@ import hr.prism.board.representation.*;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Assert;
+import org.mockito.Mockito;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -132,6 +135,17 @@ public class TestHelper {
     public static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
                                                String expectedComment) {
         verifyResourceOperation(resourceOperationR, expectedAction, expectedUser, null, expectedComment);
+    }
+
+    public static HttpServletRequest mockHttpServletRequest(String ipAddress) {
+        return mockHttpServletRequest(ipAddress, null);
+    }
+
+    public static HttpServletRequest mockHttpServletRequest(String ipAddress, String proxyIpAddress) {
+        HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn(proxyIpAddress == null ? ipAddress : proxyIpAddress);
+        Mockito.when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn(Joiner.on(", ").skipNulls().join(ipAddress, proxyIpAddress));
+        return httpServletRequest;
     }
 
     public static String toString(LocalDateTime baseline) {

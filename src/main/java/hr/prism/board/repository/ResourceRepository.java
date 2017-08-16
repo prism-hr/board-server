@@ -5,6 +5,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.value.ChildResourceSummary;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,5 +49,12 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "WHERE handle LIKE concat(:handle, '/%')",
         nativeQuery = true)
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
+
+    @Query(value =
+        "select new hr.prism.board.value.ChildResourceSummary(resource.scope, count(resource.id), max(resource.createdTimestamp)) " +
+            "from Resource resource " +
+            "where resource.parent = :parent " +
+            "and resource.state = :state")
+    ChildResourceSummary findSummaryByParentAndState(@Param("parent") Resource parent, @Param("state") State state);
 
 }

@@ -19,6 +19,7 @@ import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
+import hr.prism.board.value.ChildResourceSummary;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -184,6 +185,16 @@ public class ResourceService {
 
         resource.setState(state);
         resource.setPreviousState(previousState);
+
+        entityManager.flush();
+        Resource parent = resource.getParent();
+        if (parent instanceof Department) {
+            ChildResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
+            ((Department) parent).setBoardCount(summary.getCount());
+        } else if (parent instanceof Board) {
+            ChildResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
+            ((Board) parent).setPostCount(summary.getCount());
+        }
     }
 
     // TODO: implement paging / continuous scrolling mechanism

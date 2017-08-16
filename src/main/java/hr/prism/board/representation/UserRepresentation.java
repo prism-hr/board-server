@@ -17,8 +17,6 @@ public class UserRepresentation {
 
     private DocumentRequestState documentImageRequestState;
 
-    private Boolean shareResume;
-
     private DocumentRepresentation documentResume;
 
     private String websiteResume;
@@ -74,15 +72,6 @@ public class UserRepresentation {
 
     public UserRepresentation setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
-        return this;
-    }
-
-    public Boolean getShareResume() {
-        return shareResume;
-    }
-
-    public UserRepresentation setShareResume(Boolean shareResume) {
-        this.shareResume = shareResume;
         return this;
     }
 

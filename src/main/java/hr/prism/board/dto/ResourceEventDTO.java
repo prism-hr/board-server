@@ -4,9 +4,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 public class ResourceEventDTO {
 
-    private Boolean share;
-
-    private Boolean shareAsDefault;
+    private Boolean defaultResume;
 
     private DocumentDTO documentResume;
 
@@ -15,21 +13,12 @@ public class ResourceEventDTO {
     @NotEmpty
     private String coveringNote;
 
-    public Boolean getShare() {
-        return share;
+    public Boolean getDefaultResume() {
+        return defaultResume;
     }
 
-    public ResourceEventDTO setShare(Boolean share) {
-        this.share = share;
-        return this;
-    }
-
-    public Boolean getShareAsDefault() {
-        return shareAsDefault;
-    }
-
-    public ResourceEventDTO setShareAsDefault(Boolean shareAsDefault) {
-        this.shareAsDefault = shareAsDefault;
+    public ResourceEventDTO setDefaultResume(Boolean defaultResume) {
+        this.defaultResume = defaultResume;
         return this;
     }
 

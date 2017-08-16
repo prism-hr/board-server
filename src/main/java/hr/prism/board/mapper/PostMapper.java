@@ -2,8 +2,10 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.representation.PostApplyRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
@@ -39,25 +41,31 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             return null;
         }
 
-        return resourceMapper.apply(post, PostRepresentation.class)
-            .setDescription(post.getDescription())
-            .setOrganizationName(post.getOrganizationName())
-            .setLocation(locationMapper.apply(post.getLocation()))
-            .setExistingRelation(post.getExistingRelation())
-            .setExistingRelationExplanation(postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
-            .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
-            .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)))
-            .setApplyWebsite(post.getApplyWebsite())
-            .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
-            .setApplyEmail(post.getApplyEmail())
-            .setForwardCandidates(post.getForwardCandidates())
-            .setBoard(boardMapper.apply((Board) post.getParent()))
+        PostRepresentation representation =
+            resourceMapper.apply(post, PostRepresentation.class)
+                .setDescription(post.getDescription())
+                .setOrganizationName(post.getOrganizationName())
+                .setLocation(locationMapper.apply(post.getLocation()))
+                .setExistingRelation(post.getExistingRelation())
+                .setExistingRelationExplanation(postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
+                .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
+                .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)));
+
+        if (post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT)) {
+            representation.setApplyWebsite(post.getApplyWebsite())
+                .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
+                .setApplyEmail(post.getApplyEmail())
+                .setForwardCandidates(post.getForwardCandidates());
+        }
+
+        return representation.setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
             .setViewCount(post.getViewCount())
             .setResponseCount(post.getResponseCount())
             .setLastViewTimestamp(post.getLastViewTimestamp())
-            .setLastResponseTimestamp(post.getLastResponseTimestamp());
+            .setLastResponseTimestamp(post.getLastResponseTimestamp())
+            .setResponded(post.isResponded());
     }
 
     public PostRepresentation applySmall(Post post) {
@@ -69,6 +77,14 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setOrganizationName(post.getOrganizationName())
             .setLocation(locationMapper.apply(post.getLocation()))
             .setBoard(boardMapper.applySmall((Board) post.getParent()));
+    }
+
+    public PostApplyRepresentation applyPostApply(Post post) {
+        return new PostApplyRepresentation()
+            .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
+            .setApplyWebsite(post.getApplyWebsite())
+            .setApplyEmail(post.getApplyEmail())
+            .setForwardCandidates(post.getForwardCandidates());
     }
 
 }

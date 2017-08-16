@@ -9,6 +9,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
+import hr.prism.board.representation.PostApplyRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
@@ -83,14 +84,24 @@ public class PostApi {
         return postService.findOrganizationsBySimilarName(query);
     }
 
+    @RequestMapping(value = "api/posts/{postId}/apply", method = RequestMethod.POST)
+    public PostApplyRepresentation getPostApply(@PathVariable Long postId, HttpServletRequest request) {
+        return postMapper.applyPostApply(postService.getPostApply(postId, BoardUtils.getClientIpAddress(request)));
+    }
+
     @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)
     public ResourceEventRepresentation postResponse(@PathVariable Long postId, @Valid @RequestBody ResourceEventDTO resourceEvent, HttpServletRequest request) {
-        return resourceEventMapper.apply(postService.postPostResponse(postId, BoardUtils.getClientIpAddress(request), resourceEvent));
+        return resourceEventMapper.apply(postService.createPostResponse(postId, BoardUtils.getClientIpAddress(request), resourceEvent));
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
-    public List<ResourceEventRepresentation> postResponse(@PathVariable Long postId, @RequestParam(required = false) String mode) {
+    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId, @RequestParam(required = false) String mode) {
         return postService.getPostResponses(postId, mode).stream().map(resourceEventMapper::apply).collect(Collectors.toList());
+    }
+
+    @RequestMapping(value = "api/posts/{postId}/responses/{responseId}", method = RequestMethod.GET)
+    public ResourceEventRepresentation getPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
+        return resourceEventMapper.apply(postService.getPostResponse(postId, responseId));
     }
 
 }

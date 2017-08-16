@@ -108,14 +108,12 @@ public class UserService {
 
         userPatchService.patchDocument(user, user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
         userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState, userDTO.getDocumentImageRequestState());
-        userPatchService.patchProperty(user, user::getShareResume, user::setShareResume, userDTO.getShareResume());
         userPatchService.patchDocument(user, user::getDocumentResume, user::setDocumentResume, userDTO.getDocumentResume());
         userPatchService.patchProperty(user, user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
         return userCacheService.updateUser(user);
     }
 
     public void updateUserResume(User user, Document documentResume, String websiteResume) {
-        user.setShareResume(true);
         user.setDocumentResume(documentResume);
         user.setWebsiteResume(websiteResume);
     }

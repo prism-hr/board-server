@@ -45,6 +45,8 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
+    private boolean responded;
+
     public String getDescription() {
         return description;
     }
@@ -204,6 +206,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setLastResponseTimestamp(LocalDateTime lastResponseTimestamp) {
         this.lastResponseTimestamp = lastResponseTimestamp;
+        return this;
+    }
+
+    public boolean isResponded() {
+        return responded;
+    }
+
+    public PostRepresentation setResponded(boolean responded) {
+        this.responded = responded;
         return this;
     }
 

@@ -77,6 +77,9 @@ public class Post extends Resource {
     @Column(name = "last_response_timestamp")
     private LocalDateTime lastResponseTimestamp;
 
+    @Transient
+    private boolean responded;
+
     public String getDescription() {
         return description;
     }
@@ -187,6 +190,14 @@ public class Post extends Resource {
 
     public void setLastResponseTimestamp(LocalDateTime lastResponseTimestamp) {
         this.lastResponseTimestamp = lastResponseTimestamp;
+    }
+
+    public boolean isResponded() {
+        return responded;
+    }
+
+    public void setResponded(boolean responded) {
+        this.responded = responded;
     }
 
     @Override

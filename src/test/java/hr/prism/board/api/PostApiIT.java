@@ -549,7 +549,7 @@ public class PostApiIT extends AbstractIT {
         listenForNewActivities(postUserId);
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
-            .put(Action.VIEW, () -> postApi.getPost(postId))
+            .put(Action.VIEW, () -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")))
             .put(Action.AUDIT, () -> postApi.getPostOperations(postId))
             .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
             .put(Action.ACCEPT, () -> postApi.executeAction(postId, "accept", new PostPatchDTO()))
@@ -563,7 +563,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         // Check that we do not audit viewing
-        transactionTemplate.execute(status -> postApi.getPost(postId));
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")));
 
         LocalDateTime liveTimestamp = postR.getLiveTimestamp();
         LocalDateTime deadTimestamp = postR.getDeadTimestamp();
@@ -1142,7 +1142,7 @@ public class PostApiIT extends AbstractIT {
             });
         }
 
-        postR = transactionTemplate.execute(status -> postApi.getPost(postId));
+        postR = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")));
         Assert.assertEquals(expectedState, postR.getState());
     }
 

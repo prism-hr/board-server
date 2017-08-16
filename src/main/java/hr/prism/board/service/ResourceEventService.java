@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
@@ -37,53 +38,61 @@ public class ResourceEventService {
     @Value("${view.interval.seconds}")
     private Integer viewIntervalSeconds;
 
+    public ResourceEvent findOne(Long resourceEventId) {
+        return resourceEventRepository.findOne(resourceEventId);
+    }
+
     public ResourceEvent getOrCreatePostView(Post post, User user, String ipAddress) {
         ResourceEvent lastResourceEvent = getLastResourceEvent(post, hr.prism.board.enums.ResourceEvent.VIEW, user, ipAddress);
         if (lastResourceEvent == null || isNewEvent(hr.prism.board.enums.ResourceEvent.VIEW, lastResourceEvent)) {
             return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user));
         }
 
-        return lastResourceEvent;
+        throw new BoardDuplicateException(ExceptionCode.DUPLICATE_POST_RESPONSE, lastResourceEvent.getId());
     }
 
     public ResourceEvent getOrCreatePostResponse(Post post, User user, String ipAddress, ResourceEventDTO resourceEventDTO) {
         ResourceEvent lastResourceEvent = getLastResourceEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user, ipAddress);
         if (lastResourceEvent == null || isNewEvent(hr.prism.board.enums.ResourceEvent.RESPONSE, lastResourceEvent)) {
             ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE).setUser(user);
-            if (BooleanUtils.isTrue(resourceEventDTO.getShare())) {
+            if (resourceEventDTO != null) {
                 DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
                 String websiteResume = resourceEventDTO.getWebsiteResume();
                 String coveringNote = resourceEventDTO.getCoveringNote();
-                if (documentResumeDTO == null && websiteResume == null || coveringNote == null) {
-                    throw new BoardException(ExceptionCode.INVALID_POST_RESPONSE);
-                }
 
-                Document documentResume = null;
-                if (documentResumeDTO != null) {
-                    documentResume = documentService.getOrCreateDocument(documentResumeDTO);
-                }
+                String applyEmail = post.getApplyEmail();
+                if (applyEmail != null || BooleanUtils.isTrue(post.getForwardCandidates())) {
+                    if ((documentResumeDTO != null || websiteResume != null) && coveringNote != null) {
+                        Document documentResume = null;
+                        if (documentResumeDTO != null) {
+                            documentResume = documentService.getOrCreateDocument(documentResumeDTO);
+                        }
 
-                resourceEvent.setDocumentResume(documentResume);
-                resourceEvent.setWebsiteResume(websiteResume);
-                resourceEvent.setCoveringNote(coveringNote);
+                        resourceEvent.setDocumentResume(documentResume);
+                        resourceEvent.setWebsiteResume(websiteResume);
+                        resourceEvent.setCoveringNote(coveringNote);
 
-                if (BooleanUtils.isTrue(resourceEventDTO.getShareAsDefault())) {
-                    userService.updateUserResume(user, documentResume, websiteResume);
+                        if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
+                            userService.updateUserResume(user, documentResume, websiteResume);
+                        }
+                    } else if (applyEmail == null) {
+                        throw new BoardException(ExceptionCode.INVALID_POST_RESPONSE);
+                    }
                 }
             }
 
             return saveResourceEvent(post, resourceEvent);
         }
 
-        return lastResourceEvent;
+        throw new BoardDuplicateException(ExceptionCode.DUPLICATE_POST_RESPONSE, lastResourceEvent.getId());
     }
 
-    public List<ResourceEvent> getResourceEvents(Long resourceId) {
-        return resourceEventRepository.findByResourceIdOrderByIdDesc(resourceId);
+    public List<ResourceEvent> getResourceEvents(Resource resource) {
+        return resourceEventRepository.findByResourceOrderByIdDesc(resource);
     }
 
-    public List<ResourceEvent> getResourceEvents(Long resourceId, hr.prism.board.enums.ResourceEvent event) {
-        return resourceEventRepository.findByResourceIdAndEventOrderByIdDesc(resourceId, event);
+    public List<ResourceEvent> getResourceEvents(Resource resource, hr.prism.board.enums.ResourceEvent event) {
+        return resourceEventRepository.findByResourceAndEventOrderByIdDesc(resource, event);
     }
 
     private ResourceEvent getLastResourceEvent(Resource post, hr.prism.board.enums.ResourceEvent event, User user, String ipAddress) {

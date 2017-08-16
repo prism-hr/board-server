@@ -1,6 +1,6 @@
 package hr.prism.board.exception;
 
-// TODO - define log level for code
+// TODO - define log level
 public enum ExceptionCode {
 
     PROBLEM,
@@ -40,6 +40,7 @@ public enum ExceptionCode {
     USER_ACTIVITY_NOT_MODIFIED,
     FORBIDDEN_PASSWORD_RESET,
     MISSING_USER_EMAIL,
-    INVALID_POST_RESPONSE
+    INVALID_POST_RESPONSE,
+    DUPLICATE_POST_RESPONSE
 
 }

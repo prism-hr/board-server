@@ -25,8 +25,6 @@ public class UserPatchDTO {
 
     private Optional<DocumentRequestState> documentImageRequestState;
 
-    private Optional<Boolean> shareResume;
-
     @Valid
     private Optional<DocumentDTO> documentResume;
 
@@ -74,15 +72,6 @@ public class UserPatchDTO {
 
     public UserPatchDTO setDocumentImageRequestState(Optional<DocumentRequestState> documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
-        return this;
-    }
-
-    public Optional<Boolean> getShareResume() {
-        return shareResume;
-    }
-
-    public UserPatchDTO setShareResume(Optional<Boolean> shareResume) {
-        this.shareResume = shareResume;
         return this;
     }
 

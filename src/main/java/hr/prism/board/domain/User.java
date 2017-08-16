@@ -52,9 +52,6 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
 
-    @Column(name = "share_resume")
-    private Boolean shareResume;
-
     @OneToOne
     @JoinColumn(name = "document_resume_id")
     private Document documentResume;
@@ -161,15 +158,6 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
-        return this;
-    }
-
-    public Boolean getShareResume() {
-        return shareResume;
-    }
-
-    public User setShareResume(Boolean shareResume) {
-        this.shareResume = shareResume;
         return this;
     }
 

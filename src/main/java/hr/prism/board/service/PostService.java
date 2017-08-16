@@ -104,8 +104,23 @@ public class PostService {
     public Post getPost(Long id, String ipAddress) {
         User user = userService.getCurrentUser();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        actionService.executeAction(user, post, Action.VIEW, () -> post);
         resourceEventService.getOrCreatePostView(post, user, ipAddress);
-        return (Post) actionService.executeAction(user, post, Action.VIEW, () -> post);
+
+        if (user != null && !postRepository.findPostIdsRespondedTo(Collections.singletonList(post.getId()), user).isEmpty()) {
+            post.setResponded(true);
+        }
+
+        return post;
+    }
+
+    public Post getPostApply(Long id, String ipAddress) {
+        User user = userService.getCurrentUser();
+        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        return (Post) actionService.executeAction(user, post, Action.PURSUE, () -> {
+            resourceEventService.getOrCreatePostResponse(post, user, ipAddress, null);
+            return post;
+        });
     }
 
     public List<Post> getByName(String name) {
@@ -113,14 +128,27 @@ public class PostService {
     }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts) {
-        User currentUser = userService.getCurrentUser();
-        return resourceService.getResources(currentUser,
-            new ResourceFilterDTO()
-                .setScope(Scope.POST)
-                .setParentId(boardId)
-                .setIncludePublicResources(includePublicPosts)
-                .setOrderStatement("order by resource.updatedTimestamp desc"))
-            .stream().map(resource -> (Post) resource).collect(Collectors.toList());
+        User user = userService.getCurrentUser();
+        List<Post> posts =
+            resourceService.getResources(user,
+                new ResourceFilterDTO()
+                    .setScope(Scope.POST)
+                    .setParentId(boardId)
+                    .setIncludePublicResources(includePublicPosts)
+                    .setOrderStatement("order by resource.updatedTimestamp desc"))
+                .stream().map(resource -> (Post) resource).collect(Collectors.toList());
+
+        if (user != null) {
+            Map<Long, Post> postIndex = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
+            postRepository.findPostIdsRespondedTo(postIndex.keySet(), user).forEach(postId -> {
+                Post post = postIndex.get(postId);
+                if (post != null) {
+                    post.setResponded(true);
+                }
+            });
+        }
+
+        return posts;
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
@@ -193,21 +221,37 @@ public class PostService {
         });
     }
 
-    public ResourceEvent postPostResponse(Long postId, String ipAddress, ResourceEventDTO resourceEvent) {
+    public ResourceEvent createPostResponse(Long postId, String ipAddress, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
-        User user = userService.getCurrentUser();
+        User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.PURSUE, () -> post);
         return resourceEventService.getOrCreatePostResponse(post, user, ipAddress, resourceEvent);
     }
 
     public List<ResourceEvent> getPostResponses(Long postId, String mode) {
+        Post post = getPost(postId);
+        User user = userService.getCurrentUserSecured();
+        actionService.executeAction(user, post, Action.AUDIT, () -> post);
+
         if ("view".equals(mode)) {
-            return resourceEventService.getResourceEvents(postId, hr.prism.board.enums.ResourceEvent.VIEW);
+            return resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.VIEW);
         } else if ("response".equals(mode)) {
-            return resourceEventService.getResourceEvents(postId, hr.prism.board.enums.ResourceEvent.RESPONSE);
+            return resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
         }
 
-        return resourceEventService.getResourceEvents(postId);
+        return resourceEventService.getResourceEvents(post);
+    }
+
+    public ResourceEvent getPostResponse(Long postId, Long responseId) {
+        Post post = getPost(postId);
+        User user = userService.getCurrentUserSecured();
+        ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
+        if (resourceEvent.getUser().equals(user)) {
+            return resourceEvent;
+        }
+
+        actionService.executeAction(user, post, Action.AUDIT, () -> post);
+        return resourceEvent;
     }
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
