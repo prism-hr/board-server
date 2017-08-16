@@ -23,10 +23,13 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
         }
 
         return new ResourceEventRepresentation()
+            .setEvent(resourceEvent.getEvent())
             .setUser(userMapper.apply(resourceEvent.getUser()))
             .setIpAddress(resourceEvent.getIpAddress())
             .setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()))
-            .setWebsiteResume(resourceEvent.getWebsiteResume());
+            .setWebsiteResume(resourceEvent.getWebsiteResume())
+            .setCoveringNote(resourceEvent.getCoveringNote())
+            .setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
     }
 
 }

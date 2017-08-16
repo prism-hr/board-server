@@ -16,6 +16,10 @@ public class BoardRepresentation extends ResourceRepresentation<BoardRepresentat
 
     private PostVisibility defaultPostVisibility;
 
+    private Long postCount;
+
+    private Long authorCount;
+
     public DocumentRepresentation getDocumentLogo() {
         return documentLogo;
     }
@@ -58,6 +62,24 @@ public class BoardRepresentation extends ResourceRepresentation<BoardRepresentat
 
     public BoardRepresentation setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
         this.defaultPostVisibility = defaultPostVisibility;
+        return this;
+    }
+
+    public Long getPostCount() {
+        return postCount;
+    }
+
+    public BoardRepresentation setPostCount(Long postCount) {
+        this.postCount = postCount;
+        return this;
+    }
+
+    public Long getAuthorCount() {
+        return authorCount;
+    }
+
+    public BoardRepresentation setAuthorCount(Long authorCount) {
+        this.authorCount = authorCount;
         return this;
     }
 

@@ -12,6 +12,10 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private List<MemberCategory> memberCategories;
 
+    private Long boardCount;
+
+    private Long memberCount;
+
     public DocumentRepresentation getDocumentLogo() {
         return documentLogo;
     }
@@ -36,6 +40,24 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setMemberCategories(List<MemberCategory> memberCategories) {
         this.memberCategories = memberCategories;
+        return this;
+    }
+
+    public Long getBoardCount() {
+        return boardCount;
+    }
+
+    public DepartmentRepresentation setBoardCount(Long boardCount) {
+        this.boardCount = boardCount;
+        return this;
+    }
+
+    public Long getMemberCount() {
+        return memberCount;
+    }
+
+    public DepartmentRepresentation setMemberCount(Long memberCount) {
+        this.memberCount = memberCount;
         return this;
     }
 

@@ -10,6 +10,9 @@ import java.io.Serializable;
 public interface MyRepository<ENTITY extends BoardEntity, ID extends Serializable>
     extends PagingAndSortingRepository<ENTITY, ID> {
 
+    String ACTIVE_USER_ROLE_CONSTRAINT =
+        "(userRole.expiryDate is null or userRole.expiryDate >= :baseline)";
+
     <T extends ENTITY> T save(T entity);
 
     <T extends ENTITY> T update(T entity);

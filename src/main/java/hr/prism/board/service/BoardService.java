@@ -111,7 +111,7 @@ public class BoardService {
             board = boardRepository.save(board);
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
-            userRoleService.createUserRole(board, currentUser, Role.ADMINISTRATOR);
+            userRoleService.createOrUpdateUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
         });
     }

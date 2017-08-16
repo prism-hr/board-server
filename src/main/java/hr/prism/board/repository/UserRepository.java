@@ -13,9 +13,6 @@ import java.util.List;
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
 
-    String ACTIVE_CONSTRAINT =
-        "(userRole.expiryDate is null or userRole.expiryDate >= :baseline)";
-
     String SUPPRESSION_CONSTRAINT =
         "userRole.user not in (" +
             "select userNotificationSuppression.user " +
@@ -60,7 +57,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
-            "and " + ACTIVE_CONSTRAINT + " " +
+            "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
             "and " + SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
                                                       @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
@@ -79,7 +76,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and userRole.state in (:userRoleStates) " +
             "and resourceCategory.type = :categoryType " +
             "and resourceCategory.name = userRoleCategory.name " +
-            "and " + ACTIVE_CONSTRAINT + " " +
+            "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
             "and " + SUPPRESSION_CONSTRAINT)
     List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
                                                                    @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,

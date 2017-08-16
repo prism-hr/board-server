@@ -7,8 +7,10 @@ import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.PostMapper;
+import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.PostRepresentation;
+import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
@@ -35,6 +37,9 @@ public class PostApi {
 
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
+
+    @Inject
+    private ResourceEventMapper resourceEventMapper;
 
     @RequestMapping(value = "/api/boards/{id}/posts", method = RequestMethod.POST)
     public PostRepresentation postPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
@@ -79,8 +84,13 @@ public class PostApi {
     }
 
     @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)
-    public void postResponse(@PathVariable Long postId, @Valid @RequestBody ResourceEventDTO resourceEvent, HttpServletRequest request) {
-        postService.postResponse(postId, BoardUtils.getClientIpAddress(request), resourceEvent);
+    public ResourceEventRepresentation postResponse(@PathVariable Long postId, @Valid @RequestBody ResourceEventDTO resourceEvent, HttpServletRequest request) {
+        return resourceEventMapper.apply(postService.postPostResponse(postId, BoardUtils.getClientIpAddress(request), resourceEvent));
+    }
+
+    @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
+    public List<ResourceEventRepresentation> postResponse(@PathVariable Long postId, @RequestParam(required = false) String mode) {
+        return postService.getPostResponses(postId, mode).stream().map(resourceEventMapper::apply).collect(Collectors.toList());
     }
 
 }

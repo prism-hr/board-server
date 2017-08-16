@@ -202,7 +202,7 @@ public class DepartmentApiIT extends AbstractIT {
         User boardUser = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             Board board = boardService.getBoard(boardId);
-            userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
+            userRoleService.createOrUpdateUserRole(board, boardUser, Role.ADMINISTRATOR);
             return null;
         });
 

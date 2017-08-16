@@ -55,9 +55,6 @@ public class UserService {
     private UserCacheService userCacheService;
 
     @Inject
-    private DocumentService documentService;
-
-    @Inject
     private ResourceService resourceService;
 
     @Inject

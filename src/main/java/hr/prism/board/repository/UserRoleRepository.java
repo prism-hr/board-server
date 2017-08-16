@@ -4,6 +4,8 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.State;
+import hr.prism.board.value.UserRoleSummary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,6 +35,15 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "and userRole.user = :user " +
             "and userRole.role <> :role")
     List<UserRole> findByResourceAndUserAndNotRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+
+    @Query(value =
+        "select new hr.prism.board.value.UserRoleSummary(userRole.role, count(userRole.id), max(userRole.createdTimestamp)) " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.role = :role " +
+            "and userRole.state in (:userRoleStates) " +
+            "and " + ACTIVE_USER_ROLE_CONSTRAINT)
+    UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates);
 
     Long deleteByResourceAndUser(Resource resource, User user);
 

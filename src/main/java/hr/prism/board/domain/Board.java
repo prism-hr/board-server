@@ -25,12 +25,34 @@ public class Board extends Resource {
     @Enumerated(value = EnumType.STRING)
     private PostVisibility defaultPostVisibility;
 
+    @Column(name = "post_count")
+    private Long postCount;
+
+    @Column(name = "author_count")
+    private Long authorCount;
+
     public PostVisibility getDefaultPostVisibility() {
         return defaultPostVisibility;
     }
 
     public void setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
         this.defaultPostVisibility = defaultPostVisibility;
+    }
+
+    public Long getPostCount() {
+        return postCount;
+    }
+
+    public void setPostCount(Long postCount) {
+        this.postCount = postCount;
+    }
+
+    public Long getAuthorCount() {
+        return authorCount;
+    }
+
+    public void setAuthorCount(Long authorCount) {
+        this.authorCount = authorCount;
     }
 
 }

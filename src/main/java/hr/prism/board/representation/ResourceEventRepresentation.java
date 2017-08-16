@@ -2,6 +2,8 @@ package hr.prism.board.representation;
 
 import hr.prism.board.enums.ResourceEvent;
 
+import java.time.LocalDateTime;
+
 public class ResourceEventRepresentation {
 
     private ResourceEvent event;
@@ -15,6 +17,8 @@ public class ResourceEventRepresentation {
     private String websiteResume;
 
     private String coveringNote;
+
+    private LocalDateTime createdTimestamp;
 
     public ResourceEvent getEvent() {
         return event;
@@ -67,6 +71,15 @@ public class ResourceEventRepresentation {
 
     public ResourceEventRepresentation setCoveringNote(String coveringNote) {
         this.coveringNote = coveringNote;
+        return this;
+    }
+
+    public LocalDateTime getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public ResourceEventRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
         return this;
     }
 

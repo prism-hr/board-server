@@ -53,7 +53,11 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setForwardCandidates(post.getForwardCandidates())
             .setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
-            .setDeadTimestamp(post.getDeadTimestamp());
+            .setDeadTimestamp(post.getDeadTimestamp())
+            .setViewCount(post.getViewCount())
+            .setResponseCount(post.getResponseCount())
+            .setLastViewTimestamp(post.getLastViewTimestamp())
+            .setLastResponseTimestamp(post.getLastResponseTimestamp());
     }
 
     public PostRepresentation applySmall(Post post) {

@@ -35,4 +35,12 @@ ALTER TABLE user
 ALTER TABLE resource
   ADD COLUMN forward_candidates INT(1) UNSIGNED
   AFTER apply_email,
-  MODIFY COLUMN apply_email VARCHAR(255);
+  MODIFY COLUMN apply_email VARCHAR(255),
+  ADD COLUMN board_count BIGINT UNSIGNED AFTER dead_timestamp,
+  ADD COLUMN post_count BIGINT UNSIGNED AFTER board_count,
+  ADD COLUMN author_count BIGINT UNSIGNED AFTER post_count,
+  ADD COLUMN member_count BIGINT UNSIGNED AFTER author_count,
+  ADD COLUMN view_count BIGINT UNSIGNED AFTER member_count,
+  ADD COLUMN response_count BIGINT UNSIGNED AFTER view_count,
+  ADD COLUMN last_view_timestamp DATETIME AFTER response_count,
+  ADD COLUMN last_response_timestamp DATETIME AFTER last_response_timestamp;

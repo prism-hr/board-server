@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.*;
+import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -155,7 +156,7 @@ public class PostService {
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
             updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
-            userRoleService.createUserRole(post, currentUser, Role.ADMINISTRATOR);
+            userRoleService.createOrUpdateUserRole(post, currentUser, Role.ADMINISTRATOR);
             return post;
         });
 
@@ -192,14 +193,21 @@ public class PostService {
         });
     }
 
-    // TODO: return response object and flag whether new or not
-    public void postResponse(Long postId, String ipAddress, ResourceEventDTO resourceEvent) {
+    public ResourceEvent postPostResponse(Long postId, String ipAddress, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
         User user = userService.getCurrentUser();
-        actionService.executeAction(user, post, Action.PURSUE, () -> {
-            resourceEventService.getOrCreatePostResponse(post, user, ipAddress, resourceEvent);
-            return post;
-        });
+        actionService.executeAction(user, post, Action.PURSUE, () -> post);
+        return resourceEventService.getOrCreatePostResponse(post, user, ipAddress, resourceEvent);
+    }
+
+    public List<ResourceEvent> getPostResponses(Long postId, String mode) {
+        if ("view".equals(mode)) {
+            return resourceEventService.getResourceEvents(postId, hr.prism.board.enums.ResourceEvent.VIEW);
+        } else if ("response".equals(mode)) {
+            return resourceEventService.getResourceEvents(postId, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        }
+
+        return resourceEventService.getResourceEvents(postId);
     }
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)

@@ -16,20 +16,6 @@ public abstract class PatchService<T extends BoardEntity> {
     @Inject
     private DocumentService documentService;
 
-    public void patchDocument(T entity, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
-        if (newValueOptional != null) {
-            Document oldValue = getter.get();
-            if (newValueOptional.isPresent()) {
-                DocumentDTO newValue = newValueOptional.get();
-                if (oldValue == null || !Objects.equals(oldValue.getId(), newValue.getId())) {
-                    patchDocument(entity, property, setter, oldValue, newValue);
-                }
-            } else if (oldValue != null) {
-                patchDocument(entity, property, setter, oldValue, null);
-            }
-        }
-    }
-
     public <U> void patchProperty(T entity, String property, Getter<U> getter, Setter<U> setter, Optional<U> newValueOptional) {
         if (newValueOptional != null) {
             U oldValue = getter.get();
@@ -40,6 +26,20 @@ public abstract class PatchService<T extends BoardEntity> {
                 }
             } else if (oldValue != null) {
                 patchProperty(entity, property, setter, oldValue, null);
+            }
+        }
+    }
+
+    public void patchDocument(T entity, String property, Getter<Document> getter, Setter<Document> setter, Optional<DocumentDTO> newValueOptional) {
+        if (newValueOptional != null) {
+            Document oldValue = getter.get();
+            if (newValueOptional.isPresent()) {
+                DocumentDTO newValue = newValueOptional.get();
+                if (oldValue == null || !Objects.equals(oldValue.getId(), newValue.getId())) {
+                    patchDocument(entity, property, setter, oldValue, newValue);
+                }
+            } else if (oldValue != null) {
+                patchDocument(entity, property, setter, oldValue, null);
             }
         }
     }

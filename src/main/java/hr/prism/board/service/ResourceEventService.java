@@ -6,13 +6,17 @@ import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
+import hr.prism.board.value.ResourceEventSummary;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional
@@ -27,32 +31,25 @@ public class ResourceEventService {
     @Inject
     private DocumentService documentService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Value("${view.interval.seconds}")
     private Integer viewIntervalSeconds;
 
     public ResourceEvent getOrCreatePostView(Post post, User user, String ipAddress) {
         ResourceEvent lastResourceEvent = getLastResourceEvent(post, hr.prism.board.enums.ResourceEvent.VIEW, user, ipAddress);
         if (lastResourceEvent == null || isNewEvent(hr.prism.board.enums.ResourceEvent.VIEW, lastResourceEvent)) {
-            return resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user));
+            return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user));
         }
 
         return lastResourceEvent;
     }
 
-    // TODO: add support for user preferences
     public ResourceEvent getOrCreatePostResponse(Post post, User user, String ipAddress, ResourceEventDTO resourceEventDTO) {
-        hr.prism.board.enums.ResourceEvent event;
-        if (post.getApplyWebsite() != null) {
-            event = hr.prism.board.enums.ResourceEvent.CLICK;
-        } else if (post.getApplyDocument() != null) {
-            event = hr.prism.board.enums.ResourceEvent.DOWNLOAD;
-        } else {
-            event = hr.prism.board.enums.ResourceEvent.EMAIL;
-        }
-
-        ResourceEvent lastResourceEvent = getLastResourceEvent(post, event, user, ipAddress);
-        if (lastResourceEvent == null || isNewEvent(event, lastResourceEvent)) {
-            ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(event).setUser(user);
+        ResourceEvent lastResourceEvent = getLastResourceEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user, ipAddress);
+        if (lastResourceEvent == null || isNewEvent(hr.prism.board.enums.ResourceEvent.RESPONSE, lastResourceEvent)) {
+            ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE).setUser(user);
             if (BooleanUtils.isTrue(resourceEventDTO.getShare())) {
                 DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
                 String websiteResume = resourceEventDTO.getWebsiteResume();
@@ -75,27 +72,47 @@ public class ResourceEventService {
                 }
             }
 
-            return resourceEventRepository.save(resourceEvent);
+            return saveResourceEvent(post, resourceEvent);
         }
 
         return lastResourceEvent;
     }
 
+    public List<ResourceEvent> getResourceEvents(Long resourceId) {
+        return resourceEventRepository.findByResourceIdOrderByIdDesc(resourceId);
+    }
+
+    public List<ResourceEvent> getResourceEvents(Long resourceId, hr.prism.board.enums.ResourceEvent event) {
+        return resourceEventRepository.findByResourceIdAndEventOrderByIdDesc(resourceId, event);
+    }
+
     private ResourceEvent getLastResourceEvent(Resource post, hr.prism.board.enums.ResourceEvent event, User user, String ipAddress) {
         if (user == null) {
-            if (ipAddress == null) {
-                return null;
-            }
-
-            return resourceEventRepository.findFirstByResourceAndEventAndIpAddressOrderByIdDesc(post, event, ipAddress);
+            return ipAddress == null ? null : resourceEventRepository.findFirstByResourceAndEventAndIpAddressOrderByIdDesc(post, event, ipAddress);
         }
 
         return resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(post, event, user);
     }
 
     private boolean isNewEvent(hr.prism.board.enums.ResourceEvent event, ResourceEvent lastResourceEvent) {
-        return event.isResponse() && lastResourceEvent.getDocumentResume() == null && lastResourceEvent.getWebsiteResume() == null
+        return event == hr.prism.board.enums.ResourceEvent.RESPONSE && lastResourceEvent.getDocumentResume() == null && lastResourceEvent.getWebsiteResume() == null
             || LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(lastResourceEvent.getCreatedTimestamp());
+    }
+
+    private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
+        resourceEvent = resourceEventRepository.save(resourceEvent);
+        entityManager.flush();
+        for (ResourceEventSummary summary : resourceEventRepository.findSummaryByResource(post)) {
+            if (summary.getKey() == hr.prism.board.enums.ResourceEvent.VIEW) {
+                post.setViewCount(summary.getCount());
+                post.setLastViewTimestamp(summary.getLastTimestamp());
+            } else {
+                post.setResponseCount(summary.getCount());
+                post.setLastResponseTimestamp(summary.getLastTimestamp());
+            }
+        }
+
+        return resourceEvent;
     }
 
 }

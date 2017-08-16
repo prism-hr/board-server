@@ -51,4 +51,5 @@ public class UserDTO {
         this.email = email;
         return this;
     }
+
 }

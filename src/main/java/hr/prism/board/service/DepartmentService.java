@@ -156,7 +156,7 @@ public class DepartmentService {
             resourceService.updateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
             resourceService.createResourceRelation(department, department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
-            userRoleService.createUserRole(department, currentUser, Role.ADMINISTRATOR);
+            userRoleService.createOrUpdateUserRole(department, currentUser, Role.ADMINISTRATOR);
             return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
         }
     }

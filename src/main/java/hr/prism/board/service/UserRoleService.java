@@ -116,8 +116,8 @@ public class UserRoleService {
         return new ArrayList<>(resourceUsersMap.values());
     }
 
-    public void createUserRole(Resource resource, User user, Role role) {
-        createUserRole(user, resource, user, new UserRoleDTO().setRole(role));
+    public void createOrUpdateUserRole(Resource resource, User user, Role role) {
+        createOrUpdateUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
     public ResourceUserRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
@@ -127,7 +127,7 @@ public class UserRoleService {
         Set<UserRoleDTO> roles = resourceUserDTO.getRoles();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             for (UserRoleDTO roleDTO : roles) {
-                createUserRole(currentUser, resource, user, roleDTO);
+                createOrUpdateUserRole(currentUser, resource, user, roleDTO);
             }
 
             return resource;
@@ -151,7 +151,7 @@ public class UserRoleService {
         User user = userService.getOrCreateUser(userDTO);
         Resource resource = resourceService.findOne(resourceId);
         for (UserRoleDTO userRoleDTO : userRoleDTOs) {
-            createUserRole(currentUser, resource, user, userRoleDTO);
+            createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
         }
     }
 
@@ -185,7 +185,7 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
     }
 
-    private void createUserRole(User currentUser, Resource resource, User user, UserRoleDTO roleDTO) {
+    private void createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO roleDTO) {
         if (roleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
@@ -195,6 +195,7 @@ public class UserRoleService {
             userRoleCacheService.createUserRole(currentUser, resource, user, roleDTO, true);
         } else if (userRole.getState() == State.REJECTED) {
             userRole.setState(State.ACCEPTED);
+            userRoleCacheService.updateUserRolesSummary(resource);
         }
     }
 

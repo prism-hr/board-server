@@ -81,7 +81,6 @@ public class ActionService {
                     }
 
                     Long newResourceId = newResource.getId();
-
                     List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
                     if (activities != null) {
                         activityEventService.publishEvent(this, newResourceId, activities);

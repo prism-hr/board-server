@@ -65,6 +65,18 @@ public class Post extends Resource {
     @Column(name = "dead_timestamp", nullable = false)
     private LocalDateTime deadTimestamp;
 
+    @Column(name = "view_count")
+    private Long viewCount;
+
+    @Column(name = "response_count")
+    private Long responseCount;
+
+    @Column(name = "last_view_timestamp")
+    private LocalDateTime lastViewTimestamp;
+
+    @Column(name = "last_response_timestamp")
+    private LocalDateTime lastResponseTimestamp;
+
     public String getDescription() {
         return description;
     }
@@ -143,6 +155,38 @@ public class Post extends Resource {
 
     public void setDeadTimestamp(LocalDateTime deadTimestamp) {
         this.deadTimestamp = deadTimestamp;
+    }
+
+    public Long getViewCount() {
+        return viewCount;
+    }
+
+    public void setViewCount(Long viewCount) {
+        this.viewCount = viewCount;
+    }
+
+    public Long getResponseCount() {
+        return responseCount;
+    }
+
+    public void setResponseCount(Long responseCount) {
+        this.responseCount = responseCount;
+    }
+
+    public LocalDateTime getLastViewTimestamp() {
+        return lastViewTimestamp;
+    }
+
+    public void setLastViewTimestamp(LocalDateTime lastViewTimestamp) {
+        this.lastViewTimestamp = lastViewTimestamp;
+    }
+
+    public LocalDateTime getLastResponseTimestamp() {
+        return lastResponseTimestamp;
+    }
+
+    public void setLastResponseTimestamp(LocalDateTime lastResponseTimestamp) {
+        this.lastResponseTimestamp = lastResponseTimestamp;
     }
 
     @Override

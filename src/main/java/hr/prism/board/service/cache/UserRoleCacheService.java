@@ -1,9 +1,6 @@
 package hr.prism.board.service.cache;
 
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
-import hr.prism.board.domain.UserRoleCategory;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
@@ -13,6 +10,7 @@ import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.value.UserRoleSummary;
 import hr.prism.board.workflow.Notification;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
@@ -64,6 +62,7 @@ public class UserRoleCacheService {
 
         UserRole userRole = userRoleRepository.save(
             new UserRole().setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+        updateUserRolesSummary(resource);
 
         List<MemberCategory> newCategories = userRoleDTO.getCategories();
         if (userRoleDTO.getRole() == Role.MEMBER) {
@@ -100,6 +99,7 @@ public class UserRoleCacheService {
         userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
         userRoleRepository.deleteByResourceAndUser(resource, user);
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER);
+        updateUserRolesSummary(resource);
     }
 
     @CacheEvict(key = "#user.id", value = "users")
@@ -117,6 +117,17 @@ public class UserRoleCacheService {
         }
 
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
+    }
+
+    public void updateUserRolesSummary(Resource resource) {
+        entityManager.flush();
+        if (resource instanceof Department) {
+            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES);
+            ((Department) resource).setMemberCount(userRoleSummary.getCount());
+        } else if (resource instanceof Board) {
+            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES);
+            ((Board) resource).setAuthorCount(userRoleSummary.getCount());
+        }
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {

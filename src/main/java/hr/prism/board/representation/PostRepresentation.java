@@ -37,6 +37,14 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime deadTimestamp;
 
+    private Long viewCount;
+
+    private Long responseCount;
+
+    private LocalDateTime lastViewTimestamp;
+
+    private LocalDateTime lastResponseTimestamp;
+
     public String getDescription() {
         return description;
     }
@@ -160,6 +168,42 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setDeadTimestamp(LocalDateTime deadTimestamp) {
         this.deadTimestamp = deadTimestamp;
+        return this;
+    }
+
+    public Long getViewCount() {
+        return viewCount;
+    }
+
+    public PostRepresentation setViewCount(Long viewCount) {
+        this.viewCount = viewCount;
+        return this;
+    }
+
+    public Long getResponseCount() {
+        return responseCount;
+    }
+
+    public PostRepresentation setResponseCount(Long responseCount) {
+        this.responseCount = responseCount;
+        return this;
+    }
+
+    public LocalDateTime getLastViewTimestamp() {
+        return lastViewTimestamp;
+    }
+
+    public PostRepresentation setLastViewTimestamp(LocalDateTime lastViewTimestamp) {
+        this.lastViewTimestamp = lastViewTimestamp;
+        return this;
+    }
+
+    public LocalDateTime getLastResponseTimestamp() {
+        return lastResponseTimestamp;
+    }
+
+    public PostRepresentation setLastResponseTimestamp(LocalDateTime lastResponseTimestamp) {
+        this.lastResponseTimestamp = lastResponseTimestamp;
         return this;
     }
 
