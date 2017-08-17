@@ -39,9 +39,13 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private Long viewCount;
 
+    private Long referralCount;
+
     private Long responseCount;
 
     private LocalDateTime lastViewTimestamp;
+
+    private LocalDateTime lastReferralTimestamp;
 
     private LocalDateTime lastResponseTimestamp;
 
@@ -182,6 +186,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
+    public Long getReferralCount() {
+        return referralCount;
+    }
+
+    public PostRepresentation setReferralCount(Long referralCount) {
+        this.referralCount = referralCount;
+        return this;
+    }
+
     public Long getResponseCount() {
         return responseCount;
     }
@@ -197,6 +210,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setLastViewTimestamp(LocalDateTime lastViewTimestamp) {
         this.lastViewTimestamp = lastViewTimestamp;
+        return this;
+    }
+
+    public LocalDateTime getLastReferralTimestamp() {
+        return lastReferralTimestamp;
+    }
+
+    public PostRepresentation setLastReferralTimestamp(LocalDateTime lastReferralTimestamp) {
+        this.lastReferralTimestamp = lastReferralTimestamp;
         return this;
     }
 

@@ -118,7 +118,7 @@ public class PostService {
         User user = userService.getCurrentUser();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         return (Post) actionService.executeAction(user, post, Action.PURSUE, () -> {
-            resourceEventService.getOrCreatePostResponse(post, user, ipAddress, null);
+            resourceEventService.getOrCreatePostReferral(post, user, ipAddress);
             return post;
         });
     }
@@ -221,25 +221,18 @@ public class PostService {
         });
     }
 
-    public ResourceEvent createPostResponse(Long postId, String ipAddress, ResourceEventDTO resourceEvent) {
+    public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.PURSUE, () -> post);
-        return resourceEventService.getOrCreatePostResponse(post, user, ipAddress, resourceEvent);
+        return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent);
     }
 
-    public List<ResourceEvent> getPostResponses(Long postId, String mode) {
+    public List<ResourceEvent> getPostResponses(Long postId) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.AUDIT, () -> post);
-
-        if ("view".equals(mode)) {
-            return resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.VIEW);
-        } else if ("response".equals(mode)) {
-            return resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
-        }
-
-        return resourceEventService.getResourceEvents(post);
+        return resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
     }
 
     public ResourceEvent getPostResponse(Long postId, Long responseId) {

@@ -58,12 +58,15 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 .setForwardCandidates(post.getForwardCandidates());
         }
 
+        // TODO: confirm with Iris who can see metrics - would be a better user experience to allow everybody
         return representation.setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
             .setViewCount(post.getViewCount())
+            .setReferralCount(post.getReferralCount())
             .setResponseCount(post.getResponseCount())
             .setLastViewTimestamp(post.getLastViewTimestamp())
+            .setLastReferralTimestamp(post.getLastReferralTimestamp())
             .setLastResponseTimestamp(post.getLastResponseTimestamp())
             .setResponded(post.isResponded());
     }

@@ -1,7 +1,5 @@
 package hr.prism.board.dto;
 
-import org.hibernate.validator.constraints.NotEmpty;
-
 public class ResourceEventDTO {
 
     private Boolean defaultResume;
@@ -10,7 +8,6 @@ public class ResourceEventDTO {
 
     private String websiteResume;
 
-    @NotEmpty
     private String coveringNote;
 
     public Boolean getDefaultResume() {

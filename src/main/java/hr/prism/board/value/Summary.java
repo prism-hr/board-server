@@ -43,4 +43,27 @@ public abstract class Summary<T extends Enum<T>> {
         return this;
     }
 
+    public Summary<T> merge(Summary<T> other) {
+        assert key == other.getKey();
+        Long otherCount = other.getCount();
+        if (count != null || otherCount != null) {
+            if (count == null) {
+                count = otherCount;
+            } else if (otherCount != null) {
+                count = count + otherCount;
+            }
+        }
+
+        LocalDateTime otherLastTimestamp = other.getLastTimestamp();
+        if (lastTimestamp != null || otherLastTimestamp != null) {
+            if (lastTimestamp == null) {
+                lastTimestamp = otherLastTimestamp;
+            } else if (otherLastTimestamp != null) {
+                lastTimestamp = lastTimestamp.isAfter(otherLastTimestamp) ? lastTimestamp : otherLastTimestamp;
+            }
+        }
+
+        return this;
+    }
+
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -90,13 +91,13 @@ public class PostApi {
     }
 
     @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)
-    public ResourceEventRepresentation postResponse(@PathVariable Long postId, @Valid @RequestBody ResourceEventDTO resourceEvent, HttpServletRequest request) {
-        return resourceEventMapper.apply(postService.createPostResponse(postId, BoardUtils.getClientIpAddress(request), resourceEvent));
+    public ResourceEventRepresentation postResponse(@PathVariable Long postId, @Valid @NotNull @RequestBody ResourceEventDTO resourceEvent) {
+        return resourceEventMapper.apply(postService.createPostResponse(postId, resourceEvent));
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
-    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId, @RequestParam(required = false) String mode) {
-        return postService.getPostResponses(postId, mode).stream().map(resourceEventMapper::apply).collect(Collectors.toList());
+    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId) {
+        return postService.getPostResponses(postId).stream().map(resourceEventMapper::apply).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses/{responseId}", method = RequestMethod.GET)

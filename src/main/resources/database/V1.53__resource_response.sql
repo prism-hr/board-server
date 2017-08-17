@@ -40,6 +40,8 @@ ALTER TABLE resource
   ADD COLUMN author_count BIGINT UNSIGNED AFTER post_count,
   ADD COLUMN member_count BIGINT UNSIGNED AFTER author_count,
   ADD COLUMN view_count BIGINT UNSIGNED AFTER member_count,
-  ADD COLUMN response_count BIGINT UNSIGNED AFTER view_count,
+  ADD COLUMN referral_count BIGINT UNSIGNED AFTER view_count,
+  ADD COLUMN response_count BIGINT UNSIGNED AFTER referral_count,
   ADD COLUMN last_view_timestamp DATETIME AFTER response_count,
-  ADD COLUMN last_response_timestamp DATETIME AFTER last_response_timestamp;
+  ADD COLUMN last_referral_timestamp DATETIME AFTER last_view_timestamp,
+  ADD COLUMN last_response_timestamp DATETIME AFTER last_referral_timestamp;

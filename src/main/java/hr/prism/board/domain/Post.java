@@ -68,11 +68,17 @@ public class Post extends Resource {
     @Column(name = "view_count")
     private Long viewCount;
 
+    @Column(name = "referral_count")
+    private Long referralCount;
+
     @Column(name = "response_count")
     private Long responseCount;
 
     @Column(name = "last_view_timestamp")
     private LocalDateTime lastViewTimestamp;
+
+    @Column(name = "last_referral_timestamp")
+    private LocalDateTime lastReferralTimestamp;
 
     @Column(name = "last_response_timestamp")
     private LocalDateTime lastResponseTimestamp;
@@ -168,6 +174,14 @@ public class Post extends Resource {
         this.viewCount = viewCount;
     }
 
+    public Long getReferralCount() {
+        return referralCount;
+    }
+
+    public void setReferralCount(Long referralCount) {
+        this.referralCount = referralCount;
+    }
+
     public Long getResponseCount() {
         return responseCount;
     }
@@ -182,6 +196,14 @@ public class Post extends Resource {
 
     public void setLastViewTimestamp(LocalDateTime lastViewTimestamp) {
         this.lastViewTimestamp = lastViewTimestamp;
+    }
+
+    public LocalDateTime getLastReferralTimestamp() {
+        return lastReferralTimestamp;
+    }
+
+    public void setLastReferralTimestamp(LocalDateTime lastReferralTimestamp) {
+        this.lastReferralTimestamp = lastReferralTimestamp;
     }
 
     public LocalDateTime getLastResponseTimestamp() {

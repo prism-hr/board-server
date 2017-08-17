@@ -8,16 +8,15 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.value.ResourceEventSummary;
-import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -27,97 +26,87 @@ public class ResourceEventService {
     private ResourceEventRepository resourceEventRepository;
 
     @Inject
-    private UserService userService;
-
-    @Inject
     private DocumentService documentService;
 
     @PersistenceContext
     private EntityManager entityManager;
-
-    @Value("${view.interval.seconds}")
-    private Integer viewIntervalSeconds;
 
     public ResourceEvent findOne(Long resourceEventId) {
         return resourceEventRepository.findOne(resourceEventId);
     }
 
     public ResourceEvent getOrCreatePostView(Post post, User user, String ipAddress) {
-        ResourceEvent lastResourceEvent = getLastResourceEvent(post, hr.prism.board.enums.ResourceEvent.VIEW, user, ipAddress);
-        if (lastResourceEvent == null || isNewEvent(hr.prism.board.enums.ResourceEvent.VIEW, lastResourceEvent)) {
-            return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user));
-        }
-
-        throw new BoardDuplicateException(ExceptionCode.DUPLICATE_POST_RESPONSE, lastResourceEvent.getId());
+        verifyEventIdentifiable(user, ipAddress);
+        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user).setIpAddress(ipAddress));
     }
 
-    public ResourceEvent getOrCreatePostResponse(Post post, User user, String ipAddress, ResourceEventDTO resourceEventDTO) {
-        ResourceEvent lastResourceEvent = getLastResourceEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user, ipAddress);
-        if (lastResourceEvent == null || isNewEvent(hr.prism.board.enums.ResourceEvent.RESPONSE, lastResourceEvent)) {
-            ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE).setUser(user);
-            if (resourceEventDTO != null) {
-                DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
-                String websiteResume = resourceEventDTO.getWebsiteResume();
-                String coveringNote = resourceEventDTO.getCoveringNote();
-
-                String applyEmail = post.getApplyEmail();
-                if (applyEmail != null || BooleanUtils.isTrue(post.getForwardCandidates())) {
-                    if ((documentResumeDTO != null || websiteResume != null) && coveringNote != null) {
-                        Document documentResume = null;
-                        if (documentResumeDTO != null) {
-                            documentResume = documentService.getOrCreateDocument(documentResumeDTO);
-                        }
-
-                        resourceEvent.setDocumentResume(documentResume);
-                        resourceEvent.setWebsiteResume(websiteResume);
-                        resourceEvent.setCoveringNote(coveringNote);
-
-                        if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
-                            userService.updateUserResume(user, documentResume, websiteResume);
-                        }
-                    } else if (applyEmail == null) {
-                        throw new BoardException(ExceptionCode.INVALID_POST_RESPONSE);
-                    }
-                }
-            }
-
-            return saveResourceEvent(post, resourceEvent);
-        }
-
-        throw new BoardDuplicateException(ExceptionCode.DUPLICATE_POST_RESPONSE, lastResourceEvent.getId());
+    public ResourceEvent getOrCreatePostReferral(Post post, User user, String ipAddress) {
+        verifyEventIdentifiable(user, ipAddress);
+        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.REFERRAL).setUser(user).setIpAddress(ipAddress));
     }
 
-    public List<ResourceEvent> getResourceEvents(Resource resource) {
-        return resourceEventRepository.findByResourceOrderByIdDesc(resource);
+    public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
+        DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
+        String websiteResume = resourceEventDTO.getWebsiteResume();
+        String coveringNote = resourceEventDTO.getCoveringNote();
+        if (documentResumeDTO == null && websiteResume == null || post.getApplyEmail() != null && coveringNote == null) {
+            throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
+        }
+
+        ResourceEvent previousResponse = resourceEventRepository.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user);
+        if (previousResponse != null) {
+            throw new BoardDuplicateException(ExceptionCode.DUPLICATE_RESOURCE_EVENT, previousResponse.getId());
+        }
+
+        Document documentResume = null;
+        if (documentResumeDTO != null) {
+            documentResume = documentService.getOrCreateDocument(documentResumeDTO);
+        }
+
+        return resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
+            .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
     }
 
     public List<ResourceEvent> getResourceEvents(Resource resource, hr.prism.board.enums.ResourceEvent event) {
         return resourceEventRepository.findByResourceAndEventOrderByIdDesc(resource, event);
     }
 
-    private ResourceEvent getLastResourceEvent(Resource post, hr.prism.board.enums.ResourceEvent event, User user, String ipAddress) {
-        if (user == null) {
-            return ipAddress == null ? null : resourceEventRepository.findFirstByResourceAndEventAndIpAddressOrderByIdDesc(post, event, ipAddress);
+    private void verifyEventIdentifiable(User user, String ipAddress) {
+        if (user == null && ipAddress == null) {
+            throw new BoardException(ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT);
         }
-
-        return resourceEventRepository.findFirstByResourceAndEventAndUserOrderByIdDesc(post, event, user);
-    }
-
-    private boolean isNewEvent(hr.prism.board.enums.ResourceEvent event, ResourceEvent lastResourceEvent) {
-        return event == hr.prism.board.enums.ResourceEvent.RESPONSE && lastResourceEvent.getDocumentResume() == null && lastResourceEvent.getWebsiteResume() == null
-            || LocalDateTime.now().minusSeconds(viewIntervalSeconds).isAfter(lastResourceEvent.getCreatedTimestamp());
     }
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
         resourceEvent = resourceEventRepository.save(resourceEvent);
         entityManager.flush();
-        for (ResourceEventSummary summary : resourceEventRepository.findSummaryByResource(post)) {
-            if (summary.getKey() == hr.prism.board.enums.ResourceEvent.VIEW) {
-                post.setViewCount(summary.getCount());
-                post.setLastViewTimestamp(summary.getLastTimestamp());
+
+        Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries = resourceEventRepository.findUserSummaryByResource(post)
+            .stream().collect(Collectors.toMap(ResourceEventSummary::getKey, resourceEventSummary -> resourceEventSummary));
+        resourceEventRepository.findIpAddressSummaryByResource(post).forEach(summary -> {
+            hr.prism.board.enums.ResourceEvent key = summary.getKey();
+            ResourceEventSummary value = summaries.get(summary.getKey());
+            if (value == null) {
+                summaries.put(key, summary);
             } else {
-                post.setResponseCount(summary.getCount());
-                post.setLastResponseTimestamp(summary.getLastTimestamp());
+                value.merge(summary);
+            }
+        });
+
+        for (ResourceEventSummary summary : summaries.values()) {
+            switch (summary.getKey()) {
+                case VIEW:
+                    post.setViewCount(summary.getCount());
+                    post.setLastViewTimestamp(summary.getLastTimestamp());
+                    break;
+                case REFERRAL:
+                    post.setReferralCount(summary.getCount());
+                    post.setLastResponseTimestamp(summary.getLastTimestamp());
+                    break;
+                case RESPONSE:
+                    post.setResponseCount(summary.getCount());
+                    post.setLastResponseTimestamp(summary.getLastTimestamp());
+                    break;
             }
         }
 
