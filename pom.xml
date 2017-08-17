@@ -351,8 +351,8 @@
             <properties>
                 <profile.id>uat</profile.id>
                 <profile.environment>board-uat.prism.hr</profile.environment>
-                <profile.app.url>https://board-uat.prism.hr</profile.app.url>
-                <profile.server.url>https://board-uat.prism.hr/api</profile.server.url>
+                <profile.app.url>http://board-uat.prism.hr</profile.app.url>
+                <profile.server.url>http://board-uat.prism.hr/api</profile.server.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>d4da5d66c6d3e8a2cb2dc86552296b27</profile.auth.facebook.appSecret>
@@ -368,7 +368,7 @@
                 <profile.id>prod</profile.id>
                 <profile.environment>board.prism.hr</profile.environment>
                 <profile.app.url>https://board.prism.hr</profile.app.url>
-                <profile.server.url>https://board-uat.prism.hr/api</profile.server.url>
+                <profile.server.url>https://board.prism.hr/api</profile.server.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>

@@ -11,6 +11,7 @@
 [#if image??]
     <meta property="og:image" content="${image}">
 [/#if]
+    <meta property="og:image:alt" content="${imageAlt}">
 
     <base href="/">
 

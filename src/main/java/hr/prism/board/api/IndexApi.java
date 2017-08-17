@@ -32,6 +32,7 @@ public class IndexApi {
 
     @RequestMapping(value = "/api/index/{departmentHandle}", method = RequestMethod.GET)
     public String getDepartment(@PathVariable String departmentHandle, Model model) {
+        fillGenericModel(model);
         Department department = departmentService.getDepartment(departmentHandle);
         if (department != null) {
             model.addAttribute("title", department.getName());
@@ -40,13 +41,13 @@ public class IndexApi {
             if (department.getDocumentLogo() != null) {
                 model.addAttribute("image", department.getDocumentLogo().getCloudinaryUrl());
             }
-            return "index";
         }
-        return getGenericIndex(model);
+        return "index";
     }
 
     @RequestMapping(value = "/api/index/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
     public String getBoard(@PathVariable String departmentHandle, @PathVariable String boardHandle, Model model) {
+        fillGenericModel(model);
         Board board = boardService.getBoard(departmentHandle + "/" + boardHandle);
         if (board != null) {
             model.addAttribute("title", board.getName());
@@ -55,13 +56,13 @@ public class IndexApi {
             if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
-            return "index";
         }
-        return getGenericIndex(model);
+        return "index";
     }
 
     @RequestMapping(value = "/api/index/{departmentHandle}/{boardHandle}/{postId}", method = RequestMethod.GET)
     public String getPost(@PathVariable Long postId, Model model) {
+        fillGenericModel(model);
         Post post = postService.getPost(postId);
         if (post != null) {
             Board board = (Board) post.getParent();
@@ -72,22 +73,22 @@ public class IndexApi {
             if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
-            return "index";
         }
-        return getGenericIndex(model);
+        return "index";
     }
 
     @RequestMapping(value = "/api/index", method = RequestMethod.GET)
     public String getIndex(Model model) {
-        return getGenericIndex(model);
+        fillGenericModel(model);
+        return "index";
     }
 
-    private String getGenericIndex(Model model) {
+    private void fillGenericModel(Model model) {
         model.addAttribute("title", "Prism");
         model.addAttribute("description", "Student placement marketplace");
         model.addAttribute("url", environment.getProperty("app.url"));
         model.addAttribute("image", environment.getProperty("app.url") + "/assets/prism-logo.png");
-        return "index";
+        model.addAttribute("imageAlt", environment.getProperty("app.url") + "/assets/prism-logo.png");
     }
 
 }
