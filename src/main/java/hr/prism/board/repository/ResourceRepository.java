@@ -45,8 +45,8 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
     @Modifying
     @Query(value =
         "UPDATE resource " +
-            "SET handle = concat(:newHandle, substring(handle, length(:handle) + 1)) " +
-            "WHERE handle LIKE concat(:handle, '/%')",
+            "SET handle = CONCAT(:newHandle, SUBSTRING(handle, LENGTH(:handle) + 1)) " +
+            "WHERE handle LIKE CONCAT(:handle, '/%')",
         nativeQuery = true)
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
 

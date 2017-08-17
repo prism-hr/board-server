@@ -7,7 +7,10 @@ import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
+import hr.prism.board.service.event.ActivityEventService;
+import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.value.ResourceEventSummary;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,14 @@ public class ResourceEventService {
 
     @Inject
     private DocumentService documentService;
+
+    @Lazy
+    @Inject
+    private ActivityEventService activityEventService;
+
+    @Lazy
+    @Inject
+    private NotificationEventService notificationEventService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -63,8 +74,11 @@ public class ResourceEventService {
             documentResume = documentService.getOrCreateDocument(documentResumeDTO);
         }
 
-        return resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
+        ResourceEvent response = resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
             .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
+
+        // TODO: prompt / notify
+        return response;
     }
 
     public List<ResourceEvent> getResourceEvents(Resource resource, hr.prism.board.enums.ResourceEvent event) {

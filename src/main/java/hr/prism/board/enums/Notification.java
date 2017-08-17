@@ -25,7 +25,8 @@ public enum Notification {
     RESTORE_BOARD_NOTIFICATION(AuthorizedRecipientList.class),
     RESTORE_POST_NOTIFICATION(AuthorizedRecipientList.class),
     RETIRE_POST_NOTIFICATION(AuthorizedRecipientList.class),
-    SUSPEND_POST_NOTIFICATION(AuthorizedRecipientList.class);
+    SUSPEND_POST_NOTIFICATION(AuthorizedRecipientList.class),
+    RESPOND_POST_NOTIFICATION(AuthorizedRecipientList.class);
 
     private Class<? extends NotificationRecipientList> recipients;
 

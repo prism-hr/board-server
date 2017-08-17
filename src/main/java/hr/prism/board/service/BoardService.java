@@ -139,7 +139,7 @@ public class BoardService {
         Map<String, Object> model = createBoardBadgeModel(board, department, options);
 
         List<Post> posts = postService.getPosts(board.getId(), true);
-        posts = posts.subList(0, Math.min(posts.size(), options.getPostCount())); // FIXME use query params in order to limit results
+        posts = posts.subList(0, Math.min(posts.size(), options.getPostCount()));
         model.put("posts", posts);
 
         StringWriter stringWriter = new StringWriter();
@@ -148,7 +148,12 @@ public class BoardService {
         } catch (IOException | TemplateException e) {
             throw new Error(e);
         }
+
         return stringWriter.toString();
+    }
+
+    public void updateBoardPostCounts(List<Long> postIds, String state) {
+        boardRepository.updateBoardPostCounts(postIds, state);
     }
 
     private Map<String, Object> createBoardBadgeModel(Board board, Department department, WidgetOptionsDTO options) {

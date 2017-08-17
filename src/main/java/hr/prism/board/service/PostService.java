@@ -79,6 +79,9 @@ public class PostService {
     @Inject
     private ResourceEventService resourceEventService;
 
+    @Inject
+    private BoardService boardService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -258,6 +261,13 @@ public class PostService {
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
         List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
+
+        List<Long> modifiedPostIds = new ArrayList<>();
+        modifiedPostIds.addAll(postToRetireIds);
+        modifiedPostIds.addAll(postToPublishIds);
+        if (!modifiedPostIds.isEmpty()) {
+            boardService.updateBoardPostCounts(modifiedPostIds, State.ACCEPTED.name());
+        }
     }
 
     public LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
@@ -407,7 +417,6 @@ public class PostService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    // TODO: Register the prompts
     private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
             new TransactionTemplate(platformTransactionManager).execute(status -> {
