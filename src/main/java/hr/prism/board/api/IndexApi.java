@@ -69,11 +69,16 @@ public class IndexApi {
             model.addAttribute("description", post.getSummary());
             model.addAttribute("url", environment.getProperty("app.url") + "/" + board.getParent().getHandle()
                 + "/" + board.getHandle() + "/" + post.getId());
-            if (post.getDocumentLogo() != null) {
+            if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
             return "index";
         }
+        return getGenericIndex(model);
+    }
+
+    @RequestMapping(value = "/api/index", method = RequestMethod.GET)
+    public String getIndex(Model model) {
         return getGenericIndex(model);
     }
 
