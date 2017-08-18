@@ -13,7 +13,6 @@ CREATE TABLE resource_event (
   INDEX (resource_id, event, user_id, ip_address),
   INDEX (user_id),
   INDEX (document_resume_id),
-  INDEX (website_resume),
   INDEX (created_timestamp),
   INDEX (updated_timestamp),
   FOREIGN KEY (resource_id) REFERENCES resource (id),
