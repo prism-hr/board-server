@@ -56,7 +56,7 @@ public class User extends BoardEntity implements Comparable<User> {
     @JoinColumn(name = "document_resume_id")
     private Document documentResume;
 
-    @Column(name = "website")
+    @Column(name = "website_resume")
     private String websiteResume;
 
     @OneToMany(mappedBy = "user")
