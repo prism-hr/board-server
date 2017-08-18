@@ -9,6 +9,7 @@ import hr.prism.board.value.UserRoleSummary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -51,7 +52,8 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT)
-    UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates);
+    UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
+                                                 @Param("baseline") LocalDate baseline);
 
     Long deleteByResourceAndUser(Resource resource, User user);
 

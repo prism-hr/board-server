@@ -6,7 +6,7 @@ CREATE TABLE resource_event (
   ip_address         VARCHAR(50),
   document_resume_id BIGINT UNSIGNED,
   website_resume     VARCHAR(2048),
-  covering_note      VARCHAR(1000)   NOT NULL,
+  covering_note      VARCHAR(1000),
   created_timestamp  DATETIME        NOT NULL,
   updated_timestamp  DATETIME,
   PRIMARY KEY (id),

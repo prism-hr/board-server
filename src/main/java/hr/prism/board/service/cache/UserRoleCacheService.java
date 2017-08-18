@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -122,10 +123,10 @@ public class UserRoleCacheService {
     public void updateUserRolesSummary(Resource resource) {
         entityManager.flush();
         if (resource instanceof Department) {
-            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES);
+            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
             ((Department) resource).setMemberCount(userRoleSummary.getCount());
         } else if (resource instanceof Board) {
-            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES);
+            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
             ((Board) resource).setAuthorCount(userRoleSummary.getCount());
         }
     }
