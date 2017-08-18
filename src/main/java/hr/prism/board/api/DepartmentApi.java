@@ -7,8 +7,10 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
+import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +34,9 @@ public class DepartmentApi {
 
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
+
+    @Inject
+    private UserRoleMapper userRoleMapper;
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.POST)
     public DepartmentRepresentation postDepartment(@RequestBody @Valid DepartmentDTO departmentDTO) {
@@ -72,6 +77,11 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.POST)
     public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
         departmentService.createMembershipRequest(departmentId, userRoleDTO);
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.GET)
+    public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId) {
+        return departmentService.getMembershipRequests(departmentId).stream().map(userRoleMapper::apply).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)

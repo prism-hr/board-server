@@ -221,11 +221,18 @@ public class DepartmentService {
 
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
-        activityEventService.publishEvent(this, departmentId, userRole.getId(), Collections.singletonList(activity));
+        activityEventService.publishEvent(this, departmentId, userRole, Collections.singletonList(activity));
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+    }
+
+    public List<UserRole> getMembershipRequests(Long departmentId) {
+        User user = userService.getCurrentUserSecured();
+        Resource department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
+        return userRoleService.findByResourceAndState(department, State.PENDING);
     }
 
     public void processMembershipRequest(Long departmentId, Long userId, State state) {

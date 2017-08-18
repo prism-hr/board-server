@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "activity", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_role_id", "activity"}))
+@Table(name = "activity", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_role_id",  "resource_event_id", "activity"}))
 public class Activity extends BoardEntity {
 
     @ManyToOne
@@ -15,6 +15,10 @@ public class Activity extends BoardEntity {
     @ManyToOne
     @JoinColumn(name = "user_role_id")
     private UserRole userRole;
+
+    @ManyToOne
+    @JoinColumn(name = "resource_event_id")
+    private ResourceEvent resourceEvent;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "activity", nullable = false)
@@ -41,6 +45,15 @@ public class Activity extends BoardEntity {
 
     public Activity setUserRole(UserRole userRole) {
         this.userRole = userRole;
+        return this;
+    }
+
+    public ResourceEvent getResourceEvent() {
+        return resourceEvent;
+    }
+
+    public Activity setResourceEvent(ResourceEvent resourceEvent) {
+        this.resourceEvent = resourceEvent;
         return this;
     }
 

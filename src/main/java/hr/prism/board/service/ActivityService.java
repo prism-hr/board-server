@@ -48,29 +48,13 @@ public class ActivityService {
     }
 
     public List<ActivityRepresentation> getActivities(Long userId) {
-        return getActivities(userId, null, null);
-    }
-
-    public List<ActivityRepresentation> getActivities(Long resourceId, String filter) {
-        return getActivities(userService.getCurrentUserSecured().getId(), resourceId, filter);
-    }
-
-    public List<ActivityRepresentation> getActivities(Long userId, Long resourceId, String filter) {
-        if (resourceId == null) {
-            return activityRepository.findByUserId(userId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
-        } else if ("userRole".equals(filter)) {
-            return activityRepository.findByUserIdAndResourceIdAndUserRoleNotNull(userId, resourceId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER)
-                .stream().map(activityMapper).collect(Collectors.toList());
-        }
-
-        return activityRepository.findByUserIdAndResourceId(userId, resourceId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER)
-            .stream().map(activityMapper).collect(Collectors.toList());
+        return activityRepository.findByUserId(userId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER).stream().map(activityMapper).collect(Collectors.toList());
     }
 
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
         if (entity == null) {
-            entity = createActivity(resource, null, activity);
+            entity = createActivity(resource, null, null, activity);
         }
 
         return entity;
@@ -79,7 +63,16 @@ public class ActivityService {
     public Activity getOrCreateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByUserRoleAndActivity(userRole, activity);
         if (entity == null) {
-            entity = createActivity(userRole.getResource(), userRole, activity);
+            entity = createActivity(userRole.getResource(), userRole, null, activity);
+        }
+
+        return entity;
+    }
+
+    public Activity getOrCreateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
+        Activity entity = activityRepository.findByResourceEventAndActivity(resourceEvent, activity);
+        if (entity == null) {
+            entity = createActivity(resourceEvent.getResource(), null, resourceEvent, activity);
         }
 
         return entity;
@@ -117,9 +110,9 @@ public class ActivityService {
         activityRepository.deleteByUserRole(userRole);
     }
 
-    private Activity createActivity(Resource resource, UserRole userRole, hr.prism.board.enums.Activity activity) {
+    private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
         return activityRepository.save(new hr.prism.board.domain.Activity()
-            .setResource(resource).setUserRole(userRole).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));
+            .setResource(resource).setUserRole(userRole).setResourceEvent(resourceEvent).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));
     }
 
 }

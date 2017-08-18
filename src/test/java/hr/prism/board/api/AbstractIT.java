@@ -202,13 +202,13 @@ public abstract class AbstractIT {
 
     void listenForNewActivities(Long userId) {
         testUserService.setAuthentication(userId);
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        Assert.assertTrue(userApi.getActivities().isEmpty());
         userApi.refreshActivities();
     }
 
     void verifyActivitiesEmpty(Long userId) {
         testUserService.setAuthentication(userId);
-        Assert.assertTrue(userApi.getActivities(null, null).isEmpty());
+        Assert.assertTrue(userApi.getActivities().isEmpty());
         testUserActivityService.verify(userId);
     }
 

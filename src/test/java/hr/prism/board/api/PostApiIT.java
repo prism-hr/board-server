@@ -536,7 +536,7 @@ public class PostApiIT extends AbstractIT {
         // Clear activity streams for the admin users
         for (Long userId : new Long[]{departmentUserId, boardUserId}) {
             testUserService.setAuthentication(userId);
-            List<Long> activityIds = userApi.getActivities(null, null).stream().map(ActivityRepresentation::getId).collect(Collectors.toList());
+            List<Long> activityIds = userApi.getActivities().stream().map(ActivityRepresentation::getId).collect(Collectors.toList());
             Assert.assertEquals(2, activityIds.size());
             for (Long activityId : activityIds) {
                 userApi.dismissActivity(activityId);

@@ -83,8 +83,8 @@ public class UserApi {
     }
 
     @RequestMapping(value = "api/user/activities", method = RequestMethod.GET)
-    public List<ActivityRepresentation> getActivities(@RequestParam(required = false) Long resourceId, @RequestParam(required = false) String filter) {
-        return activityService.getActivities(resourceId, filter);
+    public List<ActivityRepresentation> getActivities() {
+        return activityService.getActivities(userService.getCurrentUserSecured().getId());
     }
 
     @RequestMapping(value = "api/user/activities/refresh", method = RequestMethod.GET)

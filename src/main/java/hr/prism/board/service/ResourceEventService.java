@@ -3,6 +3,9 @@ package hr.prism.board.service;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
+import hr.prism.board.enums.Notification;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,7 +81,14 @@ public class ResourceEventService {
         ResourceEvent response = resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
             .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
 
-        // TODO: prompt / notify
+        Long postId = post.getId();
+        hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
+            .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setActivity(hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY);
+        activityEventService.publishEvent(this, postId, response, Collections.singletonList(activity));
+
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.RESPOND_POST_NOTIFICATION);
+        notificationEventService.publishEvent(this, postId, Collections.singletonList(notification));
         return response;
     }
 

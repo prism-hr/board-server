@@ -35,13 +35,31 @@ ALTER TABLE resource
   ADD COLUMN forward_candidates INT(1) UNSIGNED
   AFTER apply_email,
   MODIFY COLUMN apply_email VARCHAR(255),
-  ADD COLUMN board_count BIGINT UNSIGNED AFTER dead_timestamp,
-  ADD COLUMN post_count BIGINT UNSIGNED AFTER board_count,
-  ADD COLUMN author_count BIGINT UNSIGNED AFTER post_count,
-  ADD COLUMN member_count BIGINT UNSIGNED AFTER author_count,
-  ADD COLUMN view_count BIGINT UNSIGNED AFTER member_count,
-  ADD COLUMN referral_count BIGINT UNSIGNED AFTER view_count,
-  ADD COLUMN response_count BIGINT UNSIGNED AFTER referral_count,
-  ADD COLUMN last_view_timestamp DATETIME AFTER response_count,
-  ADD COLUMN last_referral_timestamp DATETIME AFTER last_view_timestamp,
-  ADD COLUMN last_response_timestamp DATETIME AFTER last_referral_timestamp;
+  ADD COLUMN board_count BIGINT UNSIGNED
+  AFTER dead_timestamp,
+  ADD COLUMN post_count BIGINT UNSIGNED
+  AFTER board_count,
+  ADD COLUMN author_count BIGINT UNSIGNED
+  AFTER post_count,
+  ADD COLUMN member_count BIGINT UNSIGNED
+  AFTER author_count,
+  ADD COLUMN view_count BIGINT UNSIGNED
+  AFTER member_count,
+  ADD COLUMN referral_count BIGINT UNSIGNED
+  AFTER view_count,
+  ADD COLUMN response_count BIGINT UNSIGNED
+  AFTER referral_count,
+  ADD COLUMN last_view_timestamp DATETIME
+  AFTER response_count,
+  ADD COLUMN last_referral_timestamp DATETIME
+  AFTER last_view_timestamp,
+  ADD COLUMN last_response_timestamp DATETIME
+  AFTER last_referral_timestamp;
+
+ALTER TABLE activity
+  DROP FOREIGN KEY activity_ibfk_3,
+  DROP INDEX resource_id,
+  ADD COLUMN resource_event_id BIGINT UNSIGNED
+  AFTER user_role_id,
+  ADD UNIQUE INDEX (resource_id, user_role_id, resource_event_id, activity),
+  ADD FOREIGN KEY (resource_id) REFERENCES resource (id);

@@ -2,6 +2,7 @@ package hr.prism.board.service.event;
 
 import hr.prism.board.domain.BoardEntity;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
@@ -34,6 +35,9 @@ public class ActivityEventService {
     private UserRoleService userRoleService;
 
     @Inject
+    private ResourceEventService resourceEventService;
+
+    @Inject
     private UserActivityService userActivityService;
 
     @Inject
@@ -46,8 +50,13 @@ public class ActivityEventService {
         applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, activities));
     }
 
-    public void publishEvent(Object source, Long resourceId, Long userRoleId, List<Activity> activities) {
-        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, userRoleId, activities));
+    public void publishEvent(Object source, Long resourceId, BoardEntity entity, List<Activity> activities) {
+        Class<? extends BoardEntity> entityClass = entity.getClass();
+        if (entityClass == UserRole.class) {
+            applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, entity.getId(), null, activities));
+        } else if (entityClass == ResourceEvent.class) {
+            applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, null, entity.getId(), activities));
+        }
     }
 
     public void publishEvent(Object source, Long resourceId, Long userRoleId) {
@@ -63,17 +72,19 @@ public class ActivityEventService {
     protected void sendActivities(ActivityEvent activityEvent) {
         Resource resource;
         Long userRoleId = activityEvent.getUserRoleId();
+        Long resourceEventId = activityEvent.getResourceEventId();
         Map<Pair<BoardEntity, hr.prism.board.enums.Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity = new HashMap<>();
-        if (userRoleId == null) {
-            resource = resourceService.findOne(activityEvent.getResourceId());
-            activityService.deleteActivities(resource);
+        if (resourceEventId != null) {
+            ResourceEvent resourceEvent = resourceEventService.findOne(resourceEventId);
             activityEvent.getActivities().forEach(activity -> {
                 hr.prism.board.enums.Activity activityEnum = activity.getActivity();
                 hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
-                    .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.getOrCreateActivity(resource, activityEnum));
+                    .computeIfAbsent(Pair.of(resourceEvent, activityEnum), value -> activityService.getOrCreateActivity(resourceEvent, activityEnum));
                 activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
             });
-        } else {
+
+            resource = resourceEvent.getResource();
+        } else if (userRoleId != null) {
             UserRole userRole = userRoleService.fineOne(userRoleId);
             if (userRole.getState() == State.PENDING) {
                 activityEvent.getActivities().forEach(activity -> {
@@ -87,6 +98,15 @@ public class ActivityEventService {
             }
 
             resource = userRole.getResource();
+        } else {
+            resource = resourceService.findOne(activityEvent.getResourceId());
+            activityService.deleteActivities(resource);
+            activityEvent.getActivities().forEach(activity -> {
+                hr.prism.board.enums.Activity activityEnum = activity.getActivity();
+                hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
+                    .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.getOrCreateActivity(resource, activityEnum));
+                activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+            });
         }
 
         Collection<Long> userIds = userActivityService.getUserIds();

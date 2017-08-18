@@ -12,7 +12,7 @@ public class ResourceUserRedirectProperty implements NotificationProperty {
 
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
-        return serverUrl + "/redirect?resource=" + notificationRequest.getResource().getId() + "&view=activity&filter=userRole";
+        return serverUrl + "/redirect?resource=" + notificationRequest.getResource().getId() + "&view=memberships";
     }
 
 }
