@@ -8,7 +8,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.social.connect.Connection;
-import org.springframework.social.connect.ConnectionData;
 import org.springframework.social.facebook.api.Facebook;
 import org.springframework.social.facebook.connect.FacebookConnectionFactory;
 import org.springframework.social.oauth2.AccessGrant;
@@ -27,7 +26,6 @@ public class FacebookAdapter implements OauthAdapter {
         try {
             AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
             Connection<Facebook> connection = cf.createConnection(accessGrant);
-            ConnectionData data = connection.createData();
             org.springframework.social.facebook.api.User user = connection.getApi().fetchObject(
                 "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");
 
