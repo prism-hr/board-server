@@ -325,14 +325,6 @@ public class PostService {
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
 
-        resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
-        patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
-
-        Board board = (Board) post.getParent();
-        Department department = (Department) board.getParent();
-        patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-        patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
-
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (BoardUtils.isPresent(applyWebsite)) {
             patchPostApply(post, applyWebsite, Optional.empty(), Optional.empty());
@@ -348,7 +340,13 @@ public class PostService {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
         }
 
-        resourcePatchService.patchProperty(post, "forwardCandidates", post::getForwardCandidates, post::setForwardCandidates, postDTO.getForwardCandidates());
+        Board board = (Board) post.getParent();
+        Department department = (Department) board.getParent();
+        patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
+        patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
+
+        resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
+        patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
 
         Optional<LocalDateTime> liveTimestamp = postDTO.getLiveTimestamp();
         Optional<LocalDateTime> deadTimestamp = postDTO.getDeadTimestamp();
