@@ -21,7 +21,8 @@ public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation
             .setRole(userRole.getRole())
             .setState(userRole.getState())
             .setCategories(userRole.getCategories().stream().map(UserRoleCategory::getName).collect(Collectors.toList()))
-            .setExpiryDate(userRole.getExpiryDate());
+            .setExpiryDate(userRole.getExpiryDate())
+            .setViewed(userRole.isViewed());
     }
 
 }

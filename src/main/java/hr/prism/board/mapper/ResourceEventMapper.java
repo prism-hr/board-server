@@ -29,7 +29,8 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             .setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()))
             .setWebsiteResume(resourceEvent.getWebsiteResume())
             .setCoveringNote(resourceEvent.getCoveringNote())
-            .setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
+            .setCreatedTimestamp(resourceEvent.getCreatedTimestamp())
+            .setViewed(resourceEvent.isViewed());
     }
 
 }

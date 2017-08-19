@@ -20,6 +20,8 @@ public class ResourceEventRepresentation {
 
     private LocalDateTime createdTimestamp;
 
+    private boolean viewed;
+
     public ResourceEvent getEvent() {
         return event;
     }
@@ -80,6 +82,15 @@ public class ResourceEventRepresentation {
 
     public ResourceEventRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
+        return this;
+    }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public ResourceEventRepresentation setViewed(boolean viewed) {
+        this.viewed = viewed;
         return this;
     }
 

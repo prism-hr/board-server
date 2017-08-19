@@ -20,6 +20,8 @@ public class UserRoleRepresentation {
 
     private List<MemberCategory> categories;
 
+    private boolean viewed;
+
     public UserRepresentation getUser() {
         return user;
     }
@@ -62,6 +64,15 @@ public class UserRoleRepresentation {
 
     public UserRoleRepresentation setCategories(List<MemberCategory> categories) {
         this.categories = categories;
+        return this;
+    }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public UserRoleRepresentation setViewed(boolean viewed) {
+        this.viewed = viewed;
         return this;
     }
 

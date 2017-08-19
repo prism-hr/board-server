@@ -12,11 +12,11 @@ public class Activity extends BoardEntity {
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "user_role_id")
     private UserRole userRole;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "resource_event_id")
     private ResourceEvent resourceEvent;
 

@@ -4,6 +4,7 @@ import hr.prism.board.domain.Activity;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.UserRole;
+import hr.prism.board.enums.ActivityEvent;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,11 +32,13 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and userRole.state in (:userRoleStates) " +
             "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name)" +
             "and activity.id not in (" +
-            "select activityDismissal.activity.id " +
-            "from ActivityDismissal activityDismissal " +
-            "where activityDismissal.user.id = :userId) " +
+            "select activityEvent.activity.id " +
+            "from ActivityEvent activityEvent " +
+            "where activityEvent.user.id = :userId " +
+            "and activityEvent.event = :activityEvent) " +
             "order by activity.id desc")
-    List<Activity> findByUserId(@Param("userId") Long userId, @Param("userRoleStates") List<State> state, @Param("categoryType") CategoryType categoryType);
+    List<Activity> findByUserId(@Param("userId") Long userId, @Param("userRoleStates") List<State> state, @Param("categoryType") CategoryType categoryType,
+                                @Param("activityEvent") ActivityEvent activityEvent);
 
     @Query(value =
         "select activity " +

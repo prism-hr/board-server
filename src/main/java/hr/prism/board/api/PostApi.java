@@ -105,4 +105,9 @@ public class PostApi {
         return resourceEventMapper.apply(postService.getPostResponse(postId, responseId));
     }
 
+    @RequestMapping(value = "api/posts/{postId}/responses/{responseId}/view", method = RequestMethod.PUT)
+    public ResourceEventRepresentation viewPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
+        return resourceEventMapper.apply(postService.viewPostResponse(postId, responseId));
+    }
+
 }

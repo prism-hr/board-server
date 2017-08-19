@@ -36,9 +36,15 @@ public class UserRole extends BoardEntity {
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
+    @OneToOne(mappedBy = "userRole")
+    private Activity activity;
+
     @SortNatural
     @OneToMany(mappedBy = "userRole")
     private SortedSet<UserRoleCategory> categories = new TreeSet<>();
+
+    @Transient
+    private boolean viewed;
 
     public Resource getResource() {
         return resource;
@@ -85,7 +91,26 @@ public class UserRole extends BoardEntity {
         return this;
     }
 
+    public Activity getActivity() {
+        return activity;
+    }
+
+    public UserRole setActivity(Activity activity) {
+        this.activity = activity;
+        return this;
+    }
+
     public Set<UserRoleCategory> getCategories() {
         return categories;
     }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public UserRole setViewed(boolean viewed) {
+        this.viewed = viewed;
+        return this;
+    }
+
 }

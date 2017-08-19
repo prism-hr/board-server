@@ -32,6 +32,7 @@ import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,6 +74,9 @@ public class DepartmentService {
 
     @Inject
     private ActionService actionService;
+
+    @Inject
+    private ActivityService activityService;
 
     @Lazy
     @Inject
@@ -232,7 +236,27 @@ public class DepartmentService {
         User user = userService.getCurrentUserSecured();
         Resource department = getDepartment(departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
-        return userRoleService.findByResourceAndState(department, State.PENDING);
+
+        List<UserRole> userRoles = userRoleService.findByResourceAndState(department, State.PENDING);
+        if (userRoles.isEmpty()) {
+            return userRoles;
+        }
+
+        Map<hr.prism.board.domain.Activity, UserRole> indexByActivities = userRoles.stream().collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
+        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+        }
+
+        return userRoles;
+    }
+
+    public UserRole viewMembershipRequest(Long departmentId, Long userId) {
+        User user = userService.getCurrentUserSecured();
+        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
+        UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
+        activityService.viewActivity(userRole.getActivity(), user);
+        return userRole.setViewed(true);
     }
 
     public void processMembershipRequest(Long departmentId, Long userId, State state) {

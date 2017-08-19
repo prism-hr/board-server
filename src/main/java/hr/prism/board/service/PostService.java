@@ -82,6 +82,9 @@ public class PostService {
     @Inject
     private BoardService boardService;
 
+    @Inject
+    private ActivityService activityService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -235,19 +238,29 @@ public class PostService {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.AUDIT, () -> post);
-        return resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+
+        List<ResourceEvent> resourceEvents = resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        if (resourceEvents.isEmpty()) {
+            return resourceEvents;
+        }
+
+        Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = resourceEvents.stream().collect(Collectors.toMap(ResourceEvent::getActivity, event -> event));
+        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+        }
+
+        return resourceEvents;
     }
 
     public ResourceEvent getPostResponse(Long postId, Long responseId) {
-        Post post = getPost(postId);
-        User user = userService.getCurrentUserSecured();
-        ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
-        if (resourceEvent.getUser().equals(user)) {
-            return resourceEvent;
-        }
+        return getPostResponse(userService.getCurrentUserSecured(), postId, responseId);
+    }
 
-        actionService.executeAction(user, post, Action.AUDIT, () -> post);
-        return resourceEvent;
+    public ResourceEvent viewPostResponse(Long postId, Long responseId) {
+        User user = userService.getCurrentUserSecured();
+        ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
+        activityService.viewActivity(resourceEvent.getActivity(), user);
+        return resourceEvent.setViewed(true);
     }
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
@@ -483,6 +496,17 @@ public class PostService {
         } else if (applyCount > 1) {
             throw new BoardException(ExceptionCode.CORRUPTED_POST_APPLY);
         }
+    }
+
+    private ResourceEvent getPostResponse(User user, Long postId, Long responseId) {
+        Post post = getPost(postId);
+        ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
+        if (resourceEvent.getUser().equals(user)) {
+            return resourceEvent;
+        }
+
+        actionService.executeAction(user, post, Action.AUDIT, () -> post);
+        return resourceEvent;
     }
 
 }

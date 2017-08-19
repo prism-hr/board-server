@@ -62,3 +62,34 @@ ALTER TABLE activity
   AFTER user_role_id,
   ADD UNIQUE INDEX (resource_id, user_role_id, resource_event_id, activity),
   ADD FOREIGN KEY (resource_id) REFERENCES resource (id);
+
+CREATE TABLE activity_event (
+  id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  activity_id       BIGINT UNSIGNED NOT NULL,
+  user_id           BIGINT UNSIGNED NOT NULL,
+  event             VARCHAR(20)     NOT NULL,
+  event_count       BIGINT          NOT NULL,
+  created_timestamp DATETIME        NOT NULL,
+  updated_timestamp DATETIME,
+  PRIMARY KEY (id),
+  UNIQUE INDEX (activity_id, user_id, event),
+  INDEX (user_id),
+  FOREIGN KEY (activity_id) REFERENCES activity (id),
+  FOREIGN KEY (user_id) REFERENCES user (id),
+  INDEX (created_timestamp),
+  INDEX (updated_timestamp)
+)
+  COLLATE = utf8_general_ci
+  ENGINE = innodb;
+
+INSERT INTO activity_event (activity_id, user_id, event, event_count, created_timestamp, updated_timestamp)
+  SELECT
+    activity_id,
+    user_id,
+    'DISMISSAL',
+    1,
+    created_timestamp,
+    updated_timestamp
+  FROM activity_dismissal;
+
+DROP TABLE activity_dismissal;

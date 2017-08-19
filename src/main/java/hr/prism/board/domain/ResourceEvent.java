@@ -31,6 +31,12 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "covering_note")
     private String coveringNote;
 
+    @OneToOne(mappedBy = "resourceEvent")
+    private Activity activity;
+
+    @Transient
+    private boolean viewed;
+
     public Resource getResource() {
         return resource;
     }
@@ -91,6 +97,24 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setCoveringNote(String coveringNote) {
         this.coveringNote = coveringNote;
+        return this;
+    }
+
+    public Activity getActivity() {
+        return activity;
+    }
+
+    public ResourceEvent setActivity(Activity activity) {
+        this.activity = activity;
+        return this;
+    }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public ResourceEvent setViewed(boolean viewed) {
+        this.viewed = viewed;
         return this;
     }
 

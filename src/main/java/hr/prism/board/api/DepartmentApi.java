@@ -84,6 +84,11 @@ public class DepartmentApi {
         return departmentService.getMembershipRequests(departmentId).stream().map(userRoleMapper::apply).collect(Collectors.toList());
     }
 
+    @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}", method = RequestMethod.PUT)
+    public UserRoleRepresentation viewMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId) {
+        return userRoleMapper.apply(departmentService.viewMembershipRequest(departmentId, userId));
+    }
+
     @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)
     public void patchMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
         departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));

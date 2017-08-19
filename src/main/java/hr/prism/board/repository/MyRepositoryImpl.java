@@ -8,6 +8,7 @@ import javax.persistence.EntityManager;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+// TODO: get rid of this weird inheritance pattern - just use default methods in base interface
 public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializable>
     extends SimpleJpaRepository<ENTITY, ID> implements MyRepository<ENTITY, ID> {
 
