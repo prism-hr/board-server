@@ -113,7 +113,7 @@ public class PostService {
         actionService.executeAction(user, post, Action.VIEW, () -> post);
         resourceEventService.getOrCreatePostView(post, user, ipAddress);
 
-        if (user != null && !postRepository.findPostIdsRespondedTo(Collections.singletonList(post.getId()), user).isEmpty()) {
+        if (user != null && !postRepository.findPostIdsRespondedTo(Collections.singletonList(post.getId()), user, hr.prism.board.enums.ResourceEvent.RESPONSE).isEmpty()) {
             post.setResponded(true);
         }
 
@@ -144,9 +144,13 @@ public class PostService {
                     .setOrderStatement("order by resource.updatedTimestamp desc"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
+        if (posts.isEmpty()) {
+            return posts;
+        }
+
         if (user != null) {
             Map<Long, Post> postIndex = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
-            postRepository.findPostIdsRespondedTo(postIndex.keySet(), user).forEach(postId -> {
+            postRepository.findPostIdsRespondedTo(postIndex.keySet(), user, hr.prism.board.enums.ResourceEvent.RESPONSE).forEach(postId -> {
                 Post post = postIndex.get(postId);
                 if (post != null) {
                     post.setResponded(true);
