@@ -168,7 +168,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
     @Bean
     public FreeMarkerConfigurer freemarkerConfig() {
         FreeMarkerConfigurer freeMarkerConfigurer = new CustomFreeMarkerConfigurer();
-        freeMarkerConfigurer.setTemplateLoaderPath("classpath:badge");
+        freeMarkerConfigurer.setTemplateLoaderPaths("classpath:badge", "classpath:index");
         return freeMarkerConfigurer;
     }
 
@@ -181,7 +181,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         @Override
         public void afterPropertiesSet() throws IOException, TemplateException {
             super.afterPropertiesSet();
-            this.getConfiguration().setObjectWrapper(new Java8ObjectWrapper(freemarker.template.Configuration.VERSION_2_3_23));
+            this.getConfiguration().setObjectWrapper(new Java8ObjectWrapper(freemarker.template.Configuration.VERSION_2_3_26));
         }
     }
 

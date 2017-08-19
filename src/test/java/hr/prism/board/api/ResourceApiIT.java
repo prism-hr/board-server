@@ -289,9 +289,12 @@ public class ResourceApiIT extends AbstractIT {
             resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // add one role
-        resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
+        ResourceUserRepresentation resourceUser = resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
             new ResourceUserDTO().setUser(newUser).setRoles(
                 ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT), new UserRoleDTO(Role.AUTHOR))));
+
+        Assert.assertThat(resourceUser, resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR), new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT)));
+
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
             resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR), new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT))));

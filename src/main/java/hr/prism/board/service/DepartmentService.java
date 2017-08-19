@@ -102,7 +102,10 @@ public class DepartmentService {
     public Department getDepartment(String handle) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, handle);
-        return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
+        if (department != null) {
+            return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
+        }
+        return null;
     }
 
     public List<Department> getDepartments(Boolean includePublicDepartments) {

@@ -60,6 +60,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-freemarker</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
         </dependency>
@@ -175,15 +180,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.freemarker</groupId>
-            <artifactId>freemarker</artifactId>
-            <version>2.3.23</version>
-        </dependency>
-
-        <dependency>
             <groupId>no.api.freemarker</groupId>
             <artifactId>freemarker-java8</artifactId>
-            <version>1.1.5</version>
+            <version>1.2.0</version>
         </dependency>
 
         <dependency>
@@ -214,7 +213,7 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>2.3.9</version>
+            <version>2.6.3</version>
         </dependency>
     </dependencies>
 
@@ -352,8 +351,8 @@
             <properties>
                 <profile.id>uat</profile.id>
                 <profile.environment>board-uat.prism.hr</profile.environment>
-                <profile.app.url>https://board-uat.prism.hr</profile.app.url>
-                <profile.server.url>https://board-uat.prism.hr/api</profile.server.url>
+                <profile.app.url>http://board-uat.prism.hr</profile.app.url>
+                <profile.server.url>http://board-uat.prism.hr/api</profile.server.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>d4da5d66c6d3e8a2cb2dc86552296b27</profile.auth.facebook.appSecret>
@@ -369,7 +368,7 @@
                 <profile.id>prod</profile.id>
                 <profile.environment>board.prism.hr</profile.environment>
                 <profile.app.url>https://board.prism.hr</profile.app.url>
-                <profile.server.url>https://board-uat.prism.hr/api</profile.server.url>
+                <profile.server.url>https://board.prism.hr/api</profile.server.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
