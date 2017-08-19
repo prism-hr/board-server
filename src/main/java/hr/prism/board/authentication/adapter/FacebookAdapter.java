@@ -4,6 +4,8 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionData;
@@ -32,7 +34,7 @@ public class FacebookAdapter implements OauthAdapter {
             return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
                 .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
         } catch (ResourceAccessException e) {
-            throw new Error(e); // TODO I experienced this exception couple of times, need exception code for that
+            throw new BoardException(ExceptionCode.UNAVAILABLE_INTEGRATION);
         }
     }
 
