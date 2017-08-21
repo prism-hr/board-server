@@ -1,9 +1,6 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
@@ -406,7 +403,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyActivitiesEmpty(boardUserId);
-        Resource department = resourceService.findOne(departmentId);
+        Resource department = transactionTemplate.execute(status -> resourceService.findOne(departmentId));
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.ACCEPTED, userRole.getState());
 
@@ -461,7 +458,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyActivitiesEmpty(boardUserId);
-        Resource department = resourceService.findOne(departmentId);
+        Resource department = transactionTemplate.execute(status -> resourceService.findOne(departmentId));
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.REJECTED, userRole.getState());
 
@@ -524,6 +521,80 @@ public class DepartmentApiIT extends AbstractIT {
         verifyActivitiesEmpty(boardUserId);
         testUserActivityService.stop();
         testNotificationService.stop();
+    }
+
+    @Test
+    public void shouldCountBoardsAndMembers() {
+        Long departmentUserId = testUserService.authenticate().getId();
+        Long departmentId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getDepartment().getId();
+
+        testUserService.authenticate();
+        Long board1Id = transactionTemplate.execute(status -> boardApi.postBoard(
+            TestHelper.smallSampleBoard()
+                .setName("board1")
+                .setDepartment(new DepartmentDTO().setId(departmentId)))).getId();
+
+        Long board2Id = transactionTemplate.execute(status -> boardApi.postBoard(
+            TestHelper.smallSampleBoard()
+                .setName("board2")
+                .setDepartment(new DepartmentDTO().setId(departmentId)))).getId();
+        Assert.assertEquals(new Long(1), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+
+        testUserService.setAuthentication(departmentUserId);
+        transactionTemplate.execute(status -> boardApi.executeAction(board1Id, "accept", new BoardPatchDTO()));
+        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+
+        transactionTemplate.execute(status -> boardApi.executeAction(board2Id, "accept", new BoardPatchDTO()));
+        Assert.assertEquals(new Long(3), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+
+        transactionTemplate.execute(status -> boardApi.executeAction(board2Id, "reject", new BoardPatchDTO().setComment("comment")));
+        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartments(true)).get(0).getBoardCount());
+
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO()
+                .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
+                .setRoles(Sets.newHashSet(new UserRoleDTO().setRole(Role.MEMBER))));
+        Assert.assertEquals(new Long(1), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO()
+                .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
+                .setRoles(Sets.newHashSet(new UserRoleDTO().setRole(Role.MEMBER))));
+        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+
+        Long memberUser1Id = testUserService.authenticate().getId();
+        transactionTemplate.execute(status -> {
+            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO());
+            return null;
+        });
+
+        Long memberUser2Id = testUserService.authenticate().getId();
+        transactionTemplate.execute(status -> {
+            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO());
+            return null;
+        });
+
+        Assert.assertEquals(new Long(4), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+
+        testUserService.setAuthentication(departmentUserId);
+        transactionTemplate.execute(status -> {
+            departmentApi.patchMembershipRequest(departmentId, memberUser1Id, "accepted");
+            return null;
+        });
+
+        Assert.assertEquals(new Long(4), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+
+        transactionTemplate.execute(status -> {
+            departmentApi.patchMembershipRequest(departmentId, memberUser2Id, "rejected");
+            return null;
+        });
+
+        Assert.assertEquals(new Long(3), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartments(true)).get(0);
+        Assert.assertEquals(new Long(2), departmentR.getBoardCount());
+        Assert.assertEquals(new Long(3), departmentR.getMemberCount());
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {

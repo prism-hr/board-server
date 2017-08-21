@@ -7,6 +7,7 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.service.*;
+import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.workflow.Activity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,6 +43,9 @@ public class ActivityEventService {
 
     @Inject
     private UserService userService;
+
+    @Inject
+    private UserRoleCacheService userRoleCacheService;
 
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
@@ -98,6 +102,7 @@ public class ActivityEventService {
             }
 
             resource = userRole.getResource();
+            userRoleCacheService.updateUserRolesSummary(resource);
         } else {
             resource = resourceService.findOne(activityEvent.getResourceId());
             activityService.deleteActivities(resource);

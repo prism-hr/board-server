@@ -54,6 +54,7 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
         "select new hr.prism.board.value.ChildResourceSummary(resource.scope, count(resource.id), max(resource.createdTimestamp)) " +
             "from Resource resource " +
             "where resource.parent = :parent " +
+            "and resource.id <> resource.parent.id " +
             "and resource.state = :state")
     ChildResourceSummary findSummaryByParentAndState(@Param("parent") Resource parent, @Param("state") State state);
 

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,7 +76,7 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.POST)
-    public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
+    public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid @NotNull UserRoleDTO userRoleDTO) {
         departmentService.createMembershipRequest(departmentId, userRoleDTO);
     }
 
