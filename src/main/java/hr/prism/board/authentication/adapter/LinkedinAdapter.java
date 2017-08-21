@@ -18,7 +18,7 @@ import org.springframework.web.client.ResourceAccessException;
 @Component
 public class LinkedinAdapter implements OauthAdapter {
 
-    @Value("${auth.linkedin.appSecret]")
+    @Value("${auth.linkedin.appSecret}")
     private String linkedinAppSecret;
 
     @Override

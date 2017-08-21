@@ -12,17 +12,7 @@
     <meta property="og:image" content="${image}">
 [/#if]
     <meta property="og:image:alt" content="${imageAlt}">
-
-    <base href="/">
-
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-<b-app-root>
-    <div class="preloader">
-        <div class="spinner"></div>
-    </div>
-</b-app-root>
-</body>
+    </body>
 </html>
