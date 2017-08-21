@@ -1,13 +1,23 @@
 package hr.prism.board.dto;
 
+import org.hibernate.validator.constraints.URL;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 public class ResourceEventDTO {
 
+    @NotNull
     private Boolean defaultResume;
 
+    @Valid
     private DocumentDTO documentResume;
 
+    @URL
     private String websiteResume;
 
+    @Size(max = 1000)
     private String coveringNote;
 
     public Boolean getDefaultResume() {

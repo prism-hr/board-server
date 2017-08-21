@@ -64,7 +64,7 @@ public class ResourceEventService {
         DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
         String websiteResume = resourceEventDTO.getWebsiteResume();
         String coveringNote = resourceEventDTO.getCoveringNote();
-        if (documentResumeDTO == null && websiteResume == null || post.getApplyEmail() != null && coveringNote == null) {
+        if (documentResumeDTO == null && websiteResume == null && post.getApplyEmail() != null && coveringNote == null) {
             throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
         }
 

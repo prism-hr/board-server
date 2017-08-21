@@ -97,7 +97,7 @@ public class PostApi {
 
     @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
     public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId) {
-        return postService.getPostResponses(postId).stream().map(resourceEventMapper::apply).collect(Collectors.toList());
+        return postService.getPostResponses(postId).stream().map(resourceEventMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses/{responseId}", method = RequestMethod.GET)
