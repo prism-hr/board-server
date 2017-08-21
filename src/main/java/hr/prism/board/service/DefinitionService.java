@@ -22,10 +22,10 @@ public class DefinitionService {
     @Value("${app.url}")
     private String appUrl;
 
-    @Value("${auth.facebook.clientId]")
+    @Value("${auth.facebook.clientId}")
     private String facebookClientId;
 
-    @Value("${auth.linkedin.clientId]")
+    @Value("${auth.linkedin.clientId}")
     private String linkedinClientId;
 
     @PostConstruct

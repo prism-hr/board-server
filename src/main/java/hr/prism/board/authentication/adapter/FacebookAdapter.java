@@ -17,7 +17,7 @@ import org.springframework.web.client.ResourceAccessException;
 @Component
 public class FacebookAdapter implements OauthAdapter {
 
-    @Value("${auth.facebook.appSecret]")
+    @Value("${auth.facebook.appSecret}")
     private String facebookAppSecret;
 
     @Override
