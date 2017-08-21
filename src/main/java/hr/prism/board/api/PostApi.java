@@ -85,7 +85,7 @@ public class PostApi {
         return postService.findOrganizationsBySimilarName(query);
     }
 
-    @RequestMapping(value = "api/posts/{postId}/apply", method = RequestMethod.POST)
+    @RequestMapping(value = "api/posts/{postId}/apply", method = RequestMethod.GET)
     public PostApplyRepresentation getPostApply(@PathVariable Long postId, HttpServletRequest request) {
         return postMapper.applyPostApply(postService.getPostApply(postId, BoardUtils.getClientIpAddress(request)));
     }

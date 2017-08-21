@@ -486,6 +486,42 @@ public class BoardApiIT extends AbstractIT {
         verifyDocument(initialLogo, department.getDocumentLogo());
     }
 
+    @Test
+    public void shouldCountPostsAndAuthors() {
+        Long boardUserId = testUserService.authenticate().getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getId();
+
+        testUserService.authenticate().getId();
+        Long post1id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+
+        testUserService.authenticate().getId();
+        Long post2id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+
+        testUserService.authenticate().getId();
+        Long post3id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+        Assert.assertEquals(new Long(0), boardR.getPostCount());
+        Assert.assertEquals(new Long(0), boardR.getAuthorCount());
+
+        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
+        Assert.assertEquals(new Long(0), boardRs.get(0).getPostCount());
+        Assert.assertEquals(new Long(0), boardRs.get(0).getAuthorCount());
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.executeAction(post1id, "accept", new PostPatchDTO()));
+        transactionTemplate.execute(status -> postApi.executeAction(post2id, "accept", new PostPatchDTO()));
+        transactionTemplate.execute(status -> postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment")));
+
+        boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+        Assert.assertEquals(new Long(2), boardR.getPostCount());
+        Assert.assertEquals(new Long(2), boardR.getAuthorCount());
+
+        boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
+        Assert.assertEquals(new Long(2), boardRs.get(0).getPostCount());
+        Assert.assertEquals(new Long(2), boardRs.get(0).getAuthorCount());
+    }
+
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         testUserService.authenticate();
         BoardRepresentation boardR1 = verifyPostBoard(TestHelper.smallSampleBoard(), "board");
