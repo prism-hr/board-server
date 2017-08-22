@@ -527,6 +527,7 @@ public class DepartmentApiIT extends AbstractIT {
     public void shouldCountBoardsAndMembers() {
         Long departmentUserId = testUserService.authenticate().getId();
         Long departmentId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getDepartment().getId();
+        transactionTemplate.execute(status -> departmentApi.postDepartment(new DepartmentDTO().setName("other")));
 
         testUserService.authenticate();
         Long board1Id = transactionTemplate.execute(status -> boardApi.postBoard(
@@ -538,30 +539,29 @@ public class DepartmentApiIT extends AbstractIT {
             TestHelper.smallSampleBoard()
                 .setName("board2")
                 .setDepartment(new DepartmentDTO().setId(departmentId)))).getId();
-        Assert.assertEquals(new Long(1), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+        verifyBoardAndMemberCount(departmentId, 1L, 0L);
 
         testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> boardApi.executeAction(board1Id, "accept", new BoardPatchDTO()));
-        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 0L);
 
         transactionTemplate.execute(status -> boardApi.executeAction(board2Id, "accept", new BoardPatchDTO()));
-        Assert.assertEquals(new Long(3), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
+        verifyBoardAndMemberCount(departmentId, 3L, 0L);
 
         transactionTemplate.execute(status -> boardApi.executeAction(board2Id, "reject", new BoardPatchDTO().setComment("comment")));
-        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getBoardCount());
-        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartments(true)).get(0).getBoardCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 0L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
                 .setRoles(Sets.newHashSet(new UserRoleDTO().setRole(Role.MEMBER))));
-        Assert.assertEquals(new Long(1), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 1L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
                 .setRoles(Sets.newHashSet(new UserRoleDTO().setRole(Role.MEMBER))));
-        Assert.assertEquals(new Long(2), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 2L);
 
         Long memberUser1Id = testUserService.authenticate().getId();
         transactionTemplate.execute(status -> {
@@ -575,7 +575,7 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Assert.assertEquals(new Long(4), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 4L);
 
         testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> {
@@ -583,18 +583,14 @@ public class DepartmentApiIT extends AbstractIT {
             return null;
         });
 
-        Assert.assertEquals(new Long(4), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 4L);
 
         transactionTemplate.execute(status -> {
             departmentApi.patchMembershipRequest(departmentId, memberUser2Id, "rejected");
             return null;
         });
 
-        Assert.assertEquals(new Long(3), transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId)).getMemberCount());
-
-        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartments(true)).get(0);
-        Assert.assertEquals(new Long(2), departmentR.getBoardCount());
-        Assert.assertEquals(new Long(3), departmentR.getMemberCount());
+        verifyBoardAndMemberCount(departmentId, 2L, 3L);
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
@@ -699,6 +695,19 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentIdString, documentLogoR.getCloudinaryId());
         Assert.assertEquals(departmentIdString, documentLogoR.getCloudinaryUrl());
         Assert.assertEquals(departmentIdString, documentLogoR.getFileName());
+    }
+
+    private void verifyBoardAndMemberCount(Long departmentId, Long boardCount, Long memberCount) {
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        TestHelper.verifyNullableCount(boardCount, departmentR.getBoardCount());
+        TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
+
+        List<DepartmentRepresentation> departmentRs = transactionTemplate.execute(status -> departmentApi.getDepartments(true));
+        TestHelper.verifyNullableCount(boardCount, departmentRs.get(0).getBoardCount());
+        TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
+
+        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getBoardCount());
+        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
     }
 
 }

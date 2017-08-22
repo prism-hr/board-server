@@ -162,6 +162,13 @@ public class TestHelper {
         return baseline.toString() + ":00";
     }
 
+    public static void verifyNullableCount(Long expected, Long actual) {
+        if (expected == 0L) {
+            Assert.assertTrue(actual == null || actual == 0L);
+        } else {
+            Assert.assertEquals(expected, actual);
+        }
+    }
 
     private static void verifyResourceOperation(ResourceOperationRepresentation resourceOperationR, Action expectedAction, User expectedUser,
                                                 ChangeListRepresentation expectedChanges, String expectedComment) {

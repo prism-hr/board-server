@@ -101,9 +101,9 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         hikariConfig.setPassword("pgadmissions");
 
         hikariConfig.setPoolName("database-connection-pool");
+        hikariConfig.setMaxLifetime(600000);
         hikariConfig.setMaximumPoolSize(20);
-        hikariConfig.setIdleTimeout(80000);
-        hikariConfig.setConnectionTimeout(600000);
+        hikariConfig.setConnectionTimeout(10000);
         hikariConfig.setAutoCommit(false);
         hikariConfig.setLeakDetectionThreshold(120000);
         return new HikariDataSource(hikariConfig);

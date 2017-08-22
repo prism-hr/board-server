@@ -6,7 +6,7 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,8 +27,8 @@ public class IndexApi {
     @Inject
     private PostService postService;
 
-    @Inject
-    private Environment environment;
+    @Value("${app.url}")
+    private String appUrl;
 
     @RequestMapping(value = "/api/index/{departmentHandle}", method = RequestMethod.GET)
     public String getDepartment(@PathVariable String departmentHandle, Model model) {
@@ -37,7 +37,7 @@ public class IndexApi {
         if (department != null) {
             model.addAttribute("title", department.getName());
             model.addAttribute("description", department.getSummary());
-            model.addAttribute("url", environment.getProperty("app.url") + "/" + departmentHandle);
+            model.addAttribute("url", appUrl + "/" + departmentHandle);
             if (department.getDocumentLogo() != null) {
                 model.addAttribute("image", department.getDocumentLogo().getCloudinaryUrl());
             }
@@ -52,7 +52,7 @@ public class IndexApi {
         if (board != null) {
             model.addAttribute("title", board.getName());
             model.addAttribute("description", board.getSummary());
-            model.addAttribute("url", environment.getProperty("app.url") + "/" + board.getParent().getHandle() + "/" + boardHandle);
+            model.addAttribute("url", appUrl + "/" + board.getParent().getHandle() + "/" + boardHandle);
             if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
@@ -68,7 +68,7 @@ public class IndexApi {
             Board board = (Board) post.getParent();
             model.addAttribute("title", post.getName());
             model.addAttribute("description", post.getSummary());
-            model.addAttribute("url", environment.getProperty("app.url") + "/" + board.getParent().getHandle()
+            model.addAttribute("url", appUrl + "/" + board.getParent().getHandle()
                 + "/" + board.getHandle() + "/" + post.getId());
             if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
@@ -85,10 +85,10 @@ public class IndexApi {
 
     private void fillGenericModel(Model model) {
         model.addAttribute("title", "Prism");
-        model.addAttribute("description", "Student placement marketplace");
-        model.addAttribute("url", environment.getProperty("app.url"));
-        model.addAttribute("image", environment.getProperty("app.url") + "/assets/prism-logo.png");
-        model.addAttribute("imageAlt", environment.getProperty("app.url") + "/assets/prism-logo.png");
+        model.addAttribute("description", "Student job board");
+        model.addAttribute("url", appUrl);
+        model.addAttribute("image", appUrl + "/assets/prism-logo.png");
+        model.addAttribute("imageAlt", appUrl + "/assets/prism-logo.png");
     }
 
 }

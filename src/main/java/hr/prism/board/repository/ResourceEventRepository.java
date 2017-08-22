@@ -34,6 +34,7 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, count(distinct resourceEvent.ipAddress), max(resourceEvent.createdTimestamp)) " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
+            "and resourceEvent.user is null " +
             "and resourceEvent.ipAddress is not null " +
             "group by resourceEvent.event")
     List<ResourceEventSummary> findIpAddressSummaryByResource(@Param("resource") Resource resource);

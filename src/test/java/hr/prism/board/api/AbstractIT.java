@@ -82,6 +82,9 @@ public abstract class AbstractIT {
     UserRoleService userRoleService;
 
     @Inject
+    PostService postService;
+
+    @Inject
     TestUserService testUserService;
 
     @Inject

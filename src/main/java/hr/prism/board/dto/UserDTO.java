@@ -21,8 +21,9 @@ public class UserDTO {
         return id;
     }
 
-    public void setId(Long id) {
+    public UserDTO setId(Long id) {
         this.id = id;
+        return this;
     }
 
     public String getGivenName() {

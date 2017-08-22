@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -490,36 +491,52 @@ public class BoardApiIT extends AbstractIT {
     public void shouldCountPostsAndAuthors() {
         Long boardUserId = testUserService.authenticate().getId();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getId();
+        transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard().setName("other")));
 
-        testUserService.authenticate().getId();
+        testUserService.authenticate();
         Long post1id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
 
-        testUserService.authenticate().getId();
+        Long postUserId = testUserService.authenticate().getId();
         Long post2id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
 
-        testUserService.authenticate().getId();
+        testUserService.authenticate();
         Long post3id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
-
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
-        Assert.assertEquals(new Long(0), boardR.getPostCount());
-        Assert.assertEquals(new Long(0), boardR.getAuthorCount());
-
-        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
-        Assert.assertEquals(new Long(0), boardRs.get(0).getPostCount());
-        Assert.assertEquals(new Long(0), boardRs.get(0).getAuthorCount());
+        verifyPostAndAuthorCount(boardId, 0L, 0L);
 
         testUserService.setAuthentication(boardUserId);
         transactionTemplate.execute(status -> postApi.executeAction(post1id, "accept", new PostPatchDTO()));
         transactionTemplate.execute(status -> postApi.executeAction(post2id, "accept", new PostPatchDTO()));
         transactionTemplate.execute(status -> postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment")));
+        verifyPostAndAuthorCount(boardId, 2L, 2L);
 
-        boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
-        Assert.assertEquals(new Long(2), boardR.getPostCount());
-        Assert.assertEquals(new Long(2), boardR.getAuthorCount());
+        transactionTemplate.execute(status -> postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment")));
+        verifyPostAndAuthorCount(boardId, 1L, 2L);
 
-        boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
-        Assert.assertEquals(new Long(2), boardRs.get(0).getPostCount());
-        Assert.assertEquals(new Long(2), boardRs.get(0).getAuthorCount());
+        transactionTemplate.execute(status -> {
+            resourceApi.deleteResourceUser(Scope.BOARD, boardId, postUserId);
+            return null;
+        });
+
+        verifyPostAndAuthorCount(boardId, 1L, 1L);
+
+        transactionTemplate.execute(status -> postApi.updatePost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1)))));
+        transactionTemplate.execute(status -> {
+            postService.publishAndRetirePosts();
+            return null;
+        });
+
+        verifyPostAndAuthorCount(boardId, 0L, 1L);
+
+        Long post4id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setLiveTimestamp(LocalDateTime.now().plusMinutes(1)))).getId();
+        verifyPostAndAuthorCount(boardId, 0L, 1L);
+
+        transactionTemplate.execute(status -> postApi.updatePost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty())));
+        transactionTemplate.execute(status -> {
+            postService.publishAndRetirePosts();
+            return null;
+        });
+
+        verifyPostAndAuthorCount(boardId, 1L, 1L);
     }
 
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
@@ -671,6 +688,19 @@ public class BoardApiIT extends AbstractIT {
                     .add(publicActionList)
                     .addAll(adminDepartmentBoardNames, adminActionList));
         }
+    }
+
+    private void verifyPostAndAuthorCount(Long boardId, Long postCount, Long authorCount) {
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+        TestHelper.verifyNullableCount(postCount, boardR.getPostCount());
+        TestHelper.verifyNullableCount(authorCount, boardR.getAuthorCount());
+
+        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
+        TestHelper.verifyNullableCount(postCount, boardRs.get(0).getPostCount());
+        TestHelper.verifyNullableCount(authorCount, boardRs.get(0).getAuthorCount());
+
+        TestHelper.verifyNullableCount(0L, boardRs.get(1).getPostCount());
+        TestHelper.verifyNullableCount(0L, boardRs.get(1).getAuthorCount());
     }
 
 }
