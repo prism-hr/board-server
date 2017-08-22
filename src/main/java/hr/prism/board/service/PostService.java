@@ -104,14 +104,17 @@ public class PostService {
     private PlatformTransactionManager platformTransactionManager;
 
     public Post getPost(Long id) {
-        return getPost(id, null);
+        return getPost(id, null, false);
     }
 
-    public Post getPost(Long id, String ipAddress) {
+    public Post getPost(Long id, String ipAddress, boolean recordView) {
         User user = userService.getCurrentUser();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         actionService.executeAction(user, post, Action.VIEW, () -> post);
-        resourceEventService.getOrCreatePostView(post, user, ipAddress);
+
+        if (recordView) {
+            resourceEventService.getOrCreatePostView(post, user, ipAddress);
+        }
 
         if (user != null && !postRepository.findPostIdsRespondedTo(Collections.singletonList(post.getId()), user, hr.prism.board.enums.ResourceEvent.RESPONSE).isEmpty()) {
             post.setResponded(true);
@@ -141,7 +144,7 @@ public class PostService {
                     .setScope(Scope.POST)
                     .setParentId(boardId)
                     .setIncludePublicResources(includePublicPosts)
-                    .setOrderStatement("order by resource.updatedTimestamp desc"))
+                    .setOrderStatement("order by resource.updatedTimestamp desc, resource.id desc"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
         if (posts.isEmpty()) {

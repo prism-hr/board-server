@@ -13,6 +13,7 @@ import hr.prism.board.enums.Activity;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,6 +70,9 @@ public class PostApiIT extends AbstractIT {
 
         PUBLIC_ACTIONS.put(State.ACCEPTED, Action.VIEW);
     }
+
+    @Inject
+    private PostRepository postRepository;
 
     @Test
     public void shouldCreateAndListPosts() {
@@ -1035,6 +1040,43 @@ public class PostApiIT extends AbstractIT {
         Assert.assertEquals(0, organizations.size());
     }
 
+    @Test
+    public void shouldCountPostViewsReferralsAndResponses() {
+        Long boardUserId = testUserService.authenticate().getId();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()));
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId = boardR.getId();
+
+        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setForwardCandidates(true))).getId();
+
+        Long memberUser1 = testUserService.authenticate().getId();
+        Long memberUser2 = testUserService.authenticate().getId();
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser1)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser2)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
+
+        testUserService.setAuthentication(memberUser1);
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
+        verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
+
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
+        verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
+
+        testUserService.unauthenticate();
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
+        verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
+
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
+        verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
+
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2")));
+        verifyViewReferralAndResponseCounts(postId, 3L, 0L, 0L);
+    }
+
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
         return transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
@@ -1297,6 +1339,22 @@ public class PostApiIT extends AbstractIT {
         });
 
         return mergedPostNames;
+    }
+
+    private void verifyViewReferralAndResponseCounts(Long postId, Long viewCount, Long referralCount, Long responseCount) {
+        Post post = transactionTemplate.execute(status -> postRepository.findOne(postId));
+        TestHelper.verifyNullableCount(viewCount, post.getViewCount());
+        TestHelper.verifyNullableCount(referralCount, post.getReferralCount());
+        TestHelper.verifyNullableCount(responseCount, post.getResponseCount());
+
+        List<PostRepresentation> postRs = transactionTemplate.execute(status -> postApi.getPosts(true));
+        TestHelper.verifyNullableCount(viewCount, postRs.get(0).getViewCount());
+        TestHelper.verifyNullableCount(referralCount, postRs.get(0).getReferralCount());
+        TestHelper.verifyNullableCount(responseCount, postRs.get(0).getResponseCount());
+
+        TestHelper.verifyNullableCount(0L, postRs.get(1).getViewCount());
+        TestHelper.verifyNullableCount(0L, postRs.get(1).getReferralCount());
+        TestHelper.verifyNullableCount(0L, postRs.get(1).getResponseCount());
     }
 
     private interface PostOperation {

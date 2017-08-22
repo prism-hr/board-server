@@ -491,6 +491,7 @@ public class BoardApiIT extends AbstractIT {
     public void shouldCountPostsAndAuthors() {
         Long boardUserId = testUserService.authenticate().getId();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getId();
+        transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard().setName("other")));
 
         testUserService.authenticate();
         Long post1id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
@@ -691,12 +692,15 @@ public class BoardApiIT extends AbstractIT {
 
     private void verifyPostAndAuthorCount(Long boardId, Long postCount, Long authorCount) {
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
-        Assert.assertEquals(postCount, boardR.getPostCount());
-        Assert.assertEquals(authorCount, boardR.getAuthorCount());
+        TestHelper.verifyNullableCount(postCount, boardR.getPostCount());
+        TestHelper.verifyNullableCount(authorCount, boardR.getAuthorCount());
 
         List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
-        Assert.assertEquals(postCount, boardRs.get(0).getPostCount());
-        Assert.assertEquals(authorCount, boardRs.get(0).getAuthorCount());
+        TestHelper.verifyNullableCount(postCount, boardRs.get(0).getPostCount());
+        TestHelper.verifyNullableCount(authorCount, boardRs.get(0).getAuthorCount());
+
+        TestHelper.verifyNullableCount(0L, boardRs.get(1).getPostCount());
+        TestHelper.verifyNullableCount(0L, boardRs.get(1).getAuthorCount());
     }
 
 }
