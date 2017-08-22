@@ -339,6 +339,7 @@ public class PostService {
         if (BoardUtils.isPresent(applyEmail)) {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
         }
+        resourcePatchService.patchProperty(post, "forwardCandidates", post::getForwardCandidates, post::setForwardCandidates, postDTO.getForwardCandidates());
 
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();

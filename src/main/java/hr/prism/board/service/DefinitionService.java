@@ -28,6 +28,9 @@ public class DefinitionService {
     @Value("${auth.linkedin.clientId}")
     private String linkedinClientId;
 
+    @Value("${cloudinary.folder}")
+    private String cloudinaryFolder;
+
     @PostConstruct
     public TreeMap<String, Object> getDefinitions() {
         if (this.definitions == null) {
@@ -38,6 +41,7 @@ public class DefinitionService {
             });
 
             this.definitions.put("applicationUrl", appUrl);
+            this.definitions.put("cloudinaryFolder", cloudinaryFolder);
             List<Map<String, Object>> oauthProviders = new ArrayList<>();
             oauthProviders.add(ImmutableMap.of("id", OauthProvider.FACEBOOK, "clientId", facebookClientId));
             oauthProviders.add(ImmutableMap.of("id", OauthProvider.LINKEDIN, "clientId", linkedinClientId));
