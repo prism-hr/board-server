@@ -14,7 +14,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.PostService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
 import hr.prism.board.util.BoardUtils;
@@ -27,7 +26,6 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -71,11 +69,7 @@ public class PostApiIT extends AbstractIT {
         PUBLIC_ACTIONS.put(State.ACCEPTED, Action.VIEW);
     }
 
-    @Inject
-    private PostService postService;
-
     @Test
-    // FIXME: find out why this occasionally fails and fix it
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
