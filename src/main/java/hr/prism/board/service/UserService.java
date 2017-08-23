@@ -208,7 +208,7 @@ public class UserService {
         return userRepresentations;
     }
 
-    private User getCurrentUser(boolean fresh) {
+    public User getCurrentUser(boolean fresh) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
@@ -221,7 +221,7 @@ public class UserService {
         return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
     }
 
-    private User getCurrentUserSecured(boolean fresh) {
+    public User getCurrentUserSecured(boolean fresh) {
         User user = getCurrentUser(fresh);
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);

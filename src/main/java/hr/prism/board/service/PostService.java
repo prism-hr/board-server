@@ -236,7 +236,7 @@ public class PostService {
 
     public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getCurrentUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> post);
         return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent);
     }
