@@ -7,7 +7,6 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.AuthenticationService;
-import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -17,9 +16,6 @@ import java.util.Map;
 
 @RestController
 public class AuthenticationApi {
-
-    @Inject
-    private Environment environment;
 
     @Inject
     private AuthenticationService authenticationService;

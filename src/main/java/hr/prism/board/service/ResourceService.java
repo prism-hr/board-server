@@ -367,7 +367,7 @@ public class ResourceService {
     public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
         User user = userService.getCurrentUserSecured();
         Resource resource = getResource(user, scope, id);
-        actionService.executeAction(user, resource, Action.AUDIT, () -> resource);
+        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
 
         return new ArrayList<>(entityManager.createQuery(
             "select resourceOperation " +

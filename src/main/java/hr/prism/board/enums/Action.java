@@ -8,7 +8,6 @@ public enum Action {
 
     VIEW(false),
     PURSUE(false),
-    AUDIT(false),
     EDIT(false),
     EXTEND(false),
     ACCEPT(false), // Comment optional

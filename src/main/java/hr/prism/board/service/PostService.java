@@ -244,7 +244,7 @@ public class PostService {
     public List<ResourceEvent> getPostResponses(Long postId) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
-        actionService.executeAction(user, post, Action.AUDIT, () -> post);
+        actionService.executeAction(user, post, Action.EDIT, () -> post);
 
         List<ResourceEvent> resourceEvents = resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
         if (resourceEvents.isEmpty()) {
@@ -511,7 +511,7 @@ public class PostService {
             return resourceEvent;
         }
 
-        actionService.executeAction(user, post, Action.AUDIT, () -> post);
+        actionService.executeAction(user, post, Action.EDIT, () -> post);
         return resourceEvent;
     }
 
