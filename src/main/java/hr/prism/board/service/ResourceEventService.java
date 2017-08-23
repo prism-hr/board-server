@@ -13,6 +13,7 @@ import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.value.ResourceEventSummary;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,9 @@ public class ResourceEventService {
 
     @Inject
     private DocumentService documentService;
+
+    @Inject
+    private UserService userService;
 
     @Lazy
     @Inject
@@ -80,6 +84,9 @@ public class ResourceEventService {
 
         ResourceEvent response = resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
             .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
+        if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
+            userService.updateUserResume(user, documentResume, websiteResume);
+        }
 
         Long postId = post.getId();
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()

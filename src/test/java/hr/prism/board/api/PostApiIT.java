@@ -1074,6 +1074,15 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2")));
         verifyViewReferralAndResponseCounts(postId, 3L, 0L, 0L);
+
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2", "proxy2")));
+        verifyViewReferralAndResponseCounts(postId, 3L, 0L, 0L);
+
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown3", "proxy3")));
+        verifyViewReferralAndResponseCounts(postId, 4L, 0L, 0L);
+
+        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown3", "proxy3")));
+        verifyViewReferralAndResponseCounts(postId, 4L, 0L, 0L);
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
