@@ -68,7 +68,11 @@ public class ResourceEventService {
         DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
         String websiteResume = resourceEventDTO.getWebsiteResume();
         String coveringNote = resourceEventDTO.getCoveringNote();
-        if (documentResumeDTO == null && websiteResume == null && post.getApplyEmail() != null && coveringNote == null) {
+        if (documentResumeDTO == null && websiteResume == null) {
+            throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
+        }
+
+        if (post.getApplyEmail() != null && coveringNote == null) {
             throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
         }
 
@@ -82,7 +86,7 @@ public class ResourceEventService {
             documentResume = documentService.getOrCreateDocument(documentResumeDTO);
         }
 
-        ResourceEvent response = resourceEventRepository.save(new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
+        ResourceEvent response = saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
             .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
         if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
             userService.updateUserResume(user, documentResume, websiteResume);

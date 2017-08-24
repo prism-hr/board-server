@@ -8,26 +8,17 @@ import javax.validation.constraints.Size;
 
 public class ResourceEventDTO {
 
-    @NotNull
-    private Boolean defaultResume;
-
     @Valid
     private DocumentDTO documentResume;
 
     @URL
     private String websiteResume;
 
+    @NotNull
+    private Boolean defaultResume;
+
     @Size(max = 1000)
     private String coveringNote;
-
-    public Boolean getDefaultResume() {
-        return defaultResume;
-    }
-
-    public ResourceEventDTO setDefaultResume(Boolean defaultResume) {
-        this.defaultResume = defaultResume;
-        return this;
-    }
 
     public DocumentDTO getDocumentResume() {
         return documentResume;
@@ -44,6 +35,15 @@ public class ResourceEventDTO {
 
     public ResourceEventDTO setWebsiteResume(String websiteResume) {
         this.websiteResume = websiteResume;
+        return this;
+    }
+
+    public Boolean getDefaultResume() {
+        return defaultResume;
+    }
+
+    public ResourceEventDTO setDefaultResume(Boolean defaultResume) {
+        this.defaultResume = defaultResume;
         return this;
     }
 
