@@ -67,7 +67,6 @@ public class BoardUtils {
     }
 
     public static String obfuscateEmail(String email) {
-        char hashChar = "#".charAt(0);
         String[] emailParts = email.split("@");
 
         List<String> newNameParts = new ArrayList<>();
@@ -76,7 +75,7 @@ public class BoardUtils {
             for (int i = 0; i < subPartLength; i++) {
                 if (i > 0 && !(i > 2 && i == (subPartLength - 1))) {
                     StringBuilder addressPartBuilder = new StringBuilder(namePart);
-                    addressPartBuilder.setCharAt(i, hashChar);
+                    addressPartBuilder.setCharAt(i, '.');
                     namePart = addressPartBuilder.toString();
                 }
             }
