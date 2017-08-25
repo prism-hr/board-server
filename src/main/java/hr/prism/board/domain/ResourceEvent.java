@@ -35,6 +35,9 @@ public class ResourceEvent extends BoardEntity {
     private Activity activity;
 
     @Transient
+    private boolean exposeResponseData;
+
+    @Transient
     private boolean viewed;
 
     public Resource getResource() {
@@ -106,6 +109,15 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setActivity(Activity activity) {
         this.activity = activity;
+        return this;
+    }
+
+    public boolean isExposeResponseData() {
+        return exposeResponseData;
+    }
+
+    public ResourceEvent setExposeResponseData(boolean exposeResponseData) {
+        this.exposeResponseData = exposeResponseData;
         return this;
     }
 

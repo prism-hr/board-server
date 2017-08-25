@@ -416,7 +416,7 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO()
+                    postApi.patchPost(postId, new PostPatchDTO()
                         .setPostCategories(Optional.empty())),
                 ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
             return null;
@@ -424,7 +424,7 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO()
+                    postApi.patchPost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.empty())),
                 ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
             return null;
@@ -432,7 +432,7 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO()
+                    postApi.patchPost(postId, new PostPatchDTO()
                         .setPostCategories(Optional.of(Collections.singletonList("p4")))),
                 ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
             return null;
@@ -440,18 +440,18 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO()
+                    postApi.patchPost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
         });
 
-        transactionTemplate.execute(status -> departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty())));
-        transactionTemplate.execute(status -> boardApi.updateBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty())));
+        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty())));
+        transactionTemplate.execute(status -> boardApi.patchBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty())));
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO()
+                    postApi.patchPost(postId, new PostPatchDTO()
                         .setPostCategories(Optional.of(Collections.singletonList("p1")))),
                 ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
             return null;
@@ -459,7 +459,7 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.updatePost(postId, new PostPatchDTO()
+                    postApi.patchPost(postId, new PostPatchDTO()
                         .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
             return null;
@@ -475,7 +475,7 @@ public class PostApiIT extends AbstractIT {
         Long boardId = boardR.getId();
 
         // Allow department to have research students
-        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(
+        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(
             Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT, MemberCategory.RESEARCH_STUDENT))));
 
         User boardUser = testUserService.authenticate();
@@ -548,7 +548,7 @@ public class PostApiIT extends AbstractIT {
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")))
-            .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
+            .put(Action.EDIT, () -> postApi.patchPost(postId, new PostPatchDTO()))
             .put(Action.ACCEPT, () -> postApi.executeAction(postId, "accept", new PostPatchDTO()))
             .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")))
             .put(Action.CORRECT, () -> postApi.executeAction(postId, "correct", new PostPatchDTO()))
@@ -589,7 +589,7 @@ public class PostApiIT extends AbstractIT {
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
             .setDeadTimestamp(Optional.of(deadTimestampDelayed));
 
-        postR = verifyPatchPost(postUser, postId, updateDTO, () -> postApi.updatePost(postId, updateDTO), State.DRAFT);
+        postR = verifyPatchPost(postUser, postId, updateDTO, () -> postApi.patchPost(postId, updateDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
         postName = postR.getName();
 
@@ -1046,7 +1046,7 @@ public class PostApiIT extends AbstractIT {
         Long boardId = boardR.getId();
 
         transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setForwardCandidates(true))).getId();
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
 
         Long memberUser1 = testUserService.authenticate().getId();
         Long memberUser2 = testUserService.authenticate().getId();
@@ -1114,7 +1114,6 @@ public class PostApiIT extends AbstractIT {
         Assert.assertEquals("http://www.google.co.uk", postApplyR.getApplyWebsite());
         Assert.assertNull(postApplyR.getApplyDocument());
         Assert.assertNull(postApplyR.getApplyEmail());
-        Assert.assertTrue(postApplyR.getForwardCandidates());
 
         transactionTemplate.execute(status -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("member1")));
         verifyViewReferralAndResponseCounts(postId, 5L, 1L, 0L);
@@ -1126,26 +1125,37 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("member1")));
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
 
+        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("cloudinaryId").setCloudinaryUrl("cloudinaryUrl").setFileName("fileName");
+        ResourceEventDTO resourceEventDTO = new ResourceEventDTO().setDefaultResume(true).setDocumentResume(documentDTO).setCoveringNote("hello");
+
         testUserService.setAuthentication(memberUser1);
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardException.class,
-            () -> postApi.postResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT, status));
+            () -> postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.INVALID_RESOURCE_EVENT, status));
 
-        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("cloudinaryId").setCloudinaryUrl("cloudinaryUrl").setFileName("fileName");
-        ResourceEventRepresentation resourceEventR = transactionTemplate.execute(status ->
-            postApi.postResponse(postId, new ResourceEventDTO().setDefaultResume(true).setDocumentResume(documentDTO)));
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyWebsite(Optional.empty()).setApplyEmail(Optional.of("apply@post.com"))));
+
+        testUserService.setAuthentication(memberUser1);
+        ResourceEventRepresentation resourceEventR = transactionTemplate.execute(status -> postApi.postPostResponse(postId, resourceEventDTO));
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 1L);
 
         Assert.assertEquals(ResourceEvent.RESPONSE, resourceEventR.getEvent());
         Assert.assertEquals(memberUser1, resourceEventR.getUser().getId());
         verifyDocument(documentDTO, resourceEventR.getDocumentResume());
         Assert.assertNull(resourceEventR.getWebsiteResume());
-        Assert.assertNull(resourceEventR.getCoveringNote());
+        Assert.assertEquals("hello", resourceEventR.getCoveringNote());
         Assert.assertNotNull(resourceEventR.getCreatedTimestamp());
         Assert.assertFalse(resourceEventR.isViewed());
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardDuplicateException.class, () ->
-                postApi.postResponse(postId, new ResourceEventDTO().setDefaultResume(true).setDocumentResume(documentDTO)),
-            ExceptionCode.DUPLICATE_RESOURCE_EVENT, status));
+                postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT, status));
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()));
+
+        testUserService.setAuthentication(memberUser2);
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class, () -> postApi.postPostResponse(postId, resourceEventDTO),
+            ExceptionCode.FORBIDDEN_ACTION, status));
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {

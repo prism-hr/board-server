@@ -145,7 +145,7 @@ public class DepartmentApiIT extends AbstractIT {
             "new-department-with-2").getDepartment().getId();
 
         transactionTemplate.execute(status -> {
-            DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId,
+            DepartmentRepresentation departmentR = departmentApi.patchDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setHandle(Optional.of("new-department-with-long")));
             Assert.assertEquals("new-department-with-long", departmentR.getHandle());
@@ -165,7 +165,7 @@ public class DepartmentApiIT extends AbstractIT {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyDuplicateException(
-                () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
+                () -> departmentApi.patchDepartment(departmentRs.getKey().getId(),
                     new DepartmentPatchDTO()
                         .setName(Optional.of(departmentRs.getValue().getName()))),
                 ExceptionCode.DUPLICATE_DEPARTMENT, departmentRs.getValue().getId(), status);
@@ -179,7 +179,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(
                 BoardException.class,
-                () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
+                () -> departmentApi.patchDepartment(departmentRs.getKey().getId(),
                     new DepartmentPatchDTO()
                         .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
                 ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, status);
@@ -213,7 +213,7 @@ public class DepartmentApiIT extends AbstractIT {
         unprivilegedUsers.add(postUser);
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
-            .put(Action.EDIT, () -> departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO()))
+            .put(Action.EDIT, () -> departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO()))
             .build();
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
@@ -626,7 +626,7 @@ public class DepartmentApiIT extends AbstractIT {
     private DepartmentRepresentation verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
         Department department = transactionTemplate.execute(status -> departmentService.getDepartment(departmentId));
-        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.updateDepartment(departmentId, departmentDTO));
+        DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, departmentDTO));
 
         return transactionTemplate.execute(status -> {
             Optional<String> nameOptional = departmentDTO.getName();

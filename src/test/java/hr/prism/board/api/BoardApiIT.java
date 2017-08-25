@@ -158,7 +158,7 @@ public class BoardApiIT extends AbstractIT {
         Long boardId = verifyPostBoard(boardDTO.setName("new board with long name too"), "new-board-with-long-2").getId();
 
         transactionTemplate.execute(status -> {
-            BoardRepresentation boardR = boardApi.updateBoard(boardId,
+            BoardRepresentation boardR = boardApi.patchBoard(boardId,
                 new BoardPatchDTO()
                     .setHandle(Optional.of("new-board-with-long-name")));
             Assert.assertEquals("new-board-with-long-name", boardR.getHandle());
@@ -175,7 +175,7 @@ public class BoardApiIT extends AbstractIT {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setName(Optional.of(boardRs.getValue().getName()));
             ExceptionUtils.verifyDuplicateException(() ->
-                boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId(), status);
+                boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId(), status);
             return null;
         });
     }
@@ -186,7 +186,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-            ExceptionUtils.verifyException(BoardException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
+            ExceptionUtils.verifyException(BoardException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
                 status);
             return null;
         });
@@ -217,7 +217,7 @@ public class BoardApiIT extends AbstractIT {
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
             Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2"));
 
-            departmentApi.updateDepartment(departmentId,
+            departmentApi.patchDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setHandle(Optional.of("new-department-updated")));
             return null;
@@ -297,7 +297,7 @@ public class BoardApiIT extends AbstractIT {
         List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, 2, 2, TestHelper.smallSamplePost()).values());
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
-            .put(Action.EDIT, () -> boardApi.updateBoard(boardId, new BoardPatchDTO()))
+            .put(Action.EDIT, () -> boardApi.patchBoard(boardId, new BoardPatchDTO()))
             .put(Action.ACCEPT, () -> boardApi.executeAction(boardId, "accept", new BoardPatchDTO()))
             .put(Action.REJECT, () -> boardApi.executeAction(boardId, "reject", new BoardPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> boardApi.executeAction(boardId, "restore", new BoardPatchDTO()))
@@ -518,7 +518,7 @@ public class BoardApiIT extends AbstractIT {
 
         verifyPostAndAuthorCount(boardId, 1L, 1L);
 
-        transactionTemplate.execute(status -> postApi.updatePost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1)))));
+        transactionTemplate.execute(status -> postApi.patchPost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1)))));
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -529,7 +529,7 @@ public class BoardApiIT extends AbstractIT {
         Long post4id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setLiveTimestamp(LocalDateTime.now().plusMinutes(1)))).getId();
         verifyPostAndAuthorCount(boardId, 0L, 1L);
 
-        transactionTemplate.execute(status -> postApi.updatePost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty())));
+        transactionTemplate.execute(status -> postApi.patchPost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty())));
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -582,7 +582,7 @@ public class BoardApiIT extends AbstractIT {
     private BoardRepresentation verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
         Board board = transactionTemplate.execute(status -> boardService.getBoard(boardId));
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.updateBoard(boardId, boardDTO));
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.patchBoard(boardId, boardDTO));
 
         return transactionTemplate.execute(status -> {
             Optional<String> nameOptional = boardDTO.getName();

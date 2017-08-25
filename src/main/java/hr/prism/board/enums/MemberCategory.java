@@ -12,9 +12,7 @@ public enum MemberCategory {
     UNDERGRADUATE_STUDENT,
     MASTER_STUDENT,
     RESEARCH_STUDENT,
-    RESEARCH_STAFF,
-    ACADEMIC_STAFF,
-    PROFESSIONAL_STAFF;
+    RESEARCH_STAFF;
 
     public static List<String> toStrings(List<MemberCategory> categories) {
         if (CollectionUtils.isEmpty(categories)) {

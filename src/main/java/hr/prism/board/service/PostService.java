@@ -116,10 +116,7 @@ public class PostService {
             resourceEventService.getOrCreatePostView(post, user, ipAddress);
         }
 
-        if (user != null && !postRepository.findPostIdsRespondedTo(Collections.singletonList(post.getId()), user, hr.prism.board.enums.ResourceEvent.RESPONSE).isEmpty()) {
-            post.setResponded(true);
-        }
-
+        decoratePosts(user, Collections.singletonList(post));
         return post;
     }
 
@@ -151,16 +148,7 @@ public class PostService {
             return posts;
         }
 
-        if (user != null) {
-            Map<Long, Post> postIndex = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
-            postRepository.findPostIdsRespondedTo(postIndex.keySet(), user, hr.prism.board.enums.ResourceEvent.RESPONSE).forEach(postId -> {
-                Post post = postIndex.get(postId);
-                if (post != null) {
-                    post.setResponded(true);
-                }
-            });
-        }
-
+        decoratePosts(user, posts);
         return posts;
     }
 
@@ -179,7 +167,6 @@ public class PostService {
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
             post.setApplyWebsite(postDTO.getApplyWebsite());
             post.setApplyEmail(postDTO.getApplyEmail());
-            post.setForwardCandidates(postDTO.getForwardCandidates());
 
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
@@ -234,11 +221,11 @@ public class PostService {
         });
     }
 
-    public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
+    public ResourceEvent postPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> post);
-        return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent);
+        return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent).setExposeResponseData(true);
     }
 
     public List<ResourceEvent> getPostResponses(Long postId) {
@@ -251,7 +238,13 @@ public class PostService {
             return resourceEvents;
         }
 
-        Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = resourceEvents.stream().collect(Collectors.toMap(ResourceEvent::getActivity, event -> event));
+        boolean exposeResponseData = post.getApplyEmail().equals(user.getEmail());
+        Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
+        for (ResourceEvent resourceEvent : resourceEvents) {
+            resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user) || exposeResponseData);
+            indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
+        }
+
         for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
             indexByActivities.get(activityEvent.getActivity()).setViewed(true);
         }
@@ -263,7 +256,7 @@ public class PostService {
         return getPostResponse(userService.getCurrentUserSecured(), postId, responseId);
     }
 
-    public ResourceEvent viewPostResponse(Long postId, Long responseId) {
+    public ResourceEvent putPostResponseView(Long postId, Long responseId) {
         User user = userService.getCurrentUserSecured();
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
@@ -342,7 +335,6 @@ public class PostService {
         if (BoardUtils.isPresent(applyEmail)) {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
         }
-        resourcePatchService.patchProperty(post, "forwardCandidates", post::getForwardCandidates, post::setForwardCandidates, postDTO.getForwardCandidates());
 
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
@@ -512,7 +504,37 @@ public class PostService {
         }
 
         actionService.executeAction(user, post, Action.EDIT, () -> post);
+        resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user) || post.getApplyEmail().equals(user.getEmail()));
         return resourceEvent;
+    }
+
+    private void decoratePosts(User user, List<Post> posts) {
+        if (user != null) {
+            Map<Long, Post> postIndex = new HashMap<>();
+            List<Long> acceptingReferralIds = new ArrayList<>();
+            List<Long> acceptingResponseIds = new ArrayList<>();
+            for (Post post : posts) {
+                Long postId = post.getId();
+                postIndex.put(postId, post);
+                if (post.getApplyEmail() == null) {
+                    acceptingReferralIds.add(postId);
+                } else {
+                    acceptingResponseIds.add(postId);
+                }
+            }
+
+            List<Long> withReferralIds = acceptingReferralIds.isEmpty() ? acceptingReferralIds :
+                postRepository.findPostIdsByUserAndEvent(acceptingReferralIds, user, hr.prism.board.enums.ResourceEvent.REFERRAL);
+            List<Long> withResponseIds = acceptingResponseIds.isEmpty() ? acceptingResponseIds :
+                postRepository.findPostIdsByUserAndEvent(acceptingResponseIds, user, hr.prism.board.enums.ResourceEvent.RESPONSE);
+
+            for (Map.Entry<Long, Post> postIndexEntry : postIndex.entrySet()) {
+                Long postId = postIndexEntry.getKey();
+                Post post = postIndexEntry.getValue();
+                post.setExposeApplyData(withReferralIds.contains(postId) || post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT));
+                post.setResponded(withResponseIds.contains(postId));
+            }
+        }
     }
 
 }

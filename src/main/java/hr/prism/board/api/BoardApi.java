@@ -80,7 +80,7 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/boards/{id}", method = RequestMethod.PATCH)
-    public BoardRepresentation updateBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
+    public BoardRepresentation patchBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
         return boardMapper.apply(boardService.executeAction(id, Action.EDIT, boardDTO));
     }
 

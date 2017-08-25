@@ -29,8 +29,6 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private String applyEmail;
 
-    private Boolean forwardCandidates;
-
     private BoardRepresentation board;
 
     private LocalDateTime liveTimestamp;
@@ -138,15 +136,6 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
-        return this;
-    }
-
-    public Boolean getForwardCandidates() {
-        return forwardCandidates;
-    }
-
-    public PostRepresentation setForwardCandidates(Boolean forwardCandidates) {
-        this.forwardCandidates = forwardCandidates;
         return this;
     }
 

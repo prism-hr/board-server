@@ -8,8 +8,6 @@ public class PostApplyRepresentation {
 
     private String applyEmail;
 
-    private Boolean forwardCandidates;
-
     public String getApplyWebsite() {
         return applyWebsite;
     }
@@ -34,15 +32,6 @@ public class PostApplyRepresentation {
 
     public PostApplyRepresentation setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
-        return this;
-    }
-
-    public Boolean getForwardCandidates() {
-        return forwardCandidates;
-    }
-
-    public PostApplyRepresentation setForwardCandidates(Boolean forwardCandidates) {
-        this.forwardCandidates = forwardCandidates;
         return this;
     }
 

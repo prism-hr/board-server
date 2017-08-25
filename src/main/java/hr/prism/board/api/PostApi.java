@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,7 +70,7 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.PATCH)
-    public PostRepresentation updatePost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
+    public PostRepresentation patchPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(id, Action.EDIT, postDTO));
     }
 
@@ -91,8 +90,8 @@ public class PostApi {
     }
 
     @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)
-    public ResourceEventRepresentation postResponse(@PathVariable Long postId, @Valid @NotNull @RequestBody ResourceEventDTO resourceEvent) {
-        return resourceEventMapper.apply(postService.createPostResponse(postId, resourceEvent));
+    public ResourceEventRepresentation postPostResponse(@PathVariable Long postId, @RequestBody @Valid ResourceEventDTO resourceEvent) {
+        return resourceEventMapper.apply(postService.postPostResponse(postId, resourceEvent));
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
@@ -106,8 +105,8 @@ public class PostApi {
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses/{responseId}/view", method = RequestMethod.PUT)
-    public ResourceEventRepresentation viewPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
-        return resourceEventMapper.apply(postService.viewPostResponse(postId, responseId));
+    public ResourceEventRepresentation putPostResponseView(@PathVariable Long postId, @PathVariable Long responseId) {
+        return resourceEventMapper.apply(postService.putPostResponseView(postId, responseId));
     }
 
 }

@@ -40,8 +40,6 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
     @Email
     private Optional<String> applyEmail;
 
-    private Optional<Boolean> forwardCandidates;
-
     private Optional<LocalDateTime> liveTimestamp;
 
     private Optional<LocalDateTime> deadTimestamp;
@@ -133,15 +131,6 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     public PostPatchDTO setApplyEmail(Optional<String> applyEmail) {
         this.applyEmail = applyEmail;
-        return this;
-    }
-
-    public Optional<Boolean> getForwardCandidates() {
-        return forwardCandidates;
-    }
-
-    public PostPatchDTO setForwardCandidates(Optional<Boolean> forwardCandidates) {
-        this.forwardCandidates = forwardCandidates;
         return this;
     }
 

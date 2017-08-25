@@ -2,13 +2,13 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
-import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.PostApplyRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.util.BoardUtils;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -51,14 +51,12 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
                 .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)));
 
-        if (post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT)) {
-            representation.setApplyWebsite(post.getApplyWebsite())
-                .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
-                .setApplyEmail(post.getApplyEmail())
-                .setForwardCandidates(post.getForwardCandidates());
+        if (post.isExposeApplyData()) {
+            representation.setApplyWebsite(post.getApplyWebsite());
+            representation.setApplyDocument(documentMapper.apply(post.getApplyDocument()));
+            representation.setApplyEmail(post.getApplyEmail());
         }
 
-        // TODO: confirm with Iris who can see metrics - would be a better user experience to allow everybody
         return representation.setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
@@ -83,11 +81,13 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     }
 
     public PostApplyRepresentation applyPostApply(Post post) {
+        String applyEmail = post.getApplyEmail();
+        applyEmail = applyEmail == null ? null : BoardUtils.obfuscateEmail(applyEmail);
+
         return new PostApplyRepresentation()
             .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
             .setApplyWebsite(post.getApplyWebsite())
-            .setApplyEmail(post.getApplyEmail())
-            .setForwardCandidates(post.getForwardCandidates());
+            .setApplyEmail(applyEmail);
     }
 
 }

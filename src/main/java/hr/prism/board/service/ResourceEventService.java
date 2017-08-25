@@ -65,16 +65,13 @@ public class ResourceEventService {
     }
 
     public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
-        DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
-        String websiteResume = resourceEventDTO.getWebsiteResume();
-        String coveringNote = resourceEventDTO.getCoveringNote();
-        if (documentResumeDTO == null && websiteResume == null) {
+        if (post.getApplyEmail() == null) {
             throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
         }
 
-        if (post.getApplyEmail() != null && coveringNote == null) {
-            throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
-        }
+        DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
+        String websiteResume = resourceEventDTO.getWebsiteResume();
+        String coveringNote = resourceEventDTO.getCoveringNote();
 
         ResourceEvent previousResponse = resourceEventRepository.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user);
         if (previousResponse != null) {
@@ -97,9 +94,14 @@ public class ResourceEventService {
             .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setActivity(hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY);
         activityEventService.publishEvent(this, postId, response, Collections.singletonList(activity));
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.RESPOND_POST_NOTIFICATION);
-        notificationEventService.publishEvent(this, postId, Collections.singletonList(notification));
+        if (post.getApplyEmail().equals(user.getEmail())) {
+            hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+                .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.RESPOND_POST_NOTIFICATION);
+            notificationEventService.publishEvent(this, postId, Collections.singletonList(notification));
+        } else {
+            // TODO: send the email / attachment to the specified address
+        }
+
         return response;
     }
 

@@ -9,6 +9,7 @@ import javax.validation.constraints.Size;
 public class ResourceEventDTO {
 
     @Valid
+    @NotNull
     private DocumentDTO documentResume;
 
     @URL
@@ -17,6 +18,7 @@ public class ResourceEventDTO {
     @NotNull
     private Boolean defaultResume;
 
+    @NotNull
     @Size(max = 1000)
     private String coveringNote;
 
