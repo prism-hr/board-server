@@ -185,6 +185,7 @@ public class PostService {
             updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
             userRoleService.createOrUpdateUserRole(post, currentUser, Role.ADMINISTRATOR);
+            post.setExposeApplyData(true);
             return post;
         });
 
@@ -196,27 +197,28 @@ public class PostService {
     }
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
-        User currentUser = userService.getCurrentUserSecured();
-        Post post = (Post) resourceService.getResource(currentUser, Scope.POST, id);
+        User user = userService.getCurrentUserSecured();
+        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         post.setComment(postDTO.getComment());
-        return (Post) actionService.executeAction(currentUser, post, action, () -> {
+        return (Post) actionService.executeAction(user, post, action, () -> {
             if (action == Action.EDIT) {
                 updatePost(post, postDTO);
             } else {
                 if (action == Action.ACCEPT) {
                     Resource board = post.getParent();
                     userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, board, Role.AUTHOR)
-                        .forEach(user -> userRoleCacheService.createUserRole(currentUser, board, user, new UserRoleDTO(Role.AUTHOR), false));
+                        .forEach(author -> userRoleCacheService.createUserRole(author, board, author, new UserRoleDTO(Role.AUTHOR), false));
                 }
 
                 if (BoardUtils.hasUpdates(postDTO)) {
-                    actionService.executeAction(currentUser, post, Action.EDIT, () -> {
+                    actionService.executeAction(user, post, Action.EDIT, () -> {
                         updatePost(post, postDTO);
                         return post;
                     });
                 }
             }
 
+            decoratePosts(user, Collections.singletonList(post));
             return post;
         });
     }
