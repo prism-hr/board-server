@@ -8,6 +8,7 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
@@ -15,6 +16,8 @@ import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.workflow.Notification;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -28,6 +31,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -37,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -165,12 +171,26 @@ public class AuthenticationService {
             .compact();
     }
 
-    public Long decodeAccessToken(String accessToken, String jwsSecret) {
-        return Long.parseLong(Jwts.parser()
+    public Claims decodeAccessToken(String accessToken, String jwsSecret) {
+        return Jwts.parser()
             .setSigningKey(jwsSecret)
             .parseClaimsJws(accessToken)
-            .getBody()
-            .getSubject());
+            .getBody();
     }
 
+    public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authorization = request.getHeader("Authorization");
+        if(authorization == null) {
+            throw new BoardException(ExceptionCode.UNAUTHENTICATED_USER);
+        }
+        String accessToken = authorization.replaceFirst("Bearer ", "");
+        try {
+            Claims token = decodeAccessToken(accessToken, jwsSecret);
+            long userId = Long.parseLong(token.getSubject());
+            return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret()));
+        } catch (ExpiredJwtException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
+            return null;
+        }
+    }
 }

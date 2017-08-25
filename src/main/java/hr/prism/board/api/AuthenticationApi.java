@@ -10,7 +10,10 @@ import hr.prism.board.service.AuthenticationService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -41,6 +44,11 @@ public class AuthenticationApi {
     @RequestMapping(value = "/api/auth/resetPassword", method = RequestMethod.POST)
     public void resetPassword(@RequestBody @Valid ResetPasswordDTO resetPasswordDTO) {
         authenticationService.resetPassword(resetPasswordDTO);
+    }
+
+    @RequestMapping(value = "/api/auth/refresh", method = RequestMethod.GET)
+    public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        return authenticationService.refreshToken(request, response);
     }
 
     private Map<String, String> makeAccessTokenResponse(User user) {

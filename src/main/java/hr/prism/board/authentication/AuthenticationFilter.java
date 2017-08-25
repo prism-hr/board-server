@@ -1,6 +1,7 @@
 package hr.prism.board.authentication;
 
 import hr.prism.board.service.AuthenticationService;
+import io.jsonwebtoken.Claims;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -26,7 +27,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
         if (authorization != null) {
             String accessToken = authorization.replaceFirst("Bearer ", "");
-            Long userId = authenticationService.decodeAccessToken(accessToken, jwsSecret);
+            Claims token = authenticationService.decodeAccessToken(accessToken, jwsSecret);
+            long userId = Long.parseLong(token.getSubject());
 
             SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
             response.setHeader("Authorization", "Bearer " + authenticationService.makeAccessToken(userId, jwsSecret));
