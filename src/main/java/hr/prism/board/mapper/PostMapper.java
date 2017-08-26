@@ -2,9 +2,9 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
+import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.representation.PostApplyRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
@@ -30,6 +30,9 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     private ResourceMapper resourceMapper;
 
     @Inject
+    private ResourceEventMapper resourceEventMapper;
+
+    @Inject
     private ResourceService resourceService;
 
     @Inject
@@ -51,12 +54,16 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
                 .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)));
 
+        String applyEmail = post.getApplyEmail();
         if (post.isExposeApplyData()) {
             representation.setApplyWebsite(post.getApplyWebsite());
             representation.setApplyDocument(documentMapper.apply(post.getApplyDocument()));
-            representation.setApplyEmail(post.getApplyEmail());
+            representation.setApplyEmail(applyEmail);
+        } else if (applyEmail != null) {
+            representation.setApplyEmail(BoardUtils.obfuscateEmail(applyEmail));
         }
 
+        ResourceEvent referral = post.getReferral();
         return representation.setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
@@ -66,7 +73,8 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setLastViewTimestamp(post.getLastViewTimestamp())
             .setLastReferralTimestamp(post.getLastReferralTimestamp())
             .setLastResponseTimestamp(post.getLastResponseTimestamp())
-            .setResponded(post.isResponded());
+            .setReferral(referral == null ? null : referral.getReferral())
+            .setResponse(resourceEventMapper.applyResponse(post.getResponse()));
     }
 
     public PostRepresentation applySmall(Post post) {
@@ -78,16 +86,6 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setOrganizationName(post.getOrganizationName())
             .setLocation(locationMapper.apply(post.getLocation()))
             .setBoard(boardMapper.applySmall((Board) post.getParent()));
-    }
-
-    public PostApplyRepresentation applyPostApply(Post post) {
-        String applyEmail = post.getApplyEmail();
-        applyEmail = applyEmail == null ? null : BoardUtils.obfuscateEmail(applyEmail);
-
-        return new PostApplyRepresentation()
-            .setApplyDocument(documentMapper.apply(post.getApplyDocument()))
-            .setApplyWebsite(post.getApplyWebsite())
-            .setApplyEmail(applyEmail);
     }
 
 }

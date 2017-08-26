@@ -8,11 +8,13 @@ import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.value.ResourceEventSummary;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ import javax.persistence.PersistenceContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,14 +57,15 @@ public class ResourceEventService {
         return resourceEventRepository.findOne(resourceEventId);
     }
 
-    public ResourceEvent getOrCreatePostView(Post post, User user, String ipAddress) {
+    public ResourceEvent createPostView(Post post, User user, String ipAddress) {
         verifyEventIdentifiable(user, ipAddress);
         return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user).setIpAddress(ipAddress));
     }
 
-    public ResourceEvent getOrCreatePostReferral(Post post, User user, String ipAddress) {
+    public ResourceEvent createPostReferral(Post post, User user, String ipAddress) {
         verifyEventIdentifiable(user, ipAddress);
-        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.REFERRAL).setUser(user).setIpAddress(ipAddress));
+        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.REFERRAL)
+            .setUser(user).setIpAddress(ipAddress).setReferral(DigestUtils.sha256Hex(UUID.randomUUID().toString())));
     }
 
     public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
@@ -73,7 +77,7 @@ public class ResourceEventService {
         String websiteResume = resourceEventDTO.getWebsiteResume();
         String coveringNote = resourceEventDTO.getCoveringNote();
 
-        ResourceEvent previousResponse = resourceEventRepository.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user);
+        ResourceEvent previousResponse = findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user);
         if (previousResponse != null) {
             throw new BoardDuplicateException(ExceptionCode.DUPLICATE_RESOURCE_EVENT, previousResponse.getId());
         }
@@ -105,8 +109,27 @@ public class ResourceEventService {
         return response;
     }
 
-    public List<ResourceEvent> getResourceEvents(Resource resource, hr.prism.board.enums.ResourceEvent event) {
-        return resourceEventRepository.findByResourceAndEventOrderByIdDesc(resource, event);
+    public ResourceEvent findByResourceAndEventAndUser(Resource resource, hr.prism.board.enums.ResourceEvent event, User user) {
+        return resourceEventRepository.findByResourceAndEventAndUser(resource, event, user);
+    }
+
+    public List<ResourceEvent> findByResourceAndEvent(Resource resource, hr.prism.board.enums.ResourceEvent event) {
+        return resourceEventRepository.findByResourceAndEvent(resource, event);
+    }
+
+    public List<ResourceEvent> findByResourceIdsAndEventAndUser(List<Long> resourceIds, hr.prism.board.enums.ResourceEvent event, User user) {
+        return resourceEventRepository.findByResourceIdsAndEventAndUser(resourceIds, event, user);
+    }
+
+    public ResourceEvent getAndConsumeReferral(String referral) {
+        ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
+        if (resourceEvent == null) {
+            // Bad referral, or referral consumed already - client should request a new one
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_REFERRAL);
+        }
+
+        resourceEvent.setReferral(null);
+        return resourceEventRepository.update(resourceEvent);
     }
 
     private void verifyEventIdentifiable(User user, String ipAddress) {
@@ -139,7 +162,7 @@ public class ResourceEventService {
                     break;
                 case REFERRAL:
                     post.setReferralCount(summary.getCount());
-                    post.setLastResponseTimestamp(summary.getLastTimestamp());
+                    post.setLastReferralTimestamp(summary.getLastTimestamp());
                     break;
                 case RESPONSE:
                     post.setResponseCount(summary.getCount());

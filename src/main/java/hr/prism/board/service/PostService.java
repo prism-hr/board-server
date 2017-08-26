@@ -113,20 +113,14 @@ public class PostService {
         actionService.executeAction(user, post, Action.VIEW, () -> post);
 
         if (recordView) {
-            resourceEventService.getOrCreatePostView(post, user, ipAddress);
+            resourceEventService.createPostView(post, user, ipAddress);
+            if (user != null) {
+                resourceEventService.createPostReferral(post, user, ipAddress);
+            }
         }
 
-        decoratePosts(user, Collections.singletonList(post));
+        decoratePost(user, post);
         return post;
-    }
-
-    public Post getPostApply(Long id, String ipAddress) {
-        User user = userService.getCurrentUser();
-        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
-        return (Post) actionService.executeAction(user, post, Action.PURSUE, () -> {
-            resourceEventService.getOrCreatePostReferral(post, user, ipAddress);
-            return post;
-        });
     }
 
     public List<Post> getByName(String name) {
@@ -153,9 +147,9 @@ public class PostService {
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
-        User currentUser = userService.getCurrentUserSecured();
-        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, boardId);
-        Post createdPost = (Post) actionService.executeAction(currentUser, board, Action.EXTEND, () -> {
+        User user = userService.getCurrentUserSecured();
+        Board board = (Board) resourceService.getResource(user, Scope.BOARD, boardId);
+        Post createdPost = (Post) actionService.executeAction(user, board, Action.EXTEND, () -> {
             Post post = new Post();
             Department department = (Department) board.getParent();
 
@@ -184,11 +178,11 @@ public class PostService {
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
             updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
-            userRoleService.createOrUpdateUserRole(post, currentUser, Role.ADMINISTRATOR);
-            post.setExposeApplyData(true);
+            userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
             return post;
         });
 
+        decoratePost(user, createdPost);
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
             throw new BoardException(ExceptionCode.MISSING_POST_EXISTING_RELATION);
         }
@@ -218,9 +212,23 @@ public class PostService {
                 }
             }
 
-            decoratePosts(user, Collections.singletonList(post));
+            decoratePost(user, post);
             return post;
         });
+    }
+
+    public String getPostReferral(String referral) {
+        ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
+        Post post = (Post) resourceEvent.getResource();
+
+        Document applyDocument = post.getApplyDocument();
+        String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
+        if (redirect == null) {
+            // We may no longer be redirecting - throw an exception so client can divert to application form
+            throw new BoardException(ExceptionCode.INVALID_REFERRAL);
+        }
+
+        return redirect;
     }
 
     public ResourceEvent postPostResponse(Long postId, ResourceEventDTO resourceEvent) {
@@ -235,7 +243,7 @@ public class PostService {
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.EDIT, () -> post);
 
-        List<ResourceEvent> resourceEvents = resourceEventService.getResourceEvents(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        List<ResourceEvent> resourceEvents = resourceEventService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
         if (resourceEvents.isEmpty()) {
             return resourceEvents;
         }
@@ -510,31 +518,47 @@ public class PostService {
         return resourceEvent;
     }
 
+    private void decoratePost(User user, Post post) {
+        if (user != null) {
+            post.setExposeApplyData(post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT));
+            post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.REFERRAL, user));
+            post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user));
+        }
+    }
+
     private void decoratePosts(User user, List<Post> posts) {
         if (user != null) {
             Map<Long, Post> postIndex = new HashMap<>();
-            List<Long> acceptingReferralIds = new ArrayList<>();
-            List<Long> acceptingResponseIds = new ArrayList<>();
-            for (Post post : posts) {
+            List<Long> acceptingReferrals = new ArrayList<>();
+            List<Long> acceptingResponses = new ArrayList<>();
+            posts.forEach(post -> {
                 Long postId = post.getId();
                 postIndex.put(postId, post);
                 if (post.getApplyEmail() == null) {
-                    acceptingReferralIds.add(postId);
+                    acceptingReferrals.add(postId);
                 } else {
-                    acceptingResponseIds.add(postId);
+                    acceptingResponses.add(postId);
                 }
+            });
+
+            Map<Long, ResourceEvent> referrals = new HashMap<>();
+            if (!acceptingReferrals.isEmpty()) {
+                referrals = resourceEventService.findByResourceIdsAndEventAndUser(acceptingReferrals, hr.prism.board.enums.ResourceEvent.REFERRAL, user)
+                    .stream().collect(Collectors.toMap(referral -> referral.getResource().getId(), referral -> referral));
             }
 
-            List<Long> withReferralIds = acceptingReferralIds.isEmpty() ? acceptingReferralIds :
-                postRepository.findPostIdsByUserAndEvent(acceptingReferralIds, user, hr.prism.board.enums.ResourceEvent.REFERRAL);
-            List<Long> withResponseIds = acceptingResponseIds.isEmpty() ? acceptingResponseIds :
-                postRepository.findPostIdsByUserAndEvent(acceptingResponseIds, user, hr.prism.board.enums.ResourceEvent.RESPONSE);
+            Map<Long, ResourceEvent> responses = new HashMap<>();
+            if (!acceptingResponses.isEmpty()) {
+                responses = resourceEventService.findByResourceIdsAndEventAndUser(acceptingReferrals, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
+                    .stream().collect(Collectors.toMap(response -> response.getResource().getId(), referral -> referral));
+            }
 
             for (Map.Entry<Long, Post> postIndexEntry : postIndex.entrySet()) {
                 Long postId = postIndexEntry.getKey();
                 Post post = postIndexEntry.getValue();
-                post.setExposeApplyData(withReferralIds.contains(postId) || post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT));
-                post.setResponded(withResponseIds.contains(postId));
+                post.setExposeApplyData(post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT));
+                post.setReferral(referrals.get(postId));
+                post.setResponse(responses.get(postId));
             }
         }
     }

@@ -1,7 +1,5 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.enums.PostVisibility;
-
 import java.util.List;
 
 public class BoardRepresentation extends ResourceRepresentation<BoardRepresentation> {
@@ -13,8 +11,6 @@ public class BoardRepresentation extends ResourceRepresentation<BoardRepresentat
     private DepartmentRepresentation department;
 
     private List<String> postCategories;
-
-    private PostVisibility defaultPostVisibility;
 
     private Long postCount;
 
@@ -53,15 +49,6 @@ public class BoardRepresentation extends ResourceRepresentation<BoardRepresentat
 
     public BoardRepresentation setPostCategories(List<String> postCategories) {
         this.postCategories = postCategories;
-        return this;
-    }
-
-    public PostVisibility getDefaultPostVisibility() {
-        return defaultPostVisibility;
-    }
-
-    public BoardRepresentation setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
-        this.defaultPostVisibility = defaultPostVisibility;
         return this;
     }
 

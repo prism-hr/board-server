@@ -1,7 +1,7 @@
 package hr.prism.board.api;
 
 import hr.prism.board.TestContext;
-import hr.prism.board.enums.PostVisibility;
+import hr.prism.board.enums.Action;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,8 +29,8 @@ public class DefinitionApiIT {
     // FIXME: this is not a proper test, assert against the whole response
     public void shouldGetDefinitions() {
         TreeMap<String, Object> definitions = definitionApi.getDefinitions();
-        List<String> postVisibility = (List<String>) definitions.get("postVisibility");
-        Assert.assertThat(postVisibility, Matchers.containsInAnyOrder(Arrays.stream(PostVisibility.values()).map(PostVisibility::name).toArray(String[]::new)));
+        List<String> postVisibility = (List<String>) definitions.get("action");
+        Assert.assertThat(postVisibility, Matchers.containsInAnyOrder(Arrays.stream(Action.values()).map(Action::name).toArray(String[]::new)));
         Assert.assertNotNull(appUrl);
         Assert.assertEquals(appUrl, definitions.get("applicationUrl"));
     }

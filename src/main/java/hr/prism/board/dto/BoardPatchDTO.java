@@ -1,7 +1,5 @@
 package hr.prism.board.dto;
 
-import hr.prism.board.enums.PostVisibility;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -19,8 +17,6 @@ public class BoardPatchDTO extends ResourcePatchDTO<BoardPatchDTO> {
     private Optional<String> handle;
 
     private Optional<List<String>> postCategories;
-
-    private Optional<PostVisibility> defaultPostVisibility;
 
     public Optional<DocumentDTO> getDocumentLogo() {
         return documentLogo;
@@ -46,15 +42,6 @@ public class BoardPatchDTO extends ResourcePatchDTO<BoardPatchDTO> {
 
     public BoardPatchDTO setPostCategories(Optional<List<String>> postCategories) {
         this.postCategories = postCategories;
-        return this;
-    }
-
-    public Optional<PostVisibility> getDefaultPostVisibility() {
-        return defaultPostVisibility;
-    }
-
-    public BoardPatchDTO setDefaultPostVisibility(Optional<PostVisibility> defaultPostVisibility) {
-        this.defaultPostVisibility = defaultPostVisibility;
         return this;
     }
 

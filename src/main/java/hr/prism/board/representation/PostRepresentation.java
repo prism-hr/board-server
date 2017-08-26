@@ -47,7 +47,9 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
-    private boolean responded;
+    private String referral;
+
+    private ResourceEventRepresentation response;
 
     public String getDescription() {
         return description;
@@ -220,12 +222,21 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public boolean isResponded() {
-        return responded;
+    public String getReferral() {
+        return referral;
     }
 
-    public PostRepresentation setResponded(boolean responded) {
-        this.responded = responded;
+    public PostRepresentation setReferral(String referral) {
+        this.referral = referral;
+        return this;
+    }
+
+    public ResourceEventRepresentation getResponse() {
+        return response;
+    }
+
+    public PostRepresentation setResponse(ResourceEventRepresentation response) {
+        this.response = response;
         return this;
     }
 

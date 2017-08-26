@@ -21,6 +21,9 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "ip_address")
     private String ipAddress;
 
+    @Column(name = "referral", unique = true)
+    private String referral;
+
     @ManyToOne
     @JoinColumn(name = "document_resume_id")
     private Document documentResume;
@@ -73,6 +76,15 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+        return this;
+    }
+
+    public String getReferral() {
+        return referral;
+    }
+
+    public ResourceEvent setReferral(String referral) {
+        this.referral = referral;
         return this;
     }
 

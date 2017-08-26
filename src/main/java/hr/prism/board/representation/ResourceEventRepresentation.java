@@ -49,6 +49,15 @@ public class ResourceEventRepresentation {
         return this;
     }
 
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public ResourceEventRepresentation setViewed(boolean viewed) {
+        this.viewed = viewed;
+        return this;
+    }
+
     public DocumentRepresentation getDocumentResume() {
         return documentResume;
     }
@@ -82,15 +91,6 @@ public class ResourceEventRepresentation {
 
     public ResourceEventRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
-        return this;
-    }
-
-    public boolean isViewed() {
-        return viewed;
-    }
-
-    public ResourceEventRepresentation setViewed(boolean viewed) {
-        this.viewed = viewed;
         return this;
     }
 

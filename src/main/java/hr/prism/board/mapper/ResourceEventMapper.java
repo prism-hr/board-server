@@ -22,21 +22,30 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             return null;
         }
 
-        ResourceEventRepresentation representation =
-            new ResourceEventRepresentation()
-                .setEvent(resourceEvent.getEvent())
-                .setUser(userMapper.apply(resourceEvent.getUser()))
-                .setIpAddress(resourceEvent.getIpAddress())
-                .setCreatedTimestamp(resourceEvent.getCreatedTimestamp())
-                .setViewed(resourceEvent.isViewed());
+        return applySmall(resourceEvent)
+            .setEvent(resourceEvent.getEvent())
+            .setUser(userMapper.apply(resourceEvent.getUser()))
+            .setIpAddress(resourceEvent.getIpAddress())
+            .setViewed(resourceEvent.isViewed());
+    }
 
+    public ResourceEventRepresentation applyResponse(ResourceEvent resourceEvent) {
+        if (resourceEvent == null) {
+            return null;
+        }
+
+        return applySmall(resourceEvent);
+    }
+
+    private ResourceEventRepresentation applySmall(ResourceEvent resourceEvent) {
+        ResourceEventRepresentation representation = new ResourceEventRepresentation();
         if (resourceEvent.isExposeResponseData()) {
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));
             representation.setWebsiteResume(resourceEvent.getWebsiteResume());
             representation.setCoveringNote(resourceEvent.getCoveringNote());
         }
 
-        return representation;
+        return representation.setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
     }
 
 }

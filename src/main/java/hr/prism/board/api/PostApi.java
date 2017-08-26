@@ -9,7 +9,6 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
-import hr.prism.board.representation.PostApplyRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
@@ -20,7 +19,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,9 +85,9 @@ public class PostApi {
         return postService.findOrganizationsBySimilarName(query);
     }
 
-    @RequestMapping(value = "api/posts/{postId}/apply", method = RequestMethod.GET)
-    public PostApplyRepresentation getPostApply(@PathVariable Long postId, HttpServletRequest request) {
-        return postMapper.applyPostApply(postService.getPostApply(postId, BoardUtils.getClientIpAddress(request)));
+    @RequestMapping(value = "api/posts/{referral}", method = RequestMethod.GET)
+    public void getPostReferral(@PathVariable String referral, HttpServletResponse response) throws IOException {
+        response.sendRedirect(postService.getPostReferral(referral));
     }
 
     @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)

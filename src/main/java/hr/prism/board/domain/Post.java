@@ -84,7 +84,10 @@ public class Post extends Resource {
     private boolean exposeApplyData;
 
     @Transient
-    private boolean responded;
+    private ResourceEvent referral;
+
+    @Transient
+    private ResourceEvent response;
 
     public String getDescription() {
         return description;
@@ -214,12 +217,22 @@ public class Post extends Resource {
         this.exposeApplyData = exposeApplyData;
     }
 
-    public boolean isResponded() {
-        return responded;
+    public ResourceEvent getReferral() {
+        return referral;
     }
 
-    public void setResponded(boolean responded) {
-        this.responded = responded;
+    public Post setReferral(ResourceEvent referral) {
+        this.referral = referral;
+        return this;
+    }
+
+    public ResourceEvent getResponse() {
+        return response;
+    }
+
+    public Post setResponse(ResourceEvent response) {
+        this.response = response;
+        return this;
     }
 
     @Override

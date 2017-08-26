@@ -6,7 +6,10 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
@@ -95,7 +98,6 @@ public class BoardService {
             Board board = new Board();
             board.setName(name);
             board.setSummary(boardDTO.getSummary());
-            board.setDefaultPostVisibility(PostVisibility.PART_PRIVATE);
 
             DocumentDTO documentLogoDTO = boardDTO.getDocumentLogo();
             if (documentLogoDTO != null) {
@@ -171,8 +173,6 @@ public class BoardService {
         resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.DUPLICATE_BOARD);
         resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.DUPLICATE_BOARD_HANDLE);
         resourcePatchService.patchDocument(board, "documentLogo", board::getDocumentLogo, board::setDocumentLogo, boardDTO.getDocumentLogo());
-        resourcePatchService.patchProperty(board, "defaultPostVisibility", board::getDefaultPostVisibility, board::setDefaultPostVisibility,
-            boardDTO.getDefaultPostVisibility());
         resourcePatchService.patchProperty(board, "summary", board::getSummary, board::setSummary, boardDTO.getSummary());
         resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
         boardRepository.update(board);

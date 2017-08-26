@@ -37,7 +37,6 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setHandle(getHandle(board, department))
             .setPostCategories(resourceService.getCategories(board, CategoryType.POST))
             .setDepartment(departmentMapper.apply(department))
-            .setDefaultPostVisibility(board.getDefaultPostVisibility())
             .setPostCount(board.getPostCount())
             .setAuthorCount(board.getAuthorCount());
     }

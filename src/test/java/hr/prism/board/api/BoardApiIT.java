@@ -394,7 +394,6 @@ public class BoardApiIT extends AbstractIT {
                 .setSummary(Optional.of("summary"))
                 .setHandle(Optional.of("board-3"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("logo 2").setCloudinaryUrl("logo 2").setFileName("logo 2")))
-                .setDefaultPostVisibility(Optional.of(PostVisibility.PRIVATE))
                 .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))),
             State.ACCEPTED);
 
@@ -406,7 +405,6 @@ public class BoardApiIT extends AbstractIT {
                 .setName(Optional.of("board 4"))
                 .setSummary(Optional.of("summary 2"))
                 .setHandle(Optional.of("board-4"))
-                .setDefaultPostVisibility(Optional.of(PostVisibility.PUBLIC))
                 .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))),
             State.ACCEPTED);
 
@@ -445,7 +443,6 @@ public class BoardApiIT extends AbstractIT {
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1"),
                     ObjectUtils.orderedMap("cloudinaryId", "logo 2", "cloudinaryUrl", "logo 2", "fileName", "logo 2"))
-                .put("defaultPostVisibility", "PART_PRIVATE", "PRIVATE")
                 .put("summary", null, "summary")
                 .put("postCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
 
@@ -453,7 +450,6 @@ public class BoardApiIT extends AbstractIT {
             new ChangeListRepresentation()
                 .put("name", "board 3", "board 4")
                 .put("handle", "board-3", "board-4")
-                .put("defaultPostVisibility", "PRIVATE", "PUBLIC")
                 .put("summary", "summary", "summary 2")
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
 
@@ -560,7 +556,6 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
             verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
             Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
-            Assert.assertEquals(PostVisibility.PART_PRIVATE, boardR.getDefaultPostVisibility());
 
             Board board = boardService.getBoard(boardR.getId());
             Department department = departmentService.getDepartment(boardR.getDepartment().getId());
@@ -600,10 +595,6 @@ public class BoardApiIT extends AbstractIT {
             Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
             Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),
                 boardR.getPostCategories());
-
-            Optional<PostVisibility> defaultVisibilityOptional = boardDTO.getDefaultPostVisibility();
-            Assert.assertEquals(defaultVisibilityOptional == null ? board.getDefaultPostVisibility() : defaultVisibilityOptional.orElse(null),
-                boardR.getDefaultPostVisibility());
 
             Assert.assertEquals(expectedState, boardR.getState());
             return boardR;

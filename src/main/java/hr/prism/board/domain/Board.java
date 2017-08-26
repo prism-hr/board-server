@@ -1,6 +1,5 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.PostVisibility;
 import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
@@ -21,23 +20,11 @@ import javax.persistence.*;
                 @NamedAttributeNode(value = "documentLogo")})})
 public class Board extends Resource {
 
-    @Column(name = "default_post_visibility")
-    @Enumerated(value = EnumType.STRING)
-    private PostVisibility defaultPostVisibility;
-
     @Column(name = "post_count")
     private Long postCount;
 
     @Column(name = "author_count")
     private Long authorCount;
-
-    public PostVisibility getDefaultPostVisibility() {
-        return defaultPostVisibility;
-    }
-
-    public void setDefaultPostVisibility(PostVisibility defaultPostVisibility) {
-        this.defaultPostVisibility = defaultPostVisibility;
-    }
 
     public Long getPostCount() {
         return postCount;
