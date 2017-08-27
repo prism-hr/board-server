@@ -1,7 +1,7 @@
 package hr.prism.board.api;
 
 import hr.prism.board.TestContext;
-import hr.prism.board.enums.Action;
+import hr.prism.board.enums.*;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,14 +25,29 @@ public class DefinitionApiIT {
     private String appUrl;
 
     @Test
-    @SuppressWarnings("unchecked")
-    // FIXME: this is not a proper test, assert against the whole response
     public void shouldGetDefinitions() {
         TreeMap<String, Object> definitions = definitionApi.getDefinitions();
-        List<String> postVisibility = (List<String>) definitions.get("action");
-        Assert.assertThat(postVisibility, Matchers.containsInAnyOrder(Arrays.stream(Action.values()).map(Action::name).toArray(String[]::new)));
+        verifyDefinition(definitions, "action", Action.class);
+        verifyDefinition(definitions, "activity", Activity.class);
+        verifyDefinition(definitions, "activityEvent", ActivityEvent.class);
+        verifyDefinition(definitions, "badgeListType", BadgeListType.class);
+        verifyDefinition(definitions, "badgeType", BadgeType.class);
+        verifyDefinition(definitions, "categoryType", CategoryType.class);
+        verifyDefinition(definitions, "documentRequestState", DocumentRequestState.class);
+        verifyDefinition(definitions, "existingRelation", ExistingRelation.class);
+        verifyDefinition(definitions, "memberCategory", MemberCategory.class);
+        verifyDefinition(definitions, "notification", Notification.class);
+        verifyDefinition(definitions, "resourceEvent", ResourceEvent.class);
+        verifyDefinition(definitions, "role", Role.class);
+        verifyDefinition(definitions, "scope", Scope.class);
+        verifyDefinition(definitions, "state", State.class);
         Assert.assertNotNull(appUrl);
         Assert.assertEquals(appUrl, definitions.get("applicationUrl"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Enum<T>> void verifyDefinition(TreeMap<String, Object> definitions, String key, Class<T> clazz) {
+        Assert.assertThat((List<String>) definitions.get(key), Matchers.containsInAnyOrder(Arrays.stream(clazz.getEnumConstants()).map(Enum::name).toArray(String[]::new)));
     }
 
 }

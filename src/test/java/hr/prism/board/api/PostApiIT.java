@@ -10,9 +10,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.exception.*;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
@@ -28,6 +26,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1040,7 +1039,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldCountPostViewsReferralsAndResponses() {
+    public void shouldCountPostViewsReferralsAndResponses() throws IOException {
         Long boardUserId = testUserService.authenticate().getId();
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()));
         Long departmentId = boardR.getDepartment().getId();
@@ -1059,15 +1058,19 @@ public class PostApiIT extends AbstractIT {
             new ResourceUserDTO().setUser(new UserDTO().setId(memberUser2)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
 
         testUserService.setAuthentication(memberUser1);
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
+        PostRepresentation viewPostMemberUser1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
+        String referral1 = viewPostMemberUser1.getReferral();
+        Assert.assertNotNull(referral1);
 
         transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
 
         testUserService.setAuthentication(memberUser2);
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
+        PostRepresentation viewPostMemberUser2 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
+        String referral2 = viewPostMemberUser2.getReferral();
+        Assert.assertNotNull(referral2);
 
         transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
@@ -1092,75 +1095,40 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
 
         PostRepresentation viewPostUnknown1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
-        String referral = viewPostUnknown1.getReferral();
+        Assert.assertNull(viewPostUnknown1.getReferral());
 
+        TestHelper.MockHttpServletResponse response = TestHelper.mockHttpServletResponse();
+        verifyPostReferral(referral1, response, "http://www.google.co.uk");
+        verifyViewReferralAndResponseCounts(postId, 5L, 1L, 0L);
 
-//        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
-//            () -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("unknown1")), ExceptionCode.UNAUTHENTICATED_USER, status));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
-//
-//        Long otherDepartmentUserId = testUserService.authenticate().getId();
-//        Long otherDepartmentId = departmentApi.postDepartment(new DepartmentDTO().setName("other")).getId();
-//
-//        Long otherMemberUserId = testUserService.authenticate().getId();
-//        testUserService.setAuthentication(otherDepartmentUserId);
-//        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, otherDepartmentId,
-//            new ResourceUserDTO().setUser(new UserDTO().setId(otherMemberUserId)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
-//
-//        testUserService.setAuthentication(otherMemberUserId);
-//        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
-//            () -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("otherMemberUser1")), ExceptionCode.FORBIDDEN_ACTION, status));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
-//
-//        testUserService.setAuthentication(memberUser1);
-//        PostApplyRepresentation postApplyR = transactionTemplate.execute(status -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("member1")));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 1L, 0L);
-//
-//        Assert.assertEquals("http://www.google.co.uk", postApplyR.getApplyWebsite());
-//        Assert.assertNull(postApplyR.getApplyDocument());
-//        Assert.assertNull(postApplyR.getApplyEmail());
-//
-//        transactionTemplate.execute(status -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("member1")));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 1L, 0L);
-//
-//        testUserService.setAuthentication(memberUser2);
-//        transactionTemplate.execute(status -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("member1")));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
-//
-//        transactionTemplate.execute(status -> postApi.getPostApply(postId, TestHelper.mockHttpServletRequest("member1")));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
-//
-//        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("cloudinaryId").setCloudinaryUrl("cloudinaryUrl").setFileName("fileName");
-//        ResourceEventDTO resourceEventDTO = new ResourceEventDTO().setDefaultResume(true).setDocumentResume(documentDTO).setCoveringNote("hello");
-//
-//        testUserService.setAuthentication(memberUser1);
-//        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardException.class,
-//            () -> postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.INVALID_RESOURCE_EVENT, status));
-//
-//        testUserService.setAuthentication(boardUserId);
-//        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyWebsite(Optional.empty()).setApplyEmail(Optional.of("apply@post.com"))));
-//
-//        testUserService.setAuthentication(memberUser1);
-//        ResourceEventRepresentation resourceEventR = transactionTemplate.execute(status -> postApi.postPostResponse(postId, resourceEventDTO));
-//        verifyViewReferralAndResponseCounts(postId, 5L, 2L, 1L);
-//
-//        Assert.assertEquals(ResourceEvent.RESPONSE, resourceEventR.getEvent());
-//        Assert.assertEquals(memberUser1, resourceEventR.getUser().getId());
-//        verifyDocument(documentDTO, resourceEventR.getDocumentResume());
-//        Assert.assertNull(resourceEventR.getWebsiteResume());
-//        Assert.assertEquals("hello", resourceEventR.getCoveringNote());
-//        Assert.assertNotNull(resourceEventR.getCreatedTimestamp());
-//        Assert.assertFalse(resourceEventR.isViewed());
-//
-//        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardDuplicateException.class, () ->
-//                postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT, status));
-//
-//        testUserService.setAuthentication(boardUserId);
-//        transactionTemplate.execute(status -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()));
-//
-//        testUserService.setAuthentication(memberUser2);
-//        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class, () -> postApi.postPostResponse(postId, resourceEventDTO),
-//            ExceptionCode.FORBIDDEN_ACTION, status));
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> verifyPostReferral(referral1, response, "http://www.google.co.uk"), ExceptionCode.FORBIDDEN_REFERRAL, status));
+
+        testUserService.setAuthentication(boardUserId);
+        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("cloudinaryId").setCloudinaryUrl("cloudinaryUrl").setFileName("fileName");
+        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty())));
+
+        testUserService.setAuthentication(memberUser2);
+        verifyPostReferral(referral2, response, "cloudinaryUrl");
+        verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
+
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardException.class,
+            () -> postApi.postPostResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT, status));
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.empty()).setApplyEmail(Optional.of("email@email.com"))));
+
+        testUserService.setAuthentication(memberUser1);
+        ResourceEventDTO resourceEventDTO = new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website").setCoveringNote("note");
+        transactionTemplate.execute(status -> postApi.postPostResponse(postId, resourceEventDTO));
+        verifyViewReferralAndResponseCounts(postId, 5L, 2L, 1L);
+
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardDuplicateException.class, () ->
+            postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT, status));
+
+        testUserService.setAuthentication(memberUser2);
+        transactionTemplate.execute(status -> postApi.postPostResponse(postId, resourceEventDTO));
+        verifyViewReferralAndResponseCounts(postId, 5L, 2L, 2L);
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
@@ -1441,6 +1409,20 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyNullableCount(0L, postRs.get(1).getViewCount());
         TestHelper.verifyNullableCount(0L, postRs.get(1).getReferralCount());
         TestHelper.verifyNullableCount(0L, postRs.get(1).getResponseCount());
+    }
+
+    private void verifyPostReferral(String referral, TestHelper.MockHttpServletResponse response, String expectedLocation) {
+        transactionTemplate.execute(status -> {
+            try {
+                postApi.getPostReferral(referral, response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        });
+
+        Assert.assertEquals(expectedLocation, response.getLocation());
     }
 
     private interface PostOperation {

@@ -114,8 +114,8 @@ public class PostService {
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
-            if (user != null) {
-                resourceEventService.createPostReferral(post, user, ipAddress);
+            if (user != null && post.getApplyEmail() == null) {
+                resourceEventService.createPostReferral(post, user);
             }
         }
 

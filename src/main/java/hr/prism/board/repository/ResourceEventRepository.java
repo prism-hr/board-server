@@ -20,8 +20,7 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.event = :event " +
             "and resourceEvent.user = :user " +
-            "group by resourceEvent.resource " +
-            "order by resourceEvent.id desc")
+            "group by resourceEvent.resource")
     ResourceEvent findByResourceAndEventAndUser(@Param("resource") Resource resource, @Param("event") hr.prism.board.enums.ResourceEvent event, @Param("user") User user);
 
     @Query(value =
@@ -47,7 +46,6 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, count(distinct resourceEvent.ipAddress), max(resourceEvent.createdTimestamp)) " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
-            "and resourceEvent.user is null " +
             "and resourceEvent.ipAddress is not null " +
             "and resourceEvent.referral is null " +
             "group by resourceEvent.event")

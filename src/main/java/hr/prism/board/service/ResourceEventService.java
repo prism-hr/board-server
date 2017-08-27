@@ -58,14 +58,23 @@ public class ResourceEventService {
     }
 
     public ResourceEvent createPostView(Post post, User user, String ipAddress) {
-        verifyEventIdentifiable(user, ipAddress);
-        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW).setUser(user).setIpAddress(ipAddress));
+        if (user == null && ipAddress == null) {
+            throw new BoardException(ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT);
+        }
+
+        ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW);
+        if (user == null) {
+            resourceEvent.setIpAddress(ipAddress);
+        } else {
+            resourceEvent.setUser(user);
+        }
+
+        return saveResourceEvent(post, resourceEvent);
     }
 
-    public ResourceEvent createPostReferral(Post post, User user, String ipAddress) {
-        verifyEventIdentifiable(user, ipAddress);
-        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.REFERRAL)
-            .setUser(user).setIpAddress(ipAddress).setReferral(DigestUtils.sha256Hex(UUID.randomUUID().toString())));
+    public ResourceEvent createPostReferral(Post post, User user) {
+        String referral = DigestUtils.sha256Hex(UUID.randomUUID().toString());
+        return saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.REFERRAL).setUser(user).setReferral(referral));
     }
 
     public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
@@ -129,19 +138,22 @@ public class ResourceEventService {
         }
 
         resourceEvent.setReferral(null);
-        return resourceEventRepository.update(resourceEvent);
-    }
+        resourceEvent = resourceEventRepository.update(resourceEvent);
+        entityManager.flush();
 
-    private void verifyEventIdentifiable(User user, String ipAddress) {
-        if (user == null && ipAddress == null) {
-            throw new BoardException(ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT);
-        }
+        updateResourceEventSummary((Post) resourceEvent.getResource());
+        return resourceEvent;
     }
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
         resourceEvent = resourceEventRepository.save(resourceEvent);
         entityManager.flush();
 
+        updateResourceEventSummary(post);
+        return resourceEvent;
+    }
+
+    private void updateResourceEventSummary(Post post) {
         Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries = resourceEventRepository.findUserSummaryByResource(post)
             .stream().collect(Collectors.toMap(ResourceEventSummary::getKey, resourceEventSummary -> resourceEventSummary));
         resourceEventRepository.findIpAddressSummaryByResource(post).forEach(summary -> {
@@ -170,8 +182,6 @@ public class ResourceEventService {
                     break;
             }
         }
-
-        return resourceEvent;
     }
 
 }

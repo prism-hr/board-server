@@ -16,6 +16,8 @@ import org.junit.Assert;
 import org.mockito.Mockito;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -148,6 +150,13 @@ public class TestHelper {
         return httpServletRequest;
     }
 
+    public static MockHttpServletResponse mockHttpServletResponse() throws IOException {
+        MockHttpServletResponse httpServletResponse = Mockito.mock(MockHttpServletResponse.class);
+        Mockito.doCallRealMethod().when(httpServletResponse).sendRedirect(Mockito.anyString());
+        Mockito.when(httpServletResponse.getLocation()).thenCallRealMethod();
+        return httpServletResponse;
+    }
+
     public static String toString(LocalDateTime baseline) {
         if (baseline == null) {
             return null;
@@ -208,6 +217,21 @@ public class TestHelper {
             values.sort(Comparator.naturalOrder());
             super.put(key, values);
             return this;
+        }
+
+    }
+
+    public static abstract class MockHttpServletResponse implements HttpServletResponse {
+
+        private String location;
+
+        public String getLocation() {
+            return location;
+        }
+
+        @Override
+        public void sendRedirect(String location) throws IOException {
+            this.location = location;
         }
 
     }
