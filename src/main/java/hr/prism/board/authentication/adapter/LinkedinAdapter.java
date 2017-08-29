@@ -32,7 +32,7 @@ public class LinkedinAdapter implements OauthAdapter {
             return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmailAddress())
                 .setOauthProvider(OauthProvider.LINKEDIN).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
         } catch (ResourceAccessException e) {
-            throw new BoardException(ExceptionCode.UNAVAILABLE_INTEGRATION);
+            throw new BoardException(ExceptionCode.FAILING_INTEGRATION);
         }
 
     }

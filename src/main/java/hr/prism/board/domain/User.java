@@ -188,6 +188,10 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    public String getFullName() {
+        return Joiner.on(" ").skipNulls().join(givenName, surname);
+    }
+
     @Override
     public String toString() {
         return Joiner.on(" ").skipNulls().join(givenName, surname, email);

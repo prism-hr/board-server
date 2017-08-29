@@ -10,6 +10,8 @@ public class NotificationEvent extends ApplicationEvent {
 
     private Long resourceId;
 
+    private Long resourceEventId;
+
     private Action action;
 
     private List<Notification> notifications;
@@ -32,8 +34,19 @@ public class NotificationEvent extends ApplicationEvent {
         this.notifications = notifications;
     }
 
+    public NotificationEvent(Object source, Long resourceId, Long resourceEventId, List<Notification> notifications) {
+        super(source);
+        this.resourceId = resourceId;
+        this.resourceEventId = resourceEventId;
+        this.notifications = notifications;
+    }
+
     public Long getResourceId() {
         return resourceId;
+    }
+
+    public Long getResourceEventId() {
+        return resourceEventId;
     }
 
     public Action getAction() {

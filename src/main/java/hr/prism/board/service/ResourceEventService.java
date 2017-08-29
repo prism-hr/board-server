@@ -91,11 +91,7 @@ public class ResourceEventService {
             throw new BoardDuplicateException(ExceptionCode.DUPLICATE_RESOURCE_EVENT, previousResponse.getId());
         }
 
-        Document documentResume = null;
-        if (documentResumeDTO != null) {
-            documentResume = documentService.getOrCreateDocument(documentResumeDTO);
-        }
-
+        Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
         ResourceEvent response = saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
             .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
         if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
@@ -107,14 +103,10 @@ public class ResourceEventService {
             .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setActivity(hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY);
         activityEventService.publishEvent(this, postId, response, Collections.singletonList(activity));
 
-        if (post.getApplyEmail().equals(user.getEmail())) {
-            hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-                .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.RESPOND_POST_NOTIFICATION);
-            notificationEventService.publishEvent(this, postId, Collections.singletonList(notification));
-        } else {
-            // TODO: send the email / attachment to the specified address
-        }
-
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.RESPOND_POST_NOTIFICATION).addAttachment(
+                new hr.prism.board.workflow.Notification.Attachment().setName(documentResume.getFileName()).setUrl(documentResume.getCloudinaryUrl()).setLabel("Application"));
+        notificationEventService.publishEvent(this, postId, response.getId(), Collections.singletonList(notification));
         return response;
     }
 

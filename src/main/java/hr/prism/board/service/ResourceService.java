@@ -102,6 +102,9 @@ public class ResourceService {
     private UserService userService;
 
     @Inject
+    private UserRoleService userRoleService;
+
+    @Inject
     private ObjectMapper objectMapper;
 
     @PersistenceContext
@@ -510,6 +513,11 @@ public class ResourceService {
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
         return resourceRepository.findByScopeAndUserAndRolesOrCategories(scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACTIVE_USER_ROLE_STATES);
+    }
+
+    public boolean isResourceAdministrator(Resource resource, String email) {
+        List<UserRole> userRoles = userRoleService.findByResourceAndRole(resource, Role.ADMINISTRATOR);
+        return userRoles.stream().map(userRole -> userRole.getUser().getEmail()).anyMatch(email::equals);
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {

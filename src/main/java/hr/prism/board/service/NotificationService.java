@@ -120,6 +120,7 @@ public class NotificationService {
             mail.setSubject(subject);
             mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
             mail.addContent(new Content("text/html", content));
+            request.getAttachments().forEach(mail::addAttachments);
 
             try {
                 Request sendGridRequest = new Request();
@@ -186,13 +187,14 @@ public class NotificationService {
 
         private Action action;
 
-        private Map<String, String> customProperties;
+        private List<Attachments> attachments = new ArrayList<>();
 
-        public NotificationRequest(Notification notification, User recipient, Resource resource, Action action) {
+        public NotificationRequest(Notification notification, User recipient, Resource resource, Action action, List<Attachments> attachments) {
             this.notification = notification;
             this.recipient = recipient;
             this.resource = resource;
             this.action = action;
+            this.attachments.addAll(attachments);
         }
 
         public Notification getNotification() {
@@ -209,6 +211,10 @@ public class NotificationService {
 
         public Action getAction() {
             return action;
+        }
+
+        public List<Attachments> getAttachments() {
+            return attachments;
         }
 
     }

@@ -25,4 +25,9 @@ public class TestNotificationEventService extends NotificationEventService {
         super.sendNotifications(new NotificationEvent(source, resourceId, action, notifications));
     }
 
+    @Override
+    public void publishEvent(Object source, Long resourceId, Long resourceEventId, List<Notification> notifications) {
+        super.sendNotifications(new NotificationEvent(source, resourceId, resourceEventId, notifications));
+    }
+
 }
