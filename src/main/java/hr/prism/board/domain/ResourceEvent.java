@@ -34,6 +34,9 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "covering_note")
     private String coveringNote;
 
+    @Column(name = "visible_to_administrator")
+    private Boolean visibleToAdministrator;
+
     @OneToOne(mappedBy = "resourceEvent")
     private Activity activity;
 
@@ -112,6 +115,15 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setCoveringNote(String coveringNote) {
         this.coveringNote = coveringNote;
+        return this;
+    }
+
+    public Boolean getVisibleToAdministrator() {
+        return visibleToAdministrator;
+    }
+
+    public ResourceEvent setVisibleToAdministrator(Boolean visibleToAdministrator) {
+        this.visibleToAdministrator = visibleToAdministrator;
         return this;
     }
 

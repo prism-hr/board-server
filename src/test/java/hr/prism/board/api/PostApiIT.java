@@ -1132,6 +1132,46 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 2L);
     }
 
+    @Test
+    public void shouldNotifyAndListPostResponses() {
+        Long boardUserId = testUserService.authenticate().getId();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()));
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId = boardR.getId();
+
+        User postUser = testUserService.authenticate();
+        String postUserEmail = postUser.getEmail();
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setApplyWebsite(null).setApplyEmail(postUserEmail))).getId();
+
+        Long memberUser1 = testUserService.authenticate().getId();
+        Long memberUser2 = testUserService.authenticate().getId();
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser1)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser2)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
+        transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
+
+        testUserService.setAuthentication(memberUser1);
+        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
+            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments1.pdf");
+        transactionTemplate.execute(status -> postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website1").setCoveringNote("note1")));
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
+
+        testUserService.setAuthentication(memberUser2);
+        transactionTemplate.execute(status -> postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website2").setCoveringNote("note2")));
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail))));
+
+    }
+
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
         return transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.postPost(boardId, postDTO);

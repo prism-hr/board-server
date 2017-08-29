@@ -17,6 +17,7 @@ import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -248,10 +249,10 @@ public class PostService {
             return resourceEvents;
         }
 
-        boolean exposeResponseData = resourceService.isResourceAdministrator(post, post.getApplyEmail());
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
+        boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
         for (ResourceEvent resourceEvent : resourceEvents) {
-            resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user) || exposeResponseData);
+            resourceEvent.setExposeResponseData(BooleanUtils.isTrue(isAdministrator && resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
             indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
         }
 
@@ -344,6 +345,9 @@ public class PostService {
         Optional<String> applyEmail = postDTO.getApplyEmail();
         if (BoardUtils.isPresent(applyEmail)) {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
+            if (resourceService.isResourceAdministrator(post, post.getApplyEmail())) {
+                resourceEventService.updateVisibleToAdministrator(post);
+            }
         }
 
         Board board = (Board) post.getParent();
@@ -514,7 +518,8 @@ public class PostService {
         }
 
         actionService.executeAction(user, post, Action.EDIT, () -> post);
-        resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user) || resourceService.isResourceAdministrator(post, post.getApplyEmail()));
+        boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
+        resourceEvent.setExposeResponseData(BooleanUtils.isTrue(isAdministrator && resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
         return resourceEvent;
     }
 

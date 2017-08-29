@@ -4,6 +4,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.User;
 import hr.prism.board.value.ResourceEventSummary;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -61,5 +62,14 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "order by resourceEvent.id desc")
     List<ResourceEvent> findByResourceIdsAndEventAndUser(@Param("resourceIds") List<Long> resourceIds, @Param("event") hr.prism.board.enums.ResourceEvent event,
                                                          @Param("user") User user);
+
+    @Modifying
+    @Query(value =
+        "update ResourceEvent resourceEvent " +
+            "set resourceEvent.visibleToAdministrator = :visibleToAdministrator " +
+            "where resourceEvent.resource = :resource " +
+            "and resourceEvent.event = :event")
+    void updateVisibleToAdministrator(@Param("resource") Resource resource, @Param("event") hr.prism.board.enums.ResourceEvent event,
+                                      @Param("visibleToAdministrator") Boolean visibleToAdministrator);
 
 }

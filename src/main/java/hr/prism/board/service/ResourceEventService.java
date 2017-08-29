@@ -42,6 +42,9 @@ public class ResourceEventService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private ResourceService resourceService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -93,7 +96,8 @@ public class ResourceEventService {
 
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
         ResourceEvent response = saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
-            .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
+            .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote)
+            .setVisibleToAdministrator(resourceService.isResourceAdministrator(post, post.getApplyEmail())));
         if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
             userService.updateUserResume(user, documentResume, websiteResume);
         }
@@ -135,6 +139,10 @@ public class ResourceEventService {
 
         updateResourceEventSummary((Post) resourceEvent.getResource());
         return resourceEvent;
+    }
+
+    public void updateVisibleToAdministrator(Resource resource) {
+        resourceEventRepository.updateVisibleToAdministrator(resource, hr.prism.board.enums.ResourceEvent.RESPONSE, true);
     }
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
