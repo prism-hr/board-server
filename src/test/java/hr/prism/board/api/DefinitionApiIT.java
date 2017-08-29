@@ -12,10 +12,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 @TestContext
 @RunWith(SpringRunner.class)
+@SuppressWarnings("unchecked")
 public class DefinitionApiIT {
 
     @Inject
@@ -24,9 +26,21 @@ public class DefinitionApiIT {
     @Value("${app.url}")
     private String appUrl;
 
+    @Value("${auth.facebook.clientId}")
+    private String facebookClientId;
+
+    @Value("${auth.linkedin.clientId}")
+    private String linkedinClientId;
+
+    @Value("${cloudinary.folder}")
+    private String cloudinaryFolder;
+
     @Test
     public void shouldGetDefinitions() {
         TreeMap<String, Object> definitions = definitionApi.getDefinitions();
+        verifyProperty(definitions, "applicationUrl", appUrl);
+        verifyProperty(definitions, "cloudinaryFolder", cloudinaryFolder);
+
         verifyDefinition(definitions, "action", Action.class);
         verifyDefinition(definitions, "activity", Activity.class);
         verifyDefinition(definitions, "activityEvent", ActivityEvent.class);
@@ -41,11 +55,21 @@ public class DefinitionApiIT {
         verifyDefinition(definitions, "role", Role.class);
         verifyDefinition(definitions, "scope", Scope.class);
         verifyDefinition(definitions, "state", State.class);
-        Assert.assertNotNull(appUrl);
-        Assert.assertEquals(appUrl, definitions.get("applicationUrl"));
+
+        List<Map<String, Object>> oauthProviders = (List<Map<String, Object>>) definitions.get("oauthProvider");
+        Map<String, Object> facebook = oauthProviders.get(0);
+        verifyProperty(facebook, "id", OauthProvider.FACEBOOK);
+        verifyProperty(facebook, "clientId", facebookClientId);
+        Map<String, Object> linkedin = oauthProviders.get(1);
+        verifyProperty(linkedin, "id", OauthProvider.LINKEDIN);
+        verifyProperty(linkedin, "clientId", linkedinClientId);
     }
 
-    @SuppressWarnings("unchecked")
+    private void verifyProperty(Map<String, Object> definitions, String key, Object value) {
+        Assert.assertNotNull(value);
+        Assert.assertEquals(value, definitions.get(key));
+    }
+
     private <T extends Enum<T>> void verifyDefinition(TreeMap<String, Object> definitions, String key, Class<T> clazz) {
         Assert.assertThat((List<String>) definitions.get(key), Matchers.containsInAnyOrder(Arrays.stream(clazz.getEnumConstants()).map(Enum::name).toArray(String[]::new)));
     }
