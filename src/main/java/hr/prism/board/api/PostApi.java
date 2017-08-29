@@ -85,7 +85,7 @@ public class PostApi {
         return postService.findOrganizationsBySimilarName(query);
     }
 
-    @RequestMapping(value = "api/posts/{referral}", method = RequestMethod.GET)
+    @RequestMapping(value = "api/posts/referrals/{referral}", method = RequestMethod.GET)
     public void getPostReferral(@PathVariable String referral, HttpServletResponse response) throws IOException {
         response.sendRedirect(postService.getPostReferral(referral));
     }
