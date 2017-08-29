@@ -83,7 +83,7 @@ public class NotificationService {
             for (String placeholder : placeholders) {
                 NotificationProperty property = propertiesMap.get(placeholder);
                 if (property == null) {
-                    throw new BoardException(ExceptionCode.MISSING_NOTIFICATION_PROPERTY);
+                    throw new BoardException(ExceptionCode.MISSING_NOTIFICATION_PROPERTY, placeholder);
                 }
 
                 properties.put(placeholder, property);

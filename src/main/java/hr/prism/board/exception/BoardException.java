@@ -14,6 +14,11 @@ public class BoardException extends RuntimeException {
         this.exceptionCode = exceptionCode;
     }
 
+    public BoardException(ExceptionCode exceptionCode, String message) {
+        super(exceptionCode.name() + ": " + message);
+        this.exceptionCode = exceptionCode;
+    }
+
     public ExceptionCode getExceptionCode() {
         return exceptionCode;
     }

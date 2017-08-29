@@ -1105,11 +1105,12 @@ public class PostApiIT extends AbstractIT {
             () -> verifyPostReferral(referral1, response, "http://www.google.co.uk"), ExceptionCode.FORBIDDEN_REFERRAL, status));
 
         testUserService.setAuthentication(boardUserId);
-        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("cloudinaryId").setCloudinaryUrl("cloudinaryUrl").setFileName("fileName");
+        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
+            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments1.pdf");
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty())));
 
         testUserService.setAuthentication(memberUser2);
-        verifyPostReferral(referral2, response, "cloudinaryUrl");
+        verifyPostReferral(referral2, response, "http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf");
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardException.class,
