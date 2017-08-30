@@ -116,7 +116,6 @@ public class PostService {
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
-
             List<ActionRepresentation> actions = post.getActions();
             if (actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action -> action.equals(Action.PURSUE)) && post.getApplyEmail() == null) {
                 resourceEventService.createPostReferral(post, user);
