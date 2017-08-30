@@ -10,6 +10,7 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
+import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
@@ -115,7 +116,9 @@ public class PostService {
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
-            if (user != null && post.getApplyEmail() == null) {
+
+            List<ActionRepresentation> actions = post.getActions();
+            if (actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action -> action.equals(Action.PURSUE)) && post.getApplyEmail() == null) {
                 resourceEventService.createPostReferral(post, user);
             }
         }
@@ -252,7 +255,7 @@ public class PostService {
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
         boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
         for (ResourceEvent resourceEvent : resourceEvents) {
-            resourceEvent.setExposeResponseData(isAdministrator &&  BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
+            resourceEvent.setExposeResponseData(isAdministrator && BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
             indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
         }
 
