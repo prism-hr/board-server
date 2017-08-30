@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-@SuppressWarnings("JpaQlInspection")
+@SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
 public interface ResourceEventRepository extends MyRepository<ResourceEvent, Long> {
 
     ResourceEvent findByReferral(String referral);

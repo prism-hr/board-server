@@ -1140,36 +1140,92 @@ public class PostApiIT extends AbstractIT {
         Long boardId = boardR.getId();
 
         User postUser = testUserService.authenticate();
+        Long postUserId = postUser.getId();
         String postUserEmail = postUser.getEmail();
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             TestHelper.smallSamplePost().setApplyWebsite(null).setApplyEmail(postUserEmail))).getId();
 
         Long memberUser1 = testUserService.authenticate().getId();
         Long memberUser2 = testUserService.authenticate().getId();
+        Long memberUser3 = testUserService.authenticate().getId();
 
         testUserService.setAuthentication(boardUserId);
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO().setUser(new UserDTO().setId(memberUser1)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO().setUser(new UserDTO().setId(memberUser2)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser3)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
         transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
 
         testUserService.setAuthentication(memberUser1);
-        DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
+        DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments1.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
-            new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website1").setCoveringNote("note1")));
+            new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1")));
+
+        testUserService.setAuthentication(postUserId);
+        List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(1, responses.size());
+        verifyPostResponse(memberUser1, responses.get(0), "attachments1.pdf", "website1", "note1");
 
         testUserService.setAuthentication(boardUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(1, responses.size());
+        verifyPostResponse(memberUser1, responses.get(0), null, null, null);
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
 
         testUserService.setAuthentication(memberUser2);
+        DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
+            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments2.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
-            new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website2").setCoveringNote("note2")));
+            new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2")));
+
+        testUserService.setAuthentication(postUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(2, responses.size());
+        verifyPostResponse(memberUser2, responses.get(0), null, null, null);
+        verifyPostResponse(memberUser1, responses.get(1), "attachments1.pdf", "website1", "note1");
 
         testUserService.setAuthentication(boardUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(2, responses.size());
+        verifyPostResponse(memberUser2, responses.get(0), null, null, null);
+        verifyPostResponse(memberUser1, responses.get(1), null, null, null);
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail))));
 
+        testUserService.setAuthentication(postUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(2, responses.size());
+        verifyPostResponse(memberUser2, responses.get(0), "attachments2.pdf", "website2", "note2");
+        verifyPostResponse(memberUser1, responses.get(1), "attachments1.pdf", "website1", "note1");
+
+        testUserService.setAuthentication(boardUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(2, responses.size());
+        verifyPostResponse(memberUser2, responses.get(0), null, null, null);
+        verifyPostResponse(memberUser1, responses.get(1), null, null, null);
+        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
+
+        testUserService.setAuthentication(memberUser3);
+        DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
+            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments3.pdf");
+        transactionTemplate.execute(status -> postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website3").setCoveringNote("note3")));
+
+        testUserService.setAuthentication(postUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(3, responses.size());
+        verifyPostResponse(memberUser3, responses.get(0), null, null, null);
+        verifyPostResponse(memberUser2, responses.get(1), "attachments2.pdf", "website2", "note2");
+        verifyPostResponse(memberUser1, responses.get(2), "attachments1.pdf", "website1", "note1");
+
+        testUserService.setAuthentication(boardUserId);
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertEquals(3, responses.size());
+        verifyPostResponse(memberUser3, responses.get(0), null, null, null);
+        verifyPostResponse(memberUser2, responses.get(1), null, null, null);
+        verifyPostResponse(memberUser1, responses.get(2), null, null, null);
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
@@ -1464,6 +1520,14 @@ public class PostApiIT extends AbstractIT {
         });
 
         Assert.assertEquals(expectedLocation, response.getLocation());
+    }
+
+    private void verifyPostResponse(Long userId, ResourceEventRepresentation response, String documentResumeFileName, String websiteResume, String coveringNote) {
+        Assert.assertEquals(userId, response.getUser().getId());
+        DocumentRepresentation documentResume = response.getDocumentResume();
+        Assert.assertEquals(documentResumeFileName, documentResume == null ? null : documentResume.getFileName());
+        Assert.assertEquals(websiteResume, response.getWebsiteResume());
+        Assert.assertEquals(coveringNote, response.getCoveringNote());
     }
 
     private interface PostOperation {

@@ -252,7 +252,7 @@ public class PostService {
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
         boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
         for (ResourceEvent resourceEvent : resourceEvents) {
-            resourceEvent.setExposeResponseData(BooleanUtils.isTrue(isAdministrator && resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
+            resourceEvent.setExposeResponseData(isAdministrator &&  BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
             indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
         }
 
@@ -512,14 +512,10 @@ public class PostService {
 
     private ResourceEvent getPostResponse(User user, Long postId, Long responseId) {
         Post post = getPost(postId);
-        ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
-        if (resourceEvent.getUser().equals(user)) {
-            return resourceEvent;
-        }
-
         actionService.executeAction(user, post, Action.EDIT, () -> post);
         boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
-        resourceEvent.setExposeResponseData(BooleanUtils.isTrue(isAdministrator && resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
+        ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
+        resourceEvent.setExposeResponseData(isAdministrator && BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
         return resourceEvent;
     }
 
