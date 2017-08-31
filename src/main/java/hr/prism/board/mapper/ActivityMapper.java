@@ -21,6 +21,9 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
     @Inject
     private UserMapper userMapper;
 
+    @Inject
+    private ResourceEventMapper resourceEventMapper;
+
     @Override
     public ActivityRepresentation apply(Activity activity) {
         if (activity == null) {
@@ -31,15 +34,13 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
             .setId(activity.getId())
             .setResource(resourceMapperFactory.applySmall(activity.getResource()))
             .setUserRole(mapUserRole(activity.getUserRole()))
+            .setResourceEvent(resourceEventMapper.apply(activity.getResourceEvent()))
             .setActivity(activity.getActivity());
     }
 
     private UserRoleRepresentation mapUserRole(UserRole userRole) {
-        if (userRole == null) {
-            return null;
-        }
-
-        return userRoleMapper.apply(userRole).setUser(userMapper.apply(userRole.getUser()));
+        UserRoleRepresentation userRoleRepresentation = userRoleMapper.apply(userRole);
+        return userRoleRepresentation == null ? null : userRoleRepresentation.setUser(userMapper.apply(userRole.getUser()));
     }
 
 }

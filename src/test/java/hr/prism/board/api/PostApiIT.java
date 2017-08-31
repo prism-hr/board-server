@@ -10,6 +10,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
+import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.exception.*;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
@@ -1164,8 +1165,18 @@ public class PostApiIT extends AbstractIT {
             new ResourceUserDTO().setUser(new UserDTO().setId(memberUser3Id)).setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER)))));
         transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
 
-        testNotificationService.record();
+        testUserService.setAuthentication(postUserId);
+        List<ActivityRepresentation> activities = transactionTemplate.execute(status -> userApi.getActivities());
+        activities.forEach(activity -> {
+            transactionTemplate.execute(status -> {
+                userApi.dismissActivity(activity.getId());
+                return null;
+            });
+        });
+
         testUserActivityService.record();
+        testNotificationService.record();
+        listenForNewActivities(postUserId);
 
         testUserService.setAuthentication(memberUser1Id);
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
@@ -1177,6 +1188,7 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").build()));
+        testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
         List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
@@ -1194,6 +1206,14 @@ public class PostApiIT extends AbstractIT {
             .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments2.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2")));
+
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser2.getFullName())
+                    .put("coveringNote", "note2").put("profile", "website2").build()));
+        testUserActivityService.verify(postUserId,
+            new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
@@ -1227,8 +1247,17 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3")));
 
-        testNotificationService.stop();
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser3.getFullName())
+                    .put("coveringNote", "note3").put("profile", "website3").build()));
+        testUserActivityService.verify(postUserId,
+            new TestUserActivityService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+
         testUserActivityService.stop();
+        testNotificationService.stop();
 
         testUserService.setAuthentication(postUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));

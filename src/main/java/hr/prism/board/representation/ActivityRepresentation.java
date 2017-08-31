@@ -10,6 +10,8 @@ public class ActivityRepresentation {
 
     private UserRoleRepresentation userRole;
 
+    private ResourceEventRepresentation resourceEvent;
+
     private Activity activity;
 
     public Long getId() {
@@ -36,6 +38,15 @@ public class ActivityRepresentation {
 
     public ActivityRepresentation setUserRole(UserRoleRepresentation userRole) {
         this.userRole = userRole;
+        return this;
+    }
+
+    public ResourceEventRepresentation getResourceEvent() {
+        return resourceEvent;
+    }
+
+    public ActivityRepresentation setResourceEvent(ResourceEventRepresentation resourceEvent) {
+        this.resourceEvent = resourceEvent;
         return this;
     }
 

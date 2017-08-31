@@ -3,8 +3,10 @@ package hr.prism.board.service;
 import com.google.common.collect.HashMultimap;
 import hr.prism.board.api.UserApi;
 import hr.prism.board.enums.Activity;
+import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.enums.Role;
 import hr.prism.board.representation.ActivityRepresentation;
+import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import org.junit.Assert;
 import org.springframework.stereotype.Service;
@@ -77,6 +79,8 @@ public class TestUserActivityService extends UserActivityService {
 
         private Role role;
 
+        private ResourceEvent resourceEvent;
+
         private Activity activity;
 
         public ActivityInstance(Long resourceId, Activity activity) {
@@ -91,14 +95,25 @@ public class TestUserActivityService extends UserActivityService {
             this.activity = activity;
         }
 
+        public ActivityInstance(Long resourceId, Long userId, ResourceEvent resourceEvent, Activity activity) {
+            this.resourceId = resourceId;
+            this.userId = userId;
+            this.resourceEvent = resourceEvent;
+            this.activity = activity;
+        }
+
         public static ActivityInstance fromActivityRepresentation(ActivityRepresentation activityRepresentation) {
             UserRoleRepresentation userRoleRepresentation = activityRepresentation.getUserRole();
-            if (userRoleRepresentation == null) {
+            ResourceEventRepresentation resourceEventRepresentation = activityRepresentation.getResourceEvent();
+            if (userRoleRepresentation == null && resourceEventRepresentation == null) {
                 return new ActivityInstance(activityRepresentation.getResource().getId(), activityRepresentation.getActivity());
+            } else if (userRoleRepresentation == null) {
+                return new ActivityInstance(activityRepresentation.getResource().getId(),
+                    resourceEventRepresentation.getUser().getId(), resourceEventRepresentation.getEvent(), activityRepresentation.getActivity());
             }
 
-            return new ActivityInstance(
-                activityRepresentation.getResource().getId(), userRoleRepresentation.getUser().getId(), userRoleRepresentation.getRole(), activityRepresentation.getActivity());
+            return new ActivityInstance(activityRepresentation.getResource().getId(),
+                userRoleRepresentation.getUser().getId(), userRoleRepresentation.getRole(), activityRepresentation.getActivity());
         }
 
         public Long getResourceId() {
@@ -111,6 +126,10 @@ public class TestUserActivityService extends UserActivityService {
 
         public Role getRole() {
             return role;
+        }
+
+        public ResourceEvent getResourceEvent() {
+            return resourceEvent;
         }
 
         public Activity getActivity() {
@@ -130,7 +149,7 @@ public class TestUserActivityService extends UserActivityService {
 
             ActivityInstance that = (ActivityInstance) object;
             return Objects.equals(resourceId, that.getResourceId()) && Objects.equals(userId, that.getUserId()) && Objects.equals(role, that.getRole())
-                && Objects.equals(activity, that.getActivity());
+                && Objects.equals(resourceEvent, that.getResourceEvent()) && Objects.equals(activity, that.getActivity());
         }
 
     }

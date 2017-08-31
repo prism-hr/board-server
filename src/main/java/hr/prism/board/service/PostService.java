@@ -10,7 +10,6 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
-import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
@@ -116,8 +115,7 @@ public class PostService {
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
-            List<ActionRepresentation> actions = post.getActions();
-            if (actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action -> action.equals(Action.PURSUE)) && post.getApplyEmail() == null) {
+            if (post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
                 resourceEventService.createPostReferral(post, user);
             }
         }
@@ -523,7 +521,7 @@ public class PostService {
 
     private void decoratePost(User user, Post post) {
         if (user != null) {
-            post.setExposeApplyData(post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT));
+            post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
             post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.REFERRAL, user));
             post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user));
         }
@@ -559,7 +557,7 @@ public class PostService {
             for (Map.Entry<Long, Post> postIndexEntry : postIndex.entrySet()) {
                 Long postId = postIndexEntry.getKey();
                 Post post = postIndexEntry.getValue();
-                post.setExposeApplyData(post.getActions().stream().anyMatch(action -> action.getAction() == Action.EDIT));
+                post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
                 post.setReferral(referrals.get(postId));
                 post.setResponse(responses.get(postId));
             }

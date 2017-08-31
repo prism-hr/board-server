@@ -105,6 +105,11 @@ public class ActionService {
         throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
     }
 
+    public boolean canExecuteAction(Resource resource, Action action) {
+        List<ActionRepresentation> actions = resource.getActions();
+        return actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action::equals);
+    }
+
     private <T extends Update<T>> List<T> deserializeUpdates(String serializedUpdates, Class<T> updateClass) {
         if (serializedUpdates != null) {
             try {
