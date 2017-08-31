@@ -3,6 +3,7 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
+import com.sendgrid.Attachments;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.definition.LocationDefinition;
@@ -19,6 +20,7 @@ import hr.prism.board.service.TestUserActivityService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +30,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URL;
+import java.net.URLConnection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -1167,12 +1172,10 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(postUserId);
         List<ActivityRepresentation> activities = transactionTemplate.execute(status -> userApi.getActivities());
-        activities.forEach(activity -> {
-            transactionTemplate.execute(status -> {
-                userApi.dismissActivity(activity.getId());
-                return null;
-            });
-        });
+        activities.forEach(activity -> transactionTemplate.execute(status -> {
+            userApi.dismissActivity(activity.getId());
+            return null;
+        }));
 
         testUserActivityService.record();
         testNotificationService.record();
@@ -1181,13 +1184,14 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser1Id);
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments1.pdf");
-        transactionTemplate.execute(status -> postApi.postPostResponse(postId,
-            new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1")));
+        Long responseId = transactionTemplate.execute(status -> postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1"))).getId();
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser1.getFullName())
-                    .put("coveringNote", "note1").put("profile", "website1").build()));
+                    .put("coveringNote", "note1").put("profile", "website1").build(),
+                makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments1.pdf", "Application")));
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
@@ -1210,7 +1214,8 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser2.getFullName())
-                    .put("coveringNote", "note2").put("profile", "website2").build()));
+                    .put("coveringNote", "note2").put("profile", "website2").build(),
+                makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments2.pdf", "Application")));
         testUserActivityService.verify(postUserId,
             new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
@@ -1250,7 +1255,8 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser3.getFullName())
-                    .put("coveringNote", "note3").put("profile", "website3").build()));
+                    .put("coveringNote", "note3").put("profile", "website3").build(),
+                makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments3.pdf", "Application")));
         testUserActivityService.verify(postUserId,
             new TestUserActivityService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
@@ -1272,6 +1278,36 @@ public class PostApiIT extends AbstractIT {
         verifyPostResponse(memberUser3Id, responses.get(0), null, null, null);
         verifyPostResponse(memberUser2Id, responses.get(1), null, null, null);
         verifyPostResponse(memberUser1Id, responses.get(2), null, null, null);
+
+        testUserService.setAuthentication(postUserId);
+        transactionTemplate.execute(status -> {
+            postApi.putPostResponseView(postId, responseId);
+            return null;
+        });
+
+        ResourceEventRepresentation response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
+        verifyPostResponse(memberUser1Id, response1, "attachments1.pdf", "website1", "note1");
+
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertFalse(responses.get(0).isViewed());
+        Assert.assertFalse(responses.get(1).isViewed());
+        Assert.assertTrue(responses.get(2).isViewed());
+
+        testUserService.setAuthentication(boardUserId);
+        transactionTemplate.execute(status -> postApi.getPostResponses(postId)).forEach(response -> Assert.assertFalse(response.isViewed()));
+
+        transactionTemplate.execute(status -> {
+            postApi.putPostResponseView(postId, responseId);
+            return null;
+        });
+
+        response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
+        verifyPostResponse(memberUser1Id, response1, null, null, null);
+
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        Assert.assertFalse(responses.get(0).isViewed());
+        Assert.assertFalse(responses.get(1).isViewed());
+        Assert.assertTrue(responses.get(2).isViewed());
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
@@ -1582,6 +1618,27 @@ public class PostApiIT extends AbstractIT {
 
     private enum PostAdminContext {
         ADMIN, AUTHOR
+    }
+
+    private static List<Attachments> makeTestAttachments(String urlString, String name, String label) {
+        InputStream inputStream = null;
+        try {
+            URL url = new URL(urlString);
+            URLConnection connection = url.openConnection();
+            inputStream = connection.getInputStream();
+
+            Attachments attachments = new Attachments();
+            attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
+            attachments.setType(connection.getContentType());
+            attachments.setFilename(name);
+            attachments.setDisposition("attachment");
+            attachments.setContentId(label);
+            return Collections.singletonList(attachments);
+        } catch (IOException e) {
+            throw new Error(e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
     }
 
 }

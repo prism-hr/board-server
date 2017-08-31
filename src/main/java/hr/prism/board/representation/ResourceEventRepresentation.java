@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 
 public class ResourceEventRepresentation {
 
+    private Long id;
+
     private ResourceEvent event;
 
     private UserRepresentation user;
@@ -21,6 +23,15 @@ public class ResourceEventRepresentation {
     private LocalDateTime createdTimestamp;
 
     private boolean viewed;
+
+    public Long getId() {
+        return id;
+    }
+
+    public ResourceEventRepresentation setId(Long id) {
+        this.id = id;
+        return this;
+    }
 
     public ResourceEvent getEvent() {
         return event;

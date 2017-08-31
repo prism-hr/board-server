@@ -1,10 +1,12 @@
 package hr.prism.board.service;
 
+import com.sendgrid.Attachments;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Notification;
 import org.junit.Assert;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,22 @@ public class TestNotificationService extends NotificationService {
 
             // Any remaining parameters not defined in the expectations should have null values
             actualParameters.keySet().forEach(actualParameterKey -> Assert.assertNull(actualParameters.get(actualParameterKey)));
+
+            List<Attachments> expectedAttachments = expectedNotificationInstance.getAttachments();
+            List<Attachments> actualAttachments = actualNotificationInstance.getAttachments();
+
+            int expectedAttachmentsSize = expectedAttachments.size();
+            Assert.assertEquals(expectedAttachmentsSize, actualAttachments.size());
+            for (int i = 0; i < expectedAttachmentsSize; i++) {
+                Attachments expectedAttachment = expectedAttachments.get(i);
+                Attachments actualAttachment = expectedAttachments.get(i);
+
+                Assert.assertEquals(expectedAttachment.getContent(), actualAttachment.getContent());
+                Assert.assertEquals(expectedAttachment.getContentId(), actualAttachment.getContentId());
+                Assert.assertEquals(expectedAttachment.getDisposition(), actualAttachment.getDisposition());
+                Assert.assertEquals(expectedAttachment.getFilename(), actualAttachment.getFilename());
+                Assert.assertEquals(expectedAttachment.getType(), actualAttachment.getType());
+            }
         }
     }
 
@@ -47,7 +65,7 @@ public class TestNotificationService extends NotificationService {
     public Map<String, String> sendNotification(NotificationRequest request) {
         Map<String, String> properties = super.sendNotification(request);
         if (recording) {
-            instances.add(new NotificationInstance(request.getNotification(), request.getRecipient(), properties));
+            instances.add(new NotificationInstance(request.getNotification(), request.getRecipient(), properties, request.getAttachments()));
         }
 
         return properties;
@@ -61,10 +79,19 @@ public class TestNotificationService extends NotificationService {
 
         private Map<String, String> properties;
 
+        private List<Attachments> attachments = new ArrayList<>();
+
         public NotificationInstance(Notification notification, User recipient, Map<String, String> properties) {
             this.notification = notification;
             this.recipient = recipient;
             this.properties = properties;
+        }
+
+        public NotificationInstance(Notification notification, User recipient, Map<String, String> properties, List<Attachments> attachments) {
+            this.notification = notification;
+            this.recipient = recipient;
+            this.properties = properties;
+            this.attachments = attachments;
         }
 
         public Notification getNotification() {
@@ -77,6 +104,10 @@ public class TestNotificationService extends NotificationService {
 
         public Map<String, String> getProperties() {
             return properties;
+        }
+
+        public List<Attachments> getAttachments() {
+            return attachments;
         }
 
     }

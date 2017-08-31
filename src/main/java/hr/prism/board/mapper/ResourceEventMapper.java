@@ -38,7 +38,7 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
     }
 
     private ResourceEventRepresentation applySmall(ResourceEvent resourceEvent) {
-        ResourceEventRepresentation representation = new ResourceEventRepresentation();
+        ResourceEventRepresentation representation = new ResourceEventRepresentation().setId(resourceEvent.getId());
         if (resourceEvent.isExposeResponseData()) {
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));
             representation.setWebsiteResume(resourceEvent.getWebsiteResume());
