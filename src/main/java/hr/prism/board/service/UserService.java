@@ -151,7 +151,9 @@ public class UserService {
             user.setGivenName(userDTO.getGivenName());
             user.setSurname(userDTO.getSurname());
             user.setEmail(userDTO.getEmail());
-            return userRepository.save(user);
+            user = userRepository.save(user);
+            user.setIndexData(BoardUtils.soundex(user.getGivenName(), user.getSurname(), user.getEmail()));
+            return user;
         }
 
         return user;

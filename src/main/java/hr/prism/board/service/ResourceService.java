@@ -520,6 +520,19 @@ public class ResourceService {
         return userRoles.stream().map(userRole -> userRole.getUser().getEmail()).anyMatch(email::equals);
     }
 
+    public void setIndexData(Resource resource) {
+        setIndexData(resource, resource.getName(), resource.getSummary());
+    }
+
+    public void setIndexData(Resource resource, String... parts) {
+        Resource parent = resource.getParent();
+        if (resource.equals(parent)) {
+            resource.setIndexData(BoardUtils.soundex(parts));
+        }
+
+        resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.soundex(parts)));
+    }
+
     private void commitResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);

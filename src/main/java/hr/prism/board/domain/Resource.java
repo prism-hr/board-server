@@ -53,6 +53,9 @@ public class Resource extends BoardEntity {
     @Column(name = "handle")
     private String handle;
 
+    @Column(name = "indexData")
+    private String indexData;
+
     @OneToMany(mappedBy = "resource")
     private Set<ResourceCategory> categories = new HashSet<>();
 
@@ -147,6 +150,14 @@ public class Resource extends BoardEntity {
 
     public void setHandle(String handle) {
         this.handle = handle;
+    }
+
+    public String getIndexData() {
+        return indexData;
+    }
+
+    public void setIndexData(String indexData) {
+        this.indexData = indexData;
     }
 
     public Set<ResourceCategory> getCategories() {

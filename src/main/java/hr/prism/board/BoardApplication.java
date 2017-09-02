@@ -105,7 +105,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         hikariConfig.setMaximumPoolSize(20);
         hikariConfig.setConnectionTimeout(10000);
         hikariConfig.setAutoCommit(false);
-        hikariConfig.setLeakDetectionThreshold(240000);
+        hikariConfig.setLeakDetectionThreshold(360000);
         return new HikariDataSource(hikariConfig);
     }
 

@@ -157,11 +157,12 @@ public class DepartmentService {
             String handle = ResourceService.suggestHandle(name);
             List<String> similarHandles = departmentRepository.findHandleByLikeSuggestedHandle(handle);
             handle = ResourceService.confirmHandle(handle, similarHandles);
-
             resourceService.updateHandle(department, handle);
             department = departmentRepository.save(department);
+
             resourceService.updateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
             resourceService.createResourceRelation(department, department);
+            resourceService.setIndexData(department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createOrUpdateUserRole(department, currentUser, Role.ADMINISTRATOR);
             return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
@@ -179,6 +180,7 @@ public class DepartmentService {
             resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
             resourcePatchService.patchCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
             departmentRepository.update(department);
+            resourceService.setIndexData(department);
             return department;
         });
     }

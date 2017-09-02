@@ -109,10 +109,11 @@ public class BoardService {
             String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
             List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
             board.setHandle(ResourceService.confirmHandle(handle, similarHandles));
-
             board = boardRepository.save(board);
+
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
+            resourceService.setIndexData(board);
             userRoleService.createOrUpdateUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
         });
@@ -175,6 +176,7 @@ public class BoardService {
         resourcePatchService.patchDocument(board, "documentLogo", board::getDocumentLogo, board::setDocumentLogo, boardDTO.getDocumentLogo());
         resourcePatchService.patchProperty(board, "summary", board::getSummary, board::setSummary, boardDTO.getSummary());
         resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
+        resourceService.setIndexData(board);
         boardRepository.update(board);
     }
 

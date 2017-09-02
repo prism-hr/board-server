@@ -59,6 +59,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "website_resume")
     private String websiteResume;
 
+    @Column(name = "indexData")
+    private String indexData;
+
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
 
@@ -176,6 +179,15 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setWebsiteResume(String websiteResume) {
         this.websiteResume = websiteResume;
+        return this;
+    }
+
+    public String getIndexData() {
+        return indexData;
+    }
+
+    public User setIndexData(String indexData) {
+        this.indexData = indexData;
         return this;
     }
 
