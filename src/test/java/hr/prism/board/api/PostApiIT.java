@@ -153,7 +153,7 @@ public class PostApiIT extends AbstractIT {
         int postCount = 1;
         LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
-        for (State state : Arrays.stream(State.values()).filter(state -> state != State.PREVIOUS).collect(Collectors.toList())) {
+        for (State state : Arrays.stream(State.values()).filter(state -> !Arrays.asList(State.ARCHIVED, State.PREVIOUS).contains(state)).collect(Collectors.toList())) {
             if (state == State.DRAFT) {
                 reschedulePost(board11PostName, baseline, postCount);
                 boardPostNames11.put(state, board11PostName);

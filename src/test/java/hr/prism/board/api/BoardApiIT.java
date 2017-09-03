@@ -294,7 +294,7 @@ public class BoardApiIT extends AbstractIT {
                     .put("modal", "login").build()));
 
         // Create unprivileged users
-        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, 2, 2, TestHelper.smallSamplePost()).values());
+        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, 2, 2).values());
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.EDIT, () -> boardApi.patchBoard(boardId, new BoardPatchDTO()))

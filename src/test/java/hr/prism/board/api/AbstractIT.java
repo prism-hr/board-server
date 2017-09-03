@@ -126,7 +126,7 @@ public abstract class AbstractIT {
         });
     }
 
-    LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
+    LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, int departmentSuffix, int boardSuffix) {
         LinkedHashMap<Scope, User> unprivilegedUsers = new LinkedHashMap<>();
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
         transactionTemplate.execute(status -> {
@@ -163,7 +163,7 @@ public abstract class AbstractIT {
     }
 
     LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, Long boardId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
-        LinkedHashMap<Scope, User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, departmentSuffix, boardSuffix, samplePost);
+        LinkedHashMap<Scope, User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, departmentSuffix, boardSuffix);
         unprivilegedUsers.put(Scope.POST, testUserService.authenticate());
         transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;
