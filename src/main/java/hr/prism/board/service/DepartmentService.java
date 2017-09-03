@@ -116,7 +116,7 @@ public class DepartmentService {
                 .setScope(Scope.DEPARTMENT)
                 .setSearchTerm(BoardUtils.makeSoundexRemovingStopWords(searchTerm))
                 .setIncludePublicResources(includePublicDepartments)
-                .setOrderStatement("ORDER BY resource.name"))
+                .setOrderStatement("resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
 

@@ -11,10 +11,7 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.ResourceCategoryRepository;
-import hr.prism.board.repository.ResourceOperationRepository;
-import hr.prism.board.repository.ResourceRelationRepository;
-import hr.prism.board.repository.ResourceRepository;
+import hr.prism.board.repository.*;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
@@ -90,14 +87,6 @@ public class ResourceService {
             SECURE_RESOURCE_ACTION + " " +
             "WHERE resource.scope = :scope";
 
-    private static final String RESOURCE_SEARCH =
-        "SELECT resource.id " +
-            "MATCH resource.indexData against(:searchTerm IN BOOLEAN MODE) AS similarity " +
-            "FROM resource " +
-            "WHERE resource.id IN (:ids) " +
-            "HAVING SIMILARITY > 0 " +
-            "ORDER BY similarity DESC, resource.id DESC";
-
     @Inject
     private ResourceRepository resourceRepository;
 
@@ -109,6 +98,9 @@ public class ResourceService {
 
     @Inject
     private ResourceOperationRepository resourceOperationRepository;
+
+    @Inject
+    private ResourceSearchRepository resourceSearchRepository;
 
     @Inject
     private ActionService actionService;
@@ -326,32 +318,34 @@ public class ResourceService {
         Class<? extends Resource> resourceClass = scope.resourceClass;
         EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
 
+        String search = UUID.randomUUID().toString();
         String searchTerm = filter.getSearchTerm();
         Collection<Long> resourceIds = resourceActionIndex.keySet();
         if (searchTerm != null) {
             // Apply the search query
-            resourceIds = ((List<Object[]>) entityManager.createNativeQuery(RESOURCE_SEARCH)
-                .setParameter("searchTerm", searchTerm)
-                .setParameter("ids", resourceIds)
-                .getResultList()).stream().map(row -> Long.parseLong(row[0].toString())).collect(Collectors.toList());
+            resourceSearchRepository.insertBySearch(search, searchTerm, resourceIds);
         }
 
         // Get the resource data
-        Collection<Long> finalResourceIds = resourceIds;
+        entityManager.flush();
         List<Resource> resources = transactionTemplate.execute(status -> {
-            String statement = Joiner.on(" ").skipNulls().join(
+            String statement = Joiner.on(", ").skipNulls().join(
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
-                    "where resource.id in (:ids) ",
-                filter.getOrderStatement());
+                    "left join resource.searches search " +
+                    "and search.search = :search " +
+                    "where resource.id in (:ids) " +
+                    "order by search.id desc", filter.getOrderStatement());
 
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
-                .setParameter("ids", finalResourceIds)
+                .setParameter("search", search)
+                .setParameter("ids", resourceIds)
                 .setHint("javax.persistence.loadgraph", entityGraph)
                 .getResultList());
         });
 
         // Merge the output
+        resourceSearchRepository.deleteBySearch(search);
         for (Resource resource : resources) {
             List<ActionRepresentation> actionRepresentations = Lists.newArrayList(resourceActionIndex.get(resource.getId()));
             actionRepresentations.sort(Comparator.naturalOrder());

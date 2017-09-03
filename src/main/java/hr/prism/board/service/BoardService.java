@@ -81,7 +81,7 @@ public class BoardService {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
             ResourceService.makeResourceFilter(Scope.DEPARTMENT, departmentId, includePublicBoards, state, quarter, searchTerm)
-                .setOrderStatement("ORDER BY resource.name"))
+                .setOrderStatement("resource.name"))
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
 

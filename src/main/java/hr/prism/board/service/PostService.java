@@ -137,7 +137,7 @@ public class PostService {
         List<Post> posts =
             resourceService.getResources(user,
                 ResourceService.makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
-                    .setOrderStatement("ORDER BY resource.updatedTimestamp DESC, resource.id DESC"))
+                    .setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
         if (posts.isEmpty()) {
