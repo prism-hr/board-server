@@ -14,7 +14,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
-import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -81,10 +80,7 @@ public class BoardService {
     public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
-            new ResourceFilter()
-                .setScope(Scope.BOARD)
-                .setParentId(departmentId)
-                .setIncludePublicResources(includePublicBoards)
+            ResourceService.makeResourceFilter(Scope.DEPARTMENT, departmentId, includePublicBoards, state, quarter, searchTerm)
                 .setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }

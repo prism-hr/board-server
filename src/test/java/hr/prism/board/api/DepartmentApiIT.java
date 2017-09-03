@@ -658,12 +658,12 @@ public class DepartmentApiIT extends AbstractIT {
 
     private void verifyUnprivilegedDepartmentUser(List<String> departmentNames) {
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+            transactionTemplate.execute(status -> departmentApi.getDepartments(null, null)),
             Collections.emptyList(),
             null);
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+            transactionTemplate.execute(status -> departmentApi.getDepartments(true, null)),
             departmentNames,
             new TestHelper.ExpectedActions()
                 .add(Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED))));
@@ -673,13 +673,13 @@ public class DepartmentApiIT extends AbstractIT {
         List<Action> adminActions = Lists.newArrayList(ADMIN_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> departmentApi.getDepartments(null)),
+            transactionTemplate.execute(status -> departmentApi.getDepartments(null, null)),
             adminDepartmentNames,
             new TestHelper.ExpectedActions()
                 .addAll(adminDepartmentNames, adminActions));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> departmentApi.getDepartments(true)),
+            transactionTemplate.execute(status -> departmentApi.getDepartments(true, null)),
             departmentNames,
             new TestHelper.ExpectedActions()
                 .add(Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED)))
@@ -701,7 +701,7 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyNullableCount(boardCount, departmentR.getBoardCount());
         TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
 
-        List<DepartmentRepresentation> departmentRs = transactionTemplate.execute(status -> departmentApi.getDepartments(true));
+        List<DepartmentRepresentation> departmentRs = transactionTemplate.execute(status -> departmentApi.getDepartments(true, null));
         TestHelper.verifyNullableCount(boardCount, departmentRs.get(0).getBoardCount());
         TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
 

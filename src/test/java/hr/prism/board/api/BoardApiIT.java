@@ -211,7 +211,7 @@ public class BoardApiIT extends AbstractIT {
             "board-2");
 
         transactionTemplate.execute(status -> {
-            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId, true);
+            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId, true, null, null, null);
             Assert.assertEquals(2, boardRs.size());
 
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
@@ -228,7 +228,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals("new-department-updated", department.getHandle());
 
             int index = 1;
-            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true);
+            List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true,  null, null, null);
             Assert.assertEquals(2, boardRs.size());
             for (BoardRepresentation boardR : boardRs) {
                 Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
@@ -621,25 +621,25 @@ public class BoardApiIT extends AbstractIT {
         List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(null)),
+            transactionTemplate.execute(status -> boardApi.getBoards(null,  null, null, null)),
             Collections.emptyList(),
             null);
 
         TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
             .add(publicActions);
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(true)),
+            transactionTemplate.execute(status -> boardApi.getBoards(true,  null, null, null)),
             boardNames,
             expectedActions);
 
         for (Long departmentId : boardNamesByDepartment.keySet()) {
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null,  null, null, null)),
                 Collections.emptyList(),
                 null);
 
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true,  null, null, null)),
                 Lists.newArrayList(boardNamesByDepartment.get(departmentId)),
                 expectedActions);
         }
@@ -650,13 +650,13 @@ public class BoardApiIT extends AbstractIT {
         List<Action> publicActionList = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(null)),
+            transactionTemplate.execute(status -> boardApi.getBoards(null,  null, null, null)),
             adminBoardNames,
             new TestHelper.ExpectedActions()
                 .addAll(adminBoardNames, adminActionList));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(true)),
+            transactionTemplate.execute(status -> boardApi.getBoards(true,  null, null, null)),
             boardNames,
             new TestHelper.ExpectedActions()
                 .add(publicActionList)
@@ -666,13 +666,13 @@ public class BoardApiIT extends AbstractIT {
             List<String> departmentBoardNames = Lists.newArrayList(boardNamesByDepartment.get(departmentId));
             @SuppressWarnings("unchecked") List<String> adminDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, adminBoardNames);
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null)),
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null,  null, null, null)),
                 adminDepartmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .addAll(adminDepartmentBoardNames, adminActionList));
 
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true)),
+                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true,  null, null, null)),
                 departmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .add(publicActionList)
@@ -685,7 +685,7 @@ public class BoardApiIT extends AbstractIT {
         TestHelper.verifyNullableCount(postCount, boardR.getPostCount());
         TestHelper.verifyNullableCount(authorCount, boardR.getAuthorCount());
 
-        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true));
+        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(true,  null, null, null));
         TestHelper.verifyNullableCount(postCount, boardRs.get(0).getPostCount());
         TestHelper.verifyNullableCount(authorCount, boardRs.get(0).getAuthorCount());
 

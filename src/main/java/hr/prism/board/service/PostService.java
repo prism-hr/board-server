@@ -15,7 +15,6 @@ import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
-import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.BooleanUtils;
@@ -129,14 +128,15 @@ public class PostService {
         return postRepository.findByName(name);
     }
 
+    public List<Post> getPosts(Long boardId, Boolean includePublicPosts) {
+        return getPosts(boardId, includePublicPosts, null, null, null);
+    }
+
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
         User user = userService.getCurrentUser();
         List<Post> posts =
             resourceService.getResources(user,
-                new ResourceFilter()
-                    .setScope(Scope.POST)
-                    .setParentId(boardId)
-                    .setIncludePublicResources(includePublicPosts)
+                ResourceService.makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
                     .setOrderStatement("order by resource.updatedTimestamp desc, resource.id desc"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 

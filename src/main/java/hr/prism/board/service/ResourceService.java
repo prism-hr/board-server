@@ -428,61 +428,6 @@ public class ResourceService {
         }
     }
 
-    public static String suggestHandle(String name) {
-        String suggestion = "";
-        name = name.toLowerCase();
-        String[] parts = name.split(" ");
-        for (int i = 0; i < parts.length; i++) {
-            String newSuggestion;
-            String part = parts[i];
-            if (suggestion.length() > 0) {
-                newSuggestion = suggestion + "-" + part;
-            } else {
-                newSuggestion = part;
-            }
-
-            if (newSuggestion.length() > 20) {
-                if (i == 0) {
-                    return newSuggestion.substring(0, 20);
-                }
-
-                return suggestion;
-            }
-
-            suggestion = newSuggestion;
-        }
-
-        return suggestion;
-    }
-
-    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
-        if (similarHandles.contains(suggestedHandle)) {
-
-            int ordinal = 2;
-            int suggestedHandleLength = suggestedHandle.length();
-            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
-            for (String similarHandleSuffix : similarHandleSuffixes) {
-                if (similarHandleSuffix.startsWith("-")) {
-                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
-
-                    // We only care about creating a unique value in a formatted sequence
-                    // We can ignore anything else that has been reformatted by an end user
-                    if (parts.length == 1) {
-                        String firstPart = parts[0];
-                        if (StringUtils.isNumeric(firstPart)) {
-                            ordinal = Integer.parseInt(firstPart) + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return suggestedHandle + "-" + ordinal;
-        }
-
-        return suggestedHandle;
-    }
-
     public ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {
         return resourceCategoryRepository.save(resourceCategory);
     }
@@ -560,6 +505,84 @@ public class ResourceService {
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
+    }
+
+    public static String suggestHandle(String name) {
+        String suggestion = "";
+        name = name.toLowerCase();
+        String[] parts = name.split(" ");
+        for (int i = 0; i < parts.length; i++) {
+            String newSuggestion;
+            String part = parts[i];
+            if (suggestion.length() > 0) {
+                newSuggestion = suggestion + "-" + part;
+            } else {
+                newSuggestion = part;
+            }
+
+            if (newSuggestion.length() > 20) {
+                if (i == 0) {
+                    return newSuggestion.substring(0, 20);
+                }
+
+                return suggestion;
+            }
+
+            suggestion = newSuggestion;
+        }
+
+        return suggestion;
+    }
+
+    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
+        if (similarHandles.contains(suggestedHandle)) {
+
+            int ordinal = 2;
+            int suggestedHandleLength = suggestedHandle.length();
+            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
+            for (String similarHandleSuffix : similarHandleSuffixes) {
+                if (similarHandleSuffix.startsWith("-")) {
+                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
+
+                    // We only care about creating a unique value in a formatted sequence
+                    // We can ignore anything else that has been reformatted by an end user
+                    if (parts.length == 1) {
+                        String firstPart = parts[0];
+                        if (StringUtils.isNumeric(firstPart)) {
+                            ordinal = Integer.parseInt(firstPart) + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return suggestedHandle + "-" + ordinal;
+        }
+
+        return suggestedHandle;
+    }
+
+    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, boolean includePublicPosts, State state, String quarter, String searchTerm) {
+        String stateString = null;
+        String negatedStateString = State.ARCHIVED.name();
+        if (state != null) {
+            stateString = state.name();
+            if (state == State.ARCHIVED) {
+                negatedStateString = null;
+                if (quarter == null) {
+                    throw new BoardException(ExceptionCode.INVALID_RESOURCE_FILTER);
+                }
+            }
+        }
+
+        return new ResourceFilter()
+            .setScope(scope)
+            .setParentId(parentId)
+            .setState(stateString)
+            .setNegatedState(negatedStateString)
+            .setQuarter(quarter)
+            .setSearchTerm(searchTerm)
+            .setIncludePublicResources(includePublicPosts);
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {
