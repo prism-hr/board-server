@@ -18,6 +18,7 @@ import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.representation.ResourceArchiveQuarterRepresentation;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.value.ChildResourceSummary;
 import org.apache.commons.collections.CollectionUtils;
@@ -536,7 +537,7 @@ public class ResourceService {
         resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil(createdTimestamp.getMonthValue() / 3));
     }
 
-    public List<String> getArchiveQuarters(Scope scope, Long parentId) {
+    public List<ResourceArchiveQuarterRepresentation> getArchiveQuarters(Scope scope, Long parentId) {
         String statement =
             SECURE_QUARTER + " " +
                 "resource.state = :archivedState";
@@ -559,7 +560,7 @@ public class ResourceService {
 
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
+        return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).map(ResourceArchiveQuarterRepresentation::fromString).collect(Collectors.toList());
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {
