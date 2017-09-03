@@ -118,9 +118,13 @@ public class BoardUtils {
         return chain.split(", ")[0];
     }
 
-    public static String soundex(String... strings) {
-        return Stream.of(strings)
-            .filter(Objects::nonNull)
+    public static String soundexRemovingStopWords(String... strings) {
+        List<String> nullSafeStrings = Stream.of(strings).filter(Objects::nonNull).collect(Collectors.toList());
+        if (nullSafeStrings.isEmpty()) {
+            return null;
+        }
+
+        return nullSafeStrings.stream()
             .map(String::toLowerCase)
             .map(TOKENIZER::tokenize)
             .flatMap(Arrays::stream)

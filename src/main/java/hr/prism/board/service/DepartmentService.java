@@ -18,6 +18,7 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.util.BoardUtils;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -113,6 +114,7 @@ public class DepartmentService {
         return resourceService.getResources(currentUser,
             new ResourceFilter()
                 .setScope(Scope.DEPARTMENT)
+                .setSearchTerm(BoardUtils.soundexRemovingStopWords(searchTerm))
                 .setIncludePublicResources(includePublicDepartments)
                 .setOrderStatement("order by resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());

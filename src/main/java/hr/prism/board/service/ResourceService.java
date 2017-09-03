@@ -473,10 +473,10 @@ public class ResourceService {
     public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
-            resource.setIndexData(BoardUtils.soundex(parts));
+            resource.setIndexData(BoardUtils.soundexRemovingStopWords(parts));
         }
 
-        resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.soundex(parts)));
+        resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.soundexRemovingStopWords(parts)));
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
         resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil(createdTimestamp.getMonthValue() / 3));
     }
@@ -581,7 +581,7 @@ public class ResourceService {
             .setState(stateString)
             .setNegatedState(negatedStateString)
             .setQuarter(quarter)
-            .setSearchTerm(searchTerm)
+            .setSearchTerm(BoardUtils.soundexRemovingStopWords(searchTerm))
             .setIncludePublicResources(includePublicPosts);
     }
 

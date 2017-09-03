@@ -152,7 +152,7 @@ public class UserService {
             user.setSurname(userDTO.getSurname());
             user.setEmail(userDTO.getEmail());
             user = userRepository.save(user);
-            user.setIndexData(BoardUtils.soundex(user.getGivenName(), user.getSurname(), user.getEmail()));
+            user.setIndexData(BoardUtils.soundexRemovingStopWords(user.getGivenName(), user.getSurname(), user.getEmail()));
             return user;
         }
 
