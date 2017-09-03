@@ -42,13 +42,13 @@ public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
-            "IF(resource.scope = :scope AND resource.state = :state, 1, 0) AS valid, " +
             "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
             "MATCH resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
             "LEFT JOIN document AS document_logo " +
             "ON resource.document_logo_id = document_logo.id " +
-            "HAVING valid = 1 AND (similarityHard = 1 OR similaritySoft > 0) " +
+            "WHERE resource.scope = :scope AND resource.state = :state " +
+            "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
             "LIMIT 10";
 
@@ -114,9 +114,9 @@ public class DepartmentService {
         return resourceService.getResources(currentUser,
             new ResourceFilter()
                 .setScope(Scope.DEPARTMENT)
-                .setSearchTerm(BoardUtils.soundexRemovingStopWords(searchTerm))
+                .setSearchTerm(BoardUtils.makeSoundexRemovingStopWords(searchTerm))
                 .setIncludePublicResources(includePublicDepartments)
-                .setOrderStatement("order by resource.name"))
+                .setOrderStatement("ORDER BY resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
 

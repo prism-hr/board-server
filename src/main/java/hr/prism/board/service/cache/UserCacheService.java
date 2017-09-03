@@ -45,7 +45,7 @@ public class UserCacheService {
     }
 
     private void setIndexData(User user) {
-        user.setIndexData(BoardUtils.soundexRemovingStopWords(user.getGivenName(), user.getSurname(), user.getEmail()));
+        user.setIndexData(BoardUtils.makeSoundexRemovingStopWords(user.getGivenName(), user.getSurname(), user.getEmail()));
     }
 
 }

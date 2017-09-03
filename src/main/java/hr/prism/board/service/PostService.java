@@ -41,12 +41,12 @@ public class PostService {
 
     private static final String SIMILAR_ORGANIZATION =
         "SELECT resource.organization_name, " +
-            "IF(resource.scope = :scope, 1, 0) AS valid, " +
             "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
             "MATCH resource.organization_name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
+            "WHERE resource.scope = :scope " +
             "GROUP BY resource.organization_name " +
-            "HAVING valid = 1 AND (similarityHard = 1 OR similaritySoft > 0) " +
+            "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
             "LIMIT 10";
 
@@ -137,7 +137,7 @@ public class PostService {
         List<Post> posts =
             resourceService.getResources(user,
                 ResourceService.makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
-                    .setOrderStatement("order by resource.updatedTimestamp desc, resource.id desc"))
+                    .setOrderStatement("ORDER BY resource.updatedTimestamp DESC, resource.id DESC"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
         if (posts.isEmpty()) {

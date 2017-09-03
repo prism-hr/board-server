@@ -118,7 +118,7 @@ public class BoardUtils {
         return chain.split(", ")[0];
     }
 
-    public static String soundexRemovingStopWords(String... strings) {
+    public static String makeSoundexRemovingStopWords(String... strings) {
         List<String> nullSafeStrings = Stream.of(strings).filter(Objects::nonNull).collect(Collectors.toList());
         if (nullSafeStrings.isEmpty()) {
             return null;

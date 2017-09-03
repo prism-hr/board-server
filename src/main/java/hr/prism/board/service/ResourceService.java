@@ -86,9 +86,17 @@ public class ResourceService {
             "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline) ";
 
     private static final String SECURE_QUARTER =
-        "select distinct resource.quarter " +
+        "SELECT DISTINCT resource.quarter " +
             SECURE_RESOURCE_ACTION + " " +
-            "where resource.scope = :scope";
+            "WHERE resource.scope = :scope";
+
+    private static final String RESOURCE_SEARCH =
+        "SELECT resource.id " +
+            "MATCH resource.indexData against(:searchTerm IN BOOLEAN MODE) AS similarity " +
+            "FROM resource " +
+            "WHERE resource.id IN (:ids) " +
+            "HAVING SIMILARITY > 0 " +
+            "ORDER BY similarity DESC, resource.id DESC";
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -318,7 +326,18 @@ public class ResourceService {
         Class<? extends Resource> resourceClass = scope.resourceClass;
         EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
 
+        String searchTerm = filter.getSearchTerm();
+        Collection<Long> resourceIds = resourceActionIndex.keySet();
+        if (searchTerm != null) {
+            // Apply the search query
+            resourceIds = ((List<Object[]>) entityManager.createNativeQuery(RESOURCE_SEARCH)
+                .setParameter("searchTerm", searchTerm)
+                .setParameter("ids", resourceIds)
+                .getResultList()).stream().map(row -> Long.parseLong(row[0].toString())).collect(Collectors.toList());
+        }
+
         // Get the resource data
+        Collection<Long> finalResourceIds = resourceIds;
         List<Resource> resources = transactionTemplate.execute(status -> {
             String statement = Joiner.on(" ").skipNulls().join(
                 "select distinct resource " +
@@ -327,7 +346,7 @@ public class ResourceService {
                 filter.getOrderStatement());
 
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
-                .setParameter("ids", resourceActionIndex.keySet())
+                .setParameter("ids", finalResourceIds)
                 .setHint("javax.persistence.loadgraph", entityGraph)
                 .getResultList());
         });
@@ -473,15 +492,16 @@ public class ResourceService {
     public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
-            resource.setIndexData(BoardUtils.soundexRemovingStopWords(parts));
+            resource.setIndexData(BoardUtils.makeSoundexRemovingStopWords(parts));
+        } else {
+            resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.makeSoundexRemovingStopWords(parts)));
         }
 
-        resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.soundexRemovingStopWords(parts)));
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
         resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil(createdTimestamp.getMonthValue() / 3));
     }
 
-    public List<String> getArchiveQuarters(Scope scope, Long parentId) {
+    public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
         String statement =
             SECURE_QUARTER + " " +
                 "resource.state = :archivedState";
@@ -581,7 +601,7 @@ public class ResourceService {
             .setState(stateString)
             .setNegatedState(negatedStateString)
             .setQuarter(quarter)
-            .setSearchTerm(BoardUtils.soundexRemovingStopWords(searchTerm))
+            .setSearchTerm(BoardUtils.makeSoundexRemovingStopWords(searchTerm))
             .setIncludePublicResources(includePublicPosts);
     }
 
