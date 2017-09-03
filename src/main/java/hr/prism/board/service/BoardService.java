@@ -5,15 +5,16 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.*;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.WidgetOptionsDTO;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
+import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -77,10 +78,10 @@ public class BoardService {
         return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
     }
 
-    public List<Board> getBoards(Long departmentId, Boolean includePublicBoards) {
+    public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
-            new ResourceFilterDTO()
+            new ResourceFilter()
                 .setScope(Scope.BOARD)
                 .setParentId(departmentId)
                 .setIncludePublicResources(includePublicBoards)

@@ -8,6 +8,7 @@ import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.WidgetOptionsDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.BoardRepresentation;
@@ -45,13 +46,16 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Boolean includePublicBoards) {
-        return boardService.getBoards(null, includePublicBoards).stream().map(board -> boardMapper.apply(board)).collect(Collectors.toList());
+    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Boolean includePublicBoards, @RequestParam(required = false) State state,
+                                               @RequestParam("quarter") String quarter, @RequestParam(required = false) String searchTerm) {
+        return boardService.getBoards(null, includePublicBoards, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoardsByDepartment(@PathVariable Long departmentId, @RequestParam(required = false) Boolean includePublicBoards) {
-        return boardService.getBoards(departmentId, includePublicBoards).stream().map(board -> boardMapper.apply(board)).collect(Collectors.toList());
+    public List<BoardRepresentation> getBoardsByDepartment(@PathVariable Long departmentId, @RequestParam(required = false) Boolean includePublicBoards,
+                                                           @RequestParam(required = false) State state, @RequestParam("quarter") String quarter,
+                                                           @RequestParam(required = false) String searchTerm) {
+        return boardService.getBoards(departmentId, includePublicBoards, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/boards/{id}", method = RequestMethod.GET)

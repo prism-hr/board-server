@@ -7,7 +7,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
@@ -18,9 +17,9 @@ import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.ResourceArchiveQuarterRepresentation;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.value.ChildResourceSummary;
+import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -127,12 +126,12 @@ public class ResourceService {
     }
 
     public Resource getResource(User user, Scope scope, Long id) {
-        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setId(id).setIncludePublicResources(true));
+        List<Resource> resources = getResources(user, new ResourceFilter().setScope(scope).setId(id).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
     }
 
     public Resource getResource(User user, Scope scope, String handle) {
-        List<Resource> resources = getResources(user, new ResourceFilterDTO().setScope(scope).setHandle(handle).setIncludePublicResources(true));
+        List<Resource> resources = getResources(user, new ResourceFilter().setScope(scope).setHandle(handle).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
     }
 
@@ -209,7 +208,7 @@ public class ResourceService {
     }
 
     // TODO: implement paging / continuous scrolling mechanism
-    public List<Resource> getResources(User user, ResourceFilterDTO filter) {
+    public List<Resource> getResources(User user, ResourceFilter filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role ");
 
@@ -222,12 +221,12 @@ public class ResourceService {
         Map<String, Object> secureFilterParameters = getSecureFilterParameters(user);
 
         // Unwrap the filters
-        for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
+        for (Field field : ResourceFilter.class.getDeclaredFields()) {
             try {
                 field.setAccessible(true);
                 Object value = field.get(filter);
                 if (value != null) {
-                    ResourceFilterDTO.ResourceFilter resourceFilter = field.getAnnotation(ResourceFilterDTO.ResourceFilter.class);
+                    ResourceFilter.ResourceFilterProperty resourceFilter = field.getAnnotation(ResourceFilter.ResourceFilterProperty.class);
                     if (resourceFilter != null) {
                         String statement = resourceFilter.statement();
                         String parameter = resourceFilter.parameter();
@@ -537,7 +536,7 @@ public class ResourceService {
         resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil(createdTimestamp.getMonthValue() / 3));
     }
 
-    public List<ResourceArchiveQuarterRepresentation> getArchiveQuarters(Scope scope, Long parentId) {
+    public List<String> getArchiveQuarters(Scope scope, Long parentId) {
         String statement =
             SECURE_QUARTER + " " +
                 "resource.state = :archivedState";
@@ -560,7 +559,7 @@ public class ResourceService {
 
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).map(ResourceArchiveQuarterRepresentation::fromString).collect(Collectors.toList());
+        return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {

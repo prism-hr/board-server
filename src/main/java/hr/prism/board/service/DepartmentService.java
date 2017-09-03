@@ -6,7 +6,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.ResourceFilterDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -19,6 +18,7 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -108,10 +108,10 @@ public class DepartmentService {
         return null;
     }
 
-    public List<Department> getDepartments(Boolean includePublicDepartments) {
+    public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
-            new ResourceFilterDTO()
+            new ResourceFilter()
                 .setScope(Scope.DEPARTMENT)
                 .setIncludePublicResources(includePublicDepartments)
                 .setOrderStatement("order by resource.name"))

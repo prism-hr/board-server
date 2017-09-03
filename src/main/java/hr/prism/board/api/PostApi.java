@@ -6,6 +6,7 @@ import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
@@ -50,13 +51,16 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublicPosts) {
-        return postService.getPosts(null, includePublicPosts).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
+    public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublicPosts, @RequestParam(required = false) State state,
+                                             @RequestParam("quarter") String quarter, @RequestParam(required = false) String searchTerm) {
+        return postService.getPosts(null, includePublicPosts, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublicPosts) {
-        return postService.getPosts(boardId, includePublicPosts).stream().map(post -> postMapper.apply(post)).collect(Collectors.toList());
+    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublicPosts,
+                                                    @RequestParam(required = false) State state, @RequestParam("quarter") String quarter,
+                                                    @RequestParam(required = false) String searchTerm) {
+        return postService.getPosts(boardId, includePublicPosts, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.GET)

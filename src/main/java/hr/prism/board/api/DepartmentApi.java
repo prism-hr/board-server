@@ -44,8 +44,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET)
-    public List<DepartmentRepresentation> getDepartments(@RequestParam(required = false) Boolean includePublic) {
-        return departmentService.getDepartments(includePublic).stream().map(department -> departmentMapper.apply(department)).collect(Collectors.toList());
+    public List<DepartmentRepresentation> getDepartments(@RequestParam(required = false) Boolean includePublic, @RequestParam(required = false) String searchTerm) {
+        return departmentService.getDepartments(includePublic, searchTerm).stream().map(departmentMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "query")
