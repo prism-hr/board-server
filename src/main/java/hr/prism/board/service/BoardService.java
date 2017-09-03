@@ -113,7 +113,7 @@ public class BoardService {
 
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
-            resourceService.setIndexData(board);
+            resourceService.setIndexDataAndQuarter(board);
             userRoleService.createOrUpdateUserRole(board, currentUser, Role.ADMINISTRATOR);
             return board;
         });
@@ -176,7 +176,7 @@ public class BoardService {
         resourcePatchService.patchDocument(board, "documentLogo", board::getDocumentLogo, board::setDocumentLogo, boardDTO.getDocumentLogo());
         resourcePatchService.patchProperty(board, "summary", board::getSummary, board::setSummary, boardDTO.getSummary());
         resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
-        resourceService.setIndexData(board);
+        resourceService.setIndexDataAndQuarter(board);
         boardRepository.update(board);
     }
 

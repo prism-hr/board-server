@@ -179,7 +179,7 @@ public class PostService {
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
             updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
-            setIndexData(post);
+            setIndexDataAndQuarter(post);
             userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
             return post;
         });
@@ -366,7 +366,7 @@ public class PostService {
         resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
             deadTimestamp != null ? deadTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
 
-        setIndexData(post);
+        setIndexDataAndQuarter(post);
         postRepository.update(post);
     }
 
@@ -566,8 +566,8 @@ public class PostService {
         }
     }
 
-    private void setIndexData(Post post) {
-        resourceService.setIndexData(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName());
+    private void setIndexDataAndQuarter(Post post) {
+        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName());
     }
 
 }

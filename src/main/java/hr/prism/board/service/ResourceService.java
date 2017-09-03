@@ -49,8 +49,11 @@ public class ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
+    private static final String RESOURCE_COLUMN_LIST =
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification";
+
     private static final String PUBLIC_RESOURCE_ACTION =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification " +
+        RESOURCE_COLUMN_LIST + " " +
             "FROM resource " +
             "INNER join workflow " +
             "ON resource.scope = workflow.resource2_scope " +
@@ -63,8 +66,7 @@ public class ResourceService {
             "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) ";
 
     private static final String SECURE_RESOURCE_ACTION =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification " +
-            "FROM resource " +
+        "FROM resource " +
             "INNER JOIN workflow " +
             "ON resource.scope = workflow.resource2_scope " +
             "AND resource.state = workflow.resource2_state " +
@@ -82,6 +84,11 @@ public class ResourceService {
             "INNER JOIN user_role " +
             "ON parent.id = user_role.resource_id " +
             "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline) ";
+
+    private static final String SECURE_QUARTER =
+        "select distinct resource.quarter " +
+            SECURE_RESOURCE_ACTION + " " +
+            "where resource.scope = :scope";
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -205,19 +212,13 @@ public class ResourceService {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role ");
 
-        String departmentScope = Scope.DEPARTMENT.name();
         Map<String, Object> publicFilterParameters = new HashMap<>();
         publicFilterParameters.put("role", Role.PUBLIC.name());
-        publicFilterParameters.put("departmentScope", departmentScope);
+        publicFilterParameters.put("departmentScope", Scope.DEPARTMENT.name());
 
         List<String> secureFilterStatements = new ArrayList<>();
         secureFilterStatements.add("user_role.user_id = :userId ");
-
-        Map<String, Object> secureFilterParameters = new HashMap<>();
-        secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
-        secureFilterParameters.put("departmentScope", departmentScope);
-        secureFilterParameters.put("userRoleStates", State.ACTIVE_USER_ROLE_STATE_STRINGS);
-        secureFilterParameters.put("baseline", LocalDate.now());
+        Map<String, Object> secureFilterParameters = getSecureFilterParameters(user);
 
         // Unwrap the filters
         for (Field field : ResourceFilterDTO.class.getDeclaredFields()) {
@@ -247,7 +248,7 @@ public class ResourceService {
         TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
         List<Object[]> rows = transactionTemplate.execute(status -> {
             List<Object[]> publicResults = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
-            List<Object[]> secureResults = getResources(SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
+            List<Object[]> secureResults = getResources(RESOURCE_COLUMN_LIST + " " + SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
             if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
                 // Return public and secure results
                 secureResults.addAll(publicResults);
@@ -520,17 +521,45 @@ public class ResourceService {
         return userRoles.stream().map(userRole -> userRole.getUser().getEmail()).anyMatch(email::equals);
     }
 
-    public void setIndexData(Resource resource) {
-        setIndexData(resource, resource.getName(), resource.getSummary());
+    public void setIndexDataAndQuarter(Resource resource) {
+        setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
     }
 
-    public void setIndexData(Resource resource, String... parts) {
+    public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
             resource.setIndexData(BoardUtils.soundex(parts));
         }
 
         resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.soundex(parts)));
+        LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
+        resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil(createdTimestamp.getMonthValue() / 3));
+    }
+
+    public List<String> getArchiveQuarters(Scope scope, Long parentId) {
+        String statement =
+            SECURE_QUARTER + " " +
+                "resource.state = :archivedState";
+
+        User user = userService.getCurrentUserSecured();
+        Map<String, Object> filterParameters = getSecureFilterParameters(user);
+        filterParameters.put("scope", scope.name());
+        filterParameters.put("archiveState", State.ARCHIVED.name());
+
+        if (parentId != null) {
+            statement =
+                statement + " " +
+                    "resource.parent.id = :parentId";
+            filterParameters.put("parentId", parentId);
+        }
+
+        statement =
+            statement + " " +
+                "order by resource.quarter desc";
+
+        Query query = entityManager.createNativeQuery(statement);
+        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+        return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {
@@ -539,6 +568,15 @@ public class ResourceService {
 
         resource1.getChildren().add(resourceRelation);
         resource2.getParents().add(resourceRelation);
+    }
+
+    private Map<String, Object> getSecureFilterParameters(User user) {
+        Map<String, Object> secureFilterParameters = new HashMap<>();
+        secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
+        secureFilterParameters.put("departmentScope", Scope.DEPARTMENT.name());
+        secureFilterParameters.put("userRoleStates", State.ACTIVE_USER_ROLE_STATE_STRINGS);
+        secureFilterParameters.put("baseline", LocalDate.now());
+        return secureFilterParameters;
     }
 
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
