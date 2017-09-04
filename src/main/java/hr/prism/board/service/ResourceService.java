@@ -321,7 +321,9 @@ public class ResourceService {
         String search = UUID.randomUUID().toString();
         String searchTerm = filter.getSearchTerm();
         Collection<Long> resourceIds = resourceActionIndex.keySet();
-        if (searchTerm != null) {
+
+        boolean searchTermApplied = searchTerm != null;
+        if (searchTermApplied) {
             // Apply the search query
             resourceSearchRepository.insertBySearch(search, searchTerm, resourceIds);
         }
@@ -329,12 +331,16 @@ public class ResourceService {
         // Get the resource data
         entityManager.flush();
         List<Resource> resources = transactionTemplate.execute(status -> {
-            String statement = Joiner.on(", ").skipNulls().join(
+            String statement =
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
                     "left join resource.searches search on search.search = :search " +
-                    "where resource.id in (:ids) " +
-                    "order by search.id", filter.getOrderStatement());
+                    "where resource.id in (:ids) ";
+            if (searchTermApplied) {
+                statement += " and search.id is not null ";
+            }
+
+            statement += Joiner.on(", ").skipNulls().join("order by search.id", filter.getOrderStatement());
 
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
                 .setParameter("search", search)

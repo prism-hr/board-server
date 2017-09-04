@@ -117,7 +117,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
 
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
-//            flyway.clean();
+            flyway.clean();
         }
 
         flyway.migrate();
