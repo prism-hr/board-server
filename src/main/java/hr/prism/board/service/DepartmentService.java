@@ -259,8 +259,8 @@ public class DepartmentService {
                     "from UserRole userRole " +
                     "inner join userRole.user user " +
                     "left join user.searches search on search.search = :search " +
-                    "and userRole.resource.id = :departmentId " +
-                    "where user.id in (:userIds) " +
+                    "where userRole.resource.id = :departmentId " +
+                    "and user.id in (:userIds) " +
                     "and userRole.state = :state ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
