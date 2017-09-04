@@ -259,6 +259,7 @@ public class DepartmentService {
                     "from UserRole userRole " +
                     "inner join userRole.user user " +
                     "left join user.searches search on search.search = :search " +
+                    "and userRole.resource.id = :departmentId " +
                     "where user.id in (:userIds) " +
                     "and userRole.state = :state ";
             if (searchTermApplied) {
@@ -268,6 +269,7 @@ public class DepartmentService {
             statement += "order by search.id, user.id desc";
             return entityManager.createQuery(statement, UserRole.class)
                 .setParameter("search", search)
+                .setParameter("departmentId", departmentId)
                 .setParameter("userIds", userIds)
                 .setParameter("state", State.PENDING)
                 .getResultList();

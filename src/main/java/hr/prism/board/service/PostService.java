@@ -265,6 +265,7 @@ public class PostService {
                     "from ResourceEvent resourceEvent " +
                     "inner join resourceEvent.user user " +
                     "left join user.searches search on search.search = :search " +
+                    "and resourceEvent.resource.id = :postId " +
                     "where user.id in (:userIds) " +
                     "and resourceEvent.event = :event ";
             if (searchTermApplied) {
@@ -274,6 +275,7 @@ public class PostService {
             statement += "order by search.id, resourceEvent.id desc";
             return entityManager.createQuery(statement, ResourceEvent.class)
                 .setParameter("search", search)
+                .setParameter("postId", postId)
                 .setParameter("userIds", userIds)
                 .setParameter("event", hr.prism.board.enums.ResourceEvent.RESPONSE)
                 .getResultList();
