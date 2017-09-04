@@ -100,8 +100,8 @@ public class PostApi {
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
-    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId) {
-        return postService.getPostResponses(postId).stream().map(resourceEventMapper).collect(Collectors.toList());
+    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId, @RequestParam(value = "searchTerm", required = false) String searchTerm) {
+        return postService.getPostResponses(postId, searchTerm).stream().map(resourceEventMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses/{responseId}", method = RequestMethod.GET)

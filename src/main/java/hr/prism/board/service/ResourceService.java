@@ -326,31 +326,34 @@ public class ResourceService {
         if (searchTermApplied) {
             // Apply the search query
             resourceSearchRepository.insertBySearch(search, searchTerm, resourceIds);
+            entityManager.flush();
         }
 
         // Get the resource data
-        entityManager.flush();
         List<Resource> resources = transactionTemplate.execute(status -> {
             String statement =
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
                     "left join resource.searches search on search.search = :search " +
-                    "where resource.id in (:ids) ";
+                    "where resource.id in (:resourceIds) ";
             if (searchTermApplied) {
-                statement += " and search.id is not null ";
+                statement += "and search.id is not null ";
             }
 
             statement += Joiner.on(", ").skipNulls().join("order by search.id", filter.getOrderStatement());
 
-            return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
+            return (List<Resource>) entityManager.createQuery(statement, resourceClass)
                 .setParameter("search", search)
-                .setParameter("ids", resourceIds)
+                .setParameter("resourceIds", resourceIds)
                 .setHint("javax.persistence.loadgraph", entityGraph)
-                .getResultList());
+                .getResultList();
         });
 
+        if (searchTermApplied) {
+            resourceSearchRepository.deleteBySearch(search);
+        }
+
         // Merge the output
-        resourceSearchRepository.deleteBySearch(search);
         for (Resource resource : resources) {
             List<ActionRepresentation> actionRepresentations = Lists.newArrayList(resourceActionIndex.get(resource.getId()));
             actionRepresentations.sort(Comparator.naturalOrder());

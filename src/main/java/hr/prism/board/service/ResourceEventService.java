@@ -118,10 +118,6 @@ public class ResourceEventService {
         return resourceEventRepository.findByResourceAndEventAndUser(resource, event, user);
     }
 
-    public List<ResourceEvent> findByResourceAndEvent(Resource resource, hr.prism.board.enums.ResourceEvent event) {
-        return resourceEventRepository.findByResourceAndEvent(resource, event);
-    }
-
     public List<ResourceEvent> findByResourceIdsAndEventAndUser(List<Long> resourceIds, hr.prism.board.enums.ResourceEvent event, User user) {
         return resourceEventRepository.findByResourceIdsAndEventAndUser(resourceIds, event, user);
     }

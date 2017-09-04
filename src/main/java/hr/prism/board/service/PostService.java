@@ -10,6 +10,8 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
+import hr.prism.board.repository.UserRepository;
+import hr.prism.board.repository.UserSearchRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
@@ -52,6 +54,12 @@ public class PostService {
 
     @Inject
     private PostRepository postRepository;
+
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
+    private UserSearchRepository userSearchRepository;
 
     @Inject
     private DocumentService documentService;
@@ -241,14 +249,45 @@ public class PostService {
         return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent).setExposeResponseData(true);
     }
 
-    public List<ResourceEvent> getPostResponses(Long postId) {
+    @SuppressWarnings("JpaQlInspection")
+    public List<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.EDIT, () -> post);
 
-        List<ResourceEvent> resourceEvents = resourceEventService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
-        if (resourceEvents.isEmpty()) {
-            return resourceEvents;
+        List<Long> userIds = userRepository.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        if (userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String search = UUID.randomUUID().toString();
+        boolean searchTermApplied = searchTerm != null;
+        if (searchTermApplied) {
+            searchTerm = BoardUtils.makeSoundexRemovingStopWords(searchTerm);
+            userSearchRepository.insertBySearch(search, searchTerm, userIds);
+            entityManager.flush();
+        }
+
+        List<ResourceEvent> resourceEvents = new TransactionTemplate(platformTransactionManager).execute(status -> {
+            String statement =
+                "select distinct resourceEvent " +
+                    "from ResourceEvent resourceEvent " +
+                    "inner join resourceEvent.user user " +
+                    "left join user.searches search on search.search = :search " +
+                    "where user.id in (:userIds) ";
+            if (searchTermApplied) {
+                statement += "and search.id is not null ";
+            }
+
+            statement += "order by search.id, resourceEvent.id desc";
+            return entityManager.createQuery(statement, ResourceEvent.class)
+                .setParameter("search", search)
+                .setParameter("userIds", userIds)
+                .getResultList();
+        });
+
+        if (searchTermApplied) {
+            userSearchRepository.deleteBySearch(search);
         }
 
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();

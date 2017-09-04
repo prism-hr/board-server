@@ -80,8 +80,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.GET)
-    public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId) {
-        return departmentService.getMembershipRequests(departmentId).stream().map(userRoleMapper::apply).collect(Collectors.toList());
+    public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId, @RequestParam(value = "searchTerm", required = false) String searchTerm) {
+        return departmentService.getMembershipRequests(departmentId, searchTerm).stream().map(userRoleMapper::apply).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}", method = RequestMethod.PUT)

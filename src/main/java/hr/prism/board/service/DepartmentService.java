@@ -239,7 +239,7 @@ public class DepartmentService {
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
     }
 
-    public List<UserRole> getMembershipRequests(Long departmentId) {
+    public List<UserRole> getMembershipRequests(Long departmentId, String searchTerm) {
         User user = userService.getCurrentUserSecured();
         Resource department = getDepartment(departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);

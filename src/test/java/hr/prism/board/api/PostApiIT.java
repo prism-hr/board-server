@@ -1195,12 +1195,12 @@ public class PostApiIT extends AbstractIT {
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
-        List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(1, responses.size());
         verifyPostResponse(memberUser1Id, responses.get(0), "attachments1.pdf", "website1", "note1");
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(1, responses.size());
         verifyPostResponse(memberUser1Id, responses.get(0), null, null, null);
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
@@ -1221,26 +1221,26 @@ public class PostApiIT extends AbstractIT {
             new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
         verifyPostResponse(memberUser2Id, responses.get(0), null, null, null);
         verifyPostResponse(memberUser1Id, responses.get(1), "attachments1.pdf", "website1", "note1");
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
         verifyPostResponse(memberUser2Id, responses.get(0), null, null, null);
         verifyPostResponse(memberUser1Id, responses.get(1), null, null, null);
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail))));
 
         testUserService.setAuthentication(postUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
         verifyPostResponse(memberUser2Id, responses.get(0), "attachments2.pdf", "website2", "note2");
         verifyPostResponse(memberUser1Id, responses.get(1), "attachments1.pdf", "website1", "note1");
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
         verifyPostResponse(memberUser2Id, responses.get(0), null, null, null);
         verifyPostResponse(memberUser1Id, responses.get(1), null, null, null);
@@ -1266,14 +1266,14 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(3, responses.size());
         verifyPostResponse(memberUser3Id, responses.get(0), null, null, null);
         verifyPostResponse(memberUser2Id, responses.get(1), "attachments2.pdf", "website2", "note2");
         verifyPostResponse(memberUser1Id, responses.get(2), "attachments1.pdf", "website1", "note1");
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(3, responses.size());
         verifyPostResponse(memberUser3Id, responses.get(0), null, null, null);
         verifyPostResponse(memberUser2Id, responses.get(1), null, null, null);
@@ -1288,13 +1288,13 @@ public class PostApiIT extends AbstractIT {
         ResourceEventRepresentation response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
         verifyPostResponse(memberUser1Id, response1, "attachments1.pdf", "website1", "note1");
 
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertFalse(responses.get(0).isViewed());
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());
 
         testUserService.setAuthentication(boardUserId);
-        transactionTemplate.execute(status -> postApi.getPostResponses(postId)).forEach(response -> Assert.assertFalse(response.isViewed()));
+        transactionTemplate.execute(status -> postApi.getPostResponses(postId, null)).forEach(response -> Assert.assertFalse(response.isViewed()));
 
         transactionTemplate.execute(status -> {
             postApi.putPostResponseView(postId, responseId);
@@ -1304,7 +1304,7 @@ public class PostApiIT extends AbstractIT {
         response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
         verifyPostResponse(memberUser1Id, response1, null, null, null);
 
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId));
+        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertFalse(responses.get(0).isViewed());
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());

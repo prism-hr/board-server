@@ -65,6 +65,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @OneToMany(mappedBy = "user")
     private Set<UserRole> userRoles = new HashSet<>();
 
+    @OneToMany(mappedBy = "user")
+    private Set<UserSearch> searches = new HashSet<>();
+
     public String getUuid() {
         return uuid;
     }
@@ -195,9 +198,8 @@ public class User extends BoardEntity implements Comparable<User> {
         return userRoles;
     }
 
-    public User setUserRoles(Set<UserRole> userRoles) {
-        this.userRoles = userRoles;
-        return this;
+    public Set<UserSearch> getSearches() {
+        return searches;
     }
 
     public String getFullName() {
