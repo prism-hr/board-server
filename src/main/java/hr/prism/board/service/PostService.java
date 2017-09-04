@@ -265,7 +265,8 @@ public class PostService {
                     "from ResourceEvent resourceEvent " +
                     "inner join resourceEvent.user user " +
                     "left join user.searches search on search.search = :search " +
-                    "where user.id in (:userIds) ";
+                    "where user.id in (:userIds) " +
+                    "and resourceEvent.event = :event ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
@@ -274,6 +275,7 @@ public class PostService {
             return entityManager.createQuery(statement, ResourceEvent.class)
                 .setParameter("search", search)
                 .setParameter("userIds", userIds)
+                .setParameter("event", hr.prism.board.enums.ResourceEvent.RESPONSE)
                 .getResultList();
         });
 
