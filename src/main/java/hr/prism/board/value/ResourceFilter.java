@@ -38,7 +38,7 @@ public class ResourceFilter {
 
     @ResourceFilterProperty(
         parameter = "negatedState",
-        statement = "resource.state <> :state")
+        statement = "resource.state <> :negatedState")
     private String negatedState;
 
     @ResourceFilterProperty(

@@ -80,7 +80,7 @@ public class BoardService {
     public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
-            ResourceService.makeResourceFilter(Scope.DEPARTMENT, departmentId, includePublicBoards, state, quarter, searchTerm)
+            ResourceService.makeResourceFilter(Scope.BOARD, departmentId, includePublicBoards, state, quarter, searchTerm)
                 .setOrderStatement("resource.name"))
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }

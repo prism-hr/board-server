@@ -52,13 +52,13 @@ public class PostApi {
 
     @RequestMapping(value = "/api/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublicPosts, @RequestParam(required = false) State state,
-                                             @RequestParam("quarter") String quarter, @RequestParam(required = false) String searchTerm) {
+                                             @RequestParam(value = "quarter", required = false) String quarter, @RequestParam(required = false) String searchTerm) {
         return postService.getPosts(null, includePublicPosts, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.GET)
     public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublicPosts,
-                                                    @RequestParam(required = false) State state, @RequestParam("quarter") String quarter,
+                                                    @RequestParam(required = false) State state, @RequestParam(value = "quarter", required = false) String quarter,
                                                     @RequestParam(required = false) String searchTerm) {
         return postService.getPosts(boardId, includePublicPosts, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }

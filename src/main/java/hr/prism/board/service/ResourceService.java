@@ -332,10 +332,9 @@ public class ResourceService {
             String statement = Joiner.on(", ").skipNulls().join(
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
-                    "left join resource.searches search " +
-                    "and search.search = :search " +
+                    "left join resource.searches search on search.search = :search " +
                     "where resource.id in (:ids) " +
-                    "order by search.id desc", filter.getOrderStatement());
+                    "order by search.id", filter.getOrderStatement());
 
             return new ArrayList<Resource>(entityManager.createQuery(statement, resourceClass)
                 .setParameter("search", search)
@@ -576,7 +575,7 @@ public class ResourceService {
         return suggestedHandle;
     }
 
-    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, boolean includePublicPosts, State state, String quarter, String searchTerm) {
+    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
         String stateString = null;
         String negatedStateString = State.ARCHIVED.name();
         if (state != null) {
