@@ -24,14 +24,6 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
     @Query(value =
         "select userRole " +
             "from UserRole userRole " +
-            "where userRole.resource = :resource " +
-            "and userRole.state = :state " +
-            "order by userRole.id desc")
-    List<UserRole> findByResourceAndState(@Param("resource") Resource resource, @Param("state") State state);
-
-    @Query(value =
-        "select userRole " +
-            "from UserRole userRole " +
             "where resource = :resource " +
             "and user.id = :userId " +
             "and role = :role")

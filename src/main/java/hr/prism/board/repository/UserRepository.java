@@ -96,6 +96,14 @@ public interface UserRepository extends MyRepository<User, Long> {
         @Param("resource") Resource resource, @Param("role") Role role, @Param("withoutResource") Resource withoutResource, @Param("withoutRole") Role withoutRole);
 
     @Query(value =
+        "select userRole.user.id " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.state = :state " +
+            "order by userRole.id desc")
+    List<Long> findByResourceAndState(@Param("resource") Resource resource, @Param("state") State state);
+
+    @Query(value =
         "select resourceEvent.user.id " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +

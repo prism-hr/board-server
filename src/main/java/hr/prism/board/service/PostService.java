@@ -10,8 +10,6 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
-import hr.prism.board.repository.UserRepository;
-import hr.prism.board.repository.UserSearchRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
@@ -54,12 +52,6 @@ public class PostService {
 
     @Inject
     private PostRepository postRepository;
-
-    @Inject
-    private UserRepository userRepository;
-
-    @Inject
-    private UserSearchRepository userSearchRepository;
 
     @Inject
     private DocumentService documentService;
@@ -255,7 +247,7 @@ public class PostService {
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.EDIT, () -> post);
 
-        List<Long> userIds = userRepository.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        List<Long> userIds = userService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
         if (userIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -263,8 +255,7 @@ public class PostService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            searchTerm = BoardUtils.makeSoundexRemovingStopWords(searchTerm);
-            userSearchRepository.insertBySearch(search, searchTerm, userIds);
+            userService.createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
 
@@ -287,7 +278,7 @@ public class PostService {
         });
 
         if (searchTermApplied) {
-            userSearchRepository.deleteBySearch(search);
+            userService.deleteSearchResults(search);
         }
 
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();

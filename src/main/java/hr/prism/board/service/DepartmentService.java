@@ -18,7 +18,6 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.util.BoardUtils;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -30,10 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,13 +49,13 @@ public class DepartmentService {
             "LIMIT 10";
 
     @Inject
+    private DepartmentRepository departmentRepository;
+
+    @Inject
     private UserService userService;
 
     @Inject
     private DocumentService documentService;
-
-    @Inject
-    private DepartmentRepository departmentRepository;
 
     @Inject
     private ResourceService resourceService;
@@ -114,7 +110,7 @@ public class DepartmentService {
         return resourceService.getResources(currentUser,
             new ResourceFilter()
                 .setScope(Scope.DEPARTMENT)
-                .setSearchTerm(BoardUtils.makeSoundexRemovingStopWords(searchTerm))
+                .setSearchTerm(searchTerm)
                 .setIncludePublicResources(includePublicDepartments)
                 .setOrderStatement("resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
@@ -239,14 +235,44 @@ public class DepartmentService {
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
     }
 
+    @SuppressWarnings("JpaQlInspection")
     public List<UserRole> getMembershipRequests(Long departmentId, String searchTerm) {
         User user = userService.getCurrentUserSecured();
         Resource department = getDepartment(departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
 
-        List<UserRole> userRoles = userRoleService.findByResourceAndState(department, State.PENDING);
-        if (userRoles.isEmpty()) {
-            return userRoles;
+        List<Long> userIds = userService.findByResourceAndState(department, State.PENDING);
+        if (userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String search = UUID.randomUUID().toString();
+        boolean searchTermApplied = searchTerm != null;
+        if (searchTermApplied) {
+            userService.createSearchResults(search, searchTerm, userIds);
+            entityManager.flush();
+        }
+
+        List<hr.prism.board.domain.UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status -> {
+            String statement =
+                "select distinct userRole " +
+                    "from UserRole userRole " +
+                    "inner join userRole.user user " +
+                    "left join user.searches search on search.search = :search " +
+                    "where user.id in (:userIds) ";
+            if (searchTermApplied) {
+                statement += "and search.id is not null ";
+            }
+
+            statement += "order by search.id, user.id desc";
+            return entityManager.createQuery(statement, UserRole.class)
+                .setParameter("search", search)
+                .setParameter("userIds", userIds)
+                .getResultList();
+        });
+
+        if (searchTermApplied) {
+            userService.deleteSearchResults(search);
         }
 
         Map<hr.prism.board.domain.Activity, UserRole> indexByActivities = userRoles.stream().collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));

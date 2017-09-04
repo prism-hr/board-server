@@ -177,10 +177,6 @@ public class UserRoleService {
         return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(getUserRoles(resource, user));
     }
 
-    public List<UserRole> findByResourceAndState(Resource resource, State state) {
-        return userRoleRepository.findByResourceAndState(resource, state);
-    }
-
     public UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role) {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }

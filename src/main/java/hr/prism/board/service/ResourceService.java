@@ -325,7 +325,7 @@ public class ResourceService {
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             // Apply the search query
-            resourceSearchRepository.insertBySearch(search, searchTerm, resourceIds);
+            resourceSearchRepository.insertBySearch(search, BoardUtils.makeSoundexRemovingStopWords(searchTerm), resourceIds);
             entityManager.flush();
         }
 
@@ -603,7 +603,7 @@ public class ResourceService {
             .setState(stateString)
             .setNegatedState(negatedStateString)
             .setQuarter(quarter)
-            .setSearchTerm(BoardUtils.makeSoundexRemovingStopWords(searchTerm))
+            .setSearchTerm(searchTerm)
             .setIncludePublicResources(includePublicPosts);
     }
 

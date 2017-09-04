@@ -12,6 +12,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
+import hr.prism.board.repository.UserSearchRepository;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
@@ -50,6 +51,9 @@ public class UserService {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private UserSearchRepository userSearchRepository;
 
     @Inject
     private UserCacheService userCacheService;
@@ -230,6 +234,22 @@ public class UserService {
         }
 
         return user;
+    }
+
+    public List<Long> findByResourceAndState(Resource resource, State state) {
+        return userRepository.findByResourceAndState(resource, state);
+    }
+
+    public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
+        return userRepository.findByResourceAndEvent(resource, event);
+    }
+
+    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
+        userSearchRepository.insertBySearch(search, BoardUtils.makeSoundexRemovingStopWords(searchTerm), userIds);
+    }
+
+    public void deleteSearchResults(String search) {
+        userSearchRepository.deleteBySearch(search);
     }
 
 }
