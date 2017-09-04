@@ -260,7 +260,7 @@ public class DepartmentService {
                     "inner join userRole.user user " +
                     "left join user.searches search on search.search = :search " +
                     "where user.id in (:userIds) " +
-                    "and userRole.role = :role ";
+                    "and userRole.state = :state ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
@@ -269,7 +269,7 @@ public class DepartmentService {
             return entityManager.createQuery(statement, UserRole.class)
                 .setParameter("search", search)
                 .setParameter("userIds", userIds)
-                .setParameter("role", Role.MEMBER)
+                .setParameter("state", State.PENDING)
                 .getResultList();
         });
 
