@@ -1,9 +1,6 @@
 package hr.prism.board.repository;
 
-import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.ActivityRole;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import org.springframework.data.jpa.repository.Modifying;
@@ -33,5 +30,16 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "from Activity activity " +
             "where activity.userRole = :userRole)")
     void deleteByUserRole(@Param("userRole") UserRole userRole);
+
+    @Modifying
+    @Query(value =
+        "delete from ActivityRole activityRole " +
+            "where activityRole.activity in ( " +
+            "select activity " +
+            "from Activity activity " +
+            "inner join activity.userRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user)")
+    void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
 
 }

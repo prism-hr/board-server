@@ -41,4 +41,15 @@ public interface ActivityEventRepository extends MyRepository<ActivityEvent, Lon
             "where activity.userRole = :userRole)")
     void deleteByUserRole(@Param("userRole") UserRole userRole);
 
+    @Modifying
+    @Query(value =
+        "delete from ActivityEvent activityEvent " +
+            "where activityEvent.activity in ( " +
+            "select activity " +
+            "from Activity activity " +
+            "inner join activity.userRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user)")
+    void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
+
 }

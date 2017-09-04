@@ -1,9 +1,6 @@
 package hr.prism.board.repository;
 
-import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.enums.ActivityEvent;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.State;
@@ -64,5 +61,15 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
         "delete from Activity activity " +
             "where activity.userRole = :userRole")
     void deleteByUserRole(@Param("userRole") UserRole userRole);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.userRole in (" +
+            "select userRole " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user)")
+    void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
 
 }

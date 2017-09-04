@@ -8,6 +8,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
+import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.value.UserRoleSummary;
@@ -38,6 +39,9 @@ public class UserRoleCacheService {
 
     @Inject
     private ResourceService resourceService;
+
+    @Inject
+    private ActivityService activityService;
 
     @Lazy
     @Inject
@@ -98,8 +102,7 @@ public class UserRoleCacheService {
 
     @CacheEvict(key = "#user.id", value = "users")
     public void deleteResourceUser(Resource resource, User user) {
-        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
-        userRoleRepository.deleteByResourceAndUser(resource, user);
+        deleteUserRoles(resource, user);
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER);
         updateUserRolesSummary(resource);
     }
@@ -110,8 +113,7 @@ public class UserRoleCacheService {
             throw new BoardException(ExceptionCode.IRREMOVABLE_USER_ROLE);
         }
 
-        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
-        userRoleRepository.deleteByResourceAndUser(resource, user);
+        deleteUserRoles(resource, user);
         entityManager.flush();
 
         for (UserRoleDTO userRoleDTO : resourceUserDTO.getRoles()) {
@@ -139,6 +141,12 @@ public class UserRoleCacheService {
                 throw new BoardException(exceptionCode);
             }
         }
+    }
+
+    private void deleteUserRoles(Resource resource, User user) {
+        activityService.deleteActivities(resource, user);
+        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
+        userRoleRepository.deleteByResourceAndUser(resource, user);
     }
 
 }
