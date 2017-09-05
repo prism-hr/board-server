@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.UserRoleDTO;
@@ -9,10 +10,12 @@ import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.ResourceMembershipRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -27,10 +30,10 @@ public class DepartmentApi {
     private DepartmentService departmentService;
 
     @Inject
-    private DepartmentMapper departmentMapper;
+    private ResourceService resourceService;
 
     @Inject
-    private ResourceService resourceService;
+    private DepartmentMapper departmentMapper;
 
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
@@ -80,8 +83,11 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.GET)
-    public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId, @RequestParam(value = "searchTerm", required = false) String searchTerm) {
-        return departmentService.getMembershipRequests(departmentId, searchTerm).stream().map(userRoleMapper::apply).collect(Collectors.toList());
+    public ResourceMembershipRepresentation getMembershipRequests(@PathVariable Long departmentId, @RequestParam(required = false) String searchTerm) {
+        Pair<Long, List<UserRole>> memberships = departmentService.getMembershipRequests(departmentId, searchTerm);
+        return new ResourceMembershipRepresentation()
+            .setMemberCount(memberships.getKey())
+            .setRequests(memberships.getValue().stream().map(userRoleMapper).collect(Collectors.toList()));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}", method = RequestMethod.PUT)
@@ -92,6 +98,11 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)
     public void patchMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
         departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/members", method = RequestMethod.GET)
+    public List<UserRoleRepresentation> getMembers(@PathVariable Long departmentId, @RequestParam String searchTerm) {
+        return departmentService.getMembers(departmentId, searchTerm).stream().map(userRoleMapper).collect(Collectors.toList());
     }
 
 }

@@ -63,7 +63,7 @@ public class UserApi {
     }
 
     @RequestMapping(value = "api/user/suppressions/{resourceId}", method = RequestMethod.POST)
-    public UserNotificationSuppressionRepresentation postSuppression(@PathVariable("resourceId") Long resourceId, @RequestParam(required = false) String uuid) {
+    public UserNotificationSuppressionRepresentation postSuppression(@PathVariable Long resourceId, @RequestParam(required = false) String uuid) {
         return userNotificationSuppressionService.postSuppression(uuid, resourceId);
     }
 

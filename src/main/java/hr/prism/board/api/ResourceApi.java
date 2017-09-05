@@ -58,7 +58,7 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards|posts}/archiveQuarters", method = RequestMethod.GET)
-    public List<String> getResourceArchiveQuarters(@ModelAttribute Scope scope, @RequestParam(value = "parentId", required = false) Long parentId) {
+    public List<String> getResourceArchiveQuarters(@ModelAttribute Scope scope, @RequestParam(required = false) Long parentId) {
         return resourceService.getResourceArchiveQuarters(scope, parentId);
     }
 

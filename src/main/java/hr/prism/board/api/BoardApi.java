@@ -47,13 +47,13 @@ public class BoardApi {
 
     @RequestMapping(value = "/api/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoards(@RequestParam(required = false) Boolean includePublicBoards, @RequestParam(required = false) State state,
-                                               @RequestParam(value = "quarter", required = false) String quarter, @RequestParam(required = false) String searchTerm) {
+                                               @RequestParam(required = false) String quarter, @RequestParam(required = false) String searchTerm) {
         return boardService.getBoards(null, includePublicBoards, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/boards", method = RequestMethod.GET)
     public List<BoardRepresentation> getBoardsByDepartment(@PathVariable Long departmentId, @RequestParam(required = false) Boolean includePublicBoards,
-                                                           @RequestParam(required = false) State state, @RequestParam(value = "quarter", required = false) String quarter,
+                                                           @RequestParam(required = false) State state, @RequestParam(required = false) String quarter,
                                                            @RequestParam(required = false) String searchTerm) {
         return boardService.getBoards(departmentId, includePublicBoards, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
     }

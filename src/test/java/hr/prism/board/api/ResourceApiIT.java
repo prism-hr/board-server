@@ -12,10 +12,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.representation.ResourceUserRepresentation;
-import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.util.BoardUtils;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -102,8 +99,7 @@ public class ResourceApiIT extends AbstractIT {
         });
 
         List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId);
-        Assert.assertThat(users, contains(resourceUserMatcher(newUserDTO.getEmail(),
-            new UserRoleDTO(Role.ADMINISTRATOR), new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT))));
+        Assert.assertThat(users, contains(resourceUserMatcher(newUserDTO.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
     @Test
@@ -129,8 +125,8 @@ public class ResourceApiIT extends AbstractIT {
         User currentUser = testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-        List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId());
+        DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
+        List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
         Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add 200 members
@@ -141,10 +137,13 @@ public class ResourceApiIT extends AbstractIT {
         }
 
         bulkDTO.setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
-        resourceApi.createResourceUsers(Scope.BOARD, boardR.getId(), bulkDTO);
+        resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), bulkDTO);
 
-        int usersCount = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId()).size();
-        assertEquals(201, usersCount);
+        int usersCount = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId()).size();
+        assertEquals(1, usersCount);
+
+        int membersCount = departmentApi.getMembershipRequests(departmentR.getId(), null).getMemberCount().intValue();
+        assertEquals(200, membersCount);
 
         bulkDTO = new ResourceUsersDTO();
         bulkDTO.setUsers(new LinkedList<>());
@@ -154,10 +153,13 @@ public class ResourceApiIT extends AbstractIT {
 
         bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(
             Collections.singletonList(MemberCategory.MASTER_STUDENT)), new UserRoleDTO().setRole(Role.AUTHOR)));
-        resourceApi.createResourceUsers(Scope.BOARD, boardR.getId(), bulkDTO);
+        resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), bulkDTO);
 
-        usersCount = resourceApi.getResourceUsers(Scope.BOARD, boardR.getId()).size();
-        assertEquals(301, usersCount);
+        usersCount = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId()).size();
+        assertEquals(201, usersCount);
+
+        membersCount = departmentApi.getMembershipRequests(departmentR.getId(), null).getMemberCount().intValue();
+        assertEquals(300, membersCount);
     }
 
     @Test
@@ -278,8 +280,7 @@ public class ResourceApiIT extends AbstractIT {
                 ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, MemberCategory.UNDERGRADUATE_STUDENT), new UserRoleDTO(Role.AUTHOR))));
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
-            resourceUserMatcher("board-manager@mail.com",
-                new UserRoleDTO(Role.MEMBER, null, MemberCategory.UNDERGRADUATE_STUDENT), new UserRoleDTO(Role.AUTHOR))));
+            resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // remove one role
         resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
@@ -293,11 +294,11 @@ public class ResourceApiIT extends AbstractIT {
             new ResourceUserDTO().setUser(newUser).setRoles(
                 ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT), new UserRoleDTO(Role.AUTHOR))));
 
-        Assert.assertThat(resourceUser, resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR), new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT)));
+        Assert.assertThat(resourceUser, resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR)));
 
         resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
-            resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR), new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT))));
+            resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // remove user from resource
         resourceApi.deleteResourceUser(scope, resourceId, boardManager.getUser().getId());

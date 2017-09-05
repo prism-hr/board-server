@@ -39,14 +39,16 @@ public class UserRoleService {
         "select distinct userRole " +
             "from UserRole userRole " +
             "where userRole.resource = :resource " +
-            "and userRole.state in (:userRoleStates) ";
+            "and userRole.role <> :role " +
+            "and userRole.state in (:states) ";
 
     private static final String RESOURCE_USER_USER_ROLE =
         "select distinct userRole " +
             "from UserRole userRole " +
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
-            "and userRole.state in (:userRoleStates) ";
+            "and userRole.role <> :role " +
+            "and userRole.state in (:states) ";
 
     @Inject
     private UserRoleRepository userRoleRepository;
@@ -98,7 +100,8 @@ public class UserRoleService {
         List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createQuery(RESOURCE_USER_ROLE)
                 .setParameter("resource", resource)
-                .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
+                .setParameter("role", Role.MEMBER)
+                .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
                 .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList());
 
@@ -209,7 +212,8 @@ public class UserRoleService {
             entityManager.createQuery(RESOURCE_USER_USER_ROLE)
                 .setParameter("resource", resource)
                 .setParameter("user", user)
-                .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
+                .setParameter("role", Role.MEMBER)
+                .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
                 .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList());
         return userRoles.stream().map(userRoleMapper).collect(Collectors.toSet());

@@ -125,13 +125,21 @@ public class UserRoleCacheService {
 
     public void updateUserRolesSummary(Resource resource) {
         entityManager.flush();
+        LocalDate baseline = LocalDate.now();
         if (resource instanceof Department) {
-            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
-            ((Department) resource).setMemberCount(userRoleSummary.getCount());
+            ((Department) resource).setMemberCount(findRoleCount(resource, Role.MEMBER, baseline));
         } else if (resource instanceof Board) {
-            UserRoleSummary userRoleSummary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
-            ((Board) resource).setAuthorCount(userRoleSummary.getCount());
+            ((Board) resource).setAuthorCount(findRoleCount(resource, Role.AUTHOR, baseline));
         }
+    }
+
+    public Long findRoleCount(Resource resource, Role role, LocalDate baseline) {
+        UserRoleSummary summary = userRoleRepository.findSummaryByResourceAndRole(resource, role, State.ACTIVE_USER_ROLE_STATES, baseline);
+        if (summary == null) {
+            return 0L;
+        }
+
+        return summary.getCount();
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {
