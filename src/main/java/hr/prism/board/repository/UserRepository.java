@@ -23,6 +23,8 @@ public interface UserRepository extends MyRepository<User, Long> {
 
     User findByEmail(String email);
 
+    User findByEmailOriginal(String emailOriginal);
+
     @Query(value =
         "select user " +
             "from User user " +

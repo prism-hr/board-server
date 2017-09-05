@@ -134,7 +134,7 @@ public class ResourceApiIT extends AbstractIT {
         assertEquals(300, response.getMemberCount().intValue());
 
         List<UserRoleDTO> userRoleDTOs3 = new ArrayList<>();
-        userRoleDTOs2.add(
+        userRoleDTOs3.add(
             new UserRoleDTO()
                 .setUser(new UserDTO().setEmail("bulk301@mail.com").setGivenName("Bulk301").setSurname("User"))
                 .setRole(Role.AUTHOR));

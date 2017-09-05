@@ -145,8 +145,15 @@ public class UserService {
             user = userRepository.findOne(userDTO.getId());
         }
 
-        if (user == null) {
-            user = userRepository.findByEmail(userDTO.getEmail());
+        String email = userDTO.getEmail();
+        if (email != null) {
+            if (user == null) {
+                user = userRepository.findByEmail(email);
+            }
+
+            if (user == null) {
+                user = userRepository.findByEmailOriginal(email);
+            }
         }
 
         if (user == null) {
