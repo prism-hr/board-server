@@ -1,7 +1,6 @@
 package hr.prism.board.service.cache;
 
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -107,18 +106,11 @@ public class UserRoleCacheService {
     }
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void updateResourceUser(User currentUser, Resource resource, User user, ResourceUserDTO resourceUserDTO) {
-        if (resourceUserDTO.getRoles().isEmpty()) {
-            throw new BoardException(ExceptionCode.IRREMOVABLE_USER_ROLE);
-        }
-
+    public void updateResourceUser(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         deleteUserRoles(resource, user);
         entityManager.flush();
 
-        for (UserRoleDTO userRoleDTO : resourceUserDTO.getRoles()) {
-            createUserRole(currentUser, resource, user, userRoleDTO, false);
-        }
-
+        createUserRole(currentUser, resource, user, userRoleDTO, false);
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
     }
 

@@ -74,28 +74,28 @@ public class DepartmentApi {
         return departmentMapper.apply(departmentService.updateDepartment(id, departmentDTO));
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.POST)
     public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
         departmentService.createMembershipRequest(departmentId, userRoleDTO);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/memberships", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.GET)
     public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId, @RequestParam(required = false) String searchTerm) {
         return departmentService.getMembershipRequests(departmentId, searchTerm, true).stream().map(userRoleMapper).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = RequestMethod.PUT)
     public UserRoleRepresentation viewMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId) {
         return userRoleMapper.apply(departmentService.viewMembershipRequest(departmentId, userId));
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/memberships/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)
     public void patchMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
         departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/members", method = RequestMethod.GET)
-    public List<UserRoleRepresentation> getMembers(@PathVariable Long departmentId, @RequestParam String searchTerm) {
+    public List<UserRoleRepresentation> getMembers(@PathVariable Long departmentId, @RequestParam(required = false) String searchTerm) {
         return departmentService.getMembers(departmentId, searchTerm).stream().map(userRoleMapper).collect(Collectors.toList());
     }
 

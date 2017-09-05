@@ -1,12 +1,17 @@
 package hr.prism.board.dto;
 
-import java.util.Set;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 public class ResourceUserDTO {
 
+    @NotNull
+    @Valid
     private UserDTO user;
 
-    private Set<UserRoleDTO> roles;
+    @NotNull
+    @Valid
+    private UserRoleDTO role;
 
     public UserDTO getUser() {
         return user;
@@ -17,12 +22,12 @@ public class ResourceUserDTO {
         return this;
     }
 
-    public Set<UserRoleDTO> getRoles() {
-        return roles;
+    public UserRoleDTO getRole() {
+        return role;
     }
 
-    public ResourceUserDTO setRoles(Set<UserRoleDTO> roles) {
-        this.roles = roles;
+    public ResourceUserDTO setRole(UserRoleDTO role) {
+        this.role = role;
         return this;
     }
 }

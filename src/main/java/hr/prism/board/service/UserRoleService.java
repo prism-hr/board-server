@@ -18,8 +18,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
-import hr.prism.board.representation.ResourceUserRepresentation;
-import hr.prism.board.representation.ResourceUsersRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
@@ -52,7 +51,7 @@ public class UserRoleService {
             "from UserRole userRole " +
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
-            "and userRole.role <> :role " +
+            "and userRole.role = :role " +
             "and userRole.state in (:states) ";
 
     @Inject
@@ -100,7 +99,7 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
 
-    public ResourceUsersRepresentation getResourceUsers(Scope scope, Long resourceId) {
+    public UserRolesRepresentation getResourceUsers(Scope scope, Long resourceId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
@@ -113,19 +112,16 @@ public class UserRoleService {
                 .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList());
 
-        Map<User, ResourceUserRepresentation> resourceUsersMap = new TreeMap<>();
+        Map<User, UserRoleRepresentation> resourceUsersMap = new TreeMap<>();
         for (UserRole userRole : userRoles) {
             User user = userRole.getUser();
             if (!resourceUsersMap.containsKey(user)) {
-                resourceUsersMap.put(user, new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(new HashSet<>()));
+                resourceUsersMap.put(user, userRoleMapper.apply(userRole));
             }
-
-            ResourceUserRepresentation representation = resourceUsersMap.get(user);
-            representation.getRoles().add(userRoleMapper.apply(userRole));
         }
 
-        ResourceUsersRepresentation response =
-            new ResourceUsersRepresentation()
+        UserRolesRepresentation response =
+            new UserRolesRepresentation()
                 .setUsers(new ArrayList<>(resourceUsersMap.values()));
         if (scope == Scope.DEPARTMENT) {
             response.setMemberCount(((Department) resource).getMemberCount());
@@ -140,20 +136,17 @@ public class UserRoleService {
         createOrUpdateUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
-    public ResourceUserRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
+    public UserRoleRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userService.getOrCreateUser(resourceUserDTO.getUser());
-        Set<UserRoleDTO> roles = resourceUserDTO.getRoles();
+        UserRoleDTO userRoleDTO = resourceUserDTO.getRole();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            for (UserRoleDTO roleDTO : roles) {
-                createOrUpdateUserRole(currentUser, resource, user, roleDTO);
-            }
-
+            createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
             return resource;
         });
 
-        return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(getUserRoles(resource, user));
+        return getUserRole(resource, user, userRoleDTO.getRole());
     }
 
     public Long createResourceUsers(Scope scope, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
@@ -197,16 +190,17 @@ public class UserRoleService {
         });
     }
 
-    public ResourceUserRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, ResourceUserDTO resourceUserDTO) {
+    public UserRoleRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, ResourceUserDTO resourceUserDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userCacheService.findOne(userId);
+        UserRoleDTO userRoleDTO = resourceUserDTO.getRole();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            userRoleCacheService.updateResourceUser(currentUser, resource, user, resourceUserDTO);
+            userRoleCacheService.updateResourceUser(currentUser, resource, user, userRoleDTO);
             return resource;
         });
 
-        return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(getUserRoles(resource, user));
+        return getUserRole(resource, user, userRoleDTO.getRole());
     }
 
     public UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role) {
@@ -235,17 +229,21 @@ public class UserRoleService {
         }
     }
 
-    private Set<UserRoleRepresentation> getUserRoles(Resource resource, User user) {
+    private UserRoleRepresentation getUserRole(Resource resource, User user, Role role) {
         entityManager.flush();
         List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createQuery(RESOURCE_USER_USER_ROLE)
+            entityManager.createQuery(RESOURCE_USER_USER_ROLE, UserRole.class)
                 .setParameter("resource", resource)
                 .setParameter("user", user)
-                .setParameter("role", Role.MEMBER)
+                .setParameter("role", role)
                 .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
                 .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList());
-        return userRoles.stream().map(userRoleMapper).collect(Collectors.toSet());
+        if (userRoles.isEmpty()) {
+            return null;
+        }
+
+        return userRoleMapper.apply(userRoles.get(0));
     }
 
 }

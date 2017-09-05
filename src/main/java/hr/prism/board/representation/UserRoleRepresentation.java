@@ -79,11 +79,12 @@ public class UserRoleRepresentation {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
+            .add("user", user)
             .add("role", role)
             .add("state", state)
             .add("expiryDate", expiryDate)
             .add("categories", categories)
+            .add("viewed", viewed)
             .toString();
     }
-
 }

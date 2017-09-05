@@ -3,9 +3,9 @@ package hr.prism.board.api;
 import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.enums.Scope;
-import hr.prism.board.representation.ResourceUserRepresentation;
-import hr.prism.board.representation.ResourceUsersRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
@@ -29,12 +29,12 @@ public class ResourceApi {
     private ResourceService resourceService;
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
-    public ResourceUsersRepresentation getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
+    public UserRolesRepresentation getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
         return userRoleService.getResourceUsers(scope, resourceId);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
-    public ResourceUserRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
+    public UserRoleRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
         return userRoleService.createResourceUser(scope, resourceId, user);
     }
 
@@ -49,7 +49,7 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.PUT)
-    public ResourceUserRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid ResourceUserDTO user) {
+    public UserRoleRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid ResourceUserDTO user) {
         return userRoleService.updateResourceUser(scope, resourceId, userId, user);
     }
 

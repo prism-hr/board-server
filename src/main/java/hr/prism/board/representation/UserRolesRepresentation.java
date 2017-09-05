@@ -2,19 +2,19 @@ package hr.prism.board.representation;
 
 import java.util.List;
 
-public class ResourceUsersRepresentation {
+public class UserRolesRepresentation {
 
-    private List<ResourceUserRepresentation> users;
+    private List<UserRoleRepresentation> users;
 
     private List<UserRoleRepresentation> memberRequests;
 
     private Long memberCount;
 
-    public List<ResourceUserRepresentation> getUsers() {
+    public List<UserRoleRepresentation> getUsers() {
         return users;
     }
 
-    public ResourceUsersRepresentation setUsers(List<ResourceUserRepresentation> users) {
+    public UserRolesRepresentation setUsers(List<UserRoleRepresentation> users) {
         this.users = users;
         return this;
     }
@@ -23,7 +23,7 @@ public class ResourceUsersRepresentation {
         return memberRequests;
     }
 
-    public ResourceUsersRepresentation setMemberRequests(List<UserRoleRepresentation> memberRequests) {
+    public UserRolesRepresentation setMemberRequests(List<UserRoleRepresentation> memberRequests) {
         this.memberRequests = memberRequests;
         return this;
     }
@@ -32,7 +32,7 @@ public class ResourceUsersRepresentation {
         return memberCount;
     }
 
-    public ResourceUsersRepresentation setMemberCount(Long memberCount) {
+    public UserRolesRepresentation setMemberCount(Long memberCount) {
         this.memberCount = memberCount;
         return this;
     }

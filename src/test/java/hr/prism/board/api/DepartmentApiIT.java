@@ -272,9 +272,7 @@ public class DepartmentApiIT extends AbstractIT {
                         .setGivenName("admin1")
                         .setSurname("admin1")
                         .setEmail("admin1@admin1.com"))
-                    .setRoles(Collections.singleton(
-                        new UserRoleDTO()
-                            .setRole(Role.ADMINISTRATOR)))).getUser().getId());
+                    .setRole(new UserRoleDTO().setRole(Role.ADMINISTRATOR))).getUser().getId());
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
@@ -286,9 +284,7 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status ->
             resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, departmentUser2Id,
                 new ResourceUserDTO()
-                    .setRoles(Collections.singleton(
-                        new UserRoleDTO()
-                            .setRole(Role.AUTHOR)))));
+                    .setRole(new UserRoleDTO().setRole(Role.AUTHOR))));
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify();
@@ -553,13 +549,13 @@ public class DepartmentApiIT extends AbstractIT {
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
-                .setRoles(Sets.newHashSet(new UserRoleDTO().setRole(Role.MEMBER))));
+                .setRole(new UserRoleDTO().setRole(Role.MEMBER)));
         verifyBoardAndMemberCount(departmentId, 2L, 1L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new ResourceUserDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
-                .setRoles(Sets.newHashSet(new UserRoleDTO().setRole(Role.MEMBER))));
+                .setRole(new UserRoleDTO().setRole(Role.MEMBER)));
         verifyBoardAndMemberCount(departmentId, 2L, 2L);
 
         Long memberUser1Id = testUserService.authenticate().getId();
