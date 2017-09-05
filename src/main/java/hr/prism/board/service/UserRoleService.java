@@ -174,8 +174,8 @@ public class UserRoleService {
         return memberCountProvisional;
     }
 
-    public void createResourceUser(User currentUser, Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs) {
-        if (userService.getCurrentUser() != null) {
+    public void createResourceUser(User currentUser, Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs, boolean invokedAsynchronously) {
+        if (invokedAsynchronously && userService.getCurrentUser() != null) {
             // There should never be an authenticated user inside this method authentication
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE_USER);
         }

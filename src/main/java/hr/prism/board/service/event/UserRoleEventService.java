@@ -40,20 +40,20 @@ public class UserRoleEventService {
     @Async
     @TransactionalEventListener
     public void createResourceUsersAsync(UserRoleEvent userRoleEvent) {
-        createResourceUsers(userRoleEvent);
+        createResourceUsers(userRoleEvent, true);
     }
 
-    protected void createResourceUsers(UserRoleEvent userRoleEvent) {
+    protected void createResourceUsers(UserRoleEvent userRoleEvent, boolean invokedAsynchronously) {
         Long resourceId = userRoleEvent.getResourceId();
         try {
             User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
             ResourceUsersDTO resourceUsersDTO = userRoleEvent.getResourceUsersDTO();
             Set<UserRoleDTO> userRoleDTOs = resourceUsersDTO.getRoles();
             for (UserDTO userDTO : resourceUsersDTO.getUsers()) {
-                userRoleService.createResourceUser(currentUser, resourceId, userDTO, userRoleDTOs);
+                userRoleService.createResourceUser(currentUser, resourceId, userDTO, userRoleDTOs, invokedAsynchronously);
             }
         } catch (Throwable t) {
-            throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER);
+            throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, t);
         } finally {
             departmentService.unsetMemberCountProvisional(resourceId);
         }

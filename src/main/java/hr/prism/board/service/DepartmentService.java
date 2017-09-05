@@ -282,7 +282,7 @@ public class DepartmentService {
         User user = userService.getCurrentUserSecured();
         Resource department = getDepartment(departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
-        return getMembers(departmentId, searchTerm);
+        return getMembers(department, searchTerm, State.ACTIVE_USER_ROLE_STATES);
     }
 
     public void unsetMemberCountProvisional(Long departmentId) {

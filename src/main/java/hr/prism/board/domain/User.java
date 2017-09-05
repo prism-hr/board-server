@@ -29,7 +29,7 @@ public class User extends BoardEntity implements Comparable<User> {
     private String email;
 
     @Email
-    @Column(name = "email_orginal", nullable = false, unique = true)
+    @Column(name = "email_original", nullable = false, unique = true)
     private String emailOriginal;
 
     @Column(name = "password")

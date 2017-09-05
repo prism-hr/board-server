@@ -9,7 +9,7 @@ public class TestUserRoleEventService extends UserRoleEventService {
 
     @Override
     public void publishEvent(Object source, Long creatorId, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
-        super.createResourceUsers(new UserRoleEvent(source, creatorId, resourceId, resourceUsersDTO));
+        super.createResourceUsers(new UserRoleEvent(source, creatorId, resourceId, resourceUsersDTO),false);
     }
 
 }

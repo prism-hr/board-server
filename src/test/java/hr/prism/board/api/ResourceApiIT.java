@@ -149,13 +149,15 @@ public class ResourceApiIT extends AbstractIT {
             bulkDTO.getUsers().add(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"));
         }
 
-        bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(
-            Collections.singletonList(MemberCategory.MASTER_STUDENT)), new UserRoleDTO().setRole(Role.AUTHOR)));
+        bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), bulkDTO);
-
-        response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
-        assertEquals(201, response.getUsers().size());
         assertEquals(300, response.getMemberCount().intValue());
+
+        ResourceUsersDTO failingBulkDTO = new ResourceUsersDTO();
+        failingBulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(
+            Collections.singletonList(MemberCategory.MASTER_STUDENT)), new UserRoleDTO().setRole(Role.AUTHOR)));
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), failingBulkDTO), ExceptionCode.INVALID_RESOURCE_USER, null);
     }
 
     @Test
