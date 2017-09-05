@@ -1,4 +1,4 @@
-INSERT INTO user(uuid, given_name, surname, email, email_orginal, created_timestamp)
+INSERT INTO user(uuid, given_name, surname, email, email_original, created_timestamp)
 VALUES(UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'alastair@knowles.com', NOW()),
   (UUID(), 'alastair', 'fibinger', 'alastair@fibinger.com', 'alastair@fibinger.com', NOW()),
   (UUID(), 'jakub', 'knowles', 'jakub@knowles.com', 'jakub@knowles.com', NOW()),
