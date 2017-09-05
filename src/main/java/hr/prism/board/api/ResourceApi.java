@@ -1,11 +1,10 @@
 package hr.prism.board.api;
 
-import hr.prism.board.dto.ResourceUserDTO;
-import hr.prism.board.dto.ResourceUsersDTO;
+import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Scope;
-import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
@@ -34,12 +33,12 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
-    public UserRoleRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUserDTO user) {
+    public UserRoleRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid UserRoleDTO user) {
         return userRoleService.createResourceUser(scope, resourceId, user);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/bulk", method = RequestMethod.POST)
-    public Long createResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUsersDTO users) {
+    public Long createResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid List<UserRoleDTO> users) {
         return userRoleService.createResourceUsers(scope, resourceId, users);
     }
 
@@ -49,7 +48,7 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.PUT)
-    public UserRoleRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid ResourceUserDTO user) {
+    public UserRoleRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid UserRoleDTO user) {
         return userRoleService.updateResourceUser(scope, resourceId, userId, user);
     }
 

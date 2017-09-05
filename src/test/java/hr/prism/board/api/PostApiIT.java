@@ -733,39 +733,36 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember1Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-                new ResourceUserDTO().setUser(
+                new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student1")
                         .setSurname("student1")
                         .setEmail("student1@student1.com"))
-                    .setRole(new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getUser().getId());
+                    .setRole(Role.MEMBER)
+                    .setExpiryDate(LocalDate.now().plusDays(1))
+                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getUser().getId());
 
         // Should be notified
         Long departmentMember2Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-                new ResourceUserDTO().setUser(
+                new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student2")
                         .setSurname("student2")
                         .setEmail("student2@student2.com"))
-                    .setRole(new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)))).getUser().getId());
+                    .setRole(Role.MEMBER)
+                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))).getUser().getId());
 
         // Should not be notified - suppressed
         Long departmentMember3Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-                new ResourceUserDTO().setUser(
+                new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student3")
                         .setSurname("student3")
                         .setEmail("student3@student3.com"))
-                    .setRole(                        new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)))).getUser().getId());
+                    .setRole(Role.MEMBER)
+                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))).getUser().getId());
 
         testUserService.setAuthentication(departmentMember3Id);
         userApi.postSuppressions();
@@ -774,28 +771,26 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember4Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-                new ResourceUserDTO().setUser(
+                new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student4")
                         .setSurname("student4")
                         .setEmail("student4@student4.com"))
-                    .setRole(new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().plusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))).getUser().getId());
+                    .setRole(Role.MEMBER)
+                    .setExpiryDate(LocalDate.now().plusDays(1))
+                    .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))).getUser().getId());
 
         // Should not be notified
         Long departmentMember5Id = transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-                new ResourceUserDTO().setUser(
+                new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student5")
                         .setSurname("student5")
                         .setEmail("student5@student5.com"))
-                    .setRole(new UserRoleDTO()
-                        .setRole(Role.MEMBER)
-                        .setExpiryDate(LocalDate.now().minusDays(1))
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getUser().getId());
+                    .setRole(Role.MEMBER)
+                    .setExpiryDate(LocalDate.now().minusDays(1))
+                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getUser().getId());
 
         listenForNewActivities(departmentMember1Id);
         listenForNewActivities(departmentMember2Id);
@@ -1074,9 +1069,9 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(boardUserId);
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser1)).setRole(new UserRoleDTO().setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1)).setRole(Role.MEMBER)));
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser2)).setRole(new UserRoleDTO().setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER)));
 
         testUserService.setAuthentication(memberUser1);
         PostRepresentation viewPostMemberUser1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
@@ -1178,11 +1173,11 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(boardUserId);
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(new UserRoleDTO().setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(Role.MEMBER)));
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(new UserRoleDTO().setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(Role.MEMBER)));
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new ResourceUserDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(new UserRoleDTO().setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER)));
         transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
 
         testUserService.setAuthentication(postUserId);

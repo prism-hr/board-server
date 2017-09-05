@@ -10,6 +10,8 @@ import java.util.Objects;
 
 public class UserRoleDTO {
 
+    private UserDTO user;
+
     private Role role;
 
     private LocalDate expiryDate;
@@ -27,6 +29,15 @@ public class UserRoleDTO {
         this.role = role;
         this.expiryDate = expiryDate;
         this.categories = Arrays.asList(categories);
+    }
+
+    public UserDTO getUser() {
+        return user;
+    }
+
+    public UserRoleDTO setUser(UserDTO user) {
+        this.user = user;
+        return this;
     }
 
     public Role getRole() {

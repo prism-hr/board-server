@@ -95,30 +95,30 @@ public class UserApiIT extends AbstractIT {
         testUserService.setAuthentication(adminUser.getId());
         for (String memberUserEmail : new String[]{memberUser1Email, memberUser2Email}) {
             transactionTemplate.execute(status ->
-                resourceApi.createResourceUser(Scope.BOARD, board11id, new ResourceUserDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(new UserRoleDTO().setRole(Role.ADMINISTRATOR))));
+                resourceApi.createResourceUser(Scope.BOARD, board11id, new UserRoleDTO().setUser(
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR)));
 
             transactionTemplate.execute(status ->
-                resourceApi.createResourceUser(Scope.BOARD, board12id, new ResourceUserDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(new UserRoleDTO().setRole(Role.AUTHOR))));
+                resourceApi.createResourceUser(Scope.BOARD, board12id, new UserRoleDTO().setUser(
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR)));
 
             transactionTemplate.execute(status ->
-                resourceApi.createResourceUser(Scope.DEPARTMENT, department1id, new ResourceUserDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(new UserRoleDTO().setRole(Role.MEMBER))));
+                resourceApi.createResourceUser(Scope.DEPARTMENT, department1id, new UserRoleDTO().setUser(
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER)));
 
             transactionTemplate.execute(status ->
-                resourceApi.createResourceUser(Scope.BOARD, board21id, new ResourceUserDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(new UserRoleDTO().setRole(Role.ADMINISTRATOR))));
+                resourceApi.createResourceUser(Scope.BOARD, board21id, new UserRoleDTO().setUser(
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR)));
 
             transactionTemplate.execute(status ->
-                resourceApi.createResourceUser(Scope.BOARD, board22id, new ResourceUserDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(new UserRoleDTO().setRole(Role.AUTHOR))));
+                resourceApi.createResourceUser(Scope.BOARD, board22id, new UserRoleDTO().setUser(
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR)));
         }
 
         transactionTemplate.execute(status ->
-            resourceApi.createResourceUser(Scope.DEPARTMENT, department2id, new ResourceUserDTO().setUser(
-                new UserDTO().setEmail(memberUser1Email)).setRole(new UserRoleDTO().setRole(Role.MEMBER)
-                .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))));
+            resourceApi.createResourceUser(Scope.DEPARTMENT, department2id, new UserRoleDTO().setUser(
+                new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
+                .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         Long adminUserId = adminUser.getId();
         Long memberUser1Id = memberUser1.getId();

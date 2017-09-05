@@ -1,7 +1,9 @@
 package hr.prism.board.event;
 
-import hr.prism.board.dto.ResourceUsersDTO;
+import hr.prism.board.dto.UserRoleDTO;
 import org.springframework.context.ApplicationEvent;
+
+import java.util.List;
 
 public class UserRoleEvent extends ApplicationEvent {
 
@@ -9,13 +11,13 @@ public class UserRoleEvent extends ApplicationEvent {
 
     private Long resourceId;
 
-    private ResourceUsersDTO resourceUsersDTO;
+    private List<UserRoleDTO> userRoles;
 
-    public UserRoleEvent(Object source, Long creatorId, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
+    public UserRoleEvent(Object source, Long creatorId, Long resourceId, List<UserRoleDTO> userRoles) {
         super(source);
         this.creatorId = creatorId;
         this.resourceId = resourceId;
-        this.resourceUsersDTO = resourceUsersDTO;
+        this.userRoles = userRoles;
     }
 
     public Long getCreatorId() {
@@ -26,8 +28,8 @@ public class UserRoleEvent extends ApplicationEvent {
         return resourceId;
     }
 
-    public ResourceUsersDTO getResourceUsersDTO() {
-        return resourceUsersDTO;
+    public List<UserRoleDTO> getUserRoles() {
+        return userRoles;
     }
 
 }

@@ -1,8 +1,6 @@
 package hr.prism.board.service.event;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.ResourceUsersDTO;
-import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.exception.BoardException;
@@ -16,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.inject.Inject;
-import java.util.Set;
+import java.util.List;
 
 @Service
 public class UserRoleEventService {
@@ -33,8 +31,8 @@ public class UserRoleEventService {
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishEvent(Object source, Long creatorId, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
-        applicationEventPublisher.publishEvent(new UserRoleEvent(source, creatorId, resourceId, resourceUsersDTO));
+    public void publishEvent(Object source, Long creatorId, Long resourceId, List<UserRoleDTO> userRoleDTOs) {
+        applicationEventPublisher.publishEvent(new UserRoleEvent(source, creatorId, resourceId, userRoleDTOs));
     }
 
     @Async
@@ -47,10 +45,8 @@ public class UserRoleEventService {
         Long resourceId = userRoleEvent.getResourceId();
         try {
             User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
-            ResourceUsersDTO resourceUsersDTO = userRoleEvent.getResourceUsersDTO();
-            Set<UserRoleDTO> userRoleDTOs = resourceUsersDTO.getRoles();
-            for (UserDTO userDTO : resourceUsersDTO.getUsers()) {
-                userRoleService.createResourceUser(currentUser, resourceId, userDTO, userRoleDTOs, invokedAsynchronously);
+            for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
+                userRoleService.createResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
             }
         } catch (Throwable t) {
             throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, t);

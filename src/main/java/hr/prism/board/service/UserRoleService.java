@@ -4,8 +4,6 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
-import hr.prism.board.dto.ResourceUserDTO;
-import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
@@ -18,8 +16,8 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
-import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.UserRoleEventService;
@@ -31,7 +29,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -136,11 +137,10 @@ public class UserRoleService {
         createOrUpdateUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
-    public UserRoleRepresentation createResourceUser(Scope scope, Long resourceId, ResourceUserDTO resourceUserDTO) {
+    public UserRoleRepresentation createResourceUser(Scope scope, Long resourceId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        User user = userService.getOrCreateUser(resourceUserDTO.getUser());
-        UserRoleDTO userRoleDTO = resourceUserDTO.getRole();
+        User user = userService.getOrCreateUser(userRoleDTO.getUser());
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
             return resource;
@@ -149,35 +149,33 @@ public class UserRoleService {
         return getUserRole(resource, user, userRoleDTO.getRole());
     }
 
-    public Long createResourceUsers(Scope scope, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
-        if (resourceUsersDTO.getRoles().stream().anyMatch(userRoleDTO -> userRoleDTO.getRole() != Role.MEMBER)) {
+    public Long createResourceUsers(Scope scope, Long resourceId, List<UserRoleDTO> userRoleDTOs) {
+        if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != Role.MEMBER)) {
             throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER);
         }
 
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            userRoleEventService.publishEvent(this, currentUser.getId(), resourceId, resourceUsersDTO);
+            userRoleEventService.publishEvent(this, currentUser.getId(), resourceId, userRoleDTOs);
             return resource;
         });
 
-        List<String> emails = resourceUsersDTO.getUsers().stream().map(UserDTO::getEmail).collect(Collectors.toList());
+        List<String> emails = userRoleDTOs.stream().map(UserRoleDTO::getUser).map(UserDTO::getEmail).collect(Collectors.toList());
         Long memberCountProvisional = userService.findUserCount(resource, Role.MEMBER, emails) + emails.size();
         ((Department) resource).setMemberCountProvisional(memberCountProvisional);
         return memberCountProvisional;
     }
 
-    public void createResourceUser(User currentUser, Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs, boolean invokedAsynchronously) {
+    public void createResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
         if (invokedAsynchronously && userService.getCurrentUser() != null) {
             // There should never be an authenticated user inside this method authentication
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE_USER);
         }
 
-        User user = userService.getOrCreateUser(userDTO);
+        User user = userService.getOrCreateUser(userRoleDTO.getUser());
         Resource resource = resourceService.findOne(resourceId);
-        for (UserRoleDTO userRoleDTO : userRoleDTOs) {
-            createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
-        }
+        createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
     }
 
     public void deleteResourceUser(Scope scope, Long resourceId, Long userId) {
@@ -190,11 +188,10 @@ public class UserRoleService {
         });
     }
 
-    public UserRoleRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, ResourceUserDTO resourceUserDTO) {
+    public UserRoleRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userCacheService.findOne(userId);
-        UserRoleDTO userRoleDTO = resourceUserDTO.getRole();
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             userRoleCacheService.updateResourceUser(currentUser, resource, user, userRoleDTO);
             return resource;
