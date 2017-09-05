@@ -151,6 +151,7 @@ public class ResourceApiIT extends AbstractIT {
 
         bulkDTO.setRoles(ImmutableSet.of(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), bulkDTO);
+        response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
         assertEquals(300, response.getMemberCount().intValue());
 
         ResourceUsersDTO failingBulkDTO = new ResourceUsersDTO();
