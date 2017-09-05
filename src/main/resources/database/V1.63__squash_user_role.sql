@@ -20,7 +20,7 @@ WHERE activity_id IN (
     WHERE user_role.state = 'REJECTED'));
 
 DELETE
-FROM activity_category
+FROM activity_event
 WHERE activity_id IN (
   SELECT id
   FROM activity
@@ -83,10 +83,10 @@ WHERE activity_id IN (
         ON user_role.resource_id = max_user_role.resource_id
            AND user_role.user_id = max_user_role.user_id
            AND user_role.role = max_user_role.role
-    WHERE max_user_role.id IS NULL));
+    WHERE max_user_role.resource_id IS NULL));
 
 DELETE
-FROM activity_category
+FROM activity_event
 WHERE activity_id IN (
   SELECT id
   FROM activity
@@ -97,7 +97,7 @@ WHERE activity_id IN (
         ON user_role.resource_id = max_user_role.resource_id
            AND user_role.user_id = max_user_role.user_id
            AND user_role.role = max_user_role.role
-    WHERE max_user_role.id IS NULL));
+    WHERE max_user_role.resource_id IS NULL));
 
 DELETE
 FROM activity
@@ -108,7 +108,7 @@ WHERE activity.user_role_id IN (
       ON user_role.resource_id = max_user_role.resource_id
          AND user_role.user_id = max_user_role.user_id
          AND user_role.role = max_user_role.role
-  WHERE max_user_role.id IS NULL);
+  WHERE max_user_role.resource_id IS NULL);
 
 DELETE
 FROM user_role_category
@@ -119,7 +119,7 @@ WHERE user_role_category.user_role_id IN (
       ON user_role.resource_id = max_user_role.resource_id
          AND user_role.user_id = max_user_role.user_id
          AND user_role.role = max_user_role.role
-  WHERE max_user_role.id IS NULL);
+  WHERE max_user_role.resource_id IS NULL);
 
 DELETE
 FROM user_role
@@ -130,7 +130,7 @@ WHERE id IN (
       ON user_role.resource_id = max_user_role.resource_id
          AND user_role.user_id = max_user_role.user_id
          AND user_role.role = max_user_role.role
-  WHERE max_user_role.id IS NULL);
+  WHERE max_user_role.resource_id IS NULL);
 
 COMMIT;
 
