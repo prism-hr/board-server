@@ -98,7 +98,7 @@ public class ResourceApiIT extends AbstractIT {
             return null;
         });
 
-        List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId);
+        List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId).getUsers();
         Assert.assertThat(users, contains(resourceUserMatcher(newUserDTO.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
@@ -116,7 +116,7 @@ public class ResourceApiIT extends AbstractIT {
             return null;
         });
 
-        List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId);
+        List<ResourceUserRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId).getUsers();
         Assert.assertThat(users, contains(resourceUserMatcher(creator.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
@@ -126,7 +126,7 @@ public class ResourceApiIT extends AbstractIT {
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
         DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
-        List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
+        List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId()).getUsers();
         Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add 200 members
@@ -139,11 +139,9 @@ public class ResourceApiIT extends AbstractIT {
         bulkDTO.setRoles(Collections.singleton(new UserRoleDTO().setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), bulkDTO);
 
-        int usersCount = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId()).size();
-        assertEquals(1, usersCount);
-
-        int membersCount = departmentApi.getMembershipRequests(departmentR.getId(), null).getMemberCount().intValue();
-        assertEquals(200, membersCount);
+        ResourceUsersRepresentation response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
+        assertEquals(1, response.getUsers().size());
+        assertEquals(200, response.getMemberCount().intValue());
 
         bulkDTO = new ResourceUsersDTO();
         bulkDTO.setUsers(new LinkedList<>());
@@ -155,11 +153,9 @@ public class ResourceApiIT extends AbstractIT {
             Collections.singletonList(MemberCategory.MASTER_STUDENT)), new UserRoleDTO().setRole(Role.AUTHOR)));
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), bulkDTO);
 
-        usersCount = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId()).size();
-        assertEquals(201, usersCount);
-
-        membersCount = departmentApi.getMembershipRequests(departmentR.getId(), null).getMemberCount().intValue();
-        assertEquals(300, membersCount);
+        response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
+        assertEquals(201, response.getUsers().size());
+        assertEquals(300, response.getMemberCount().intValue());
     }
 
     @Test
@@ -270,7 +266,7 @@ public class ResourceApiIT extends AbstractIT {
     }
 
     private void addAndRemoveUserRoles(User currentUser, Scope scope, Long resourceId) {
-        List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
+        List<ResourceUserRepresentation> resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
         Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add resource user with two roles
@@ -278,14 +274,14 @@ public class ResourceApiIT extends AbstractIT {
         ResourceUserRepresentation boardManager = resourceApi.createResourceUser(scope, resourceId,
             new ResourceUserDTO().setUser(newUser).setRoles(
                 ImmutableSet.of(new UserRoleDTO(Role.MEMBER, null, MemberCategory.UNDERGRADUATE_STUDENT), new UserRoleDTO(Role.AUTHOR))));
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
+        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
             resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // remove one role
         resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
             new ResourceUserDTO().setUser(newUser).setRoles(ImmutableSet.of(new UserRoleDTO(Role.AUTHOR))));
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
+        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
             resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
@@ -296,13 +292,13 @@ public class ResourceApiIT extends AbstractIT {
 
         Assert.assertThat(resourceUser, resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR)));
 
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
+        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
         Assert.assertThat(resourceUsers, containsInAnyOrder(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
             resourceUserMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // remove user from resource
         resourceApi.deleteResourceUser(scope, resourceId, boardManager.getUser().getId());
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId);
+        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
         Assert.assertThat(resourceUsers, contains(resourceUserMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 

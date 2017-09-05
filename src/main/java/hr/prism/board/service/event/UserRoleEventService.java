@@ -5,6 +5,9 @@ import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.event.UserRoleEvent;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.cache.UserCacheService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,6 +28,9 @@ public class UserRoleEventService {
     private UserRoleService userRoleService;
 
     @Inject
+    private DepartmentService departmentService;
+
+    @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
     public void publishEvent(Object source, Long creatorId, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
@@ -39,11 +45,17 @@ public class UserRoleEventService {
 
     protected void createResourceUsers(UserRoleEvent userRoleEvent) {
         Long resourceId = userRoleEvent.getResourceId();
-        User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
-        ResourceUsersDTO resourceUsersDTO = userRoleEvent.getResourceUsersDTO();
-        Set<UserRoleDTO> userRoleDTOs = resourceUsersDTO.getRoles();
-        for (UserDTO userDTO : resourceUsersDTO.getUsers()) {
-            userRoleService.createResourceUser(currentUser, resourceId, userDTO, userRoleDTOs);
+        try {
+            User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
+            ResourceUsersDTO resourceUsersDTO = userRoleEvent.getResourceUsersDTO();
+            Set<UserRoleDTO> userRoleDTOs = resourceUsersDTO.getRoles();
+            for (UserDTO userDTO : resourceUsersDTO.getUsers()) {
+                userRoleService.createResourceUser(currentUser, resourceId, userDTO, userRoleDTOs);
+            }
+        } catch (Throwable t) {
+            throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER);
+        } finally {
+            departmentService.unsetMemberCountProvisional(resourceId);
         }
     }
 

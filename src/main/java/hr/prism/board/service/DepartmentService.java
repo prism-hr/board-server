@@ -20,7 +20,6 @@ import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -30,7 +29,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -237,15 +235,16 @@ public class DepartmentService {
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
     }
 
-    public Pair<Long, List<UserRole>> getMembershipRequests(Long departmentId, String searchTerm) {
+    public List<UserRole> getMembershipRequests(Long departmentId, String searchTerm, boolean checkPermission) {
         User user = userService.getCurrentUserSecured();
         Resource department = getDepartment(departmentId);
-        actionService.executeAction(user, department, Action.EDIT, () -> department);
+        if (checkPermission) {
+            actionService.executeAction(user, department, Action.EDIT, () -> department);
+        }
 
-        Long memberCount = userRoleCacheService.findRoleCount(department, Role.MEMBER, LocalDate.now());
         List<UserRole> userRoles = getMembers(department, searchTerm, Collections.singletonList(State.PENDING));
         if (userRoles.isEmpty()) {
-            return Pair.of(memberCount, userRoles);
+            return userRoles;
         }
 
         Map<hr.prism.board.domain.Activity, UserRole> indexByActivities = userRoles.stream().collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
@@ -253,7 +252,7 @@ public class DepartmentService {
             indexByActivities.get(activityEvent.getActivity()).setViewed(true);
         }
 
-        return Pair.of(memberCount, userRoles);
+        return userRoles;
     }
 
     public UserRole viewMembershipRequest(Long departmentId, Long userId) {
@@ -284,6 +283,10 @@ public class DepartmentService {
         Resource department = getDepartment(departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
         return getMembers(departmentId, searchTerm);
+    }
+
+    public void unsetMemberCountProvisional(Long departmentId) {
+        departmentRepository.findOne(departmentId).setMemberCountProvisional(null);
     }
 
     @SuppressWarnings("JpaQlInspection")

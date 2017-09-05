@@ -4,6 +4,7 @@ import hr.prism.board.dto.ResourceUserDTO;
 import hr.prism.board.dto.ResourceUsersDTO;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.ResourceUserRepresentation;
+import hr.prism.board.representation.ResourceUsersRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.UserRoleService;
@@ -28,7 +29,7 @@ public class ResourceApi {
     private ResourceService resourceService;
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
-    public List<ResourceUserRepresentation> getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
+    public ResourceUsersRepresentation getResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId) {
         return userRoleService.getResourceUsers(scope, resourceId);
     }
 
@@ -38,8 +39,8 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/bulk", method = RequestMethod.POST)
-    public void createResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUsersDTO users) {
-        userRoleService.createResourceUsers(scope, resourceId, users);
+    public Long createResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid ResourceUsersDTO users) {
+        return userRoleService.createResourceUsers(scope, resourceId, users);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.DELETE)

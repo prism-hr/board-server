@@ -11,7 +11,6 @@ import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.value.UserRoleSummary;
 import hr.prism.board.workflow.Notification;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
@@ -127,19 +126,10 @@ public class UserRoleCacheService {
         entityManager.flush();
         LocalDate baseline = LocalDate.now();
         if (resource instanceof Department) {
-            ((Department) resource).setMemberCount(findRoleCount(resource, Role.MEMBER, baseline));
+            ((Department) resource).setMemberCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
         } else if (resource instanceof Board) {
-            ((Board) resource).setAuthorCount(findRoleCount(resource, Role.AUTHOR, baseline));
+            ((Board) resource).setAuthorCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
         }
-    }
-
-    public Long findRoleCount(Resource resource, Role role, LocalDate baseline) {
-        UserRoleSummary summary = userRoleRepository.findSummaryByResourceAndRole(resource, role, State.ACTIVE_USER_ROLE_STATES, baseline);
-        if (summary == null) {
-            return 0L;
-        }
-
-        return summary.getCount();
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {

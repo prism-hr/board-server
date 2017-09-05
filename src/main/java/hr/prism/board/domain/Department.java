@@ -19,6 +19,9 @@ public class Department extends Resource {
     @Column(name = "member_count")
     private Long memberCount;
 
+    @Column(name = "member_count_provisional")
+    private Long memberCountProvisional;
+
     public Long getBoardCount() {
         return boardCount;
     }
@@ -33,6 +36,18 @@ public class Department extends Resource {
 
     public void setMemberCount(Long memberCount) {
         this.memberCount = memberCount;
+    }
+
+    public Long getMemberCountProvisional() {
+        return memberCountProvisional;
+    }
+
+    public void setMemberCountProvisional(Long memberCountProvisional) {
+        this.memberCountProvisional = memberCountProvisional;
+    }
+
+    public Long getEffectiveMemberCount() {
+        return memberCountProvisional == null ? memberCount : memberCountProvisional;
     }
 
 }

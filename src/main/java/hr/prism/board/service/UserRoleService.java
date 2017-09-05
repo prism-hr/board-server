@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
@@ -11,10 +12,14 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ResourceUserRepresentation;
+import hr.prism.board.representation.ResourceUsersRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
@@ -69,6 +74,9 @@ public class UserRoleService {
     private ActionService actionService;
 
     @Inject
+    private DepartmentService departmentService;
+
+    @Inject
     private UserMapper userMapper;
 
     @Inject
@@ -92,10 +100,10 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
 
-    public List<ResourceUserRepresentation> getResourceUsers(Scope scope, Long resourceId) {
+    public ResourceUsersRepresentation getResourceUsers(Scope scope, Long resourceId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        actionService.executeAction(currentUser, resource, Action.VIEW, () -> resource);
+        actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
 
         List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createQuery(RESOURCE_USER_ROLE)
@@ -116,7 +124,16 @@ public class UserRoleService {
             representation.getRoles().add(userRoleMapper.apply(userRole));
         }
 
-        return new ArrayList<>(resourceUsersMap.values());
+        ResourceUsersRepresentation response =
+            new ResourceUsersRepresentation()
+                .setUsers(new ArrayList<>(resourceUsersMap.values()));
+        if (scope == Scope.DEPARTMENT) {
+            response.setMemberCount(((Department) resource).getMemberCount());
+            response.setMemberRequests(departmentService.getMembershipRequests(
+                resourceId, null, false).stream().map(userRoleMapper).collect(Collectors.toList()));
+        }
+
+        return response;
     }
 
     public void createOrUpdateUserRole(Resource resource, User user, Role role) {
@@ -139,18 +156,30 @@ public class UserRoleService {
         return new ResourceUserRepresentation().setUser(userMapper.apply(user)).setRoles(getUserRoles(resource, user));
     }
 
-    public void createResourceUsers(Scope scope, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
+    public Long createResourceUsers(Scope scope, Long resourceId, ResourceUsersDTO resourceUsersDTO) {
+        if (resourceUsersDTO.getRoles().stream().anyMatch(userRoleDTO -> userRoleDTO.getRole() != Role.MEMBER)) {
+            throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER);
+        }
+
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             userRoleEventService.publishEvent(this, currentUser.getId(), resourceId, resourceUsersDTO);
             return resource;
         });
+
+        List<String> emails = resourceUsersDTO.getUsers().stream().map(UserDTO::getEmail).collect(Collectors.toList());
+        Long memberCountProvisional = userService.findUserCount(resource, Role.MEMBER, emails) + emails.size();
+        ((Department) resource).setMemberCountProvisional(memberCountProvisional);
+        return memberCountProvisional;
     }
 
-    // Method is used by UserRoleEventService#createResourceUsers to process user creation in a series of small transactions
-    // Don't use it for anything else - there are no security checks applied to it, security checks are applied when we publish the producing event
     public void createResourceUser(User currentUser, Long resourceId, UserDTO userDTO, Set<UserRoleDTO> userRoleDTOs) {
+        if (userService.getCurrentUser() != null) {
+            // There should never be an authenticated user inside this method authentication
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE_USER);
+        }
+
         User user = userService.getOrCreateUser(userDTO);
         Resource resource = resourceService.findOne(resourceId);
         for (UserRoleDTO userRoleDTO : userRoleDTOs) {
