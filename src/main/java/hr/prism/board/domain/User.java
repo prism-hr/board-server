@@ -28,6 +28,10 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @Email
+    @Column(name = "email_orginal", nullable = false, unique = true)
+    private String emailOriginal;
+
     @Column(name = "password")
     private String password;
 
@@ -101,6 +105,19 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setEmail(String email) {
         this.email = email;
+        if (this.emailOriginal == null) {
+            this.emailOriginal = email;
+        }
+
+        return this;
+    }
+
+    public String getEmailOriginal() {
+        return emailOriginal;
+    }
+
+    public User setEmailOriginal(String emailOriginal) {
+        this.emailOriginal = emailOriginal;
         return this;
     }
 
