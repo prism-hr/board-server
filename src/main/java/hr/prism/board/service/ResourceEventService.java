@@ -122,7 +122,7 @@ public class ResourceEventService {
     public <T extends Resource> List<ResourceEvent> findByResourceIdsAndEventAndUser(List<T> resources, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(resources, event, user);
         return ids.isEmpty() ? Collections.emptyList() : resourceEventRepository.findOnes(ids);
-    }z
+    }
 
     public ResourceEvent getAndConsumeReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
