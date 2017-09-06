@@ -1076,7 +1076,7 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser1);
         PostRepresentation viewPostMemberUser1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
-        String referral1 = viewPostMemberUser1.getReferral();
+        String referral1 = viewPostMemberUser1.getReferralCode();
         Assert.assertNotNull(referral1);
 
         transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
@@ -1085,7 +1085,7 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser2);
         PostRepresentation viewPostMemberUser2 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
-        String referral2 = viewPostMemberUser2.getReferral();
+        String referral2 = viewPostMemberUser2.getReferralCode();
         Assert.assertNotNull(referral2);
 
         transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
@@ -1111,7 +1111,7 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
 
         PostRepresentation viewPostUnknown1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
-        Assert.assertNull(viewPostUnknown1.getReferral());
+        Assert.assertNull(viewPostUnknown1.getReferralCode());
 
         TestHelper.MockHttpServletResponse response = TestHelper.mockHttpServletResponse();
         verifyPostReferral(referral1, response, "http://www.google.co.uk");

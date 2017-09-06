@@ -47,7 +47,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
-    private String referral;
+    private String referralCode;
 
     private ResourceEventRepresentation response;
 
@@ -222,12 +222,12 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public String getReferral() {
-        return referral;
+    public String getReferralCode() {
+        return referralCode;
     }
 
-    public PostRepresentation setReferral(String referral) {
-        this.referral = referral;
+    public PostRepresentation setReferralCode(String referralCode) {
+        this.referralCode = referralCode;
         return this;
     }
 
