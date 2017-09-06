@@ -11,7 +11,6 @@ import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
@@ -54,9 +53,6 @@ public class AuthenticationService {
     private String jwsSecret;
 
     @Inject
-    private UserRepository userRepository;
-
-    @Inject
     private UserCacheService userCacheService;
 
     @Lazy
@@ -94,7 +90,7 @@ public class AuthenticationService {
     }
 
     public User login(LoginDTO loginDTO) {
-        User user = userRepository.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
+        User user = userCacheService.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
         }
@@ -104,7 +100,7 @@ public class AuthenticationService {
 
     public User register(RegisterDTO registerDTO) {
         String email = registerDTO.getEmail();
-        User user = userRepository.findByEmail(email);
+        User user = userCacheService.findByEmail(email);
         if (user != null) {
             throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER);
         }
@@ -131,10 +127,10 @@ public class AuthenticationService {
         }
 
         String accountId = newUser.getOauthAccountId();
-        User oldUser = userRepository.findByOauthProviderAndOauthAccountId(provider, accountId);
+        User oldUser = userCacheService.findByOauthProviderAndOauthAccountId(provider, accountId);
         if (oldUser == null) {
             String email = newUser.getEmail();
-            oldUser = userRepository.findByEmail(email);
+            oldUser = userCacheService.findByEmail(email);
             if (oldUser == null) {
                 newUser.setUuid(UUID.randomUUID().toString());
                 return userCacheService.saveUser(newUser);
@@ -149,7 +145,7 @@ public class AuthenticationService {
     }
 
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
-        User user = userRepository.findByEmail(resetPasswordDTO.getEmail());
+        User user = userCacheService.findByEmail(resetPasswordDTO.getEmail());
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
         }
@@ -180,7 +176,7 @@ public class AuthenticationService {
 
     public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String authorization = request.getHeader("Authorization");
-        if(authorization == null) {
+        if (authorization == null) {
             throw new BoardException(ExceptionCode.UNAUTHENTICATED_USER);
         }
         String accessToken = authorization.replaceFirst("Bearer ", "");

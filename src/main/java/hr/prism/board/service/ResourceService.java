@@ -23,6 +23,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -87,6 +88,9 @@ public class ResourceService {
         "SELECT DISTINCT resource.quarter " +
             SECURE_RESOURCE_ACTION + " " +
             "WHERE resource.scope = :scope";
+
+    @Value("${resource.archive.duration.seconds}")
+    private Long resourceArchiveDurationSeconds;
 
     @Inject
     private ResourceRepository resourceRepository;
@@ -541,7 +545,7 @@ public class ResourceService {
     }
 
     public synchronized void archiveResources() {
-
+        List<Long> resourceIds = resourceRepository.findByUpdatedTimestamp(LocalDateTime.now().minusSeconds(resourceArchiveDurationSeconds));
     }
 
     public static String suggestHandle(String name) {
