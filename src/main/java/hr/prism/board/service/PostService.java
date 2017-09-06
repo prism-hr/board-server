@@ -558,6 +558,7 @@ public class PostService {
 
     private void decoratePost(User user, Post post) {
         if (user != null) {
+            entityManager.flush();
             post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
             post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.REFERRAL, user));
             post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user));
@@ -566,6 +567,7 @@ public class PostService {
 
     private void decoratePosts(User user, List<Post> posts) {
         if (user != null) {
+            entityManager.flush();
             Map<Long, Post> postIndex = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
             Collection<Long> postIds = postIndex.keySet();
 

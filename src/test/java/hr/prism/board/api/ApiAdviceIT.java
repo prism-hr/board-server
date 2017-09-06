@@ -38,7 +38,7 @@ public class ApiAdviceIT {
 
     @Test
     public void shouldHandleApiException() throws Exception {
-        doRequest("apiException", MockMvcResultMatchers.status().isUnprocessableEntity(), ExceptionCode.DUPLICATE_DEPARTMENT);
+        doRequest("apiException", MockMvcResultMatchers.status().isInternalServerError(), ExceptionCode.DUPLICATE_DEPARTMENT);
     }
 
     @Test

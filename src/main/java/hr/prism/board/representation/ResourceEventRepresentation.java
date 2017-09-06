@@ -14,6 +14,8 @@ public class ResourceEventRepresentation {
 
     private String ipAddress;
 
+    private String referral;
+
     private DocumentRepresentation documentResume;
 
     private String websiteResume;
@@ -57,6 +59,15 @@ public class ResourceEventRepresentation {
 
     public ResourceEventRepresentation setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+        return this;
+    }
+
+    public String getReferral() {
+        return referral;
+    }
+
+    public ResourceEventRepresentation setReferral(String referral) {
+        this.referral = referral;
         return this;
     }
 

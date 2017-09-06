@@ -2,7 +2,6 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
-import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.PostRepresentation;
@@ -63,7 +62,6 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             representation.setApplyEmail(BoardUtils.obfuscateEmail(applyEmail));
         }
 
-        ResourceEvent referral = post.getReferral();
         return representation.setBoard(boardMapper.apply((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
@@ -73,8 +71,8 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setLastViewTimestamp(post.getLastViewTimestamp())
             .setLastReferralTimestamp(post.getLastReferralTimestamp())
             .setLastResponseTimestamp(post.getLastResponseTimestamp())
-            .setReferralCode(referral == null ? null : referral.getReferral())
-            .setResponse(resourceEventMapper.applyResponse(post.getResponse()));
+            .setReferral(resourceEventMapper.apply(post.getReferral()))
+            .setResponse(resourceEventMapper.apply(post.getResponse()));
     }
 
     public PostRepresentation applySmall(Post post) {

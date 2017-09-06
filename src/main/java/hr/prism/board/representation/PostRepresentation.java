@@ -224,15 +224,6 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public String getReferralCode() {
-        return referralCode;
-    }
-
-    public PostRepresentation setReferralCode(String referralCode) {
-        this.referralCode = referralCode;
-        return this;
-    }
-
     public ResourceEventRepresentation getReferral() {
         return referral;
     }

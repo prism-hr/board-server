@@ -22,7 +22,8 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.event = :event " +
             "and resourceEvent.user = :user " +
-            "group by resourceEvent.resource")
+            "group by resourceEvent.resource " +
+            "order by resourceEvent.id desc")
     ResourceEvent findByResourceAndEventAndUser(@Param("resource") Resource resource, @Param("event") hr.prism.board.enums.ResourceEvent event, @Param("user") User user);
 
     @Query(value =
