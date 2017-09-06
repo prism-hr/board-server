@@ -23,7 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -112,12 +115,14 @@ public class ResourceEventService {
     }
 
     public ResourceEvent findByResourceAndEventAndUser(Resource resource, hr.prism.board.enums.ResourceEvent event, User user) {
-        return resourceEventRepository.findByResourceAndEventAndUser(resource, event, user);
+        List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(Collections.singletonList(resource), event, user);
+        return ids.isEmpty() ? null : resourceEventRepository.findOne(ids.get(0));
     }
 
-    public List<ResourceEvent> findByResourceIdsAndEventAndUser(Collection<Long> resourceIds, hr.prism.board.enums.ResourceEvent event, User user) {
-        return resourceEventRepository.findByResourceIdsAndEventAndUser(resourceIds, event, user);
-    }
+    public <T extends Resource> List<ResourceEvent> findByResourceIdsAndEventAndUser(List<T> resources, hr.prism.board.enums.ResourceEvent event, User user) {
+        List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(resources, event, user);
+        return ids.isEmpty() ? Collections.emptyList() : resourceEventRepository.findOnes(ids);
+    }z
 
     public ResourceEvent getAndConsumeReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);

@@ -568,20 +568,17 @@ public class PostService {
     private void decoratePosts(User user, List<Post> posts) {
         if (user != null) {
             entityManager.flush();
-            Map<Long, Post> postIndex = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
-            Collection<Long> postIds = postIndex.keySet();
+            Map<Post, Post> postIndex = posts.stream().collect(Collectors.toMap(post -> post, post -> post));
+            Map<Resource, ResourceEvent> referrals = resourceEventService.findByResourceIdsAndEventAndUser(posts, hr.prism.board.enums.ResourceEvent.REFERRAL, user)
+                .stream().collect(Collectors.toMap(ResourceEvent::getResource, referral -> referral));
+            Map<Resource, ResourceEvent> responses = resourceEventService.findByResourceIdsAndEventAndUser(posts, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
+                .stream().collect(Collectors.toMap(ResourceEvent::getResource, referral -> referral));
 
-            Map<Long, ResourceEvent> referrals = resourceEventService.findByResourceIdsAndEventAndUser(postIds, hr.prism.board.enums.ResourceEvent.REFERRAL, user)
-                .stream().collect(Collectors.toMap(referral -> referral.getResource().getId(), referral -> referral));
-            Map<Long, ResourceEvent> responses = resourceEventService.findByResourceIdsAndEventAndUser(postIds, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
-                .stream().collect(Collectors.toMap(response -> response.getResource().getId(), referral -> referral));
-
-            for (Map.Entry<Long, Post> postIndexEntry : postIndex.entrySet()) {
-                Long postId = postIndexEntry.getKey();
+            for (Map.Entry<Post, Post> postIndexEntry : postIndex.entrySet()) {
                 Post post = postIndexEntry.getValue();
                 post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
-                post.setReferral(referrals.get(postId));
-                post.setResponse(responses.get(postId));
+                post.setReferral(referrals.get(post));
+                post.setResponse(responses.get(post));
             }
         }
     }

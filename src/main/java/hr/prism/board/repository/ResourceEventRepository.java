@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
@@ -19,12 +18,17 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
     @Query(value =
         "select resourceEvent " +
             "from ResourceEvent resourceEvent " +
-            "where resourceEvent.resource = :resource " +
+            "where resourceEvent.id in (:ids)")
+    List<ResourceEvent> findOnes(@Param("ids") List<Long> ids);
+
+    @Query(value =
+        "select max(resourceEvent.id) " +
+            "from ResourceEvent resourceEvent " +
+            "where resourceEvent.resource in (:resources) " +
             "and resourceEvent.event = :event " +
             "and resourceEvent.user = :user " +
-            "group by resourceEvent.resource " +
-            "order by resourceEvent.id desc")
-    ResourceEvent findByResourceAndEventAndUser(@Param("resource") Resource resource, @Param("event") hr.prism.board.enums.ResourceEvent event, @Param("user") User user);
+            "group by resourceEvent.resource")
+    <T extends Resource> List<Long> findMaxIdsByResourcesAndEventAndUser(@Param("resources") List<T> resources, @Param("event") hr.prism.board.enums.ResourceEvent event, @Param("user") User user);
 
     @Query(value =
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, count(distinct resourceEvent.user), max(resourceEvent.createdTimestamp)) " +
@@ -43,17 +47,6 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.referral is null " +
             "group by resourceEvent.event")
     List<ResourceEventSummary> findIpAddressSummaryByResource(@Param("resource") Resource resource);
-
-    @Query(value =
-        "select resourceEvent " +
-            "from ResourceEvent resourceEvent " +
-            "where resourceEvent.resource.id in (:resourceIds) " +
-            "and resourceEvent.event = :event " +
-            "and resourceEvent.user = :user " +
-            "group by resourceEvent.resource " +
-            "order by resourceEvent.id desc")
-    List<ResourceEvent> findByResourceIdsAndEventAndUser(@Param("resourceIds") Collection<Long> resourceIds, @Param("event") hr.prism.board.enums.ResourceEvent event,
-                                                         @Param("user") User user);
 
     @Modifying
     @Query(value =
