@@ -81,13 +81,15 @@ public class UserCacheService {
     }
 
     private void appendScopes(User user) {
-        List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, Role.ADMINISTRATOR).stream().map(ResourceSummary::getKey).collect(Collectors.toList());
-        if (scopes.contains(Scope.DEPARTMENT)) {
-            user.setScopes(Arrays.asList(Scope.DEPARTMENT, Scope.BOARD, Scope.POST));
-        } else if (scopes.contains(Scope.BOARD)) {
-            user.setScopes(Arrays.asList(Scope.BOARD, Scope.POST));
-        } else {
-            user.setScopes(Collections.singletonList(Scope.POST));
+        if (user != null) {
+            List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, Role.ADMINISTRATOR).stream().map(ResourceSummary::getKey).collect(Collectors.toList());
+            if (scopes.contains(Scope.DEPARTMENT)) {
+                user.setScopes(Arrays.asList(Scope.DEPARTMENT, Scope.BOARD, Scope.POST));
+            } else if (scopes.contains(Scope.BOARD)) {
+                user.setScopes(Arrays.asList(Scope.BOARD, Scope.POST));
+            } else {
+                user.setScopes(Collections.singletonList(Scope.POST));
+            }
         }
     }
 

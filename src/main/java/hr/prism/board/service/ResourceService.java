@@ -545,7 +545,9 @@ public class ResourceService {
     }
 
     public synchronized void archiveResources() {
-        List<Long> resourceIds = resourceRepository.findByUpdatedTimestamp(LocalDateTime.now().minusSeconds(resourceArchiveDurationSeconds));
+        for (Long resourceId : resourceRepository.findByUpdatedTimestamp(LocalDateTime.now().minusSeconds(resourceArchiveDurationSeconds))) {
+
+        }
     }
 
     public static String suggestHandle(String name) {
