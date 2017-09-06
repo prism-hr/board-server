@@ -49,7 +49,12 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
             }
         }
 
-        LOGGER.error("Could not serve request", exception);
+        if (responseStatus == HttpStatus.INTERNAL_SERVER_ERROR) {
+            LOGGER.error("Could not serve request: " + responseStatus, exception);
+        } else {
+            LOGGER.info("Could not serve request: " + responseStatus);
+        }
+
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
         ImmutableMap.Builder<String, Object> bodyBuilder = ImmutableMap.<String, Object>builder()
             .put("timestamp", LocalDateTime.now())
