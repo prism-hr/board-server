@@ -2,6 +2,9 @@ package hr.prism.board.representation;
 
 import com.google.common.base.MoreObjects;
 import hr.prism.board.enums.DocumentRequestState;
+import hr.prism.board.enums.Scope;
+
+import java.util.List;
 
 public class UserRepresentation {
 
@@ -20,6 +23,8 @@ public class UserRepresentation {
     private DocumentRepresentation documentResume;
 
     private String websiteResume;
+
+    private List<Scope> scopes;
 
     public Long getId() {
         return id;
@@ -90,6 +95,15 @@ public class UserRepresentation {
 
     public UserRepresentation setWebsiteResume(String websiteResume) {
         this.websiteResume = websiteResume;
+        return this;
+    }
+
+    public List<Scope> getScopes() {
+        return scopes;
+    }
+
+    public UserRepresentation setScopes(List<Scope> scopes) {
+        this.scopes = scopes;
         return this;
     }
 

@@ -17,6 +17,7 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.util.BoardUtils;
+import hr.prism.board.value.ResourceSummary;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,7 @@ import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -228,7 +230,15 @@ public class UserService {
         }
 
         if (fresh) {
-            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+            User user = userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+            List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, Role.ADMINISTRATOR).stream().map(ResourceSummary::getKey).collect(Collectors.toList());
+            if (scopes.contains(Scope.DEPARTMENT)) {
+                user.setScopes(Arrays.asList(Scope.DEPARTMENT, Scope.BOARD, Scope.POST));
+            } else if (scopes.contains(Scope.BOARD)) {
+                user.setScopes(Arrays.asList(Scope.BOARD, Scope.POST));
+            } else {
+                user.setScopes(Collections.singletonList(Scope.POST));
+            }
         }
 
         return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());

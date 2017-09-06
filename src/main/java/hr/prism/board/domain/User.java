@@ -3,12 +3,14 @@ package hr.prism.board.domain;
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.enums.Scope;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -71,6 +73,9 @@ public class User extends BoardEntity implements Comparable<User> {
 
     @OneToMany(mappedBy = "user")
     private Set<UserSearch> searches = new HashSet<>();
+
+    @Transient
+    private List<Scope> scopes;
 
     public String getUuid() {
         return uuid;
@@ -217,6 +222,15 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public Set<UserSearch> getSearches() {
         return searches;
+    }
+
+    public List<Scope> getScopes() {
+        return scopes;
+    }
+
+    public User setScopes(List<Scope> scopes) {
+        this.scopes = scopes;
+        return this;
     }
 
     public String getFullName() {

@@ -15,8 +15,8 @@ import hr.prism.board.repository.*;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.util.BoardUtils;
-import hr.prism.board.value.ChildResourceSummary;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceSummary;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -200,10 +200,10 @@ public class ResourceService {
         entityManager.flush();
         Resource parent = resource.getParent();
         if (parent instanceof Department) {
-            ChildResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
+            ResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
             ((Department) parent).setBoardCount(summary.getCount());
         } else if (parent instanceof Board) {
-            ChildResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
+            ResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
             ((Board) parent).setPostCount(summary.getCount());
         }
     }
@@ -529,6 +529,10 @@ public class ResourceService {
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
+    }
+
+    public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
+        return resourceRepository.findSummaryByUserAndRole(user, role);
     }
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
