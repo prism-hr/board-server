@@ -566,30 +566,13 @@ public class PostService {
 
     private void decoratePosts(User user, List<Post> posts) {
         if (user != null) {
-            Map<Long, Post> postIndex = new HashMap<>();
-            List<Long> acceptingReferrals = new ArrayList<>();
-            List<Long> acceptingResponses = new ArrayList<>();
-            posts.forEach(post -> {
-                Long postId = post.getId();
-                postIndex.put(postId, post);
-                if (post.getApplyEmail() == null) {
-                    acceptingReferrals.add(postId);
-                } else {
-                    acceptingResponses.add(postId);
-                }
-            });
+            Map<Long, Post> postIndex = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
+            Collection<Long> postIds = postIndex.keySet();
 
-            Map<Long, ResourceEvent> referrals = new HashMap<>();
-            if (!acceptingReferrals.isEmpty()) {
-                referrals = resourceEventService.findByResourceIdsAndEventAndUser(acceptingReferrals, hr.prism.board.enums.ResourceEvent.REFERRAL, user)
-                    .stream().collect(Collectors.toMap(referral -> referral.getResource().getId(), referral -> referral));
-            }
-
-            Map<Long, ResourceEvent> responses = new HashMap<>();
-            if (!acceptingResponses.isEmpty()) {
-                responses = resourceEventService.findByResourceIdsAndEventAndUser(acceptingReferrals, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
-                    .stream().collect(Collectors.toMap(response -> response.getResource().getId(), referral -> referral));
-            }
+            Map<Long, ResourceEvent> referrals = resourceEventService.findByResourceIdsAndEventAndUser(postIds, hr.prism.board.enums.ResourceEvent.REFERRAL, user)
+                .stream().collect(Collectors.toMap(referral -> referral.getResource().getId(), referral -> referral));
+            Map<Long, ResourceEvent> responses = resourceEventService.findByResourceIdsAndEventAndUser(postIds, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
+                .stream().collect(Collectors.toMap(response -> response.getResource().getId(), referral -> referral));
 
             for (Map.Entry<Long, Post> postIndexEntry : postIndex.entrySet()) {
                 Long postId = postIndexEntry.getKey();

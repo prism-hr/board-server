@@ -91,6 +91,13 @@ public class Installer {
             .prompting(BOARD, ADMINISTRATOR).with(RESTORE_BOARD_ACTIVITY)
             .notifying(BOARD, ADMINISTRATOR).with(RESTORE_BOARD_NOTIFICATION)
 
+            // Board archived state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(ARCHIVED)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(ARCHIVED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ARCHIVED)
+            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ARCHIVED)
+            .permitThat(POST, ADMINISTRATOR).can(RESTORE, BOARD).inState(ARCHIVED).transitioningTo(PREVIOUS)
+
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
@@ -243,7 +250,16 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
-            .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS);
+            .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS)
+
+            // Post archived state
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(ARCHIVED)
+            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(ARCHIVED)
+            .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(ARCHIVED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ARCHIVED)
+            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(ARCHIVED)
+            .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(ARCHIVED)
+            .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
         new TransactionTemplate(platformTransactionManager).execute(transactionStatus -> {
             LOGGER.info("Deleting old workflow definition");

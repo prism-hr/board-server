@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -57,5 +58,11 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "and resource.id <> resource.parent.id " +
             "and resource.state = :state")
     ChildResourceSummary findSummaryByParentAndState(@Param("parent") Resource parent, @Param("state") State state);
+
+    @Query(value =
+        "select resource.id " +
+            "from Resource resource " +
+            "where resource.updatedTimestamp < :baseline")
+    Long findByUpdatedTimestamp(@Param("baseline") LocalDateTime baseline);
 
 }

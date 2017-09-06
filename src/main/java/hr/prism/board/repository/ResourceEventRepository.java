@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
@@ -50,7 +51,7 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.user = :user " +
             "group by resourceEvent.resource " +
             "order by resourceEvent.id desc")
-    List<ResourceEvent> findByResourceIdsAndEventAndUser(@Param("resourceIds") List<Long> resourceIds, @Param("event") hr.prism.board.enums.ResourceEvent event,
+    List<ResourceEvent> findByResourceIdsAndEventAndUser(@Param("resourceIds") Collection<Long> resourceIds, @Param("event") hr.prism.board.enums.ResourceEvent event,
                                                          @Param("user") User user);
 
     @Modifying

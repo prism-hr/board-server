@@ -23,6 +23,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -380,6 +381,7 @@ public class ResourceService {
 
         resourceOperation = resourceOperationRepository.save(resourceOperation);
         resource.getOperations().add(resourceOperation);
+        resourceRepository.update(resource);
         return resourceOperation;
     }
 
@@ -527,6 +529,15 @@ public class ResourceService {
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
+    }
+
+    @Scheduled(initialDelay = 60000, fixedRate = 60000)
+    public void archiveResourcesScheduled() {
+        archiveResources();
+    }
+
+    public synchronized void archiveResources() {
+
     }
 
     public static String suggestHandle(String name) {

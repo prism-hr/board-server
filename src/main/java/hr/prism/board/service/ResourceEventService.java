@@ -23,10 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,7 +115,7 @@ public class ResourceEventService {
         return resourceEventRepository.findByResourceAndEventAndUser(resource, event, user);
     }
 
-    public List<ResourceEvent> findByResourceIdsAndEventAndUser(List<Long> resourceIds, hr.prism.board.enums.ResourceEvent event, User user) {
+    public List<ResourceEvent> findByResourceIdsAndEventAndUser(Collection<Long> resourceIds, hr.prism.board.enums.ResourceEvent event, User user) {
         return resourceEventRepository.findByResourceIdsAndEventAndUser(resourceIds, event, user);
     }
 

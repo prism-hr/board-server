@@ -2,7 +2,7 @@ package hr.prism.board.value;
 
 import java.time.LocalDateTime;
 
-public abstract class Summary<T extends Enum<T>> {
+public abstract class Summary<T> {
 
     private T key;
 
