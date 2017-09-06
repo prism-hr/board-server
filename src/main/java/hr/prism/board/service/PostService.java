@@ -18,6 +18,7 @@ import hr.prism.board.util.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,9 @@ public class PostService {
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
             "LIMIT 10";
+
+    @Value("${scheduler.on}")
+    private Boolean schedulerOn;
 
     @Inject
     private PostRepository postRepository;
@@ -312,7 +316,9 @@ public class PostService {
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void publishAndRetirePostsScheduled() {
-        publishAndRetirePosts();
+        if (BooleanUtils.isTrue(schedulerOn)) {
+            publishAndRetirePosts();
+        }
     }
 
     public synchronized void publishAndRetirePosts() {
@@ -478,34 +484,9 @@ public class PostService {
         }
     }
 
-    @SuppressWarnings("JpaQlInspection")
     private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
-            new TransactionTemplate(platformTransactionManager).execute(status -> {
-                entityManager.createQuery(
-                    "update Post post " +
-                        "set post.previousState = post.state, " +
-                        "post.state = :newState, " +
-                        "post.updatedTimestamp = :baseline " +
-                        "where post.id in (:postIds)")
-                    .setParameter("newState", newState)
-                    .setParameter("baseline", baseline)
-                    .setParameter("postIds", postIds)
-                    .executeUpdate();
-
-                //noinspection SqlResolve
-                entityManager.createNativeQuery(
-                    "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
-                        "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
-                        "FROM resource " +
-                        "WHERE resource.id IN (:postIds) " +
-                        "ORDER BY resource.id")
-                    .setParameter("action", action.name())
-                    .setParameter("baseline", baseline)
-                    .setParameter("postIds", postIds)
-                    .executeUpdate();
-                return null;
-            });
+            actionService.executeInBulk(postIds, action, newState, baseline);
 
             for (Long postId : postIds) {
                 List<Activity> activities = new ArrayList<>();

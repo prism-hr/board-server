@@ -22,10 +22,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -47,6 +52,13 @@ public class ActionService {
 
     @Inject
     private ObjectMapper objectMapper;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    private PlatformTransactionManager platformTransactionManager;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -103,6 +115,35 @@ public class ActionService {
 
         LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
         throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
+    }
+
+    @SuppressWarnings("JpaQlInspection")
+    public void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            entityManager.createQuery(
+                "update Post post " +
+                    "set post.previousState = post.state, " +
+                    "post.state = :newState, " +
+                    "post.updatedTimestamp = :baseline " +
+                    "where post.id in (:postIds)")
+                .setParameter("newState", newState)
+                .setParameter("baseline", baseline)
+                .setParameter("postIds", resourceIds)
+                .executeUpdate();
+
+            //noinspection SqlResolve
+            entityManager.createNativeQuery(
+                "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
+                    "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
+                    "FROM resource " +
+                    "WHERE resource.id IN (:postIds) " +
+                    "ORDER BY resource.id")
+                .setParameter("action", action.name())
+                .setParameter("baseline", baseline)
+                .setParameter("postIds", resourceIds)
+                .executeUpdate();
+            return null;
+        });
     }
 
     public boolean canExecuteAction(Resource resource, Action action) {

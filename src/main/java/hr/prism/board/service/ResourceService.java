@@ -89,6 +89,9 @@ public class ResourceService {
             SECURE_RESOURCE_ACTION + " " +
             "WHERE resource.scope = :scope";
 
+    @Value("${scheduler.on}")
+    private Boolean schedulerOn;
+
     @Value("${resource.archive.duration.seconds}")
     private Long resourceArchiveDurationSeconds;
 
@@ -541,12 +544,17 @@ public class ResourceService {
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void archiveResourcesScheduled() {
-        archiveResources();
+        if (BooleanUtils.isTrue(schedulerOn)) {
+            archiveResources();
+        }
     }
 
     public synchronized void archiveResources() {
-        for (Long resourceId : resourceRepository.findByUpdatedTimestamp(LocalDateTime.now().minusSeconds(resourceArchiveDurationSeconds))) {
-
+        LocalDateTime baseline = LocalDateTime.now();
+        List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
+            State.RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
+        if (!resourceIds.isEmpty()) {
+            actionService.executeInBulk(resourceIds, Action.ARCHIVE, State.ARCHIVED, baseline);
         }
     }
 
@@ -579,7 +587,6 @@ public class ResourceService {
 
     public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
         if (similarHandles.contains(suggestedHandle)) {
-
             int ordinal = 2;
             int suggestedHandleLength = suggestedHandle.length();
             List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());

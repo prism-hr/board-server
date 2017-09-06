@@ -20,4 +20,6 @@ public enum State {
 
     public static final List<String> ACTIVE_USER_ROLE_STATE_STRINGS = ACTIVE_USER_ROLE_STATES.stream().map(State::name).collect(Collectors.toList());
 
+    public static final List<State> RESOURCE_STATES_TO_ARCHIVE_FROM = Arrays.asList(DRAFT, SUSPENDED, EXPIRED, REJECTED, WITHDRAWN);
+
 }

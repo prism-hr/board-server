@@ -71,7 +71,8 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
     @Query(value =
         "select resource.id " +
             "from Resource resource " +
-            "where resource.updatedTimestamp < :baseline")
-    List<Long> findByUpdatedTimestamp(@Param("baseline") LocalDateTime baseline);
+            "where resource.state in (:states) " +
+            "and resource.updatedTimestamp < :baseline")
+    List<Long> findByStatesAndLessThanUpdatedTimestamp(@Param("states") List<State> states, @Param("baseline") LocalDateTime baseline);
 
 }
