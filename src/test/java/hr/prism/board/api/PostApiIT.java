@@ -1111,7 +1111,7 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
 
         PostRepresentation viewPostUnknown1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
-        Assert.assertNull(viewPostUnknown1.getReferral().getReferral());
+        Assert.assertNull(viewPostUnknown1.getReferral());
 
         TestHelper.MockHttpServletResponse response = TestHelper.mockHttpServletResponse();
         verifyPostReferral(referral1, response, "http://www.google.co.uk");
