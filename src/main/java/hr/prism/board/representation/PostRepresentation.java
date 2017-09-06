@@ -49,6 +49,8 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private String referralCode;
 
+    private ResourceEventRepresentation referral;
+
     private ResourceEventRepresentation response;
 
     public String getDescription() {
@@ -228,6 +230,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setReferralCode(String referralCode) {
         this.referralCode = referralCode;
+        return this;
+    }
+
+    public ResourceEventRepresentation getReferral() {
+        return referral;
+    }
+
+    public PostRepresentation setReferral(ResourceEventRepresentation referral) {
+        this.referral = referral;
         return this;
     }
 

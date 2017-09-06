@@ -44,8 +44,6 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
                 responseStatus = HttpStatus.CONFLICT;
             } else if (exceptionClass == BoardNotModifiedException.class) {
                 responseStatus = HttpStatus.NOT_MODIFIED;
-            } else {
-                responseStatus = HttpStatus.UNPROCESSABLE_ENTITY;
             }
         }
 
