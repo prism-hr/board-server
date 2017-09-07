@@ -342,8 +342,9 @@ public class ResourceService {
             String statement =
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
+                    "inner join resource.parents parent " +
                     "left join resource.searches search on search.search = :search " +
-                    "where resource.id in (:resourceIds) ";
+                    "where parent.resource1.id in (:resourceIds) ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }

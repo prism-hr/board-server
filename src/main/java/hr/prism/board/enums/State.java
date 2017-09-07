@@ -6,14 +6,14 @@ import java.util.stream.Collectors;
 
 public enum State {
 
-    DRAFT,
-    SUSPENDED,
-    PENDING,
-    ACCEPTED,
-    EXPIRED,
-    REJECTED,
-    WITHDRAWN,
-    ARCHIVED,
+    DRAFT, // Board filter, Post filter
+    SUSPENDED, // Post filter
+    PENDING, // Post filter
+    ACCEPTED, // Board filter, Post filter
+    EXPIRED, // Post filter
+    REJECTED, // Board filter, Post filter
+    WITHDRAWN, // Post filter
+    ARCHIVED, // Post only - not in filter for active posts, provides hard-coded filter for separate archive section
     PREVIOUS;
 
     public static final List<State> ACTIVE_USER_ROLE_STATES = Arrays.asList(PENDING, ACCEPTED);

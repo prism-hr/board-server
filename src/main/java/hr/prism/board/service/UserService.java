@@ -243,8 +243,8 @@ public class UserService {
         return user;
     }
 
-    public List<Long> findByResourceAndRoleAndStates(Resource resource, Role role, List<State> states) {
-        return userRepository.findByResourceAndRoleAndStates(resource, role, states);
+    public List<Long> findByResourceAndRoleAndStates(Resource resource, List<Role> roles, State state) {
+        return userRepository.findByResourceAndRolesAndState(resource, roles, state);
     }
 
     public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {

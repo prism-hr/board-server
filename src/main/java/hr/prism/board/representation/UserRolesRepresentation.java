@@ -1,15 +1,14 @@
 package hr.prism.board.representation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class UserRolesRepresentation {
 
-    private List<UserRoleRepresentation> users = new ArrayList<>();
+    private List<UserRoleRepresentation> users;
 
-    private List<UserRoleRepresentation> members = new ArrayList<>();
+    private List<UserRoleRepresentation> members;
 
-    private List<UserRoleRepresentation> memberRequests = new ArrayList<>();
+    private List<UserRoleRepresentation> memberRequests;
 
     public List<UserRoleRepresentation> getUsers() {
         return users;

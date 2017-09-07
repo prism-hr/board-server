@@ -29,7 +29,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -235,30 +237,6 @@ public class DepartmentService {
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
     }
 
-    public List<UserRole> getMembershipRequests(Long departmentId, String searchTerm) {
-        Resource department = getDepartment(departmentId);
-        return getMembershipRequests((Department) department, searchTerm, true);
-    }
-
-    public List<UserRole> getMembershipRequests(Department department, String searchTerm, boolean checkPermission) {
-        User user = userService.getCurrentUserSecured();
-        if (checkPermission) {
-            actionService.executeAction(user, department, Action.EDIT, () -> department);
-        }
-
-        List<UserRole> userRoles = getMembers(department, searchTerm, Collections.singletonList(State.PENDING));
-        if (userRoles.isEmpty()) {
-            return userRoles;
-        }
-
-        Map<hr.prism.board.domain.Activity, UserRole> indexByActivities = userRoles.stream().collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
-        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
-            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
-        }
-
-        return userRoles;
-    }
-
     public UserRole viewMembershipRequest(Long departmentId, Long userId) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
@@ -268,7 +246,7 @@ public class DepartmentService {
         return userRole.setViewed(true);
     }
 
-    public void processMembershipRequest(Long departmentId, Long userId, State state) {
+    public void putMembershipRequest(Long departmentId, Long userId, State state) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
@@ -282,60 +260,8 @@ public class DepartmentService {
         });
     }
 
-    public List<UserRole> getMembers(Long departmentId, String searchTerm) {
-        User user = userService.getCurrentUserSecured();
-        Resource department = getDepartment(departmentId);
-        actionService.executeAction(user, department, Action.EDIT, () -> department);
-        return getMembers(department, searchTerm, State.ACTIVE_USER_ROLE_STATES);
-    }
-
     public void unsetMemberCountProvisional(Long departmentId) {
         departmentRepository.findOne(departmentId).setMemberCountProvisional(null);
-    }
-
-    @SuppressWarnings("JpaQlInspection")
-    private List<UserRole> getMembers(Resource department, String searchTerm, List<State> states) {
-        List<Long> userIds = userService.findByResourceAndRoleAndStates(department, Role.MEMBER, states);
-        if (userIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        String search = UUID.randomUUID().toString();
-        boolean searchTermApplied = searchTerm != null;
-        if (searchTermApplied) {
-            userService.createSearchResults(search, searchTerm, userIds);
-            entityManager.flush();
-        }
-
-        List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status -> {
-            String statement =
-                "select distinct userRole " +
-                    "from UserRole userRole " +
-                    "inner join userRole.user user " +
-                    "left join user.searches search on search.search = :search " +
-                    "where userRole.resource = :department " +
-                    "and user.id in (:userIds) " +
-                    "and userRole.role = :role " +
-                    "and userRole.state in (:states) ";
-            if (searchTermApplied) {
-                statement += "and search.id is not null ";
-            }
-
-            statement += "order by search.id, user.id desc";
-            return entityManager.createQuery(statement, UserRole.class)
-                .setParameter("search", search)
-                .setParameter("department", department)
-                .setParameter("userIds", userIds)
-                .setParameter("role", Role.MEMBER)
-                .setParameter("states", states)
-                .getResultList();
-        });
-
-        if (searchTermApplied) {
-            userService.deleteSearchResults(search);
-        }
-
-        return userRoles;
     }
 
 }

@@ -15,8 +15,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.util.BoardUtils;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
 @TestContext
@@ -74,7 +72,7 @@ public class ResourceApiIT extends AbstractIT {
             return null;
         });
 
-        List<UserRoleRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId).getUsers();
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
         Assert.assertThat(users, contains(userRoleMatcher(newUserDTO.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
@@ -92,8 +90,8 @@ public class ResourceApiIT extends AbstractIT {
             return null;
         });
 
-        List<UserRoleRepresentation> users = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentId).getUsers();
-        Assert.assertThat(users, contains(userRoleMatcher(creator.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
+        Assert.assertThat(users, contains(userRoleMatcher(creator.getEmail(), new UserRoleRepresentation(Role.ADMINISTRATOR))));
     }
 
     @Test
@@ -102,7 +100,7 @@ public class ResourceApiIT extends AbstractIT {
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
         DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
-        List<UserRoleRepresentation> resourceUsers = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId()).getUsers();
+        List<UserRoleRepresentation> resourceUsers = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
         Assert.assertThat(resourceUsers, contains(userRoleMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add 200 members
@@ -116,7 +114,7 @@ public class ResourceApiIT extends AbstractIT {
         }
 
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), userRoleDTOs1);
-        UserRolesRepresentation response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
+        UserRolesRepresentation response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
         assertEquals(1, response.getUsers().size());
         assertEquals(200, response.getMembers().size());
 
@@ -130,7 +128,7 @@ public class ResourceApiIT extends AbstractIT {
         }
 
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), userRoleDTOs2);
-        response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
+        response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
         assertEquals(300, response.getMembers().size());
 
         List<UserRoleDTO> userRoleDTOs3 = new ArrayList<>();
@@ -238,42 +236,33 @@ public class ResourceApiIT extends AbstractIT {
             () -> resourceApi.getSimilarUsers(Scope.BOARD, boardId, "alastair"), ExceptionCode.UNAUTHENTICATED_USER, null);
     }
 
-    public Matcher<UserRoleRepresentation> userRoleMatcher(String email, UserRoleDTO roleDTO) {
-        Matcher<Object> emailMatcher = hasProperty("user", hasProperty("email", equalTo(email)));
-        Matcher<? super Object> roleMatcher = Matchers.allOf(
-            hasProperty("role", equalTo(roleDTO.getRole())),
-            hasProperty("expiryDate", equalTo(roleDTO.getExpiryDate())),
-            hasProperty("categories", equalTo(roleDTO.getCategories() != null ? roleDTO.getCategories() : Collections.emptyList())));
-        return allOf(emailMatcher, roleMatcher);
-    }
-
-    private void addAndRemoveUserRoles(User currentUser, Scope scope, Long resourceId) {
-        List<UserRoleRepresentation> resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
-        Assert.assertThat(resourceUsers, contains(userRoleMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+    private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
+        List<UserRoleRepresentation> resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        Assert.assertThat(resourceUsers, contains(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // add resource user a role
         UserDTO newUser = new UserDTO().setEmail("board-manager@mail.com").setGivenName("Sample").setSurname("User");
-        UserRoleRepresentation boardManager = resourceApi.createResourceUser(scope, resourceId, new UserRoleDTO().setUser(newUser).setRole(Role.AUTHOR));
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
-        Assert.assertThat(resourceUsers, containsInAnyOrder(userRoleMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
+        UserRoleRepresentation resourceManager = resourceApi.createResourceUser(scope, resourceId, new UserRoleDTO().setUser(newUser).setRole(Role.AUTHOR));
+        resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        Assert.assertThat(resourceUsers, containsInAnyOrder(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
             userRoleMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
 
         // replace it with MEMBER role
-        UserRoleRepresentation resourceUser = resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(),
+        UserRoleRepresentation resourceUser = resourceApi.updateResourceUser(scope, resourceId, resourceManager.getUser().getId(),
             new UserRoleDTO().setUser(newUser).setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
 
         Assert.assertThat(resourceUser, userRoleMatcher("board-manager@mail.com", new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT)));
 
         // replace it with ADMINISTRATOR role
-        resourceApi.updateResourceUser(scope, resourceId, boardManager.getUser().getId(), new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
-        Assert.assertThat(resourceUsers, containsInAnyOrder(userRoleMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
+        resourceApi.updateResourceUser(scope, resourceId, resourceManager.getUser().getId(), new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
+        resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        Assert.assertThat(resourceUsers, containsInAnyOrder(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
             userRoleMatcher("board-manager@mail.com", new UserRoleDTO(Role.ADMINISTRATOR))));
 
         // remove user from resource
-        resourceApi.deleteResourceUser(scope, resourceId, boardManager.getUser().getId());
-        resourceUsers = resourceApi.getResourceUsers(scope, resourceId).getUsers();
-        Assert.assertThat(resourceUsers, contains(userRoleMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+        resourceApi.deleteResourceUser(scope, resourceId, resourceManager.getUser().getId());
+        resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        Assert.assertThat(resourceUsers, contains(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
     }
 
     private void verifySuggestedUser(String expectedGivenName, String expectedSurname, String expectedEmail, UserRepresentation userR) {

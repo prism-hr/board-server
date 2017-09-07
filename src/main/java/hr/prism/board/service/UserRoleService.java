@@ -1,9 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
@@ -13,7 +10,6 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.UserRoleRepresentation;
@@ -29,10 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,26 +33,14 @@ import java.util.stream.Collectors;
 @SuppressWarnings("JpaQlInspection")
 public class UserRoleService {
 
-    private static final String RESOURCE_USER_ROLE =
-        "select distinct userRole " +
-            "from UserRole userRole " +
-            "where userRole.resource = :resource " +
-            "and userRole.role <> :role " +
-            "and userRole.state in (:states) ";
-
-    private static final String RESOURCE_USER_USER_ROLE =
-        "select distinct userRole " +
-            "from UserRole userRole " +
-            "where userRole.resource = :resource " +
-            "and userRole.user = :user " +
-            "and userRole.role = :role " +
-            "and userRole.state in (:states) ";
-
     @Inject
     private UserRoleRepository userRoleRepository;
 
     @Inject
     private UserRoleCacheService userRoleCacheService;
+
+    @Inject
+    private ActivityService activityService;
 
     @Inject
     private ResourceService resourceService;
@@ -72,12 +53,6 @@ public class UserRoleService {
 
     @Inject
     private ActionService actionService;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private UserMapper userMapper;
 
     @Inject
     private UserRoleMapper userRoleMapper;
@@ -100,38 +75,35 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
 
-    public UserRolesRepresentation getResourceUsers(Scope scope, Long resourceId) {
-        User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
+    public UserRolesRepresentation getUserRoles(Scope scope, Long resourceId, String searchTerm) {
+        User user = userService.getCurrentUserSecured();
+        Resource resource = resourceService.getResource(user, scope, resourceId);
+        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
 
-        List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createQuery(RESOURCE_USER_ROLE)
-                .setParameter("resource", resource)
-                .setParameter("role", Role.MEMBER)
-                .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
-                .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
-                .getResultList());
-
-        Map<User, UserRoleRepresentation> resourceUsersMap = new TreeMap<>();
-        for (UserRole userRole : userRoles) {
-            User user = userRole.getUser();
-            if (!resourceUsersMap.containsKey(user)) {
-                resourceUsersMap.put(user, userRoleMapper.apply(userRole));
-            }
-        }
-
-        UserRolesRepresentation response =
-            new UserRolesRepresentation()
-                .setUsers(new ArrayList<>(resourceUsersMap.values()));
+        List<UserRole> users;
+        List<UserRole> members = Collections.emptyList();
+        List<UserRole> memberRequests = Collections.emptyList();
         if (scope == Scope.DEPARTMENT) {
-            response.setMembers(userRoleRepository.findByResourceAndRoleAndState(
-                resource, Role.MEMBER, State.ACCEPTED).stream().map(userRoleMapper).collect(Collectors.toList()));
-            response.setMemberRequests(departmentService.getMembershipRequests(
-                (Department) resource, null, false).stream().map(userRoleMapper).collect(Collectors.toList()));
+            users = getUserRoles(resource, Collections.singletonList(Role.ADMINISTRATOR), State.ACCEPTED, searchTerm);
+            members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, searchTerm);
+
+            memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
+            if (!memberRequests.isEmpty()) {
+                Map<Activity, UserRole> indexByActivities = memberRequests.stream().collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
+                for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+                    indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+                }
+            }
+        } else if (scope == Scope.BOARD) {
+            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
+        } else {
+            throw new IllegalStateException("Cannot request user roles for post");
         }
 
-        return response;
+        return new UserRolesRepresentation()
+            .setUsers(users.stream().map(userRoleMapper).collect(Collectors.toList()))
+            .setMembers(members.stream().map(userRoleMapper).collect(Collectors.toList()))
+            .setMemberRequests(memberRequests.stream().map(userRoleMapper).collect(Collectors.toList()));
     }
 
     public void createOrUpdateUserRole(Resource resource, User user, Role role) {
@@ -230,7 +202,13 @@ public class UserRoleService {
     private UserRoleRepresentation getUserRole(Resource resource, User user, Role role) {
         entityManager.flush();
         List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createQuery(RESOURCE_USER_USER_ROLE, UserRole.class)
+            entityManager.createQuery(
+                "select distinct userRole " +
+                    "from UserRole userRole " +
+                    "where userRole.resource = :resource " +
+                    "and userRole.user = :user " +
+                    "and userRole.role = :role " +
+                    "and userRole.state in (:states) ", UserRole.class)
                 .setParameter("resource", resource)
                 .setParameter("user", user)
                 .setParameter("role", role)
@@ -242,6 +220,52 @@ public class UserRoleService {
         }
 
         return userRoleMapper.apply(userRoles.get(0));
+    }
+
+    @SuppressWarnings("JpaQlInspection")
+    private List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, String searchTerm) {
+        List<Long> userIds = userService.findByResourceAndRoleAndStates(resource, roles, state);
+        if (userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String search = UUID.randomUUID().toString();
+        boolean searchTermApplied = searchTerm != null;
+        if (searchTermApplied) {
+            userService.createSearchResults(search, searchTerm, userIds);
+            entityManager.flush();
+        }
+
+        List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status -> {
+            String statement =
+                "select distinct userRole " +
+                    "from UserRole userRole " +
+                    "inner join userRole.user user " +
+                    "left join user.searches search on search.search = :search " +
+                    "where userRole.resource = :resource " +
+                    "and user.id in (:userIds) " +
+                    "and userRole.role in(:roles) " +
+                    "and userRole.state = :state ";
+            if (searchTermApplied) {
+                statement += "and search.id is not null ";
+            }
+
+            statement += "order by search.id, user.id desc";
+            return entityManager.createQuery(statement, UserRole.class)
+                .setParameter("search", search)
+                .setParameter("resource", resource)
+                .setParameter("userIds", userIds)
+                .setParameter("roles", roles)
+                .setParameter("state", state)
+                .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
+                .getResultList();
+        });
+
+        if (searchTermApplied) {
+            userService.deleteSearchResults(search);
+        }
+
+        return userRoles;
     }
 
 }

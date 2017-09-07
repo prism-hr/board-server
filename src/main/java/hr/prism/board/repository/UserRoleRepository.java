@@ -19,8 +19,6 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
 
     List<UserRole> findByResourceAndRole(Resource resource, Role role);
 
-    List<UserRole> findByResourceAndRoleAndState(Resource resource, Role role, State state);
-
     UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);
 
     @Query(value =

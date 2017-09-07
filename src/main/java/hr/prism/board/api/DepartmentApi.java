@@ -79,24 +79,14 @@ public class DepartmentApi {
         departmentService.createMembershipRequest(departmentId, userRoleDTO);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.GET)
-    public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId, @RequestParam(required = false) String searchTerm) {
-        return departmentService.getMembershipRequests(departmentId, searchTerm).stream().map(userRoleMapper).collect(Collectors.toList());
-    }
-
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = RequestMethod.PUT)
     public UserRoleRepresentation viewMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId) {
         return userRoleMapper.apply(departmentService.viewMembershipRequest(departmentId, userId));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}/{state:accepted|rejected}", method = RequestMethod.PUT)
-    public void respondToMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
-        departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
-    }
-
-    @RequestMapping(value = "/api/departments/{departmentId}/members", method = RequestMethod.GET)
-    public List<UserRoleRepresentation> getMembers(@PathVariable Long departmentId, @RequestParam(required = false) String searchTerm) {
-        return departmentService.getMembers(departmentId, searchTerm).stream().map(userRoleMapper).collect(Collectors.toList());
+    public void putMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
+        departmentService.putMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
     }
 
 }

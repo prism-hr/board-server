@@ -389,13 +389,13 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.setAuthentication(boardMemberId);
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(
             BoardForbiddenException.class,
-            () -> departmentApi.respondToMembershipRequest(departmentId, boardMemberId, "accepted"),
+            () -> departmentApi.putMembershipRequest(departmentId, boardMemberId, "accepted"),
             ExceptionCode.FORBIDDEN_ACTION,
             status));
 
         testUserService.setAuthentication(boardUserId);
         transactionTemplate.execute(status -> {
-            departmentApi.respondToMembershipRequest(departmentId, boardMemberId, "accepted");
+            departmentApi.putMembershipRequest(departmentId, boardMemberId, "accepted");
             return null;
         });
 
@@ -450,7 +450,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testUserService.setAuthentication(boardUserId);
         transactionTemplate.execute(status -> {
-            departmentApi.respondToMembershipRequest(departmentId, boardMemberId, "rejected");
+            departmentApi.putMembershipRequest(departmentId, boardMemberId, "rejected");
             return null;
         });
 
@@ -576,14 +576,14 @@ public class DepartmentApiIT extends AbstractIT {
 
         testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> {
-            departmentApi.respondToMembershipRequest(departmentId, memberUser1Id, "accepted");
+            departmentApi.putMembershipRequest(departmentId, memberUser1Id, "accepted");
             return null;
         });
 
         verifyBoardAndMemberCount(departmentId, 2L, 4L);
 
         transactionTemplate.execute(status -> {
-            departmentApi.respondToMembershipRequest(departmentId, memberUser2Id, "rejected");
+            departmentApi.putMembershipRequest(departmentId, memberUser2Id, "rejected");
             return null;
         });
 
