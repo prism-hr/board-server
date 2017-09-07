@@ -89,8 +89,8 @@ public class DepartmentApi {
         return userRoleMapper.apply(departmentService.viewMembershipRequest(departmentId, userId));
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}/{state:accepted|rejected}", method = RequestMethod.PATCH)
-    public void patchMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
+    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}/{state:accepted|rejected}", method = RequestMethod.PUT)
+    public void respondToMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId, @PathVariable String state) {
         departmentService.processMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
     }
 

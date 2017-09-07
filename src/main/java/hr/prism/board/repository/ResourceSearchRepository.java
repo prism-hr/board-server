@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.ResourceSearch;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 
@@ -18,8 +19,9 @@ public interface ResourceSearchRepository extends MyRepository<ResourceSearch, L
             "HAVING SIMILARITY > 0 " +
             "ORDER BY similarity DESC, resource.id DESC",
         nativeQuery = true)
-    void insertBySearch(String search, String searchTerm, Collection<Long> resourceIds);
+    void insertBySearch(@Param("search") String search, @Param("searchTerm") String searchTerm,
+                        @Param("resourceIds") Collection<Long> resourceIds);
 
-    void deleteBySearch(String search);
+    void deleteBySearch(@Param("search") String search);
 
 }
