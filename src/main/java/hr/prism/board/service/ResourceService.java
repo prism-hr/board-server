@@ -333,7 +333,7 @@ public class ResourceService {
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             // Apply the search query
-            resourceSearchRepository.insertBySearch(search, BoardUtils.makeSoundexRemovingStopWords(searchTerm), resourceIds);
+            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundexRemovingStopWords(searchTerm), resourceIds);
             entityManager.flush();
         }
 

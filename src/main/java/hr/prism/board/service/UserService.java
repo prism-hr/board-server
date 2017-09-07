@@ -252,7 +252,7 @@ public class UserService {
     }
 
     public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
-        userSearchRepository.insertBySearch(search, BoardUtils.makeSoundexRemovingStopWords(searchTerm), userIds);
+        userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundexRemovingStopWords(searchTerm), userIds);
     }
 
     public void deleteSearchResults(String search) {
