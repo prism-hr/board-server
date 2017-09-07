@@ -565,7 +565,7 @@ public class PostService {
     }
 
     private void setIndexDataAndQuarter(Post post) {
-        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName());
+        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
     }
 
 }
