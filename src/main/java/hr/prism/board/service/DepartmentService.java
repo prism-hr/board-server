@@ -235,9 +235,13 @@ public class DepartmentService {
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
     }
 
-    public List<UserRole> getMembershipRequests(Long departmentId, String searchTerm, boolean checkPermission) {
-        User user = userService.getCurrentUserSecured();
+    public List<UserRole> getMembershipRequests(Long departmentId, String searchTerm) {
         Resource department = getDepartment(departmentId);
+        return getMembershipRequests((Department) department, searchTerm, true);
+    }
+
+    public List<UserRole> getMembershipRequests(Department department, String searchTerm, boolean checkPermission) {
+        User user = userService.getCurrentUserSecured();
         if (checkPermission) {
             actionService.executeAction(user, department, Action.EDIT, () -> department);
         }

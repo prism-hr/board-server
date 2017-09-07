@@ -125,9 +125,10 @@ public class UserRoleService {
             new UserRolesRepresentation()
                 .setUsers(new ArrayList<>(resourceUsersMap.values()));
         if (scope == Scope.DEPARTMENT) {
-            response.setMemberCount(((Department) resource).getMemberCount());
+            response.setMembers(userRoleRepository.findByResourceAndRoleAndState(
+                resource, Role.MEMBER, State.ACCEPTED).stream().map(userRoleMapper).collect(Collectors.toList()));
             response.setMemberRequests(departmentService.getMembershipRequests(
-                resourceId, null, false).stream().map(userRoleMapper).collect(Collectors.toList()));
+                (Department) resource, null, false).stream().map(userRoleMapper).collect(Collectors.toList()));
         }
 
         return response;

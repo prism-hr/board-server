@@ -81,7 +81,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.GET)
     public List<UserRoleRepresentation> getMembershipRequests(@PathVariable Long departmentId, @RequestParam(required = false) String searchTerm) {
-        return departmentService.getMembershipRequests(departmentId, searchTerm, true).stream().map(userRoleMapper).collect(Collectors.toList());
+        return departmentService.getMembershipRequests(departmentId, searchTerm).stream().map(userRoleMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = RequestMethod.PUT)

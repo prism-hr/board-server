@@ -1,7 +1,9 @@
 INSERT INTO user (uuid, given_name, surname, email, email_original, password, created_timetamp)
 VALUES (UUID(), 'administrator', 'administrator', 'administrator@administrator.com', 'administrator@administrator.com', SHA2('password', 256), NOW()),
   (UUID(), 'author', 'author', 'author@author.com', 'author@author.com', SHA2('password', 256), NOW()),
-  (UUID(), 'member', 'member', 'member@member.com', 'member@member.com', SHA2('password', 256), NOW());
+  (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'alastair@knowles.com', SHA2('password', 256), NOW()),
+  (UUID(), 'jakub', 'fibinger', 'jakub@fibinger.com', 'jakub@fibinger.com', SHA2('password', 256), NOW()),
+  (UUID(), 'juan', 'mingo', 'juan@mingo.com', 'juan@mingo.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, summary, description, organization_name, apply_website, created_timestamp)
 VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW()),

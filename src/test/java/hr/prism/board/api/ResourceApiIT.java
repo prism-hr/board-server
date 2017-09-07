@@ -118,7 +118,7 @@ public class ResourceApiIT extends AbstractIT {
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), userRoleDTOs1);
         UserRolesRepresentation response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
         assertEquals(1, response.getUsers().size());
-        assertEquals(200, response.getMemberCount().intValue());
+        assertEquals(200, response.getMembers().size());
 
         List<UserRoleDTO> userRoleDTOs2 = new ArrayList<>();
         for (int i = 101; i <= 300; i++) {
@@ -131,7 +131,7 @@ public class ResourceApiIT extends AbstractIT {
 
         resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentR.getId(), userRoleDTOs2);
         response = resourceApi.getResourceUsers(Scope.DEPARTMENT, departmentR.getId());
-        assertEquals(300, response.getMemberCount().intValue());
+        assertEquals(300, response.getMembers().size());
 
         List<UserRoleDTO> userRoleDTOs3 = new ArrayList<>();
         userRoleDTOs3.add(
