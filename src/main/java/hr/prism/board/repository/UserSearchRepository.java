@@ -12,12 +12,13 @@ public interface UserSearchRepository extends MyRepository<UserSearch, Long> {
     @Modifying
     @Query(value =
         "INSERT INTO user_search(user_id, search) " +
-            "SELECT user.id , :search " +
-            "MATCH USER.indexData against(:searchTerm IN BOOLEAN MODE) AS similarity " +
-            "FROM USER " +
-            "WHERE USER.id IN (:userIds) " +
-            "HAVING SIMILARITY > 0 " +
-            "ORDER BY similarity DESC, USER.id DESC",
+            "SELECT user_search_result.user_id, user_search_result.search " +
+            "FROM (" +
+            "SELECT user.id as user_id, :search as search, MATCH user.index_data against(:searchTerm IN BOOLEAN MODE) AS similarity " +
+            "FROM user " +
+            "WHERE user.id IN (:userIds) " +
+            "HAVING similarity > 0 " +
+            "ORDER BY similarity DESC, user.id DESC) AS user_search_result",
         nativeQuery = true)
     void insertBySearch(@Param("search") String search, @Param("searchTerm") String searchTerm, @Param("userIds") Collection<Long> userIds);
 
