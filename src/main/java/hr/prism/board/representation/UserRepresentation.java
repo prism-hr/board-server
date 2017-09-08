@@ -109,7 +109,7 @@ public class UserRepresentation {
 
     @Override
     public int hashCode() {
-        return id == null ? Objects.hash(email) : Objects.hash(email);
+        return Objects.hash(email);
     }
 
     @Override
@@ -118,8 +118,7 @@ public class UserRepresentation {
             return false;
         }
 
-        UserRepresentation that = (UserRepresentation) object;
-        return id.equals(that.getId()) || email.equals(that.getEmail());
+        return Objects.equals(email, ((UserRepresentation) object).getEmail());
     }
 
 }
