@@ -296,16 +296,16 @@ public class ResourceApiIT extends AbstractIT {
         verifyContains(boardNames, "Opportunities");
 
         List<PostRepresentation> postRs = postApi.getPosts(false, null, null, null);
-        Assert.assertEquals(3, postRs.size());
-
-        List<String> postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
-        verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
-
-        postRs = postApi.getPosts(false, null, null, "scalable optimise");
         Assert.assertEquals(2, postRs.size());
 
-        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        List<String> postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer", "Java Web Developer");
+
+        postRs = postApi.getPosts(false, null, null, "optimise");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer");
 
         postRs = postApi.getPosts(false, State.REJECTED, null, null);
         Assert.assertEquals(0, postRs.size());
@@ -313,13 +313,13 @@ public class ResourceApiIT extends AbstractIT {
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@member.com")).getId();
         testUserService.setAuthentication(userId);
 
-        postRs = postApi.getPosts(true, null, null, null);
+        postRs = postApi.getPosts(false, null, null, null);
         Assert.assertEquals(3, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
 
-        postRs = postApi.getPosts(true, null, null, "london");
+        postRs = postApi.getPosts(false, null, null, "london");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
@@ -340,6 +340,21 @@ public class ResourceApiIT extends AbstractIT {
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer");
 
+        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("post@administrator.com")).getId();
+        testUserService.setAuthentication(userId);
+
+        postRs = postApi.getPostsByBoard(boardId, false, null, null, null);
+        Assert.assertEquals(7, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Support Engineer", "UX Designer", "Front-End Developer", "Technical Analyst", "Scrum Leader", "Product Manager", "Test Engineer");
+
+        postRs = postApi.getPostsByBoard(boardId, false, null, null, "madrid krakow");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Technical Analyst");
+
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@administrator.com")).getId();
         testUserService.setAuthentication(userId);
 
@@ -355,6 +370,12 @@ public class ResourceApiIT extends AbstractIT {
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Java Web Developer");
+
+        postRs = postApi.getPostsByBoard(boardId, false, State.ACCEPTED, null, "madrid krakow");
+        Assert.assertEquals(2, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Java Web Developer", "Technical Analyst");
 
         ExceptionUtils.verifyException(BoardException.class,
             () -> postApi.getPosts(false, State.ARCHIVED, null, null), ExceptionCode.INVALID_RESOURCE_FILTER, null);

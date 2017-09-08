@@ -88,6 +88,20 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   FROM resource
     INNER JOIN user
   WHERE resource.scope = 'POST'
+        AND resource.name IN ('Database Engineer', 'Java Web Developer')
+        AND user.email = 'board@author.com';
+
+INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+  SELECT
+    resource.id,
+    user.id,
+    'ADMINISTRATOR',
+    'ACCEPTED',
+    NOW()
+  FROM resource
+    INNER JOIN user
+  WHERE resource.scope = 'POST'
+        AND resource.name NOT IN ('Database Engineer', 'Java Web Developer')
         AND user.email = 'post@administrator.com';
 
 INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
