@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
@@ -27,10 +28,8 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -94,8 +93,8 @@ public class ResourceApiIT extends AbstractIT {
         Long departmentId = boardR.getDepartment().getId();
 
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode
-                .IRREMOVABLE_USER, status);
+            ExceptionUtils.verifyException(BoardException.class,
+                () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode.IRREMOVABLE_USER, status);
             return null;
         });
 
@@ -266,11 +265,20 @@ public class ResourceApiIT extends AbstractIT {
         List<BoardRepresentation> boardRs = boardApi.getBoards(false, null, null, null);
         Assert.assertEquals(3, boardRs.size());
 
+        List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Games", "Opportunities", "Housing");
+
         boardRs = boardApi.getBoards(false, null, null, "student");
         Assert.assertEquals(3, boardRs.size());
 
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Games", "Opportunities", "Housing");
+
         boardRs = boardApi.getBoards(false, null, null, "promote work experience");
         Assert.assertEquals(1, boardRs.size());
+
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities");
 
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("author@author.com")).getId();
         testUserService.setAuthentication(userId);
@@ -278,8 +286,14 @@ public class ResourceApiIT extends AbstractIT {
         boardRs = boardApi.getBoards(false, null, null, null);
         Assert.assertEquals(1, boardRs.size());
 
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities");
+
         boardRs = boardApi.getBoards(false, null, null, "student");
         Assert.assertEquals(1, boardRs.size());
+
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities");
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
@@ -317,15 +331,13 @@ public class ResourceApiIT extends AbstractIT {
         Assert.assertEquals(userIdString, documentImageR.getFileName());
     }
 
-    private void verifyContains(List<UserRoleRepresentation> responses, UserRoleRepresentation expectedToContain) {
-        boolean passed = false;
-        for (UserRoleRepresentation response : responses) {
-            if (response.equals(expectedToContain)) {
-                passed = true;
+    private <T> void verifyContains(List<T> expectations, T... actuals) {
+        Set<T> expectationsSet = Sets.newLinkedHashSet(expectations);
+        for (T actual : actuals) {
+            if (!expectationsSet.contains(actual)) {
+                Assert.fail();
             }
         }
-
-        Assert.assertTrue(passed);
     }
 
 }
