@@ -93,6 +93,12 @@ public class ActivityService {
         return activityEventRepository.findByActivitiesAndUserAndEvent(activities, user, hr.prism.board.enums.ActivityEvent.VIEW);
     }
 
+    public void viewActivity(Long activityId) {
+        User user = userService.getCurrentUserSecured();
+        Activity activity = activityRepository.findOne(activityId);
+        viewActivity(activity, user);
+    }
+
     public void viewActivity(Activity activity, User user) {
         ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
         if (activityEvent == null) {

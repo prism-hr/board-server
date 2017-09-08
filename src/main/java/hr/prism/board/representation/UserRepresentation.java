@@ -1,6 +1,5 @@
 package hr.prism.board.representation;
 
-import com.google.common.base.MoreObjects;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.Scope;
 
@@ -108,11 +107,13 @@ public class UserRepresentation {
     }
 
     @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-            .add("name", givenName + " " + surname)
-            .add("email", email)
-            .toString();
+    public boolean equals(Object object) {
+        if (object == null || object.getClass() != getClass()) {
+            return false;
+        }
+
+        UserRepresentation that = (UserRepresentation) object;
+        return id.equals(that.getId()) || email.equals(that.getEmail());
     }
 
 }

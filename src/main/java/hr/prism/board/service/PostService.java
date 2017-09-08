@@ -365,6 +365,10 @@ public class PostService {
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
+    public void setIndexDataAndQuarter(Post post) {
+        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
+    }
+
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ChangeListRepresentation());
@@ -562,10 +566,6 @@ public class PostService {
                 post.setResponse(responses.get(post));
             }
         }
-    }
-
-    private void setIndexDataAndQuarter(Post post) {
-        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
     }
 
 }

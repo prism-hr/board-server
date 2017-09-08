@@ -333,7 +333,7 @@ public class ResourceService {
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             // Apply the search query
-            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundexRemovingStopWords(searchTerm), resourceIds);
+            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), resourceIds);
             entityManager.flush();
         }
 
@@ -342,9 +342,8 @@ public class ResourceService {
             String statement =
                 "select distinct resource " +
                     "from " + resourceClass.getSimpleName() + " resource " +
-                    "inner join resource.parents parent " +
                     "left join resource.searches search on search.search = :search " +
-                    "where parent.resource1.id in (:resourceIds) ";
+                    "where resource.id in (:resourceIds) ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
@@ -504,9 +503,9 @@ public class ResourceService {
     public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
-            resource.setIndexData(BoardUtils.makeSoundexRemovingStopWords(parts));
+            resource.setIndexData(BoardUtils.makeSoundex(parts));
         } else {
-            resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.makeSoundexRemovingStopWords(parts)));
+            resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.makeSoundex(parts)));
         }
 
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();

@@ -163,7 +163,7 @@ public class UserService {
             user.setSurname(userDTO.getSurname());
             user.setEmail(userDTO.getEmail());
             user = userRepository.save(user);
-            user.setIndexData(BoardUtils.makeSoundexRemovingStopWords(user.getGivenName(), user.getSurname(), user.getEmail()));
+            user.setIndexData(BoardUtils.makeSoundex(user.getGivenName(), user.getSurname(), user.getEmail()));
             return user;
         }
 
@@ -252,7 +252,7 @@ public class UserService {
     }
 
     public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
-        userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundexRemovingStopWords(searchTerm), userIds);
+        userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
     }
 
     public void deleteSearchResults(String search) {

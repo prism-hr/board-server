@@ -92,6 +92,11 @@ public class UserApi {
         return refreshActivities(userService.getCurrentUserSecured().getId());
     }
 
+    @RequestMapping(value = "api/user/activities/{activityId}", method = RequestMethod.GET)
+    public void viewActivity(@PathVariable Long activityId) {
+        activityService.viewActivity(activityId);
+    }
+
     @RequestMapping(value = "api/user/activities/{activityId}", method = RequestMethod.DELETE)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);

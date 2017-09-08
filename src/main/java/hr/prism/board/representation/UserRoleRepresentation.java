@@ -1,6 +1,5 @@
 package hr.prism.board.representation;
 
-import com.google.common.base.MoreObjects;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
@@ -77,14 +76,13 @@ public class UserRoleRepresentation {
     }
 
     @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-            .add("user", user)
-            .add("role", role)
-            .add("state", state)
-            .add("expiryDate", expiryDate)
-            .add("categories", categories)
-            .add("viewed", viewed)
-            .toString();
+    public boolean equals(Object object) {
+        if (object == null || object.getClass() != getClass()) {
+            return false;
+        }
+
+        UserRoleRepresentation that = (UserRoleRepresentation) object;
+        return user.equals(that.getUser()) && role == that.getRole() && state == that.getState();
     }
+
 }

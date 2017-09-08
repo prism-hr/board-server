@@ -105,7 +105,7 @@ public class BoardUtils {
         return chain.split(", ")[0];
     }
 
-    public static String makeSoundexRemovingStopWords(String... strings) {
+    public static String makeSoundex(String... strings) {
         List<String> nullSafeStrings = Stream.of(strings).filter(Objects::nonNull).collect(Collectors.toList());
         if (nullSafeStrings.isEmpty()) {
             return null;

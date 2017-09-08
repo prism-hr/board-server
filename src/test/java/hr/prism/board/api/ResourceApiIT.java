@@ -1,7 +1,9 @@
 package hr.prism.board.api;
 
+import com.google.common.collect.Streams;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
+import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.UserDTO;
@@ -9,29 +11,36 @@ import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.util.BoardUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
 @TestContext
 @RunWith(SpringRunner.class)
 @SuppressWarnings("unchecked")
 public class ResourceApiIT extends AbstractIT {
+
+    @Inject
+    private ResourceRepository resourceRepository;
 
     @Test
     public void shouldAddAndRemoveRoles() {
@@ -73,7 +82,7 @@ public class ResourceApiIT extends AbstractIT {
         });
 
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
-        Assert.assertThat(users, contains(userRoleMatcher(newUserDTO.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(newUserDTO.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
 
     @Test
@@ -91,7 +100,7 @@ public class ResourceApiIT extends AbstractIT {
         });
 
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
-        Assert.assertThat(users, contains(userRoleMatcher(creator.getEmail(), new UserRoleRepresentation(Role.ADMINISTRATOR))));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(creator.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
 
     @Test
@@ -100,8 +109,8 @@ public class ResourceApiIT extends AbstractIT {
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
         DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
-        List<UserRoleRepresentation> resourceUsers = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
-        Assert.assertThat(resourceUsers, contains(userRoleMatcher(currentUser.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(currentUser.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // add 200 members
         List<UserRoleDTO> userRoleDTOs1 = new ArrayList<>();
@@ -146,7 +155,7 @@ public class ResourceApiIT extends AbstractIT {
         BoardDTO boardDTO = TestHelper.sampleBoard();
         BoardRepresentation boardR = boardApi.postBoard(boardDTO);
 
-        UserDTO newUser = new UserDTO().setEmail("board-manager@mail.com").setGivenName("Sample").setSurname("User");
+        UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
 
         // try to add a user to a board
         ExceptionUtils.verifyException(BoardException.class,
@@ -236,33 +245,64 @@ public class ResourceApiIT extends AbstractIT {
             () -> resourceApi.getSimilarUsers(Scope.BOARD, boardId, "alastair"), ExceptionCode.UNAUTHENTICATED_USER, null);
     }
 
+    @Test
+    @Sql("classpath:data/filter_setup.sql")
+    public void shouldSupportFilters() {
+        transactionTemplate.execute(status -> {
+            Streams.stream(resourceRepository.findAll()).sorted((resource1, resource2) -> ObjectUtils.compare(resource1.getId(), resource2.getId())).forEach(resource -> {
+                if (Arrays.asList(Scope.DEPARTMENT, Scope.BOARD).contains(resource.getScope())) {
+                    resourceService.setIndexDataAndQuarter(resource);
+                } else {
+                    postService.setIndexDataAndQuarter((Post) resource);
+                }
+            });
+
+            return null;
+        });
+
+        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("administrator@administrator.com")).getId();
+        testUserService.setAuthentication(userId);
+
+        List<BoardRepresentation> boardRs = boardApi.getBoards(false, null, null, null);
+        Assert.assertEquals(3, boardRs.size());
+
+        boardRs = boardApi.getBoards(false, null, null, "student");
+        Assert.assertEquals(3, boardRs.size());
+
+        boardRs = boardApi.getBoards(false, null, null, "promote work experience");
+        Assert.assertEquals(1, boardRs.size());
+
+        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("author@author.com")).getId();
+        testUserService.setAuthentication(userId);
+
+        boardRs = boardApi.getBoards(false, null, null, null);
+        Assert.assertEquals(1, boardRs.size());
+
+        boardRs = boardApi.getBoards(false, null, null, "student");
+        Assert.assertEquals(1, boardRs.size());
+    }
+
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
-        List<UserRoleRepresentation> resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        Assert.assertThat(resourceUsers, contains(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // add resource user a role
-        UserDTO newUser = new UserDTO().setEmail("board-manager@mail.com").setGivenName("Sample").setSurname("User");
-        UserRoleRepresentation resourceManager = resourceApi.createResourceUser(scope, resourceId, new UserRoleDTO().setUser(newUser).setRole(Role.AUTHOR));
-        resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        Assert.assertThat(resourceUsers, containsInAnyOrder(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
-            userRoleMatcher("board-manager@mail.com", new UserRoleDTO(Role.AUTHOR))));
+        UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
+        UserRoleRepresentation resourceManager = resourceApi.createResourceUser(scope, resourceId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
+        users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail("board@mail.com")).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // replace it with MEMBER role
         UserRoleRepresentation resourceUser = resourceApi.updateResourceUser(scope, resourceId, resourceManager.getUser().getId(),
             new UserRoleDTO().setUser(newUser).setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
-
-        Assert.assertThat(resourceUser, userRoleMatcher("board-manager@mail.com", new UserRoleDTO(Role.MEMBER, null, MemberCategory.MASTER_STUDENT)));
-
-        // replace it with ADMINISTRATOR role
-        resourceApi.updateResourceUser(scope, resourceId, resourceManager.getUser().getId(), new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
-        resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        Assert.assertThat(resourceUsers, containsInAnyOrder(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR)),
-            userRoleMatcher("board-manager@mail.com", new UserRoleDTO(Role.ADMINISTRATOR))));
+        verifyContains(Collections.singletonList(resourceUser), new UserRoleRepresentation().setUser(
+            new UserRepresentation().setEmail("board@mail.com")).setRole(Role.MEMBER).setState(State.ACCEPTED));
 
         // remove user from resource
         resourceApi.deleteResourceUser(scope, resourceId, resourceManager.getUser().getId());
-        resourceUsers = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        Assert.assertThat(resourceUsers, contains(userRoleMatcher(user.getEmail(), new UserRoleDTO(Role.ADMINISTRATOR))));
+        users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
 
     private void verifySuggestedUser(String expectedGivenName, String expectedSurname, String expectedEmail, UserRepresentation userR) {
@@ -275,6 +315,17 @@ public class ResourceApiIT extends AbstractIT {
         Assert.assertEquals(userIdString, documentImageR.getCloudinaryId());
         Assert.assertEquals(userIdString, documentImageR.getCloudinaryUrl());
         Assert.assertEquals(userIdString, documentImageR.getFileName());
+    }
+
+    private void verifyContains(List<UserRoleRepresentation> responses, UserRoleRepresentation expectedToContain) {
+        boolean passed = false;
+        for (UserRoleRepresentation response : responses) {
+            if (response.equals(expectedToContain)) {
+                passed = true;
+            }
+        }
+
+        Assert.assertTrue(passed);
     }
 
 }
