@@ -6,6 +6,7 @@ import hr.prism.board.enums.State;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 public class UserRoleRepresentation {
 
@@ -73,6 +74,11 @@ public class UserRoleRepresentation {
     public UserRoleRepresentation setViewed(boolean viewed) {
         this.viewed = viewed;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(user, role, state);
     }
 
     @Override
