@@ -245,7 +245,7 @@ public class ResourceApiIT extends AbstractIT {
     }
 
     @Test
-    @Sql("classpath:data/filter_setup.sql")
+    @Sql("classpath:data/resource_filter_setup.sql")
     public void shouldSupportFilters() {
         transactionTemplate.execute(status -> {
             Streams.stream(resourceRepository.findAll()).sorted((resource1, resource2) -> ObjectUtils.compare(resource1.getId(), resource2.getId())).forEach(resource -> {
@@ -259,7 +259,7 @@ public class ResourceApiIT extends AbstractIT {
             return null;
         });
 
-        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("administrator@administrator.com")).getId();
+        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@administrator.com")).getId();
         testUserService.setAuthentication(userId);
 
         List<BoardRepresentation> boardRs = boardApi.getBoards(false, null, null, null);
@@ -280,7 +280,7 @@ public class ResourceApiIT extends AbstractIT {
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
 
-        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("author@author.com")).getId();
+        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@author.com")).getId();
         testUserService.setAuthentication(userId);
 
         boardRs = boardApi.getBoards(false, null, null, null);
@@ -294,26 +294,108 @@ public class ResourceApiIT extends AbstractIT {
 
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
+
+        List<PostRepresentation> postRs = postApi.getPosts(false, null, null, null);
+        Assert.assertEquals(3, postRs.size());
+
+        List<String> postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
+
+        postRs = postApi.getPosts(false, null, null, "scalable optimise");
+        Assert.assertEquals(2, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer");
+
+        postRs = postApi.getPosts(false, State.REJECTED, null, null);
+        Assert.assertEquals(0, postRs.size());
+
+        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@member.com")).getId();
+        testUserService.setAuthentication(userId);
+
+        postRs = postApi.getPosts(true, null, null, null);
+        Assert.assertEquals(3, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
+
+        postRs = postApi.getPosts(true, null, null, "london");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer");
+
+        testUserService.unauthenticate();
+        Long boardId = transactionTemplate.execute(status -> boardService.getBoard("cs/opportunities")).getId();
+
+        postRs = postApi.getPostsByBoard(boardId, true, null, null, null);
+        Assert.assertEquals(3, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
+
+        postRs = postApi.getPostsByBoard(boardId, true, null, null, "london");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer");
+
+        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@administrator.com")).getId();
+        testUserService.setAuthentication(userId);
+
+        postRs = postApi.getPostsByBoard(boardId, false, null, null, null);
+        Assert.assertEquals(9, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Support Engineer", "UX Designer", "Front-End Developer", "Database Engineer", "Java Web Developer", "Technical Analyst", "Scrum Leader",
+            "Product Manager", "Test Engineer");
+
+        postRs = postApi.getPostsByBoard(boardId, false, State.ACCEPTED, null, "service");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Java Web Developer");
+
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> postApi.getPosts(false, State.ARCHIVED, null, null), ExceptionCode.INVALID_RESOURCE_FILTER, null);
+
+        List<String> archiveQuarters = resourceApi.getResourceArchiveQuarters(Scope.POST, boardId);
+        verifyContains(archiveQuarters, "20164", "20171");
+
+        postRs = postApi.getPosts(false, State.ARCHIVED, "20164", null);
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Software Architect");
+
+        postRs = postApi.getPostsByBoard(boardId, false, State.ARCHIVED, "20171", "nuts");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Business Analyst");
+
+        postRs = postApi.getPostsByBoard(boardId, false, State.ARCHIVED, "20171", "guru");
+        Assert.assertEquals(0, postRs.size());
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
-        // add resource user a role
+        // add ADMINISTRATOR role
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
         UserRoleRepresentation resourceManager = resourceApi.createResourceUser(scope, resourceId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
         users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail("board@mail.com")).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
-        // replace it with MEMBER role
+        // replace with MEMBER role
         UserRoleRepresentation resourceUser = resourceApi.updateResourceUser(scope, resourceId, resourceManager.getUser().getId(),
             new UserRoleDTO().setUser(newUser).setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
         verifyContains(Collections.singletonList(resourceUser), new UserRoleRepresentation().setUser(
             new UserRepresentation().setEmail("board@mail.com")).setRole(Role.MEMBER).setState(State.ACCEPTED));
 
-        // remove user from resource
+        // remove from resource
         resourceApi.deleteResourceUser(scope, resourceId, resourceManager.getUser().getId());
         users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
