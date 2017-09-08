@@ -4,6 +4,7 @@ import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.Scope;
 
 import java.util.List;
+import java.util.Objects;
 
 public class UserRepresentation {
 
@@ -104,6 +105,11 @@ public class UserRepresentation {
     public UserRepresentation setScopes(List<Scope> scopes) {
         this.scopes = scopes;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return id == null ? Objects.hash(email) : Objects.hash(email);
     }
 
     @Override
