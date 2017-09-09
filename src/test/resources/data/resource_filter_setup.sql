@@ -3,7 +3,7 @@ VALUES (UUID(), 'department', 'administrator', 'department@administrator.com', '
   (UUID(), 'department', 'member', 'department@member.com', 'department@member.com', SHA2('password', 256), NOW()),
   (UUID(), 'board', 'administrator', 'board@administrator.com', 'board@administrator.com', SHA2('password', 256), NOW()),
   (UUID(), 'board', 'author', 'board@author.com', 'board@author.com', SHA2('password', 256), NOW()),
-  (UUID(), 'post', 'administrator', 'post@admistrator.com', 'post@admistrator.com', SHA2('password', 256), NOW());
+  (UUID(), 'post', 'administrator', 'post@administrator.com', 'post@administrator.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, handle, summary, description, organization_name, apply_website, created_timestamp, updated_timestamp)
 VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW(), NULL),
@@ -104,31 +104,11 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
         AND resource.name NOT IN ('Database Engineer', 'Java Web Developer')
         AND user.email = 'post@administrator.com';
 
-INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
-  SELECT
-    resource1.id,
-    resource2.id,
-    NOW()
-  FROM resource AS resource1
-    INNER JOIN resource AS resource2
-  WHERE resource1.scope = 'DEPARTMENT'
-        AND resource2.scope = 'DEPARTMENT';
-
 UPDATE resource AS resource1
   INNER JOIN resource AS resource2
 SET resource1.parent_id = resource2.id
 WHERE resource1.scope = 'DEPARTMENT'
       AND resource2.scope = 'DEPARTMENT';
-
-INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
-  SELECT
-    resource1.id,
-    resource2.id,
-    NOW()
-  FROM resource AS resource1
-    INNER JOIN resource AS resource2
-  WHERE resource1.scope IN ('DEPARTMENT', 'BOARD')
-        AND resource2.scope = 'BOARD';
 
 UPDATE resource AS resource1
   INNER JOIN resource AS resource2
@@ -136,6 +116,13 @@ SET resource1.parent_id = resource2.id
 WHERE resource1.scope = 'BOARD'
       AND resource2.scope = 'DEPARTMENT';
 
+UPDATE resource AS resource1
+  INNER JOIN resource AS resource2
+SET resource1.parent_id = resource2.id
+WHERE resource1.scope = 'POST'
+      AND resource2.scope = 'BOARD'
+      AND resource2.state = 'ACCEPTED';
+
 INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
   SELECT
     resource1.id,
@@ -143,16 +130,25 @@ INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
     NOW()
   FROM resource AS resource1
     INNER JOIN resource AS resource2
-  WHERE (resource1.scope IN ('DEPARTMENT', 'POST')
-         OR resource1.scope = 'BOARD' AND resource1.state = 'ACCEPTED')
+  WHERE resource1.scope = 'DEPARTMENT';
+
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
+  SELECT
+    resource1.id,
+    resource2.id,
+    NOW()
+  FROM resource AS resource1
+    INNER JOIN resource AS resource2
+  WHERE resource1.scope = 'BOARD'
+        AND resource1.state = 'ACCEPTED'
         AND resource2.scope = 'POST';
 
-UPDATE resource AS resource1
-  INNER JOIN resource AS resource2
-SET resource1.parent_id = resource2.id
-WHERE resource1.scope = 'POST'
-      AND resource2.scope = 'BOARD'
-      AND resource2.state = 'ACCEPTED';
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
+  SELECT
+    resource.id,
+    resource.id,
+    NOW()
+  FROM resource;
 
 INSERT INTO location (name, domicile, google_id, latitude, longitude, created_timestamp)
 VALUES ('London, United Kingdom', 'GB', 'code1', 1.00, 1.00, NOW()),
