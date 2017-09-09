@@ -62,7 +62,7 @@ public class ResourceService {
             "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
-            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) ";
+            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state)";
 
     private static final String SECURE_RESOURCE_ACTION =
         "FROM resource " +
@@ -82,12 +82,13 @@ public class ResourceService {
             "AND workflow.resource1_scope = parent.scope " +
             "INNER JOIN user_role " +
             "ON parent.id = user_role.resource_id " +
-            "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline) ";
+            "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline)";
 
     private static final String SECURE_QUARTER =
         "SELECT DISTINCT resource.quarter " +
             SECURE_RESOURCE_ACTION + " " +
-            "WHERE resource.scope = :scope";
+            "WHERE resource.scope = :scope " +
+            "AND user_role.user_id = :userId";
 
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
@@ -215,7 +216,6 @@ public class ResourceService {
         }
     }
 
-    // TODO: implement paging / continuous scrolling mechanism
     public List<Resource> getResources(User user, ResourceFilter filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role ");
@@ -509,13 +509,13 @@ public class ResourceService {
         }
 
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
-        resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil(createdTimestamp.getMonthValue() / 3));
+        resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil((double) createdTimestamp.getMonthValue() / 3));
     }
 
     public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
         String statement =
             SECURE_QUARTER + " " +
-                "resource.state = :archivedState";
+                "AND resource.state = :archiveState";
 
         User user = userService.getCurrentUserSecured();
         Map<String, Object> filterParameters = getSecureFilterParameters(user);
@@ -525,7 +525,7 @@ public class ResourceService {
         if (parentId != null) {
             statement =
                 statement + " " +
-                    "resource.parent.id = :parentId";
+                    "AND resource.parent_id = :parentId";
             filterParameters.put("parentId", parentId);
         }
 
@@ -535,7 +535,7 @@ public class ResourceService {
 
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return ((List<Object[]>) query.getResultList()).stream().map(row -> row[0].toString()).collect(Collectors.toList());
+        return query.getResultList();
     }
 
     public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
@@ -653,7 +653,7 @@ public class ResourceService {
     }
 
     private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
-        Query query = entityManager.createNativeQuery(Joiner.on(" where ").skipNulls().join(statement, Joiner.on(" and ").join(filterStatements)));
+        Query query = entityManager.createNativeQuery(Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
     }

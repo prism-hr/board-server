@@ -43,7 +43,7 @@ public class ResourceFilter {
 
     @ResourceFilterProperty(
         parameter = "quarter",
-        statement = "resource.quarter = quarter")
+        statement = "resource.quarter = :quarter")
     private String quarter;
 
     private String searchTerm;

@@ -438,7 +438,7 @@ public class ResourceApiIT extends AbstractIT {
         Set<T> expectationsSet = Sets.newLinkedHashSet(expectations);
         for (T actual : actuals) {
             if (!expectationsSet.contains(actual)) {
-                Assert.fail();
+                Assert.fail(expectations.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + actual.toString());
             }
         }
     }
