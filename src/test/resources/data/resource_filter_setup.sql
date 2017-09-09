@@ -148,7 +148,8 @@ INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
     resource.id,
     resource.id,
     NOW()
-  FROM resource;
+  FROM resource
+  WHERE resource.scope IN ('BOARD', 'POST');
 
 INSERT INTO location (name, domicile, google_id, latitude, longitude, created_timestamp)
 VALUES ('London, United Kingdom', 'GB', 'code1', 1.00, 1.00, NOW()),
