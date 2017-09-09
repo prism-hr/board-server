@@ -28,7 +28,8 @@ public class ResourceApi {
     private ResourceService resourceService;
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
-    public UserRolesRepresentation getUserRoles(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestParam("searchTerm") String searchTerm) {
+    public UserRolesRepresentation getUserRoles(@ModelAttribute Scope scope, @PathVariable Long resourceId,
+                                                @RequestParam(value = "searchTerm", required = false) String searchTerm) {
         return userRoleService.getUserRoles(scope, resourceId, searchTerm);
     }
 

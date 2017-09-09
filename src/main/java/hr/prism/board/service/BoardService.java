@@ -138,7 +138,7 @@ public class BoardService {
         Department department = departmentService.getDepartment(board.getParent().getId());
         Map<String, Object> model = createBoardBadgeModel(board, department, options);
 
-        List<Post> posts = postService.getPosts(board.getId(), true);
+        List<Post> posts = postService.getPosts(board.getId());
         posts = posts.subList(0, Math.min(posts.size(), options.getPostCount()));
         model.put("posts", posts);
 

@@ -132,8 +132,8 @@ public class PostService {
         return postRepository.findByName(name);
     }
 
-    public List<Post> getPosts(Long boardId, Boolean includePublicPosts) {
-        return getPosts(boardId, includePublicPosts, null, null, null);
+    public List<Post> getPosts(Long boardId) {
+        return getPosts(boardId, true, null, null, null);
     }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
