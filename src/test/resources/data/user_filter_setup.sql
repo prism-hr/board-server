@@ -1,28 +1,19 @@
 INSERT INTO user (uuid, given_name, surname, email, email_original, password, created_timestamp)
-VALUES (UUID(), 'administrator', 'administrator', 'administrator@administrator.com', 'administrator@administrator.com', SHA2('password', 256), NOW()),
-  (UUID(), 'manager', 'manager', 'manager@manager.com', 'manager@manager.com', SHA2('password', 256), NOW()),
-  (UUID(), 'author', 'author', 'author@author.com', 'author@author.com', SHA2('password', 256), NOW()),
-  (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'alastair@knowles.com', SHA2('password', 256), NOW()),
+VALUES (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'alastair@knowles.com', SHA2('password', 256), NOW()),
   (UUID(), 'jakub', 'fibinger', 'jakub@fibinger.com', 'jakub@fibinger.com', SHA2('password', 256), NOW()),
-  (UUID(), 'juan', 'mingo', 'juan@mingo.com', 'juan@mingo.com', SHA2('password', 256), NOW());
+  (UUID(), 'juan', 'mingo', 'juan@mingo.com', 'juan@mingo.com', SHA2('password', 256), NOW()),
+  (UUID(), 'beatriz', 'rodriguez', 'beatriz@rodriguez.com', 'beatriz@rodriguez.com', SHA2('password', 256), NOW()),
+  (UUID(), 'felipe', 'ieder', 'felipe@ieder.com', 'felipe@ieder.com', SHA2('password', 256), NOW()),
+  (UUID(), 'chris', 'neil', 'chris@neil.com', 'chris@neil.com', SHA2('password', 256), NOW()),
+  (UUID(), 'andrew', 'marriott', 'andrew@marriott.com', 'andrew@marriott.com', SHA2('password', 256), NOW()),
+  (UUID(), 'jon', 'wheatley', 'jon@wheatley.com', 'jon@wheatley.com', SHA2('password', 256), NOW()),
+  (UUID(), 'toby', 'godfrey', 'toby@godfrey.com', 'toby@godfrey.com', SHA2('password', 256), NOW()),
+  (UUID(), 'dan', 'black', 'dan@black.com', 'dan@black.com', SHA2('password', 256), NOW()),
+  (UUID(), 'kevin', 'denver', 'kevin@denver.com', 'kevin@denver.com', SHA2('password', 256), NOW());
 
-INSERT INTO resource (scope, state, name, handle, summary, description, organization_name, apply_website, created_timestamp)
-VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW()),
-  ('BOARD', 'DRAFT', 'Games', 'cs/games', 'Games for students to play', NULL, NULL, NULL, NOW()),
-  ('BOARD', 'ACCEPTED', 'Opportunities', 'cs/opportunities', 'Promote work and work experience opportunities to students', NULL, NULL, NULL, NOW()),
-  ('BOARD', 'REJECTED', 'Housing', 'cs/housing', 'Meet students to share houses with', NULL, NULL, NULL, NOW()),
-  ('POST', 'DRAFT', 'Support Engineer', 'cs/opportunities/1', 'Help people to use their computers', 'This will be soul destroying', NULL, NULL, NOW()),
-  ('POST', 'SUSPENDED', 'UX Designer', 'cs/opportunities/2', 'Design user-friendly software', 'You will get to analyze requirements and produce screen designs', NULL, NULL, NOW()),
-  ('POST', 'PENDING', 'Front-End Developer', 'cs/opportunities/3', 'Writing responsive single page applications in AngularJs',
-   'You will spend a lot of time fiddling around with stuff that never works very well', NULL, NULL, NOW()),
-  ('POST', 'ACCEPTED', 'Database Engineer', 'cs/opportunities/4', 'Design schemas and optimize queries', 'You will be working primarily with SQL Server', NULL, NULL, NOW()),
-  ('POST', 'ACCEPTED', 'Java Web Developer', 'cs/opportunities/5', 'Build fast, scalable backend services', 'You will be implementing business logic in Spring Boot microservices', NULL, NULL, NOW()),
-  ('POST', 'ACCEPTED', 'Technical Analyst', 'cs/opportunities/6', 'Work out how to build things', 'Nobody will ever know what you actually do', NULL, NULL, NOW()),
-  ('POST', 'EXPIRED', 'Scrum Leader', 'cs/opportunities/7', 'Whip software engineers into shape', 'You will be inculcating agile practice to ensure stuff gets done on time', NULL, NULL, NOW()),
-  ('POST', 'REJECTED', 'Product Manager', 'cs/opportunities/8', 'Work with customers to design products', 'You will be annoying software engineers a lot', NULL, NULL, NOW()),
-  ('POST', 'WITHDRAWN', 'Test Engineer', 'cs/opportunities/9', 'Anticipate and find bugs before release to production', 'You will be working primarily with Selenium', NULL, NULL,
-   NOW()),
-  ('POST', 'ARCHIVED', 'Software Architect', 'cs/opportunities/10', 'Play lego all day', 'You will work out how to put the big bits together', NULL, NULL, NOW());
+INSERT INTO resource (scope, state, name, handle, summary, created_timestamp)
+VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NOW()),
+  ('BOARD', 'ACCEPTED', 'Opportunities', 'cs/opportunities', 'Promote work and work experience opportunities to students', NOW());
 
 INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   SELECT
@@ -34,7 +25,7 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   FROM resource
     INNER JOIN user
   WHERE resource.scope IN ('DEPARTMENT', 'BOARD')
-        AND user.email = 'administrator@administrator.com';
+        AND user.email IN ('alastair@knowles.com', 'jakub@fibinger.com');
 
 INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   SELECT
@@ -46,7 +37,31 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   FROM resource
     INNER JOIN user
   WHERE resource.scope = 'DEPARTMENT'
-        AND user.email = 'administrator@administrator.com';
+        AND user.email IN ('juan@mingo.com', 'beatriz@rodriguez.com');
+
+INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+  SELECT
+    resource.id,
+    user.id,
+    'MEMBER',
+    'PENDING',
+    NOW()
+  FROM resource
+    INNER JOIN user
+  WHERE resource.scope = 'DEPARTMENT'
+        AND user.email IN ('felipe@ieder.com', 'chris@neil.com');
+
+INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+  SELECT
+    resource.id,
+    user.id,
+    'MEMBER',
+    'REJECTED',
+    NOW()
+  FROM resource
+    INNER JOIN user
+  WHERE resource.scope = 'DEPARTMENT'
+        AND user.email = 'andrew@marriott.com';
 
 INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   SELECT
@@ -58,8 +73,7 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   FROM resource
     INNER JOIN user
   WHERE resource.scope = 'BOARD'
-        AND resource.state = 'ACCEPTED'
-        AND user.email = 'manager@manager.com';
+        AND user.email IN ('jon@wheatley.com', 'toby@godfrey.com');
 
 INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   SELECT
@@ -71,45 +85,13 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   FROM resource
     INNER JOIN user
   WHERE resource.scope = 'BOARD'
-        AND user.email = 'author@author.com';
-
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
-  SELECT
-    resource.id,
-    user.id,
-    'ADMINISTRATOR',
-    'ACCEPTED',
-    NOW()
-  FROM resource
-    INNER JOIN user
-  WHERE resource.scope = 'POST'
-        AND user.email = 'member@member.com';
-
-INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
-  SELECT
-    resource1.id,
-    resource2.id,
-    NOW()
-  FROM resource AS resource1
-    INNER JOIN resource AS resource2
-  WHERE resource1.scope = 'DEPARTMENT'
-        AND resource2.scope = 'DEPARTMENT';
+        AND user.email IN ('dan@black.com', 'kevin@denver.com');
 
 UPDATE resource AS resource1
   INNER JOIN resource AS resource2
 SET resource1.parent_id = resource2.id
 WHERE resource1.scope = 'DEPARTMENT'
       AND resource2.scope = 'DEPARTMENT';
-
-INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
-  SELECT
-    resource1.id,
-    resource2.id,
-    NOW()
-  FROM resource AS resource1
-    INNER JOIN resource AS resource2
-  WHERE resource1.scope IN ('DEPARTMENT', 'BOARD')
-        AND resource2.scope = 'BOARD';
 
 UPDATE resource AS resource1
   INNER JOIN resource AS resource2
@@ -124,46 +106,12 @@ INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
     NOW()
   FROM resource AS resource1
     INNER JOIN resource AS resource2
-  WHERE (resource1.scope IN ('DEPARTMENT', 'POST')
-         OR resource1.scope = 'BOARD' AND resource1.state = 'ACCEPTED')
-        AND resource2.scope = 'POST';
+  WHERE resource1.scope = 'DEPARTMENT';
 
-UPDATE resource AS resource1
-  INNER JOIN resource AS resource2
-SET resource1.parent_id = resource2.id
-WHERE resource1.scope = 'POST'
-      AND resource2.scope = 'BOARD'
-      AND resource2.state = 'ACCEPTED';
-
-INSERT INTO location (name, domicile, google_id, latitude, longitude, created_timestamp)
-VALUES ('London, United Kingdom', 'GB', 'code1', 1.00, 1.00, NOW()),
-  ('Madrid, Spain', 'ES', 'code2', 2.00, 2.00, NOW()),
-  ('Krakow, Poland', 'PL', 'code3', 3.00, 3.00, NOW());
-
-UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
-WHERE resource.scope = 'POST'
-      AND resource.state <> 'ACCEPTED'
-      AND location.google_id = 'code1';
-
-UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
-WHERE resource.scope = 'POST'
-      AND resource.name = 'Database Engineer'
-      AND location.google_id = 'code1';
-
-UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
-WHERE resource.scope = 'POST'
-      AND resource.name = 'Java Web Developer'
-      AND location.google_id = 'code2';
-
-UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
-WHERE resource.scope = 'POST'
-      AND resource.name = 'Technical Analyst'
-      AND location.google_id = 'code3';
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
+  SELECT
+    resource.id,
+    resource.id,
+    NOW()
+  FROM resource
+  WHERE resource.scope = 'BOARD';
