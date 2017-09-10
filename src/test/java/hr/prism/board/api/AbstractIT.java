@@ -216,15 +216,6 @@ public abstract class AbstractIT {
     }
 
     private void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
-        ExceptionCode exceptionCode;
-        if (user == null) {
-            testUserService.unauthenticate();
-            exceptionCode = ExceptionCode.UNAUTHENTICATED_USER;
-        } else {
-            testUserService.setAuthentication(user.getId());
-            exceptionCode = ExceptionCode.FORBIDDEN_ACTION;
-        }
-
         Resource resource = resourceService.getResource(user, scope, id);
         if (ArrayUtils.isEmpty(expectedActions)) {
             Assert.assertNull(resource.getActions());
@@ -237,6 +228,19 @@ public abstract class AbstractIT {
                 transactionTemplate.execute(status -> {
                     Runnable operation = operations.get(action);
                     if (operation != null) {
+                        ExceptionCode exceptionCode;
+                        if (user == null) {
+                            testUserService.unauthenticate();
+                            if (action == Action.VIEW) {
+                                exceptionCode = ExceptionCode.FORBIDDEN_ACTION;
+                            } else {
+                                exceptionCode = ExceptionCode.UNAUTHENTICATED_USER;
+                            }
+                        } else {
+                            testUserService.setAuthentication(user.getId());
+                            exceptionCode = ExceptionCode.FORBIDDEN_ACTION;
+                        }
+
                         LOGGER.info("Verifying forbidden action: " + action.name().toLowerCase());
                         ExceptionUtils.verifyException(BoardForbiddenException.class, operation, exceptionCode, status);
                     }

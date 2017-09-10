@@ -94,7 +94,6 @@ public class UserService {
         userPatchService.patchProperty(user, user::getGivenName, user::setGivenName, userDTO.getGivenName());
         userPatchService.patchProperty(user, user::getSurname, user::setSurname, userDTO.getSurname());
 
-        // TODO: remember the original email as key for uploads
         Optional<String> emailOptional = userDTO.getEmail();
         if (emailOptional != null) {
             if (emailOptional.isPresent()) {
@@ -103,10 +102,10 @@ public class UserService {
                 if (duplicateUser == null) {
                     user.setEmail(email);
                 } else {
-                    throw new BoardException(ExceptionCode.DUPLICATE_USER);
+                    throw new BoardException(ExceptionCode.DUPLICATE_USER, "Email address already in use");
                 }
             } else {
-                throw new BoardException(ExceptionCode.MISSING_USER_EMAIL);
+                throw new BoardException(ExceptionCode.MISSING_USER_EMAIL, "Cannot unset email address");
             }
         }
 
@@ -126,12 +125,12 @@ public class UserService {
         String uuid = userPasswordDTO.getUuid();
         User user = userRepository.findByPasswordResetUuid(uuid);
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET, "Invalid password reset token");
         }
 
         LocalDateTime baseline = LocalDateTime.now();
         if (user.getPasswordResetTimestamp().plusSeconds(passwordResetTimeoutSeconds).isBefore(baseline)) {
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET, "Expired password reset token");
         }
 
         user.setPassword(DigestUtils.sha256Hex(userPasswordDTO.getPassword()));
@@ -237,7 +236,7 @@ public class UserService {
     public User getCurrentUserSecured(boolean fresh) {
         User user = getCurrentUser(fresh);
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "User cannot be authenticated");
         }
 
         return user;

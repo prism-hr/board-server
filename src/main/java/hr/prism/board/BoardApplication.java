@@ -12,6 +12,7 @@ import freemarker.template.TemplateException;
 import hr.prism.board.repository.MyRepositoryImpl;
 import no.api.freemarker.java8.Java8ObjectWrapper;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -37,7 +37,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
-import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,9 +56,6 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
-    @Inject
-    private Environment environment;
-
     @Value("${database.host}")
     private String datbaseHost;
 
@@ -68,6 +64,9 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
 
     @Value("${sendgrid.key}")
     private String sendgridKey;
+
+    @Value("${clean.db.on.startup}")
+    private Boolean cleanDbOnStartup;
 
     public static void main(String[] args) {
         InputStream propertiesStream = null;
@@ -114,9 +113,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:database");
-
-        String[] activeProfiles = environment.getActiveProfiles();
-        if (activeProfiles.length > 0 && activeProfiles[0].equals("test")) {
+        if (BooleanUtils.isTrue(cleanDbOnStartup)) {
             flyway.clean();
         }
 

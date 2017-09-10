@@ -1,8 +1,5 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.math.BigDecimal;
@@ -32,7 +29,7 @@ public class BigDecimalConverter implements AttributeConverter<BigDecimal, Strin
         try {
             return ((BigDecimal) decimalFormat.parse(dbData)).stripTrailingZeros();
         } catch (ParseException e) {
-            throw new BoardException(ExceptionCode.PROBLEM, e);
+            throw new Error(e);
         }
     }
 

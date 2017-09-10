@@ -10,7 +10,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.notification.property.NotificationProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrSubstitutor;
 import org.jsoup.Jsoup;
@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -36,13 +35,17 @@ public class NotificationService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
 
-    private MailStrategy mailStrategy;
-
     private Map<Notification, String> subjects = new TreeMap<>();
 
     private Map<Notification, String> contents = new TreeMap<>();
 
     private Map<Notification, Map<String, NotificationProperty>> properties = new TreeMap<>();
+
+    @Value("${mail.on}")
+    private Boolean mailOn;
+
+    @Value("${system.email}")
+    private String senderEmail;
 
     @Inject
     private SendGrid sendGrid;
@@ -50,21 +53,8 @@ public class NotificationService {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Inject
-    private Environment environment;
-
-    @Value("${system.email}")
-    private String senderEmail;
-
     @PostConstruct
     public void postConstruct() throws IOException {
-        String[] activeProfiles = environment.getActiveProfiles();
-        if (ArrayUtils.contains(activeProfiles, "local") || ArrayUtils.contains(activeProfiles, "test")) {
-            mailStrategy = MailStrategy.LOG;
-        } else {
-            mailStrategy = MailStrategy.SEND;
-        }
-
         Map<String, NotificationProperty> propertiesMap =
             applicationContext.getBeansOfType(NotificationProperty.class).values().stream().collect(Collectors.toMap(NotificationProperty::getKey, property -> property));
 
@@ -72,7 +62,7 @@ public class NotificationService {
             org.springframework.core.io.Resource subject = applicationContext.getResource("classpath:notification/subject/" + notification + ".html");
             org.springframework.core.io.Resource content = applicationContext.getResource("classpath:notification/content/" + notification + ".html");
             if (!subject.exists() || !content.exists()) {
-                throw new BoardException(ExceptionCode.MISSING_NOTIFICATION);
+                throw new BoardException(ExceptionCode.MISSING_NOTIFICATION, "No subject or content defined for notification: " + notification);
             }
 
             Set<String> placeholders = new HashSet<>();
@@ -104,11 +94,7 @@ public class NotificationService {
         String subject = parser.replace(this.subjects.get(notification));
         String content = parser.replace(this.contents.get(notification));
 
-        if (mailStrategy == MailStrategy.LOG) {
-            // Local/Test contexts
-            LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail)
-                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
-        } else {
+        if (BooleanUtils.isTrue(mailOn)) {
             // Production/UAT contexts
             Mail mail = new Mail();
             mail.setFrom(new Email(senderEmail));
@@ -132,8 +118,12 @@ public class NotificationService {
                 LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
             } catch (IOException e) {
                 LOGGER.error("Failed to send notification", e);
-                throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION);
+                throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
             }
+        } else {
+            // Local/Test contexts
+            LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail)
+                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
         }
 
         return properties;
@@ -171,10 +161,6 @@ public class NotificationService {
         }
 
         return plainText.replaceAll("\\n$", StringUtils.EMPTY);
-    }
-
-    private enum MailStrategy {
-        LOG, SEND
     }
 
     public static class NotificationRequest {

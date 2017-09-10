@@ -69,16 +69,17 @@ public class UserNotificationSuppressionService {
         }
 
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User cannot be found");
         }
 
         Resource resource = resourceService.findOne(resourceId);
-        if (resource.getScope() != Scope.BOARD) {
-            throw new BoardException(ExceptionCode.UNSUPPRESSABLE_RESOURCE);
+        Scope scope = resource.getScope();
+        if (scope != Scope.BOARD) {
+            throw new BoardException(ExceptionCode.UNSUPPRESSABLE_RESOURCE, "Notifications cannot be suppressed for resource of scope: " + scope);
         }
 
         if (userRoleService.findByResourceAndUser(resource, user).isEmpty()) {
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE, "User cannot access resource: " + scope + ": " + resourceId);
         }
 
         if (userNotificationSuppressionRepository.findByUserAndResource(user, resource) == null) {

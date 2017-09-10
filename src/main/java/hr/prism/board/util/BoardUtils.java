@@ -2,8 +2,6 @@ package hr.prism.board.util;
 
 import com.google.common.base.Joiner;
 import hr.prism.board.dto.ResourcePatchDTO;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import org.apache.commons.codec.language.Soundex;
 import org.apache.commons.collections.CollectionUtils;
@@ -65,7 +63,7 @@ public class BoardUtils {
                         return true;
                     }
                 } catch (IllegalAccessException e) {
-                    throw new BoardException(ExceptionCode.PROBLEM, e);
+                    throw new Error(e);
                 }
             }
         }

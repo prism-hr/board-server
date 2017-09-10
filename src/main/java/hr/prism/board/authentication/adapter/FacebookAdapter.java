@@ -32,7 +32,7 @@ public class FacebookAdapter implements OauthAdapter {
             return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
                 .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
         } catch (ResourceAccessException e) {
-            throw new BoardException(ExceptionCode.FAILING_INTEGRATION);
+            throw new BoardException(ExceptionCode.FAILING_INTEGRATION, "Fault calling Facebook API", e);
         }
     }
 

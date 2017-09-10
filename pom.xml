@@ -347,6 +347,7 @@
                 <profile.auth.linkedin.appSecret>S9rG2e7FWFRY5YFh</profile.auth.linkedin.appSecret>
                 <profile.auth.linkedin.clientId>772yxzl30r2opy</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>local</profile.cloudinary.folder>
+                <profile.mail.on>false</profile.mail.on>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -367,6 +368,7 @@
                 <profile.auth.linkedin.appSecret>qqbWOxibjsuCetzN</profile.auth.linkedin.appSecret>
                 <profile.auth.linkedin.clientId>77tm9xfc3d1bxd</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>uat</profile.cloudinary.folder>
+                <profile.mail.on>true</profile.mail.on>
             </properties>
         </profile>
 
@@ -382,6 +384,7 @@
                 <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
                 <profile.auth.linkedin.appSecret>tbc</profile.auth.linkedin.appSecret>
                 <profile.cloudinary.folder>p</profile.cloudinary.folder>
+                <profile.mail.on>true</profile.mail.on>
             </properties>
         </profile>
     </profiles>

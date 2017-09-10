@@ -49,7 +49,7 @@ public class UserRoleEventService {
                 userRoleService.createResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
             }
         } catch (Throwable t) {
-            throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, t);
+            throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to bulk create user roles", t);
         } finally {
             departmentService.unsetMemberCountProvisional(resourceId);
         }

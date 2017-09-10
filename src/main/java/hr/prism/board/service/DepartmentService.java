@@ -12,6 +12,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
@@ -92,6 +93,9 @@ public class DepartmentService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
+    @Inject
+    private UserRoleRepository userRoleRepository;
+
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
@@ -170,7 +174,7 @@ public class DepartmentService {
     }
 
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
-        User currentUser = userService.getCurrentUser();
+        User currentUser = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.setChangeList(new ChangeListRepresentation());
@@ -219,10 +223,10 @@ public class DepartmentService {
         if (userRole != null) {
             if (userRole.getState() == State.REJECTED) {
                 // User has been rejected already, don't let them be a nuisance by repeatedly retrying
-                throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION);
+                throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION, "User has already been rejected as a member");
             }
 
-            throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION);
+            throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION, "User has already requested membership");
         }
 
         userRoleDTO.setRole(Role.MEMBER);

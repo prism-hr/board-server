@@ -62,7 +62,7 @@ public class ResourceEventService {
 
     public ResourceEvent createPostView(Post post, User user, String ipAddress) {
         if (user == null && ipAddress == null) {
-            throw new BoardException(ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT);
+            throw new BoardException(ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
         }
 
         ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW);
@@ -82,7 +82,7 @@ public class ResourceEventService {
 
     public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
         if (post.getApplyEmail() == null) {
-            throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT);
+            throw new BoardException(ExceptionCode.INVALID_RESOURCE_EVENT, "Post no longer accepting applications");
         }
 
         DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
@@ -91,7 +91,7 @@ public class ResourceEventService {
 
         ResourceEvent previousResponse = findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user);
         if (previousResponse != null) {
-            throw new BoardDuplicateException(ExceptionCode.DUPLICATE_RESOURCE_EVENT, previousResponse.getId());
+            throw new BoardDuplicateException(ExceptionCode.DUPLICATE_RESOURCE_EVENT, "User already responded", previousResponse.getId());
         }
 
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
@@ -128,7 +128,7 @@ public class ResourceEventService {
         ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
         if (resourceEvent == null) {
             // Bad referral, or referral consumed already - client should request a new one
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_REFERRAL);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_REFERRAL, "Referral code does not exist or has been consumed");
         }
 
         resourceEvent.setReferral(null);

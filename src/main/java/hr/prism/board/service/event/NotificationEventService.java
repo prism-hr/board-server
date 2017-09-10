@@ -125,7 +125,7 @@ public class NotificationEventService {
             attachments.setContentId(attachment.getLabel());
             return attachments;
         } catch (IOException e) {
-            throw new BoardException(ExceptionCode.FAILING_INTEGRATION);
+            throw new BoardException(ExceptionCode.FAILING_INTEGRATION, "Could not retrieve attachment data");
         } finally {
             IOUtils.closeQuietly(inputStream);
         }

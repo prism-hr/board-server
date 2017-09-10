@@ -2,7 +2,9 @@ package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import hr.prism.board.domain.User;
 import hr.prism.board.exception.*;
+import hr.prism.board.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,6 +30,9 @@ import java.util.List;
 public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiAdvice.class);
+
+    @Inject
+    private UserService userService;
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> processException(Exception exception, WebRequest request) {
@@ -47,24 +53,26 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
             }
         }
 
+        User user = userService.getCurrentUser();
+        String userPrefix = user == null ? "Anonymous" : user.toString();
         if (responseStatus == HttpStatus.INTERNAL_SERVER_ERROR) {
-            LOGGER.error("Could not serve request: " + responseStatus, exception);
+            LOGGER.error(userPrefix + ": " + responseStatus + " - " + exception.getMessage(), exception);
         } else {
-            LOGGER.info("Could not serve request: " + responseStatus);
+            LOGGER.info(userPrefix + ": " + responseStatus + " - " + exception.getMessage());
         }
 
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
-        ImmutableMap.Builder<String, Object> bodyBuilder = ImmutableMap.<String, Object>builder()
+        ImmutableMap.Builder<String, Object> responseBuilder = ImmutableMap.<String, Object>builder()
             .put("timestamp", LocalDateTime.now())
             .put("uri", Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString()))
             .put("status", responseStatus.value())
             .put("error", responseStatus.getReasonPhrase())
             .put("exceptionCode", exceptionCode);
         if (id != null) {
-            bodyBuilder.put("id", id);
+            responseBuilder.put("id", id);
         }
 
-        return handleExceptionInternal(exception, bodyBuilder.build(), new HttpHeaders(), responseStatus, request);
+        return handleExceptionInternal(exception, responseBuilder.build(), new HttpHeaders(), responseStatus, request);
     }
 
     @Override
@@ -90,4 +98,5 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(), headers, status, request);
     }
+
 }

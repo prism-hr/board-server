@@ -92,7 +92,7 @@ public class AuthenticationService {
     public User login(LoginDTO loginDTO) {
         User user = userCacheService.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User cannot be found");
         }
 
         return user;
@@ -102,7 +102,7 @@ public class AuthenticationService {
         String email = registerDTO.getEmail();
         User user = userCacheService.findByEmail(email);
         if (user != null) {
-            throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER);
+            throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER, "User with email " + email + " exists already");
         }
 
         return userCacheService.saveUser(
@@ -117,13 +117,9 @@ public class AuthenticationService {
 
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {
         Class<? extends OauthAdapter> oauthAdapterClass = provider.getOauthAdapter();
-        if (oauthAdapterClass == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNSUPPORTED_AUTHENTICATOR);
-        }
-
         User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(oauthDTO);
         if (newUser.getEmail() == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER, "User not identifiable, no email address");
         }
 
         String accountId = newUser.getOauthAccountId();
@@ -147,7 +143,7 @@ public class AuthenticationService {
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
         User user = userCacheService.findByEmail(resetPasswordDTO.getEmail());
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER);
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User cannot be found");
         }
 
         String resetUuid = UUID.randomUUID().toString();
@@ -177,8 +173,9 @@ public class AuthenticationService {
     public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String authorization = request.getHeader("Authorization");
         if (authorization == null) {
-            throw new BoardException(ExceptionCode.UNAUTHENTICATED_USER);
+            throw new BoardException(ExceptionCode.UNAUTHENTICATED_USER, "User not authenticated");
         }
+
         String accessToken = authorization.replaceFirst("Bearer ", "");
         try {
             Claims token = decodeAccessToken(accessToken, jwsSecret);
@@ -189,4 +186,5 @@ public class AuthenticationService {
             return null;
         }
     }
+
 }

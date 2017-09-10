@@ -22,12 +22,12 @@ public class TestApi {
 
     @RequestMapping(value = "/test/apiException")
     public void throwApiException() {
-        throw new BoardException(ExceptionCode.DUPLICATE_DEPARTMENT);
+        throw new BoardException(ExceptionCode.MISSING_COMMENT, "Comment must be provided");
     }
 
     @RequestMapping(value = "/test/apiForbiddenException")
     public void throwApiForbiddenException() {
-        throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+        throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "User cannot be authenticated");
     }
 
 }

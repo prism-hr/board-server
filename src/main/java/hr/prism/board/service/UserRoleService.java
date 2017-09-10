@@ -8,7 +8,6 @@ import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
@@ -124,7 +123,7 @@ public class UserRoleService {
 
     public Long createResourceUsers(Scope scope, Long resourceId, List<UserRoleDTO> userRoleDTOs) {
         if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != Role.MEMBER)) {
-            throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER);
+            throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER, "Only members can be bulk created");
         }
 
         User currentUser = userService.getCurrentUserSecured();
@@ -143,7 +142,7 @@ public class UserRoleService {
     public void createResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
         if (invokedAsynchronously && userService.getCurrentUser() != null) {
             // There should never be an authenticated user inside this method authentication
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE_USER);
+            throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
         }
 
         User user = userService.getOrCreateUser(userRoleDTO.getUser());

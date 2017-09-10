@@ -32,7 +32,7 @@ public class UserActivityService {
 
     public void processRequestTimeout(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
         requests.remove(userId, request);
-        request.setErrorResult(new BoardNotModifiedException(ExceptionCode.USER_ACTIVITY_NOT_MODIFIED));
+        request.setErrorResult(new BoardNotModifiedException(ExceptionCode.USER_ACTIVITY_NOT_MODIFIED, "No new activities for user: " + userId));
     }
 
 }

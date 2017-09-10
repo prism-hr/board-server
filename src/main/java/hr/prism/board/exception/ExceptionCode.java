@@ -1,11 +1,9 @@
 package hr.prism.board.exception;
 
-// TODO - define log level
 public enum ExceptionCode {
 
     PROBLEM,
     UNDELIVERABLE_NOTIFICATION,
-    UNSUPPORTED_AUTHENTICATOR,
     FORBIDDEN_ACTION,
     MISSING_COMMENT,
     MISSING_NOTIFICATION,
@@ -48,7 +46,6 @@ public enum ExceptionCode {
     INVALID_REFERRAL,
     INVALID_RESOURCE_FILTER,
     INVALID_RESOURCE_USER,
-    FORBIDDEN_RESOURCE_USER,
     UNPROCESSABLE_RESOURCE_USER
 
 }

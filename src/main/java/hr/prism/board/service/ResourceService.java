@@ -439,7 +439,7 @@ public class ResourceService {
 
         List<Long> resourceIds = query.getResultList();
         if (!resourceIds.isEmpty()) {
-            throw new BoardDuplicateException(exceptionCode, resourceIds.get(0));
+            throw new BoardDuplicateException(exceptionCode, scope.name() + " with name " + name + " exists already", resourceIds.get(0));
         }
     }
 
@@ -454,7 +454,7 @@ public class ResourceService {
             .setParameter("id", resource.getId());
 
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new BoardException(exceptionCode);
+            throw new BoardException(exceptionCode, "Specified handle would not be unique");
         }
     }
 
@@ -470,12 +470,12 @@ public class ResourceService {
         List<ResourceCategory> referenceCategories = reference.getCategories(type);
         if (!referenceCategories.isEmpty()) {
             if (CollectionUtils.isEmpty(categories)) {
-                throw new BoardException(missing);
+                throw new BoardException(missing, "Categories must be specified");
             } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
-                throw new BoardException(invalid);
+                throw new BoardException(invalid, "Valid categories must be specified - check parent categories");
             }
         } else if (CollectionUtils.isNotEmpty(categories)) {
-            throw new BoardException(corrupted);
+            throw new BoardException(corrupted, "Categories must not be specified");
         }
     }
 
@@ -620,7 +620,7 @@ public class ResourceService {
             if (state == State.ARCHIVED) {
                 negatedStateString = null;
                 if (quarter == null) {
-                    throw new BoardException(ExceptionCode.INVALID_RESOURCE_FILTER);
+                    throw new BoardException(ExceptionCode.INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
                 }
             }
         }

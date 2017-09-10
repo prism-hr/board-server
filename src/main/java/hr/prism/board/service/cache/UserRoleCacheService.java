@@ -128,7 +128,7 @@ public class UserRoleCacheService {
         if (resource.getScope() == Scope.DEPARTMENT) {
             List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, Role.ADMINISTRATOR);
             if (remainingAdminRoles.isEmpty()) {
-                throw new BoardException(exceptionCode);
+                throw new BoardException(exceptionCode, "Cannot remove last remaining administrator");
             }
         }
     }

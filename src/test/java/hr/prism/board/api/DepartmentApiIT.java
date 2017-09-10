@@ -278,12 +278,11 @@ public class DepartmentApiIT extends AbstractIT {
                     .setRole(Role.ADMINISTRATOR)).getUser().getId());
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
-
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
             ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4")
                 .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").build()));
 
-
+        testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status ->
             resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, departmentUser2Id,
                 new UserRoleDTO().setRole(Role.AUTHOR)));
@@ -292,6 +291,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.verify();
         testNotificationService.stop();
 
+        testUserService.setAuthentication(departmentUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> departmentApi.getDepartmentOperations(departmentId));
         Assert.assertEquals(5, resourceOperationRs.size());
 

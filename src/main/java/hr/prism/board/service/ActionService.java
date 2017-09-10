@@ -110,11 +110,11 @@ public class ActionService {
 
         if (user == null) {
             LOGGER.info("Public user cannot " + action.name().toLowerCase() + " " + resource.toString());
-            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER);
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION, "User not authorized");
         }
 
         LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
-        throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION);
+        throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_ACTION, "User cannot perform action");
     }
 
     @SuppressWarnings("JpaQlInspection")

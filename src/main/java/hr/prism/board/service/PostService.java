@@ -191,7 +191,7 @@ public class PostService {
 
         decoratePost(user, createdPost);
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
-            throw new BoardException(ExceptionCode.MISSING_POST_EXISTING_RELATION);
+            throw new BoardException(ExceptionCode.MISSING_POST_EXISTING_RELATION, "Existing relation explanation required");
         }
 
         return createdPost;
@@ -230,9 +230,9 @@ public class PostService {
 
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
-        if (redirect == null) {
-            // We may no longer be redirecting - throw an exception so client can divert to application form
-            throw new BoardException(ExceptionCode.INVALID_REFERRAL);
+        if (post.getState() != State.ACCEPTED || redirect == null) {
+            // We may no longer be redirecting - throw an exception so client can refresh
+            throw new BoardException(ExceptionCode.INVALID_REFERRAL, "Post no longer accepting referrals");
         }
 
         return redirect;
@@ -345,7 +345,7 @@ public class PostService {
             return objectMapper.readValue(existingRelationExplanation, new TypeReference<LinkedHashMap<String, Object>>() {
             });
         } catch (IOException e) {
-            throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+            throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, "Unable to deserialize existing relation explanation", e);
         }
     }
 
@@ -519,16 +519,16 @@ public class PostService {
         try {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
-            throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, e);
+            throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, "Unable to serialize existing relation explanation", e);
         }
     }
 
     private void validatePostApply(Post post) {
         long applyCount = Stream.of(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail()).filter(Objects::nonNull).count();
         if (applyCount == 0) {
-            throw new BoardException(ExceptionCode.MISSING_POST_APPLY);
+            throw new BoardException(ExceptionCode.MISSING_POST_APPLY, "No apply mechanism specified");
         } else if (applyCount > 1) {
-            throw new BoardException(ExceptionCode.CORRUPTED_POST_APPLY);
+            throw new BoardException(ExceptionCode.CORRUPTED_POST_APPLY, "Multiple apply mechanisms specified");
         }
     }
 
