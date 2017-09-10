@@ -246,7 +246,7 @@ public class ResourceApiIT extends AbstractIT {
 
     @Test
     @Sql("classpath:data/resource_filter_setup.sql")
-    public void shouldSupportFilters() {
+    public void shouldListAndFilterResources() {
         transactionTemplate.execute(status -> {
             Streams.stream(resourceRepository.findAll()).sorted((resource1, resource2) -> ObjectUtils.compare(resource1.getId(), resource2.getId())).forEach(resource -> {
                 if (Arrays.asList(Scope.DEPARTMENT, Scope.BOARD).contains(resource.getScope())) {
@@ -397,6 +397,17 @@ public class ResourceApiIT extends AbstractIT {
 
         postRs = postApi.getPostsByBoard(boardId, false, State.ARCHIVED, "20171", "guru");
         Assert.assertEquals(0, postRs.size());
+    }
+
+    @Test
+    @Sql("classpath:data/user_role_filter_setup.sql")
+    public void shouldListAndFilterUserRoles() {
+
+    }
+
+    @Test
+    public void shouldBulkUpdateUserRoles() {
+
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {

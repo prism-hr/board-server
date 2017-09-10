@@ -1320,6 +1320,12 @@ public class PostApiIT extends AbstractIT {
         Assert.assertTrue(responses.get(2).isViewed());
     }
 
+    @Test
+    @Sql("classpath:data/post_response_filter_setup.sql")
+    public void shouldListAndFilterPostResponses() {
+
+    }
+
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
         return transactionTemplate.execute(status -> {
             PostRepresentation postR = postApi.postPost(boardId, postDTO);
