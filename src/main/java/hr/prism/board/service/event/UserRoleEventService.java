@@ -46,7 +46,7 @@ public class UserRoleEventService {
         try {
             User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
             for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
-                userRoleService.createResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
+                userRoleService.createOrUpdateResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
             }
         } catch (Throwable t) {
             throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to bulk create user roles", t);

@@ -80,6 +80,10 @@ public class UserCacheService {
         return user;
     }
 
+    public void setIndexData(User user) {
+        user.setIndexData(BoardUtils.makeSoundex(user.getGivenName(), user.getSurname()));
+    }
+
     private void appendScopes(User user) {
         if (user != null) {
             List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, Role.ADMINISTRATOR).stream().map(ResourceSummary::getKey).collect(Collectors.toList());
@@ -91,10 +95,6 @@ public class UserCacheService {
                 user.setScopes(Collections.singletonList(Scope.POST));
             }
         }
-    }
-
-    private void setIndexData(User user) {
-        user.setIndexData(BoardUtils.makeSoundex(user.getGivenName(), user.getSurname(), user.getEmail()));
     }
 
 }

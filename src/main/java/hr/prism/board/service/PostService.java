@@ -43,7 +43,7 @@ public class PostService {
     private static final String SIMILAR_ORGANIZATION =
         "SELECT resource.organization_name, " +
             "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "MATCH resource.organization_name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+            "MATCH (resource.organization_name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
             "WHERE resource.scope = :scope " +
             "GROUP BY resource.organization_name " +

@@ -8,6 +8,7 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
@@ -28,6 +29,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,12 +106,12 @@ public class ResourceApiIT extends AbstractIT {
 
     @Test
     public void shouldAddUsersInBulk() throws InterruptedException {
-        User currentUser = testUserService.authenticate();
+        User user = testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
         DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(currentUser.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // add 200 members
         List<UserRoleDTO> userRoleDTOs1 = new ArrayList<>();
@@ -402,12 +404,105 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/user_role_filter_setup.sql")
     public void shouldListAndFilterUserRoles() {
+        transactionTemplate.execute(status -> {
+            for (User user : userRepository.findAll()) {
+                userCacheService.setIndexData(user);
+                userRepository.update(user);
+            }
 
+            return null;
+        });
+
+        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("alastair@knowles.com")).getId();
+        testUserService.setAuthentication(userId);
+
+        Long departmentId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs")).getId();
+        UserRolesRepresentation userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null);
+        Assert.assertEquals(2, userRoles.getUsers().size());
+        Assert.assertEquals(2, userRoles.getMembers().size());
+        Assert.assertEquals(2, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "alastair@knowles.com", "jakub@fibinger.com");
+
+        userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "alastair");
+        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "alastair@knowles.com");
+
+        userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "alister");
+        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "alastair@knowles.com");
+
+        userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "beatriz");
+        Assert.assertEquals(0, userRoles.getUsers().size());
+        Assert.assertEquals(1, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "beatriz@rodriguez.com");
+
+        userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "felipe");
+        Assert.assertEquals(0, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(1, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getMemberRequests().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "felipe@ieder.com");
+
+        testUserService.unauthenticate();
+        ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null), ExceptionCode.UNAUTHENTICATED_USER, null);
+
+        testUserService.setAuthentication(userId);
+        Long boardId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs/opportunities")).getId();
+        userRoles = resourceApi.getUserRoles(Scope.BOARD, boardId, null);
+        Assert.assertEquals(4, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            "alastair@knowles.com", "jakub@fibinger.com", "jon@wheatley.com", "toby@godfrey.com");
+
+        userRoles = resourceApi.getUserRoles(Scope.BOARD, boardId, "toby godfrey");
+        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "toby@godfrey.com");
     }
 
     @Test
-    public void shouldBulkUpdateUserRoles() {
+    public void shouldUpdateUsersInBulk() {
+        User user = testUserService.authenticate();
+        BoardDTO boardDTO = TestHelper.sampleBoard();
 
+        Long departmentId = boardApi.postBoard(boardDTO).getDepartment().getId();
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+
+        List<UserRoleDTO> userRoleDTOs = new ArrayList<>();
+        userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
+            .setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+        userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("jakub").setSurname("fibinger").setEmail("jakub@fibinger.com"))
+            .setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+
+        resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentId, userRoleDTOs);
+        List<UserRoleRepresentation> members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
+
+        verifyMember("jakub@fibinger.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(0));
+        verifyMember("alastair@knowles.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(1));
+
+        Long memberId = transactionTemplate.execute(status -> userRepository.findByEmail("alastair@knowles.com")).getId();
+        testUserService.setAuthentication(memberId);
+
+        userApi.updateUser(new UserPatchDTO().setEmail(Optional.of("alastair@alastair.com")));
+
+        testUserService.setAuthentication(user.getId());
+        userRoleDTOs = new ArrayList<>();
+        userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
+            .setRole(Role.MEMBER).setExpiryDate(LocalDate.of(2018, 7, 1)).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+
+        resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentId, userRoleDTOs);
+        members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
+
+        verifyMember("jakub@fibinger.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(0));
+        verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), Collections.singletonList(MemberCategory.MASTER_STUDENT), members.get(1));
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
@@ -452,6 +547,12 @@ public class ResourceApiIT extends AbstractIT {
                 Assert.fail(expectations.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + actual.toString());
             }
         }
+    }
+
+    private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, List<MemberCategory> expectedMemberCategories, UserRoleRepresentation actual) {
+        Assert.assertEquals(expectedEmail, actual.getUser().getEmail());
+        Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
+        Assert.assertEquals(expectedMemberCategories, actual.getCategories());
     }
 
 }

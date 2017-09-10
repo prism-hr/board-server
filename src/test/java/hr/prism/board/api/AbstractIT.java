@@ -14,6 +14,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.repository.UserRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
@@ -59,6 +60,9 @@ public abstract class AbstractIT {
 
     @Inject
     UserApi userApi;
+
+    @Inject
+    UserRepository userRepository;
 
     @Inject
     ActivityService activityService;

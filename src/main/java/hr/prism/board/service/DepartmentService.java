@@ -42,7 +42,7 @@ public class DepartmentService {
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
             "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "MATCH resource.name against(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+            "MATCH (resource.name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
             "LEFT JOIN document AS document_logo " +
             "ON resource.document_logo_id = document_logo.id " +

@@ -139,7 +139,7 @@ public class UserRoleService {
         return memberCountProvisional;
     }
 
-    public void createResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
+    public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
         if (invokedAsynchronously && userService.getCurrentUser() != null) {
             // There should never be an authenticated user inside this method authentication
             throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
@@ -184,16 +184,19 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndRole(resource, role);
     }
 
-    private void createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO roleDTO) {
-        if (roleDTO.getRole() == Role.PUBLIC) {
+    private void createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
+        if (userRoleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
 
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, roleDTO.getRole());
+        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, userRoleDTO.getRole());
         if (userRole == null) {
-            userRoleCacheService.createUserRole(currentUser, resource, user, roleDTO, true);
-        } else if (userRole.getState() == State.REJECTED) {
+            userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
+        } else {
             userRole.setState(State.ACCEPTED);
+            userRole.setExpiryDate(userRoleDTO.getExpiryDate());
+            userRoleCacheService.deleteUserRoleCategories(resource, user);
+            userRoleCacheService.createUserRoleCategories(userRole, userRoleDTO);
             userRoleCacheService.updateUserRolesSummary(resource);
         }
     }

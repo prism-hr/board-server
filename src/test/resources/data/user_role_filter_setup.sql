@@ -7,9 +7,7 @@ VALUES (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'alastair@knowles
   (UUID(), 'chris', 'neil', 'chris@neil.com', 'chris@neil.com', SHA2('password', 256), NOW()),
   (UUID(), 'andrew', 'marriott', 'andrew@marriott.com', 'andrew@marriott.com', SHA2('password', 256), NOW()),
   (UUID(), 'jon', 'wheatley', 'jon@wheatley.com', 'jon@wheatley.com', SHA2('password', 256), NOW()),
-  (UUID(), 'toby', 'godfrey', 'toby@godfrey.com', 'toby@godfrey.com', SHA2('password', 256), NOW()),
-  (UUID(), 'dan', 'black', 'dan@black.com', 'dan@black.com', SHA2('password', 256), NOW()),
-  (UUID(), 'kevin', 'denver', 'kevin@denver.com', 'kevin@denver.com', SHA2('password', 256), NOW());
+  (UUID(), 'toby', 'godfrey', 'toby@godfrey.com', 'toby@godfrey.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, handle, summary, created_timestamp)
 VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NOW()),
@@ -67,25 +65,13 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   SELECT
     resource.id,
     user.id,
-    'ADMINISTRATOR',
-    'ACCEPTED',
-    NOW()
-  FROM resource
-    INNER JOIN user
-  WHERE resource.scope = 'BOARD'
-        AND user.email IN ('jon@wheatley.com', 'toby@godfrey.com');
-
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
-  SELECT
-    resource.id,
-    user.id,
     'AUTHOR',
     'ACCEPTED',
     NOW()
   FROM resource
     INNER JOIN user
   WHERE resource.scope = 'BOARD'
-        AND user.email IN ('dan@black.com', 'kevin@denver.com');
+        AND user.email IN ('jon@wheatley.com', 'toby@godfrey.com');
 
 UPDATE resource AS resource1
   INNER JOIN resource AS resource2
@@ -115,3 +101,13 @@ INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
     NOW()
   FROM resource
   WHERE resource.scope = 'BOARD';
+
+INSERT INTO activity (resource_id, user_role_id, activity, filter_by_category, created_timestamp)
+  SELECT
+    user_role.resource_id,
+    user_role.id,
+    'JOIN_DEPARTMENT_REQUEST_ACTIVITY',
+    0,
+    NOW()
+  FROM user_role
+  WHERE user_role.state = 'PENDING';

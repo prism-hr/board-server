@@ -65,29 +65,8 @@ public class UserRoleCacheService {
 
         UserRole userRole = userRoleRepository.save(
             new UserRole().setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+        createUserRoleCategories(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
-
-        List<MemberCategory> newCategories = userRoleDTO.getCategories();
-        if (userRoleDTO.getRole() == Role.MEMBER) {
-            Resource department = resourceService.findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
-            resourceService.validateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(newCategories),
-                ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES,
-                ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES,
-                ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
-
-            if (newCategories != null) {
-                IntStream.range(0, newCategories.size())
-                    .forEach(index -> {
-                        MemberCategory newCategory = newCategories.get(index);
-                        UserRoleCategory userRoleCategory = new UserRoleCategory();
-                        userRoleCategory.setUserRole(userRole);
-                        userRoleCategory.setName(newCategory);
-                        userRoleCategory.setOrdinal(index);
-                        userRole.getCategories().add(userRoleCategory);
-                        userRoleCategoryRepository.save(userRoleCategory);
-                    });
-            }
-        }
 
         if (notify) {
             Notification notification = new Notification().setUserId(user.getId())
@@ -114,6 +93,30 @@ public class UserRoleCacheService {
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
     }
 
+    public void createUserRoleCategories(UserRole userRole, UserRoleDTO userRoleDTO) {
+        if (userRoleDTO.getRole() == Role.MEMBER) {
+            Resource resource = userRole.getResource();
+            List<MemberCategory> categories = userRoleDTO.getCategories();
+
+            Resource department = resourceService.findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
+            resourceService.validateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(categories),
+                ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
+
+            if (resource != null) {
+                IntStream.range(0, categories.size())
+                    .forEach(index -> {
+                        MemberCategory newCategory = categories.get(index);
+                        UserRoleCategory userRoleCategory = new UserRoleCategory();
+                        userRoleCategory.setUserRole(userRole);
+                        userRoleCategory.setName(newCategory);
+                        userRoleCategory.setOrdinal(index);
+                        userRole.getCategories().add(userRoleCategory);
+                        userRoleCategoryRepository.save(userRoleCategory);
+                    });
+            }
+        }
+    }
+
     public void updateUserRolesSummary(Resource resource) {
         entityManager.flush();
         LocalDate baseline = LocalDate.now();
@@ -122,6 +125,10 @@ public class UserRoleCacheService {
         } else if (resource instanceof Board) {
             ((Board) resource).setAuthorCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
         }
+    }
+
+    public void deleteUserRoleCategories(Resource resource, User user) {
+        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {

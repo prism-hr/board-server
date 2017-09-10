@@ -15,7 +15,7 @@ public interface ResourceSearchRepository extends MyRepository<ResourceSearch, L
         "INSERT INTO resource_search(resource_id, search, created_timestamp) " +
             "SELECT resource_search_result.resource_id, resource_search_result.search, :baseline " +
             "FROM (" +
-            "SELECT resource.id as resource_id, :search as search, MATCH resource.index_data against(:searchTerm IN BOOLEAN MODE) AS similarity " +
+            "SELECT resource.id as resource_id, :search as search, MATCH(resource.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
             "FROM resource " +
             "WHERE resource.id IN (:resourceIds) " +
             "HAVING SIMILARITY > 0 " +

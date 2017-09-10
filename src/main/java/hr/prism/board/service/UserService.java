@@ -162,7 +162,7 @@ public class UserService {
             user.setSurname(userDTO.getSurname());
             user.setEmail(userDTO.getEmail());
             user = userRepository.save(user);
-            user.setIndexData(BoardUtils.makeSoundex(user.getGivenName(), user.getSurname(), user.getEmail()));
+            userCacheService.setIndexData(user);
             return user;
         }
 
