@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.google.common.collect.Sets;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -14,6 +15,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
@@ -60,6 +62,9 @@ public abstract class AbstractIT {
 
     @Inject
     UserApi userApi;
+
+    @Inject
+    ResourceRepository resourceRepository;
 
     @Inject
     UserRepository userRepository;
@@ -217,6 +222,26 @@ public abstract class AbstractIT {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(userApi.getActivities().isEmpty());
         testUserActivityService.verify(userId);
+    }
+
+    <T> void verifyContains(List<T> expectations, T... actuals) {
+        Set<T> expectationsSet = Sets.newLinkedHashSet(expectations);
+        for (T actual : actuals) {
+            if (!expectationsSet.contains(actual)) {
+                Assert.fail(expectations.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + actual.toString());
+            }
+        }
+    }
+
+    void indexUserData() {
+        transactionTemplate.execute(status -> {
+            for (User user : userRepository.findAll()) {
+                userCacheService.setIndexData(user);
+                userRepository.update(user);
+            }
+
+            return null;
+        });
     }
 
     private void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {

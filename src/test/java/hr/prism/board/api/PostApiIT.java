@@ -1323,7 +1323,18 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/post_response_filter_setup.sql")
     public void shouldListAndFilterPostResponses() {
+        indexUserData();
+        Long userId = transactionTemplate.execute(status -> userRepository.findByEmail("alastair@knowles.com")).getId();
+        Long postId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs/opportunities/4")).getId();
+        testUserService.setAuthentication(userId);
 
+        List<ResourceEventRepresentation> responses = postApi.getPostResponses(postId, null);
+        Assert.assertEquals(2, responses.size());
+        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), "jakub@fibinger.com", "juan@mingo.com");
+
+        responses = postApi.getPostResponses(postId, "juan");
+        Assert.assertEquals(1, responses.size());
+        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), "juan@mingo.com");
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {

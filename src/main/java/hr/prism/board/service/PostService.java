@@ -289,15 +289,17 @@ public class PostService {
             userService.deleteSearchResults(search);
         }
 
-        Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
-        boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
-        for (ResourceEvent resourceEvent : resourceEvents) {
-            resourceEvent.setExposeResponseData(isAdministrator && BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
-            indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
-        }
+        if (!resourceEvents.isEmpty()) {
+            Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
+            boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
+            for (ResourceEvent resourceEvent : resourceEvents) {
+                resourceEvent.setExposeResponseData(isAdministrator && BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
+                indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
+            }
 
-        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
-            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+            for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+                indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+            }
         }
 
         return resourceEvents;

@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
@@ -18,7 +17,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -28,7 +26,6 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,9 +36,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @SuppressWarnings("unchecked")
 public class ResourceApiIT extends AbstractIT {
-
-    @Inject
-    private ResourceRepository resourceRepository;
 
     @Test
     public void shouldAddAndRemoveRoles() {
@@ -404,15 +398,7 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/user_role_filter_setup.sql")
     public void shouldListAndFilterUserRoles() {
-        transactionTemplate.execute(status -> {
-            for (User user : userRepository.findAll()) {
-                userCacheService.setIndexData(user);
-                userRepository.update(user);
-            }
-
-            return null;
-        });
-
+        indexUserData();
         Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("alastair@knowles.com")).getId();
         testUserService.setAuthentication(userId);
 
@@ -538,15 +524,6 @@ public class ResourceApiIT extends AbstractIT {
         Assert.assertEquals(userIdString, documentImageR.getCloudinaryId());
         Assert.assertEquals(userIdString, documentImageR.getCloudinaryUrl());
         Assert.assertEquals(userIdString, documentImageR.getFileName());
-    }
-
-    private <T> void verifyContains(List<T> expectations, T... actuals) {
-        Set<T> expectationsSet = Sets.newLinkedHashSet(expectations);
-        for (T actual : actuals) {
-            if (!expectationsSet.contains(actual)) {
-                Assert.fail(expectations.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + actual.toString());
-            }
-        }
     }
 
     private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, List<MemberCategory> expectedMemberCategories, UserRoleRepresentation actual) {

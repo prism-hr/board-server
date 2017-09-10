@@ -102,7 +102,7 @@ public class UserRoleCacheService {
             resourceService.validateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(categories),
                 ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
 
-            if (resource != null) {
+            if (categories != null) {
                 IntStream.range(0, categories.size())
                     .forEach(index -> {
                         MemberCategory newCategory = categories.get(index);
