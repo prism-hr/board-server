@@ -29,8 +29,9 @@ VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in ma
    'You will work out how to put the big bits together', NULL, NULL, '2016-10-01 00:00:00', '2017-01-01 00:00:00'),
   ('POST', 'ARCHIVED', 'Business Analyst', 'cs/opportunities/11', 'Solve the world', 'You will be the nuts in visio', NULL, NULL, '2017-01-01 00:00:00', '2017-04-01 00:00:00');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'ADMINISTRATOR',
@@ -41,8 +42,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope IN ('DEPARTMENT', 'BOARD')
         AND user.email = 'department@administrator.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'MEMBER',
@@ -53,8 +55,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope = 'DEPARTMENT'
         AND user.email = 'department@member.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'ADMINISTRATOR',
@@ -66,8 +69,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
         AND resource.state = 'ACCEPTED'
         AND user.email = 'board@administrator.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'AUTHOR',
@@ -78,8 +82,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope = 'BOARD'
         AND user.email = 'board@author.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'ADMINISTRATOR',
@@ -91,8 +96,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
         AND resource.name IN ('Database Engineer', 'Java Web Developer')
         AND user.email = 'board@author.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'ADMINISTRATOR',

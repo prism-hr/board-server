@@ -277,10 +277,12 @@ public class DepartmentApiIT extends AbstractIT {
                         .setEmail("admin1@admin1.com"))
                     .setRole(Role.ADMINISTRATOR)).getUser().getId());
 
+        User departmentUser2 = userCacheService.findOne(departmentUser2Id);
+        UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
             ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4")
-                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").build()));
+                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").put("invitationUuid", department2UserRole.getUuid()).build()));
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status ->

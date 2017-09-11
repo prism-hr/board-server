@@ -8,8 +8,9 @@ VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in ma
   ('BOARD', 'ACCEPTED', 'Opportunities', 'cs/opportunities', 'Promote work and work experience opportunities to students', NULL, NULL, NULL, NOW()),
   ('POST', 'ACCEPTED', 'Database Engineer', 'cs/opportunities/4', 'Design schemas and optimize queries', 'You will be working primarily with SQL Server', NULL, NULL, NOW());
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'ADMINISTRATOR',
@@ -20,8 +21,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope IN ('DEPARTMENT', 'BOARD', 'POST')
         AND user.email = 'alastair@knowles.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'MEMBER',

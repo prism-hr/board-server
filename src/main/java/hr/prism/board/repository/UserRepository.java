@@ -20,10 +20,6 @@ public interface UserRepository extends MyRepository<User, Long> {
             "from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.resource <> :resource)";
 
-    @Query(value =
-        "select userRole.user " +
-            "from UserRole userRole " +
-            "where userRole.uuid = :uuid")
     User findByUuid(String uuid);
 
     User findByEmail(String email);

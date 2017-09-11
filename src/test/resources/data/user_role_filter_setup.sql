@@ -13,8 +13,9 @@ INSERT INTO resource (scope, state, name, handle, summary, created_timestamp)
 VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NOW()),
   ('BOARD', 'ACCEPTED', 'Opportunities', 'cs/opportunities', 'Promote work and work experience opportunities to students', NOW());
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'ADMINISTRATOR',
@@ -25,8 +26,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope IN ('DEPARTMENT', 'BOARD')
         AND user.email IN ('alastair@knowles.com', 'jakub@fibinger.com');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'MEMBER',
@@ -37,8 +39,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope = 'DEPARTMENT'
         AND user.email IN ('juan@mingo.com', 'beatriz@rodriguez.com');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'MEMBER',
@@ -49,8 +52,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope = 'DEPARTMENT'
         AND user.email IN ('felipe@ieder.com', 'chris@neil.com');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'MEMBER',
@@ -61,8 +65,9 @@ INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
   WHERE resource.scope = 'DEPARTMENT'
         AND user.email = 'andrew@marriott.com';
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
+    UUID(),
     resource.id,
     user.id,
     'AUTHOR',

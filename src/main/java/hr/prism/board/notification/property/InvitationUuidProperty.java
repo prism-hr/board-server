@@ -4,7 +4,7 @@ import hr.prism.board.service.NotificationService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class InvitationProperty implements NotificationProperty {
+public class InvitationUuidProperty implements NotificationProperty {
 
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {

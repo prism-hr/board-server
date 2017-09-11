@@ -491,6 +491,11 @@ public class ResourceApiIT extends AbstractIT {
         verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), Collections.singletonList(MemberCategory.MASTER_STUDENT), members.get(1));
     }
 
+    @Test
+    public void shouldReconcileAuthenticationsWithInvitations() {
+        
+    }
+
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));

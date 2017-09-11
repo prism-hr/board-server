@@ -93,8 +93,8 @@ public class NotificationEventService {
 
             List<UserNotification> recipients = applicationContext.getBean(template.getRecipients()).list(resource, notification);
             for (UserNotification recipient : recipients) {
-                if (!sent.containsEntry(recipient, template)) {
-                    User user = recipient.getUser();
+                User user = recipient.getUser();
+                if (!sent.containsEntry(user, template)) {
                     notificationService.sendNotification(
                         new NotificationService.NotificationRequest(template, user, recipient.getInvitation(), resource, action, mapAttachments(notification.getAttachments())));
                     sent.put(user, template);
