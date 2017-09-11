@@ -493,7 +493,7 @@ public class ResourceApiIT extends AbstractIT {
 
     @Test
     public void shouldReconcileAuthenticationsWithInvitations() {
-        
+
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {

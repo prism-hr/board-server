@@ -123,7 +123,7 @@ public class NotificationService {
         } else {
             // Local/Test contexts
             LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail)
-                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content));
+                + "\n\n" + "Subject:\n\n" + subject + "\n\n" + "Content:\n\n" + makePlainTextVersion(content) + "\n");
         }
 
         return properties;
