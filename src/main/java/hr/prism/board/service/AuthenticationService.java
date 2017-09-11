@@ -90,7 +90,6 @@ public class AuthenticationService {
     }
 
     public User login(LoginDTO loginDTO) {
-        String uuid = loginDTO.getUuid();
         String email = loginDTO.getEmail();
         User user = userCacheService.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
         if (user == null) {
