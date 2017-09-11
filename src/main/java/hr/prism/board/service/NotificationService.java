@@ -169,15 +169,18 @@ public class NotificationService {
 
         private User recipient;
 
+        private String invitation;
+
         private Resource resource;
 
         private Action action;
 
         private List<Attachments> attachments = new ArrayList<>();
 
-        public NotificationRequest(Notification notification, User recipient, Resource resource, Action action, List<Attachments> attachments) {
+        public NotificationRequest(Notification notification, User recipient, String invitation, Resource resource, Action action, List<Attachments> attachments) {
             this.notification = notification;
             this.recipient = recipient;
+            this.invitation = invitation;
             this.resource = resource;
             this.action = action;
             this.attachments.addAll(attachments);
@@ -189,6 +192,10 @@ public class NotificationService {
 
         public User getRecipient() {
             return recipient;
+        }
+
+        public String getInvitation() {
+            return invitation;
         }
 
         public Resource getResource() {

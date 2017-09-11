@@ -1,8 +1,8 @@
 package hr.prism.board.notification.recipient;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
 import hr.prism.board.service.UserService;
+import hr.prism.board.value.UserNotification;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ public class AuthorizedCategorizedRecipientList implements NotificationRecipient
     @Inject
     private UserService userService;
 
-    public List<User> list(Resource resource, Notification notification) {
+    public List<UserNotification> list(Resource resource, Notification notification) {
         return userService.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, notification.getScope(), notification.getRole());
     }
 

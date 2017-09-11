@@ -14,6 +14,9 @@ public class Notification extends Update<Notification> {
     @JsonIgnore
     private Long userId;
 
+    @JsonIgnore
+    private String invitation;
+
     public Notification() {
         setType(Update.NOTIFICATION);
     }
@@ -47,6 +50,15 @@ public class Notification extends Update<Notification> {
 
     public Notification setUserId(Long userId) {
         this.userId = userId;
+        return this;
+    }
+
+    public String getInvitation() {
+        return invitation;
+    }
+
+    public Notification setInvitation(String invitation) {
+        this.invitation = invitation;
         return this;
     }
 

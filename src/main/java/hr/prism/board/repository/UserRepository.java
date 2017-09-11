@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.*;
+import hr.prism.board.value.UserNotification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,6 +20,10 @@ public interface UserRepository extends MyRepository<User, Long> {
             "from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.resource <> :resource)";
 
+    @Query(value =
+        "select userRole.user " +
+            "from UserRole userRole " +
+            "where userRole.uuid = :uuid")
     User findByUuid(String uuid);
 
     User findByEmail(String email);
@@ -57,7 +62,7 @@ public interface UserRepository extends MyRepository<User, Long> {
                                         @Param("userRoleStates") List<State> userRoleStates);
 
     @Query(value =
-        "select distinct userRole.user " +
+        "select distinct new hr.prism.board.value.UserNotification(userRole.user) " +
             "from ResourceRelation relation " +
             "inner join relation.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
@@ -67,11 +72,11 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and userRole.state in (:userRoleStates) " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
             "and " + SUPPRESSION_CONSTRAINT)
-    List<User> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
-                                                      @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
+    List<UserNotification> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
+                                                                  @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
 
     @Query(value =
-        "select distinct userRole.user " +
+        "select distinct new hr.prism.board.value.UserNotification(userRole.user, userRole.uuid) " +
             "from ResourceRelation relation " +
             "inner join relation.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
@@ -86,9 +91,9 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and resourceCategory.name = userRoleCategory.name " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
             "and " + SUPPRESSION_CONSTRAINT)
-    List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
-                                                                   @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
-                                                                   @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
+    List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
+                                                                               @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
+                                                                               @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select userRole.user " +

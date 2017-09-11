@@ -17,6 +17,7 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.util.BoardUtils;
+import hr.prism.board.value.UserNotification;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -173,11 +174,11 @@ public class UserService {
         return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
 
-    public List<User> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
+    public List<UserNotification> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
     }
 
-    public List<User> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
+    public List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, LocalDate.now());
     }
 

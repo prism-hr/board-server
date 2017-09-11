@@ -2,10 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.LoginDTO;
-import hr.prism.board.dto.OauthDTO;
-import hr.prism.board.dto.RegisterDTO;
-import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
@@ -100,43 +97,8 @@ public class AuthenticationService {
             throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User: " + email + " cannot be found");
         }
 
-        if (uuid != null) {
-            processInvitation(uuid, user);
-        }
-
+        verifyAuthenticationValid(user, loginDTO);
         return user;
-    }
-
-    public User register(RegisterDTO registerDTO) {
-        String uuid = registerDTO.getUuid();
-        String email = registerDTO.getEmail();
-        if (uuid == null) {
-            // Anonymous registration
-            verifyEmailUnique(email);
-            return userCacheService.saveUser(
-                new User()
-                    .setUuid(UUID.randomUUID().toString())
-                    .setGivenName(registerDTO.getGivenName())
-                    .setSurname(registerDTO.getSurname())
-                    .setEmail(email)
-                    .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
-                    .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
-        } else {
-            // Responding to an invitation
-            User user = userCacheService.findByUserRoleUuid(uuid);
-            if (user.isRegistered()) {
-                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_AUTHENTICATION, "User: " + user.getEmail() + " is already registered");
-            }
-
-            if (!email.equals(user.getEmail())) {
-                verifyEmailUnique(email);
-            }
-
-            user.setGivenName(registerDTO.getGivenName());
-            user.setSurname(registerDTO.getSurname());
-            user.setEmail(registerDTO.getEmail());
-            return user;
-        }
     }
 
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {
@@ -149,8 +111,7 @@ public class AuthenticationService {
         String accountId = newUser.getOauthAccountId();
         User user = userCacheService.findByOauthProviderAndOauthAccountId(provider, accountId);
         if (user == null) {
-            String email = newUser.getEmail();
-            user = userCacheService.findByEmail(email);
+            user = userCacheService.findByEmail(newUser.getEmail());
             if (user == null) {
                 user = newUser;
                 user.setUuid(UUID.randomUUID().toString());
@@ -162,12 +123,38 @@ public class AuthenticationService {
             }
         }
 
-        String uuid = oauthDTO.getUuid();
-        if (uuid != null) {
-            processInvitation(uuid, user);
-        }
-
+        verifyAuthenticationValid(user, oauthDTO);
         return user;
+    }
+
+    public User register(RegisterDTO registerDTO) {
+        String uuid = registerDTO.getUuid();
+        String email = registerDTO.getEmail();
+        if (uuid == null) {
+            verifyEmailUnique(email);
+            return userCacheService.saveUser(
+                new User()
+                    .setUuid(UUID.randomUUID().toString())
+                    .setGivenName(registerDTO.getGivenName())
+                    .setSurname(registerDTO.getSurname())
+                    .setEmail(email)
+                    .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
+                    .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
+        } else {
+            User user = userCacheService.findByUuid(uuid);
+            if (user.isRegistered()) {
+                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_AUTHENTICATION, "User: " + user.getEmail() + " is already registered");
+            }
+
+            if (!email.equals(user.getEmail())) {
+                verifyEmailUnique(email);
+                user.setEmail(registerDTO.getEmail());
+            }
+
+            user.setGivenName(registerDTO.getGivenName());
+            user.setSurname(registerDTO.getSurname());
+            return user;
+        }
     }
 
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
@@ -224,13 +211,16 @@ public class AuthenticationService {
         }
     }
 
-    private void processInvitation(String uuid, User user) {
-        User invitee = userCacheService.findByUserRoleUuid(uuid);
-        if (invitee.isRegistered() && !user.equals(invitee)) {
-            throw new BoardForbiddenException(ExceptionCode.CORRUPTED_AUTHENTICATION, "User: " + user.getEmail() + " cannot accept invitation for: " + invitee.getEmail());
-        }
+    private void verifyAuthenticationValid(User user, AuthenticateDTO request) {
+        String uuid = request.getUuid();
+        if (uuid != null) {
+            User invitee = userCacheService.findByUuid(uuid);
+            if (invitee.isRegistered() && !user.equals(invitee)) {
+                throw new BoardForbiddenException(ExceptionCode.CORRUPTED_AUTHENTICATION, "User: " + user.getEmail() + " cannot accept invitation for: " + invitee.getEmail());
+            }
 
-        userRoleService.findByUuid(uuid).setUser(user);
+            userRoleService.findByUuid(uuid).setUser(user);
+        }
     }
 
 }

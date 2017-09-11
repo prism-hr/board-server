@@ -12,6 +12,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.ResourceEventService;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.value.UserNotification;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.ApplicationContext;
@@ -90,12 +91,13 @@ public class NotificationEventService {
         for (Notification notification : notifications) {
             hr.prism.board.enums.Notification template = notification.getNotification();
 
-            List<User> recipients = applicationContext.getBean(template.getRecipients()).list(resource, notification);
-            for (User recipient : recipients) {
+            List<UserNotification> recipients = applicationContext.getBean(template.getRecipients()).list(resource, notification);
+            for (UserNotification recipient : recipients) {
                 if (!sent.containsEntry(recipient, template)) {
+                    User user = recipient.getUser();
                     notificationService.sendNotification(
-                        new NotificationService.NotificationRequest(template, recipient, resource, action, mapAttachments(notification.getAttachments())));
-                    sent.put(recipient, template);
+                        new NotificationService.NotificationRequest(template, user, recipient.getInvitation(), resource, action, mapAttachments(notification.getAttachments())));
+                    sent.put(user, template);
                 }
             }
         }
