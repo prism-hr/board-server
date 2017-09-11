@@ -237,6 +237,10 @@ public class User extends BoardEntity implements Comparable<User> {
         return Joiner.on(" ").skipNulls().join(givenName, surname);
     }
 
+    public boolean isRegistered() {
+        return password != null || oauthProvider != null;
+    }
+
     @Override
     public String toString() {
         return Joiner.on(" ").skipNulls().join(givenName, surname, email);

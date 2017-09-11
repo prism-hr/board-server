@@ -23,6 +23,12 @@ public interface UserRepository extends MyRepository<User, Long> {
 
     User findByEmail(String email);
 
+    @Query(value =
+        "select userRole.user " +
+            "from UserRole userRole " +
+            "where userRole.uuid = :uuid")
+    User findByUserRoleUuid(@Param("uuid") String uuid);
+
     User findByEmailOriginal(String emailOriginal);
 
     @Query(value =

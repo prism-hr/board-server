@@ -184,6 +184,10 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndRole(resource, role);
     }
 
+    public UserRole findByUuid(String uuid) {
+        return userRoleRepository.findByUuid(uuid);
+    }
+
     private void createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         if (userRoleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");

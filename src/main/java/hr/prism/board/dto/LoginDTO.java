@@ -2,7 +2,7 @@ package hr.prism.board.dto;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
-public class LoginDTO {
+public class LoginDTO extends AuthenticateDTO<LoginDTO> {
 
     @NotEmpty
     private String email;

@@ -17,6 +17,9 @@ import java.util.TreeSet;
 @Table(name = "user_role", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_id", "role"}))
 public class UserRole extends BoardEntity {
 
+    @Column(name = "uuid", nullable = false)
+    private String uuid;
+
     @ManyToOne
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
@@ -45,6 +48,15 @@ public class UserRole extends BoardEntity {
 
     @Transient
     private boolean viewed;
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public UserRole setUuid(String uuid) {
+        this.uuid = uuid;
+        return this;
+    }
 
     public Resource getResource() {
         return resource;

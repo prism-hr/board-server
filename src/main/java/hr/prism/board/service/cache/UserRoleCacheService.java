@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Service
@@ -64,7 +65,7 @@ public class UserRoleCacheService {
         }
 
         UserRole userRole = userRoleRepository.save(
-            new UserRole().setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+            new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
         createUserRoleCategories(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
 

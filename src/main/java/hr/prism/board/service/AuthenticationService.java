@@ -55,6 +55,9 @@ public class AuthenticationService {
     @Inject
     private UserCacheService userCacheService;
 
+    @Inject
+    private UserRoleService userRoleService;
+
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
@@ -90,29 +93,50 @@ public class AuthenticationService {
     }
 
     public User login(LoginDTO loginDTO) {
+        String uuid = loginDTO.getUuid();
+        String email = loginDTO.getEmail();
         User user = userCacheService.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User cannot be found");
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User: " + email + " cannot be found");
+        }
+
+        if (uuid != null) {
+            processInvitation(uuid, user);
         }
 
         return user;
     }
 
     public User register(RegisterDTO registerDTO) {
+        String uuid = registerDTO.getUuid();
         String email = registerDTO.getEmail();
-        User user = userCacheService.findByEmail(email);
-        if (user != null) {
-            throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER, "User with email " + email + " exists already");
-        }
+        if (uuid == null) {
+            // Anonymous registration
+            verifyEmailUnique(email);
+            return userCacheService.saveUser(
+                new User()
+                    .setUuid(UUID.randomUUID().toString())
+                    .setGivenName(registerDTO.getGivenName())
+                    .setSurname(registerDTO.getSurname())
+                    .setEmail(email)
+                    .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
+                    .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
+        } else {
+            // Responding to an invitation
+            User user = userCacheService.findByUserRoleUuid(uuid);
+            if (user.isRegistered()) {
+                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_AUTHENTICATION, "User: " + user.getEmail() + " is already registered");
+            }
 
-        return userCacheService.saveUser(
-            new User()
-                .setUuid(UUID.randomUUID().toString())
-                .setGivenName(registerDTO.getGivenName())
-                .setSurname(registerDTO.getSurname())
-                .setEmail(email)
-                .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
-                .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
+            if (!email.equals(user.getEmail())) {
+                verifyEmailUnique(email);
+            }
+
+            user.setGivenName(registerDTO.getGivenName());
+            user.setSurname(registerDTO.getSurname());
+            user.setEmail(registerDTO.getEmail());
+            return user;
+        }
     }
 
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {
@@ -123,21 +147,27 @@ public class AuthenticationService {
         }
 
         String accountId = newUser.getOauthAccountId();
-        User oldUser = userCacheService.findByOauthProviderAndOauthAccountId(provider, accountId);
-        if (oldUser == null) {
+        User user = userCacheService.findByOauthProviderAndOauthAccountId(provider, accountId);
+        if (user == null) {
             String email = newUser.getEmail();
-            oldUser = userCacheService.findByEmail(email);
-            if (oldUser == null) {
-                newUser.setUuid(UUID.randomUUID().toString());
-                return userCacheService.saveUser(newUser);
+            user = userCacheService.findByEmail(email);
+            if (user == null) {
+                user = newUser;
+                user.setUuid(UUID.randomUUID().toString());
+                user = userCacheService.saveUser(newUser);
             } else {
-                oldUser.setOauthProvider(provider);
-                oldUser.setOauthAccountId(accountId);
-                userCacheService.updateUser(oldUser);
+                user.setOauthProvider(provider);
+                user.setOauthAccountId(accountId);
+                userCacheService.updateUser(user);
             }
         }
 
-        return oldUser;
+        String uuid = oauthDTO.getUuid();
+        if (uuid != null) {
+            processInvitation(uuid, user);
+        }
+
+        return user;
     }
 
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
@@ -185,6 +215,22 @@ public class AuthenticationService {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
             return null;
         }
+    }
+
+    private void verifyEmailUnique(String email) {
+        User user = userCacheService.findByEmail(email);
+        if (user != null) {
+            throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER, "User: " + email + " exists already");
+        }
+    }
+
+    private void processInvitation(String uuid, User user) {
+        User invitee = userCacheService.findByUserRoleUuid(uuid);
+        if (invitee.isRegistered() && !user.equals(invitee)) {
+            throw new BoardForbiddenException(ExceptionCode.CORRUPTED_AUTHENTICATION, "User: " + user.getEmail() + " cannot accept invitation for: " + invitee.getEmail());
+        }
+
+        userRoleService.findByUuid(uuid).setUser(user);
     }
 
 }

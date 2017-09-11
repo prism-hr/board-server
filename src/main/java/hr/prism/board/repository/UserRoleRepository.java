@@ -15,6 +15,8 @@ import java.util.List;
 @SuppressWarnings("JpaQlInspection")
 public interface UserRoleRepository extends MyRepository<UserRole, Long> {
 
+    UserRole findByUuid(String uuid);
+
     List<UserRole> findByResourceAndUser(Resource resource, User user);
 
     List<UserRole> findByResourceAndRole(Resource resource, Role role);

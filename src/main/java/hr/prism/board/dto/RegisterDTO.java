@@ -5,7 +5,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.Size;
 
-public class RegisterDTO {
+public class RegisterDTO extends AuthenticateDTO<RegisterDTO> {
 
     @NotEmpty
     @Size(max = 100)

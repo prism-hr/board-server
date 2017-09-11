@@ -68,6 +68,12 @@ public class UserCacheService {
         return user;
     }
 
+    public User findByUserRoleUuid(String uuid) {
+        User user = userRepository.findByUserRoleUuid(uuid);
+        appendScopes(user);
+        return user;
+    }
+
     public User findByEmailAndPassword(String email, String password) {
         User user = userRepository.findByEmailAndPassword(email, password);
         appendScopes(user);

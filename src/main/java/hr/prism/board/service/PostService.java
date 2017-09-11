@@ -259,7 +259,8 @@ public class PostService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            userService.createSearchResults(search, searchTerm, userIds);
+            userService.
+                createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
 

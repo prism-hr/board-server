@@ -6,7 +6,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OauthDTO {
+public class OauthDTO extends AuthenticateDTO<OauthDTO> {
 
     @NotEmpty
     private String clientId;
