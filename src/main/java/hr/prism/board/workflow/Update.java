@@ -31,8 +31,6 @@ public abstract class Update<T extends Update> {
 
     private Role role;
 
-    private boolean excludingCreator = false;
-
     public Workflow getWorkflow() {
         return workflow;
     }
@@ -75,20 +73,6 @@ public abstract class Update<T extends Update> {
 
     public T setRole(Role role) {
         this.role = role;
-        return (T) this;
-    }
-
-    public boolean isExcludingCreator() {
-        return excludingCreator;
-    }
-
-    public T setExcludingCreator(boolean excludingCreator) {
-        this.excludingCreator = excludingCreator;
-        return (T) this;
-    }
-
-    public T excludingCreator() {
-        this.excludingCreator = true;
         return (T) this;
     }
 
