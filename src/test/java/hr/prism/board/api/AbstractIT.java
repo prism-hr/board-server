@@ -64,6 +64,9 @@ public abstract class AbstractIT {
     UserApi userApi;
 
     @Inject
+    AuthenticationApi authenticationApi;
+
+    @Inject
     ResourceRepository resourceRepository;
 
     @Inject
