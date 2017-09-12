@@ -75,9 +75,6 @@ public class Resource extends BoardEntity {
     private Set<ResourceOperation> operations = new HashSet<>();
 
     @OneToMany(mappedBy = "resource")
-    private Set<ResourceEvent> events = new HashSet<>();
-
-    @OneToMany(mappedBy = "resource")
     private Set<ResourceSearch> searches = new HashSet<>();
 
     @Transient
@@ -203,10 +200,6 @@ public class Resource extends BoardEntity {
 
     public Set<ResourceOperation> getOperations() {
         return operations;
-    }
-
-    public Set<ResourceEvent> getEvents() {
-        return events;
     }
 
     public Set<ResourceSearch> getSearches() {
