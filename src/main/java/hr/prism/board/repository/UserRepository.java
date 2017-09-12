@@ -78,20 +78,17 @@ public interface UserRepository extends MyRepository<User, Long> {
             "inner join relation.resource2 resource " +
             "inner join enclosingResource.userRoles userRole " +
             "left join resource.categories resourceCategory " +
+            "left join resource.events event on event.user = :user " +
             "left join userRole.categories userRoleCategory " +
             "where relation.resource2 = :resource " +
             "and enclosingResource.scope = :enclosingScope " +
+            "and event.id is null " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
             "and (resourceCategory.id is null and userRoleCategory.id is null " +
             "or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name) " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
-            "and " + SUPPRESSION_CONSTRAINT + " " +
-            "and relation.resource2 not in (" +
-            "select resourceEvent.resource " +
-            "from ResourceEvent resourceEvent " +
-            "where resourceEvent.resource = :resource " +
-            "and resourceEvent.user = userRole.user)")
+            "and " + SUPPRESSION_CONSTRAINT)
     List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategories(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
                                                                                @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
                                                                                @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
