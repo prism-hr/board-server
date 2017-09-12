@@ -20,11 +20,13 @@ public class PostStateChangeInterceptor implements StateChangeInterceptor {
             LocalDateTime baseline = LocalDateTime.now();
             LocalDateTime deadTimestamp = post.getDeadTimestamp();
             LocalDateTime liveTimestamp = post.getLiveTimestamp();
-            if (deadTimestamp != null && baseline.isAfter(deadTimestamp)) {
+            if (liveTimestamp != null && baseline.isBefore(liveTimestamp)) {
+                return State.PENDING;
+            } else if (deadTimestamp != null && baseline.isAfter(deadTimestamp)) {
                 return State.EXPIRED;
             }
 
-            return State.PENDING;
+            return State.ACCEPTED;
         }
 
         return state;
