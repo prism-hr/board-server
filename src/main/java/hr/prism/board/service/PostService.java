@@ -331,11 +331,11 @@ public class PostService {
         List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
 
-        List<Long> modifiedPostIds = new ArrayList<>();
-        modifiedPostIds.addAll(postToRetireIds);
-        modifiedPostIds.addAll(postToPublishIds);
-        if (!modifiedPostIds.isEmpty()) {
-            boardService.updateBoardPostCounts(modifiedPostIds, State.ACCEPTED.name());
+        List<Long> postToModifyIds = new ArrayList<>();
+        postToModifyIds.addAll(postToRetireIds);
+        postToModifyIds.addAll(postToPublishIds);
+        if (!postToModifyIds.isEmpty()) {
+            boardService.updateBoardPostCounts(postToModifyIds, State.ACCEPTED.name());
         }
     }
 

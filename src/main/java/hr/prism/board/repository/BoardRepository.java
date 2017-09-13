@@ -20,17 +20,17 @@ public interface BoardRepository extends MyRepository<Board, Long> {
     @Modifying
     @Query(value =
         "UPDATE resource " +
-            "INNER JOIN (" +
-            "SELECT resource.parent_id as resource_id, " +
-            "COUNT(resource.id) as post_count " +
+            "INNER JOIN ( " +
+            "SELECT resource.parent_id AS board_id, " +
+            "COUNT(resource.id) AS post_count " +
             "FROM resource " +
-            "WHERE resource.parent_id IN (" +
+            "WHERE resource.parent_id IN ( " +
             "SELECT resource.parent_id " +
             "FROM resource " +
-            "WHERE resource.id IN (:postIds) " +
-            "AND resource.state = :state) " +
-            "GROUP BY resource.parent_id) AS post_summary " +
-            "ON resource.id = post_summary.resource_id " +
+            "WHERE resource.id IN (:postIds)) " +
+            "AND resource.state = :state " +
+            "GROUP BY resource.parent_id) as post_summary " +
+            "ON resource.id = post_summary.board_id " +
             "SET resource.post_count = post_summary.post_count",
         nativeQuery = true)
     void updateBoardPostCounts(@Param("postIds") List<Long> postIds, @Param("state") String state);

@@ -673,7 +673,8 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.empty())
             .setComment("accepting without time constraints");
 
-        verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.ACCEPTED);
+        verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.PENDING);
+        postService.publishAndRetirePosts();
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testUserActivityService.verify(departmentUserId);
@@ -683,7 +684,11 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("publicationSchedule", "immediately").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+                    .put("publicationSchedule", "imminently. We will send you a follow-up message when your post has gone live")
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
@@ -694,9 +699,10 @@ public class PostApiIT extends AbstractIT {
         testUserActivityService.verify(boardUserId);
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
-            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the administrator can make further changes and accept the post again
         PostPatchDTO acceptPendingDTO = new PostPatchDTO()
@@ -713,11 +719,12 @@ public class PostApiIT extends AbstractIT {
         testUserActivityService.verify(boardUserId);
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
-            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("publicationSchedule",
-                    "on or around " + postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER) + ". We will send you a follow-up message when your post has gone live")
-                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("publicationSchedule",
+                        "on or around " + postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER) + ". We will send you a follow-up message when your post has gone live")
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
@@ -822,7 +829,8 @@ public class PostApiIT extends AbstractIT {
         UserRole departmentMemberRole1 = userRoleService.findByResourceAndUserAndRole(department, departmentMember1, Role.MEMBER);
         UserRole departmentMemberRole2 = userRoleService.findByResourceAndUserAndRole(department, departmentMember2, Role.MEMBER);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
@@ -861,7 +869,8 @@ public class PostApiIT extends AbstractIT {
         PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
-        verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.ACCEPTED);
+        verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.PENDING);
+        postService.publishAndRetirePosts();
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testUserActivityService.verify(departmentUserId);
@@ -873,9 +882,23 @@ public class PostApiIT extends AbstractIT {
         testUserActivityService.verify(departmentMember4Id);
         testUserActivityService.verify(departmentMember5Id);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
-            ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
+                ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("recipientUuid", departmentMember1Uuid).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
+                ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
+                    .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("recipientUuid", departmentMember2Uuid).build()));
 
         transactionTemplate.execute(status -> {
             Post post = postService.getPost(postId);
@@ -948,7 +971,7 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(postUser.getId());
         List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
-        Assert.assertEquals(18, resourceOperationRs.size());
+        Assert.assertEquals(20, resourceOperationRs.size());
 
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
@@ -1006,9 +1029,11 @@ public class PostApiIT extends AbstractIT {
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(7), Action.ACCEPT, boardUser, "accepting without time constraints");
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.SUSPEND, boardUser, "comment");
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(8), Action.PUBLISH);
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(9), Action.EDIT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(9), Action.SUSPEND, boardUser, "comment");
+
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(10), Action.EDIT, boardUser,
             new ChangeListRepresentation()
                 .put("applyWebsite", null, "http://www.twitter.com")
                 .put("applyDocument", ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"), null)
@@ -1016,21 +1041,22 @@ public class PostApiIT extends AbstractIT {
                 .put("liveTimestamp", null, TestHelper.toString(liveTimestampDelayed))
                 .put("deadTimestamp", null, TestHelper.toString(deadTimestampDelayed)));
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(10), Action.ACCEPT, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(11), Action.ACCEPT, boardUser,
             "this looks good now - i replaced the document with the complete website for the opportunity");
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(11), Action.PUBLISH);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(12), Action.PUBLISH);
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(12), Action.REJECT, departmentUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(13), Action.REJECT, departmentUser,
             "we have received a complaint, we're closing down the post");
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(13), Action.RESTORE, boardUser,
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(14), Action.RESTORE, boardUser,
             "sorry we made a mistake, we're restoring the post");
 
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(14), Action.RETIRE);
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(15), Action.WITHDRAW, postUser);
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(16), Action.RESTORE, postUser);
-        TestHelper.verifyResourceOperation(resourceOperationRs.get(17), Action.PUBLISH);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(15), Action.PUBLISH);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(16), Action.RETIRE);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(17), Action.WITHDRAW, postUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(18), Action.RESTORE, postUser);
+        TestHelper.verifyResourceOperation(resourceOperationRs.get(19), Action.PUBLISH);
     }
 
     @Test
@@ -1071,6 +1097,7 @@ public class PostApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+        postService.publishAndRetirePosts();
 
         Long memberUser1 = testUserService.authenticate().getId();
         Long memberUser2 = testUserService.authenticate().getId();
@@ -1187,6 +1214,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER)));
         transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
+        postService.publishAndRetirePosts();
 
         testUserService.setAuthentication(postUserId);
         List<ActivityRepresentation> activities = transactionTemplate.execute(status -> userApi.getActivities());

@@ -502,6 +502,8 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.executeAction(post1id, "accept", new PostPatchDTO()));
         transactionTemplate.execute(status -> postApi.executeAction(post2id, "accept", new PostPatchDTO()));
         transactionTemplate.execute(status -> postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment")));
+
+        postService.publishAndRetirePosts();
         verifyPostAndAuthorCount(boardId, 2L, 2L);
 
         transactionTemplate.execute(status -> postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment")));

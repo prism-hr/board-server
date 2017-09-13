@@ -1,7 +1,6 @@
 package hr.prism.board.notification.property;
 
 import hr.prism.board.domain.Post;
-import hr.prism.board.enums.State;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.util.BoardUtils;
@@ -17,8 +16,8 @@ public class PublicationScheduleProperty implements NotificationProperty {
 
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         Post post = (Post) notificationRequest.getResource();
-        if (post.getState() == State.ACCEPTED) {
-            return "immediately";
+        if (post.getLiveTimestamp() == null) {
+            return "imminently. We will send you a follow-up message when your post has gone live";
         }
 
         String liveTimestamp = postService.getEffectiveLiveTimestamp(post).format(BoardUtils.DATETIME_FORMATTER);

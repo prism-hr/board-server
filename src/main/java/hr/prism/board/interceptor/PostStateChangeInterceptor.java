@@ -26,7 +26,8 @@ public class PostStateChangeInterceptor implements StateChangeInterceptor {
                 return State.EXPIRED;
             }
 
-            return State.ACCEPTED;
+            // If not currently accepted, send to pending to trigger notifications
+            return resource.getState() == State.ACCEPTED ? State.ACCEPTED : State.PENDING;
         }
 
         return state;

@@ -233,11 +233,11 @@ public class DepartmentService {
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
 
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
         activityEventService.publishEvent(this, departmentId, userRole, Collections.singletonList(activity));
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setExcludingCreator(true).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
     }
 
