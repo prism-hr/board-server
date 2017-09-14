@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.ActivityEvent;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -71,5 +72,16 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "where userRole.resource = :resource " +
             "and userRole.user = :user)")
     void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.userRole in (" +
+            "select userRole " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user " +
+            "and userRole.role = :role)")
+    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
 
 }

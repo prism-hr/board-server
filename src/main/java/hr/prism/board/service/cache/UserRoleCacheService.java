@@ -70,6 +70,8 @@ public class UserRoleCacheService {
         updateUserRolesSummary(resource);
 
         if (notify) {
+            // TODO: raise activity
+
             Notification notification = new Notification().setInvitation(userRole.getUuid())
                 .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scope.name() + "_NOTIFICATION"));
             notificationEventService.publishEvent(this, resource.getId(), Collections.singletonList(notification));
@@ -130,6 +132,12 @@ public class UserRoleCacheService {
 
     public void deleteUserRoleCategories(Resource resource, User user) {
         userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
+    }
+
+    public void deleteUserRole(Resource resource, User user, Role role) {
+        activityService.deleteActivities(resource, user, role);
+        userRoleCategoryRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {

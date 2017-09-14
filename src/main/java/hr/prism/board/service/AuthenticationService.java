@@ -2,13 +2,18 @@ package hr.prism.board.service;
 
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.*;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.dto.LoginDTO;
+import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.dto.RegisterDTO;
+import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.workflow.Notification;
@@ -55,6 +60,9 @@ public class AuthenticationService {
     @Inject
     private UserRoleService userRoleService;
 
+    @Inject
+    private UserRoleCacheService userRoleCacheService;
+
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
@@ -96,7 +104,11 @@ public class AuthenticationService {
             throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User: " + email + " cannot be found");
         }
 
-        verifyAuthenticationValid(user, loginDTO);
+        String uuid = loginDTO.getUuid();
+        if (uuid != null) {
+            processInvitation(user, uuid);
+        }
+
         return user;
     }
 
@@ -122,7 +134,11 @@ public class AuthenticationService {
             }
         }
 
-        verifyAuthenticationValid(user, oauthDTO);
+        String uuid = oauthDTO.getUuid();
+        if (uuid != null) {
+            processInvitation(user, uuid);
+        }
+
         return user;
     }
 
@@ -140,20 +156,20 @@ public class AuthenticationService {
                     .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
                     .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
         } else {
-            User user = userCacheService.findByUuid(uuid);
-            if (user.isRegistered()) {
-                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_AUTHENTICATION, "User: " + user.getEmail() + " is already registered");
+            User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
+            if (invitee.isRegistered()) {
+                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_AUTHENTICATION, "User: " + invitee.getEmail() + " is already registered");
             }
 
-            if (!email.equals(user.getEmail())) {
+            if (!email.equals(invitee.getEmail())) {
                 verifyEmailUnique(email);
-                user.setEmail(registerDTO.getEmail());
+                invitee.setEmail(registerDTO.getEmail());
             }
 
-            user.setGivenName(registerDTO.getGivenName());
-            user.setSurname(registerDTO.getSurname());
-            user.setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()));
-            return user;
+            invitee.setGivenName(registerDTO.getGivenName());
+            invitee.setSurname(registerDTO.getSurname());
+            invitee.setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()));
+            return invitee;
         }
     }
 
@@ -211,15 +227,12 @@ public class AuthenticationService {
         }
     }
 
-    private void verifyAuthenticationValid(User user, AuthenticateDTO request) {
-        String uuid = request.getUuid();
-        if (uuid != null) {
-            User invitee = userCacheService.findByUuid(uuid);
-            if (invitee.isRegistered() && !user.equals(invitee)) {
-                throw new BoardForbiddenException(ExceptionCode.CORRUPTED_AUTHENTICATION, "User: " + user.getEmail() + " cannot accept invitation for: " + invitee.getEmail());
-            }
-
-            userRoleService.findByUuid(uuid).setUser(user);
+    private void processInvitation(User user, String uuid) {
+        User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
+        if (!user.equals(invitee)) {
+            UserRole userRole = userRoleService.findByUuid(uuid);
+            userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
+            userRole.setUser(user);
         }
     }
 

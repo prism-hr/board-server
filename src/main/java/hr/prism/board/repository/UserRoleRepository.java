@@ -51,4 +51,6 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
 
     Long deleteByResourceAndUser(Resource resource, User user);
 
+    Long deleteByResourceAndUserAndRole(Resource resource, User user, Role role);
+
 }

@@ -138,6 +138,12 @@ public class ActivityService {
         activityRepository.deleteByResourceAndUser(resource, user);
     }
 
+    public void deleteActivities(Resource resource, User user, Role role) {
+        activityEventRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        activityRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        activityRepository.deleteByResourceAndUserAndRole(resource, user, role);
+    }
+
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
         return activityRepository.save(new hr.prism.board.domain.Activity()
             .setResource(resource).setUserRole(userRole).setResourceEvent(resourceEvent).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));

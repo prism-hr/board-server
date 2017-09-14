@@ -22,7 +22,7 @@ public class DefinedRecipientList implements NotificationRecipientList {
             return Collections.singletonList(new UserNotification(userCacheService.findOneFresh(notification.getUserId())));
         }
 
-        return Collections.singletonList(new UserNotification(userCacheService.findByUuid(uuid), uuid));
+        return Collections.singletonList(new UserNotification(userCacheService.findByUserRoleUuid(uuid), uuid));
     }
 
 }

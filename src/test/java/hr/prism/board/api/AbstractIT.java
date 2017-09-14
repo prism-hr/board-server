@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.Sets;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -227,11 +226,10 @@ public abstract class AbstractIT {
         testUserActivityService.verify(userId);
     }
 
-    <T> void verifyContains(List<T> expectations, T... actuals) {
-        Set<T> expectationsSet = Sets.newLinkedHashSet(expectations);
-        for (T actual : actuals) {
-            if (!expectationsSet.contains(actual)) {
-                Assert.fail(expectations.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + actual.toString());
+    <T> void verifyContains(List<T> actuals, T... expectations) {
+        for (T expectation : expectations) {
+            if (!actuals.contains(expectation)) {
+                Assert.fail(actuals.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + expectation.toString());
             }
         }
     }

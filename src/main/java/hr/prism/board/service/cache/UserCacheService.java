@@ -4,6 +4,8 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.util.BoardUtils;
@@ -68,9 +70,18 @@ public class UserCacheService {
         return user;
     }
 
-    public User findByUuid(String uuid) {
+    public User findByUserRoleUuid(String uuid) {
         User user = userRepository.findByUserRoleUuid(uuid);
         appendScopes(user);
+        return user;
+    }
+
+    public User findByUserRoleUuidSecured(String uuid) {
+        User user = userRepository.findByUserRoleUuid(uuid);
+        if (user == null) {
+            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User with user role uuid; " + uuid + " cannot be found");
+        }
+
         return user;
     }
 

@@ -42,4 +42,16 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "and userRole.user = :user)")
     void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
 
+    @Modifying
+    @Query(value =
+        "delete from ActivityRole activityRole " +
+            "where activityRole.activity in ( " +
+            "select activity " +
+            "from Activity activity " +
+            "inner join activity.userRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user " +
+            "and userRole.role = :role)")
+    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+
 }

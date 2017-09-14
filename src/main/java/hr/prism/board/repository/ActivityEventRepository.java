@@ -1,6 +1,7 @@
 package hr.prism.board.repository;
 
 import hr.prism.board.domain.*;
+import hr.prism.board.enums.Role;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,5 +52,17 @@ public interface ActivityEventRepository extends MyRepository<ActivityEvent, Lon
             "where userRole.resource = :resource " +
             "and userRole.user = :user)")
     void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
+
+    @Modifying
+    @Query(value =
+        "delete from ActivityEvent activityEvent " +
+            "where activityEvent.activity in ( " +
+            "select activity " +
+            "from Activity activity " +
+            "inner join activity.userRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user " +
+            "and userRole.role = :role)")
+    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
 
 }
