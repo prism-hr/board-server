@@ -152,6 +152,7 @@ public class AuthenticationService {
 
             user.setGivenName(registerDTO.getGivenName());
             user.setSurname(registerDTO.getSurname());
+            user.setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()));
             return user;
         }
     }

@@ -553,6 +553,21 @@ public class ResourceApiIT extends AbstractIT {
         Long postId = postR.getId();
         postR = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("ip1")));
         Assert.assertNotNull(postR.getReferral());
+
+        transactionTemplate.execute(status -> authenticationApi.register(
+            new RegisterDTO().setUuid(memberRole2Uuid).setGivenName("member4").setSurname("member4").setEmail("member4@member4.com").setPassword("password4")));
+        postR = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("ip4")));
+        Assert.assertNotNull(postR.getReferral());
+
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> authenticationApi.register(
+                new RegisterDTO().setUuid(memberRole3Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1")),
+            ExceptionCode.DUPLICATE_USER, status));
+
+        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> authenticationApi.register(
+                new RegisterDTO().setUuid(memberRole1Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1")),
+            ExceptionCode.DUPLICATE_AUTHENTICATION, status));
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
