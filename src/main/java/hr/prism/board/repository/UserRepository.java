@@ -25,12 +25,22 @@ public interface UserRepository extends MyRepository<User, Long> {
     User findByEmail(String email);
 
     @Query(value =
+        "select user " +
+            "from User user " +
+            "where user.email = :email " +
+            "or user.id in (" +
+            "select userRole.user.id " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.email = :email " +
+            "and userRole.role = :role)")
+    List<User> findByEmail(@Param("resource") Resource resource, @Param("email") String email, @Param("role") Role role);
+
+    @Query(value =
         "select userRole.user " +
             "from UserRole userRole " +
             "where userRole.uuid = :uuid")
     User findByUserRoleUuid(@Param("uuid") String uuid);
-
-    User findByEmailOriginal(String emailOriginal);
 
     @Query(value =
         "select user " +

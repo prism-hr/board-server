@@ -112,7 +112,9 @@ public class UserRoleService {
     public UserRoleRepresentation createResourceUser(Scope scope, Long resourceId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        User user = userService.getOrCreateUser(userRoleDTO.getUser());
+
+        UserDTO userDTO = userRoleDTO.getUser();
+        User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(email));
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
             return resource;
@@ -145,9 +147,11 @@ public class UserRoleService {
             throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
         }
 
-        User user = userService.getOrCreateUser(userRoleDTO.getUser());
+        UserDTO userDTO = userRoleDTO.getUser();
         Resource resource = resourceService.findOne(resourceId);
-        createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
+        User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(resource, email, Role.MEMBER));
+        UserRole userRole = createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
+        userRole.setEmail(userDTO.getEmail());
     }
 
     public void deleteResourceUser(Scope scope, Long resourceId, Long userId) {
@@ -188,20 +192,21 @@ public class UserRoleService {
         return userRoleRepository.findByUuid(uuid);
     }
 
-    private void createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
+    private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         if (userRoleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
 
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, userRoleDTO.getRole());
         if (userRole == null) {
-            userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
+            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
         } else {
             userRole.setState(State.ACCEPTED);
             userRole.setExpiryDate(userRoleDTO.getExpiryDate());
             userRoleCacheService.deleteUserRoleCategories(resource, user);
             userRoleCacheService.createUserRoleCategories(userRole, userRoleDTO);
             userRoleCacheService.updateUserRolesSummary(resource);
+            return userRole;
         }
     }
 

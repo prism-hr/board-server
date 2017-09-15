@@ -1,5 +1,6 @@
 package hr.prism.board.service.cache;
 
+import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.Role;
@@ -66,6 +67,17 @@ public class UserCacheService {
 
     public User findByEmail(String email) {
         User user = userRepository.findByEmail(email);
+        appendScopes(user);
+        return user;
+    }
+
+    public User findByEmail(Resource resource, String email, Role role) {
+        List<User> users = userRepository.findByEmail(resource, email, role);
+        if (users.isEmpty()) {
+            return null;
+        }
+
+        User user = users.stream().filter(usr -> usr.getEmail().equals(email)).findFirst().orElse(users.get(0));
         appendScopes(user);
         return user;
     }

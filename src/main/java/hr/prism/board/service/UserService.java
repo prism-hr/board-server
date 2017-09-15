@@ -139,21 +139,15 @@ public class UserService {
         user.setPasswordResetTimestamp(null);
     }
 
-    public User getOrCreateUser(UserDTO userDTO) {
+    public User getOrCreateUser(UserDTO userDTO, UserFinder userFinder) {
         User user = null;
         if (userDTO.getId() != null) {
             user = userRepository.findOne(userDTO.getId());
         }
 
         String email = userDTO.getEmail();
-        if (email != null) {
-            if (user == null) {
-                user = userRepository.findByEmail(email);
-            }
-
-            if (user == null) {
-                user = userRepository.findByEmailOriginal(email);
-            }
+        if (user == null && email != null) {
+            user = userFinder.getByEmail(email);
         }
 
         if (user == null) {
@@ -261,6 +255,10 @@ public class UserService {
 
     public Long findUserCount(Resource resource, Role role, List<String> emails) {
         return userRepository.findUserCount(resource, role, State.ACTIVE_USER_ROLE_STATES, emails);
+    }
+
+    public interface UserFinder {
+        User getByEmail(String email);
     }
 
 }

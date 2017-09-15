@@ -1,13 +1,13 @@
-INSERT INTO user (uuid, given_name, surname, email, email_original, password, created_timestamp)
-VALUES (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'alastair@knowles.com', SHA2('password', 256), NOW()),
-  (UUID(), 'jakub', 'fibinger', 'jakub@fibinger.com', 'jakub@fibinger.com', SHA2('password', 256), NOW()),
-  (UUID(), 'juan', 'mingo', 'juan@mingo.com', 'juan@mingo.com', SHA2('password', 256), NOW()),
-  (UUID(), 'beatriz', 'rodriguez', 'beatriz@rodriguez.com', 'beatriz@rodriguez.com', SHA2('password', 256), NOW()),
-  (UUID(), 'felipe', 'ieder', 'felipe@ieder.com', 'felipe@ieder.com', SHA2('password', 256), NOW()),
-  (UUID(), 'chris', 'neil', 'chris@neil.com', 'chris@neil.com', SHA2('password', 256), NOW()),
-  (UUID(), 'andrew', 'marriott', 'andrew@marriott.com', 'andrew@marriott.com', SHA2('password', 256), NOW()),
-  (UUID(), 'jon', 'wheatley', 'jon@wheatley.com', 'jon@wheatley.com', SHA2('password', 256), NOW()),
-  (UUID(), 'toby', 'godfrey', 'toby@godfrey.com', 'toby@godfrey.com', SHA2('password', 256), NOW());
+INSERT INTO user (uuid, given_name, surname, email, password, created_timestamp)
+VALUES (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', SHA2('password', 256), NOW()),
+  (UUID(), 'jakub', 'fibinger', 'jakub@fibinger.com', SHA2('password', 256), NOW()),
+  (UUID(), 'juan', 'mingo', 'juan@mingo.com', SHA2('password', 256), NOW()),
+  (UUID(), 'beatriz', 'rodriguez', 'beatriz@rodriguez.com', SHA2('password', 256), NOW()),
+  (UUID(), 'felipe', 'ieder', 'felipe@ieder.com', SHA2('password', 256), NOW()),
+  (UUID(), 'chris', 'neil', 'chris@neil.com', SHA2('password', 256), NOW()),
+  (UUID(), 'andrew', 'marriott', 'andrew@marriott.com', SHA2('password', 256), NOW()),
+  (UUID(), 'jon', 'wheatley', 'jon@wheatley.com', SHA2('password', 256), NOW()),
+  (UUID(), 'toby', 'godfrey', 'toby@godfrey.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, handle, summary, created_timestamp)
 VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NOW()),

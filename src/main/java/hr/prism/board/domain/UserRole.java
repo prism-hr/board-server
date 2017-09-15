@@ -28,6 +28,9 @@ public class UserRole extends BoardEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "email")
+    private String email;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
@@ -73,6 +76,15 @@ public class UserRole extends BoardEntity {
 
     public UserRole setUser(User user) {
         this.user = user;
+        return this;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public UserRole setEmail(String email) {
+        this.email = email;
         return this;
     }
 
