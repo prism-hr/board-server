@@ -97,12 +97,6 @@ public class UserCacheService {
         return user;
     }
 
-    public User findByEmailAndPassword(String email, String password) {
-        User user = userRepository.findByEmailAndPassword(email, password);
-        appendScopes(user);
-        return user;
-    }
-
     public User findByOauthProviderAndOauthAccountId(OauthProvider provider, String oauthAccountId) {
         User user = userRepository.findByOauthProviderAndOauthAccountId(provider, oauthAccountId);
         appendScopes(user);

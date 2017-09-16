@@ -139,6 +139,16 @@ public interface UserRepository extends MyRepository<User, Long> {
     List<Long> findByResourceAndEvent(@Param("resource") Resource resource, @Param("event") ResourceEvent event);
 
     @Query(value =
+        "select resourceEvent.user.id " +
+            "from ResourceEvent resourceEvent " +
+            "where resourceEvent.resource = :resource " +
+            "and resourceEvent.event in (:events) " +
+            "and resourceEvent.referral is null " +
+            "group by resourceEvent.resource, resourceEvent.user " +
+            "order by resourceEvent.id desc")
+    List<Long> findByResourceAndEvents(@Param("resource") Resource resource, @Param("events") List<ResourceEvent> events);
+
+    @Query(value =
         "select count(user.id) " +
             "from UserRole userRole " +
             "inner join userRole.user user " +

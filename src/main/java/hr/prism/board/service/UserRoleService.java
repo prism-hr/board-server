@@ -143,7 +143,7 @@ public class UserRoleService {
 
     public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
         if (invokedAsynchronously && userService.getCurrentUser() != null) {
-            // There should never be an authenticated user inside this method authentication
+            // There should never be an authenticated user inside this method invocation
             throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
         }
 

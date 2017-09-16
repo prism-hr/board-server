@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.HashMultimap;
 import hr.prism.board.domain.*;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.*;
@@ -246,12 +247,20 @@ public class PostService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    public List<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
+    public Collection<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.EDIT, () -> post);
 
-        List<Long> userIds = userService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        List<Long> userIds;
+        boolean targetingReferrals = post.getApplyEmail() == null;
+        if (targetingReferrals) {
+            userIds = userService.findByResourceAndEvents(post,
+                Arrays.asList(hr.prism.board.enums.ResourceEvent.REFERRAL, hr.prism.board.enums.ResourceEvent.RESPONSE));
+        } else {
+            userIds = userService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+        }
+
         if (userIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -271,8 +280,7 @@ public class PostService {
                     "inner join resourceEvent.user user " +
                     "left join user.searches search on search.search = :search " +
                     "where resourceEvent.resource.id = :postId " +
-                    "and user.id in (:userIds) " +
-                    "and resourceEvent.event = :event ";
+                    "and user.id in (:userIds) ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
@@ -282,7 +290,6 @@ public class PostService {
                 .setParameter("search", search)
                 .setParameter("postId", postId)
                 .setParameter("userIds", userIds)
-                .setParameter("event", hr.prism.board.enums.ResourceEvent.RESPONSE)
                 .getResultList();
         });
 
@@ -290,20 +297,60 @@ public class PostService {
             userService.deleteSearchResults(search);
         }
 
-        if (!resourceEvents.isEmpty()) {
-            Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
-            boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
-            for (ResourceEvent resourceEvent : resourceEvents) {
-                resourceEvent.setExposeResponseData(isAdministrator && BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
-                indexByActivities.put(resourceEvent.getActivity(), resourceEvent);
-            }
-
-            for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
-                indexByActivities.get(activityEvent.getActivity()).setViewed(true);
-            }
+        if (resourceEvents.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        return resourceEvents;
+        HashMultimap<String, User> userIpAddresses = HashMultimap.create();
+        Map<User, ResourceEvent> userResourceEvents = new LinkedHashMap<>();
+
+        resourceEvents.forEach(resourceEvent -> {
+            User resourceEventUser = resourceEvent.getUser();
+            ResourceEvent headResourceEvent = userResourceEvents.get(resourceEventUser);
+            if (headResourceEvent == null) {
+                userResourceEvents.put(resourceEventUser, resourceEvent);
+            } else if (resourceEvent.getEvent() == hr.prism.board.enums.ResourceEvent.RESPONSE) {
+                userResourceEvents.put(resourceEventUser, resourceEvent);
+                List<ResourceEvent> resourceEventHistory = new ArrayList<>();
+                resourceEventHistory.add(headResourceEvent);
+
+                List<ResourceEvent> previousResourceEventHistory = headResourceEvent.getHistory();
+                if (previousResourceEventHistory != null) {
+                    resourceEventHistory.addAll(previousResourceEventHistory);
+                }
+
+                resourceEvent.setHistory(resourceEventHistory);
+            } else {
+                appendToResourceEventHistory(headResourceEvent, resourceEvent);
+            }
+
+            String ipAddress = resourceEvent.getIpAddress();
+            if (ipAddress != null) {
+                userIpAddresses.put(ipAddress, resourceEventUser);
+            }
+        });
+
+        if (!userIpAddresses.isEmpty()) {
+            resourceEventService.findByIpAddresses(userIpAddresses.keySet()).forEach(resourceEvent -> {
+                userIpAddresses.get(resourceEvent.getIpAddress()).forEach(resourceEventUser ->
+                    appendToResourceEventHistory(userResourceEvents.get(resourceEventUser), resourceEvent));
+            });
+        }
+
+        Collection<ResourceEvent> headResourceEvents = userResourceEvents.values();
+        Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
+        boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
+        for (ResourceEvent headResourceEvent : headResourceEvents) {
+            headResourceEvent.setExposeResponseData(headResourceEvent.getUser().equals(user) ||
+                isAdministrator && BooleanUtils.isTrue(headResourceEvent.getVisibleToAdministrator()));
+            indexByActivities.put(headResourceEvent.getActivity(), headResourceEvent);
+        }
+
+        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+        }
+
+        return headResourceEvents;
     }
 
     public ResourceEvent getPostResponse(Long postId, Long responseId) {
@@ -568,6 +615,16 @@ public class PostService {
                 post.setResponse(responses.get(post));
             }
         }
+    }
+
+    private void appendToResourceEventHistory(ResourceEvent headResourceEvent, ResourceEvent resourceEvent) {
+        List<ResourceEvent> resourceEventHistory = headResourceEvent.getHistory();
+        if (resourceEventHistory == null) {
+            resourceEventHistory = new ArrayList<>();
+            headResourceEvent.setHistory(resourceEventHistory);
+        }
+
+        resourceEventHistory.add(resourceEvent);
     }
 
 }

@@ -1,8 +1,10 @@
 package hr.prism.board.representation;
 
 import hr.prism.board.enums.ResourceEvent;
+import hr.prism.board.enums.ResourceEventMatch;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ResourceEventRepresentation {
 
@@ -24,7 +26,11 @@ public class ResourceEventRepresentation {
 
     private LocalDateTime createdTimestamp;
 
+    private ResourceEventMatch match;
+
     private boolean viewed;
+
+    private List<ResourceEventRepresentation> history;
 
     public Long getId() {
         return id;
@@ -71,15 +77,6 @@ public class ResourceEventRepresentation {
         return this;
     }
 
-    public boolean isViewed() {
-        return viewed;
-    }
-
-    public ResourceEventRepresentation setViewed(boolean viewed) {
-        this.viewed = viewed;
-        return this;
-    }
-
     public DocumentRepresentation getDocumentResume() {
         return documentResume;
     }
@@ -113,6 +110,33 @@ public class ResourceEventRepresentation {
 
     public ResourceEventRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
+        return this;
+    }
+
+    public ResourceEventMatch getMatch() {
+        return match;
+    }
+
+    public ResourceEventRepresentation setMatch(ResourceEventMatch match) {
+        this.match = match;
+        return this;
+    }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public ResourceEventRepresentation setViewed(boolean viewed) {
+        this.viewed = viewed;
+        return this;
+    }
+
+    public List<ResourceEventRepresentation> getHistory() {
+        return history;
+    }
+
+    public ResourceEventRepresentation setHistory(List<ResourceEventRepresentation> history) {
+        this.history = history;
         return this;
     }
 

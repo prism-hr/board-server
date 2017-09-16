@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "resource_event")
@@ -45,6 +46,9 @@ public class ResourceEvent extends BoardEntity {
 
     @Transient
     private boolean viewed;
+
+    @Transient
+    private List<ResourceEvent> history;
 
     public Resource getResource() {
         return resource;
@@ -151,6 +155,15 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setViewed(boolean viewed) {
         this.viewed = viewed;
+        return this;
+    }
+
+    public List<ResourceEvent> getHistory() {
+        return history;
+    }
+
+    public ResourceEvent setHistory(List<ResourceEvent> history) {
+        this.history = history;
         return this;
     }
 

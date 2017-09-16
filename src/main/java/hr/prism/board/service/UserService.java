@@ -135,6 +135,7 @@ public class UserService {
         }
 
         user.setPassword(DigestUtils.sha256Hex(userPasswordDTO.getPassword()));
+        user.setPasswordHash(PasswordHash.SHA256);
         user.setPasswordResetUuid(null);
         user.setPasswordResetTimestamp(null);
     }
@@ -243,6 +244,10 @@ public class UserService {
 
     public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
         return userRepository.findByResourceAndEvent(resource, event);
+    }
+
+    public List<Long> findByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
+        return userRepository.findByResourceAndEvents(resource, events);
     }
 
     public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {

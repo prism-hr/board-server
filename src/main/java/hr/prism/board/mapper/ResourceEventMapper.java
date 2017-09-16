@@ -1,20 +1,25 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.ResourceEvent;
+import hr.prism.board.domain.User;
+import hr.prism.board.enums.ResourceEventMatch;
 import hr.prism.board.representation.ResourceEventRepresentation;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ResourceEventMapper implements Function<ResourceEvent, ResourceEventRepresentation> {
 
     @Inject
-    private DocumentMapper documentMapper;
+    private UserMapper userMapper;
 
     @Inject
-    private UserMapper userMapper;
+    private DocumentMapper documentMapper;
 
     @Override
     public ResourceEventRepresentation apply(ResourceEvent resourceEvent) {
@@ -22,6 +27,7 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             return null;
         }
 
+        User user = resourceEvent.getUser();
         ResourceEventRepresentation representation =
             new ResourceEventRepresentation()
                 .setId(resourceEvent.getId())
@@ -29,7 +35,13 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
                 .setUser(userMapper.apply(resourceEvent.getUser()))
                 .setIpAddress(resourceEvent.getIpAddress())
                 .setReferral(resourceEvent.getReferral())
+                .setMatch(getResourceEventMatch(user))
                 .setViewed(resourceEvent.isViewed());
+
+        List<ResourceEvent> history = resourceEvent.getHistory();
+        if (CollectionUtils.isNotEmpty(history)) {
+            representation.setHistory(history.stream().map(this::applyHistory).collect(Collectors.toList()));
+        }
 
         if (resourceEvent.isExposeResponseData()) {
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));
@@ -37,7 +49,19 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             representation.setCoveringNote(resourceEvent.getCoveringNote());
         }
 
+        representation.setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
         return representation;
+    }
+
+    private ResourceEventRepresentation applyHistory(ResourceEvent resourceEvent) {
+        return new ResourceEventRepresentation()
+            .setEvent(resourceEvent.getEvent())
+            .setCreatedTimestamp(resourceEvent.getCreatedTimestamp())
+            .setMatch(getResourceEventMatch(resourceEvent.getUser()));
+    }
+
+    private ResourceEventMatch getResourceEventMatch(User user) {
+        return user == null ? ResourceEventMatch.PROBABLE : ResourceEventMatch.DEFINITE;
     }
 
 }

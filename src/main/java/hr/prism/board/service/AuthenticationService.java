@@ -9,6 +9,7 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.enums.PasswordHash;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -99,17 +100,21 @@ public class AuthenticationService {
 
     public User login(LoginDTO loginDTO) {
         String email = loginDTO.getEmail();
-        User user = userCacheService.findByEmailAndPassword(loginDTO.getEmail(), DigestUtils.sha256Hex(loginDTO.getPassword()));
+        User user = userCacheService.findByEmail(loginDTO.getEmail());
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User: " + email + " cannot be found");
         }
 
-        String uuid = loginDTO.getUuid();
-        if (uuid != null) {
-            processInvitation(user, uuid);
+        if (user.passwordMatches(loginDTO.getPassword())) {
+            String uuid = loginDTO.getUuid();
+            if (uuid != null) {
+                processInvitation(user, uuid);
+            }
+
+            return user;
         }
 
-        return user;
+        throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "Incorrect password for user: " + email);
     }
 
     public User signin(OauthProvider provider, OauthDTO oauthDTO) {
@@ -154,6 +159,7 @@ public class AuthenticationService {
                     .setSurname(registerDTO.getSurname())
                     .setEmail(email)
                     .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
+                    .setPasswordHash(PasswordHash.SHA256)
                     .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
         } else {
             User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
@@ -169,6 +175,7 @@ public class AuthenticationService {
             invitee.setGivenName(registerDTO.getGivenName());
             invitee.setSurname(registerDTO.getSurname());
             invitee.setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()));
+            invitee.setPasswordHash(PasswordHash.SHA256);
             return invitee;
         }
     }

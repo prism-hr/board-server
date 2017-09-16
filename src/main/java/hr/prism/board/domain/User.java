@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.enums.PasswordHash;
 import hr.prism.board.enums.Scope;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.validator.constraints.Email;
@@ -32,6 +33,10 @@ public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "password")
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "password_hash")
+    private PasswordHash passwordHash;
 
     @Column(name = "password_reset_uuid")
     private String passwordResetUuid;
@@ -115,6 +120,15 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setPassword(String password) {
         this.password = password;
+        return this;
+    }
+
+    public PasswordHash getPasswordHash() {
+        return passwordHash;
+    }
+
+    public User setPasswordHash(PasswordHash passwordHash) {
+        this.passwordHash = passwordHash;
         return this;
     }
 
@@ -222,6 +236,10 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public boolean isRegistered() {
         return password != null || oauthProvider != null;
+    }
+
+    public boolean passwordMatches(String input) {
+        return passwordHash.matches(input, password);
     }
 
     @Override

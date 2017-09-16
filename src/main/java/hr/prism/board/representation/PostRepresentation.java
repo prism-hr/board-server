@@ -47,8 +47,6 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
-    private String referralCode;
-
     private ResourceEventRepresentation referral;
 
     private ResourceEventRepresentation response;

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
@@ -20,6 +21,15 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.id in (:ids)")
     List<ResourceEvent> findOnes(@Param("ids") List<Long> ids);
+
+
+    @Query(value =
+        "select resourceEvent " +
+            "from ResourceEvent resourceEvent " +
+            "where resourceEvent.event = :event " +
+            "and resourceEvent.ipAddress in (:ipAddresses) " +
+            "and resourceEvent.user is null")
+    List<ResourceEvent> findByEventAndIpAddresses(@Param("event") hr.prism.board.enums.ResourceEvent event, @Param("ipAddresses") Collection<String> ipAddresses);
 
     @Query(value =
         "select max(resourceEvent.id) " +

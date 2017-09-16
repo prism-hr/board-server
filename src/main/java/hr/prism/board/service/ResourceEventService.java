@@ -23,10 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,7 +125,7 @@ public class ResourceEventService {
         ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
         if (resourceEvent == null) {
             // Bad referral, or referral consumed already - client should request a new one
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_REFERRAL, "Referral code does not exist or has been consumed");
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_REFERRAL, "Referral does not exist or has been consumed");
         }
 
         resourceEvent.setReferral(null);
@@ -141,6 +138,10 @@ public class ResourceEventService {
 
     public void updateVisibleToAdministrator(Resource resource) {
         resourceEventRepository.updateVisibleToAdministrator(resource, hr.prism.board.enums.ResourceEvent.RESPONSE, true);
+    }
+
+    public List<ResourceEvent> findByIpAddresses(Collection<String> ipAddresses) {
+        return resourceEventRepository.findByEventAndIpAddresses(hr.prism.board.enums.ResourceEvent.VIEW, ipAddresses);
     }
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
