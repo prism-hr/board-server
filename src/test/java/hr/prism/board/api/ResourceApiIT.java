@@ -657,8 +657,10 @@ public class ResourceApiIT extends AbstractIT {
         Long departmentId3 = departmentR3.getId();
         Long boardId3 = boardR3.getId();
 
-        transactionTemplate.execute(status -> resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentId3, Collections.singletonList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member5").setSurname("member5").setEmail("member5@member5.com")).setRole(Role.MEMBER))));
+        transactionTemplate.execute(status -> resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentId3, Arrays.asList(
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member5").setSurname("member5").setEmail("member5@member5.com")).setRole(Role.MEMBER),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member6").setSurname("member6").setEmail("member6@member6.com")).setRole(Role.MEMBER),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member7").setSurname("member7").setEmail("member7@member7.com")).setRole(Role.MEMBER))));
 
         testNotificationService.record();
         PostRepresentation postR3 = transactionTemplate.execute(status -> postApi.postPost(boardId3, TestHelper.smallSamplePost()));
@@ -672,13 +674,19 @@ public class ResourceApiIT extends AbstractIT {
         String departmentName3 = departmentR3.getName();
 
         User member5 = transactionTemplate.execute(status -> userRepository.findByEmail("member5@member5.com"));
+        User member6 = transactionTemplate.execute(status -> userRepository.findByEmail("member6@member6.com"));
+        User member7 = transactionTemplate.execute(status -> userRepository.findByEmail("member7@member7.com"));
+
         Resource department3 = transactionTemplate.execute(status -> resourceService.findOne(departmentId3));
         String department3memberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member5, Role.MEMBER)).getUuid();
+        String department3memberRole2Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member6, Role.MEMBER)).getUuid();
+        String department3memberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member7, Role.MEMBER)).getUuid();
 
         String parentRedirect3 = serverUrl + "/redirect?resource=" + boardId3;
         String resourceRedirect3 = serverUrl + "/redirect?resource=" + postR3.getId();
         User user3 = transactionTemplate.execute(status -> userCacheService.findOne(userId3));
 
+        testNotificationService.stop();
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, user3,
                 ImmutableMap.<String, String>builder().put("recipient", user3.getGivenName()).put("department", departmentName3).put("board", boardName3)
@@ -687,7 +695,17 @@ public class ResourceApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "member5").put("department", departmentName3).put("board", boardName3).put("post", postName3)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect3)
                     .put("invitationUuid", department3memberRole1Uuid).put("modal", "register").put("parentRedirect", parentRedirect3)
-                    .put("recipientUuid", member5.getUuid()).build()));
+                    .put("recipientUuid", member5.getUuid()).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member6,
+                ImmutableMap.<String, String>builder().put("recipient", "member6").put("department", departmentName3).put("board", boardName3).put("post", postName3)
+                    .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect3)
+                    .put("invitationUuid", department3memberRole2Uuid).put("modal", "register").put("parentRedirect", parentRedirect3)
+                    .put("recipientUuid", member6.getUuid()).build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member7,
+                ImmutableMap.<String, String>builder().put("recipient", "member7").put("department", departmentName3).put("board", boardName3).put("post", postName3)
+                    .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect3)
+                    .put("invitationUuid", department3memberRole3Uuid).put("modal", "register").put("parentRedirect", parentRedirect3)
+                    .put("recipientUuid", member7.getUuid()).build()));
 
         Long postId3 = postR3.getId();
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
@@ -697,10 +715,82 @@ public class ResourceApiIT extends AbstractIT {
         postR3 = transactionTemplate.execute(status -> postApi.getPost(postId3, TestHelper.mockHttpServletRequest("ip5")));
         Assert.assertNotNull(postR3.getReferral());
 
+        transactionTemplate.execute(status -> authenticationApi.signin("facebook",
+            new SigninDTO().setUuid(department3memberRole2Uuid).setClientId("clientId2").setCode("code2").setRedirectUri("redirectUri2")));
+        testUserService.setAuthentication(member6.getId());
+
+        postR3 = transactionTemplate.execute(status -> postApi.getPost(postId3, TestHelper.mockHttpServletRequest("ip6")));
+        Assert.assertNotNull(postR3.getReferral());
+
+        transactionTemplate.execute(status -> authenticationApi.signin("facebook",
+            new SigninDTO().setUuid(department3memberRole3Uuid).setClientId("clientId3").setCode("code3").setRedirectUri("redirectUri3")));
+        testUserService.setAuthentication(member1.getId());
+
+        postR3 = transactionTemplate.execute(status -> postApi.getPost(postId3, TestHelper.mockHttpServletRequest("ip7")));
+        Assert.assertNotNull(postR3.getReferral());
+
         testUserService.setAuthentication(userId3);
         List<String> emails3 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId3, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
-        verifyContains(emails3, "alastair@prism.hr");
+        verifyContains(emails3, "alastair@prism.hr", "jakub@prism.hr", "member1@member1.com");
+
+        Long userId4 = testUserService.authenticate().getId();
+        BoardRepresentation boardR4 = transactionTemplate.execute(status -> boardApi.postBoard(
+            new BoardDTO()
+                .setName("board4")
+                .setDepartment(new DepartmentDTO()
+                    .setName("department4"))));
+
+        DepartmentRepresentation departmentR4 = boardR4.getDepartment();
+        Long departmentId4 = departmentR4.getId();
+        Long boardId4 = boardR4.getId();
+
+        transactionTemplate.execute(status -> resourceApi.createResourceUsers(Scope.DEPARTMENT, departmentId4, Collections.singletonList(
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member8").setSurname("member8").setEmail("member8@member8.com")).setRole(Role.MEMBER))));
+
+        testNotificationService.record();
+        PostRepresentation postR4 = transactionTemplate.execute(status -> postApi.postPost(boardId4, TestHelper.smallSamplePost()));
+        transactionTemplate.execute(status -> {
+            postService.publishAndRetirePosts();
+            return null;
+        });
+
+        String postName4 = postR4.getName();
+        String boardName4 = boardR4.getName();
+        String departmentName4 = departmentR4.getName();
+
+        User member8 = transactionTemplate.execute(status -> userRepository.findByEmail("member8@member8.com"));
+
+        Resource department4 = transactionTemplate.execute(status -> resourceService.findOne(departmentId4));
+        String department4memberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department4, member8, Role.MEMBER)).getUuid();
+
+        String parentRedirect4 = serverUrl + "/redirect?resource=" + boardId4;
+        String resourceRedirect4 = serverUrl + "/redirect?resource=" + postR4.getId();
+        User user4 = transactionTemplate.execute(status -> userCacheService.findOne(userId4));
+
+        testNotificationService.stop();
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, user4,
+                ImmutableMap.<String, String>builder().put("recipient", user4.getGivenName()).put("department", departmentName4).put("board", boardName4)
+                    .put("post", postName4).put("resourceRedirect", resourceRedirect4).put("modal", "login").build()),
+            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member8,
+                ImmutableMap.<String, String>builder().put("recipient", "member8").put("department", departmentName4).put("board", boardName4).put("post", postName4)
+                    .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect4)
+                    .put("invitationUuid", department4memberRole1Uuid).put("modal", "register").put("parentRedirect", parentRedirect4)
+                    .put("recipientUuid", member8.getUuid()).build()));
+
+        Long postId4 = postR4.getId();
+        transactionTemplate.execute(status -> authenticationApi.signin("facebook",
+            new SigninDTO().setUuid(department4memberRole1Uuid).setClientId("clientId").setCode("code").setRedirectUri("redirectUri")));
+        testUserService.setAuthentication(member5.getId());
+
+        postR4 = transactionTemplate.execute(status -> postApi.getPost(postId4, TestHelper.mockHttpServletRequest("ip5")));
+        Assert.assertNotNull(postR4.getReferral());
+
+        testUserService.setAuthentication(userId4);
+        List<String> emails4 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId4, null)
+            .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
+        verifyContains(emails4, "alastair@prism.hr");
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
