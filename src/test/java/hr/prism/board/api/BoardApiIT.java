@@ -31,6 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @TestContext
@@ -534,6 +535,35 @@ public class BoardApiIT extends AbstractIT {
         });
 
         verifyPostAndAuthorCount(boardId, 1L, 1L);
+    }
+
+    @Test
+    public void shouldArchiveBoards() throws InterruptedException {
+        testUserService.authenticate();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(new BoardDTO()
+            .setName("board1")
+            .setDepartment(new DepartmentDTO()
+                .setName("department"))));
+
+        Long departmentId = boardR.getDepartment().getId();
+        Long boardId1 = boardR.getId();
+
+        testUserService.authenticate();
+        Long boardId2 = transactionTemplate.execute(status -> boardApi.postBoard(
+            new BoardDTO()
+                .setName("board2")
+                .setDepartment(new DepartmentDTO()
+                    .setId(departmentId)))).getId();
+
+        TimeUnit.SECONDS.sleep(resourceArchiveDurationSeconds + 1);
+
+        transactionTemplate.execute(status -> {
+            resourceService.archiveResources();
+            return null;
+        });
+
+        Assert.assertEquals(State.ACCEPTED, transactionTemplate.execute(status -> resourceRepository.findOne(boardId1)).getState());
+        Assert.assertEquals(State.ARCHIVED, transactionTemplate.execute(status -> resourceRepository.findOne(boardId2)).getState());
     }
 
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {

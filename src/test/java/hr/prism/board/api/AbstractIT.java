@@ -47,6 +47,9 @@ public abstract class AbstractIT {
 
     TransactionTemplate transactionTemplate;
 
+    @Value("${resource.archive.duration.seconds}")
+    Long resourceArchiveDurationSeconds;
+
     @Inject
     ResourceApi resourceApi;
 

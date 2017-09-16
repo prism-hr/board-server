@@ -38,6 +38,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -1371,6 +1372,28 @@ public class PostApiIT extends AbstractIT {
         responses = postApi.getPostResponses(postId, "juan");
         Assert.assertEquals(1, responses.size());
         verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), "juan@mingo.com");
+    }
+
+    @Test
+    public void shouldArchivePosts() throws InterruptedException {
+        testUserService.authenticate();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getId();
+        Long postId1 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post1"))).getId();
+
+        testUserService.authenticate();
+        Long postId2 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post2"))).getId();
+        Long postId3 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post3"))).getId();
+
+        TimeUnit.SECONDS.sleep(resourceArchiveDurationSeconds + 1);
+
+        transactionTemplate.execute(status -> {
+            resourceService.archiveResources();
+            return null;
+        });
+
+        Assert.assertEquals(State.PENDING, transactionTemplate.execute(status -> resourceRepository.findOne(postId1)).getState());
+        Assert.assertEquals(State.ARCHIVED, transactionTemplate.execute(status -> resourceRepository.findOne(postId2)).getState());
+        Assert.assertEquals(State.ARCHIVED, transactionTemplate.execute(status -> resourceRepository.findOne(postId3)).getState());
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {

@@ -121,14 +121,14 @@ public class ActionService {
     public void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             entityManager.createQuery(
-                "update Post post " +
-                    "set post.previousState = post.state, " +
-                    "post.state = :newState, " +
-                    "post.updatedTimestamp = :baseline " +
-                    "where post.id in (:postIds)")
+                "update Resource resource " +
+                    "set resource.previousState = resource.state, " +
+                    "resource.state = :newState, " +
+                    "resource.updatedTimestamp = :baseline " +
+                    "where resource.id in (:resourceIds)")
                 .setParameter("newState", newState)
                 .setParameter("baseline", baseline)
-                .setParameter("postIds", resourceIds)
+                .setParameter("resourceIds", resourceIds)
                 .executeUpdate();
 
             //noinspection SqlResolve
