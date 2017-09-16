@@ -6,6 +6,7 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.value.UserRoleSummary;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -52,5 +53,19 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
     Long deleteByResourceAndUser(Resource resource, User user);
 
     Long deleteByResourceAndUserAndRole(Resource resource, User user, Role role);
+
+    @Query(value =
+        "select userRole " +
+            "from UserRole userRole " +
+            "where userRole.user in (:users) " +
+            "order by userRole.user")
+    List<UserRole> findByUsersOrderByUser(@Param("users") List<User> users);
+
+    @Modifying
+    @Query(value =
+        "update UserRole userRole " +
+            "set userRole.user = :newUser " +
+            "where userRole.user = :oldUser")
+    void updateByUser(@Param("newUser") User newUser, @Param("oldUser") User oldUser);
 
 }

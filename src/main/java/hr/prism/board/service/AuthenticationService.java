@@ -59,9 +59,6 @@ public class AuthenticationService {
     private UserCacheService userCacheService;
 
     @Inject
-    private UserRoleService userRoleService;
-
-    @Inject
     private UserRoleCacheService userRoleCacheService;
 
     @Lazy
@@ -254,9 +251,14 @@ public class AuthenticationService {
     private void processInvitation(User user, String uuid) {
         User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
         if (!user.equals(invitee)) {
-            UserRole userRole = userRoleService.findByUuid(uuid);
+            UserRole userRole = userRoleCacheService.findByUuid(uuid);
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
             userRole.setUser(user);
+
+            if (!invitee.isRegistered()) {
+                userRoleCacheService.mergeUserRoles(user, invitee);
+                userCacheService.deleteUser(invitee);
+            }
         }
     }
 

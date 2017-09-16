@@ -11,6 +11,7 @@ import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Notification;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -20,10 +21,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @Service
@@ -48,6 +46,10 @@ public class UserRoleCacheService {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    public UserRole findByUuid(String uuid) {
+        return userRoleRepository.findByUuid(uuid);
+    }
 
     @CacheEvict(key = "#user.id", value = "users")
     public UserRole createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
@@ -96,6 +98,35 @@ public class UserRoleCacheService {
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
     }
 
+    @CacheEvict(key = "#user.id", value = "users")
+    public void deleteUserRole(Resource resource, User user, Role role) {
+        activityService.deleteActivities(resource, user, role);
+        userRoleCategoryRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+    }
+
+    @CacheEvict(key = "#newUser.id", value = "users")
+    public void mergeUserRoles(User newUser, User oldUser) {
+        Map<Pair<Resource, Role>, UserRole> newUserRoles = new HashMap<>();
+        Map<Pair<Resource, Role>, UserRole> oldUserRoles = new HashMap<>();
+        userRoleRepository.findByUsersOrderByUser(Arrays.asList(newUser, oldUser)).forEach(userRole -> {
+            if (userRole.getUser().equals(newUser)) {
+                newUserRoles.put(Pair.of(userRole.getResource(), userRole.getRole()), userRole);
+            } else {
+                oldUserRoles.put(Pair.of(userRole.getResource(), userRole.getRole()), userRole);
+            }
+        });
+
+        for (Map.Entry<Pair<Resource, Role>, UserRole> oldUserRoleEntry : oldUserRoles.entrySet()) {
+            if (newUserRoles.containsKey(oldUserRoleEntry.getKey())) {
+                UserRole oldUserRole = oldUserRoleEntry.getValue();
+                deleteUserRole(oldUserRole.getResource(), oldUserRole.getUser(), oldUserRole.getRole());
+            }
+        }
+
+        userRoleRepository.updateByUser(newUser, oldUser);
+    }
+
     public void createUserRoleCategories(UserRole userRole, UserRoleDTO userRoleDTO) {
         if (userRoleDTO.getRole() == Role.MEMBER) {
             Resource resource = userRole.getResource();
@@ -132,12 +163,6 @@ public class UserRoleCacheService {
 
     public void deleteUserRoleCategories(Resource resource, User user) {
         userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
-    }
-
-    public void deleteUserRole(Resource resource, User user, Role role) {
-        activityService.deleteActivities(resource, user, role);
-        userRoleCategoryRepository.deleteByResourceAndUserAndRole(resource, user, role);
-        userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {

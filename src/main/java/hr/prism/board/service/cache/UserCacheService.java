@@ -11,6 +11,8 @@ import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.value.ResourceSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class UserCacheService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserCacheService.class);
 
     @Inject
     private CacheManager cacheManager;
@@ -50,19 +54,29 @@ public class UserCacheService {
         return user;
     }
 
+    @Cacheable(key = "#user.id", value = "users")
+    public User updateUser(User user) {
+        setIndexData(user);
+        appendScopes(user);
+        return userRepository.update(user);
+    }
+
+    @Cacheable(key = "#user.id", value = "users")
+    public void deleteUser(User user) {
+        try {
+            userRepository.delete(user);
+        } catch (Exception e) {
+            // Should not happen but in case it does, not a reason to crash the process
+            LOGGER.warn("Could not delete user: " + user.toString(), e);
+        }
+    }
+
     public User saveUser(User user) {
         user = userRepository.save(user);
         setIndexData(user);
         appendScopes(user);
         cacheManager.getCache("users").put(user.getId(), user);
         return user;
-    }
-
-    @Cacheable(key = "#user.id", value = "users")
-    public User updateUser(User user) {
-        setIndexData(user);
-        appendScopes(user);
-        return userRepository.update(user);
     }
 
     public User findByEmail(String email) {
