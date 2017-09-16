@@ -2,9 +2,9 @@ package hr.prism.board.api;
 
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LoginDTO;
-import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.AuthenticationService;
 import org.springframework.web.bind.annotation.*;
@@ -36,8 +36,8 @@ public class AuthenticationApi {
     }
 
     @RequestMapping(value = "/api/auth/{provider}", method = RequestMethod.POST)
-    public Map<String, String> signin(@PathVariable String provider, @RequestBody @Valid OauthDTO oauthDTO) {
-        User user = authenticationService.signin(OauthProvider.valueOf(provider.toUpperCase()), oauthDTO);
+    public Map<String, String> signin(@PathVariable String provider, @RequestBody @Valid SigninDTO signinDTO) {
+        User user = authenticationService.signin(OauthProvider.valueOf(provider.toUpperCase()), signinDTO);
         return makeAccessTokenResponse(user);
     }
 

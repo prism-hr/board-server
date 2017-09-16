@@ -1,7 +1,7 @@
 package hr.prism.board.authentication.adapter;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
@@ -22,10 +22,10 @@ public class LinkedinAdapter implements OauthAdapter {
     private String linkedinAppSecret;
 
     @Override
-    public User exchangeForUser(OauthDTO oauthDTO) {
+    public User exchangeForUser(SigninDTO signinDTO) {
         try {
-            LinkedInConnectionFactory cf = new LinkedInConnectionFactory(oauthDTO.getClientId(), linkedinAppSecret);
-            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
+            LinkedInConnectionFactory cf = new LinkedInConnectionFactory(signinDTO.getClientId(), linkedinAppSecret);
+            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(signinDTO.getCode(), signinDTO.getRedirectUri(), null);
             Connection<LinkedIn> connection = cf.createConnection(accessGrant);
             LinkedInProfile user = connection.getApi().profileOperations().getUserProfile();
 

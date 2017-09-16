@@ -1,10 +1,10 @@
 package hr.prism.board.authentication.adapter;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.dto.SigninDTO;
 
 public interface OauthAdapter {
 
-    User exchangeForUser(OauthDTO oauthDTO);
+    User exchangeForUser(SigninDTO signinDTO);
 
 }

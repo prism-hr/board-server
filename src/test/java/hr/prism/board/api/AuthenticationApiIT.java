@@ -235,7 +235,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 MockMvcRequestBuilders.post("/api/auth/facebook")
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .content(objectMapper.writeValueAsString(
-                        new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
+                        new SigninDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse()
@@ -263,7 +263,7 @@ public class AuthenticationApiIT extends AbstractIT {
             MockMvcRequestBuilders.post("/api/auth/linkedin")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(
-                    new OauthDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
+                    new SigninDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
         user = userCacheService.findOneFresh(userId);

@@ -3,7 +3,7 @@ package hr.prism.board;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
@@ -23,7 +23,7 @@ public class TestBoardApplication {
     public FacebookAdapter facebookAdapter() {
         FacebookAdapter facebookAdapter = Mockito.mock(FacebookAdapter.class);
         Mockito.when(facebookAdapter.exchangeForUser(
-            new OauthDTO()
+            new SigninDTO()
                 .setClientId("clientId")
                 .setCode("code")
                 .setRedirectUri("redirectUri")))
@@ -34,6 +34,33 @@ public class TestBoardApplication {
                     .setEmail("alastair@prism.hr")
                     .setOauthProvider(OauthProvider.FACEBOOK)
                     .setOauthAccountId("facebookId"));
+
+        Mockito.when(facebookAdapter.exchangeForUser(
+            new SigninDTO()
+                .setClientId("clientId2")
+                .setCode("code2")
+                .setRedirectUri("redirectUri2")))
+            .thenReturn(
+                new User()
+                    .setGivenName("jakub")
+                    .setSurname("fibinger")
+                    .setEmail("jakub@prism.hr")
+                    .setOauthProvider(OauthProvider.FACEBOOK)
+                    .setOauthAccountId("facebookId2"));
+
+        Mockito.when(facebookAdapter.exchangeForUser(
+            new SigninDTO()
+                .setClientId("clientId3")
+                .setCode("code3")
+                .setRedirectUri("redirectUri3")))
+            .thenReturn(
+                new User()
+                    .setGivenName("member1")
+                    .setSurname("member1")
+                    .setEmail("member1@member1.com")
+                    .setOauthProvider(OauthProvider.FACEBOOK)
+                    .setOauthAccountId("facebookId3"));
+
         return facebookAdapter;
     }
 
@@ -42,7 +69,7 @@ public class TestBoardApplication {
     public LinkedinAdapter linkedinAdapter() {
         LinkedinAdapter linkedinAdapter = Mockito.mock(LinkedinAdapter.class);
         Mockito.when(linkedinAdapter.exchangeForUser(
-            new OauthDTO()
+            new SigninDTO()
                 .setClientId("clientId")
                 .setCode("code")
                 .setRedirectUri("redirectUri")))
@@ -53,6 +80,7 @@ public class TestBoardApplication {
                     .setEmail("alastair@prism.hr")
                     .setOauthProvider(OauthProvider.LINKEDIN)
                     .setOauthAccountId("linkedinId"));
+
         return linkedinAdapter;
     }
 

@@ -1,7 +1,7 @@
 package hr.prism.board.authentication.adapter;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.OauthDTO;
+import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
@@ -21,10 +21,10 @@ public class FacebookAdapter implements OauthAdapter {
     private String facebookAppSecret;
 
     @Override
-    public User exchangeForUser(OauthDTO oauthDTO) {
+    public User exchangeForUser(SigninDTO signinDTO) {
         try {
-            FacebookConnectionFactory cf = new FacebookConnectionFactory(oauthDTO.getClientId(), facebookAppSecret);
-            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(oauthDTO.getCode(), oauthDTO.getRedirectUri(), null);
+            FacebookConnectionFactory cf = new FacebookConnectionFactory(signinDTO.getClientId(), facebookAppSecret);
+            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(signinDTO.getCode(), signinDTO.getRedirectUri(), null);
             Connection<Facebook> connection = cf.createConnection(accessGrant);
             org.springframework.social.facebook.api.User user = connection.getApi().fetchObject(
                 "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");

@@ -4,9 +4,9 @@ import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.LoginDTO;
-import hr.prism.board.dto.OauthDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
+import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.PasswordHash;
@@ -117,9 +117,9 @@ public class AuthenticationService {
         throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "Incorrect password for user: " + email);
     }
 
-    public User signin(OauthProvider provider, OauthDTO oauthDTO) {
+    public User signin(OauthProvider provider, SigninDTO signinDTO) {
         Class<? extends OauthAdapter> oauthAdapterClass = provider.getOauthAdapter();
-        User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(oauthDTO);
+        User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(signinDTO);
         if (newUser.getEmail() == null) {
             throw new BoardForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER, "User not identifiable, no email address");
         }
@@ -129,9 +129,26 @@ public class AuthenticationService {
         if (user == null) {
             user = userCacheService.findByEmail(newUser.getEmail());
             if (user == null) {
-                user = newUser;
-                user.setUuid(UUID.randomUUID().toString());
-                user = userCacheService.saveUser(newUser);
+                User invitee = null;
+                String uuid = signinDTO.getUuid();
+                if (uuid != null) {
+                    invitee = userCacheService.findByUserRoleUuid(signinDTO.getUuid());
+                }
+
+                if (invitee == null || invitee.isRegistered()) {
+                    user = newUser;
+                    user.setUuid(UUID.randomUUID().toString());
+                    user = userCacheService.saveUser(user);
+                } else {
+                    user = invitee;
+                    user.setGivenName(newUser.getGivenName());
+                    user.setSurname(newUser.getSurname());
+                    user.setEmail(newUser.getEmail());
+                    user.setOauthProvider(newUser.getOauthProvider());
+                    user.setOauthAccountId(newUser.getOauthAccountId());
+                    user.setDocumentImageRequestState(newUser.getDocumentImageRequestState());
+                    user = userCacheService.updateUser(user);
+                }
             } else {
                 user.setOauthProvider(provider);
                 user.setOauthAccountId(accountId);
@@ -139,7 +156,7 @@ public class AuthenticationService {
             }
         }
 
-        String uuid = oauthDTO.getUuid();
+        String uuid = signinDTO.getUuid();
         if (uuid != null) {
             processInvitation(user, uuid);
         }
