@@ -31,6 +31,9 @@ public abstract class Update<T extends Update> {
 
     private Role role;
 
+    @JsonIgnore
+    private Long userId;
+
     public Workflow getWorkflow() {
         return workflow;
     }
@@ -73,6 +76,15 @@ public abstract class Update<T extends Update> {
 
     public T setRole(Role role) {
         this.role = role;
+        return (T) this;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public T setUserId(Long userId) {
+        this.userId = userId;
         return (T) this;
     }
 

@@ -12,9 +12,6 @@ public class Notification extends Update<Notification> {
     private List<Attachment> attachments = new ArrayList<>();
 
     @JsonIgnore
-    private Long userId;
-
-    @JsonIgnore
     private String invitation;
 
     public Notification() {
@@ -41,15 +38,6 @@ public class Notification extends Update<Notification> {
 
     public Notification addAttachment(Attachment attachment) {
         this.attachments.add(attachment);
-        return this;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public Notification setUserId(Long userId) {
-        this.userId = userId;
         return this;
     }
 

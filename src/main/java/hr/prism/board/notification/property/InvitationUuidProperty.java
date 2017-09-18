@@ -9,12 +9,11 @@ public class InvitationUuidProperty implements NotificationProperty {
 
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
-        String invitation = notificationRequest.getInvitation();
-        if (invitation == null) {
+        if (notificationRequest.getRecipient().isRegistered()) {
             return StringUtils.EMPTY;
         }
 
-        return "&uuid=" + invitation;
+        return "&uuid=" + notificationRequest.getInvitation();
     }
 
 }

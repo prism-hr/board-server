@@ -9,7 +9,9 @@ import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,6 +25,8 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.IntStream;
+
+import hr.prism.board.workflow.Activity;
 
 @Service
 @Transactional
@@ -39,6 +43,10 @@ public class UserRoleCacheService {
 
     @Inject
     private ActivityService activityService;
+
+    @Lazy
+    @Inject
+    private ActivityEventService activityEventService;
 
     @Lazy
     @Inject
@@ -72,10 +80,12 @@ public class UserRoleCacheService {
         updateUserRolesSummary(resource);
 
         if (notify) {
-            // TODO: raise activity
+            String scopeName = scope.name();
+            Activity activity = new Activity()
+                .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY"));
 
             Notification notification = new Notification().setInvitation(userRole.getUuid())
-                .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scope.name() + "_NOTIFICATION"));
+                .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION"));
             notificationEventService.publishEvent(this, resource.getId(), Collections.singletonList(notification));
         }
 
