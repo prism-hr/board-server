@@ -393,7 +393,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=memberships")
+                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=users&fragment=memberRequests")
                 .put("modal", "login").build()));
 
         testUserService.setAuthentication(boardMemberId);
@@ -455,7 +455,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=memberships")
+                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=users&fragment=memberRequests")
                 .put("modal", "login").build()));
 
         testUserService.setAuthentication(boardUserId);
@@ -510,7 +510,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUser.getGivenName()).put("department", departmentR.getName())
-                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=memberships")
+                .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=users&fragment=memberRequests")
                 .put("modal", "login").build()));
 
         Long activityId = transactionTemplate.execute(status -> {
