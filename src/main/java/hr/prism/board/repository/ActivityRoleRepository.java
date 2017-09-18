@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 @SuppressWarnings("JpaQlInspection")
 public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long> {
 
@@ -18,8 +20,11 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "where activityRole.activity in (" +
             "select activity " +
             "from Activity activity " +
+            "left join activity.activityUsers activityUser " +
             "where activity.resource = :resource " +
-            "and activity.userRole is null)")
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null " +
+            "and activityUser.id is null)")
     void deleteByResource(@Param("resource") Resource resource);
 
     @Modifying
@@ -30,6 +35,15 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "from Activity activity " +
             "where activity.userRole = :userRole)")
     void deleteByUserRole(@Param("userRole") UserRole userRole);
+
+    @Modifying
+    @Query(value =
+        "delete from ActivityRole activityRole " +
+            "where activityRole.activity in (" +
+            "select activity " +
+            "from Activity activity " +
+            "where activity.userRole in (:userRoles))")
+    void deleteByUserRoles(@Param("userRoles") List<UserRole> userRoles);
 
     @Modifying
     @Query(value =

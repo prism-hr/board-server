@@ -17,18 +17,21 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     @Query(value =
         "select distinct activity " +
             "from Activity activity " +
-            "inner join activity.activityRoles activityRole " +
-            "inner join activity.resource resource " +
-            "inner join resource.parents parentRelation " +
-            "inner join parentRelation.resource1 parent " +
-            "inner join parent.userRoles userRole " +
+            "left join activity.activityRoles activityRole " +
+            "left join activity.resource resource " +
+            "left join resource.parents parentRelation " +
+            "left join parentRelation.resource1 parent " +
+            "left join parent.userRoles userRole " +
             "left join resource.categories resourceCategory " +
             "left join userRole.categories userRoleCategory " +
-            "where activityRole.scope = parent.scope " +
+            "left join activity.activityUsers activityUser " +
+            "where activityUser.id is null " +
+            "and activityRole.scope = parent.scope " +
             "and activityRole.role = userRole.role " +
             "and userRole.user.id = :userId " +
             "and userRole.state in (:userRoleStates) " +
-            "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name)" +
+            "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name) " +
+            "or activityUser.user.id = :userId " +
             "and activity.id not in (" +
             "select activityEvent.activity.id " +
             "from ActivityEvent activityEvent " +
@@ -54,14 +57,30 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     @Query(value =
         "delete from Activity activity " +
             "where activity.resource = :resource " +
-            "and activity.userRole is null")
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null")
     void deleteByResource(@Param("resource") Resource resource);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.resource = :resource " +
+            "and activity.id in (:ignores) " +
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null")
+    void deleteByResourceWithIgnores(@Param("resource") Resource resource, List<Long> ignores);
 
     @Modifying
     @Query(value =
         "delete from Activity activity " +
             "where activity.userRole = :userRole")
     void deleteByUserRole(@Param("userRole") UserRole userRole);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.userRole in (:userRoles)")
+    void deleteByUserRoles(@Param("userRoles") List<UserRole> userRoles);
 
     @Modifying
     @Query(value =
@@ -83,5 +102,14 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and userRole.user = :user " +
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+
+    @Query(value =
+        "select activity.id " +
+            "from Activity activity " +
+            "inner join activity.activityUsers activityUser " +
+            "where activity.resource = :resource " +
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null")
+    List<Long> findByResourceWithActivityUsers(@Param("resource") Resource resource);
 
 }

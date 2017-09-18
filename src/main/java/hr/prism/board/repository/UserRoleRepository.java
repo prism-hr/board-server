@@ -69,4 +69,10 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "where userRole.user = :oldUser")
     void updateByUser(@Param("newUser") User newUser, @Param("oldUser") User oldUser);
 
+    @Modifying
+    @Query(value =
+        "delete from UserRole userRole " +
+            "where userRole.id in (:ids)")
+    void deleteByIds(@Param("ids") List<Long> ids);
+
 }

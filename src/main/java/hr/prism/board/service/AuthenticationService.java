@@ -61,6 +61,9 @@ public class AuthenticationService {
     @Inject
     private UserRoleCacheService userRoleCacheService;
 
+    @Inject
+    private ActivityService activityService;
+
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
@@ -260,6 +263,7 @@ public class AuthenticationService {
 
             if (!invitee.isRegistered()) {
                 userRoleCacheService.mergeUserRoles(user, invitee);
+                activityService.deleteActivityUsers(invitee);
                 userCacheService.deleteUser(invitee);
             }
         }

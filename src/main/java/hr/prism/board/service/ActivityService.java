@@ -9,6 +9,7 @@ import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.repository.ActivityEventRepository;
 import hr.prism.board.repository.ActivityRepository;
 import hr.prism.board.repository.ActivityRoleRepository;
+import hr.prism.board.repository.ActivityUserRepository;
 import hr.prism.board.representation.ActivityRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +29,9 @@ public class ActivityService {
 
     @Inject
     private ActivityRoleRepository activityRoleRepository;
+
+    @Inject
+    private ActivityUserRepository activityUserRepository;
 
     @Inject
     private ActivityEventRepository activityEventRepository;
@@ -89,6 +94,15 @@ public class ActivityService {
         return activityRole;
     }
 
+    public ActivityUser getOrCreateActivityUser(Activity activity, User user) {
+        ActivityUser activityUser = activityUserRepository.findByActivityAndUser(activity, user);
+        if (activityUser == null) {
+            activityUser = activityUserRepository.save(new ActivityUser().setActivity(activity).setUser(user));
+        }
+
+        return activityUser;
+    }
+
     public List<ActivityEvent> findViews(Collection<Activity> activities, User user) {
         return activityEventRepository.findByActivitiesAndUserAndEvent(activities, user, hr.prism.board.enums.ActivityEvent.VIEW);
     }
@@ -111,11 +125,19 @@ public class ActivityService {
 
     public void dismissActivity(Long activityId) {
         User user = userService.getCurrentUserSecured();
+        Long userId = user.getId();
+
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
-        ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
-        if (activityEvent == null) {
-            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
-            Long userId = user.getId();
+        Set<ActivityUser> activityUsers = activity.getActivityUsers();
+        if (activityUsers.isEmpty()) {
+            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+            if (activityEvent == null) {
+                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
+                userActivityService.processRequests(userId, getActivities(userId));
+            }
+        } else {
+            activityUserRepository.deleteByActivity(activity);
+            activityRepository.delete(activity);
             userActivityService.processRequests(userId, getActivities(userId));
         }
     }
@@ -123,7 +145,13 @@ public class ActivityService {
     public void deleteActivities(Resource resource) {
         activityEventRepository.deleteByResource(resource);
         activityRoleRepository.deleteByResource(resource);
-        activityRepository.deleteByResource(resource);
+
+        List<Long> ignores = activityRepository.findByResourceWithActivityUsers(resource);
+        if (ignores.isEmpty()) {
+            activityRepository.deleteByResource(resource);
+        } else {
+            activityRepository.deleteByResourceWithIgnores(resource, ignores);
+        }
     }
 
     public void deleteActivities(UserRole userRole) {
@@ -142,6 +170,16 @@ public class ActivityService {
         activityEventRepository.deleteByResourceAndUserAndRole(resource, user, role);
         activityRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
         activityRepository.deleteByResourceAndUserAndRole(resource, user, role);
+    }
+
+    public void deleteActivities(List<UserRole> userRoles) {
+        activityEventRepository.deleteByUserRoles(userRoles);
+        activityRoleRepository.deleteByUserRoles(userRoles);
+        activityRepository.deleteByUserRoles(userRoles);
+    }
+
+    public void deleteActivityUsers(User user) {
+        activityUserRepository.deleteByUser(user);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {

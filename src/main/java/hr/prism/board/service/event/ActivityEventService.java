@@ -1,12 +1,10 @@
 package hr.prism.board.service.event;
 
-import hr.prism.board.domain.BoardEntity;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.service.*;
+import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.workflow.Activity;
 import org.apache.commons.lang3.tuple.Pair;
@@ -43,6 +41,9 @@ public class ActivityEventService {
 
     @Inject
     private UserService userService;
+
+    @Inject
+    private UserCacheService userCacheService;
 
     @Inject
     private UserRoleCacheService userRoleCacheService;
@@ -110,7 +111,14 @@ public class ActivityEventService {
                 hr.prism.board.enums.Activity activityEnum = activity.getActivity();
                 hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
                     .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.getOrCreateActivity(resource, activityEnum));
-                activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+
+                Long userId = activity.getUserId();
+                if (userId == null) {
+                    activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+                } else {
+                    User user = userCacheService.findOne(userId);
+                    activityService.getOrCreateActivityUser(activityEntity, user);
+                }
             });
         }
 

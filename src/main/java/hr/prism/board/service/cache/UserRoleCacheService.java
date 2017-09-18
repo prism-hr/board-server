@@ -24,6 +24,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import hr.prism.board.workflow.Activity;
@@ -81,12 +82,15 @@ public class UserRoleCacheService {
 
         if (notify) {
             String scopeName = scope.name();
-            Activity activity = new Activity()
+            Long resourceId = resource.getId();
+
+            Activity activity = new Activity().setUserId(user.getId())
                 .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY"));
+            activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
 
             Notification notification = new Notification().setInvitation(userRole.getUuid())
                 .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION"));
-            notificationEventService.publishEvent(this, resource.getId(), Collections.singletonList(notification));
+            notificationEventService.publishEvent(this, resourceId, Collections.singletonList(notification));
         }
 
         return userRole;
@@ -127,11 +131,17 @@ public class UserRoleCacheService {
             }
         });
 
+        List<UserRole> deletes = new ArrayList<>();
         for (Map.Entry<Pair<Resource, Role>, UserRole> oldUserRoleEntry : oldUserRoles.entrySet()) {
             if (newUserRoles.containsKey(oldUserRoleEntry.getKey())) {
-                UserRole oldUserRole = oldUserRoleEntry.getValue();
-                deleteUserRole(oldUserRole.getResource(), oldUserRole.getUser(), oldUserRole.getRole());
+                deletes.add(oldUserRoleEntry.getValue());
             }
+        }
+
+        if (!deletes.isEmpty()) {
+            activityService.deleteActivities(deletes);
+            userRoleCategoryRepository.deleteByUserRoles(deletes);
+            userRoleRepository.deleteByIds(deletes.stream().map(UserRole::getId).collect(Collectors.toList()));
         }
 
         userRoleRepository.updateByUser(newUser, oldUser);

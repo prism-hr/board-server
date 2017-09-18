@@ -30,6 +30,9 @@ public class Activity extends BoardEntity {
     @OneToMany(mappedBy = "activity")
     private Set<ActivityRole> activityRoles = new HashSet<>();
 
+    @OneToMany(mappedBy = "activity")
+    private Set<ActivityUser> activityUsers = new HashSet<>();
+
     public Resource getResource() {
         return resource;
     }
@@ -79,4 +82,8 @@ public class Activity extends BoardEntity {
         return activityRoles;
     }
 
+    public Set<ActivityUser> getActivityUsers() {
+        return activityUsers;
+    }
+    
 }
