@@ -42,7 +42,14 @@ public class RedirectApi {
             .map(param -> param + "=" + request.getParameter(param))
             .collect(Collectors.toList());
 
-        response.sendRedirect(appUrl + "/" + contextPath + ";" + Joiner.on(";").join(parameters));
+        String redirectUrl = appUrl + "/" + contextPath;
+        redirectUrl += ";" + Joiner.on(";").join(parameters);
+
+        if (request.getParameter("fragment") != null) {
+            redirectUrl += "#" + request.getParameter("fragment");
+        }
+
+        response.sendRedirect(redirectUrl);
     }
 
 }

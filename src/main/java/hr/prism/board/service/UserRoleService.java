@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
@@ -83,7 +84,7 @@ public class UserRoleService {
         List<UserRole> members = Collections.emptyList();
         List<UserRole> memberRequests = Collections.emptyList();
         if (scope == Scope.DEPARTMENT) {
-            users = getUserRoles(resource, Collections.singletonList(Role.ADMINISTRATOR), State.ACCEPTED, searchTerm);
+            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
             members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, searchTerm);
 
             memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
