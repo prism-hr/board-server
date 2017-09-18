@@ -68,7 +68,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and activity.id in (:ignores) " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
-    void deleteByResourceWithIgnores(@Param("resource") Resource resource, List<Long> ignores);
+    void deleteByResourceWithIgnores(@Param("resource") Resource resource, @Param("ignores") List<Long> ignores);
 
     @Modifying
     @Query(value =
