@@ -43,7 +43,7 @@ public class RedirectApi {
             .collect(Collectors.toList());
 
         String redirectUrl = appUrl + "/" + contextPath;
-        redirectUrl += ";" + Joiner.on(";").join(parameters);
+        redirectUrl += "?" + Joiner.on("&").join(parameters);
 
         if (request.getParameter("fragment") != null) {
             redirectUrl += "#" + request.getParameter("fragment");
