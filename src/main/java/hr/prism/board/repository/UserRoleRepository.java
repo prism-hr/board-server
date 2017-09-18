@@ -64,7 +64,8 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
     @Modifying
     @Query(value =
         "update UserRole userRole " +
-            "set userRole.user = :newUser " +
+            "set userRole.uuid = null, " +
+            "userRole.user = :newUser " +
             "where userRole.user = :oldUser")
     void updateByUser(@Param("newUser") User newUser, @Param("oldUser") User oldUser);
 

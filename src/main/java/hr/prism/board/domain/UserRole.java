@@ -17,7 +17,7 @@ import java.util.TreeSet;
 @Table(name = "user_role", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_id", "role"}))
 public class UserRole extends BoardEntity {
 
-    @Column(name = "uuid", nullable = false)
+    @Column(name = "uuid")
     private String uuid;
 
     @ManyToOne

@@ -190,6 +190,7 @@ public class AuthenticationService {
             invitee.setSurname(registerDTO.getSurname());
             invitee.setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()));
             invitee.setPasswordHash(PasswordHash.SHA256);
+            userRoleCacheService.findByUuid(uuid).setUuid(null);
             return invitee;
         }
     }
@@ -253,6 +254,8 @@ public class AuthenticationService {
         if (!user.equals(invitee)) {
             UserRole userRole = userRoleCacheService.findByUuid(uuid);
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
+
+            userRole.setUuid(null);
             userRole.setUser(user);
 
             if (!invitee.isRegistered()) {

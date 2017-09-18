@@ -282,7 +282,7 @@ public class DepartmentApiIT extends AbstractIT {
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
             ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4")
-                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").put("invitationUuid", department2UserRole.getUuid()).build()));
+                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").put("invitationUuid", "&uuid=" + department2UserRole.getUuid()).build()));
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status ->
