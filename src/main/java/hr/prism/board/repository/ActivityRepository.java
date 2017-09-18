@@ -25,13 +25,13 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "left join resource.categories resourceCategory " +
             "left join userRole.categories userRoleCategory " +
             "left join activity.activityUsers activityUser " +
-            "where activityUser.id is null " +
+            "where (activityUser.id is null " +
             "and activityRole.scope = parent.scope " +
             "and activityRole.role = userRole.role " +
             "and userRole.user.id = :userId " +
             "and userRole.state in (:userRoleStates) " +
             "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name) " +
-            "or activityUser.user.id = :userId " +
+            "or activityUser.user.id = :userId) " +
             "and activity.id not in (" +
             "select activityEvent.activity.id " +
             "from ActivityEvent activityEvent " +
@@ -65,7 +65,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     @Query(value =
         "delete from Activity activity " +
             "where activity.resource = :resource " +
-            "and activity.id in (:ignores) " +
+            "and activity.id not in (:ignores) " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
     void deleteByResourceWithIgnores(@Param("resource") Resource resource, @Param("ignores") List<Long> ignores);

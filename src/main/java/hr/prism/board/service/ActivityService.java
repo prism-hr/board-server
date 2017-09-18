@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -125,19 +124,11 @@ public class ActivityService {
 
     public void dismissActivity(Long activityId) {
         User user = userService.getCurrentUserSecured();
-        Long userId = user.getId();
-
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
-        Set<ActivityUser> activityUsers = activity.getActivityUsers();
-        if (activityUsers.isEmpty()) {
-            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
-            if (activityEvent == null) {
-                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
-                userActivityService.processRequests(userId, getActivities(userId));
-            }
-        } else {
-            activityUserRepository.deleteByActivity(activity);
-            activityRepository.delete(activity);
+        ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+        if (activityEvent == null) {
+            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
+            Long userId = user.getId();
             userActivityService.processRequests(userId, getActivities(userId));
         }
     }

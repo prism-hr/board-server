@@ -200,11 +200,19 @@ public class DepartmentApiIT extends AbstractIT {
         Long boardId = boardR.getId();
 
         User boardUser = testUserService.authenticate();
-        transactionTemplate.execute(status -> {
-            Board board = boardService.getBoard(boardId);
-            userRoleService.createOrUpdateUserRole(board, boardUser, Role.ADMINISTRATOR);
-            return null;
-        });
+        Long boardUserId = boardUser.getId();
+
+        listenForNewActivities(boardUserId);
+        testUserActivityService.record();
+
+        testUserService.setAuthentication(departmentUser.getId());
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
+            new UserRoleDTO()
+                .setUser(new UserDTO().setId(boardUserId))
+                .setRole(Role.ADMINISTRATOR)));
+
+        testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
+        testUserActivityService.stop();
 
         // Create post
         User postUser = testUserService.authenticate();
@@ -282,7 +290,7 @@ public class DepartmentApiIT extends AbstractIT {
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
             ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4")
-                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").put("invitationUuid", "&uuid=" + department2UserRole.getUuid()).build()));
+                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId).put("modal", "register").put("invitationUuid", department2UserRole.getUuid()).build()));
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status ->

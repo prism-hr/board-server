@@ -8,8 +8,6 @@ public interface ActivityUserRepository extends MyRepository<ActivityUser, Long>
 
     ActivityUser findByActivityAndUser(Activity activity, User user);
 
-    void deleteByActivity(Activity activity);
-
     void deleteByUser(User user);
 
 }
