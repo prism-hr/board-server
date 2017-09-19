@@ -58,12 +58,13 @@ public class NotificationService {
         Map<String, NotificationProperty> propertiesMap =
             applicationContext.getBeansOfType(NotificationProperty.class).values().stream().collect(Collectors.toMap(NotificationProperty::getKey, property -> property));
 
+        String header = toString(applicationContext.getResource("classpath:notification/content/header.html"));
+        String footer = toString(applicationContext.getResource("classpath:notification/content/footer.html"));
+
         for (Notification notification : Notification.values()) {
-            org.springframework.core.io.Resource subject = applicationContext.getResource("classpath:notification/subject/" + notification + ".html");
-            org.springframework.core.io.Resource content = applicationContext.getResource("classpath:notification/content/" + notification + ".html");
-            if (!subject.exists() || !content.exists()) {
-                throw new BoardException(ExceptionCode.MISSING_NOTIFICATION, "No subject or content defined for notification: " + notification);
-            }
+            String subject = toString(applicationContext.getResource("classpath:notification/subject/" + notification + ".html"));
+            String content = toString(applicationContext.getResource("classpath:notification/content/" + notification + ".html"))
+                .replace("${header}", header).replace("${footer}", footer);
 
             Set<String> placeholders = new HashSet<>();
             placeholders.addAll(indexTemplate(notification, subject, this.subjects));
@@ -129,11 +130,8 @@ public class NotificationService {
         return properties;
     }
 
-    private List<String> indexTemplate(Notification notification, org.springframework.core.io.Resource resource, Map<Notification, String> index) throws IOException {
-        InputStream inputStream = resource.getInputStream();
-        String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
+    private List<String> indexTemplate(Notification notification, String template, Map<Notification, String> index) throws IOException {
         index.put(notification, template);
-        IOUtils.closeQuietly(inputStream);
         return Arrays.asList(StringUtils.substringsBetween(template, "${", "}"));
     }
 
@@ -161,6 +159,13 @@ public class NotificationService {
         }
 
         return plainText.replaceAll("\\n$", StringUtils.EMPTY);
+    }
+
+    private static String toString(org.springframework.core.io.Resource resource) throws IOException {
+        InputStream inputStream = resource.getInputStream();
+        String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
+        IOUtils.closeQuietly(inputStream);
+        return template.trim();
     }
 
     public static class NotificationRequest {
