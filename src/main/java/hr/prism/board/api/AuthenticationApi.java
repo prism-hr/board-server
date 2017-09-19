@@ -46,7 +46,7 @@ public class AuthenticationApi {
         authenticationService.resetPassword(resetPasswordDTO);
     }
 
-    @RequestMapping(value = "/api/auth/refresh", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/auth/refreshToken", method = RequestMethod.GET)
     public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         return authenticationService.refreshToken(request, response);
     }
