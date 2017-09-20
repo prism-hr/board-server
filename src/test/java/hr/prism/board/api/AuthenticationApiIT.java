@@ -156,7 +156,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment, "resetUuid", passwordResetUuid, "homeRedirect",
-                serverUrl + "/redirect")));
+                serverUrl + "/redirect", "documentLogo", "http://www.donotfetch.com")));
         testNotificationService.stop();
 
         mockMvc.perform(
@@ -216,7 +216,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
             ImmutableMap.of("recipient", "alastair", "environment", environment, "resetUuid", passwordResetUuid, "homeRedirect",
-                serverUrl + "/redirect")));
+                serverUrl + "/redirect", "documentLogo", "http://www.donotfetch.com")));
         testNotificationService.stop();
 
         TimeUnit.SECONDS.sleep(passwordResetTimeoutSeconds + 1);
