@@ -18,7 +18,14 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
 
     UserRole findByUuid(String uuid);
 
-    List<UserRole> findByResourceAndUser(Resource resource, User user);
+    @Query(value =
+        "select userRole " +
+            "from ResourceRelation resourceRelation " +
+            "inner join resourceRelation.resource1 parentResource " +
+            "inner join parentResource.userRoles userRole " +
+            "where resourceRelation.resource2 = :resource " +
+            "and userRole.user = :user")
+    List<UserRole> findByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
 
     List<UserRole> findByResourceAndRole(Resource resource, Role role);
 
