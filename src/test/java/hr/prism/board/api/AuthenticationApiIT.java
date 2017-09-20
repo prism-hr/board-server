@@ -155,8 +155,8 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(user.getPasswordResetTimestamp());
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
-            ImmutableMap.of("recipient", "alastair", "environment", environment, "resetUuid", passwordResetUuid, "homeRedirect",
-                serverUrl + "/redirect", "documentLogo", "http://www.donotfetch.com")));
+            ImmutableMap.<String, String>builder().put("recipient", "alastair").put("environment", environment).put("resetUuid", passwordResetUuid)
+                .put("homeRedirect", serverUrl + "/redirect").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()));
         testNotificationService.stop();
 
         mockMvc.perform(
@@ -215,8 +215,8 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(user.getPasswordResetTimestamp());
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESET_PASSWORD_NOTIFICATION, user,
-            ImmutableMap.of("recipient", "alastair", "environment", environment, "resetUuid", passwordResetUuid, "homeRedirect",
-                serverUrl + "/redirect", "documentLogo", "http://www.donotfetch.com")));
+            ImmutableMap.<String, String>builder().put("recipient", "alastair").put("environment", environment).put("resetUuid", passwordResetUuid)
+                .put("homeRedirect", serverUrl + "/redirect").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()));
         testNotificationService.stop();
 
         TimeUnit.SECONDS.sleep(passwordResetTimeoutSeconds + 1);

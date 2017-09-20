@@ -8,17 +8,22 @@ import hr.prism.board.service.NotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+
 @Component
-public class DocumentLogoProperty implements NotificationProperty {
+public class LogoProperty implements NotificationProperty {
 
     @Value("${prism.logo.url}")
     private String prismLogoUrl;
+
+    @Inject
+    private GlobalLogoProperty globalLogoProperty;
 
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         Resource resource = notificationRequest.getResource();
         if (resource == null) {
-            return prismLogoUrl;
+            return globalLogoProperty.getValue(notificationRequest);
         }
 
         if (resource instanceof Post) {
@@ -31,7 +36,7 @@ public class DocumentLogoProperty implements NotificationProperty {
         }
 
         if (documentLogo == null) {
-            return prismLogoUrl;
+            return globalLogoProperty.getValue(notificationRequest);
         }
 
         return documentLogo.getCloudinaryUrl();
