@@ -159,9 +159,12 @@ public class BoardService {
     }
 
     public void migrate(Long id) {
-        Board board = boardRepository.findOne(id);
-        Department department = (Department) board.getParent();
-        board.setHandle(suggestHandle(department, board.getName()));
+        Board board = (Board) resourceService.findOne(id);
+        if (board.getHandle() == null) {
+            Department department = (Department) board.getParent();
+            board.setHandle(suggestHandle(department, board.getName()));
+        }
+
         resourceService.setIndexDataAndQuarter(board);
     }
 

@@ -1,17 +1,27 @@
 package hr.prism.board.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.util.List;
 
 @Service
+@Transactional
 public class MigrationService {
 
-    @Value("migration.on")
+    private static final Logger LOGGER = LoggerFactory.getLogger(MigrationService.class);
+
+    @Value("${migration.on}")
     private boolean migrationOn;
+
+    private volatile boolean pending = true;
 
     @Inject
     private DepartmentService departmentService;
@@ -26,14 +36,32 @@ public class MigrationService {
     private UserService userService;
 
     @Async
-    @PostConstruct
-    public void postConstruct() {
+    @EventListener
+    public void migrate(ContextRefreshedEvent event) {
         if (migrationOn) {
-            departmentService.findAllIds().forEach(id -> departmentService.migrate(id));
-            boardService.findAllIds().forEach(id -> boardService.migrate(id));
-            postService.findAllIds().forEach(id -> postService.migrate(id));
-            userService.findAllIds().forEach(id -> userService.migrate(id));
+            if (pending) {
+                synchronized (this) {
+                    if (pending) {
+                        migrate("departments", departmentService.findAllIds(), departmentService::migrate);
+                        migrate("boards", boardService.findAllIds(), boardService::migrate);
+                        migrate("posts", postService.findAllIds(), postService::migrate);
+                        migrate("users", userService.findAllIds(), userService::migrate);
+                        pending = false;
+                    }
+                }
+            }
         }
+    }
+
+    private void migrate(String entity, List<Long> ids, Migrator migrator) {
+        int migrations = ids.size();
+        LOGGER.info("Started migrating " + migrations + " " + entity);
+        ids.forEach(migrator::migrate);
+        LOGGER.info("Finished migrating " + migrations + " " + entity);
+    }
+
+    private interface Migrator {
+        void migrate(Long id);
     }
 
 }

@@ -267,9 +267,12 @@ public class DepartmentService {
     }
 
     public void migrate(Long id) {
-        Department department = departmentRepository.findOne(id);
-        String handle = suggestHandle(department.getName());
-        department.setHandle(handle);
+        Department department = (Department) resourceService.findOne(id);
+        if (department.getHandle() == null) {
+            String handle = suggestHandle(department.getName());
+            department.setHandle(handle);
+        }
+
         resourceService.setIndexDataAndQuarter(department);
     }
 
