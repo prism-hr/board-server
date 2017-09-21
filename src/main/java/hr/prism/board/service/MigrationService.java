@@ -7,13 +7,11 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
 
 @Service
-@Transactional
 public class MigrationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MigrationService.class);
