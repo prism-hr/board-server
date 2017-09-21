@@ -6,6 +6,7 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 import org.apache.commons.codec.language.Soundex;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Range;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
 
 import javax.servlet.http.HttpServletRequest;
@@ -114,7 +115,14 @@ public class BoardUtils {
             .map(TOKENIZER::tokenize)
             .flatMap(Arrays::stream)
             .filter(string -> string.length() > 1)
-            .map(SOUNDEX::encode)
+            .map(StringUtils::stripAccents)
+            .map(str -> {
+                try {
+                    return SOUNDEX.encode(str);
+                } catch (IllegalArgumentException e) {
+                    throw new Error("Could not encode string: " + str, e);
+                }
+            })
             .collect(Collectors.joining(" "));
     }
 
