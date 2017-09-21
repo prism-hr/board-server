@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 
+// TODO: configure the thread pool properly
+
 @EnableAsync
 @EnableWebMvc
 @EnableCaching

@@ -12,7 +12,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
-import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
@@ -93,9 +92,6 @@ public class DepartmentService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
-    @Inject
-    private UserRoleRepository userRoleRepository;
-
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
@@ -109,6 +105,10 @@ public class DepartmentService {
             return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
         }
         return null;
+    }
+
+    public List<Long> findAllIds() {
+        return departmentRepository.findAllIds();
     }
 
     public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
@@ -158,9 +158,7 @@ public class DepartmentService {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
 
-            String handle = ResourceService.suggestHandle(name);
-            List<String> similarHandles = departmentRepository.findHandleByLikeSuggestedHandle(handle);
-            handle = ResourceService.confirmHandle(handle, similarHandles);
+            String handle = suggestHandle(name);
             resourceService.updateHandle(department, handle);
             department = departmentRepository.save(department);
 
@@ -266,6 +264,20 @@ public class DepartmentService {
 
     public void unsetMemberCountProvisional(Long departmentId) {
         departmentRepository.findOne(departmentId).setMemberCountProvisional(null);
+    }
+
+    public void migrate(Long id) {
+        Department department = departmentRepository.findOne(id);
+        String handle = suggestHandle(department.getName());
+        department.setHandle(handle);
+        resourceService.setIndexDataAndQuarter(department);
+    }
+
+    private String suggestHandle(String name) {
+        String handle = ResourceService.suggestHandle(name);
+        List<String> similarHandles = departmentRepository.findHandleByLikeSuggestedHandle(handle);
+        handle = ResourceService.confirmHandle(handle, similarHandles);
+        return handle;
     }
 
 }

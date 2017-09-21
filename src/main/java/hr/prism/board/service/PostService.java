@@ -133,6 +133,10 @@ public class PostService {
         return postRepository.findByName(name);
     }
 
+    public List<Long> findAllIds() {
+        return postRepository.findAllIds();
+    }
+
     public List<Post> getPosts(Long boardId) {
         return getPosts(boardId, true, null, null, null);
     }
@@ -417,6 +421,11 @@ public class PostService {
 
     public void setIndexDataAndQuarter(Post post) {
         resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
+    }
+
+    public void migrate(Long id) {
+        Post post = postRepository.findOne(id);
+        setIndexDataAndQuarter(post);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

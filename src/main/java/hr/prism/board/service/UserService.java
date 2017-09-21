@@ -90,6 +90,10 @@ public class UserService {
         return userRepository.findByUuid(uuid);
     }
 
+    public List<Long> findAllIds() {
+        return userRepository.findAllIds();
+    }
+
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured(true);
         userPatchService.patchProperty(user, user::getGivenName, user::setGivenName, userDTO.getGivenName());
@@ -260,6 +264,11 @@ public class UserService {
 
     public Long findUserCount(Resource resource, Role role, List<String> emails) {
         return userRepository.findUserCount(resource, role, State.ACTIVE_USER_ROLE_STATES, emails);
+    }
+
+    public void migrate(Long id) {
+        User user = userCacheService.findOneFresh(id);
+        userCacheService.setIndexData(user);
     }
 
     public interface UserFinder {

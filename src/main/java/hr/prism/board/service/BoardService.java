@@ -77,6 +77,10 @@ public class BoardService {
         return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
     }
 
+    public List<Long> findAllIds() {
+        return boardRepository.findAllIds();
+    }
+
     public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -103,9 +107,7 @@ public class BoardService {
                 board.setDocumentLogo(department.getDocumentLogo());
             }
 
-            String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
-            List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
-            board.setHandle(ResourceService.confirmHandle(handle, similarHandles));
+            board.setHandle(suggestHandle(department, name));
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
@@ -154,6 +156,19 @@ public class BoardService {
 
     public void updateBoardPostCounts(List<Long> postIds, String state) {
         boardRepository.updateBoardPostCounts(postIds, state);
+    }
+
+    public void migrate(Long id) {
+        Board board = boardRepository.findOne(id);
+        Department department = (Department) board.getParent();
+        board.setHandle(suggestHandle(department, board.getName()));
+        resourceService.setIndexDataAndQuarter(board);
+    }
+
+    private String suggestHandle(Department department, String name) {
+        String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
+        List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
+        return ResourceService.confirmHandle(handle, similarHandles);
     }
 
     private Map<String, Object> createBoardBadgeModel(Board board, Department department, WidgetOptionsDTO options) {

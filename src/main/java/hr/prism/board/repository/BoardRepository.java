@@ -11,6 +11,12 @@ import java.util.List;
 public interface BoardRepository extends MyRepository<Board, Long> {
 
     @Query(value =
+        "select board.id " +
+            "from Board board " +
+            "order by board.id")
+    List<Long> findAllIds();
+
+    @Query(value =
         "select board.handle " +
             "from Board board " +
             "where board.handle like concat('%', :suggestedHandle) " +
