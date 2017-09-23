@@ -59,10 +59,10 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
     @Value("${database.host}")
-    private String datbaseHost;
+    private String databaseHost;
 
     @Value("${database.schema}")
-    private String datbaseSchema;
+    private String databaseSchema;
 
     @Value("${sendgrid.key}")
     private String sendgridKey;
@@ -90,12 +90,12 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
 
     @Bean
     public DataSource dataSource() {
-        LOGGER.info("Creating datasource using: " + datbaseHost);
+        LOGGER.info("Creating datasource using: " + databaseHost);
 
         HikariConfig hikariConfig = new HikariConfig();
         String timezone = TimeZone.getDefault().getID();
         hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        hikariConfig.setJdbcUrl("jdbc:mysql://" + datbaseHost + "/" + datbaseSchema +
+        hikariConfig.setJdbcUrl("jdbc:mysql://" + databaseHost + "/" + databaseSchema +
             "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci" +
             "&useLegacyDatetimeCode=false&serverTimezone=" + timezone + "&useSSL=false");
         hikariConfig.setUsername("prism");
