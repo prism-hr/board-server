@@ -55,10 +55,13 @@ public class Department extends Resource {
     }
 
     public void decrementMemberCountPending() {
-        if (this.memberCountPending == 1L) {
-            this.memberCountPending = null;
-        } else {
-            this.memberCountPending = this.memberCountPending - 1L;
+        // We shouldn't ever have null here but if we do, not a good reason to crash the app - just let the count reset itself
+        if (this.memberCountPending != null) {
+            if (this.memberCountPending == 1L) {
+                this.memberCountPending = null;
+            } else {
+                this.memberCountPending = this.memberCountPending - 1L;
+            }
         }
     }
 
