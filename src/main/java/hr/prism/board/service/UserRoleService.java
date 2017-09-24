@@ -1,22 +1,22 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Activity;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.service.event.UserRoleEventService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,9 +56,6 @@ public class UserRoleService {
 
     @Inject
     private UserRoleMapper userRoleMapper;
-
-    @Inject
-    private UserRoleEventService userRoleEventService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -122,24 +119,6 @@ public class UserRoleService {
         });
 
         return getUserRole(resource, user, userRoleDTO.getRole());
-    }
-
-    public Long createResourceUsers(Scope scope, Long resourceId, List<UserRoleDTO> userRoleDTOs) {
-        if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != Role.MEMBER)) {
-            throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER, "Only members can be bulk created");
-        }
-
-        User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
-            userRoleEventService.publishEvent(this, currentUser.getId(), resourceId, userRoleDTOs);
-            return resource;
-        });
-
-        List<String> emails = userRoleDTOs.stream().map(UserRoleDTO::getUser).map(UserDTO::getEmail).collect(Collectors.toList());
-        Long memberCountProvisional = userService.findUserCount(resource, Role.MEMBER, emails) + emails.size();
-        ((Department) resource).setMemberCountProvisional(memberCountProvisional);
-        return memberCountProvisional;
     }
 
     public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {

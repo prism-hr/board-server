@@ -46,7 +46,7 @@ public class Department extends Resource {
         this.memberCountProvisional = memberCountProvisional;
     }
 
-    public Long getEffectiveMemberCount() {
+    public Long getMemberCountEffective() {
         return memberCountProvisional == null ? memberCount : memberCountProvisional;
     }
 

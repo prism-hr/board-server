@@ -74,9 +74,14 @@ public class DepartmentApi {
         return departmentMapper.apply(departmentService.updateDepartment(id, departmentDTO));
     }
 
+    @RequestMapping(value = "/api/departments/{departmentId}/users/bulk", method = RequestMethod.POST)
+    public DepartmentRepresentation postMembers(@PathVariable Long departmentId, @RequestBody @Valid List<UserRoleDTO> users) {
+        return departmentMapper.apply(departmentService.postMembers(departmentId, users));
+    }
+
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.POST)
     public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
-        departmentService.createMembershipRequest(departmentId, userRoleDTO);
+        departmentService.postMembershipRequest(departmentId, userRoleDTO);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = RequestMethod.PUT)

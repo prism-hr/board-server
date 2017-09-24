@@ -16,6 +16,8 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private Long memberCount;
 
+    private Long memberCountEffective;
+
     public DocumentRepresentation getDocumentLogo() {
         return documentLogo;
     }
@@ -58,6 +60,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setMemberCount(Long memberCount) {
         this.memberCount = memberCount;
+        return this;
+    }
+
+    public Long getMemberCountEffective() {
+        return memberCountEffective;
+    }
+
+    public DepartmentRepresentation setMemberCountEffective(Long memberCountEffective) {
+        this.memberCountEffective = memberCountEffective;
         return this;
     }
 

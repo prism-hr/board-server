@@ -31,6 +31,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
@@ -366,6 +368,90 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentRs = departmentApi.lookupDepartments("Mathematics");
         Assert.assertEquals(0, departmentRs.size());
+    }
+
+    @Test
+    public void shouldPostMembers() throws InterruptedException {
+        User user = testUserService.authenticate();
+        BoardDTO boardDTO = TestHelper.sampleBoard();
+
+        DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+
+        // add 200 members
+        List<UserRoleDTO> userRoleDTOs1 = new ArrayList<>();
+        for (int i = 1; i <= 200; i++) {
+            userRoleDTOs1.add(
+                new UserRoleDTO()
+                    .setUser(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"))
+                    .setRole(Role.MEMBER)
+                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+        }
+
+        departmentApi.postMembers(departmentR.getId(), userRoleDTOs1);
+        UserRolesRepresentation response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
+        assertEquals(1, response.getUsers().size());
+        assertEquals(200, response.getMembers().size());
+
+        List<UserRoleDTO> userRoleDTOs2 = new ArrayList<>();
+        for (int i = 101; i <= 300; i++) {
+            userRoleDTOs2.add(
+                new UserRoleDTO()
+                    .setUser(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"))
+                    .setRole(Role.MEMBER)
+                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+        }
+
+        departmentApi.postMembers(departmentR.getId(), userRoleDTOs2);
+        response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
+        assertEquals(300, response.getMembers().size());
+
+        List<UserRoleDTO> userRoleDTOs3 = new ArrayList<>();
+        userRoleDTOs3.add(
+            new UserRoleDTO()
+                .setUser(new UserDTO().setEmail("bulk301@mail.com").setGivenName("Bulk301").setSurname("User"))
+                .setRole(Role.AUTHOR));
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.postMembers(departmentR.getId(), userRoleDTOs3), ExceptionCode.INVALID_RESOURCE_USER, null);
+    }
+
+    @Test
+    public void shouldUpdateMembersByPosting() {
+        User user = testUserService.authenticate();
+        BoardDTO boardDTO = TestHelper.sampleBoard();
+
+        Long departmentId = boardApi.postBoard(boardDTO).getDepartment().getId();
+        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+
+        List<UserRoleDTO> userRoleDTOs = new ArrayList<>();
+        userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
+            .setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+        userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("jakub").setSurname("fibinger").setEmail("jakub@fibinger.com"))
+            .setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+
+        departmentApi.postMembers(departmentId, userRoleDTOs);
+        List<UserRoleRepresentation> members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
+
+        verifyMember("jakub@fibinger.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(0));
+        verifyMember("alastair@knowles.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(1));
+
+        Long memberId = transactionTemplate.execute(status -> userRepository.findByEmail("alastair@knowles.com")).getId();
+        testUserService.setAuthentication(memberId);
+
+        userApi.updateUser(new UserPatchDTO().setEmail(Optional.of("alastair@alastair.com")));
+
+        testUserService.setAuthentication(user.getId());
+        userRoleDTOs = new ArrayList<>();
+        userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
+            .setRole(Role.MEMBER).setExpiryDate(LocalDate.of(2018, 7, 1)).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+
+        departmentApi.postMembers(departmentId, userRoleDTOs);
+        members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
+
+        verifyMember("jakub@fibinger.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(0));
+        verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), Collections.singletonList(MemberCategory.MASTER_STUDENT), members.get(1));
     }
 
     @Test
@@ -716,6 +802,12 @@ public class DepartmentApiIT extends AbstractIT {
 
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getBoardCount());
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
+    }
+
+    private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, List<MemberCategory> expectedMemberCategories, UserRoleRepresentation actual) {
+        Assert.assertEquals(expectedEmail, actual.getUser().getEmail());
+        Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
+        Assert.assertEquals(expectedMemberCategories, actual.getCategories());
     }
 
 }

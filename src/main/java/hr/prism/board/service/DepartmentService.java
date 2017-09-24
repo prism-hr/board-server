@@ -6,6 +6,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -18,6 +19,7 @@ import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -76,6 +78,9 @@ public class DepartmentService {
 
     @Inject
     private ActivityService activityService;
+
+    @Inject
+    private UserRoleEventService userRoleEventService;
 
     @Lazy
     @Inject
@@ -213,7 +218,27 @@ public class DepartmentService {
         return departmentRepresentations;
     }
 
-    public void createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
+    public Department postMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
+        if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != Role.MEMBER)) {
+            throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER, "Only members can be bulk created");
+        }
+
+        User currentUser = userService.getCurrentUserSecured();
+        Resource resource = resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
+            userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
+            return resource;
+        });
+
+        List<String> emails = userRoleDTOs.stream().map(UserRoleDTO::getUser).map(UserDTO::getEmail).collect(Collectors.toList());
+        Long memberCountProvisional = userService.findUserCount(resource, Role.MEMBER, emails) + emails.size();
+
+        Department department = (Department) resource;
+        department.setMemberCountProvisional(memberCountProvisional);
+        return department;
+    }
+
+    public void postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.findOne(departmentId);
 

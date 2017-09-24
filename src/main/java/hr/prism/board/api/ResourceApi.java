@@ -38,11 +38,6 @@ public class ResourceApi {
         return userRoleService.createResourceUser(scope, resourceId, user);
     }
 
-    @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/bulk", method = RequestMethod.POST)
-    public Long createResourceUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid List<UserRoleDTO> users) {
-        return userRoleService.createResourceUsers(scope, resourceId, users);
-    }
-
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.DELETE)
     public void deleteResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId) {
         userRoleService.deleteResourceUser(scope, resourceId, userId);
