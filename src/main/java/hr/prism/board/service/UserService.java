@@ -262,10 +262,6 @@ public class UserService {
         userSearchRepository.deleteBySearch(search);
     }
 
-    public Long findUserCount(Resource resource, Role role, List<String> emails) {
-        return userRepository.findUserCount(resource, role, State.ACTIVE_USER_ROLE_STATES, emails);
-    }
-
     public void migrate(Long id) {
         User user = userCacheService.findOneFresh(id);
         userCacheService.setIndexData(user);

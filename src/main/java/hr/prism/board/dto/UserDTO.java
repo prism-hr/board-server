@@ -53,4 +53,9 @@ public class UserDTO {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return givenName + " " + surname + " (" + email + ")";
+    }
+
 }

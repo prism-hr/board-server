@@ -19,8 +19,8 @@ public class Department extends Resource {
     @Column(name = "member_count")
     private Long memberCount;
 
-    @Column(name = "member_count_provisional")
-    private Long memberCountProvisional;
+    @Column(name = "member_count_pending")
+    private Long memberCountPending;
 
     public Long getBoardCount() {
         return boardCount;
@@ -38,16 +38,28 @@ public class Department extends Resource {
         this.memberCount = memberCount;
     }
 
-    public Long getMemberCountProvisional() {
-        return memberCountProvisional;
+    public Long getMemberCountPending() {
+        return memberCountPending;
     }
 
-    public void setMemberCountProvisional(Long memberCountProvisional) {
-        this.memberCountProvisional = memberCountProvisional;
+    public void setMemberCountPending(Long memberCountPending) {
+        this.memberCountPending = memberCountPending;
     }
 
-    public Long getMemberCountEffective() {
-        return memberCountProvisional == null ? memberCount : memberCountProvisional;
+    public void addToMemberCountPending(Long memberCountPending) {
+        if (memberCountPending == null) {
+            this.memberCountPending = memberCountPending;
+        } else {
+            this.memberCountPending = this.memberCountPending + memberCountPending;
+        }
+    }
+
+    public void decrementMemberCountPending() {
+        if (memberCountPending == 1L) {
+            this.memberCountPending = null;
+        } else {
+            this.memberCountPending = this.memberCountPending - 1L;
+        }
     }
 
 }

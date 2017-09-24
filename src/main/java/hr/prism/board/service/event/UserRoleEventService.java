@@ -43,15 +43,15 @@ public class UserRoleEventService {
 
     protected void createResourceUsers(UserRoleEvent userRoleEvent, boolean invokedAsynchronously) {
         Long resourceId = userRoleEvent.getResourceId();
-        try {
-            User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
-            for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
+        User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
+        for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
+            try {
                 userRoleService.createOrUpdateResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
+            } catch (Throwable t) {
+                throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);
+            } finally {
+                departmentService.decrementMemberCountPending(resourceId);
             }
-        } catch (Throwable t) {
-            throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to bulk create user roles", t);
-        } finally {
-            departmentService.unsetMemberCountProvisional(resourceId);
         }
     }
 

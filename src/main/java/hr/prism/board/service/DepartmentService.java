@@ -6,7 +6,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -230,11 +229,8 @@ public class DepartmentService {
             return resource;
         });
 
-        List<String> emails = userRoleDTOs.stream().map(UserRoleDTO::getUser).map(UserDTO::getEmail).collect(Collectors.toList());
-        Long memberCountProvisional = userService.findUserCount(resource, Role.MEMBER, emails) + emails.size();
-
         Department department = (Department) resource;
-        department.setMemberCountProvisional(memberCountProvisional);
+        department.addToMemberCountPending((long) userRoleDTOs.size());
         return department;
     }
 
@@ -287,8 +283,8 @@ public class DepartmentService {
         });
     }
 
-    public void unsetMemberCountProvisional(Long departmentId) {
-        departmentRepository.findOne(departmentId).setMemberCountProvisional(null);
+    public void decrementMemberCountPending(Long departmentId) {
+        ((Department) resourceService.findOne(departmentId)).decrementMemberCountPending();
     }
 
     public void migrate(Long id) {
