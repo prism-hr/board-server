@@ -3,7 +3,6 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.DEPARTMENT)
@@ -56,7 +55,7 @@ public class Department extends Resource {
     }
 
     public void decrementMemberCountPending() {
-        if (Objects.equals(this.memberCountPending, 1L)) {
+        if (this.memberCountPending == 1L) {
             this.memberCountPending = null;
         } else {
             this.memberCountPending = this.memberCountPending - 1L;

@@ -223,15 +223,12 @@ public class DepartmentService {
         }
 
         User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
+        Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
+        return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
+            department.addToMemberCountPending((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
-            return resource;
+            return department;
         });
-
-        Department department = (Department) resource;
-        department.addToMemberCountPending((long) userRoleDTOs.size());
-        return department;
     }
 
     public void postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
