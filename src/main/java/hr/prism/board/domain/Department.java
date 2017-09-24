@@ -55,7 +55,7 @@ public class Department extends Resource {
     }
 
     public void decrementMemberCountPending() {
-        if (memberCount == 1L) {
+        if (this.memberCountPending == 1L) {
             this.memberCountPending = null;
         } else {
             this.memberCountPending = this.memberCountPending - 1L;
