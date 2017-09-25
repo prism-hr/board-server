@@ -226,13 +226,13 @@ public class BoardApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             Department department = departmentService.getDepartment(departmentId);
-            Assert.assertEquals("new-department-updated", department.getHandle());
+            Assert.assertEquals("ucl/new-department-updated", department.getHandle());
 
             int index = 1;
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true, null, null, null);
             Assert.assertEquals(2, boardRs.size());
             for (BoardRepresentation boardR : boardRs) {
-                Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                Assert.assertEquals("ucl/new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
 
@@ -625,7 +625,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(summaryOptional == null ? board.getSummary() : summaryOptional.orElse(null), boardR.getSummary());
 
             Optional<String> handleOptional = boardDTO.getHandle();
-            Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[1] : handleOptional.orElse(null), boardR.getHandle());
+            Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[2] : handleOptional.orElse(null), boardR.getHandle());
 
             Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
             Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),

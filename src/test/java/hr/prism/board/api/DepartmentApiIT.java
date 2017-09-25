@@ -62,7 +62,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         String departmentName = department.getName();
         Assert.assertEquals(departmentName, departmentR.getName());
-        Assert.assertEquals(departmentName, departmentR.getHandle());
+        Assert.assertEquals("ucl/" + departmentName, departmentR.getHandle());
         Assert.assertEquals("summary", departmentR.getSummary());
         Assert.assertEquals(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT), departmentR.getMemberCategories());
 
@@ -82,28 +82,28 @@ public class DepartmentApiIT extends AbstractIT {
         User user1 = testUserService.authenticate();
         BoardDTO boardDTO1 = TestHelper.sampleBoard();
         boardDTO1.getDepartment().setName("department1");
-        BoardRepresentation boardR1 = verifyPostDepartment(boardDTO1, "department1");
+        BoardRepresentation boardR1 = verifyPostDepartment(boardDTO1, "ucl/department1");
         unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardR1.getDepartment().getId(), boardR1.getId(), 10, 2,
             TestHelper.samplePost()));
 
         testUserService.setAuthentication(user1.getId());
         BoardDTO boardDTO2 = TestHelper.smallSampleBoard();
         boardDTO2.getDepartment().setName("department2");
-        BoardRepresentation boardR2 = verifyPostDepartment(boardDTO2, "department2");
+        BoardRepresentation boardR2 = verifyPostDepartment(boardDTO2, "ucl/department2");
         unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardR2.getDepartment().getId(), boardR2.getId(), 20, 2,
             TestHelper.smallSamplePost()));
 
         User user2 = testUserService.authenticate();
         BoardDTO boardDTO3 = TestHelper.sampleBoard();
         boardDTO3.getDepartment().setName("department3");
-        BoardRepresentation boardR3 = verifyPostDepartment(boardDTO3, "department3");
+        BoardRepresentation boardR3 = verifyPostDepartment(boardDTO3, "ucl/department3");
         unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardR3.getDepartment().getId(), boardR3.getId(), 30, 2,
             TestHelper.samplePost()));
 
         testUserService.setAuthentication(user2.getId());
         BoardDTO boardDTO4 = TestHelper.smallSampleBoard();
         boardDTO4.getDepartment().setName("department4");
-        BoardRepresentation boardR4 = verifyPostDepartment(boardDTO4, "department4");
+        BoardRepresentation boardR4 = verifyPostDepartment(boardDTO4, "ucl/department4");
         unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardR4.getDepartment().getId(), boardR4.getId(), 40, 2,
             TestHelper.smallSamplePost()));
 
@@ -140,20 +140,20 @@ public class DepartmentApiIT extends AbstractIT {
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
                     .setName("new department with long name")),
-            "new-department-with");
+            "ucl/new-department-with");
 
         Long departmentId = verifyPostDepartment(
             new BoardDTO()
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
                     .setName("new department with long name too")),
-            "new-department-with-2").getDepartment().getId();
+            "ucl/new-department-with-2").getDepartment().getId();
 
         transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = departmentApi.patchDepartment(departmentId,
                 new DepartmentPatchDTO()
                     .setHandle(Optional.of("new-department-with-long")));
-            Assert.assertEquals("new-department-with-long", departmentR.getHandle());
+            Assert.assertEquals("ucl/new-department-with-long", departmentR.getHandle());
             return null;
         });
 
@@ -162,7 +162,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setName("new board")
                 .setDepartment(new DepartmentDTO()
                     .setName("new department with long name also")),
-            "new-department-with-2");
+            "ucl/new-department-with-2");
     }
 
     @Test
@@ -186,7 +186,7 @@ public class DepartmentApiIT extends AbstractIT {
                 BoardException.class,
                 () -> departmentApi.patchDepartment(departmentRs.getKey().getId(),
                     new DepartmentPatchDTO()
-                        .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
+                        .setHandle(Optional.of(departmentRs.getValue().getHandle().replace("ucl/", "")))),
                 ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE, status);
             return null;
         });
@@ -197,7 +197,7 @@ public class DepartmentApiIT extends AbstractIT {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         BoardDTO boardDTO = TestHelper.smallSampleBoard();
-        BoardRepresentation boardR = verifyPostDepartment(boardDTO, "department");
+        BoardRepresentation boardR = verifyPostDepartment(boardDTO, "ucl/department");
         Long departmentId = boardR.getDepartment().getId();
         Long boardId = boardR.getId();
 
@@ -689,13 +689,13 @@ public class DepartmentApiIT extends AbstractIT {
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
         testUserService.authenticate();
-        DepartmentRepresentation departmentR1 = verifyPostDepartment(TestHelper.smallSampleBoard(), "department").getDepartment();
+        DepartmentRepresentation departmentR1 = verifyPostDepartment(TestHelper.smallSampleBoard(), "ucl/department").getDepartment();
         DepartmentRepresentation departmentR2 = verifyPostDepartment(
             new BoardDTO()
                 .setName("board")
                 .setDepartment(new DepartmentDTO()
                     .setName("department 2")),
-            "department-2").getDepartment();
+            "ucl/department-2").getDepartment();
 
         return new Pair<>(departmentR1, departmentR2);
     }
@@ -711,9 +711,8 @@ public class DepartmentApiIT extends AbstractIT {
             Assert.assertEquals(Optional.ofNullable(departmentDTO.getMemberCategories()).orElse(new ArrayList<>()), departmentR.getMemberCategories());
 
             Department department = departmentService.getDepartment(departmentR.getId());
-            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
-
-            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(department));
+            University university = universityService.getUniversity(departmentR.getUniversity().getId());
+            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(university, department));
             return boardR;
         });
     }
@@ -734,7 +733,7 @@ public class DepartmentApiIT extends AbstractIT {
             verifyDocument(documentLogoOptional == null ? department.getDocumentLogo() : departmentDTO.getDocumentLogo().orElse(null), departmentR.getDocumentLogo());
 
             Optional<String> handleOptional = departmentDTO.getHandle();
-            Assert.assertEquals(handleOptional == null ? department.getHandle() : handleOptional.orElse(null), departmentR.getHandle());
+            Assert.assertEquals(handleOptional == null ? department.getHandle() : "ucl/" + handleOptional.orElse(null), departmentR.getHandle());
 
             Optional<List<MemberCategory>> memberCategoriesOptional = departmentDTO.getMemberCategories();
             Assert.assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(department, CategoryType.MEMBER) :

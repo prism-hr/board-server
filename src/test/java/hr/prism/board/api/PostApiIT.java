@@ -1438,7 +1438,9 @@ public class PostApiIT extends AbstractIT {
 
             Board board = boardService.getBoard(postR.getBoard().getId());
             Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
-            assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(post, board, department));
+            University university = universityService.getUniversity(postR.getBoard().getDepartment().getUniversity().getId());
+            assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
+                Matchers.containsInAnyOrder(university, department, board, post));
             return postR;
         });
     }
