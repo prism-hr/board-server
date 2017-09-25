@@ -39,8 +39,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class DepartmentService {
 
-    private static final String UCL = "ucl";
-
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
             "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
@@ -82,6 +80,9 @@ public class DepartmentService {
 
     @Inject
     private UserRoleEventService userRoleEventService;
+
+    @Inject
+    private UniversityService universityService;
 
     @Lazy
     @Inject
@@ -164,7 +165,7 @@ public class DepartmentService {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
 
-            Resource university = resourceService.findByHandle(UCL);
+            Resource university = universityService.getOrCreateUniversity(UniversityService.UNIVERSITY_COLLEGE_LONDON, UniversityService.UCL);
             String handle = resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle);
             resourceService.updateHandle(department, handle);
             department = departmentRepository.save(department);

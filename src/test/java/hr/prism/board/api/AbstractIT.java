@@ -99,6 +99,9 @@ public abstract class AbstractIT {
     PostService postService;
 
     @Inject
+    UniversityService universityService;
+
+    @Inject
     TestUserService testUserService;
 
     @Inject
@@ -136,6 +139,8 @@ public abstract class AbstractIT {
 
             Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
             restoreForeignKeyChecks.executeUpdate();
+
+            universityService.getOrCreateUniversity(UniversityService.UNIVERSITY_COLLEGE_LONDON, UniversityService.UCL);
             return null;
         });
     }

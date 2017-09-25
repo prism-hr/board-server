@@ -21,7 +21,7 @@ SET handle = CONCAT('ucl/', resource.handle)
 WHERE resource.id <> @ucl
       AND resource.handle IS NOT NULL;
 
-INSERT INTO resource_relation (resource_id1, resource_id2, created_timestamp, updated_timestamp)
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp, updated_timestamp)
   SELECT
     @ucl,
     resource.id,
