@@ -107,7 +107,8 @@ public class BoardService {
                 board.setDocumentLogo(department.getDocumentLogo());
             }
 
-            board.setHandle(suggestHandle(department, name));
+            String handle = resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle);
+            board.setHandle(handle);
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
@@ -162,16 +163,11 @@ public class BoardService {
         Board board = (Board) resourceService.findOne(id);
         if (board.getHandle() == null) {
             Department department = (Department) board.getParent();
-            board.setHandle(suggestHandle(department, board.getName()));
+            String handle = resourceService.createHandle(department, board.getName(), boardRepository::findHandleLikeSuggestedHandle);
+            board.setHandle(handle);
         }
 
         resourceService.setIndexDataAndQuarter(board);
-    }
-
-    private String suggestHandle(Department department, String name) {
-        String handle = department.getHandle() + "/" + ResourceService.suggestHandle(name);
-        List<String> similarHandles = boardRepository.findHandleLikeSuggestedHandle(handle);
-        return ResourceService.confirmHandle(handle, similarHandles);
     }
 
     private Map<String, Object> createBoardBadgeModel(Board board, Department department, WidgetOptionsDTO options) {

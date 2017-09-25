@@ -19,8 +19,8 @@ public class Department extends Resource {
     @Column(name = "member_count")
     private Long memberCount;
 
-    @Column(name = "member_count_pending")
-    private Long memberCountPending;
+    @Column(name = "member_to_be_uploaded_count")
+    private Long memberToBeUploadedCount;
 
     public Long getBoardCount() {
         return boardCount;
@@ -38,29 +38,29 @@ public class Department extends Resource {
         this.memberCount = memberCount;
     }
 
-    public Long getMemberCountPending() {
-        return memberCountPending;
+    public Long getMemberToBeUploadedCount() {
+        return memberToBeUploadedCount;
     }
 
-    public void setMemberCountPending(Long memberCountPending) {
-        this.memberCountPending = memberCountPending;
+    public void setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
+        this.memberToBeUploadedCount = memberToBeUploadedCount;
     }
 
     public void addToMemberCountPending(Long memberCountPending) {
-        if (this.memberCountPending == null) {
-            this.memberCountPending = memberCountPending;
+        if (this.memberToBeUploadedCount == null) {
+            this.memberToBeUploadedCount = memberCountPending;
         } else {
-            this.memberCountPending = this.memberCountPending + memberCountPending;
+            this.memberToBeUploadedCount = this.memberToBeUploadedCount + memberCountPending;
         }
     }
 
     public void decrementMemberCountPending() {
         // We shouldn't ever have null here but if we do, not a good reason to crash the app - just let the count reset itself
-        if (this.memberCountPending != null) {
-            if (this.memberCountPending == 1L) {
-                this.memberCountPending = null;
+        if (this.memberToBeUploadedCount != null) {
+            if (this.memberToBeUploadedCount == 1L) {
+                this.memberToBeUploadedCount = null;
             } else {
-                this.memberCountPending = this.memberCountPending - 1L;
+                this.memberToBeUploadedCount = this.memberToBeUploadedCount - 1L;
             }
         }
     }

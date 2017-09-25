@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class Resource extends BoardEntity {
 
     @ManyToOne
-    @JoinColumn(name = "parent_id", nullable = false)
+    @JoinColumn(name = "parent_id")
     private Resource parent;
 
     @Enumerated(EnumType.STRING)

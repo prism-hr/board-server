@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class DepartmentService {
 
+    private static final String UCL = "ucl";
+
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
             "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
@@ -162,12 +164,13 @@ public class DepartmentService {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
 
-            String handle = suggestHandle(name);
+            Resource university = resourceService.findByHandle(UCL);
+            String handle = resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle);
             resourceService.updateHandle(department, handle);
             department = departmentRepository.save(department);
 
             resourceService.updateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
-            resourceService.createResourceRelation(department, department);
+            resourceService.createResourceRelation(university, department);
             resourceService.setIndexDataAndQuarter(department);
             resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
             userRoleService.createOrUpdateUserRole(department, currentUser, Role.ADMINISTRATOR);
@@ -287,18 +290,11 @@ public class DepartmentService {
     public void migrate(Long id) {
         Department department = (Department) resourceService.findOne(id);
         if (department.getHandle() == null) {
-            String handle = suggestHandle(department.getName());
+            String handle = resourceService.createHandle(department.getParent(), department.getName(), departmentRepository::findHandleByLikeSuggestedHandle);
             department.setHandle(handle);
         }
 
         resourceService.setIndexDataAndQuarter(department);
-    }
-
-    private String suggestHandle(String name) {
-        String handle = ResourceService.suggestHandle(name);
-        List<String> similarHandles = departmentRepository.findHandleByLikeSuggestedHandle(handle);
-        handle = ResourceService.confirmHandle(handle, similarHandles);
-        return handle;
     }
 
 }

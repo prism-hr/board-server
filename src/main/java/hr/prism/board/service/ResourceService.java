@@ -134,6 +134,10 @@ public class ResourceService {
         return resourceRepository.findOne(id);
     }
 
+    public Resource findByHandle(String handle) {
+        return resourceRepository.findByHandle(handle);
+    }
+
     public Resource getResource(User user, Scope scope, Long id) {
         List<Resource> resources = getResources(user, new ResourceFilter().setScope(scope).setId(id).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
@@ -166,7 +170,7 @@ public class ResourceService {
         }
 
         throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. " +
-            "Arguments passed where: " + Joiner.on(", ").join(resource1, resource2));
+            "Arguments passed were: " + Joiner.on(", ").join(resource1, resource2));
     }
 
     public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
@@ -558,6 +562,12 @@ public class ResourceService {
         }
     }
 
+    public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
+        String handle = parent.getHandle() + "/" + ResourceService.suggestHandle(name);
+        List<String> similarHandles = similarHandleFinder.find(handle);
+        return ResourceService.confirmHandle(handle, similarHandles);
+    }
+
     public static String suggestHandle(String name) {
         String suggestion = "";
         name = name.toLowerCase();
@@ -656,6 +666,10 @@ public class ResourceService {
         Query query = entityManager.createNativeQuery(Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
         return query.getResultList();
+    }
+
+    public interface SimilarHandleFinder {
+        List<String> find(String handle);
     }
 
     private static class ResourceActionKey {

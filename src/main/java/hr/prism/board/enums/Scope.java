@@ -1,15 +1,13 @@
 package hr.prism.board.enums;
 
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.*;
 import hr.prism.board.interceptor.BoardStateChangeInterceptor;
 import hr.prism.board.interceptor.PostStateChangeInterceptor;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 
 public enum Scope {
 
+    UNIVERSITY(Value.UNIVERSITY, University.class),
     DEPARTMENT(Value.DEPARTMENT, Department.class),
     BOARD(Value.BOARD, Board.class, BoardStateChangeInterceptor.class),
     POST(Value.POST, Post.class, PostStateChangeInterceptor.class);
@@ -31,6 +29,8 @@ public enum Scope {
     }
 
     public static class Value {
+
+        public static final String UNIVERSITY = "UNIVERSITY";
 
         public static final String DEPARTMENT = "DEPARTMENT";
 

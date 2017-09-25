@@ -16,7 +16,7 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private Long memberCount;
 
-    private Long memberCountPending;
+    private Long memberToBeUploadedCount;
 
     public DocumentRepresentation getDocumentLogo() {
         return documentLogo;
@@ -63,12 +63,12 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public Long getMemberCountPending() {
-        return memberCountPending;
+    public Long getMemberToBeUploadedCount() {
+        return memberToBeUploadedCount;
     }
 
-    public DepartmentRepresentation setMemberCountPending(Long memberCountPending) {
-        this.memberCountPending = memberCountPending;
+    public DepartmentRepresentation setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
+        this.memberToBeUploadedCount = memberToBeUploadedCount;
         return this;
     }
 
