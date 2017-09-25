@@ -10,6 +10,10 @@ public class UserRolesRepresentation {
 
     private List<UserRoleRepresentation> memberRequests;
 
+    private Long memberCount;
+
+    private Long memberCountPending;
+
     public List<UserRoleRepresentation> getUsers() {
         return users;
     }
@@ -34,6 +38,24 @@ public class UserRolesRepresentation {
 
     public UserRolesRepresentation setMemberRequests(List<UserRoleRepresentation> memberRequests) {
         this.memberRequests = memberRequests;
+        return this;
+    }
+
+    public Long getMemberCount() {
+        return memberCount;
+    }
+
+    public UserRolesRepresentation setMemberCount(Long memberCount) {
+        this.memberCount = memberCount;
+        return this;
+    }
+
+    public Long getMemberCountPending() {
+        return memberCountPending;
+    }
+
+    public UserRolesRepresentation setMemberCountPending(Long memberCountPending) {
+        this.memberCountPending = memberCountPending;
         return this;
     }
 

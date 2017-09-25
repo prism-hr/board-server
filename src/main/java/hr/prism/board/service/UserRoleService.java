@@ -1,10 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
@@ -97,10 +94,18 @@ public class UserRoleService {
             throw new IllegalStateException("Cannot request user roles for post");
         }
 
-        return new UserRolesRepresentation()
+        UserRolesRepresentation userRolesRepresentation = new UserRolesRepresentation()
             .setUsers(users.stream().map(userRoleMapper).collect(Collectors.toList()))
             .setMembers(members.stream().map(userRoleMapper).collect(Collectors.toList()))
             .setMemberRequests(memberRequests.stream().map(userRoleMapper).collect(Collectors.toList()));
+
+        if (resource.getScope() == Scope.DEPARTMENT) {
+            Department department = (Department) resource;
+            userRolesRepresentation.setMemberCount(department.getMemberCount());
+            userRolesRepresentation.setMemberCountPending(department.getMemberCountPending());
+        }
+
+        return userRolesRepresentation;
     }
 
     public void createOrUpdateUserRole(Resource resource, User user, Role role) {
