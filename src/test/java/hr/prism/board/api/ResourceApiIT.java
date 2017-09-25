@@ -197,7 +197,7 @@ public class ResourceApiIT extends AbstractIT {
     public void shouldListAndFilterResources() {
         transactionTemplate.execute(status -> {
             Streams.stream(resourceRepository.findAll()).sorted((resource1, resource2) -> ObjectUtils.compare(resource1.getId(), resource2.getId())).forEach(resource -> {
-                if (Arrays.asList(Scope.DEPARTMENT, Scope.BOARD).contains(resource.getScope())) {
+                if (Arrays.asList(Scope.UNIVERSITY, Scope.DEPARTMENT, Scope.BOARD).contains(resource.getScope())) {
                     resourceService.setIndexDataAndQuarter(resource);
                 } else {
                     postService.setIndexDataAndQuarter((Post) resource);

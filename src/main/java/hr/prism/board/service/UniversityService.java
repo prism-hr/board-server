@@ -22,6 +22,10 @@ public class UniversityService {
     @Inject
     private ResourceService resourceService;
 
+    public University getUniversity(Long id) {
+        return (University) resourceService.findOne(id);
+    }
+
     public University getOrCreateUniversity(String name, String handle) {
         University university = universityRepository.findByNameOrHandle(name, handle);
         if (university == null) {

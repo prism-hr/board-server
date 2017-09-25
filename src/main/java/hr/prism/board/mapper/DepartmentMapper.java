@@ -4,6 +4,7 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.UniversityRepresentation;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         }
 
         return resourceMapper.apply(department, DepartmentRepresentation.class)
+            .setUniversity(resourceMapper.applySmall(department.getParent(), UniversityRepresentation.class))
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(department.getHandle())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))

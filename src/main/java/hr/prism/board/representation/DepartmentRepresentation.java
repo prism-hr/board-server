@@ -6,6 +6,8 @@ import java.util.List;
 
 public class DepartmentRepresentation extends ResourceRepresentation<DepartmentRepresentation> {
 
+    private UniversityRepresentation university;
+
     private DocumentRepresentation documentLogo;
 
     private String handle;
@@ -17,6 +19,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
     private Long memberCount;
 
     private Long memberToBeUploadedCount;
+
+    public UniversityRepresentation getUniversity() {
+        return university;
+    }
+
+    public DepartmentRepresentation setUniversity(UniversityRepresentation university) {
+        this.university = university;
+        return this;
+    }
 
     public DocumentRepresentation getDocumentLogo() {
         return documentLogo;

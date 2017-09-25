@@ -590,10 +590,13 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
 
             Board board = boardService.getBoard(boardR.getId());
-            Department department = departmentService.getDepartment(boardR.getDepartment().getId());
+            DepartmentRepresentation departmentR = boardR.getDepartment();
+            Department department = departmentService.getDepartment(departmentR.getId());
+            University university = universityService.getUniversity(departmentR.getUniversity().getId());
             Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
 
-            Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(board, department));
+            Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
+                Matchers.containsInAnyOrder(board, department, university));
             return boardR;
         });
     }
