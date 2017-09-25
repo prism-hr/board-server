@@ -35,8 +35,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setHandle(department.getHandle())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))
             .setBoardCount(department.getBoardCount())
-            .setMemberCount(department.getMemberCount())
-            .setMemberToBeUploadedCount(department.getMemberToBeUploadedCount());
+            .setMemberCount(department.getMemberCount());
     }
 
     public DepartmentRepresentation applySmall(Department department) {

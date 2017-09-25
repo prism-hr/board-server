@@ -18,8 +18,6 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private Long memberCount;
 
-    private Long memberToBeUploadedCount;
-
     public UniversityRepresentation getUniversity() {
         return university;
     }
@@ -71,15 +69,6 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setMemberCount(Long memberCount) {
         this.memberCount = memberCount;
-        return this;
-    }
-
-    public Long getMemberToBeUploadedCount() {
-        return memberToBeUploadedCount;
-    }
-
-    public DepartmentRepresentation setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
-        this.memberToBeUploadedCount = memberToBeUploadedCount;
         return this;
     }
 

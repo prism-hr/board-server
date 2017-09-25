@@ -10,6 +10,8 @@ public class UserRolesRepresentation {
 
     private List<UserRoleRepresentation> memberRequests;
 
+    private Long memberToBeUploadedCount;
+
     public List<UserRoleRepresentation> getUsers() {
         return users;
     }
@@ -34,6 +36,15 @@ public class UserRolesRepresentation {
 
     public UserRolesRepresentation setMemberRequests(List<UserRoleRepresentation> memberRequests) {
         this.memberRequests = memberRequests;
+        return this;
+    }
+
+    public Long getMemberToBeUploadedCount() {
+        return memberToBeUploadedCount;
+    }
+
+    public UserRolesRepresentation setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
+        this.memberToBeUploadedCount = memberToBeUploadedCount;
         return this;
     }
 

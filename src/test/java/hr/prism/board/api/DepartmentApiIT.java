@@ -31,8 +31,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
@@ -391,8 +389,9 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentApi.postMembers(departmentR.getId(), userRoleDTOs1);
         UserRolesRepresentation response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
-        assertEquals(1, response.getUsers().size());
-        assertEquals(200, response.getMembers().size());
+        Assert.assertEquals(1, response.getUsers().size());
+        Assert.assertEquals(200, response.getMembers().size());
+        Assert.assertNull(response.getMemberToBeUploadedCount());
 
         List<UserRoleDTO> userRoleDTOs2 = new ArrayList<>();
         for (int i = 101; i <= 300; i++) {
@@ -405,7 +404,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentApi.postMembers(departmentR.getId(), userRoleDTOs2);
         response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
-        assertEquals(300, response.getMembers().size());
+        Assert.assertEquals(300, response.getMembers().size());
+        Assert.assertNull(response.getMemberToBeUploadedCount());
 
         List<UserRoleDTO> userRoleDTOs3 = new ArrayList<>();
         userRoleDTOs3.add(
