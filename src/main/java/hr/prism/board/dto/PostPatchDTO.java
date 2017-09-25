@@ -3,7 +3,6 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
 import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.URL;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
@@ -31,7 +30,6 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     private Optional<List<MemberCategory>> memberCategories;
 
-    @URL
     private Optional<String> applyWebsite;
 
     @Valid
