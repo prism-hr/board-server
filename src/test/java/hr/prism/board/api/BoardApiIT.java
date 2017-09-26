@@ -232,7 +232,7 @@ public class BoardApiIT extends AbstractIT {
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true, null, null, null);
             Assert.assertEquals(2, boardRs.size());
             for (BoardRepresentation boardR : boardRs) {
-                Assert.assertEquals("ucl/new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                 index++;
             }
 

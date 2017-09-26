@@ -6,28 +6,29 @@ VALUES (UUID(), 'department', 'administrator', 'department@administrator.com', S
   (UUID(), 'post', 'administrator', 'post@administrator.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, handle, summary, description, organization_name, apply_website, created_timestamp, updated_timestamp)
-VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW(), NULL),
-  ('BOARD', 'DRAFT', 'Games', 'cs/games', 'Games for students to play', NULL, NULL, NULL, NOW(), NULL),
-  ('BOARD', 'ACCEPTED', 'Opportunities', 'cs/opportunities', 'Promote work and work experience opportunities to students', NULL, NULL, NULL, NOW(), NULL),
-  ('BOARD', 'REJECTED', 'Housing', 'cs/housing', 'Meet students to share houses with', NULL, NULL, NULL, NOW(), NULL),
-  ('POST', 'DRAFT', 'Support Engineer', 'cs/opportunities/1', 'Help people to use their computers', 'This will be soul destroying', NULL, NULL, NOW(), NULL),
-  ('POST', 'SUSPENDED', 'UX Designer', 'cs/opportunities/2', 'Design user-friendly software',
+VALUES ('UNIVERSITY', 'ACCEPTED', 'University of Edinburgh', 'ed', NULL, NULL, NULL, NULL, NOW(), NULL),
+  ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'ed/cs', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW(), NULL),
+  ('BOARD', 'DRAFT', 'Games', 'ed/cs/games', 'Games for students to play', NULL, NULL, NULL, NOW(), NULL),
+  ('BOARD', 'ACCEPTED', 'Opportunities', 'ed/cs/opportunities', 'Promote work and work experience opportunities to students', NULL, NULL, NULL, NOW(), NULL),
+  ('BOARD', 'REJECTED', 'Housing', 'ed/cs/housing', 'Meet students to share houses with', NULL, NULL, NULL, NOW(), NULL),
+  ('POST', 'DRAFT', 'Support Engineer', 'ed/cs/opportunities/1', 'Help people to use their computers', 'This will be soul destroying', NULL, NULL, NOW(), NULL),
+  ('POST', 'SUSPENDED', 'UX Designer', 'ed/cs/opportunities/2', 'Design user-friendly software',
    'You will get to analyze requirements and produce screen designs', NULL, NULL, NOW(), NULL),
-  ('POST', 'PENDING', 'Front-End Developer', 'cs/opportunities/3', 'Writing responsive single page applications in AngularJs',
+  ('POST', 'PENDING', 'Front-End Developer', 'ed/cs/opportunities/3', 'Writing responsive single page applications in AngularJs',
    'You will spend a lot of time fiddling around with stuff that never works very well', NULL, NULL, NOW(), NULL),
-  ('POST', 'ACCEPTED', 'Database Engineer', 'cs/opportunities/4', 'Design schemas and optimize queries', 'You will be working primarily with SQL Server', NULL, NULL, NOW(), NULL),
-  ('POST', 'ACCEPTED', 'Java Web Developer', 'cs/opportunities/5', 'Build fast, scalable backend services',
+  ('POST', 'ACCEPTED', 'Database Engineer', 'ed/cs/opportunities/4', 'Design schemas and optimize queries', 'You will be working primarily with SQL Server', NULL, NULL, NOW(), NULL),
+  ('POST', 'ACCEPTED', 'Java Web Developer', 'ed/cs/opportunities/5', 'Build fast, scalable backend services',
    'You will be implementing business logic in Spring Boot microservices', NULL, NULL, NOW(), NULL),
-  ('POST', 'ACCEPTED', 'Technical Analyst', 'cs/opportunities/6', 'Work out how to build things', 'Nobody will ever know what you actually do', NULL, NULL, NOW(), NULL),
-  ('POST', 'EXPIRED', 'Scrum Leader', 'cs/opportunities/7', 'Whip software engineers into shape',
+  ('POST', 'ACCEPTED', 'Technical Analyst', 'ed/cs/opportunities/6', 'Work out how to build things', 'Nobody will ever know what you actually do', NULL, NULL, NOW(), NULL),
+  ('POST', 'EXPIRED', 'Scrum Leader', 'ed/cs/opportunities/7', 'Whip software engineers into shape',
    'You will be inculcating agile practice to ensure stuff gets done on time', NULL, NULL, NOW(), NULL),
-  ('POST', 'REJECTED', 'Product Manager', 'cs/opportunities/8', 'Work with customers to design products',
+  ('POST', 'REJECTED', 'Product Manager', 'ed/cs/opportunities/8', 'Work with customers to design products',
    'You will be annoying software engineers a lot', NULL, NULL, NOW(), NULL),
-  ('POST', 'WITHDRAWN', 'Test Engineer', 'cs/opportunities/9', 'Anticipate and find bugs before release to production',
+  ('POST', 'WITHDRAWN', 'Test Engineer', 'ed/cs/opportunities/9', 'Anticipate and find bugs before release to production',
    'You will be working primarily with Selenium', NULL, NULL, NOW(), NULL),
-  ('POST', 'ARCHIVED', 'Software Architect', 'cs/opportunities/10', 'Play lego all day',
+  ('POST', 'ARCHIVED', 'Software Architect', 'ed/cs/opportunities/10', 'Play lego all day',
    'You will work out how to put the big bits together', NULL, NULL, '2016-10-01 00:00:00', '2017-01-01 00:00:00'),
-  ('POST', 'ARCHIVED', 'Business Analyst', 'cs/opportunities/11', 'Solve the world', 'You will be the nuts in visio', NULL, NULL, '2017-01-01 00:00:00', '2017-04-01 00:00:00');
+  ('POST', 'ARCHIVED', 'Business Analyst', 'ed/cs/opportunities/11', 'Solve the world', 'You will be the nuts in visio', NULL, NULL, '2017-01-01 00:00:00', '2017-04-01 00:00:00');
 
 INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
@@ -110,11 +111,19 @@ INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestam
         AND resource.name NOT IN ('Database Engineer', 'Java Web Developer')
         AND user.email = 'post@administrator.com';
 
-UPDATE resource AS resource1
-  INNER JOIN resource AS resource2
-SET resource1.parent_id = resource2.id
-WHERE resource1.scope = 'DEPARTMENT'
-      AND resource2.scope = 'DEPARTMENT';
+SET @edId = (
+  SELECT resource.id
+  FROM resource
+  WHERE resource.scope = 'UNIVERSITY'
+        AND resource.handle = 'ed');
+
+UPDATE resource
+SET index_data = CONCAT(SOUNDEX('university'), ' ',  CONCAT('of'), ' ', CONCAT('edinburgh'))
+WHERE resource.id = @edId;
+
+UPDATE resource
+SET resource.parent_id = @edId
+WHERE resource.scope IN ('UNIVERSITY', 'DEPARTMENT');
 
 UPDATE resource AS resource1
   INNER JOIN resource AS resource2

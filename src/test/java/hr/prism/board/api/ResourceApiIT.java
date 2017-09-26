@@ -274,7 +274,7 @@ public class ResourceApiIT extends AbstractIT {
         verifyContains(postNames, "Database Engineer");
 
         testUserService.unauthenticate();
-        Long boardId = transactionTemplate.execute(status -> boardService.getBoard("cs/opportunities")).getId();
+        Long boardId = transactionTemplate.execute(status -> boardService.getBoard("ed/cs/opportunities")).getId();
 
         postRs = postApi.getPostsByBoard(boardId, true, null, null, null);
         Assert.assertEquals(3, postRs.size());
