@@ -9,6 +9,7 @@ import javax.persistence.*;
 @NamedEntityGraph(
     name = "department.extended",
     attributeNodes = {
+        @NamedAttributeNode(value = "parent"),
         @NamedAttributeNode(value = "categories"),
         @NamedAttributeNode(value = "documentLogo")})
 public class Department extends Resource {

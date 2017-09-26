@@ -118,7 +118,7 @@ SET @edId = (
         AND resource.handle = 'ed');
 
 UPDATE resource
-SET index_data = CONCAT(SOUNDEX('university'), ' ',  CONCAT('of'), ' ', CONCAT('edinburgh'))
+SET index_data = CONCAT(SOUNDEX('university'), ' ', CONCAT('of'), ' ', CONCAT('edinburgh'))
 WHERE resource.id = @edId;
 
 UPDATE resource
