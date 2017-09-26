@@ -24,4 +24,8 @@ public class ResourceMapper {
             .setName(resource.getName());
     }
 
+    public String getHandle(Resource resource, Resource parent) {
+        return resource.getHandle().replaceFirst(parent.getHandle() + "/", "");
+    }
+
 }
