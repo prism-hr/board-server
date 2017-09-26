@@ -46,7 +46,7 @@ public class Department extends Resource {
         this.memberToBeUploadedCount = memberToBeUploadedCount;
     }
 
-    public void addToMemberCountPending(Long memberCountPending) {
+    public void addToMemberToBeUploadedCount(Long memberCountPending) {
         if (this.memberToBeUploadedCount == null) {
             this.memberToBeUploadedCount = memberCountPending;
         } else {
@@ -54,7 +54,7 @@ public class Department extends Resource {
         }
     }
 
-    public void decrementMemberCountPending() {
+    public void decrementMemberToBeUploadedCount() {
         // We shouldn't ever have null here but if we do, not a good reason to crash the app - just let the count reset itself
         if (this.memberToBeUploadedCount != null) {
             if (this.memberToBeUploadedCount == 1L) {

@@ -229,7 +229,7 @@ public class DepartmentService {
         User currentUser = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
-            department.addToMemberCountPending((long) userRoleDTOs.size());
+            department.addToMemberToBeUploadedCount((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
             return department;
         });
@@ -285,7 +285,7 @@ public class DepartmentService {
     }
 
     public void decrementMemberCountPending(Long departmentId) {
-        ((Department) resourceService.findOne(departmentId)).decrementMemberCountPending();
+        ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
 
     public void migrate(Long id) {
