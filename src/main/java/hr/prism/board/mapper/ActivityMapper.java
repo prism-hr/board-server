@@ -35,7 +35,8 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
             .setResource(resourceMapperFactory.applySmall(activity.getResource()))
             .setUserRole(mapUserRole(activity.getUserRole()))
             .setResourceEvent(resourceEventMapper.apply(activity.getResourceEvent()))
-            .setActivity(activity.getActivity());
+            .setActivity(activity.getActivity())
+            .setCreatedTimestamp(activity.getCreatedTimestamp());
     }
 
     private UserRoleRepresentation mapUserRole(UserRole userRole) {

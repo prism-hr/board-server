@@ -2,6 +2,8 @@ package hr.prism.board.representation;
 
 import hr.prism.board.enums.Activity;
 
+import java.time.LocalDateTime;
+
 public class ActivityRepresentation {
 
     private Long id;
@@ -13,6 +15,8 @@ public class ActivityRepresentation {
     private ResourceEventRepresentation resourceEvent;
 
     private Activity activity;
+
+    private LocalDateTime createdTimestamp;
 
     public Long getId() {
         return id;
@@ -56,6 +60,15 @@ public class ActivityRepresentation {
 
     public ActivityRepresentation setActivity(Activity activity) {
         this.activity = activity;
+        return this;
+    }
+
+    public LocalDateTime getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public ActivityRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
         return this;
     }
 
