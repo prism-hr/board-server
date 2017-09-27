@@ -47,9 +47,11 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             return null;
         }
 
+        University university = (University) department.getParent();
         return resourceMapper.applySmall(department, DepartmentRepresentation.class)
+            .setUniversity(universityMapper.apply(university))
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
-            .setHandle(department.getHandle());
+            .setHandle(resourceMapper.getHandle(department, university));
     }
 
 }

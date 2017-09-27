@@ -15,6 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserRoleEventService {
@@ -47,6 +48,7 @@ public class UserRoleEventService {
         for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
             try {
                 userRoleService.createOrUpdateResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
+                TimeUnit.SECONDS.sleep(5);
             } catch (Throwable t) {
                 throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);
             } finally {
