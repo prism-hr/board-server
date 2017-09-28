@@ -17,6 +17,8 @@
         </li>
     </ul>
 </div>
+
+[#if board.documentLogo??]
 <div class="image-container">
     <div class="image-flex">
         <div class="image-logo">
@@ -24,6 +26,8 @@
         </div>
     </div>
 </div>
+[/#if]
+
 <p class="summary">
 ${post.summary}
 </p>
