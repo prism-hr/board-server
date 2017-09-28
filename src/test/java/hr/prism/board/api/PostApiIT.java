@@ -1249,9 +1249,14 @@ public class PostApiIT extends AbstractIT {
         Long responseId = transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1"))).getId();
 
+        User postEmailUser = new User();
+        postEmailUser.setGivenName("Author");
+        postEmailUser.setSurname("Author");
+        postEmailUser.setEmail(postUserEmail);
+
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser1.getFullName())
+            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
+                ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
                 makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments1.pdf", "Application")));
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
@@ -1273,9 +1278,10 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2")));
 
+        postEmailUser.setEmail("other@other.com");
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser2.getFullName())
+            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
+                ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser2.getFullName())
                     .put("coveringNote", "note2").put("profile", "website2").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
                 makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments2.pdf", "Application")));
         testUserActivityService.verify(postUserId,
@@ -1315,8 +1321,8 @@ public class PostApiIT extends AbstractIT {
             new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3")));
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postUser,
-                ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("post", "post").put("candidate", memberUser3.getFullName())
+            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
+                ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser3.getFullName())
                     .put("coveringNote", "note3").put("profile", "website3").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
                 makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments3.pdf", "Application")));
         testUserActivityService.verify(postUserId,
