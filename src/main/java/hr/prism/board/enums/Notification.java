@@ -1,9 +1,6 @@
 package hr.prism.board.enums;
 
-import hr.prism.board.notification.recipient.AuthorizedCategorizedRecipientList;
-import hr.prism.board.notification.recipient.AuthorizedRecipientList;
-import hr.prism.board.notification.recipient.DefinedRecipientList;
-import hr.prism.board.notification.recipient.NotificationRecipientList;
+import hr.prism.board.notification.recipient.*;
 
 public enum Notification {
 
@@ -26,7 +23,7 @@ public enum Notification {
     RESTORE_POST_NOTIFICATION(AuthorizedRecipientList.class),
     RETIRE_POST_NOTIFICATION(AuthorizedRecipientList.class),
     SUSPEND_POST_NOTIFICATION(AuthorizedRecipientList.class),
-    RESPOND_POST_NOTIFICATION(AuthorizedRecipientList.class);
+    RESPOND_POST_NOTIFICATION(PostRecipientList.class);
 
     private Class<? extends NotificationRecipientList> recipients;
 

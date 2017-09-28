@@ -104,9 +104,8 @@ public class ResourceEventService {
             .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY);
         activityEventService.publishEvent(this, postId, response, Collections.singletonList(activity));
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(Notification.RESPOND_POST_NOTIFICATION).addAttachment(
-                new hr.prism.board.workflow.Notification.Attachment().setName(documentResume.getFileName()).setUrl(documentResume.getCloudinaryUrl()).setLabel("Application"));
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification().setNotification(Notification.RESPOND_POST_NOTIFICATION).addAttachment(
+            new hr.prism.board.workflow.Notification.Attachment().setName(documentResume.getFileName()).setUrl(documentResume.getCloudinaryUrl()).setLabel("Application"));
         notificationEventService.publishEvent(this, postId, response.getId(), Collections.singletonList(notification));
         return response;
     }
