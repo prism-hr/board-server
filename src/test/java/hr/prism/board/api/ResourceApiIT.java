@@ -75,7 +75,8 @@ public class ResourceApiIT extends AbstractIT {
         });
 
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(newUserDTO.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(BoardUtils.obfuscateEmail(newUserDTO.getEmail()))).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
 
     @Test
@@ -93,7 +94,8 @@ public class ResourceApiIT extends AbstractIT {
         });
 
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(creator.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(creator.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
 
     @Test

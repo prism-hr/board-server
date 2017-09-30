@@ -20,6 +20,7 @@ import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.util.BoardUtils;
 import io.jsonwebtoken.Jwts;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
@@ -362,7 +363,8 @@ public class AuthenticationApiIT extends AbstractIT {
         testUserService.setAuthentication(userId1);
         List<String> emails1 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId1, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
-        verifyContains(emails1, "member1@member1.com", "member4@member4.com", "member3@member3.com");
+        verifyContains(emails1, BoardUtils.obfuscateEmail("member1@member1.com"),
+            BoardUtils.obfuscateEmail("member4@member4.com"), BoardUtils.obfuscateEmail("member3@member3.com"));
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> authenticationApi.register(
@@ -443,7 +445,7 @@ public class AuthenticationApiIT extends AbstractIT {
         testUserService.setAuthentication(userId2);
         List<String> emails2 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId2, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
-        verifyContains(emails2, "member1@member1.com", "member4@member4.com");
+        verifyContains(emails2, BoardUtils.obfuscateEmail("member1@member1.com"), BoardUtils.obfuscateEmail("member4@member4.com"));
 
         Long userId3 = testUserService.authenticate().getId();
         BoardRepresentation boardR3 = transactionTemplate.execute(status -> boardApi.postBoard(
@@ -532,7 +534,8 @@ public class AuthenticationApiIT extends AbstractIT {
         testUserService.setAuthentication(userId3);
         List<String> emails3 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId3, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
-        verifyContains(emails3, "alastair@prism.hr", "jakub@prism.hr", "member1@member1.com");
+        verifyContains(emails3, BoardUtils.obfuscateEmail("alastair@prism.hr"),
+            BoardUtils.obfuscateEmail("jakub@prism.hr"), BoardUtils.obfuscateEmail("member1@member1.com"));
 
         Long userId4 = testUserService.authenticate().getId();
         BoardRepresentation boardR4 = transactionTemplate.execute(status -> boardApi.postBoard(
@@ -591,7 +594,7 @@ public class AuthenticationApiIT extends AbstractIT {
         testUserService.setAuthentication(userId4);
         List<String> emails4 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId4, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
-        verifyContains(emails4, "alastair@prism.hr");
+        verifyContains(emails4, BoardUtils.obfuscateEmail("alastair@prism.hr"));
     }
 
     private void verifyAccessToken(String loginAccessToken, Long userId) {

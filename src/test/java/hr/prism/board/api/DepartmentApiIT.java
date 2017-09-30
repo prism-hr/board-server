@@ -17,6 +17,7 @@ import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
+import hr.prism.board.util.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;
@@ -804,7 +805,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, List<MemberCategory> expectedMemberCategories, UserRoleRepresentation actual) {
-        Assert.assertEquals(expectedEmail, actual.getUser().getEmail());
+        Assert.assertEquals(BoardUtils.obfuscateEmail(expectedEmail), actual.getUser().getEmail());
         Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
         Assert.assertEquals(expectedMemberCategories, actual.getCategories());
     }

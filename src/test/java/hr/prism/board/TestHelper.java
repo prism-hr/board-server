@@ -190,7 +190,6 @@ public class TestHelper {
         }
 
         Assert.assertEquals(expectedChanges, resourceOperationR.getChangeList());
-
         Assert.assertEquals(expectedComment, resourceOperationR.getComment());
     }
 
@@ -198,7 +197,7 @@ public class TestHelper {
         Assert.assertEquals(user.getId(), userRepresentation.getId());
         Assert.assertEquals(user.getGivenName(), userRepresentation.getGivenName());
         Assert.assertEquals(user.getSurname(), userRepresentation.getSurname());
-        Assert.assertEquals(user.getEmail(), userRepresentation.getEmail());
+        Assert.assertEquals(user.getEmailDisplay(), userRepresentation.getEmail());
     }
 
     public static class ExpectedActions extends LinkedHashMap<String, List<Action>> {
