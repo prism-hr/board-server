@@ -23,7 +23,7 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setId(user.getId())
             .setGivenName(user.getGivenName())
             .setSurname(user.getSurname())
-            .setEmail(user.getEmail())
+            .setEmail(user.isRevealEmail() ? user.getEmail() : user.getEmailDisplay())
             .setDocumentImage(documentMapper.apply(user.getDocumentImage()))
             .setDocumentImageRequestState(user.getDocumentImageRequestState())
             .setDocumentResume(documentMapper.apply(user.getDocumentResume()))

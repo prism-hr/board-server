@@ -5,6 +5,7 @@ import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.PasswordHash;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.validator.constraints.Email;
 
@@ -30,6 +31,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @Email
     @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @Column(name = "email_display", nullable = false)
+    private String emailDisplay;
 
     @Column(name = "password")
     private String password;
@@ -78,6 +82,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @Transient
     private List<Scope> scopes;
 
+    @Transient
+    private boolean revealEmail;
+
     public String getUuid() {
         return uuid;
     }
@@ -111,7 +118,12 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setEmail(String email) {
         this.email = email;
+        this.emailDisplay = BoardUtils.obfuscateEmail(email);
         return this;
+    }
+
+    public String getEmailDisplay() {
+        return emailDisplay;
     }
 
     public String getPassword() {
@@ -228,6 +240,14 @@ public class User extends BoardEntity implements Comparable<User> {
     public User setScopes(List<Scope> scopes) {
         this.scopes = scopes;
         return this;
+    }
+
+    public boolean isRevealEmail() {
+        return revealEmail;
+    }
+
+    public void setRevealEmail(boolean revealEmail) {
+        this.revealEmail = revealEmail;
     }
 
     public String getFullName() {

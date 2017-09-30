@@ -2,6 +2,7 @@ package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.util.BoardUtils;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
@@ -55,6 +56,9 @@ public class Post extends Resource {
     @Email
     @Column(name = "apply_email")
     private String applyEmail;
+
+    @Column(name = "apply_email_display")
+    private String applyEmailDisplay;
 
     @Column(name = "live_timestamp", nullable = false)
     private LocalDateTime liveTimestamp;
@@ -143,6 +147,11 @@ public class Post extends Resource {
 
     public void setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
+        this.applyEmailDisplay = BoardUtils.obfuscateEmail(applyEmail);
+    }
+
+    public String getApplyEmailDisplay() {
+        return applyEmailDisplay;
     }
 
     public LocalDateTime getLiveTimestamp() {

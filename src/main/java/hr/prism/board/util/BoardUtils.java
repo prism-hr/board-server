@@ -73,22 +73,26 @@ public class BoardUtils {
     }
 
     public static String obfuscateEmail(String email) {
-        String[] emailParts = email.split("@");
+        if (email != null) {
+            String[] emailParts = email.split("@");
 
-        List<String> newNameParts = new ArrayList<>();
-        for (String namePart : emailParts[0].split("\\.")) {
-            int subPartLength = namePart.length();
-            for (int i = 0; i < subPartLength; i++) {
-                if (i > 0 && !(i > 2 && i == (subPartLength - 1))) {
-                    StringBuilder addressPartBuilder = new StringBuilder(namePart);
-                    addressPartBuilder.setCharAt(i, '.');
-                    namePart = addressPartBuilder.toString();
+            List<String> newNameParts = new ArrayList<>();
+            for (String namePart : emailParts[0].split("\\.")) {
+                int subPartLength = namePart.length();
+                for (int i = 0; i < subPartLength; i++) {
+                    if (i > 0 && !(i > 2 && i == (subPartLength - 1))) {
+                        StringBuilder addressPartBuilder = new StringBuilder(namePart);
+                        addressPartBuilder.setCharAt(i, '.');
+                        namePart = addressPartBuilder.toString();
+                    }
                 }
+                newNameParts.add(namePart);
             }
-            newNameParts.add(namePart);
+
+            return Joiner.on(".").join(newNameParts) + "@" + emailParts[1];
         }
 
-        return Joiner.on(".").join(newNameParts) + "@" + emailParts[1];
+        return null;
     }
 
     public static String randomAlphanumericString(int length) {

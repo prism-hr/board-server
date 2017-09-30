@@ -7,7 +7,6 @@ import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.util.BoardUtils;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -59,7 +58,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             representation.setApplyDocument(documentMapper.apply(post.getApplyDocument()));
             representation.setApplyEmail(applyEmail);
         } else if (applyEmail != null) {
-            representation.setApplyEmail(BoardUtils.obfuscateEmail(applyEmail));
+            representation.setApplyEmail(post.getApplyEmailDisplay());
         }
 
         return representation.setBoard(boardMapper.apply((Board) post.getParent()))

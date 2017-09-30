@@ -12,6 +12,8 @@ public class UserRoleRepresentation {
 
     private UserRepresentation user;
 
+    private String email;
+
     private Role role;
 
     private State state;
@@ -28,6 +30,15 @@ public class UserRoleRepresentation {
 
     public UserRoleRepresentation setUser(UserRepresentation user) {
         this.user = user;
+        return this;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public UserRoleRepresentation setEmail(String email) {
+        this.email = email;
         return this;
     }
 

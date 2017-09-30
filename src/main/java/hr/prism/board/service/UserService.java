@@ -39,7 +39,7 @@ import java.util.*;
 public class UserService {
 
     private static final String USER_SEARCH_STATEMENT =
-        "SELECT user.id, user.given_name, user.surname, user.email, document_image.cloudinary_id, document_image.cloudinary_url, document_image.file_name " +
+        "SELECT user.id, user.given_name, user.surname, user.email_display, document_image.cloudinary_id, document_image.cloudinary_url, document_image.file_name " +
             "FROM user " +
             "LEFT JOIN document AS document_image " +
             "ON user.document_image_id = document_image.id " +
@@ -203,7 +203,7 @@ public class UserService {
             userRepresentation.setId(Long.parseLong(result[0].toString()));
             userRepresentation.setGivenName(result[1].toString());
             userRepresentation.setSurname(result[2].toString());
-            userRepresentation.setEmail(BoardUtils.obfuscateEmail(result[3].toString()));
+            userRepresentation.setEmail(result[3].toString());
 
             Object cloudinaryId = result[4];
             if (cloudinaryId != null) {
@@ -226,11 +226,15 @@ public class UserService {
             return null;
         }
 
+        User user;
         if (fresh) {
-            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+            user = userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+        } else {
+            user = userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
         }
 
-        return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
+        user.setRevealEmail(true);
+        return user;
     }
 
     public User getCurrentUserSecured(boolean fresh) {

@@ -23,6 +23,7 @@ public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation
 
         return new UserRoleRepresentation()
             .setUser(userMapper.apply(userRole.getUser()))
+            .setEmail(userRole.getEmail())
             .setRole(userRole.getRole())
             .setState(userRole.getState())
             .setCategories(userRole.getCategories().stream().map(UserRoleCategory::getName).collect(Collectors.toList()))
