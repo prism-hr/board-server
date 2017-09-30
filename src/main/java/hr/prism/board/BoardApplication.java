@@ -5,17 +5,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.base.Joiner;
 import com.sendgrid.SendGrid;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import freemarker.template.TemplateException;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.MyRepositoryImpl;
 import no.api.freemarker.java8.Java8ObjectWrapper;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -31,8 +36,12 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
@@ -40,11 +49,12 @@ import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
-
-// TODO: configure the thread pool properly
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @EnableAsync
 @EnableWebMvc
@@ -54,7 +64,7 @@ import java.util.TimeZone;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
 @Import(SecurityConfiguration.class)
-public class BoardApplication extends WebMvcConfigurerAdapter {
+public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncConfigurer, SchedulingConfigurer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
@@ -171,9 +181,43 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
         return freeMarkerConfigurer;
     }
 
+    @Bean
+    @Override
+    public Executor getAsyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(20);
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        return executor;
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    @SuppressWarnings("ContextJavaBeanUnresolvedMethodsInspection")
+    public Executor taskExecutor() {
+        return Executors.newScheduledThreadPool(5);
+    }
+
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.add(new MappingJackson2HttpMessageConverter(objectMapper()));
+    }
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.setScheduler(taskExecutor());
+    }
+
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+        return (Throwable throwable, Method method, Object... params) -> {
+            String message = "Error calling method: " + method.getName() +
+                " in class: " + method.getDeclaringClass().getCanonicalName();
+            if (ArrayUtils.isNotEmpty(params)) {
+                message += " with parameters: " + Joiner.on(", ").join(params);
+            }
+
+            throw new BoardException(ExceptionCode.PROBLEM, message, throwable);
+        };
     }
 
     private class CustomFreeMarkerConfigurer extends FreeMarkerConfigurer {
