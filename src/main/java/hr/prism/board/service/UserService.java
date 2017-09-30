@@ -269,6 +269,7 @@ public class UserService {
     public void migrate(Long id) {
         User user = userCacheService.findOneFresh(id);
         userCacheService.setIndexData(user);
+        user.setEmail(user.getEmail());
     }
 
     public interface UserFinder {
