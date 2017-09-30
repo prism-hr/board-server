@@ -210,8 +210,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return (Throwable throwable, Method method, Object... params) -> {
-            String message = "Error calling method: " + method.getName() +
-                " in class: " + method.getDeclaringClass().getCanonicalName();
+            String message = "Error calling method: " + method.getName() + " in class: " + method.getDeclaringClass().getCanonicalName();
             if (ArrayUtils.isNotEmpty(params)) {
                 message += " with parameters: " + Joiner.on(", ").join(params);
             }

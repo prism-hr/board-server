@@ -42,6 +42,7 @@ public class IndexApi {
                 model.addAttribute("image", department.getDocumentLogo().getCloudinaryUrl());
             }
         }
+
         return "index";
     }
 
@@ -57,6 +58,7 @@ public class IndexApi {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
         }
+
         return "index";
     }
 
@@ -74,6 +76,7 @@ public class IndexApi {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
         }
+
         return "index";
     }
 
