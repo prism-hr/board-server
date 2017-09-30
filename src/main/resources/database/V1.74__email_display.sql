@@ -8,6 +8,6 @@ SET email_display = email;
 ALTER TABLE user
   MODIFY COLUMN email_display VARCHAR(255) NOT NULL;
 
-ALTER TABLE post
+ALTER TABLE resource
   ADD COLUMN apply_email_display VARCHAR(255)
   AFTER apply_email;
