@@ -226,15 +226,11 @@ public class UserService {
             return null;
         }
 
-        User user;
         if (fresh) {
-            user = userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
-        } else {
-            user = userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
+            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
         }
 
-        user.setRevealEmail(true);
-        return user;
+        return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
     }
 
     public User getCurrentUserSecured(boolean fresh) {

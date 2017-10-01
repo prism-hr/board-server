@@ -376,7 +376,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         DepartmentRepresentation departmentR = boardApi.postBoard(boardDTO).getDepartment();
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // add 200 members
         List<UserRoleDTO> userRoleDTOs1 = new ArrayList<>();
@@ -424,7 +425,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId = boardApi.postBoard(boardDTO).getDepartment().getId();
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         List<UserRoleDTO> userRoleDTOs = new ArrayList<>();
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))

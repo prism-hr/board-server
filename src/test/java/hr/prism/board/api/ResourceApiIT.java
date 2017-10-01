@@ -409,25 +409,28 @@ public class ResourceApiIT extends AbstractIT {
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // add ADMINISTRATOR role
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
         UserRoleRepresentation resourceManager = resourceApi.createResourceUser(scope, resourceId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
         users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail("board@mail.com")).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(BoardUtils.obfuscateEmail("board@mail.com"))).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // replace with MEMBER role
         UserRoleRepresentation resourceUser = resourceApi.updateResourceUser(scope, resourceId, resourceManager.getUser().getId(),
             new UserRoleDTO().setUser(newUser).setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
         verifyContains(Collections.singletonList(resourceUser), new UserRoleRepresentation().setUser(
-            new UserRepresentation().setEmail("board@mail.com")).setRole(Role.MEMBER).setState(State.ACCEPTED));
+            new UserRepresentation().setEmail(BoardUtils.obfuscateEmail("board@mail.com"))).setRole(Role.MEMBER).setState(State.ACCEPTED));
 
         // remove from resource
         resourceApi.deleteResourceUser(scope, resourceId, resourceManager.getUser().getId());
         users = resourceApi.getUserRoles(scope, resourceId, null).getUsers();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmail())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
 
     private void verifySuggestedUser(String expectedGivenName, String expectedSurname, String expectedEmail, UserRepresentation userR) {

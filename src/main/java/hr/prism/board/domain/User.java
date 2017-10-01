@@ -246,8 +246,9 @@ public class User extends BoardEntity implements Comparable<User> {
         return revealEmail;
     }
 
-    public void setRevealEmail(boolean revealEmail) {
+    public User setRevealEmail(boolean revealEmail) {
         this.revealEmail = revealEmail;
+        return this;
     }
 
     public String getFullName() {

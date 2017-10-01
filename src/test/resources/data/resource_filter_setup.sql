@@ -1,9 +1,9 @@
-INSERT INTO user (uuid, given_name, surname, email, password, created_timestamp)
-VALUES (UUID(), 'department', 'administrator', 'department@administrator.com', SHA2('password', 256), NOW()),
-  (UUID(), 'department', 'member', 'department@member.com', SHA2('password', 256), NOW()),
-  (UUID(), 'board', 'administrator', 'board@administrator.com', SHA2('password', 256), NOW()),
-  (UUID(), 'board', 'author', 'board@author.com', SHA2('password', 256), NOW()),
-  (UUID(), 'post', 'administrator', 'post@administrator.com', SHA2('password', 256), NOW());
+INSERT INTO user (uuid, given_name, surname, email, email_display, password, created_timestamp)
+VALUES (UUID(), 'department', 'administrator', 'department@administrator.com', 'd........t@administrator.com', SHA2('password', 256), NOW()),
+  (UUID(), 'department', 'member', 'department@member.com', 'd........t@member.com', SHA2('password', 256), NOW()),
+  (UUID(), 'board', 'administrator', 'board@administrator.com', 'b...d@administrator.com', SHA2('password', 256), NOW()),
+  (UUID(), 'board', 'author', 'board@author.com', 'b...d@author.com', SHA2('password', 256), NOW()),
+  (UUID(), 'post', 'administrator', 'post@administrator.com', 'p..t@administrator.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, handle, summary, description, organization_name, apply_website, created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'University of Edinburgh', 'ed', NULL, NULL, NULL, NULL, NOW(), NULL),
