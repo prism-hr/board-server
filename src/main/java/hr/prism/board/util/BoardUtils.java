@@ -80,7 +80,7 @@ public class BoardUtils {
             for (String namePart : emailParts[0].split("\\.")) {
                 int subPartLength = namePart.length();
                 for (int i = 0; i < subPartLength; i++) {
-                    if (i > 0 && !(i > 2 && i == (subPartLength - 1))) {
+                    if (i > 0 && !(i > 1 && i == (subPartLength - 1))) {
                         StringBuilder addressPartBuilder = new StringBuilder(namePart);
                         addressPartBuilder.setCharAt(i, '.');
                         namePart = addressPartBuilder.toString();
