@@ -1388,11 +1388,12 @@ public class PostApiIT extends AbstractIT {
 
         List<ResourceEventRepresentation> responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
-        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), "jakub@fibinger.com", "juan@mingo.com");
+        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("jakub@fibinger.com"), BoardUtils.obfuscateEmail("juan@mingo.com"));
 
         responses = postApi.getPostResponses(postId, "juan");
         Assert.assertEquals(1, responses.size());
-        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), "juan@mingo.com");
+        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), BoardUtils.obfuscateEmail("juan@mingo.com"));
     }
 
     @Test

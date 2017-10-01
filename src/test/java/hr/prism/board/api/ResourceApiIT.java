@@ -361,31 +361,36 @@ public class ResourceApiIT extends AbstractIT {
         Assert.assertEquals(2, userRoles.getUsers().size());
         Assert.assertEquals(2, userRoles.getMembers().size());
         Assert.assertEquals(2, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "alastair@knowles.com", "jakub@fibinger.com");
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("alastair@knowles.com"), BoardUtils.obfuscateEmail("jakub@fibinger.com"));
 
         userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "alastair");
         Assert.assertEquals(1, userRoles.getUsers().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "alastair@knowles.com");
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("alastair@knowles.com"));
 
         userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "alister");
         Assert.assertEquals(1, userRoles.getUsers().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "alastair@knowles.com");
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("alastair@knowles.com"));
 
         userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "beatriz");
         Assert.assertEquals(0, userRoles.getUsers().size());
         Assert.assertEquals(1, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "beatriz@rodriguez.com");
+        verifyContains(userRoles.getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("beatriz@rodriguez.com"));
 
         userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, "felipe");
         Assert.assertEquals(0, userRoles.getUsers().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(1, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getMemberRequests().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "felipe@ieder.com");
+        verifyContains(userRoles.getMemberRequests().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("felipe@ieder.com"));
 
         testUserService.unauthenticate();
         ExceptionUtils.verifyException(BoardForbiddenException.class,
@@ -398,13 +403,15 @@ public class ResourceApiIT extends AbstractIT {
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
         verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
-            "alastair@knowles.com", "jakub@fibinger.com", "jon@wheatley.com", "toby@godfrey.com");
+            BoardUtils.obfuscateEmail("alastair@knowles.com"), BoardUtils.obfuscateEmail("jakub@fibinger.com"),
+            BoardUtils.obfuscateEmail("jon@wheatley.com"), BoardUtils.obfuscateEmail("toby@godfrey.com"));
 
         userRoles = resourceApi.getUserRoles(Scope.BOARD, boardId, "toby godfrey");
         Assert.assertEquals(1, userRoles.getUsers().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()), "toby@godfrey.com");
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("toby@godfrey.com"));
     }
 
     private void addAndRemoveUserRoles(User user, Scope scope, Long resourceId) {
