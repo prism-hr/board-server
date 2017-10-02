@@ -83,7 +83,8 @@ public class UserRoleService {
 
             memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
             if (!memberRequests.isEmpty()) {
-                Map<Activity, UserRole> indexByActivities = memberRequests.stream().collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
+                Map<Activity, UserRole> indexByActivities = memberRequests.stream()
+                    .filter(userRole -> userRole.getActivity() != null).collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
                 for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
                     indexByActivities.get(activityEvent.getActivity()).setViewed(true);
                 }

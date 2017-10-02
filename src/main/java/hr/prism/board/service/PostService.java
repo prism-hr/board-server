@@ -354,8 +354,10 @@ public class PostService {
             }
         }
     
-        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
-            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+        if (!indexByActivities.isEmpty()) {
+            for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+                indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+            }
         }
 
         return headResourceEvents;
