@@ -347,11 +347,17 @@ public class PostService {
         for (ResourceEvent headResourceEvent : headResourceEvents) {
             headResourceEvent.setExposeResponseData(headResourceEvent.getUser().equals(user) ||
                 isAdministrator && BooleanUtils.isTrue(headResourceEvent.getVisibleToAdministrator()));
-            indexByActivities.put(headResourceEvent.getActivity(), headResourceEvent);
+    
+            hr.prism.board.domain.Activity activity = headResourceEvent.getActivity();
+            if (activity != null) {
+                indexByActivities.put(activity, headResourceEvent);
+            }
         }
-
-        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
-            indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+    
+        if (!indexByActivities.isEmpty()) {
+            for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+                indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+            }
         }
 
         return headResourceEvents;

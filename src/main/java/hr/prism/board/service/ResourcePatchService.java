@@ -55,8 +55,10 @@ public class ResourcePatchService extends PatchService<Resource> {
                 if (unique != null) {
                     resourceService.validateUniqueHandle(resource, newValue, unique);
                 }
-
-                patchHandle(resource, oldValue, newValue);
+    
+                if (!Objects.equals(oldValue, newValue)) {
+                    patchHandle(resource, oldValue, newValue);
+                }
             } else if (oldValue != null) {
                 patchHandle(resource, oldValue, null);
             }

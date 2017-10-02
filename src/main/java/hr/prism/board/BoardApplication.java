@@ -16,7 +16,6 @@ import hr.prism.board.repository.MyRepositoryImpl;
 import no.api.freemarker.java8.Java8ObjectWrapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +77,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
     private String sendgridKey;
 
     @Value("${clean.db.on.startup}")
-    private Boolean cleanDbOnStartup;
+    private boolean cleanDbOnStartup;
 
     public static void main(String[] args) {
         InputStream propertiesStream = null;
@@ -125,7 +124,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("classpath:database");
-        if (BooleanUtils.isTrue(cleanDbOnStartup)) {
+        if (cleanDbOnStartup) {
             flyway.clean();
         }
 
