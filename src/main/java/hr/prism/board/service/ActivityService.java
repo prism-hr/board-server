@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,8 +54,14 @@ public class ActivityService {
     }
 
     public List<ActivityRepresentation> getActivities(Long userId) {
-        return activityRepository.findByUserId(userId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER,
-            hr.prism.board.enums.ActivityEvent.DISMISSAL).stream().map(activityMapper).collect(Collectors.toList());
+        List<Activity> activities =
+            activityRepository.findByUserId(userId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+        if (activities.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> viewedActivityIds = activityRepository.findIdsByActivitiesAndUserIdAndEvent(activities, userId, hr.prism.board.enums.ActivityEvent.VIEW);
+        return activities.stream().map(activity -> activity.setViewed(viewedActivityIds.contains(activity.getId()))).map(activityMapper).collect(Collectors.toList());
     }
 
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {

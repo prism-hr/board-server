@@ -1173,11 +1173,11 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(boardUserId);
         DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
-            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments1.pdf");
+            .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty())));
 
         testUserService.setAuthentication(memberUser2);
-        verifyPostReferral(referral2, response, "http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf");
+        verifyPostReferral(referral2, response, "http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardException.class,
@@ -1245,7 +1245,7 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(memberUser1Id);
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
-            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments1.pdf");
+            .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
         Long responseId = transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1"))).getId();
 
@@ -1258,7 +1258,8 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
-                makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments1.pdf", "Application")));
+                makeTestAttachments("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf",
+                    "attachments1.pdf", "Application")));
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
@@ -1274,7 +1275,7 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(memberUser2Id);
         DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
-            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments2.pdf");
+            .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments2.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2")));
 
@@ -1283,7 +1284,8 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser2.getFullName())
                     .put("coveringNote", "note2").put("profile", "website2").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
-                makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments2.pdf", "Application")));
+                makeTestAttachments("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf",
+                    "attachments2.pdf", "Application")));
         testUserActivityService.verify(postUserId,
             new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
@@ -1316,7 +1318,7 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(memberUser3Id);
         DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
-            .setCloudinaryUrl("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf").setFileName("attachments3.pdf");
+            .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments3.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3")));
 
@@ -1324,7 +1326,8 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser3.getFullName())
                     .put("coveringNote", "note3").put("profile", "website3").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
-                makeTestAttachments("http://res.cloudinary.com/bitfoot/image/upload/v1504040061/test/attachments1.pdf", "attachments3.pdf", "Application")));
+                makeTestAttachments("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf",
+                    "attachments3.pdf", "Application")));
         testUserActivityService.verify(postUserId,
             new TestUserActivityService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),

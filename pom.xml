@@ -383,7 +383,7 @@
                 <profile.sendgrid.key>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</profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
                 <profile.auth.linkedin.appSecret>tbc</profile.auth.linkedin.appSecret>
-                <profile.cloudinary.folder>p</profile.cloudinary.folder>
+                <profile.cloudinary.folder>prod</profile.cloudinary.folder>
                 <profile.mail.on>true</profile.mail.on>
             </properties>
         </profile>

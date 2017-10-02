@@ -3,7 +3,7 @@ package hr.prism.board.domain;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "activity_event", uniqueConstraints = @UniqueConstraint(columnNames = {"activity_id", "user_id"}))
+@Table(name = "activity_event", uniqueConstraints = @UniqueConstraint(columnNames = {"activity_id", "user_id", "event"}))
 public class ActivityEvent extends BoardEntity {
 
     @ManyToOne

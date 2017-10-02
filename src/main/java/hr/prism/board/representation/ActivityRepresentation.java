@@ -16,6 +16,8 @@ public class ActivityRepresentation {
 
     private Activity activity;
 
+    private boolean viewed;
+
     private LocalDateTime createdTimestamp;
 
     public Long getId() {
@@ -60,6 +62,15 @@ public class ActivityRepresentation {
 
     public ActivityRepresentation setActivity(Activity activity) {
         this.activity = activity;
+        return this;
+    }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public ActivityRepresentation setViewed(boolean viewed) {
+        this.viewed = viewed;
         return this;
     }
 

@@ -36,6 +36,7 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
             .setUserRole(mapUserRole(activity.getUserRole()))
             .setResourceEvent(resourceEventMapper.apply(activity.getResourceEvent()))
             .setActivity(activity.getActivity())
+            .setViewed(activity.isViewed())
             .setCreatedTimestamp(activity.getCreatedTimestamp());
     }
 

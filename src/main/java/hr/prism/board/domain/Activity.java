@@ -33,6 +33,9 @@ public class Activity extends BoardEntity {
     @OneToMany(mappedBy = "activity")
     private Set<ActivityUser> activityUsers = new HashSet<>();
 
+    @Transient
+    private boolean viewed;
+
     public Resource getResource() {
         return resource;
     }
@@ -85,5 +88,13 @@ public class Activity extends BoardEntity {
     public Set<ActivityUser> getActivityUsers() {
         return activityUsers;
     }
-    
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public Activity setViewed(boolean viewed) {
+        this.viewed = viewed;
+        return this;
+    }
 }

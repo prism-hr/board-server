@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -40,6 +41,15 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "order by activity.id desc")
     List<Activity> findByUserId(@Param("userId") Long userId, @Param("userRoleStates") List<State> state, @Param("categoryType") CategoryType categoryType,
                                 @Param("activityEvent") ActivityEvent activityEvent);
+
+    @Query(value =
+        "select activityEvent.activity.id " +
+            "from ActivityEvent activityEvent " +
+            "where activityEvent.activity in (:activities) " +
+            "and activityEvent.user.id = :userId " +
+            "and activityEvent.event = :event")
+    List<Long> findIdsByActivitiesAndUserIdAndEvent(@Param("activities") Collection<Activity> activities, @Param("userId") Long userId,
+                                                    @Param("event") hr.prism.board.enums.ActivityEvent event);
 
     @Query(value =
         "select activity " +
