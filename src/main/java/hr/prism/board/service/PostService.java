@@ -349,8 +349,9 @@ public class PostService {
                 isAdministrator && BooleanUtils.isTrue(headResourceEvent.getVisibleToAdministrator()));
             indexByActivities.put(headResourceEvent.getActivity(), headResourceEvent);
         }
-
-        for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
+    
+        for (hr.prism.board.domain.ActivityEvent activityEvent :
+            activityService.findViews(indexByActivities.keySet().stream().filter(Objects::nonNull).collect(Collectors.toList()), user)) {
             indexByActivities.get(activityEvent.getActivity()).setViewed(true);
         }
 
