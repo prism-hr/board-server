@@ -381,8 +381,10 @@
                 <profile.server.url>https://board.prism.hr/api</profile.server.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
                 <profile.sendgrid.key>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</profile.sendgrid.key>
-                <profile.auth.facebook.appSecret>tbc</profile.auth.facebook.appSecret>
-                <profile.auth.linkedin.appSecret>tbc</profile.auth.linkedin.appSecret>
+                <profile.auth.facebook.appSecret>74505e66db6f87c53d8a5baf4d01062d</profile.auth.facebook.appSecret>
+                <profile.auth.facebook.clientId>237813276703773</profile.auth.facebook.clientId>
+                <profile.auth.linkedin.appSecret>CETAZgHuCY0EauA8</profile.auth.linkedin.appSecret>
+                <profile.auth.linkedin.clientId>775lbiy4vugg19</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>prod</profile.cloudinary.folder>
                 <profile.mail.on>true</profile.mail.on>
             </properties>
