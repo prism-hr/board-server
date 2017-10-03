@@ -51,16 +51,16 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublicPosts, @RequestParam(required = false) State state,
+    public List<PostRepresentation> getPosts(@RequestParam(required = false) Boolean includePublic, @RequestParam(required = false) State state,
                                              @RequestParam(required = false) String quarter, @RequestParam(required = false) String searchTerm) {
-        return postService.getPosts(null, includePublicPosts, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
+        return postService.getPosts(null, includePublic, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.GET)
-    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublicPosts,
+    public List<PostRepresentation> getPostsByBoard(@PathVariable Long boardId, @RequestParam(required = false) Boolean includePublic,
                                                     @RequestParam(required = false) State state, @RequestParam(required = false) String quarter,
                                                     @RequestParam(required = false) String searchTerm) {
-        return postService.getPosts(boardId, includePublicPosts, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
+        return postService.getPosts(boardId, includePublic, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.GET)
