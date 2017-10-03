@@ -570,7 +570,7 @@ public class ResourceService {
 
     public static String suggestHandle(String name) {
         String suggestion = "";
-        name = name.toLowerCase();
+        name = StringUtils.stripAccents(name.toLowerCase());
         String[] parts = name.split(" ");
         for (int i = 0; i < parts.length; i++) {
             String newSuggestion;
