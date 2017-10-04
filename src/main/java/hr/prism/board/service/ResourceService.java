@@ -492,7 +492,8 @@ public class ResourceService {
     }
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
-        return resourceRepository.findByScopeAndUserAndRolesOrCategory(scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACTIVE_USER_ROLE_STATES);
+        return resourceRepository.findByScopeAndUserAndRolesOrCategory(
+            scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
     }
 
     public boolean isResourceAdministrator(Resource resource, String email) {

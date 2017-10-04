@@ -30,7 +30,9 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and activityRole.role = userRole.role " +
             "and userRole.user.id = :userId " +
             "and userRole.state in (:userRoleStates) " +
-            "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
+            "and (activity.filterByCategory = false " +
+            "or resourceCategory.id is null and userRole.memberCategory is null " +
+            "or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
             "or activityUser.user.id = :userId) " +
             "and activity.id not in (" +
             "select activityEvent.activity.id " +
