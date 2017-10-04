@@ -11,7 +11,7 @@ public class DepartmentDTO extends ResourceDTO<DepartmentDTO> {
 
     @Valid
     private DocumentDTO documentLogo;
-
+    
     private List<MemberCategory> memberCategories;
 
     public Long getId() {

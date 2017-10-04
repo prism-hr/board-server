@@ -2,10 +2,7 @@ package hr.prism.board.service.cache;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
@@ -27,6 +24,8 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import hr.prism.board.workflow.Activity;
 
 @Service
 @Transactional
@@ -157,6 +156,10 @@ public class UserRoleCacheService {
         MemberCategory oldMemberCategory = userRole.getMemberCategory();
         MemberCategory newMemberCategory = userRoleDTO.getMemberCategory();
         if (newMemberCategory != null) {
+            Resource department = resourceService.findByResourceAndEnclosingScope(userRole.getResource(), Scope.DEPARTMENT);
+            resourceService.validateCategories(department, CategoryType.MEMBER, Collections.singletonList(newMemberCategory.name()),
+                ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
+
             userRole.setMemberCategory(newMemberCategory);
             clearStudyData = newMemberCategory != oldMemberCategory;
             updated = true;
