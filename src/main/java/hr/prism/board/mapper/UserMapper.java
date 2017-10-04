@@ -13,6 +13,9 @@ public class UserMapper implements Function<User, UserRepresentation> {
     @Inject
     private DocumentMapper documentMapper;
 
+    @Inject
+    private LocationMapper locationMapper;
+
     @Override
     public UserRepresentation apply(User user) {
         if (user == null) {
@@ -26,6 +29,9 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setEmail(user.isRevealEmail() ? user.getEmail() : user.getEmailDisplay())
             .setDocumentImage(documentMapper.apply(user.getDocumentImage()))
             .setDocumentImageRequestState(user.getDocumentImageRequestState())
+            .setGender(user.getGender())
+            .setAgeRange(user.getAgeRange())
+            .setLocationNationality(locationMapper.apply(user.getLocationNationality()))
             .setDocumentResume(documentMapper.apply(user.getDocumentResume()))
             .setWebsiteResume(user.getWebsiteResume())
             .setScopes(user.getScopes());

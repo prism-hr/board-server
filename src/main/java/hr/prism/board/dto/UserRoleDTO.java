@@ -4,8 +4,6 @@ import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 public class UserRoleDTO {
@@ -14,9 +12,13 @@ public class UserRoleDTO {
 
     private Role role;
 
-    private LocalDate expiryDate;
+    private MemberCategory memberCategory;
 
-    private List<MemberCategory> categories;
+    private String memberProgram;
+
+    private Integer memberYear;
+
+    private LocalDate expiryDate;
 
     public UserRoleDTO() {
     }
@@ -25,10 +27,10 @@ public class UserRoleDTO {
         this.role = role;
     }
 
-    public UserRoleDTO(Role role, LocalDate expiryDate, MemberCategory... categories) {
+    public UserRoleDTO(Role role, LocalDate expiryDate, MemberCategory memberCategory) {
         this.role = role;
+        this.memberCategory = memberCategory;
         this.expiryDate = expiryDate;
-        this.categories = Arrays.asList(categories);
     }
 
     public UserDTO getUser() {
@@ -49,21 +51,39 @@ public class UserRoleDTO {
         return this;
     }
 
+    public MemberCategory getMemberCategory() {
+        return memberCategory;
+    }
+
+    public UserRoleDTO setMemberCategory(MemberCategory memberCategory) {
+        this.memberCategory = memberCategory;
+        return this;
+    }
+
+    public String getMemberProgram() {
+        return memberProgram;
+    }
+
+    public UserRoleDTO setMemberProgram(String memberProgram) {
+        this.memberProgram = memberProgram;
+        return this;
+    }
+
+    public Integer getMemberYear() {
+        return memberYear;
+    }
+
+    public UserRoleDTO setMemberYear(Integer memberYear) {
+        this.memberYear = memberYear;
+        return this;
+    }
+
     public LocalDate getExpiryDate() {
         return expiryDate;
     }
 
     public UserRoleDTO setExpiryDate(LocalDate expiryDate) {
         this.expiryDate = expiryDate;
-        return this;
-    }
-
-    public List<MemberCategory> getCategories() {
-        return categories;
-    }
-
-    public UserRoleDTO setCategories(List<MemberCategory> categories) {
-        this.categories = categories;
         return this;
     }
 

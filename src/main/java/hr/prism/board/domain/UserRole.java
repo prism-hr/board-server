@@ -1,19 +1,18 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
-import org.hibernate.annotations.SortNatural;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 @Entity
 @NamedEntityGraph(
     name = "userRole.extended",
-    attributeNodes = @NamedAttributeNode(value = "categories"))
+    attributeNodes = {
+        @NamedAttributeNode(value = "resource"),
+        @NamedAttributeNode(value = "user")})
 @Table(name = "user_role", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_id", "role"}))
 public class UserRole extends BoardEntity {
 
@@ -36,6 +35,19 @@ public class UserRole extends BoardEntity {
     private Role role;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "member_category")
+    private MemberCategory memberCategory;
+
+    @Column(name = "member_program")
+    private String memberProgram;
+
+    @Column(name = "member_year")
+    private Integer memberYear;
+
+    @Column(name = "member_date")
+    private LocalDate memberDate;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false)
     private State state;
 
@@ -44,10 +56,6 @@ public class UserRole extends BoardEntity {
 
     @OneToOne(mappedBy = "userRole")
     private Activity activity;
-
-    @SortNatural
-    @OneToMany(mappedBy = "userRole")
-    private SortedSet<UserRoleCategory> categories = new TreeSet<>();
 
     @Transient
     private boolean viewed;
@@ -97,6 +105,42 @@ public class UserRole extends BoardEntity {
         return this;
     }
 
+    public MemberCategory getMemberCategory() {
+        return memberCategory;
+    }
+
+    public UserRole setMemberCategory(MemberCategory memberCategory) {
+        this.memberCategory = memberCategory;
+        return this;
+    }
+
+    public String getMemberProgram() {
+        return memberProgram;
+    }
+
+    public UserRole setMemberProgram(String memberProgram) {
+        this.memberProgram = memberProgram;
+        return this;
+    }
+
+    public Integer getMemberYear() {
+        return memberYear;
+    }
+
+    public UserRole setMemberYear(Integer memberYear) {
+        this.memberYear = memberYear;
+        return this;
+    }
+
+    public LocalDate getMemberDate() {
+        return memberDate;
+    }
+
+    public UserRole setMemberDate(LocalDate memberDate) {
+        this.memberDate = memberDate;
+        return this;
+    }
+
     public State getState() {
         return state;
     }
@@ -122,10 +166,6 @@ public class UserRole extends BoardEntity {
     public UserRole setActivity(Activity activity) {
         this.activity = activity;
         return this;
-    }
-
-    public Set<UserRoleCategory> getCategories() {
-        return categories;
     }
 
     public boolean isViewed() {

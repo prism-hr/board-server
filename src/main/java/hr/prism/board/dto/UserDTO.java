@@ -1,7 +1,10 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.enums.AgeRange;
+import hr.prism.board.enums.Gender;
 import org.hibernate.validator.constraints.Email;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Size;
 
 public class UserDTO {
@@ -16,6 +19,13 @@ public class UserDTO {
 
     @Email
     private String email;
+
+    private Gender gender;
+
+    private AgeRange ageRange;
+
+    @Valid
+    private LocationDTO locationNationality;
 
     public Long getId() {
         return id;
@@ -50,6 +60,33 @@ public class UserDTO {
 
     public UserDTO setEmail(String email) {
         this.email = email;
+        return this;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public UserDTO setGender(Gender gender) {
+        this.gender = gender;
+        return this;
+    }
+
+    public AgeRange getAgeRange() {
+        return ageRange;
+    }
+
+    public UserDTO setAgeRange(AgeRange ageRange) {
+        this.ageRange = ageRange;
+        return this;
+    }
+
+    public LocationDTO getLocationNationality() {
+        return locationNationality;
+    }
+
+    public UserDTO setLocationNationality(LocationDTO locationNationality) {
+        this.locationNationality = locationNationality;
         return this;
     }
 

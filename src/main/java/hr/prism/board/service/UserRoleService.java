@@ -176,10 +176,9 @@ public class UserRoleService {
         if (userRole == null) {
             return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
         } else {
+            userRoleCacheService.updateUserRoleMemberData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);
             userRole.setExpiryDate(userRoleDTO.getExpiryDate());
-            userRoleCacheService.deleteUserRoleCategories(resource, user);
-            userRoleCacheService.createUserRoleCategories(userRole, userRoleDTO);
             userRoleCacheService.updateUserRolesSummary(resource);
             return userRole;
         }

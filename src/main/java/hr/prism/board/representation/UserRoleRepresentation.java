@@ -5,7 +5,6 @@ import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Objects;
 
 public class UserRoleRepresentation {
@@ -16,11 +15,15 @@ public class UserRoleRepresentation {
 
     private Role role;
 
+    private MemberCategory memberCategory;
+
+    private String memberProgram;
+
+    private Integer memberYear;
+
     private State state;
 
     private LocalDate expiryDate;
-
-    private List<MemberCategory> categories;
 
     private boolean viewed;
 
@@ -51,6 +54,33 @@ public class UserRoleRepresentation {
         return this;
     }
 
+    public MemberCategory getMemberCategory() {
+        return memberCategory;
+    }
+
+    public UserRoleRepresentation setMemberCategory(MemberCategory memberCategory) {
+        this.memberCategory = memberCategory;
+        return this;
+    }
+
+    public String getMemberProgram() {
+        return memberProgram;
+    }
+
+    public UserRoleRepresentation setMemberProgram(String memberProgram) {
+        this.memberProgram = memberProgram;
+        return this;
+    }
+
+    public Integer getMemberYear() {
+        return memberYear;
+    }
+
+    public UserRoleRepresentation setMemberYear(Integer memberYear) {
+        this.memberYear = memberYear;
+        return this;
+    }
+
     public State getState() {
         return state;
     }
@@ -66,15 +96,6 @@ public class UserRoleRepresentation {
 
     public UserRoleRepresentation setExpiryDate(LocalDate expiryDate) {
         this.expiryDate = expiryDate;
-        return this;
-    }
-
-    public List<MemberCategory> getCategories() {
-        return categories;
-    }
-
-    public UserRoleRepresentation setCategories(List<MemberCategory> categories) {
-        this.categories = categories;
         return this;
     }
 

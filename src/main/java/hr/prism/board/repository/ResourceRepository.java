@@ -34,14 +34,13 @@ public interface ResourceRepository extends MyRepository<Resource, Long> {
             "inner join parent.userRoles userRole " +
             "inner join resource.parent parent " +
             "left join resource.categories category " +
-            "left join userRole.categories userCategory " +
             "where resource.scope = :scope " +
             "and userRole.user = :user " +
             "and userRole.state in (:userRoleStates) " +
-            "and (category.id is null or userRole.role in (:roles) or category.name = userCategory.name) " +
+            "and (category.id is null or userRole.role in (:roles) or category.name = userRole.memberCategory) " +
             "order by parent.name, resource.name")
-    List<Resource> findByScopeAndUserAndRolesOrCategories(@Param("scope") Scope scope, @Param("user") User user, @Param("roles") List<Role> roles,
-                                                          @Param("userRoleStates") List<State> userRoleStates);
+    List<Resource> findByScopeAndUserAndRolesOrCategory(@Param("scope") Scope scope, @Param("user") User user, @Param("roles") List<Role> roles,
+                                                        @Param("userRoleStates") List<State> userRoleStates);
 
     @Modifying
     @Query(value =

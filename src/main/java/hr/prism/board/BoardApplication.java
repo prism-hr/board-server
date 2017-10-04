@@ -113,7 +113,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
         hikariConfig.setPoolName("database-connection-pool");
         hikariConfig.setMaxLifetime(600000);
         hikariConfig.setMaximumPoolSize(20);
-        hikariConfig.setConnectionTimeout(10000);
+        hikariConfig.setConnectionTimeout(12000);
         hikariConfig.setAutoCommit(false);
         hikariConfig.setLeakDetectionThreshold(360000);
         return new HikariDataSource(hikariConfig);

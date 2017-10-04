@@ -385,8 +385,7 @@ public class DepartmentApiIT extends AbstractIT {
             userRoleDTOs1.add(
                 new UserRoleDTO()
                     .setUser(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"))
-                    .setRole(Role.MEMBER)
-                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+                    .setRole(Role.MEMBER).setMemberCategory(MemberCategory.MASTER_STUDENT));
         }
 
         departmentApi.postMembers(departmentR.getId(), userRoleDTOs1);
@@ -400,8 +399,7 @@ public class DepartmentApiIT extends AbstractIT {
             userRoleDTOs2.add(
                 new UserRoleDTO()
                     .setUser(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"))
-                    .setRole(Role.MEMBER)
-                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+                    .setRole(Role.MEMBER).setMemberCategory(MemberCategory.MASTER_STUDENT));
         }
 
         departmentApi.postMembers(departmentR.getId(), userRoleDTOs2);
@@ -430,15 +428,15 @@ public class DepartmentApiIT extends AbstractIT {
 
         List<UserRoleDTO> userRoleDTOs = new ArrayList<>();
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
-            .setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+            .setRole(Role.MEMBER).setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("jakub").setSurname("fibinger").setEmail("jakub@fibinger.com"))
-            .setRole(Role.MEMBER).setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+            .setRole(Role.MEMBER).setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
 
         departmentApi.postMembers(departmentId, userRoleDTOs);
         List<UserRoleRepresentation> members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
 
-        verifyMember("jakub@fibinger.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(0));
-        verifyMember("alastair@knowles.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(1));
+        verifyMember("jakub@fibinger.com", null, MemberCategory.UNDERGRADUATE_STUDENT, members.get(0));
+        verifyMember("alastair@knowles.com", null, MemberCategory.UNDERGRADUATE_STUDENT, members.get(1));
 
         Long memberId = transactionTemplate.execute(status -> userRepository.findByEmail("alastair@knowles.com")).getId();
         testUserService.setAuthentication(memberId);
@@ -448,13 +446,13 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.setAuthentication(user.getId());
         userRoleDTOs = new ArrayList<>();
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
-            .setRole(Role.MEMBER).setExpiryDate(LocalDate.of(2018, 7, 1)).setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+            .setRole(Role.MEMBER).setExpiryDate(LocalDate.of(2018, 7, 1)).setMemberCategory(MemberCategory.MASTER_STUDENT));
 
         departmentApi.postMembers(departmentId, userRoleDTOs);
         members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
 
-        verifyMember("jakub@fibinger.com", null, Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), members.get(0));
-        verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), Collections.singletonList(MemberCategory.MASTER_STUDENT), members.get(1));
+        verifyMember("jakub@fibinger.com", null, MemberCategory.UNDERGRADUATE_STUDENT, members.get(0));
+        verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), MemberCategory.MASTER_STUDENT, members.get(1));
     }
 
     @Test
@@ -471,9 +469,7 @@ public class DepartmentApiIT extends AbstractIT {
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO()
-                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                    .setExpiryDate(LocalDate.now().plusYears(2)));
+                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
@@ -512,9 +508,7 @@ public class DepartmentApiIT extends AbstractIT {
             ExceptionUtils.verifyException(
                 BoardException.class,
                 () -> departmentApi.postMembershipRequest(departmentId,
-                    new UserRoleDTO()
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                        .setExpiryDate(LocalDate.now().plusYears(2))),
+                    new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
                 ExceptionCode.DUPLICATE_PERMISSION,
                 status));
     }
@@ -533,9 +527,7 @@ public class DepartmentApiIT extends AbstractIT {
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO()
-                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                    .setExpiryDate(LocalDate.now().plusYears(2)));
+                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
@@ -567,9 +559,7 @@ public class DepartmentApiIT extends AbstractIT {
             ExceptionUtils.verifyException(
                 BoardForbiddenException.class,
                 () -> departmentApi.postMembershipRequest(departmentId,
-                    new UserRoleDTO()
-                        .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                        .setExpiryDate(LocalDate.now().plusYears(2))),
+                    new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
                 ExceptionCode.FORBIDDEN_PERMISSION,
                 status));
     }
@@ -588,9 +578,7 @@ public class DepartmentApiIT extends AbstractIT {
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO()
-                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                    .setExpiryDate(LocalDate.now().plusYears(2)));
+                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
@@ -806,10 +794,10 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
     }
 
-    private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, List<MemberCategory> expectedMemberCategories, UserRoleRepresentation actual) {
+    private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, MemberCategory expectedMemberCategory, UserRoleRepresentation actual) {
         Assert.assertEquals(BoardUtils.obfuscateEmail(expectedEmail), actual.getUser().getEmail());
         Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
-        Assert.assertEquals(expectedMemberCategories, actual.getCategories());
+        Assert.assertEquals(expectedMemberCategory, actual.getMemberCategory());
     }
 
 }

@@ -1,6 +1,8 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.enums.AgeRange;
 import hr.prism.board.enums.DocumentRequestState;
+import hr.prism.board.enums.Gender;
 import org.hibernate.validator.constraints.Email;
 
 import javax.validation.Valid;
@@ -24,6 +26,13 @@ public class UserPatchDTO {
     private Optional<DocumentDTO> documentImage;
 
     private Optional<DocumentRequestState> documentImageRequestState;
+
+    private Optional<Gender> gender;
+
+    private Optional<AgeRange> ageRange;
+
+    @Valid
+    private Optional<LocationDTO> locationNationality;
 
     @Valid
     private Optional<DocumentDTO> documentResume;
@@ -72,6 +81,33 @@ public class UserPatchDTO {
 
     public UserPatchDTO setDocumentImageRequestState(Optional<DocumentRequestState> documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
+        return this;
+    }
+
+    public Optional<Gender> getGender() {
+        return gender;
+    }
+
+    public UserPatchDTO setGender(Optional<Gender> gender) {
+        this.gender = gender;
+        return this;
+    }
+
+    public Optional<AgeRange> getAgeRange() {
+        return ageRange;
+    }
+
+    public UserPatchDTO setAgeRange(Optional<AgeRange> ageRange) {
+        this.ageRange = ageRange;
+        return this;
+    }
+
+    public Optional<LocationDTO> getLocationNationality() {
+        return locationNationality;
+    }
+
+    public UserPatchDTO setLocationNationality(Optional<LocationDTO> locationNationality) {
+        this.locationNationality = locationNationality;
         return this;
     }
 

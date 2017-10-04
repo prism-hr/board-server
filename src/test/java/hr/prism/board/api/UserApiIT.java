@@ -118,7 +118,7 @@ public class UserApiIT extends AbstractIT {
         transactionTemplate.execute(status ->
             resourceApi.createResourceUser(Scope.DEPARTMENT, department2id, new UserRoleDTO().setUser(
                 new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
-                .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)));
 
         Long adminUserId = adminUser.getId();
         Long memberUser1Id = memberUser1.getId();

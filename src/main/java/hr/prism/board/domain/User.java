@@ -1,10 +1,7 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.enums.DocumentRequestState;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.PasswordHash;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.*;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.validator.constraints.Email;
@@ -62,6 +59,18 @@ public class User extends BoardEntity implements Comparable<User> {
     @Enumerated(EnumType.STRING)
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
+
+    @Enumerated
+    @Column(name = "gender")
+    private Gender gender;
+
+    @Enumerated
+    @Column(name = "age_range")
+    private AgeRange ageRange;
+
+    @ManyToOne
+    @JoinColumn(name = "location_nationality_id")
+    private Location locationNationality;
 
     @OneToOne
     @JoinColumn(name = "document_resume_id")
@@ -195,6 +204,33 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
+        return this;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public User setGender(Gender gender) {
+        this.gender = gender;
+        return this;
+    }
+
+    public AgeRange getAgeRange() {
+        return ageRange;
+    }
+
+    public User setAgeRange(AgeRange ageRange) {
+        this.ageRange = ageRange;
+        return this;
+    }
+
+    public Location getLocationNationality() {
+        return locationNationality;
+    }
+
+    public User setLocationNationality(Location locationNationality) {
+        this.locationNationality = locationNationality;
         return this;
     }
 

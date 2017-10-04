@@ -1,13 +1,11 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.UserRole;
-import hr.prism.board.domain.UserRoleCategory;
 import hr.prism.board.representation.UserRoleRepresentation;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation> {
@@ -26,7 +24,9 @@ public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation
             .setEmail(userRole.getEmail())
             .setRole(userRole.getRole())
             .setState(userRole.getState())
-            .setCategories(userRole.getCategories().stream().map(UserRoleCategory::getName).collect(Collectors.toList()))
+            .setMemberCategory(userRole.getMemberCategory())
+            .setMemberProgram(userRole.getMemberProgram())
+            .setMemberYear(userRole.getMemberYear())
             .setExpiryDate(userRole.getExpiryDate())
             .setViewed(userRole.isViewed());
     }

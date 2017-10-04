@@ -24,14 +24,13 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "left join parentRelation.resource1 parent " +
             "left join parent.userRoles userRole " +
             "left join resource.categories resourceCategory " +
-            "left join userRole.categories userRoleCategory " +
             "left join activity.activityUsers activityUser " +
             "where (activityUser.id is null " +
             "and activityRole.scope = parent.scope " +
             "and activityRole.role = userRole.role " +
             "and userRole.user.id = :userId " +
             "and userRole.state in (:userRoleStates) " +
-            "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRoleCategory.name) " +
+            "and (activity.filterByCategory = false or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
             "or activityUser.user.id = :userId) " +
             "and activity.id not in (" +
             "select activityEvent.activity.id " +

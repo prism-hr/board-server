@@ -757,8 +757,8 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student1")
                         .setEmail("student1@student1.com"))
                     .setRole(Role.MEMBER)
-                    .setExpiryDate(LocalDate.now().plusDays(1))
-                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getUser().getId());
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId());
 
         // Should be notified
         Long departmentMember2Id = transactionTemplate.execute(status ->
@@ -769,7 +769,7 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student2")
                         .setEmail("student2@student2.com"))
                     .setRole(Role.MEMBER)
-                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))).getUser().getId());
+                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId());
 
         // Should not be notified - suppressed
         Long departmentMember3Id = transactionTemplate.execute(status ->
@@ -780,7 +780,7 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student3")
                         .setEmail("student3@student3.com"))
                     .setRole(Role.MEMBER)
-                    .setCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))).getUser().getId());
+                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId());
 
         testUserService.setAuthentication(departmentMember3Id);
         userApi.postSuppressions();
@@ -795,8 +795,8 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student4")
                         .setEmail("student4@student4.com"))
                     .setRole(Role.MEMBER)
-                    .setExpiryDate(LocalDate.now().plusDays(1))
-                    .setCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT))).getUser().getId());
+                    .setMemberCategory(MemberCategory.RESEARCH_STUDENT)
+                    .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId());
 
         // Should not be notified
         Long departmentMember5Id = transactionTemplate.execute(status ->
@@ -807,8 +807,8 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student5")
                         .setEmail("student5@student5.com"))
                     .setRole(Role.MEMBER)
-                    .setExpiryDate(LocalDate.now().minusDays(1))
-                    .setCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getUser().getId());
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setExpiryDate(LocalDate.now().minusDays(1))).getUser().getId());
 
         listenForNewActivities(departmentMember1Id);
         listenForNewActivities(departmentMember2Id);
@@ -848,12 +848,12 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid",  departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid).put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid",  departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()));
 
         // Check that the administrator can reject the post
@@ -906,12 +906,12 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid",  departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid).put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid",  departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()));
 
         transactionTemplate.execute(status -> {
@@ -975,12 +975,12 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid",  departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid).put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid",  departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build()));
         testUserActivityService.stop();
         testNotificationService.stop();

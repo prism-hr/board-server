@@ -1,0 +1,13 @@
+package hr.prism.board.enums;
+
+public enum AgeRange {
+
+    ZERO_EIGHTEEN,
+    NINETEEN_TWENTYFOUR,
+    TWENTYFIVE_TWENTYNINE,
+    THIRTY_THIRTYNINE,
+    FORTY_FORTYNINE,
+    FIFTY_SIXTYFOUR,
+    SIXTYFOUR_PLUS
+
+}

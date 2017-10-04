@@ -2,10 +2,12 @@ package hr.prism.board.service.cache;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.UserRoleCategoryRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.ResourceService;
@@ -25,9 +27,6 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import hr.prism.board.workflow.Activity;
 
 @Service
 @Transactional
@@ -35,9 +34,6 @@ public class UserRoleCacheService {
 
     @Inject
     private UserRoleRepository userRoleRepository;
-
-    @Inject
-    private UserRoleCategoryRepository userRoleCategoryRepository;
 
     @Inject
     private ResourceService resourceService;
@@ -77,7 +73,7 @@ public class UserRoleCacheService {
 
         UserRole userRole = userRoleRepository.save(
             new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
-        createUserRoleCategories(userRole, userRoleDTO);
+        updateUserRoleMemberData(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
 
         if (notify) {
@@ -115,7 +111,6 @@ public class UserRoleCacheService {
     @CacheEvict(key = "#user.id", value = "users")
     public void deleteUserRole(Resource resource, User user, Role role) {
         activityService.deleteActivities(resource, user, role);
-        userRoleCategoryRepository.deleteByResourceAndUserAndRole(resource, user, role);
         userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
     }
 
@@ -140,35 +135,10 @@ public class UserRoleCacheService {
 
         if (!deletes.isEmpty()) {
             activityService.deleteActivities(deletes);
-            userRoleCategoryRepository.deleteByUserRoles(deletes);
             userRoleRepository.deleteByIds(deletes.stream().map(UserRole::getId).collect(Collectors.toList()));
         }
 
         userRoleRepository.updateByUser(newUser, oldUser);
-    }
-
-    public void createUserRoleCategories(UserRole userRole, UserRoleDTO userRoleDTO) {
-        if (userRoleDTO.getRole() == Role.MEMBER) {
-            Resource resource = userRole.getResource();
-            List<MemberCategory> categories = userRoleDTO.getCategories();
-
-            Resource department = resourceService.findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
-            resourceService.validateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(categories),
-                ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
-
-            if (categories != null) {
-                IntStream.range(0, categories.size())
-                    .forEach(index -> {
-                        MemberCategory newCategory = categories.get(index);
-                        UserRoleCategory userRoleCategory = new UserRoleCategory();
-                        userRoleCategory.setUserRole(userRole);
-                        userRoleCategory.setName(newCategory);
-                        userRoleCategory.setOrdinal(index);
-                        userRole.getCategories().add(userRoleCategory);
-                        userRoleCategoryRepository.save(userRoleCategory);
-                    });
-            }
-        }
     }
 
     public void updateUserRolesSummary(Resource resource) {
@@ -181,8 +151,32 @@ public class UserRoleCacheService {
         }
     }
 
-    public void deleteUserRoleCategories(Resource resource, User user) {
-        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
+    public void updateUserRoleMemberData(UserRole userRole, UserRoleDTO userRoleDTO) {
+        boolean updated = false;
+        boolean clearStudyData = false;
+        MemberCategory oldMemberCategory = userRole.getMemberCategory();
+        MemberCategory newMemberCategory = userRoleDTO.getMemberCategory();
+        if (newMemberCategory != null) {
+            userRole.setMemberCategory(newMemberCategory);
+            clearStudyData = newMemberCategory != oldMemberCategory;
+            updated = true;
+        }
+
+        String memberProgram = userRoleDTO.getMemberProgram();
+        if (memberProgram != null || clearStudyData) {
+            userRole.setMemberProgram(memberProgram);
+            updated = true;
+        }
+
+        Integer memberYear = userRoleDTO.getMemberYear();
+        if (memberYear != null || clearStudyData) {
+            userRole.setMemberYear(memberYear);
+            updated = true;
+        }
+
+        if (updated) {
+            userRole.setMemberDate(LocalDate.now());
+        }
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {
@@ -196,7 +190,6 @@ public class UserRoleCacheService {
 
     private void deleteUserRoles(Resource resource, User user) {
         activityService.deleteActivities(resource, user);
-        userRoleCategoryRepository.deleteByResourceAndUser(resource, user);
         userRoleRepository.deleteByResourceAndUser(resource, user);
     }
 

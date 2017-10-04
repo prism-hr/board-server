@@ -1,6 +1,8 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.enums.AgeRange;
 import hr.prism.board.enums.DocumentRequestState;
+import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.Scope;
 
 import java.util.List;
@@ -19,6 +21,12 @@ public class UserRepresentation {
     private DocumentRepresentation documentImage;
 
     private DocumentRequestState documentImageRequestState;
+
+    private Gender gender;
+
+    private AgeRange ageRange;
+
+    private LocationRepresentation locationNationality;
 
     private DocumentRepresentation documentResume;
 
@@ -77,6 +85,33 @@ public class UserRepresentation {
 
     public UserRepresentation setDocumentImageRequestState(DocumentRequestState documentImageRequestState) {
         this.documentImageRequestState = documentImageRequestState;
+        return this;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public UserRepresentation setGender(Gender gender) {
+        this.gender = gender;
+        return this;
+    }
+
+    public AgeRange getAgeRange() {
+        return ageRange;
+    }
+
+    public UserRepresentation setAgeRange(AgeRange ageRange) {
+        this.ageRange = ageRange;
+        return this;
+    }
+
+    public LocationRepresentation getLocationNationality() {
+        return locationNationality;
+    }
+
+    public UserRepresentation setLocationNationality(LocationRepresentation locationNationality) {
+        this.locationNationality = locationNationality;
         return this;
     }
 
