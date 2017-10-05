@@ -48,6 +48,10 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
+    // false: post membership request, true: put membership update
+    private boolean responsePermitted;
+
+    // if requesting / updating membership, this property explains which data needs to be provided
     private List<ResponseRequirement> responseRequirements;
 
     private ResourceEventRepresentation referral;
@@ -222,6 +226,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setLastResponseTimestamp(LocalDateTime lastResponseTimestamp) {
         this.lastResponseTimestamp = lastResponseTimestamp;
+        return this;
+    }
+
+    public boolean isResponsePermitted() {
+        return responsePermitted;
+    }
+
+    public PostRepresentation setResponsePermitted(boolean responsePermitted) {
+        this.responsePermitted = responsePermitted;
         return this;
     }
 

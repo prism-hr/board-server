@@ -90,6 +90,9 @@ public class Post extends Resource {
     private boolean exposeApplyData;
 
     @Transient
+    private boolean responsePermitted;
+
+    @Transient
     private List<ResponseRequirement> responseRequirements;
 
     @Transient
@@ -229,6 +232,15 @@ public class Post extends Resource {
 
     public void setExposeApplyData(boolean exposeApplyData) {
         this.exposeApplyData = exposeApplyData;
+    }
+
+    public boolean isResponsePermitted() {
+        return responsePermitted;
+    }
+
+    public Post setResponsePermitted(boolean responsePermitted) {
+        this.responsePermitted = responsePermitted;
+        return this;
     }
 
     public List<ResponseRequirement> getResponseRequirements() {

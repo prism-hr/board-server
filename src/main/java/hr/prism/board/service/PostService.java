@@ -121,8 +121,8 @@ public class PostService {
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
-            List<ResponseRequirement> responseRequirements = new ArrayList<>();
             if (user != null) {
+                List<ResponseRequirement> responseRequirements = new ArrayList<>();
                 if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
                     // Provide user data to continue
                     responseRequirements.add(ResponseRequirement.USER_DATA);
@@ -134,6 +134,7 @@ public class PostService {
                     // Provide user role data to continue
                     responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
                 } else {
+                    post.setResponsePermitted(true);
                     MemberCategory memberCategory = userRole.getMemberCategory();
                     String memberProgram = userRole.getMemberProgram();
                     Integer memberYear = userRole.getMemberYear();
