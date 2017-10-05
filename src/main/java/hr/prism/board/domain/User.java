@@ -60,11 +60,11 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
     private Gender gender;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "age_range")
     private AgeRange ageRange;
 

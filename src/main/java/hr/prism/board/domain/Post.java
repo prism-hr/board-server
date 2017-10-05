@@ -40,7 +40,7 @@ public class Post extends Resource {
     private String organizationName;
 
     @Column(name = "existing_relation")
-    @Enumerated(value = EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private ExistingRelation existingRelation;
 
     @Column(name = "existing_relation_explanation")

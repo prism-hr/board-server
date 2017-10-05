@@ -16,7 +16,7 @@ public class ResourceCategory extends BoardEntity {
     private String name;
 
     @Column(name = "type", nullable = false)
-    @Enumerated(value = EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private CategoryType type;
 
     @Column(name = "ordinal")

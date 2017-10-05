@@ -31,11 +31,11 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "referral", unique = true)
     private String referral;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
     private Gender gender;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "age_range")
     private AgeRange ageRange;
 
