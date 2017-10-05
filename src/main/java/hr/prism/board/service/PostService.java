@@ -125,7 +125,7 @@ public class PostService {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
                 boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
-                PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post, canPursue);
+                PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, post, canPursue);
                 post.setResponseReadiness(responseReadiness);
                 if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
                     resourceEventService.createPostReferral(post, user);
@@ -649,7 +649,7 @@ public class PostService {
     }
 
     private void validatePostResponse(User user, Post post, ExceptionCode exceptionCode) {
-        PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post, true);
+        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, post, true);
         if (!responseReadiness.isReady()) {
             if (responseReadiness.isRequireUserDemographicData()) {
                 throw new BoardForbiddenException(exceptionCode, "User demographic data not valid");
@@ -659,7 +659,7 @@ public class PostService {
         }
     }
 
-    private PostResponseReadinessRepresentation getPostResponseReadiness(User user, Post post, boolean canPursue) {
+    private PostResponseReadinessRepresentation makePostResponseReadiness(User user, Post post, boolean canPursue) {
         PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
             // User data incomplete
