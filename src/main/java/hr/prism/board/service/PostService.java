@@ -124,12 +124,11 @@ public class PostService {
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
-                if (actionService.canExecuteAction(post, Action.PURSUE)) {
-                    PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
-                    post.setResponseReadiness(responseReadiness);
-                    if (responseReadiness.isReady() && post.getApplyEmail() == null) {
-                        resourceEventService.createPostReferral(post, user);
-                    }
+                boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
+                PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post, canPursue);
+                post.setResponseReadiness(responseReadiness);
+                if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
+                    resourceEventService.createPostReferral(post, user);
                 }
             }
         }
@@ -650,7 +649,7 @@ public class PostService {
     }
 
     private void validatePostResponse(User user, Post post, ExceptionCode exceptionCode) {
-        PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
+        PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post, true);
         if (!responseReadiness.isReady()) {
             if (responseReadiness.isRequireUserDemographicData()) {
                 throw new BoardForbiddenException(exceptionCode, "User demographic data not valid");
@@ -660,24 +659,26 @@ public class PostService {
         }
     }
 
-    private PostResponseReadinessRepresentation getPostResponseReadiness(User user, Post post) {
+    private PostResponseReadinessRepresentation getPostResponseReadiness(User user, Post post, boolean canPursue) {
         PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
-            // User demographic data incomplete
+            // User data incomplete
             responseReadiness.setRequireUserDemographicData(true);
         }
 
         Resource department = post.getParent().getParent();
         if (!department.getMemberCategories().isEmpty()) {
-            // Member category required - user role demographic data expected
+            // Member category required - user role data expected
             UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-            if (userRole != null) {
-                // User might be an administrator - in that case don't bug them for further data
+            if (userRole == null) {
+                // Don't bug administrator for user role data
+                responseReadiness.setRequireUserRoleDemographicData(!canPursue);
+            } else {
                 MemberCategory memberCategory = userRole.getMemberCategory();
                 String memberProgram = userRole.getMemberProgram();
                 Integer memberYear = userRole.getMemberYear();
                 if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
-                    // User role demographic data incomplete
+                    // User role data incomplete
                     responseReadiness.setRequireUserRoleDemographicData(true);
                 } else {
                     LocalDate academicYearStart;
@@ -691,7 +692,7 @@ public class PostService {
                     }
 
                     if (academicYearStart.isAfter(userRole.getMemberDate())) {
-                        // User role demographic data out of date
+                        // User role data out of date
                         responseReadiness.setRequireUserRoleDemographicData(true);
                     }
                 }
