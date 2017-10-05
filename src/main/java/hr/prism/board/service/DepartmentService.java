@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@SuppressWarnings("SqlResolve")
 public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
@@ -50,6 +51,17 @@ public class DepartmentService {
             "WHERE resource.scope = :scope AND resource.state = :state " +
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
+            "LIMIT 10";
+
+    private static final String SIMILAR_DEPARTMENT_PROGRAM =
+        "SELECT user_role.member_program, " +
+            "IF(user_role.member_program LIKE :searchTermHard, 1, 0) AS similarityHard, " +
+            "MATCH (user_role.member_program) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+            "FROM user_role " +
+            "WHERE user_role.resource_id = :departmentId " +
+            "GROUP BY user_role.member_program " +
+            "HAVING similarityHard = 1 OR similaritySoft > 0 " +
+            "ORDER BY similarityHard DESC, similaritySoft DESC, user_role.member_program " +
             "LIMIT 10";
 
     @Inject
@@ -220,6 +232,16 @@ public class DepartmentService {
         }
 
         return departmentRepresentations;
+    }
+
+    public List<String> findProgramsBySimilarName(Long departmentId, String searchTerm) {
+        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
+            entityManager.createNativeQuery(SIMILAR_DEPARTMENT_PROGRAM)
+                .setParameter("searchTermHard", searchTerm + "%")
+                .setParameter("searchTermSoft", searchTerm)
+                .setParameter("departmentId", departmentId)
+                .getResultList());
+        return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
     public Department postMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {

@@ -104,4 +104,9 @@ public class DepartmentApi {
         return userMapper.apply(departmentService.putMembershipUpdate(departmentId, userRoleDTO));
     }
 
+    @RequestMapping(value = "/api/departments/{departmentId}/programs", method = RequestMethod.GET)
+    public List<String> getDepartmentPrograms(@PathVariable Long departmentId, @RequestParam String searchTerm) {
+        return departmentService.findProgramsBySimilarName(departmentId, searchTerm);
+    }
+
 }

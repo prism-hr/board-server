@@ -124,10 +124,12 @@ public class PostService {
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
-                PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
-                post.setResponseReadiness(responseReadiness);
-                if (responseReadiness.isReady() && post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
-                    resourceEventService.createPostReferral(post, user);
+                if (actionService.canExecuteAction(post, Action.PURSUE)) {
+                    PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
+                    post.setResponseReadiness(responseReadiness);
+                    if (responseReadiness.isReady() && post.getApplyEmail() == null) {
+                        resourceEventService.createPostReferral(post, user);
+                    }
                 }
             }
         }
@@ -669,26 +671,29 @@ public class PostService {
         if (!department.getMemberCategories().isEmpty()) {
             // Member category required - user role demographic data expected
             UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-            MemberCategory memberCategory = userRole.getMemberCategory();
-            String memberProgram = userRole.getMemberProgram();
-            Integer memberYear = userRole.getMemberYear();
-            if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
-                // User role demographic data incomplete
-                responseReadiness.setRequireUserRoleDemographicData(true);
-            } else {
-                LocalDate academicYearStart;
-                LocalDate baseline = LocalDate.now();
-                if (baseline.getMonthValue() > 9) {
-                    // Academic year started this year
-                    academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
-                } else {
-                    // Academic year started last year
-                    academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
-                }
-
-                if (academicYearStart.isAfter(userRole.getMemberDate())) {
-                    // User role demographic data out of date
+            if (userRole != null) {
+                // User might be an administrator - in that case don't bug them for further data
+                MemberCategory memberCategory = userRole.getMemberCategory();
+                String memberProgram = userRole.getMemberProgram();
+                Integer memberYear = userRole.getMemberYear();
+                if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+                    // User role demographic data incomplete
                     responseReadiness.setRequireUserRoleDemographicData(true);
+                } else {
+                    LocalDate academicYearStart;
+                    LocalDate baseline = LocalDate.now();
+                    if (baseline.getMonthValue() > 9) {
+                        // Academic year started this year
+                        academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
+                    } else {
+                        // Academic year started last year
+                        academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
+                    }
+
+                    if (academicYearStart.isAfter(userRole.getMemberDate())) {
+                        // User role demographic data out of date
+                        responseReadiness.setRequireUserRoleDemographicData(true);
+                    }
                 }
             }
         }
