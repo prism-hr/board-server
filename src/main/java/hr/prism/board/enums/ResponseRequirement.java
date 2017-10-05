@@ -2,7 +2,7 @@ package hr.prism.board.enums;
 
 public enum ResponseRequirement {
 
-    USER_DATA,
-    USER_ROLE_DATA
+    USER_DEMOGRAPHIC_DATA,
+    USER_ROLE_DEMOGRAPHIC_DATA
 
 }

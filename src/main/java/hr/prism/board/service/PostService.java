@@ -125,43 +125,47 @@ public class PostService {
                 List<ResponseRequirement> responseRequirements = new ArrayList<>();
                 if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
                     // Provide user data to continue
-                    responseRequirements.add(ResponseRequirement.USER_DATA);
+                    responseRequirements.add(ResponseRequirement.USER_DEMOGRAPHIC_DATA);
                 }
 
                 Department department = (Department) post.getParent().getParent();
                 UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-                if (userRole == null) {
-                    // Provide user role data to continue
-                    responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
-                } else {
-                    post.setResponsePermitted(true);
-                    MemberCategory memberCategory = userRole.getMemberCategory();
-                    String memberProgram = userRole.getMemberProgram();
-                    Integer memberYear = userRole.getMemberYear();
-                    if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
-                        // Complete user role data to continue
-                        responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
-                    } else {
-                        LocalDate academicYearStart;
-                        LocalDate baseline = LocalDate.now();
-                        if (baseline.getMonthValue() > 9) {
-                            // Academic year started this year
-                            academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
-                        } else {
-                            // Academic year started last year
-                            academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
-                        }
 
-                        if (academicYearStart.isAfter(userRole.getMemberDate())) {
-                            // User role data out of date - update to continue
-                            responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
+                // User role data only required if department expects member category
+                if (!department.getMemberCategories().isEmpty()) {
+                    if (userRole == null) {
+                        // Provide user role data to continue
+                        responseRequirements.add(ResponseRequirement.USER_ROLE_DEMOGRAPHIC_DATA);
+                    } else {
+                        post.setResponsePermitted(true);
+                        MemberCategory memberCategory = userRole.getMemberCategory();
+                        String memberProgram = userRole.getMemberProgram();
+                        Integer memberYear = userRole.getMemberYear();
+                        if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+                            // Complete user role data to continue
+                            responseRequirements.add(ResponseRequirement.USER_ROLE_DEMOGRAPHIC_DATA);
+                        } else {
+                            LocalDate academicYearStart;
+                            LocalDate baseline = LocalDate.now();
+                            if (baseline.getMonthValue() > 9) {
+                                // Academic year started this year
+                                academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
+                            } else {
+                                // Academic year started last year
+                                academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
+                            }
+
+                            if (academicYearStart.isAfter(userRole.getMemberDate())) {
+                                // User role data out of date - update to continue
+                                responseRequirements.add(ResponseRequirement.USER_ROLE_DEMOGRAPHIC_DATA);
+                            }
                         }
                     }
                 }
 
                 if (responseRequirements.isEmpty()) {
                     if (post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
-                        // User can respond - send referral code
+                        // User can respond - prepare referral code
                         resourceEventService.createPostReferral(post, user);
                     }
                 } else {
