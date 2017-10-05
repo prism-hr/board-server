@@ -296,7 +296,7 @@ public class PostService {
                     "from ResourceEvent resourceEvent " +
                     "left join resourceEvent.searches search on search.search = :search " +
                     "where resourceEvent.resource.id = :postId " +
-                    "and user.id in (:userIds) ";
+                    "and resourceEvent.user.id in (:userIds) ";
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
