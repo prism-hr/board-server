@@ -2,7 +2,9 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.BoardEntity;
 import hr.prism.board.domain.Document;
+import hr.prism.board.domain.Location;
 import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.LocationDTO;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -12,6 +14,9 @@ import java.util.Optional;
 @Service
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public abstract class PatchService<T extends BoardEntity> {
+
+    @Inject
+    private LocationService locationService;
 
     @Inject
     private DocumentService documentService;
@@ -26,6 +31,20 @@ public abstract class PatchService<T extends BoardEntity> {
                 }
             } else if (oldValue != null) {
                 patchProperty(entity, property, setter, oldValue, null);
+            }
+        }
+    }
+
+    public void patchLocation(T entity, String property, Getter<Location> getter, Setter<Location> setter, Optional<LocationDTO> newValueOptional) {
+        if (newValueOptional != null) {
+            Location oldValue = getter.get();
+            if (newValueOptional.isPresent()) {
+                LocationDTO newValue = newValueOptional.get();
+                if (oldValue == null || !Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
+                    patchLocation(entity, property, setter, oldValue, newValue);
+                }
+            } else if (oldValue != null) {
+                patchLocation(entity, property, setter, oldValue, null);
             }
         }
     }
@@ -46,6 +65,10 @@ public abstract class PatchService<T extends BoardEntity> {
 
     protected <U> void patchProperty(T entity, String property, Setter<U> setter, U oldValue, U newValue) {
         setter.set(newValue);
+    }
+
+    private void patchLocation(T entity, String property, Setter<Location> setter, Location oldValue, LocationDTO newValue) {
+        patchProperty(entity, property, setter, oldValue, newValue == null ? null : locationService.getOrCreateLocation(newValue));
     }
 
     private void patchDocument(T entity, String property, Setter<Document> setter, Document oldValue, DocumentDTO newValue) {

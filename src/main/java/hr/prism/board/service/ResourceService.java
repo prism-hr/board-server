@@ -496,11 +496,6 @@ public class ResourceService {
             scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
     }
 
-    public boolean isResourceAdministrator(Resource resource, String email) {
-        List<UserRole> userRoles = userRoleService.findByResourceAndRole(resource, Role.ADMINISTRATOR);
-        return userRoles.stream().map(userRole -> userRole.getUser().getEmail()).anyMatch(email::equals);
-    }
-
     public void setIndexDataAndQuarter(Resource resource) {
         setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
     }

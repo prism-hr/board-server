@@ -6,6 +6,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -235,8 +236,8 @@ public class DepartmentService {
         });
     }
 
-    public void postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
-        User user = userService.getCurrentUserSecured();
+    public User postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
+        User user = userService.getCurrentUserSecured(true);
         Resource department = resourceService.findOne(departmentId);
 
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
@@ -249,6 +250,9 @@ public class DepartmentService {
             throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION, "User has already requested membership");
         }
 
+        UserDTO userDTO = userRoleDTO.getUser();
+        userService.updateUserDemographicData(user, userDTO);
+
         userRoleDTO.setRole(Role.MEMBER);
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
 
@@ -259,6 +263,7 @@ public class DepartmentService {
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+        return user;
     }
 
     public UserRole viewMembershipRequest(Long departmentId, Long userId) {
@@ -282,6 +287,21 @@ public class DepartmentService {
 
             return department;
         });
+    }
+
+    public User putMembershipUpdate(Long departmentId, UserRoleDTO userRoleDTO) {
+        User user = userService.getCurrentUserSecured(true);
+        Resource department = resourceService.findOne(departmentId);
+
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+        if (userRole == null || userRole.getState() == State.REJECTED) {
+            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION, "User is not a member");
+        }
+
+        UserDTO userDTO = userRoleDTO.getUser();
+        userService.updateUserDemographicData(user, userDTO);
+        userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
+        return user;
     }
 
     public void decrementMemberCountPending(Long departmentId) {

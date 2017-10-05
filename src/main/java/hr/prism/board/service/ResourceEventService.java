@@ -40,7 +40,7 @@ public class ResourceEventService {
     private UserService userService;
 
     @Inject
-    private ResourceService resourceService;
+    private UserRoleService userRoleService;
 
     @Lazy
     @Inject
@@ -92,9 +92,11 @@ public class ResourceEventService {
         }
 
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(post.getParent().getParent(), user, Role.MEMBER);
         ResourceEvent response = saveResourceEvent(post, new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.RESPONSE)
-            .setUser(user).setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote)
-            .setVisibleToAdministrator(resourceService.isResourceAdministrator(post, post.getApplyEmail())));
+            .setUser(user).setGender(user.getGender()).setAgeRange(user.getAgeRange()).setLocationNationality(user.getLocationNationality())
+            .setMemberCategory(userRole.getMemberCategory()).setMemberProgram(userRole.getMemberProgram()).setMemberYear(userRole.getMemberYear())
+            .setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
         if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
             userService.updateUserResume(user, documentResume, websiteResume);
         }
@@ -127,16 +129,20 @@ public class ResourceEventService {
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_REFERRAL, "Referral does not exist or has been consumed");
         }
 
+        User user = resourceEvent.getUser();
+        resourceEvent.setGender(user.getGender());
+        resourceEvent.setAgeRange(user.getAgeRange());
+        resourceEvent.setLocationNationality(user.getLocationNationality());
+
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(resourceEvent.getResource().getParent().getParent(), user, Role.MEMBER);
+        resourceEvent.setMemberCategory(userRole.getMemberCategory());
+        resourceEvent.setMemberProgram(userRole.getMemberProgram());
+        resourceEvent.setMemberYear(userRole.getMemberYear());
+
         resourceEvent.setReferral(null);
         resourceEvent = resourceEventRepository.update(resourceEvent);
-        entityManager.flush();
-
         updateResourceEventSummary((Post) resourceEvent.getResource());
         return resourceEvent;
-    }
-
-    public void updateVisibleToAdministrator(Resource resource) {
-        resourceEventRepository.updateVisibleToAdministrator(resource, hr.prism.board.enums.ResourceEvent.RESPONSE, true);
     }
 
     public List<ResourceEvent> findByIpAddresses(Collection<String> ipAddresses) {
@@ -145,13 +151,12 @@ public class ResourceEventService {
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
         resourceEvent = resourceEventRepository.save(resourceEvent);
-        entityManager.flush();
-
         updateResourceEventSummary(post);
         return resourceEvent;
     }
 
     private void updateResourceEventSummary(Post post) {
+        entityManager.flush();
         Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries = resourceEventRepository.findUserSummaryByResource(post)
             .stream().collect(Collectors.toMap(ResourceEventSummary::getKey, resourceEventSummary -> resourceEventSummary));
         resourceEventRepository.findIpAddressSummaryByResource(post).forEach(summary -> {

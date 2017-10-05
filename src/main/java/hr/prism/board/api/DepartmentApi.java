@@ -7,9 +7,11 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
+import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
@@ -37,6 +39,9 @@ public class DepartmentApi {
 
     @Inject
     private UserRoleMapper userRoleMapper;
+
+    @Inject
+    private UserMapper userMapper;
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.POST)
     public DepartmentRepresentation postDepartment(@RequestBody @Valid DepartmentDTO departmentDTO) {
@@ -80,8 +85,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.POST)
-    public void postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
-        departmentService.postMembershipRequest(departmentId, userRoleDTO);
+    public UserRepresentation postMembershipRequest(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
+        return userMapper.apply(departmentService.postMembershipRequest(departmentId, userRoleDTO));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = RequestMethod.PUT)
@@ -94,5 +99,9 @@ public class DepartmentApi {
         departmentService.putMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
     }
 
-}
+    @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.PUT)
+    public UserRepresentation postMembershipUpdate(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
+        return userMapper.apply(departmentService.putMembershipUpdate(departmentId, userRoleDTO));
+    }
 
+}

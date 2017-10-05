@@ -1,5 +1,9 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.AgeRange;
+import hr.prism.board.enums.Gender;
+import hr.prism.board.enums.MemberCategory;
+
 import javax.persistence.*;
 import java.util.List;
 
@@ -25,6 +29,28 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "referral", unique = true)
     private String referral;
 
+    @Enumerated
+    @Column(name = "gender")
+    private Gender gender;
+
+    @Enumerated
+    @Column(name = "age_range")
+    private AgeRange ageRange;
+
+    @ManyToOne
+    @JoinColumn(name = "location_nationality_id")
+    private Location locationNationality;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "member_category")
+    private MemberCategory memberCategory;
+
+    @Column(name = "member_program")
+    private String memberProgram;
+
+    @Column(name = "member_year")
+    private Integer memberYear;
+
     @ManyToOne
     @JoinColumn(name = "document_resume_id")
     private Document documentResume;
@@ -35,8 +61,8 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "covering_note")
     private String coveringNote;
 
-    @Column(name = "visible_to_administrator")
-    private Boolean visibleToAdministrator;
+    @Column(name = "index_data")
+    private String indexData;
 
     @OneToOne(mappedBy = "resourceEvent")
     private Activity activity;
@@ -95,6 +121,60 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
+    public Gender getGender() {
+        return gender;
+    }
+
+    public ResourceEvent setGender(Gender gender) {
+        this.gender = gender;
+        return this;
+    }
+
+    public AgeRange getAgeRange() {
+        return ageRange;
+    }
+
+    public ResourceEvent setAgeRange(AgeRange ageRange) {
+        this.ageRange = ageRange;
+        return this;
+    }
+
+    public Location getLocationNationality() {
+        return locationNationality;
+    }
+
+    public ResourceEvent setLocationNationality(Location locationNationality) {
+        this.locationNationality = locationNationality;
+        return this;
+    }
+
+    public MemberCategory getMemberCategory() {
+        return memberCategory;
+    }
+
+    public ResourceEvent setMemberCategory(MemberCategory memberCategory) {
+        this.memberCategory = memberCategory;
+        return this;
+    }
+
+    public String getMemberProgram() {
+        return memberProgram;
+    }
+
+    public ResourceEvent setMemberProgram(String memberProgram) {
+        this.memberProgram = memberProgram;
+        return this;
+    }
+
+    public Integer getMemberYear() {
+        return memberYear;
+    }
+
+    public ResourceEvent setMemberYear(Integer memberYear) {
+        this.memberYear = memberYear;
+        return this;
+    }
+
     public Document getDocumentResume() {
         return documentResume;
     }
@@ -122,12 +202,12 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
-    public Boolean getVisibleToAdministrator() {
-        return visibleToAdministrator;
+    public String getIndexData() {
+        return indexData;
     }
 
-    public ResourceEvent setVisibleToAdministrator(Boolean visibleToAdministrator) {
-        this.visibleToAdministrator = visibleToAdministrator;
+    public ResourceEvent setIndexData(String indexData) {
+        this.indexData = indexData;
         return this;
     }
 

@@ -79,7 +79,7 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "website_resume")
     private String websiteResume;
 
-    @Column(name = "indexData")
+    @Column(name = "index_data")
     private String indexData;
 
     @OneToMany(mappedBy = "user")

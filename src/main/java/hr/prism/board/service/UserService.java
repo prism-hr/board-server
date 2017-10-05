@@ -4,6 +4,7 @@ import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
@@ -38,6 +39,7 @@ import java.util.*;
 @Transactional
 public class UserService {
 
+    @SuppressWarnings("SqlResolve")
     private static final String USER_SEARCH_STATEMENT =
         "SELECT user.id, user.given_name, user.surname, user.email_display, document_image.cloudinary_id, document_image.cloudinary_url, document_image.file_name " +
             "FROM user " +
@@ -67,6 +69,9 @@ public class UserService {
 
     @Inject
     private UserPatchService userPatchService;
+
+    @Inject
+    private LocationService locationService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -116,9 +121,29 @@ public class UserService {
 
         userPatchService.patchDocument(user, user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
         userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState, userDTO.getDocumentImageRequestState());
+        userPatchService.patchProperty(user, user::getGender, user::setGender, userDTO.getGender());
+        userPatchService.patchProperty(user, user::getAgeRange, user::setAgeRange, userDTO.getAgeRange());
+        userPatchService.patchLocation(user, user::getLocationNationality, user::setLocationNationality, userDTO.getLocationNationality());
         userPatchService.patchDocument(user, user::getDocumentResume, user::setDocumentResume, userDTO.getDocumentResume());
         userPatchService.patchProperty(user, user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
         return userCacheService.updateUser(user);
+    }
+
+    public void updateUserDemographicData(User user, UserDTO userDTO) {
+        Gender gender = userDTO.getGender();
+        if (gender != null) {
+            user.setGender(gender);
+        }
+
+        AgeRange ageRange = userDTO.getAgeRange();
+        if (ageRange != null) {
+            user.setAgeRange(ageRange);
+        }
+
+        LocationDTO locationNationality = userDTO.getLocationNationality();
+        if (locationNationality != null) {
+            user.setLocationNationality(locationService.getOrCreateLocation(locationNationality));
+        }
     }
 
     public void updateUserResume(User user, Document documentResume, String websiteResume) {

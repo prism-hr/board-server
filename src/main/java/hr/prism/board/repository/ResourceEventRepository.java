@@ -4,7 +4,6 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.User;
 import hr.prism.board.value.ResourceEventSummary;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -57,14 +56,5 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.referral is null " +
             "group by resourceEvent.event")
     List<ResourceEventSummary> findIpAddressSummaryByResource(@Param("resource") Resource resource);
-
-    @Modifying
-    @Query(value =
-        "update ResourceEvent resourceEvent " +
-            "set resourceEvent.visibleToAdministrator = :visibleToAdministrator " +
-            "where resourceEvent.resource = :resource " +
-            "and resourceEvent.event = :event")
-    void updateVisibleToAdministrator(@Param("resource") Resource resource, @Param("event") hr.prism.board.enums.ResourceEvent event,
-                                      @Param("visibleToAdministrator") Boolean visibleToAdministrator);
 
 }

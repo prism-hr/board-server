@@ -53,7 +53,7 @@ public class Resource extends BoardEntity {
     @Column(name = "handle")
     private String handle;
 
-    @Column(name = "indexData")
+    @Column(name = "index_data")
     private String indexData;
 
     @Column(name = "quarter", nullable = false)

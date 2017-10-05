@@ -72,7 +72,7 @@ public class UserRoleCacheService {
 
         UserRole userRole = userRoleRepository.save(
             new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
-        updateUserRoleMemberData(userRole, userRoleDTO);
+        updateUserRoleDemographicData(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
 
         if (notify) {
@@ -150,7 +150,7 @@ public class UserRoleCacheService {
         }
     }
 
-    public void updateUserRoleMemberData(UserRole userRole, UserRoleDTO userRoleDTO) {
+    public void updateUserRoleDemographicData(UserRole userRole, UserRoleDTO userRoleDTO) {
         boolean updated = false;
         boolean clearStudyData = false;
         MemberCategory oldMemberCategory = userRole.getMemberCategory();

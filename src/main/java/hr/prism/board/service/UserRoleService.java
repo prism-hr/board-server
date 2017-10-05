@@ -163,10 +163,6 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
     }
 
-    public List<UserRole> findByResourceAndRole(Resource resource, Role role) {
-        return userRoleRepository.findByResourceAndRole(resource, role);
-    }
-
     private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         if (userRoleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
@@ -176,7 +172,7 @@ public class UserRoleService {
         if (userRole == null) {
             return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
         } else {
-            userRoleCacheService.updateUserRoleMemberData(userRole, userRoleDTO);
+            userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);
             userRole.setExpiryDate(userRoleDTO.getExpiryDate());
             userRoleCacheService.updateUserRolesSummary(resource);

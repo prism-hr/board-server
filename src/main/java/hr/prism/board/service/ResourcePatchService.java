@@ -1,6 +1,5 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Location;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.enums.CategoryType;
@@ -17,9 +16,6 @@ import java.util.Optional;
 @Transactional
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class ResourcePatchService extends PatchService<Resource> {
-
-    @Inject
-    private LocationService locationService;
 
     @Inject
     private ResourceService resourceService;
@@ -55,7 +51,7 @@ public class ResourcePatchService extends PatchService<Resource> {
                 if (unique != null) {
                     resourceService.validateUniqueHandle(resource, newValue, unique);
                 }
-    
+
                 if (!Objects.equals(oldValue, newValue)) {
                     patchHandle(resource, oldValue, newValue);
                 }
@@ -66,17 +62,7 @@ public class ResourcePatchService extends PatchService<Resource> {
     }
 
     public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional) {
-        if (newValueOptional != null) {
-            Location oldValue = resource.getLocation();
-            if (newValueOptional.isPresent()) {
-                LocationDTO newValue = newValueOptional.get();
-                if (oldValue == null || !Objects.equals(oldValue.getGoogleId(), newValue.getGoogleId())) {
-                    patchLocation(resource, oldValue, newValue);
-                }
-            } else if (oldValue != null) {
-                patchLocation(resource, oldValue, null);
-            }
-        }
+        super.patchLocation(resource, "location", resource::getLocation, resource::setLocation, newValueOptional);
     }
 
     public void patchCategories(Resource resource, CategoryType categoryType, Optional<List<String>> newValuesOptional) {
@@ -98,10 +84,6 @@ public class ResourcePatchService extends PatchService<Resource> {
     private void patchHandle(Resource resource, String oldValue, String newValue) {
         resourceService.updateHandle(resource, newValue);
         resource.getChangeList().put("handle", getHandleLeaf(oldValue), getHandleLeaf(newValue));
-    }
-
-    private void patchLocation(Resource resource, Location oldValue, LocationDTO newValue) {
-        patchProperty(resource, "location", resource::setLocation, oldValue, locationService.getOrCreateLocation(newValue));
     }
 
     private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {

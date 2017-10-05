@@ -122,49 +122,51 @@ public class PostService {
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
             List<ResponseRequirement> responseRequirements = new ArrayList<>();
-            if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
-                // Provide user data to continue
-                responseRequirements.add(ResponseRequirement.USER_DATA);
-            }
+            if (user != null) {
+                if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
+                    // Provide user data to continue
+                    responseRequirements.add(ResponseRequirement.USER_DATA);
+                }
 
-            Department department = (Department) post.getParent().getParent();
-            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-            if (userRole == null) {
-                // Provide user role data to continue
-                responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
-            } else {
-                MemberCategory memberCategory = userRole.getMemberCategory();
-                String memberProgram = userRole.getMemberProgram();
-                Integer memberYear = userRole.getMemberYear();
-                if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
-                    // Complete user role data to continue
+                Department department = (Department) post.getParent().getParent();
+                UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+                if (userRole == null) {
+                    // Provide user role data to continue
                     responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
                 } else {
-                    LocalDate academicYearStart;
-                    LocalDate baseline = LocalDate.now();
-                    if (baseline.getMonthValue() > 9) {
-                        // Started this year
-                        academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
-                    } else {
-                        // Started last year
-                        academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
-                    }
-
-                    if (academicYearStart.minusYears(1L).isAfter(userRole.getMemberDate())) {
-                        // Update user role data to continue
+                    MemberCategory memberCategory = userRole.getMemberCategory();
+                    String memberProgram = userRole.getMemberProgram();
+                    Integer memberYear = userRole.getMemberYear();
+                    if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+                        // Complete user role data to continue
                         responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
+                    } else {
+                        LocalDate academicYearStart;
+                        LocalDate baseline = LocalDate.now();
+                        if (baseline.getMonthValue() > 9) {
+                            // Academic year started this year
+                            academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
+                        } else {
+                            // Academic year started last year
+                            academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
+                        }
+
+                        if (academicYearStart.isAfter(userRole.getMemberDate())) {
+                            // User role data out of date - update to continue
+                            responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
+                        }
                     }
                 }
-            }
 
-            if (responseRequirements.isEmpty()) {
-                if (actionService.canExecuteAction(post, Action.PURSUE)) {
-                    if (post.getApplyEmail() == null) {
+                if (responseRequirements.isEmpty()) {
+                    if (post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
+                        // User can respond - send referral code
                         resourceEventService.createPostReferral(post, user);
                     }
+                } else {
+                    // User needs to provide data - send requirements
+                    post.setResponseRequirements(responseRequirements);
                 }
-            } else {
-                post.setResponseRequirements(responseRequirements);
             }
         }
 
@@ -386,10 +388,8 @@ public class PostService {
 
         Collection<ResourceEvent> headResourceEvents = userResourceEvents.values();
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
-        boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
         for (ResourceEvent headResourceEvent : headResourceEvents) {
-            headResourceEvent.setExposeResponseData(headResourceEvent.getUser().equals(user) ||
-                isAdministrator && BooleanUtils.isTrue(headResourceEvent.getVisibleToAdministrator()));
+            headResourceEvent.setExposeResponseData(headResourceEvent.getUser().equals(user));
 
             hr.prism.board.domain.Activity activity = headResourceEvent.getActivity();
             if (activity != null) {
@@ -499,9 +499,6 @@ public class PostService {
         Optional<String> applyEmail = postDTO.getApplyEmail();
         if (BoardUtils.isPresent(applyEmail)) {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
-            if (resourceService.isResourceAdministrator(post, post.getApplyEmail())) {
-                resourceEventService.updateVisibleToAdministrator(post);
-            }
         }
 
         Board board = (Board) post.getParent();
@@ -642,9 +639,8 @@ public class PostService {
     private ResourceEvent getPostResponse(User user, Long postId, Long responseId) {
         Post post = getPost(postId);
         actionService.executeAction(user, post, Action.EDIT, () -> post);
-        boolean isAdministrator = resourceService.isResourceAdministrator(post, user.getEmail());
         ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
-        resourceEvent.setExposeResponseData(isAdministrator && BooleanUtils.isTrue(resourceEvent.getVisibleToAdministrator()) || resourceEvent.getUser().equals(user));
+        resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
         return resourceEvent;
     }
 
