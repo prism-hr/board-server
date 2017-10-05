@@ -1,7 +1,6 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.enums.ResourceEvent;
-import hr.prism.board.enums.ResourceEventMatch;
+import hr.prism.board.enums.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +16,18 @@ public class ResourceEventRepresentation {
     private String ipAddress;
 
     private String referral;
+
+    private Gender gender;
+
+    private AgeRange ageRange;
+
+    private LocationRepresentation locationNationality;
+
+    private MemberCategory memberCategory;
+
+    private String memberProgram;
+
+    private Integer memberYear;
 
     private DocumentRepresentation documentResume;
 
@@ -74,6 +85,60 @@ public class ResourceEventRepresentation {
 
     public ResourceEventRepresentation setReferral(String referral) {
         this.referral = referral;
+        return this;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public ResourceEventRepresentation setGender(Gender gender) {
+        this.gender = gender;
+        return this;
+    }
+
+    public AgeRange getAgeRange() {
+        return ageRange;
+    }
+
+    public ResourceEventRepresentation setAgeRange(AgeRange ageRange) {
+        this.ageRange = ageRange;
+        return this;
+    }
+
+    public LocationRepresentation getLocationNationality() {
+        return locationNationality;
+    }
+
+    public ResourceEventRepresentation setLocationNationality(LocationRepresentation locationNationality) {
+        this.locationNationality = locationNationality;
+        return this;
+    }
+
+    public MemberCategory getMemberCategory() {
+        return memberCategory;
+    }
+
+    public ResourceEventRepresentation setMemberCategory(MemberCategory memberCategory) {
+        this.memberCategory = memberCategory;
+        return this;
+    }
+
+    public String getMemberProgram() {
+        return memberProgram;
+    }
+
+    public ResourceEventRepresentation setMemberProgram(String memberProgram) {
+        this.memberProgram = memberProgram;
+        return this;
+    }
+
+    public Integer getMemberYear() {
+        return memberYear;
+    }
+
+    public ResourceEventRepresentation setMemberYear(Integer memberYear) {
+        this.memberYear = memberYear;
         return this;
     }
 

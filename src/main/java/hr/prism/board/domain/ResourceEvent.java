@@ -5,7 +5,9 @@ import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.MemberCategory;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "resource_event")
@@ -66,6 +68,9 @@ public class ResourceEvent extends BoardEntity {
 
     @OneToOne(mappedBy = "resourceEvent")
     private Activity activity;
+
+    @OneToMany(mappedBy = "resourceEvent")
+    private Set<ResourceEventSearch> searches = new HashSet<>();
 
     @Transient
     private boolean exposeResponseData;
@@ -218,6 +223,10 @@ public class ResourceEvent extends BoardEntity {
     public ResourceEvent setActivity(Activity activity) {
         this.activity = activity;
         return this;
+    }
+
+    public Set<ResourceEventSearch> getSearches() {
+        return searches;
     }
 
     public boolean isExposeResponseData() {

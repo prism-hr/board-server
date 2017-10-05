@@ -1,8 +1,10 @@
 package hr.prism.board.service;
 
+import com.google.common.base.Joiner;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -11,8 +13,10 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
+import hr.prism.board.repository.ResourceEventSearchRepository;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.util.BoardUtils;
 import hr.prism.board.value.ResourceEventSummary;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -23,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +37,9 @@ public class ResourceEventService {
 
     @Inject
     private ResourceEventRepository resourceEventRepository;
+
+    @Inject
+    private ResourceEventSearchRepository resourceEventSearchRepository;
 
     @Inject
     private DocumentService documentService;
@@ -97,6 +105,7 @@ public class ResourceEventService {
             .setUser(user).setGender(user.getGender()).setAgeRange(user.getAgeRange()).setLocationNationality(user.getLocationNationality())
             .setMemberCategory(userRole.getMemberCategory()).setMemberProgram(userRole.getMemberProgram()).setMemberYear(userRole.getMemberYear())
             .setDocumentResume(documentResume).setWebsiteResume(websiteResume).setCoveringNote(coveringNote));
+        setIndexData(response);
         if (BooleanUtils.isTrue(resourceEventDTO.getDefaultResume())) {
             userService.updateUserResume(user, documentResume, websiteResume);
         }
@@ -139,6 +148,7 @@ public class ResourceEventService {
         resourceEvent.setMemberProgram(userRole.getMemberProgram());
         resourceEvent.setMemberYear(userRole.getMemberYear());
 
+        setIndexData(resourceEvent);
         resourceEvent.setReferral(null);
         resourceEvent = resourceEventRepository.update(resourceEvent);
         updateResourceEventSummary((Post) resourceEvent.getResource());
@@ -147,6 +157,14 @@ public class ResourceEventService {
 
     public List<ResourceEvent> findByIpAddresses(Collection<String> ipAddresses) {
         return resourceEventRepository.findByEventAndIpAddresses(hr.prism.board.enums.ResourceEvent.VIEW, ipAddresses);
+    }
+
+    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
+        resourceEventSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
+    }
+
+    public void deleteSearchResults(String search) {
+        resourceEventSearchRepository.deleteBySearch(search);
     }
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
@@ -185,6 +203,17 @@ public class ResourceEventService {
                     break;
             }
         }
+    }
+
+    private void setIndexData(ResourceEvent resourceEvent) {
+        String memberCategoryString = null;
+        MemberCategory memberCategory = resourceEvent.getMemberCategory();
+        if (memberCategory != null) {
+            memberCategoryString = memberCategory.name();
+        }
+
+        resourceEvent.setIndexData(Joiner.on(" ").skipNulls().join(BoardUtils.makeSoundex(resourceEvent.getGender().name(),
+            resourceEvent.getLocationNationality().getName(), memberCategoryString, resourceEvent.getMemberProgram()), resourceEvent.getMemberYear()));
     }
 
 }

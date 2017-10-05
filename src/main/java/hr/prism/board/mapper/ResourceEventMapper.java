@@ -21,6 +21,9 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
     @Inject
     private DocumentMapper documentMapper;
 
+    @Inject
+    private LocationMapper locationMapper;
+
     @Override
     public ResourceEventRepresentation apply(ResourceEvent resourceEvent) {
         if (resourceEvent == null) {
@@ -42,6 +45,13 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
         if (CollectionUtils.isNotEmpty(history)) {
             representation.setHistory(history.stream().map(this::applyHistory).collect(Collectors.toList()));
         }
+
+        representation.setGender(resourceEvent.getGender());
+        representation.setAgeRange(resourceEvent.getAgeRange());
+        representation.setLocationNationality(locationMapper.apply(resourceEvent.getLocationNationality()));
+        representation.setMemberCategory(resourceEvent.getMemberCategory());
+        representation.setMemberProgram(resourceEvent.getMemberProgram());
+        representation.setMemberYear(resourceEvent.getMemberYear());
 
         if (resourceEvent.isExposeResponseData()) {
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));

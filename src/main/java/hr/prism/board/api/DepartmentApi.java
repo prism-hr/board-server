@@ -100,7 +100,7 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = RequestMethod.PUT)
-    public UserRepresentation postMembershipUpdate(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
+    public UserRepresentation putMembershipUpdate(@PathVariable Long departmentId, @RequestBody @Valid UserRoleDTO userRoleDTO) {
         return userMapper.apply(departmentService.putMembershipUpdate(departmentId, userRoleDTO));
     }
 

@@ -2,7 +2,6 @@ package hr.prism.board.representation;
 
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.ResponseRequirement;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -48,11 +47,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
-    // false: post membership request, true: put membership update
-    private boolean responsePermitted;
-
-    // if requesting / updating membership, this property explains which data needs to be provided
-    private List<ResponseRequirement> responseRequirements;
+    private PostResponseReadinessRepresentation responseReadiness;
 
     private ResourceEventRepresentation referral;
 
@@ -229,21 +224,12 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public boolean isResponsePermitted() {
-        return responsePermitted;
+    public PostResponseReadinessRepresentation getResponseReadiness() {
+        return responseReadiness;
     }
 
-    public PostRepresentation setResponsePermitted(boolean responsePermitted) {
-        this.responsePermitted = responsePermitted;
-        return this;
-    }
-
-    public List<ResponseRequirement> getResponseRequirements() {
-        return responseRequirements;
-    }
-
-    public PostRepresentation setResponseRequirements(List<ResponseRequirement> responseRequirements) {
-        this.responseRequirements = responseRequirements;
+    public PostRepresentation setResponseReadiness(PostResponseReadinessRepresentation responseReadiness) {
+        this.responseReadiness = responseReadiness;
         return this;
     }
 

@@ -9,9 +9,11 @@ import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.representation.PostResponseReadinessRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -122,55 +124,10 @@ public class PostService {
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
-                List<ResponseRequirement> responseRequirements = new ArrayList<>();
-                if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
-                    // Provide user data to continue
-                    responseRequirements.add(ResponseRequirement.USER_DEMOGRAPHIC_DATA);
-                }
-
-                Department department = (Department) post.getParent().getParent();
-                UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-
-                // User role data only required if department expects member category
-                if (!department.getMemberCategories().isEmpty()) {
-                    if (userRole == null) {
-                        // Provide user role data to continue
-                        responseRequirements.add(ResponseRequirement.USER_ROLE_DEMOGRAPHIC_DATA);
-                    } else {
-                        post.setResponsePermitted(true);
-                        MemberCategory memberCategory = userRole.getMemberCategory();
-                        String memberProgram = userRole.getMemberProgram();
-                        Integer memberYear = userRole.getMemberYear();
-                        if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
-                            // Complete user role data to continue
-                            responseRequirements.add(ResponseRequirement.USER_ROLE_DEMOGRAPHIC_DATA);
-                        } else {
-                            LocalDate academicYearStart;
-                            LocalDate baseline = LocalDate.now();
-                            if (baseline.getMonthValue() > 9) {
-                                // Academic year started this year
-                                academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
-                            } else {
-                                // Academic year started last year
-                                academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
-                            }
-
-                            if (academicYearStart.isAfter(userRole.getMemberDate())) {
-                                // User role data out of date - update to continue
-                                responseRequirements.add(ResponseRequirement.USER_ROLE_DEMOGRAPHIC_DATA);
-                            }
-                        }
-                    }
-                }
-
-                if (responseRequirements.isEmpty()) {
-                    if (post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
-                        // User can respond - prepare referral code
-                        resourceEventService.createPostReferral(post, user);
-                    }
-                } else {
-                    // User needs to provide data - send requirements
-                    post.setResponseRequirements(responseRequirements);
+                PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
+                post.setResponseReadiness(responseReadiness);
+                if (responseReadiness.isReady() && post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
+                    resourceEventService.createPostReferral(post, user);
                 }
             }
         }
@@ -282,6 +239,7 @@ public class PostService {
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
+        validatePostResponse(resourceEvent.getUser(), post, ExceptionCode.FORBIDDEN_REFERRAL);
 
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
@@ -296,6 +254,11 @@ public class PostService {
     public ResourceEvent postPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
+        actionService.executeAction(user, post, Action.PURSUE, () -> {
+            validatePostResponse(user, post, ExceptionCode.FORBIDDEN_RESPONSE);
+            return post;
+        });
+
         actionService.executeAction(user, post, Action.PURSUE, () -> post);
         return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent).setExposeResponseData(true);
     }
@@ -322,8 +285,7 @@ public class PostService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            userService.
-                createSearchResults(search, searchTerm, userIds);
+            resourceEventService.createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
 
@@ -331,8 +293,7 @@ public class PostService {
             String statement =
                 "select distinct resourceEvent " +
                     "from ResourceEvent resourceEvent " +
-                    "inner join resourceEvent.user user " +
-                    "left join user.searches search on search.search = :search " +
+                    "left join resourceEvent.searches search on search.search = :search " +
                     "where resourceEvent.resource.id = :postId " +
                     "and user.id in (:userIds) ";
             if (searchTermApplied) {
@@ -348,7 +309,7 @@ public class PostService {
         });
 
         if (searchTermApplied) {
-            userService.deleteSearchResults(search);
+            resourceEventService.deleteSearchResults(search);
         }
 
         if (resourceEvents.isEmpty()) {
@@ -684,6 +645,60 @@ public class PostService {
         }
 
         resourceEventHistory.add(resourceEvent);
+    }
+
+    private void validatePostResponse(User user, Post post, ExceptionCode exceptionCode) {
+        PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
+        if (!responseReadiness.isReady()) {
+            if (responseReadiness.isRequireMembership()) {
+                throw new BoardForbiddenException(exceptionCode, "Membership not valid");
+            } else if (responseReadiness.isRequireUserDemographicData()) {
+                throw new BoardForbiddenException(exceptionCode, "User demographic data not valid");
+            }
+
+            throw new BoardForbiddenException(exceptionCode, "User role demographic data not valid");
+        }
+    }
+
+    private PostResponseReadinessRepresentation getPostResponseReadiness(User user, Post post) {
+        PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
+        if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
+            // User demographic data incomplete
+            responseReadiness.setRequireUserDemographicData(true);
+        }
+
+        Resource department = post.getParent().getParent();
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+        if (userRole == null) {
+            // No member role
+            responseReadiness.setRequireMembership(true);
+        } else if (!department.getMemberCategories().isEmpty()) {
+            // Member category required - user role demographic data expected
+            MemberCategory memberCategory = userRole.getMemberCategory();
+            String memberProgram = userRole.getMemberProgram();
+            Integer memberYear = userRole.getMemberYear();
+            if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+                // User role demographic data incomplete
+                responseReadiness.setRequireUserRoleDemographicData(true);
+            } else {
+                LocalDate academicYearStart;
+                LocalDate baseline = LocalDate.now();
+                if (baseline.getMonthValue() > 9) {
+                    // Academic year started this year
+                    academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
+                } else {
+                    // Academic year started last year
+                    academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
+                }
+
+                if (academicYearStart.isAfter(userRole.getMemberDate())) {
+                    // User role demographic data out of date
+                    responseReadiness.setRequireUserRoleDemographicData(true);
+                }
+            }
+        }
+
+        return responseReadiness;
     }
 
 }

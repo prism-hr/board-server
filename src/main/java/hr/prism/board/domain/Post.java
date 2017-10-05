@@ -1,15 +1,14 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
-import hr.prism.board.enums.ResponseRequirement;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.representation.PostResponseReadinessRepresentation;
 import hr.prism.board.util.BoardUtils;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.POST)
@@ -90,10 +89,7 @@ public class Post extends Resource {
     private boolean exposeApplyData;
 
     @Transient
-    private boolean responsePermitted;
-
-    @Transient
-    private List<ResponseRequirement> responseRequirements;
+    private PostResponseReadinessRepresentation responseReadiness;
 
     @Transient
     private ResourceEvent referral;
@@ -234,21 +230,12 @@ public class Post extends Resource {
         this.exposeApplyData = exposeApplyData;
     }
 
-    public boolean isResponsePermitted() {
-        return responsePermitted;
+    public PostResponseReadinessRepresentation getResponseReadiness() {
+        return responseReadiness;
     }
 
-    public Post setResponsePermitted(boolean responsePermitted) {
-        this.responsePermitted = responsePermitted;
-        return this;
-    }
-
-    public List<ResponseRequirement> getResponseRequirements() {
-        return responseRequirements;
-    }
-
-    public void setResponseRequirements(List<ResponseRequirement> responseRequirements) {
-        this.responseRequirements = responseRequirements;
+    public void setResponseReadiness(PostResponseReadinessRepresentation responseReadiness) {
+        this.responseReadiness = responseReadiness;
     }
 
     public ResourceEvent getReferral() {

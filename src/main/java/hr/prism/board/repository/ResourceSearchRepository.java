@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 
-public interface ResourceSearchRepository extends MyRepository<ResourceSearch, Long> {
+public interface ResourceSearchRepository extends SearchRepository<ResourceSearch> {
 
     @Modifying
     @Query(value =
@@ -23,7 +23,5 @@ public interface ResourceSearchRepository extends MyRepository<ResourceSearch, L
         nativeQuery = true)
     void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime, @Param("searchTerm") String searchTerm,
                         @Param("resourceIds") Collection<Long> resourceIds);
-
-    void deleteBySearch(@Param("search") String search);
 
 }
