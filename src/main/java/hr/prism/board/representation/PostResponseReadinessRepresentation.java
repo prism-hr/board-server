@@ -2,10 +2,6 @@ package hr.prism.board.representation;
 
 public class PostResponseReadinessRepresentation {
 
-    // true: user role does not exist, call DepartmentApi::postMembershipRequest
-    // false: user role does exist, call DepartmentApi::putMembershipUpdate
-    private boolean requireMembership;
-
     // true: post / put with user demographic data (gender, age range, home country)
     // false: user demographic data already complete, skip this step
     private boolean requireUserDemographicData;
@@ -13,15 +9,6 @@ public class PostResponseReadinessRepresentation {
     // true: post / put with user role demographic data (member category, member program, member year)
     // false: user role demographic data not required or already provided, skip this step
     private boolean requireUserRoleDemographicData;
-
-    public boolean isRequireMembership() {
-        return requireMembership;
-    }
-
-    public PostResponseReadinessRepresentation setRequireMembership(boolean requireMembership) {
-        this.requireMembership = requireMembership;
-        return this;
-    }
 
     public boolean isRequireUserDemographicData() {
         return requireUserDemographicData;
@@ -42,7 +29,7 @@ public class PostResponseReadinessRepresentation {
     }
 
     public boolean isReady() {
-        return !requireMembership && !requireUserDemographicData && !requireUserRoleDemographicData;
+        return !requireUserDemographicData && !requireUserRoleDemographicData;
     }
 
 }

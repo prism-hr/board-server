@@ -650,9 +650,7 @@ public class PostService {
     private void validatePostResponse(User user, Post post, ExceptionCode exceptionCode) {
         PostResponseReadinessRepresentation responseReadiness = getPostResponseReadiness(user, post);
         if (!responseReadiness.isReady()) {
-            if (responseReadiness.isRequireMembership()) {
-                throw new BoardForbiddenException(exceptionCode, "Membership not valid");
-            } else if (responseReadiness.isRequireUserDemographicData()) {
+            if (responseReadiness.isRequireUserDemographicData()) {
                 throw new BoardForbiddenException(exceptionCode, "User demographic data not valid");
             }
 
@@ -668,12 +666,9 @@ public class PostService {
         }
 
         Resource department = post.getParent().getParent();
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-        if (userRole == null) {
-            // No member role
-            responseReadiness.setRequireMembership(true);
-        } else if (!department.getMemberCategories().isEmpty()) {
+        if (!department.getMemberCategories().isEmpty()) {
             // Member category required - user role demographic data expected
+            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
             MemberCategory memberCategory = userRole.getMemberCategory();
             String memberProgram = userRole.getMemberProgram();
             Integer memberYear = userRole.getMemberYear();
