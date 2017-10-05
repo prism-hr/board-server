@@ -31,6 +31,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -120,8 +121,50 @@ public class PostService {
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
-            if (post.getApplyEmail() == null && actionService.canExecuteAction(post, Action.PURSUE)) {
-                resourceEventService.createPostReferral(post, user);
+            List<ResponseRequirement> responseRequirements = new ArrayList<>();
+            if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
+                // Provide user data to continue
+                responseRequirements.add(ResponseRequirement.USER_DATA);
+            }
+
+            Department department = (Department) post.getParent().getParent();
+            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+            if (userRole == null) {
+                // Provide user role data to continue
+                responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
+            } else {
+                MemberCategory memberCategory = userRole.getMemberCategory();
+                String memberProgram = userRole.getMemberProgram();
+                Integer memberYear = userRole.getMemberYear();
+                if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+                    // Complete user role data to continue
+                    responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
+                } else {
+                    LocalDate academicYearStart;
+                    LocalDate baseline = LocalDate.now();
+                    if (baseline.getMonthValue() > 9) {
+                        // Started this year
+                        academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
+                    } else {
+                        // Started last year
+                        academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
+                    }
+
+                    if (academicYearStart.minusYears(1L).isAfter(userRole.getMemberDate())) {
+                        // Update user role data to continue
+                        responseRequirements.add(ResponseRequirement.USER_ROLE_DATA);
+                    }
+                }
+            }
+
+            if (responseRequirements.isEmpty()) {
+                if (actionService.canExecuteAction(post, Action.PURSUE)) {
+                    if (post.getApplyEmail() == null) {
+                        resourceEventService.createPostReferral(post, user);
+                    }
+                }
+            } else {
+                post.setResponseRequirements(responseRequirements);
             }
         }
 
@@ -347,13 +390,13 @@ public class PostService {
         for (ResourceEvent headResourceEvent : headResourceEvents) {
             headResourceEvent.setExposeResponseData(headResourceEvent.getUser().equals(user) ||
                 isAdministrator && BooleanUtils.isTrue(headResourceEvent.getVisibleToAdministrator()));
-    
+
             hr.prism.board.domain.Activity activity = headResourceEvent.getActivity();
             if (activity != null) {
                 indexByActivities.put(activity, headResourceEvent);
             }
         }
-    
+
         if (!indexByActivities.isEmpty()) {
             for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
                 indexByActivities.get(activityEvent.getActivity()).setViewed(true);

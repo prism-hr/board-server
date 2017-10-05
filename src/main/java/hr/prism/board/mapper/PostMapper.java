@@ -70,6 +70,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setLastViewTimestamp(post.getLastViewTimestamp())
             .setLastReferralTimestamp(post.getLastReferralTimestamp())
             .setLastResponseTimestamp(post.getLastResponseTimestamp())
+            .setResponseRequirements(post.getResponseRequirements())
             .setReferral(resourceEventMapper.apply(post.getReferral()))
             .setResponse(resourceEventMapper.apply(post.getResponse()));
     }

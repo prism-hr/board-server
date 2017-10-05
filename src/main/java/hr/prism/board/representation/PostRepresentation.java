@@ -2,6 +2,7 @@ package hr.prism.board.representation;
 
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.ResponseRequirement;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -46,6 +47,8 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
     private LocalDateTime lastReferralTimestamp;
 
     private LocalDateTime lastResponseTimestamp;
+
+    private List<ResponseRequirement> responseRequirements;
 
     private ResourceEventRepresentation referral;
 
@@ -219,6 +222,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setLastResponseTimestamp(LocalDateTime lastResponseTimestamp) {
         this.lastResponseTimestamp = lastResponseTimestamp;
+        return this;
+    }
+
+    public List<ResponseRequirement> getResponseRequirements() {
+        return responseRequirements;
+    }
+
+    public PostRepresentation setResponseRequirements(List<ResponseRequirement> responseRequirements) {
+        this.responseRequirements = responseRequirements;
         return this;
     }
 

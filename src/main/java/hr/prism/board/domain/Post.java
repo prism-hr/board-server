@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.ResponseRequirement;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.util.BoardUtils;
 import org.hibernate.validator.constraints.Email;
@@ -8,6 +9,7 @@ import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.POST)
@@ -86,6 +88,9 @@ public class Post extends Resource {
 
     @Transient
     private boolean exposeApplyData;
+
+    @Transient
+    private List<ResponseRequirement> responseRequirements;
 
     @Transient
     private ResourceEvent referral;
@@ -226,22 +231,28 @@ public class Post extends Resource {
         this.exposeApplyData = exposeApplyData;
     }
 
+    public List<ResponseRequirement> getResponseRequirements() {
+        return responseRequirements;
+    }
+
+    public void setResponseRequirements(List<ResponseRequirement> responseRequirements) {
+        this.responseRequirements = responseRequirements;
+    }
+
     public ResourceEvent getReferral() {
         return referral;
     }
 
-    public Post setReferral(ResourceEvent referral) {
+    public void setReferral(ResourceEvent referral) {
         this.referral = referral;
-        return this;
     }
 
     public ResourceEvent getResponse() {
         return response;
     }
 
-    public Post setResponse(ResourceEvent response) {
+    public void setResponse(ResourceEvent response) {
         this.response = response;
-        return this;
     }
 
     @Override
