@@ -1,7 +1,5 @@
 package hr.prism.board.dto;
 
-import org.hibernate.validator.constraints.URL;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -12,7 +10,6 @@ public class ResourceEventDTO {
     @NotNull
     private DocumentDTO documentResume;
 
-    @URL
     private String websiteResume;
 
     @NotNull
