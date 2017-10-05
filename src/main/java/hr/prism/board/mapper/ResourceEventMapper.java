@@ -35,8 +35,6 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             new ResourceEventRepresentation()
                 .setId(resourceEvent.getId())
                 .setEvent(resourceEvent.getEvent())
-                .setUser(userMapper.apply(resourceEvent.getUser()))
-                .setIpAddress(resourceEvent.getIpAddress())
                 .setReferral(resourceEvent.getReferral())
                 .setMatch(getResourceEventMatch(user))
                 .setViewed(resourceEvent.isViewed());
@@ -54,6 +52,8 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
         representation.setMemberYear(resourceEvent.getMemberYear());
 
         if (resourceEvent.isExposeResponseData()) {
+            representation.setUser(userMapper.apply(resourceEvent.getUser()));
+            representation.setIpAddress(resourceEvent.getIpAddress());
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));
             representation.setWebsiteResume(resourceEvent.getWebsiteResume());
             representation.setCoveringNote(resourceEvent.getCoveringNote());
