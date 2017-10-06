@@ -1,6 +1,9 @@
 package hr.prism.board.repository;
 
 import hr.prism.board.domain.Post;
+import hr.prism.board.domain.User;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,5 +40,17 @@ public interface PostRepository extends MyRepository<Post, Long> {
             "and (post.deadTimestamp >= :baseline " +
             "or post.deadTimestamp is null)")
     List<Long> findPostsToPublish(@Param("states") Collection<State> states, @Param("baseline") LocalDateTime baseline);
+
+    @Query(value =
+        "select post " +
+            "from Post post " +
+            "where post.id in (" +
+            "select max (resource.id) " +
+            "from UserRole userRole " +
+            "inner join userRole.resource resource " +
+            "where userRole.user = :user " +
+            "and userRole.role = :role " +
+            "and resource.scope = :scope)")
+    Post findLatestPost(@Param("user") User user, @Param("role") Role role, @Param("scope") Scope scope);
 
 }

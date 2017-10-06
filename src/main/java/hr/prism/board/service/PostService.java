@@ -440,6 +440,10 @@ public class PostService {
         resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
     }
 
+    public Post findLatestPost(User user) {
+        return postRepository.findLatestPost(user, Role.ADMINISTRATOR, Scope.POST);
+    }
+
     public void migrate(Long id) {
         Post post = (Post) resourceService.findOne(id);
         setIndexDataAndQuarter(post);

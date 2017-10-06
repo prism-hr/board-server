@@ -94,6 +94,12 @@ public class User extends BoardEntity implements Comparable<User> {
     @Transient
     private boolean revealEmail;
 
+    @Transient
+    private String defaultOrganizationName;
+
+    @Transient
+    private Location defaultLocation;
+
     public String getUuid() {
         return uuid;
     }
@@ -284,6 +290,24 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setRevealEmail(boolean revealEmail) {
         this.revealEmail = revealEmail;
+        return this;
+    }
+
+    public String getDefaultOrganizationName() {
+        return defaultOrganizationName;
+    }
+
+    public User setDefaultOrganizationName(String defaultOrganizationName) {
+        this.defaultOrganizationName = defaultOrganizationName;
+        return this;
+    }
+
+    public Location getDefaultLocation() {
+        return defaultLocation;
+    }
+
+    public User setDefaultLocation(Location defaultLocation) {
+        this.defaultLocation = defaultLocation;
         return this;
     }
 

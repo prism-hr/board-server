@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
+import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LocationDTO;
@@ -73,6 +74,12 @@ public class UserService {
     @Inject
     private LocationService locationService;
 
+    @Inject
+    private UserRoleService userRoleService;
+
+    @Inject
+    private PostService postService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -89,6 +96,20 @@ public class UserService {
 
     public User getCurrentUserSecured() {
         return getCurrentUserSecured(false);
+    }
+
+    public User getUserForRepresentation() {
+        User user = getCurrentUserSecured().setRevealEmail(true);
+        if (!userRoleService.hasAdministratorRole(user)) {
+            // Assume user is usually posting - should have default values for organization
+            Post latestPost = postService.findLatestPost(user);
+            if (latestPost != null) {
+                user.setDefaultOrganizationName(latestPost.getOrganizationName());
+                user.setDefaultLocation(latestPost.getLocation());
+            }
+        }
+
+        return user;
     }
 
     public User findByUuid(String uuid) {

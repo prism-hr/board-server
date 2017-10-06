@@ -34,7 +34,9 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setLocationNationality(locationMapper.apply(user.getLocationNationality()))
             .setDocumentResume(documentMapper.apply(user.getDocumentResume()))
             .setWebsiteResume(user.getWebsiteResume())
-            .setScopes(user.getScopes());
+            .setScopes(user.getScopes())
+            .setDefaultOrganizationName(user.getDefaultOrganizationName())
+            .setDefaultLocation(locationMapper.apply(user.getDefaultLocation()));
     }
 
 }

@@ -22,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -161,6 +162,10 @@ public class UserRoleService {
 
     public UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
+    }
+
+    public boolean hasAdministratorRole(User user) {
+        return userRoleRepository.findIdsByUserAndRole(user, Role.ADMINISTRATOR, State.ACTIVE_USER_ROLE_STATES, LocalDateTime.now()).isEmpty();
     }
 
     private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {

@@ -42,8 +42,7 @@ public class UserApi {
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getCurrentUser() {
-        User user = userService.getCurrentUserSecured().setRevealEmail(true);
-        return userMapper.apply(user);
+        return userMapper.apply(userService.getUserForRepresentation());
     }
 
     @RequestMapping(value = "/api/user", method = RequestMethod.PATCH)
