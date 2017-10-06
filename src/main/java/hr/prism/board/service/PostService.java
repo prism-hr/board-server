@@ -680,7 +680,8 @@ public class PostService {
                 Integer memberYear = userRole.getMemberYear();
                 if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
                     // User role data incomplete
-                    responseReadiness.setRequireUserRoleDemographicData(true);
+                    responseReadiness.setRequireUserRoleDemographicData(true)
+                        .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
                 } else {
                     LocalDate academicYearStart;
                     LocalDate baseline = LocalDate.now();
