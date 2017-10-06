@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -90,6 +89,6 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "and userRole.state in (:userRoleStates) " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT)
     List<Long> findIdsByUserAndRole(@Param("user") User user, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
-                                    @Param("baseline") LocalDateTime baseline);
+                                    @Param("baseline") LocalDate baseline);
 
 }
