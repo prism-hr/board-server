@@ -17,7 +17,7 @@ public interface ResourceEventSearchRepository extends SearchRepository<Resource
             "FROM (" +
             "SELECT resource_event.id as resource_event_id, :search as search, MATCH(resource_event.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
             "FROM resource_event " +
-            "WHERE user.id IN (:userIds) " +
+            "WHERE resource_event.user_id IN (:userIds) " +
             "HAVING similarity > 0 " +
             "ORDER BY similarity DESC, resource_event.id DESC) AS resource_event_search_result",
         nativeQuery = true)
