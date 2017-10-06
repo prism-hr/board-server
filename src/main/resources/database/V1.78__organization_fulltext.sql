@@ -1,2 +1,2 @@
 ALTER TABLE resource
-  ADD FULLTEXT INDEX (organizationName);
+  ADD FULLTEXT INDEX (organization_name);

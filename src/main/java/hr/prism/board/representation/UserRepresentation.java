@@ -34,6 +34,10 @@ public class UserRepresentation {
 
     private List<Scope> scopes;
 
+    private String defaultOrganizationName;
+
+    private LocationRepresentation defaultLocation;
+
     public Long getId() {
         return id;
     }
@@ -139,6 +143,24 @@ public class UserRepresentation {
 
     public UserRepresentation setScopes(List<Scope> scopes) {
         this.scopes = scopes;
+        return this;
+    }
+
+    public String getDefaultOrganizationName() {
+        return defaultOrganizationName;
+    }
+
+    public UserRepresentation setDefaultOrganizationName(String defaultOrganizationName) {
+        this.defaultOrganizationName = defaultOrganizationName;
+        return this;
+    }
+
+    public LocationRepresentation getDefaultLocation() {
+        return defaultLocation;
+    }
+
+    public UserRepresentation setDefaultLocation(LocationRepresentation defaultLocation) {
+        this.defaultLocation = defaultLocation;
         return this;
     }
 
