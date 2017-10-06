@@ -86,7 +86,7 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
         "select userRole.id " +
             "from UserRole userRole " +
             "where userRole.user = :user " +
-            "and userRole.roles = :role " +
+            "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT)
     List<Long> findIdsByUserAndRole(@Param("user") User user, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
