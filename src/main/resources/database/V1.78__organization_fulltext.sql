@@ -1,2 +1,2 @@
-ALTER TABLE resource
-  ADD FULLTEXT INDEX (organization_name);
+ALTER TABLE user_role
+  ADD FULLTEXT INDEX (member_program);
