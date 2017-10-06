@@ -10,6 +10,8 @@ public class PostResponseReadinessRepresentation {
     // false: user role demographic data not required or already provided, skip this step
     private boolean requireUserRoleDemographicData;
 
+    private UserRoleRepresentation userRole;
+
     public boolean isRequireUserDemographicData() {
         return requireUserDemographicData;
     }
@@ -25,6 +27,15 @@ public class PostResponseReadinessRepresentation {
 
     public PostResponseReadinessRepresentation setRequireUserRoleDemographicData(boolean requireUserRoleDemographicData) {
         this.requireUserRoleDemographicData = requireUserRoleDemographicData;
+        return this;
+    }
+
+    public UserRoleRepresentation getUserRole() {
+        return userRole;
+    }
+
+    public PostResponseReadinessRepresentation setUserRole(UserRoleRepresentation userRole) {
+        this.userRole = userRole;
         return this;
     }
 

@@ -14,6 +14,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -693,7 +694,8 @@ public class PostService {
 
                     if (academicYearStart.isAfter(userRole.getMemberDate())) {
                         // User role data out of date
-                        responseReadiness.setRequireUserRoleDemographicData(true);
+                        responseReadiness.setRequireUserRoleDemographicData(true)
+                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
                     }
                 }
             }
