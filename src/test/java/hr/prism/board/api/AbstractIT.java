@@ -14,6 +14,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.representation.ActionRepresentation;
@@ -75,6 +76,9 @@ public abstract class AbstractIT {
     UserRepository userRepository;
 
     @Inject
+    ResourceEventRepository resourceEventRepository;
+
+    @Inject
     ActivityService activityService;
 
     @Inject
@@ -109,6 +113,9 @@ public abstract class AbstractIT {
 
     @Inject
     TestNotificationService testNotificationService;
+
+    @Inject
+    ResourceEventService resourceEventService;
 
     @Value("${server.url}")
     String serverUrl;
@@ -234,23 +241,13 @@ public abstract class AbstractIT {
         testUserActivityService.verify(userId);
     }
 
-    <T> void verifyContains(List<T> actuals, T... expectations) {
+    @SafeVarargs
+    final <T> void verifyContains(List<T> actuals, T... expectations) {
         for (T expectation : expectations) {
             if (!actuals.contains(expectation)) {
                 Assert.fail(actuals.stream().map(Object::toString).collect(Collectors.joining(", ")) + " does not contain " + expectation.toString());
             }
         }
-    }
-
-    void indexUserData() {
-        transactionTemplate.execute(status -> {
-            for (User user : userRepository.findAll()) {
-                userCacheService.setIndexData(user);
-                userRepository.update(user);
-            }
-
-            return null;
-        });
     }
 
     private void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {

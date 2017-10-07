@@ -65,6 +65,10 @@ public class ResourceEventService {
         return resourceEventRepository.findOne(resourceEventId);
     }
 
+    public List<Long> findAllIds() {
+        return resourceEventRepository.findAllIds();
+    }
+
     public ResourceEvent createPostView(Post post, User user, String ipAddress) {
         if (user == null && ipAddress == null) {
             throw new BoardException(ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
@@ -173,6 +177,22 @@ public class ResourceEventService {
         return resourceEvent;
     }
 
+    public void migrate(Long id) {
+        ResourceEvent resourceEvent = findOne(id);
+        setIndexData(resourceEvent);
+    }
+
+    public void setIndexData(ResourceEvent resourceEvent) {
+        String memberCategoryString = null;
+        MemberCategory memberCategory = resourceEvent.getMemberCategory();
+        if (memberCategory != null) {
+            memberCategoryString = memberCategory.name();
+        }
+
+        resourceEvent.setIndexData(Joiner.on(" ").skipNulls().join(BoardUtils.makeSoundex(resourceEvent.getGender().name(),
+            resourceEvent.getLocationNationality().getName(), memberCategoryString, resourceEvent.getMemberProgram()), resourceEvent.getMemberYear()));
+    }
+
     private void updateResourceEventSummary(Post post) {
         entityManager.flush();
         Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries = resourceEventRepository.findUserSummaryByResource(post)
@@ -203,17 +223,6 @@ public class ResourceEventService {
                     break;
             }
         }
-    }
-
-    private void setIndexData(ResourceEvent resourceEvent) {
-        String memberCategoryString = null;
-        MemberCategory memberCategory = resourceEvent.getMemberCategory();
-        if (memberCategory != null) {
-            memberCategoryString = memberCategory.name();
-        }
-
-        resourceEvent.setIndexData(Joiner.on(" ").skipNulls().join(BoardUtils.makeSoundex(resourceEvent.getGender().name(),
-            resourceEvent.getLocationNationality().getName(), memberCategoryString, resourceEvent.getMemberProgram()), resourceEvent.getMemberYear()));
     }
 
 }

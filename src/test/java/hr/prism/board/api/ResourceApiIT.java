@@ -350,7 +350,15 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/user_role_filter_setup.sql")
     public void shouldListAndFilterUserRoles() {
-        indexUserData();
+        transactionTemplate.execute(status -> {
+            for (User user : userRepository.findAll()) {
+                userCacheService.setIndexData(user);
+                userRepository.update(user);
+            }
+
+            return null;
+        });
+
         Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("alastair@knowles.com")).getId();
         testUserService.setAuthentication(userId);
 

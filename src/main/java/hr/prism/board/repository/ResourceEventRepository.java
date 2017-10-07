@@ -13,6 +13,12 @@ import java.util.List;
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
 public interface ResourceEventRepository extends MyRepository<ResourceEvent, Long> {
 
+    @Query(value =
+        "select resourceEvent.id " +
+            "from ResourceEvent resourceEvent " +
+            "order by resourceEvent.id")
+    List<Long> findAllIds();
+
     ResourceEvent findByReferral(String referral);
 
     @Query(value =

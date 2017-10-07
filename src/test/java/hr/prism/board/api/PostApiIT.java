@@ -1395,7 +1395,11 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/post_response_filter_setup.sql")
     public void shouldListAndFilterPostResponses() {
-        indexUserData();
+        transactionTemplate.execute(status -> {
+            resourceEventRepository.findAll().forEach(resourceEventService::setIndexData);
+            return null;
+        });
+
         Long userId = transactionTemplate.execute(status -> userRepository.findByEmail("alastair@knowles.com")).getId();
         Long postId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs/opportunities/4")).getId();
         testUserService.setAuthentication(userId);
@@ -1405,7 +1409,7 @@ public class PostApiIT extends AbstractIT {
         verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()),
             BoardUtils.obfuscateEmail("jakub@fibinger.com"), BoardUtils.obfuscateEmail("juan@mingo.com"));
 
-        responses = postApi.getPostResponses(postId, "juan");
+        responses = postApi.getPostResponses(postId, "madrid");
         Assert.assertEquals(1, responses.size());
         verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), BoardUtils.obfuscateEmail("juan@mingo.com"));
     }

@@ -311,6 +311,7 @@ public class UserService {
     public void migrate(Long id) {
         User user = userCacheService.findOneFresh(id);
         userCacheService.setIndexData(user);
+        // Reset email to trigger setting display value
         user.setEmail(user.getEmail());
     }
 

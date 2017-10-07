@@ -1,7 +1,42 @@
-INSERT INTO user (uuid, given_name, surname, email, email_display, password, created_timestamp)
-VALUES (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'a......r@knowles.com', SHA2('password', 256), NOW()),
-  (UUID(), 'jakub', 'fibinger', 'jakub@fibinger.com', 'j...b@fibinger.com', SHA2('password', 256), NOW()),
-  (UUID(), 'juan', 'mingo', 'juan@mingo.com', 'j..n@mingo.com', SHA2('password', 256), NOW());
+INSERT INTO user (uuid, given_name, surname, email, email_display, password, gender, age_range, created_timestamp)
+VALUES (UUID(), 'alastair', 'knowles', 'alastair@knowles.com', 'a......r@knowles.com', SHA2('password', 256), 'MALE', 'THIRTY_THIRTYNINE', NOW()),
+  (UUID(), 'jakub', 'fibinger', 'jakub@fibinger.com', 'j...b@fibinger.com', SHA2('password', 256), 'MALE', 'THIRTY_THIRTYNINE', NOW()),
+  (UUID(), 'juan', 'mingo', 'juan@mingo.com', 'j..n@mingo.com', SHA2('password', 256), 'MALE', 'THIRTY_THIRTYNINE', NOW());
+
+INSERT INTO location(name, domicile, google_id, latitude, longitude, created_timestamp)
+VALUES ('London, United Kingdom', 'GBR', 'googleId1', 1.00, 1.00, NOW()),
+  ('Krakow, Poland', 'PLN', 'googleId2', 1.00, 1.00, NOW()),
+  ('Madrid, Spain', 'ESP', 'googleId3', 1.00, 1.00, NOW());
+
+SET @alastairLocationId = (
+  SELECT location.id
+  FROM location
+  WHERE location.name = 'London, United Kingdom');
+
+UPDATE user
+INNER JOIN location
+  SET user.location_nationality_id = @alastairLocationId
+WHERE user.given_name = 'alastair';
+
+SET @jakubLocationId = (
+  SELECT location.id
+  FROM location
+  WHERE location.name = 'Krakow, Poland');
+
+UPDATE user
+  INNER JOIN location
+SET user.location_nationality_id = @jakubLocationId
+WHERE user.given_name = 'jakub';
+
+SET @juanLocationId = (
+  SELECT location.id
+  FROM location
+  WHERE location.name = 'Madrid, Spain');
+
+UPDATE user
+  INNER JOIN location
+SET user.location_nationality_id = @juanLocationId
+WHERE user.given_name = 'juan';
 
 INSERT INTO resource (scope, state, name, handle, summary, description, organization_name, apply_website, created_timestamp)
 VALUES ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'cs', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW()),
@@ -83,11 +118,14 @@ INSERT INTO document (cloudinary_id, cloudinary_url, file_name, created_timestam
 VALUES ('jakub', 'jakub/jakub', 'jakub', NOW()),
   ('juan', 'juan/juan', 'juan', NOW());
 
-INSERT INTO resource_event (resource_id, event, user_id, document_resume_id, website_resume, covering_note, visible_to_administrator, created_timestamp)
+INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, location_nationality_id, document_resume_id, website_resume, covering_note, visible_to_administrator, created_timestamp)
   SELECT
     resource.id,
     'RESPONSE',
     user.id,
+    'MALE',
+    'THIRTY_THIRTYNINE',
+    @jakubLocationId,
     document.id,
     'http://www.jakub.com',
     'jakub',
@@ -100,11 +138,14 @@ INSERT INTO resource_event (resource_id, event, user_id, document_resume_id, web
         AND user.given_name = 'jakub'
         AND document.cloudinary_id = 'jakub';
 
-INSERT INTO resource_event (resource_id, event, user_id, document_resume_id, website_resume, covering_note, visible_to_administrator, created_timestamp)
+INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, location_nationality_id, document_resume_id, website_resume, covering_note, visible_to_administrator, created_timestamp)
   SELECT
     resource.id,
     'RESPONSE',
     user.id,
+    'MALE',
+    'THIRTY_THIRTYNINE',
+    @juanLocationId,
     document.id,
     'http://www.juan.com',
     'juan',

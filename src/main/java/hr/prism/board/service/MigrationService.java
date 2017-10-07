@@ -33,6 +33,9 @@ public class MigrationService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private ResourceEventService resourceEventService;
+
     @Async
     @EventListener
     public void migrate(ContextRefreshedEvent event) {
@@ -44,6 +47,7 @@ public class MigrationService {
                         migrate("boards", boardService.findAllIds(), boardService::migrate);
                         migrate("posts", postService.findAllIds(), postService::migrate);
                         migrate("users", userService.findAllIds(), userService::migrate);
+                        migrate("resourceEvents", resourceEventService.findAllIds(), resourceEventService::migrate);
                         pending = false;
                     }
                 }
