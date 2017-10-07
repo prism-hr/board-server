@@ -3,7 +3,9 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>PRiSM</title>
+    <title>PRiSM - Board</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
 </head>
 <body>
 
@@ -16,9 +18,9 @@
     <div class="prism-header">
         <div class="logo">
             <a href="${applicationUrl}" class="navbar-brand" target="_blank"><img
-                src="${applicationUrl}/assets/prism-white.png" alt="PRiSM"></a>
+                src="${applicationUrl}/assets/prism.svg" alt="PRiSM"></a>
         </div>
-        <div class="sub-header">Jobs & Work Experience</div>
+        <div class="sub-header"> - Board</div>
     [#if options.badgeListType == "SLIDER"]
         <div class="control">
             <a class="btn control_prev"> &#60 </a>
@@ -40,10 +42,6 @@
             [#list posts as post]
                 <li>
                     [#include "board_post_partial.ftl"]
-                    <div class="prism-apply-holder">
-                        <a href="${applicationUrl}/${board.handle}/${post.id}"
-                           class="btn btn-success ng-scope" target="_blank">Read More</a>
-                    </div>
                 </li>
             [/#list]
         </ul>
