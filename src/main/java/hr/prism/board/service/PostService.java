@@ -14,7 +14,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -34,7 +33,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -95,6 +93,9 @@ public class PostService {
     @Inject
     private ActivityService activityService;
 
+    @Inject
+    private DepartmentService departmentService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -126,7 +127,8 @@ public class PostService {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
                 boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
-                PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, post, canPursue);
+                PostResponseReadinessRepresentation responseReadiness =
+                    departmentService.makePostResponseReadiness(user, (Department) post.getParent().getParent(), canPursue);
                 post.setResponseReadiness(responseReadiness);
                 if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
                     resourceEventService.createPostReferral(post, user);
@@ -241,7 +243,7 @@ public class PostService {
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
-        validatePostResponse(resourceEvent.getUser(), post, ExceptionCode.FORBIDDEN_REFERRAL);
+        departmentService.validateMembership(resourceEvent.getUser(), (Department) post.getParent().getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_REFERRAL);
 
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
@@ -257,7 +259,7 @@ public class PostService {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> {
-            validatePostResponse(user, post, ExceptionCode.FORBIDDEN_RESPONSE);
+            departmentService.validateMembership(user, (Department) post.getParent().getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
             return post;
         });
 
@@ -651,62 +653,6 @@ public class PostService {
         }
 
         resourceEventHistory.add(resourceEvent);
-    }
-
-    private void validatePostResponse(User user, Post post, ExceptionCode exceptionCode) {
-        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, post, true);
-        if (!responseReadiness.isReady()) {
-            if (responseReadiness.isRequireUserDemographicData()) {
-                throw new BoardForbiddenException(exceptionCode, "User demographic data not valid");
-            }
-
-            throw new BoardForbiddenException(exceptionCode, "User role demographic data not valid");
-        }
-    }
-
-    private PostResponseReadinessRepresentation makePostResponseReadiness(User user, Post post, boolean canPursue) {
-        PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
-        if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
-            // User data incomplete
-            responseReadiness.setRequireUserDemographicData(true);
-        }
-
-        Resource department = post.getParent().getParent();
-        if (!department.getMemberCategories().isEmpty()) {
-            // Member category required - user role data expected
-            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-            if (userRole == null) {
-                // Don't bug administrator for user role data
-                responseReadiness.setRequireUserRoleDemographicData(!canPursue);
-            } else {
-                MemberCategory memberCategory = userRole.getMemberCategory();
-                String memberProgram = userRole.getMemberProgram();
-                Integer memberYear = userRole.getMemberYear();
-                if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
-                    // User role data incomplete
-                    responseReadiness.setRequireUserRoleDemographicData(true)
-                        .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
-                } else {
-                    LocalDate academicYearStart;
-                    LocalDate baseline = LocalDate.now();
-                    if (baseline.getMonthValue() > 9) {
-                        // Academic year started this year
-                        academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
-                    } else {
-                        // Academic year started last year
-                        academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
-                    }
-
-                    if (academicYearStart.isAfter(userRole.getMemberDate())) {
-                        // User role data out of date
-                        responseReadiness.setRequireUserRoleDemographicData(true)
-                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
-                    }
-                }
-            }
-        }
-
-        return responseReadiness;
     }
 
 }

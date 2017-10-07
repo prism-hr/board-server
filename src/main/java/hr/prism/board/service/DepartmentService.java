@@ -10,12 +10,11 @@ import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardExceptionFactory;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
-import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.DocumentRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -31,10 +30,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -260,7 +262,7 @@ public class DepartmentService {
 
     public User postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
-        Resource department = resourceService.findOne(departmentId);
+        Department department = (Department) resourceService.findOne(departmentId);
 
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
         if (userRole != null) {
@@ -272,11 +274,13 @@ public class DepartmentService {
             throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION, "User has already requested membership");
         }
 
+
         UserDTO userDTO = userRoleDTO.getUser();
         userService.updateUserDemographicData(user, userDTO);
 
         userRoleDTO.setRole(Role.MEMBER);
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
+        validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
 
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
@@ -313,7 +317,7 @@ public class DepartmentService {
 
     public User putMembershipUpdate(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
-        Resource department = resourceService.findOne(departmentId);
+        Department department = (Department) resourceService.findOne(departmentId);
 
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
         if (userRole == null || userRole.getState() == State.REJECTED) {
@@ -323,6 +327,7 @@ public class DepartmentService {
         UserDTO userDTO = userRoleDTO.getUser();
         userService.updateUserDemographicData(user, userDTO);
         userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
+        validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
         return user;
     }
 
@@ -338,6 +343,61 @@ public class DepartmentService {
         }
 
         resourceService.setIndexDataAndQuarter(department);
+    }
+
+    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
+        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
+        if (!responseReadiness.isReady()) {
+            if (responseReadiness.isRequireUserDemographicData()) {
+                BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
+            }
+
+            BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
+        }
+    }
+
+    public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
+        PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
+        if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
+            // User data incomplete
+            responseReadiness.setRequireUserDemographicData(true);
+        }
+
+        if (!department.getMemberCategories().isEmpty()) {
+            // Member category required - user role data expected
+            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+            if (userRole == null) {
+                // Don't bug administrator for user role data
+                responseReadiness.setRequireUserRoleDemographicData(!canPursue);
+            } else {
+                MemberCategory memberCategory = userRole.getMemberCategory();
+                String memberProgram = userRole.getMemberProgram();
+                Integer memberYear = userRole.getMemberYear();
+                if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+                    // User role data incomplete
+                    responseReadiness.setRequireUserRoleDemographicData(true)
+                        .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
+                } else {
+                    LocalDate academicYearStart;
+                    LocalDate baseline = LocalDate.now();
+                    if (baseline.getMonthValue() > 9) {
+                        // Academic year started this year
+                        academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
+                    } else {
+                        // Academic year started last year
+                        academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
+                    }
+
+                    if (academicYearStart.isAfter(userRole.getMemberDate())) {
+                        // User role data out of date
+                        responseReadiness.setRequireUserRoleDemographicData(true)
+                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
+                    }
+                }
+            }
+        }
+
+        return responseReadiness;
     }
 
 }
