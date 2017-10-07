@@ -276,7 +276,10 @@ public class DepartmentService {
 
 
         UserDTO userDTO = userRoleDTO.getUser();
-        userService.updateUserDemographicData(user, userDTO);
+        if (userDTO != null) {
+            // We validate the membership later - avoid NPE now
+            userService.updateUserDemographicData(user, userDTO);
+        }
 
         userRoleDTO.setRole(Role.MEMBER);
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
@@ -325,7 +328,11 @@ public class DepartmentService {
         }
 
         UserDTO userDTO = userRoleDTO.getUser();
-        userService.updateUserDemographicData(user, userDTO);
+        if (userDTO != null) {
+            // We validate the membership later - avoid NPE now
+            userService.updateUserDemographicData(user, userDTO);
+        }
+
         userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
         validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
         return user;

@@ -470,7 +470,9 @@ public class DepartmentApiIT extends AbstractIT {
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2)));
+                new UserRoleDTO().setUser(new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.SIXTYFIVE_PLUS).setLocationNationality(
+                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(3).setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
@@ -527,8 +529,10 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
-            departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2)));
+            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO()
+                .setUser(new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.FIFTY_SIXTYFOUR).setLocationNationality(
+                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2).setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
@@ -581,7 +585,7 @@ public class DepartmentApiIT extends AbstractIT {
             departmentApi.postMembershipRequest(departmentId,
                 new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.FIFTY_SIXTYFOUR).setLocationNationality(
                     new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2)));
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(1).setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
@@ -653,13 +657,16 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long memberUser1Id = testUserService.authenticate().getId();
         transactionTemplate.execute(status -> {
-            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO());
+            departmentApi.postMembershipRequest(departmentId,
+                new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
+                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
             return null;
         });
 
         Long memberUser2Id = testUserService.authenticate().getId();
         transactionTemplate.execute(status -> {
-            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO());
+            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
             return null;
         });
 
