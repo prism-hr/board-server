@@ -80,10 +80,10 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private PostRepository postRepository;
 
-    private static List<Attachments> makeTestAttachments(String urlString, String name, String label) {
+    private static List<Attachments> makeTestAttachments(String name) {
         InputStream inputStream = null;
         try {
-            URL url = new URL(urlString);
+            URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
             URLConnection connection = url.openConnection();
             inputStream = connection.getInputStream();
 
@@ -92,7 +92,7 @@ public class PostApiIT extends AbstractIT {
             attachments.setType(connection.getContentType());
             attachments.setFilename(name);
             attachments.setDisposition("attachment");
-            attachments.setContentId(label);
+            attachments.setContentId("Application");
             return Collections.singletonList(attachments);
         } catch (IOException e) {
             throw new Error(e);
@@ -1125,6 +1125,9 @@ public class PostApiIT extends AbstractIT {
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER)));
 
         testUserService.setAuthentication(memberUser1);
+        departmentApi.putMembershipUpdate(departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
         PostRepresentation viewPostMemberUser1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
         String referral1 = viewPostMemberUser1.getReferral().getReferral();
@@ -1134,6 +1137,9 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
 
         testUserService.setAuthentication(memberUser2);
+        departmentApi.putMembershipUpdate(departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
         PostRepresentation viewPostMemberUser2 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
         String referral2 = viewPostMemberUser2.getReferral().getReferral();
@@ -1208,7 +1214,6 @@ public class PostApiIT extends AbstractIT {
 
         User postUser = testUserService.authenticate();
         Long postUserId = postUser.getId();
-        String postUserGivenName = postUser.getGivenName();
         String postUserEmail = postUser.getEmail();
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             TestHelper.smallSamplePost().setApplyWebsite(null).setApplyEmail(postUserEmail))).getId();
@@ -1244,6 +1249,9 @@ public class PostApiIT extends AbstractIT {
         listenForNewActivities(postUserId);
 
         testUserService.setAuthentication(memberUser1Id);
+        departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
+            new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
         Long responseId = transactionTemplate.execute(status -> postApi.postPostResponse(postId,
@@ -1258,22 +1266,24 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
-                makeTestAttachments("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf",
-                    "attachments1.pdf", "Application")));
+                makeTestAttachments("attachments1.pdf")));
         testUserActivityService.verify(postUserId, new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
         List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(1, responses.size());
-        verifyPostResponse(memberUser1Id, responses.get(0), "attachments1.pdf", "website1", "note1");
+        Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(1, responses.size());
-        verifyPostResponse(memberUser1Id, responses.get(0), null, null, null);
+        Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
 
         testUserService.setAuthentication(memberUser2Id);
+        departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
+            new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
         DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments2.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
@@ -1284,8 +1294,7 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser2.getFullName())
                     .put("coveringNote", "note2").put("profile", "website2").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
-                makeTestAttachments("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf",
-                    "attachments2.pdf", "Application")));
+                makeTestAttachments("attachments2.pdf")));
         testUserActivityService.verify(postUserId,
             new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new TestUserActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
@@ -1293,30 +1302,33 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(postUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
-        verifyPostResponse(memberUser2Id, responses.get(0), null, null, null);
-        verifyPostResponse(memberUser1Id, responses.get(1), "attachments1.pdf", "website1", "note1");
+        Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
+        Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
-        verifyPostResponse(memberUser2Id, responses.get(0), null, null, null);
-        verifyPostResponse(memberUser1Id, responses.get(1), null, null, null);
+        Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
+        Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail))));
 
         testUserService.setAuthentication(postUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
-        verifyPostResponse(memberUser2Id, responses.get(0), "attachments2.pdf", "website2", "note2");
-        verifyPostResponse(memberUser1Id, responses.get(1), "attachments1.pdf", "website1", "note1");
+        Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
+        Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(2, responses.size());
-        verifyPostResponse(memberUser2Id, responses.get(0), null, null, null);
-        verifyPostResponse(memberUser1Id, responses.get(1), null, null, null);
+        Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
+        Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
         transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
 
         testUserService.setAuthentication(memberUser3Id);
+        departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
+            new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
         DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments3.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
@@ -1326,8 +1338,7 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser3.getFullName())
                     .put("coveringNote", "note3").put("profile", "website3").put("logo", "http://www.donotfetch.com").put("globalLogo", "http://www.donotfetch.com").build(),
-                makeTestAttachments("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf",
-                    "attachments3.pdf", "Application")));
+                makeTestAttachments("attachments3.pdf")));
         testUserActivityService.verify(postUserId,
             new TestUserActivityService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new TestUserActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
@@ -1339,16 +1350,16 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(postUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(3, responses.size());
-        verifyPostResponse(memberUser3Id, responses.get(0), null, null, null);
-        verifyPostResponse(memberUser2Id, responses.get(1), "attachments2.pdf", "website2", "note2");
-        verifyPostResponse(memberUser1Id, responses.get(2), "attachments1.pdf", "website1", "note1");
+        Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
+        Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
+        Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertEquals(3, responses.size());
-        verifyPostResponse(memberUser3Id, responses.get(0), null, null, null);
-        verifyPostResponse(memberUser2Id, responses.get(1), null, null, null);
-        verifyPostResponse(memberUser1Id, responses.get(2), null, null, null);
+        Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
+        Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
+        Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
         testUserService.setAuthentication(postUserId);
         transactionTemplate.execute(status -> {
@@ -1357,7 +1368,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         ResourceEventRepresentation response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
-        verifyPostResponse(memberUser1Id, response1, "attachments1.pdf", "website1", "note1");
+        Assert.assertEquals(memberUser1Id, response1.getUser().getId());
 
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertFalse(responses.get(0).isViewed());
@@ -1373,7 +1384,7 @@ public class PostApiIT extends AbstractIT {
         });
 
         response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
-        verifyPostResponse(memberUser1Id, response1, null, null, null);
+        Assert.assertEquals(memberUser1Id, response1.getUser().getId());
 
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
         Assert.assertFalse(responses.get(0).isViewed());
@@ -1718,14 +1729,6 @@ public class PostApiIT extends AbstractIT {
         });
 
         Assert.assertEquals(expectedLocation, response.getLocation());
-    }
-
-    private void verifyPostResponse(Long userId, ResourceEventRepresentation response, String documentResumeFileName, String websiteResume, String coveringNote) {
-        Assert.assertEquals(userId, response.getUser().getId());
-        DocumentRepresentation documentResume = response.getDocumentResume();
-        Assert.assertEquals(documentResumeFileName, documentResume == null ? null : documentResume.getFileName());
-        Assert.assertEquals(websiteResume, response.getWebsiteResume());
-        Assert.assertEquals(coveringNote, response.getCoveringNote());
     }
 
     private enum PostAdminContext {

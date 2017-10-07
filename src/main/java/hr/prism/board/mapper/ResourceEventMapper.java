@@ -5,6 +5,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.ResourceEventMatch;
 import hr.prism.board.representation.ResourceEventRepresentation;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -23,6 +24,9 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
 
     @Inject
     private LocationMapper locationMapper;
+
+    @Value("${expose.response.data}")
+    private boolean exposeResponseData;
 
     @Override
     public ResourceEventRepresentation apply(ResourceEvent resourceEvent) {
@@ -51,7 +55,7 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
         representation.setMemberProgram(resourceEvent.getMemberProgram());
         representation.setMemberYear(resourceEvent.getMemberYear());
 
-        if (resourceEvent.isExposeResponseData()) {
+        if (exposeResponseData || resourceEvent.isExposeResponseData()) {
             representation.setUser(userMapper.apply(resourceEvent.getUser()));
             representation.setIpAddress(resourceEvent.getIpAddress());
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));
