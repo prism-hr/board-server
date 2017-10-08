@@ -2,12 +2,10 @@ package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
 import hr.prism.board.domain.*;
+import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.Notification;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
@@ -188,9 +186,21 @@ public class ResourceEventService {
         if (memberCategory != null) {
             memberCategoryString = memberCategory.name();
         }
-
-        resourceEvent.setIndexData(Joiner.on(" ").skipNulls().join(BoardUtils.makeSoundex(resourceEvent.getGender().name(),
-            resourceEvent.getLocationNationality().getName(), memberCategoryString, resourceEvent.getMemberProgram()), resourceEvent.getMemberYear()));
+    
+        String genderString = null;
+        Gender gender = resourceEvent.getGender();
+        if (gender != null) {
+            genderString = gender.name();
+        }
+    
+        String locationNationalityString = null;
+        Location locationNationality = resourceEvent.getLocationNationality();
+        if (locationNationality != null) {
+            locationNationalityString = locationNationality.getName();
+        }
+    
+        resourceEvent.setIndexData(Joiner.on(" ").skipNulls().join(BoardUtils.makeSoundex(genderString,
+            locationNationalityString, memberCategoryString, resourceEvent.getMemberProgram()), resourceEvent.getMemberYear()));
     }
 
     private void updateResourceEventSummary(Post post) {
