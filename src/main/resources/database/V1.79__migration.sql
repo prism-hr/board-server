@@ -1,3 +1,26 @@
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE activity;
+TRUNCATE TABLE activity_event;
+TRUNCATE TABLE activity_role;
+TRUNCATE TABLE activity_user;
+TRUNCATE TABLE document;
+TRUNCATE TABLE location;
+TRUNCATE TABLE resource;
+TRUNCATE TABLE resource_category;
+TRUNCATE TABLE resource_event;
+TRUNCATE TABLE resource_event_search;
+TRUNCATE TABLE resource_operation;
+TRUNCATE TABLE resource_relation;
+TRUNCATE TABLE resource_search;
+TRUNCATE TABLE user;
+TRUNCATE TABLE user_notification_suppression;
+TRUNCATE TABLE user_role;
+TRUNCATE TABLE user_search;
+TRUNCATE TABLE workflow;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
 SET @uclId = (
   SELECT resource.id
   FROM resource
@@ -124,6 +147,9 @@ INSERT INTO resource_operation (resource_id, action, created_timestamp, updated_
   WHERE scope IN ('DEPARTMENT', 'BOARD')
   ORDER BY id;
 
+ALTER TABLE user
+  MODIFY COLUMN email_display VARCHAR(255);
+
 INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oauth_provider, oauth_account_id, created_timestamp, updated_timestamp)
 VALUES
   ('b169293b-ac76-11e7-b423-2c600c86e54c', 'Alastair', 'Knowles', 'alastair@prism.hr', '1aff72f1f781a27944da350abd81e9eaf76fa12cf32f251ad446fbbfd8bc867c', 'SHA256', NULL, NULL,
@@ -149,9 +175,9 @@ INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oau
 VALUES
   ('1d41fd36-ac76-11e7-b423-2c600c86e54c', 'Iris', 'Luke', 'i.luke@ucl.ac.uk', '0aa56ebedfacaa0086294733c7f44712', 'MD5', NULL, NULL, '2017-10-08 23:13:31', '2017-10-08 23:13:31');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp, updated_timestamp)
-VALUES (@biochemicalId, @alastairAdminId, 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW()),
-  (@biochemicalId, last_insert_id(), 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW());
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp, updated_timestamp)
+VALUES (UUID(), @biochemicalId, @alastairAdminId, 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW()),
+  (UUID(), @biochemicalId, last_insert_id(), 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW());
 
 INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oauth_provider, oauth_account_id, created_timestamp, updated_timestamp) VALUES
   ('c92ae3f8-ac78-11e7-b423-2c600c86e54c', 'SOPHIE', 'MAYRBAEURL', 'sophie.mayrbaeurl.13@ucl.ac.uk', NULL, 'MD5', 'LINKEDIN', 'f1RJFsZSIo', '2017-10-08 23:32:38',
@@ -825,8 +851,9 @@ INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oau
   ('c92b47c0-ac78-11e7-b423-2c600c86e54c', 'Anselm', 'Lee', 'anselm.kenis@gmail.com', '501df9eae0f9f0408efacf7310b27144', 'MD5', NULL, NULL, '2017-10-08 23:32:38',
    '2017-10-08 23:32:38');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp, updated_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp, updated_timestamp)
   SELECT
+    UUID(),
     @biochemicalId,
     user.id,
     'MEMBER',
@@ -847,9 +874,9 @@ INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oau
 VALUES ('0c703a8e-ac78-11e7-b423-2c600c86e54c', 'Tim', 'Bodley-Scott', 't.bodley-scott@ucl.ac.uk', '52e960a38734bf1f75c3c70ce4b16394', 'MD5', 'LINKEDIN', 'U4IWdJe7Jw',
         '2017-10-08 23:27:21', '2017-10-08 23:27:21');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp, updated_timestamp)
-VALUES (@electricalId, @alastairAdminId, 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW()),
-  (@electricalId, last_insert_id(), 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW());
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp, updated_timestamp)
+VALUES (UUID(), @electricalId, @alastairAdminId, 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW()),
+  (UUID(), @electricalId, last_insert_id(), 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW());
 
 INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oauth_provider, oauth_account_id, created_timestamp, updated_timestamp) VALUES
   ('3c8907c0-ac7a-11e7-b423-2c600c86e54c', 'Viet Cuong', 'Vu', 'mr_vcv@hotmail.co.uk', '878d51c4047c8acd844fdb8c942794d1', 'MD5', NULL, NULL, '2017-10-08 23:43:01',
@@ -866,8 +893,9 @@ INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oau
   ('3c890ebb-ac7a-11e7-b423-2c600c86e54c', 'Filip', 'Stefanec', 'uceetef@ucl.ac.uk', 'd0907a319d5c1bbb4c25283c5d602266', 'MD5', NULL, NULL, '2017-10-08 23:43:01',
    '2017-10-08 23:43:01');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp, updated_timestamp)
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp, updated_timestamp)
   SELECT
+    UUID(),
     @electricalId,
     user.id,
     'MEMBER',
@@ -888,17 +916,9 @@ INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oau
 VALUES ('51f4bf36-ac78-11e7-b423-2c600c86e54c', 'Stephen', 'Marchant', 'stephen.marchant@ucl.ac.uk', 'e0e34c5ad05aac3eef6ab31eacbf7a5c', 'MD5', NULL, NULL, '2017-10-08 23:29:18',
         '2017-10-08 23:29:18');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp, updated_timestamp)
-VALUES (@computerId, @alastairAdminId, 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW()),
-  (@computerId, last_insert_id(), 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW());
-
-INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oauth_provider, oauth_account_id, created_timestamp, updated_timestamp) VALUES
-  ('774b4769-ac7b-11e7-b423-2c600c86e54c', 'LEWIS', 'MOFFAT', 'lewis.moffat.13@ucl.ac.uk', 'ddfa997db831b195f54e1179463e24fd', 'MD5', NULL, NULL, '2017-10-08 23:51:49',
-   '2017-10-08 23:51:49');
-
-INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oauth_provider, oauth_account_id, created_timestamp, updated_timestamp) VALUES
-  ('774b480c-ac7b-11e7-b423-2c600c86e54c', 'SAMUEL', 'HEMPHILL', 'samuel.hemphill.14@ucl.ac.uk', '55aa313840dd95bbcbfe2b1fe1eda8b0', 'MD5', 'LINKEDIN', 'igjmsObvwu',
-   '2017-10-08 23:51:49', '2017-10-08 23:51:49');
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp, updated_timestamp)
+VALUES (UUID(), @computerId, @alastairAdminId, 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW()),
+  (UUID(), @computerId, last_insert_id(), 'ADMINISTRATOR', 'ACCEPTED', NOW(), NOW());
 
 INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oauth_provider, oauth_account_id, created_timestamp, updated_timestamp) VALUES
   ('774b4879-ac7b-11e7-b423-2c600c86e54c', 'yuruo', 'zhang', 'zhangyuruo0610@gmail.com', 'c80de8ab06afa5dec05858f2ac648909', 'MD5', NULL, NULL, '2017-10-08 23:51:49',
@@ -984,8 +1004,15 @@ INSERT INTO user (uuid, given_name, surname, email, password, password_hash, oau
   ('774b4faa-ac7b-11e7-b423-2c600c86e54c', 'Kiran', 'Gopinathan', 'zcabkgo@ucl.ac.uk', '1df57e5b35d850161d52d17842b7d6f9', 'MD5', NULL, NULL, '2017-10-08 23:51:49',
    '2017-10-08 23:51:49');
 
-INSERT INTO user_role (resource_id, user_id, role, state, created_timestamp, updated_timestamp)
+UPDATE user
+SET email_display = email;
+
+ALTER TABLE user
+  MODIFY COLUMN email_display VARCHAR(255) NOT NULL;
+
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp, updated_timestamp)
   SELECT
+    UUID(),
     @computerId,
     user.id,
     'MEMBER',

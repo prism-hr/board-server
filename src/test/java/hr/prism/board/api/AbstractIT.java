@@ -24,7 +24,6 @@ import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -129,24 +128,19 @@ public abstract class AbstractIT {
     @Before
     public void before() {
         transactionTemplate = new TransactionTemplate(platformTransactionManager);
-    }
-
-    @After
-    @SuppressWarnings("unchecked")
-    public void after() {
         transactionTemplate.execute(transactionTemplate -> {
             Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
             removeForeignKeyChecks.executeUpdate();
-
+        
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
             tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
                 Query truncateTable = entityManager.createNativeQuery("DELETE FROM " + tableName);
                 truncateTable.executeUpdate();
             });
-
+        
             Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
             restoreForeignKeyChecks.executeUpdate();
-
+        
             universityService.getOrCreateUniversity(UniversityService.UNIVERSITY_COLLEGE_LONDON, UniversityService.UCL);
             return null;
         });
