@@ -39,7 +39,7 @@ public class RedirectApi {
 
         List<String> parameters = Stream.of("modal", "view", "filter", "uuid")
             .filter(param -> request.getParameter(param) != null)
-            .map(param -> param + "=" + request.getParameter(param))
+            .map(param -> param + "=" + request.getParameter(param).toLowerCase())
             .collect(Collectors.toList());
 
         String redirectUrl = appUrl + "/" + contextPath;

@@ -10,7 +10,7 @@ public class ModalProperty implements NotificationProperty {
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         User recipient = notificationRequest.getRecipient();
-        return recipient.isRegistered() ? "login" : "register";
+        return recipient.isRegistered() ? "Login" : "Register";
     }
 
 }

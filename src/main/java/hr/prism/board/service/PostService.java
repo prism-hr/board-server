@@ -328,7 +328,7 @@ public class PostService {
             ResourceEvent headResourceEvent = userResourceEvents.get(resourceEventUser);
             if (headResourceEvent == null) {
                 userResourceEvents.put(resourceEventUser, resourceEvent);
-            } else if (resourceEvent.getEvent() == hr.prism.board.enums.ResourceEvent.RESPONSE) {
+            } else if (resourceEvent.getEvent() == hr.prism.board.enums.ResourceEvent.RESPONSE || resourceEvent.hasDemographicData()) {
                 userResourceEvents.put(resourceEventUser, resourceEvent);
                 List<ResourceEvent> resourceEventHistory = new ArrayList<>();
                 resourceEventHistory.add(headResourceEvent);

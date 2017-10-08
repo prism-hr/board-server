@@ -7,7 +7,9 @@ import hr.prism.board.enums.MemberCategory;
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "resource_event")
@@ -254,6 +256,10 @@ public class ResourceEvent extends BoardEntity {
     public ResourceEvent setHistory(List<ResourceEvent> history) {
         this.history = history;
         return this;
+    }
+    
+    public boolean hasDemographicData() {
+        return Stream.of(gender, ageRange, locationNationality, memberCategory, memberProgram, memberYear).anyMatch(Objects::nonNull);
     }
 
 }

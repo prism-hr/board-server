@@ -69,6 +69,7 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
 
     private ResourceEventRepresentation applyHistory(ResourceEvent resourceEvent) {
         return new ResourceEventRepresentation()
+            .setId(resourceEvent.getId())
             .setEvent(resourceEvent.getEvent())
             .setCreatedTimestamp(resourceEvent.getCreatedTimestamp())
             .setMatch(getResourceEventMatch(resourceEvent.getUser()));

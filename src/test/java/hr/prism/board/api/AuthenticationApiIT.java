@@ -325,22 +325,22 @@ public class AuthenticationApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, user1,
                 ImmutableMap.<String, String>builder().put("recipient", user1.getGivenName()).put("department", departmentName1).put("board", boardName1)
-                    .put("post", postName1).put("resourceRedirect", resourceRedirect1).put("modal", "login").put("headerLogo", "http://www.donotfetch.com")
+                    .put("post", postName1).put("resourceRedirect", resourceRedirect1).put("modal", "Login").put("headerLogo", "http://www.donotfetch.com")
                     .put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member1,
                 ImmutableMap.<String, String>builder().put("recipient", "member1").put("department", departmentName1).put("board", boardName1).put("post", postName1)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect1)
-                    .put("invitationUuid", department1memberRole1Uuid).put("modal", "register").put("parentRedirect", parentRedirect1)
+                    .put("invitationUuid", department1memberRole1Uuid).put("modal", "Register").put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member1.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member2,
                 ImmutableMap.<String, String>builder().put("recipient", "member2").put("department", departmentName1).put("board", boardName1).put("post", postName1)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect1)
-                    .put("invitationUuid", department1memberRole2Uuid).put("modal", "register").put("parentRedirect", parentRedirect1)
+                    .put("invitationUuid", department1memberRole2Uuid).put("modal", "Register").put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member2.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member3,
                 ImmutableMap.<String, String>builder().put("recipient", "member3").put("department", departmentName1).put("board", boardName1).put("post", postName1)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect1)
-                    .put("invitationUuid", department1memberRole3Uuid).put("modal", "register").put("parentRedirect", parentRedirect1)
+                    .put("invitationUuid", department1memberRole3Uuid).put("modal", "Register").put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member3.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()));
 
         Long postId1 = postR1.getId();
@@ -416,17 +416,17 @@ public class AuthenticationApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, user2,
                 ImmutableMap.<String, String>builder().put("recipient", user2.getGivenName()).put("department", departmentName2).put("board", boardName2)
-                    .put("post", postName2).put("resourceRedirect", resourceRedirect2).put("modal", "login").put("headerLogo", "http://www.donotfetch.com")
+                    .put("post", postName2).put("resourceRedirect", resourceRedirect2).put("modal", "Login").put("headerLogo", "http://www.donotfetch.com")
                     .put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member1,
                 ImmutableMap.<String, String>builder().put("recipient", "member1").put("department", departmentName2).put("board", boardName2).put("post", postName2)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect2)
-                    .put("invitationUuid", department2memberRole1Uuid).put("modal", "login").put("parentRedirect", parentRedirect2)
+                    .put("invitationUuid", department2memberRole1Uuid).put("modal", "Login").put("parentRedirect", parentRedirect2)
                     .put("recipientUuid", member1.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member3,
                 ImmutableMap.<String, String>builder().put("recipient", "member3").put("department", departmentName2).put("board", boardName2).put("post", postName2)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect2)
-                    .put("invitationUuid", department2memberRole3Uuid).put("modal", "register").put("parentRedirect", parentRedirect2)
+                    .put("invitationUuid", department2memberRole3Uuid).put("modal", "Register").put("parentRedirect", parentRedirect2)
                     .put("recipientUuid", member3.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()));
 
         Long postId2 = postR2.getId();
@@ -497,22 +497,22 @@ public class AuthenticationApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, user3,
                 ImmutableMap.<String, String>builder().put("recipient", user3.getGivenName()).put("department", departmentName3).put("board", boardName3)
-                    .put("post", postName3).put("resourceRedirect", resourceRedirect3).put("modal", "login").put("headerLogo", "http://www.donotfetch.com")
+                    .put("post", postName3).put("resourceRedirect", resourceRedirect3).put("modal", "Login").put("headerLogo", "http://www.donotfetch.com")
                     .put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member5,
                 ImmutableMap.<String, String>builder().put("recipient", "member5").put("department", departmentName3).put("board", boardName3).put("post", postName3)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect3)
-                    .put("invitationUuid", department3memberRole1Uuid).put("modal", "register").put("parentRedirect", parentRedirect3)
+                    .put("invitationUuid", department3memberRole1Uuid).put("modal", "Register").put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member5.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member6,
                 ImmutableMap.<String, String>builder().put("recipient", "member6").put("department", departmentName3).put("board", boardName3).put("post", postName3)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect3)
-                    .put("invitationUuid", department3memberRole2Uuid).put("modal", "register").put("parentRedirect", parentRedirect3)
+                    .put("invitationUuid", department3memberRole2Uuid).put("modal", "Register").put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member6.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member7,
                 ImmutableMap.<String, String>builder().put("recipient", "member7").put("department", departmentName3).put("board", boardName3).put("post", postName3)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect3)
-                    .put("invitationUuid", department3memberRole3Uuid).put("modal", "register").put("parentRedirect", parentRedirect3)
+                    .put("invitationUuid", department3memberRole3Uuid).put("modal", "Register").put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member7.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()));
 
         Long postId3 = postR3.getId();
@@ -587,12 +587,12 @@ public class AuthenticationApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, user4,
                 ImmutableMap.<String, String>builder().put("recipient", user4.getGivenName()).put("department", departmentName4).put("board", boardName4)
-                    .put("post", postName4).put("resourceRedirect", resourceRedirect4).put("modal", "login").put("headerLogo", "http://www.donotfetch.com")
+                    .put("post", postName4).put("resourceRedirect", resourceRedirect4).put("modal", "Login").put("headerLogo", "http://www.donotfetch.com")
                     .put("footerLogo", "http://www.donotfetch.com").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member8,
                 ImmutableMap.<String, String>builder().put("recipient", "member8").put("department", departmentName4).put("board", boardName4).put("post", postName4)
                     .put("organization", "organization name").put("summary", "summary").put("resourceRedirect", resourceRedirect4)
-                    .put("invitationUuid", department4memberRole1Uuid).put("modal", "register").put("parentRedirect", parentRedirect4)
+                    .put("invitationUuid", department4memberRole1Uuid).put("modal", "Register").put("parentRedirect", parentRedirect4)
                     .put("recipientUuid", member8.getUuid()).put("headerLogo", "http://www.donotfetch.com").put("footerLogo", "http://www.donotfetch.com").build()));
 
         Long postId4 = postR4.getId();
