@@ -5,14 +5,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GlobalLogoProperty implements NotificationProperty {
-
-    @Value("${prism.logo.url}")
-    private String prismLogoUrl;
+public class FooterLogoProperty implements NotificationProperty {
+    
+    @Value("${footer.logo.url}")
+    private String footerLogoUrl;
 
     @Override
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
-        return prismLogoUrl;
+        return footerLogoUrl;
     }
 
 }

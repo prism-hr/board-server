@@ -29,6 +29,9 @@ public class IndexApi {
 
     @Value("${app.url}")
     private String appUrl;
+    
+    @Value("${social.logo.url}")
+    private String socialLogoUrl;
 
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = RequestMethod.GET)
     public String getDepartment(@PathVariable String departmentHandle, Model model) {
@@ -90,8 +93,8 @@ public class IndexApi {
         model.addAttribute("title", "Prism");
         model.addAttribute("description", "Student job board");
         model.addAttribute("url", appUrl);
-        model.addAttribute("image", appUrl + "/assets/prism-logo.png");
-        model.addAttribute("imageAlt", appUrl + "/assets/prism-logo.png");
+        model.addAttribute("image", socialLogoUrl);
+        model.addAttribute("imageAlt", socialLogoUrl);
     }
 
 }
