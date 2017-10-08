@@ -350,6 +350,7 @@ public class DepartmentService {
         }
 
         resourceService.setIndexDataAndQuarter(department);
+        userRoleCacheService.updateUserRolesSummary(department);
     }
 
     public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {

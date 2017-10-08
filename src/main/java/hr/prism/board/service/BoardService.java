@@ -13,6 +13,7 @@ import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.util.BoardUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +59,9 @@ public class BoardService {
 
     @Inject
     private PostService postService;
+    
+    @Inject
+    private UserRoleCacheService userRoleCacheService;
 
     @Inject
     private FreeMarkerConfig freemarkerConfig;
@@ -168,6 +172,7 @@ public class BoardService {
         }
 
         resourceService.setIndexDataAndQuarter(board);
+        userRoleCacheService.updateUserRolesSummary(board);
     }
 
     private Map<String, Object> createBoardBadgeModel(Board board, Department department, WidgetOptionsDTO options) {

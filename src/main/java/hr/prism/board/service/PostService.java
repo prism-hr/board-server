@@ -449,6 +449,7 @@ public class PostService {
     public void migrate(Long id) {
         Post post = (Post) resourceService.findOne(id);
         setIndexDataAndQuarter(post);
+        userRoleCacheService.updateUserRolesSummary(post);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
