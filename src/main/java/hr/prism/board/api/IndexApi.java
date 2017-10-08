@@ -31,9 +31,6 @@ public class IndexApi {
 
     @Value("${app.url}")
     private String appUrl;
-    
-    @Value("${social.logo.url}")
-    private String socialLogoUrl;
 
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = RequestMethod.GET)
     public String getDepartment(@PathVariable String departmentHandle, Model model) {
