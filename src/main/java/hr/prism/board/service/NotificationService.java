@@ -98,7 +98,7 @@ public class NotificationService {
         if (BooleanUtils.isTrue(mailOn)) {
             // Production/UAT contexts
             Mail mail = new Mail();
-            mail.setFrom(new Email(senderEmail));
+            mail.setFrom(new Email(senderEmail, "PRiSM Board"));
 
             Personalization personalization = new Personalization();
             personalization.addTo(new Email(recipientEmail));
