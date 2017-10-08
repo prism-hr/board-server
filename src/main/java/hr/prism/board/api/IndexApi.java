@@ -17,6 +17,8 @@ import javax.inject.Inject;
 
 @Controller
 public class IndexApi {
+    
+    private static final String SOCIAL_LOGO_URL = "http://res.cloudinary.com/board-prism-hr/image/upload/v1507475419/static/social.png";
 
     @Inject
     private DepartmentService departmentService;
@@ -93,8 +95,8 @@ public class IndexApi {
         model.addAttribute("title", "Prism");
         model.addAttribute("description", "Student job board");
         model.addAttribute("url", appUrl);
-        model.addAttribute("image", socialLogoUrl);
-        model.addAttribute("imageAlt", socialLogoUrl);
+        model.addAttribute("image", SOCIAL_LOGO_URL);
+        model.addAttribute("imageAlt", SOCIAL_LOGO_URL);
     }
 
 }
