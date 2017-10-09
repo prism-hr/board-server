@@ -21,10 +21,11 @@ TRUNCATE TABLE workflow;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+INSERT INTO resource (scope, state, previous_state, name, handle, index_data, created_timestamp, updated_timestamp)
+VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'University College London', 'ucl', SOUNDEX('ucl'), NOW(), NOW());
+
 SET @uclId = (
-  SELECT resource.id
-  FROM resource
-  WHERE resource.scope = 'UNIVERSITY');
+  SELECT LAST_INSERT_ID());
 
 INSERT INTO resource (parent_id, scope, state, previous_state, name, summary, created_timestamp, updated_timestamp)
 VALUES (@uclId, 'DEPARTMENT', 'ACCEPTED', 'ACCEPTED', 'Biochemical Engineering',

@@ -3,7 +3,6 @@ package hr.prism.board.api;
 import com.google.common.base.Joiner;
 import hr.prism.board.service.ResourceService;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -40,7 +39,7 @@ public class RedirectApi {
 
         List<String> parameters = Stream.of("modal", "view", "filter", "uuid")
             .filter(param -> request.getParameter(param) != null)
-            .map(param -> param + "=" + StringUtils.uncapitalize(request.getParameter(param)))
+            .map(param -> param + "=" + request.getParameter(param))
             .collect(Collectors.toList());
 
         String redirectUrl = appUrl + "/" + contextPath;
