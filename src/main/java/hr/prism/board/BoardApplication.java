@@ -78,9 +78,9 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
 
     @Value("${clean.db.on.startup}")
     private boolean cleanDbOnStartup;
-
-    @Value("${migration.on}")
-    private boolean migrationOn;
+    
+    @Value("${database.migration.on}")
+    private boolean databaseMigrationOn;
 
     public static void main(String[] args) {
         InputStream propertiesStream = null;
@@ -126,8 +126,8 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
-
-        if (migrationOn) {
+    
+        if (databaseMigrationOn) {
             flyway.setLocations("classpath:database/core", "classpath:database/migration");
         } else {
             flyway.setLocations("classpath:database.core");
