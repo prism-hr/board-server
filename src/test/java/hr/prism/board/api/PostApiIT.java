@@ -543,13 +543,13 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("department", departmentName).put("board", boardName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", boardName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         testUserActivityService.stop();
         testNotificationService.stop();
@@ -636,7 +636,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("comment", "could you please explain what you will pay the successful applicant").put("resourceRedirect", resourceRedirect).put("modal", "Login")
+                .put("comment", "could you please explain what you will pay the successful applicant").put("resourceRedirect", resourceRedirect).put("modal", "login")
                 .build()));
 
         // Check that the author can make changes and correct the post
@@ -664,10 +664,10 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", departmentUserGivenName).put("post", postName).put("department", departmentName).put("board", boardName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("post", postName).put("department", departmentName).put("board", boardName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the administrator can accept post in the suspended state
         PostPatchDTO acceptDTO = new PostPatchDTO()
@@ -687,10 +687,10 @@ public class PostApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("publicationSchedule", "imminently. We will send you a follow-up message when your post has gone live")
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
@@ -704,7 +704,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                    .put("comment", "comment").put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the administrator can make further changes and accept the post again
         PostPatchDTO acceptPendingDTO = new PostPatchDTO()
@@ -726,7 +726,7 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("publicationSchedule",
                         "on or around " + postR.getLiveTimestamp().format(BoardUtils.DATETIME_FORMATTER) + ". We will send you a follow-up message when your post has gone live")
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
@@ -834,16 +834,16 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid).build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).build()));
 
         // Check that the administrator can reject the post
@@ -865,7 +865,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                 .put("comment", "we have received a complaint, we're closing down the post").put("homeRedirect", serverUrl + "/redirect")
-                .put("modal", "Login").build()));
+                .put("modal", "login").build()));
 
         // Check that the administrator can restore the post
         PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
@@ -887,19 +887,19 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid).build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).build()));
 
         transactionTemplate.execute(status -> {
@@ -923,7 +923,7 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RETIRE_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
+                .put("resourceRedirect", resourceRedirect).put("modal", "login").build()));
 
         // Check that the author can withdraw the post
         PostPatchDTO withdrawDTO = new PostPatchDTO();
@@ -957,16 +957,16 @@ public class PostApiIT extends AbstractIT {
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
-                    .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()),
+                    .put("resourceRedirect", resourceRedirect).put("modal", "login").build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder().put("recipient", "student1").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole1.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid).build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder().put("recipient", "student2").put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
-                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
+                    .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).build()));
         testUserActivityService.stop();
         testNotificationService.stop();
