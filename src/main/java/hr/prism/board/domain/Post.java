@@ -5,7 +5,6 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
 import hr.prism.board.util.BoardUtils;
 import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -46,7 +45,6 @@ public class Post extends Resource {
     @Column(name = "existing_relation_explanation")
     private String existingRelationExplanation;
 
-    @URL
     @Column(name = "apply_website")
     private String applyWebsite;
 
