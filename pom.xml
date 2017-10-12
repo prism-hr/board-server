@@ -198,6 +198,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.rollbar</groupId>
+            <artifactId>rollbar</artifactId>
+            <version>0.5.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
