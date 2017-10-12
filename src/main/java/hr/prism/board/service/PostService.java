@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 @Service
 @Transactional
 public class PostService {
-
+    
     private static final String SIMILAR_ORGANIZATION =
         "SELECT resource.organization_name, " +
             "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
@@ -53,76 +53,76 @@ public class PostService {
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
             "LIMIT 10";
-
+    
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
-
+    
     @Inject
     private PostRepository postRepository;
-
+    
     @Inject
     private DocumentService documentService;
-
+    
     @Inject
     private LocationService locationService;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     @Inject
     private ResourcePatchService resourcePatchService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private UserRoleCacheService userRoleCacheService;
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     @Inject
     private ResourceEventService resourceEventService;
-
+    
     @Inject
     private BoardService boardService;
-
+    
     @Inject
     private ActivityService activityService;
-
+    
     @Inject
     private DepartmentService departmentService;
-
+    
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
-
+    
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
-
+    
     @Inject
     private ObjectMapper objectMapper;
-
+    
     @PersistenceContext
     private EntityManager entityManager;
-
+    
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-
+    
     public Post getPost(Long id) {
         return getPost(id, null, false);
     }
-
+    
     public Post getPost(Long id, String ipAddress, boolean recordView) {
         User user = userService.getCurrentUser();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         actionService.executeAction(user, post, Action.VIEW, () -> post);
-
+        
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
@@ -135,23 +135,19 @@ public class PostService {
                 }
             }
         }
-
+        
         decoratePost(user, post);
         return post;
     }
-
+    
     public List<Post> getByName(String name) {
         return postRepository.findByName(name);
     }
-
-    public List<Long> findAllIds() {
-        return postRepository.findAllIds();
-    }
-
+    
     public List<Post> getPosts(Long boardId) {
         return getPosts(boardId, true, null, null, null);
     }
-
+    
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
         User user = userService.getCurrentUser();
         List<Post> posts =
@@ -159,22 +155,22 @@ public class PostService {
                 ResourceService.makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
                     .setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
-
+        
         if (posts.isEmpty()) {
             return posts;
         }
-
+        
         decoratePosts(user, posts);
         return posts;
     }
-
+    
     public Post createPost(Long boardId, PostDTO postDTO) {
         User user = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(user, Scope.BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(user, board, Action.EXTEND, () -> {
             Post post = new Post();
             Department department = (Department) board.getParent();
-
+    
             post.setName(postDTO.getName());
             post.setSummary(postDTO.getSummary());
             post.setDescription(postDTO.getDescription());
@@ -183,19 +179,19 @@ public class PostService {
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
             post.setApplyWebsite(postDTO.getApplyWebsite());
             post.setApplyEmail(postDTO.getApplyEmail());
-
+    
             if (postDTO.getApplyDocument() != null) {
                 post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
             }
-
+    
             validatePostApply(post);
             post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
-
+    
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
             LocalDateTime deadTimestamp = postDTO.getDeadTimestamp();
             post.setLiveTimestamp(liveTimestamp == null ? null : liveTimestamp.truncatedTo(ChronoUnit.SECONDS));
             post.setDeadTimestamp(deadTimestamp == null ? null : deadTimestamp.truncatedTo(ChronoUnit.SECONDS));
-
+    
             post = postRepository.save(post);
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
             updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
@@ -204,15 +200,15 @@ public class PostService {
             userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
             return post;
         });
-
+        
         decoratePost(user, createdPost);
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
             throw new BoardException(ExceptionCode.MISSING_POST_EXISTING_RELATION, "Existing relation explanation required");
         }
-
+        
         return createdPost;
     }
-
+    
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User user = userService.getCurrentUserSecured();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
@@ -226,7 +222,7 @@ public class PostService {
                     userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, board, Role.AUTHOR)
                         .forEach(author -> userRoleCacheService.createUserRole(author, board, author, new UserRoleDTO(Role.AUTHOR), false));
                 }
-
+    
                 if (BoardUtils.hasUpdates(postDTO)) {
                     actionService.executeAction(user, post, Action.EDIT, () -> {
                         updatePost(post, postDTO);
@@ -234,27 +230,27 @@ public class PostService {
                     });
                 }
             }
-
+    
             decoratePost(user, post);
             return post;
         });
     }
-
+    
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
         departmentService.validateMembership(resourceEvent.getUser(), (Department) post.getParent().getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_REFERRAL);
-
+        
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
         if (post.getState() != State.ACCEPTED || redirect == null) {
             // We may no longer be redirecting - throw an exception so client can refresh
             throw new BoardException(ExceptionCode.INVALID_REFERRAL, "Post no longer accepting referrals");
         }
-
+        
         return redirect;
     }
-
+    
     public ResourceEvent postPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
@@ -262,17 +258,17 @@ public class PostService {
             departmentService.validateMembership(user, (Department) post.getParent().getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
             return post;
         });
-
+        
         actionService.executeAction(user, post, Action.PURSUE, () -> post);
         return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent).setExposeResponseData(true);
     }
-
+    
     @SuppressWarnings("JpaQlInspection")
     public Collection<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured();
         actionService.executeAction(user, post, Action.EDIT, () -> post);
-
+        
         List<Long> userIds;
         boolean targetingReferrals = post.getApplyEmail() == null;
         if (targetingReferrals) {
@@ -281,18 +277,18 @@ public class PostService {
         } else {
             userIds = userService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
         }
-
+        
         if (userIds.isEmpty()) {
             return Collections.emptyList();
         }
-
+        
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             resourceEventService.createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
-
+        
         List<ResourceEvent> resourceEvents = new TransactionTemplate(platformTransactionManager).execute(status -> {
             String statement =
                 "select distinct resourceEvent " +
@@ -303,7 +299,7 @@ public class PostService {
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
-
+            
             statement += "order by search.id, resourceEvent.id desc";
             return entityManager.createQuery(statement, ResourceEvent.class)
                 .setParameter("search", search)
@@ -311,18 +307,18 @@ public class PostService {
                 .setParameter("userIds", userIds)
                 .getResultList();
         });
-
+        
         if (searchTermApplied) {
             resourceEventService.deleteSearchResults(search);
         }
-
+        
         if (resourceEvents.isEmpty()) {
             return Collections.emptyList();
         }
-
+        
         HashMultimap<String, User> userIpAddresses = HashMultimap.create();
         Map<User, ResourceEvent> userResourceEvents = new LinkedHashMap<>();
-
+        
         resourceEvents.forEach(resourceEvent -> {
             User resourceEventUser = resourceEvent.getUser();
             ResourceEvent headResourceEvent = userResourceEvents.get(resourceEventUser);
@@ -332,75 +328,75 @@ public class PostService {
                 userResourceEvents.put(resourceEventUser, resourceEvent);
                 List<ResourceEvent> resourceEventHistory = new ArrayList<>();
                 resourceEventHistory.add(headResourceEvent);
-
+    
                 List<ResourceEvent> previousResourceEventHistory = headResourceEvent.getHistory();
                 if (previousResourceEventHistory != null) {
                     resourceEventHistory.addAll(previousResourceEventHistory);
                 }
-
+    
                 resourceEvent.setHistory(resourceEventHistory);
             } else {
                 appendToResourceEventHistory(headResourceEvent, resourceEvent);
             }
-
+            
             String ipAddress = resourceEvent.getIpAddress();
             if (ipAddress != null) {
                 userIpAddresses.put(ipAddress, resourceEventUser);
             }
         });
-
+        
         if (!userIpAddresses.isEmpty()) {
             resourceEventService.findByIpAddresses(userIpAddresses.keySet()).forEach(resourceEvent -> {
                 userIpAddresses.get(resourceEvent.getIpAddress()).forEach(resourceEventUser ->
                     appendToResourceEventHistory(userResourceEvents.get(resourceEventUser), resourceEvent));
             });
         }
-
+        
         Collection<ResourceEvent> headResourceEvents = userResourceEvents.values();
         Map<hr.prism.board.domain.Activity, ResourceEvent> indexByActivities = new HashMap<>();
         for (ResourceEvent headResourceEvent : headResourceEvents) {
             headResourceEvent.setExposeResponseData(headResourceEvent.getUser().equals(user));
-
+    
             hr.prism.board.domain.Activity activity = headResourceEvent.getActivity();
             if (activity != null) {
                 indexByActivities.put(activity, headResourceEvent);
             }
         }
-
+        
         if (!indexByActivities.isEmpty()) {
             for (hr.prism.board.domain.ActivityEvent activityEvent : activityService.findViews(indexByActivities.keySet(), user)) {
                 indexByActivities.get(activityEvent.getActivity()).setViewed(true);
             }
         }
-
+        
         return headResourceEvents;
     }
-
+    
     public ResourceEvent getPostResponse(Long postId, Long responseId) {
         return getPostResponse(userService.getCurrentUserSecured(), postId, responseId);
     }
-
+    
     public ResourceEvent putPostResponseView(Long postId, Long responseId) {
         User user = userService.getCurrentUserSecured();
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
         return resourceEvent.setViewed(true);
     }
-
+    
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void publishAndRetirePostsScheduled() {
         if (BooleanUtils.isTrue(schedulerOn)) {
             publishAndRetirePosts();
         }
     }
-
+    
     public synchronized void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> postToRetireIds = postRepository.findPostsToRetire(Arrays.asList(State.PENDING, State.ACCEPTED), baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
         List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
-
+        
         List<Long> postToModifyIds = new ArrayList<>();
         postToModifyIds.addAll(postToRetireIds);
         postToModifyIds.addAll(postToPublishIds);
@@ -408,12 +404,12 @@ public class PostService {
             boardService.updateBoardPostCounts(postToModifyIds, State.ACCEPTED.name());
         }
     }
-
+    
     public LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
         if (existingRelationExplanation == null) {
             return null;
         }
-
+        
         try {
             return objectMapper.readValue(existingRelationExplanation, new TypeReference<LinkedHashMap<String, Object>>() {
             });
@@ -421,13 +417,13 @@ public class PostService {
             throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, "Unable to deserialize existing relation explanation", e);
         }
     }
-
+    
     public LocalDateTime getEffectiveLiveTimestamp(Post post) {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime liveTimestamp = post.getLiveTimestamp();
         return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
     }
-
+    
     public List<String> findOrganizationsBySimilarName(String searchTerm) {
         List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(SIMILAR_ORGANIZATION)
@@ -437,21 +433,15 @@ public class PostService {
                 .getResultList());
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
-
+    
     public void setIndexDataAndQuarter(Post post) {
         resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
     }
-
+    
     public Post findLatestPost(User user) {
         return postRepository.findLatestPost(user, Role.ADMINISTRATOR, Scope.POST);
     }
-
-    public void migrate(Long id) {
-        Post post = (Post) resourceService.findOne(id);
-        setIndexDataAndQuarter(post);
-        userRoleCacheService.updateUserRolesSummary(post);
-    }
-
+    
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ChangeListRepresentation());
@@ -460,48 +450,48 @@ public class PostService {
         resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
-
+        
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (BoardUtils.isPresent(applyWebsite)) {
             patchPostApply(post, applyWebsite, Optional.empty(), Optional.empty());
         }
-
+        
         Optional<DocumentDTO> applyDocument = postDTO.getApplyDocument();
         if (BoardUtils.isPresent(applyDocument)) {
             patchPostApply(post, Optional.empty(), applyDocument, Optional.empty());
         }
-
+        
         Optional<String> applyEmail = postDTO.getApplyEmail();
         if (BoardUtils.isPresent(applyEmail)) {
             patchPostApply(post, Optional.empty(), Optional.empty(), applyEmail);
         }
-
+        
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
         patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
         patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
-
+        
         resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
         patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
-
+        
         Optional<LocalDateTime> liveTimestamp = postDTO.getLiveTimestamp();
         Optional<LocalDateTime> deadTimestamp = postDTO.getDeadTimestamp();
         resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
             liveTimestamp != null ? liveTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
         resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
             deadTimestamp != null ? deadTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
-
+        
         setIndexDataAndQuarter(post);
         postRepository.update(post);
     }
-
+    
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchPostApply(Post post, Optional<String> applyWebsite, Optional<DocumentDTO> applyDocument, Optional<String> applyEmail) {
         resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsite);
         resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocument);
         resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyEmail);
     }
-
+    
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchCategories(Post post, CategoryType categoryType, Optional<List<String>> categories, Resource reference) {
         if (categories != null) {
@@ -518,7 +508,7 @@ public class PostService {
             }
         }
     }
-
+    
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchExistingRelationExplanation(Post post, Optional<LinkedHashMap<String, Object>> existingRelationExplanation) {
         if (existingRelationExplanation != null) {
@@ -527,7 +517,7 @@ public class PostService {
             if (newValueMap != null) {
                 newValue = mapExistingRelationExplanation(newValueMap);
             }
-
+    
             String oldValue = post.getExistingRelationExplanation();
             if (!Objects.equals(oldValue, newValue)) {
                 post.setExistingRelationExplanation(newValue);
@@ -536,7 +526,7 @@ public class PostService {
             }
         }
     }
-
+    
     private void updateCategories(Post post, CategoryType type, List<String> categories, Resource reference) {
         // Validate the update
         if (type == CategoryType.POST) {
@@ -550,12 +540,12 @@ public class PostService {
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES,
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
         }
-
+        
         // Clear the old records
         resourceService.deleteResourceCategories(post, type);
         Set<ResourceCategory> oldCategories = post.getCategories();
         oldCategories.removeIf(next -> next.getType() == type);
-
+        
         // Index the insertion order
         Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
         if (orderIndex != null) {
@@ -567,7 +557,7 @@ public class PostService {
             });
         }
     }
-
+    
     private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
             actionService.executeInBulk(postIds, action, newState, baseline);
@@ -577,31 +567,34 @@ public class PostService {
                 if (action == Action.PUBLISH) {
                     activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
                     activities.add(new Activity().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
-                    notifications.add(new Notification().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification
+                        .PUBLISH_POST_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification
+                        .PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
                     activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification
+                        .RETIRE_POST_NOTIFICATION));
                 }
-
+    
                 activityEventService.publishEvent(this, postId, activities);
                 notificationEventService.publishEvent(this, postId, notifications);
             }
         }
     }
-
+    
     private String mapExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
         if (existingRelationExplanation == null) {
             return null;
         }
-
+        
         try {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
             throw new BoardException(ExceptionCode.CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, "Unable to serialize existing relation explanation", e);
         }
     }
-
+    
     private void validatePostApply(Post post) {
         long applyCount = Stream.of(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail()).filter(Objects::nonNull).count();
         if (applyCount == 0) {
@@ -610,7 +603,7 @@ public class PostService {
             throw new BoardException(ExceptionCode.CORRUPTED_POST_APPLY, "Multiple apply mechanisms specified");
         }
     }
-
+    
     private ResourceEvent getPostResponse(User user, Long postId, Long responseId) {
         Post post = getPost(postId);
         actionService.executeAction(user, post, Action.EDIT, () -> post);
@@ -618,7 +611,7 @@ public class PostService {
         resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
         return resourceEvent;
     }
-
+    
     private void decoratePost(User user, Post post) {
         if (user != null) {
             entityManager.flush();
@@ -627,7 +620,7 @@ public class PostService {
             post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user));
         }
     }
-
+    
     private void decoratePosts(User user, List<Post> posts) {
         if (user != null) {
             entityManager.flush();
@@ -636,7 +629,7 @@ public class PostService {
                 .stream().collect(Collectors.toMap(ResourceEvent::getResource, referral -> referral));
             Map<Resource, ResourceEvent> responses = resourceEventService.findByResourceIdsAndEventAndUser(posts, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
                 .stream().collect(Collectors.toMap(ResourceEvent::getResource, referral -> referral));
-
+    
             for (Map.Entry<Post, Post> postIndexEntry : postIndex.entrySet()) {
                 Post post = postIndexEntry.getValue();
                 post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
@@ -645,15 +638,15 @@ public class PostService {
             }
         }
     }
-
+    
     private void appendToResourceEventHistory(ResourceEvent headResourceEvent, ResourceEvent resourceEvent) {
         List<ResourceEvent> resourceEventHistory = headResourceEvent.getHistory();
         if (resourceEventHistory == null) {
             resourceEventHistory = new ArrayList<>();
             headResourceEvent.setHistory(resourceEventHistory);
         }
-
+        
         resourceEventHistory.add(resourceEvent);
     }
-
+    
 }

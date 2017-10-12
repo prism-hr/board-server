@@ -10,12 +10,6 @@ import java.util.List;
 public interface DepartmentRepository extends MyRepository<Department, Long> {
 
     @Query(value =
-        "select department.id " +
-            "from Department department " +
-            "order by department.id")
-    List<Long> findAllIds();
-
-    @Query(value =
         "select department " +
             "from Department department " +
             "where department.id = :id " +
