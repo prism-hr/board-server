@@ -126,17 +126,11 @@ public class PostService {
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
             if (user != null) {
-                boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
-                PostResponseReadinessRepresentation responseReadiness =
-                    departmentService.makePostResponseReadiness(user, (Department) post.getParent().getParent(), canPursue);
-                post.setResponseReadiness(responseReadiness);
-                if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
-                    resourceEventService.createPostReferral(post, user);
-                }
+                addPostResponseReadiness(post, user);
             }
         }
-        
-        decoratePost(user, post);
+
+        addPostResponse(post, user);
         return post;
     }
     
@@ -200,8 +194,9 @@ public class PostService {
             userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
             return post;
         });
-        
-        decoratePost(user, createdPost);
+
+        addPostResponseReadiness(createdPost, user);
+        addPostResponse(createdPost, user);
         if (createdPost.getState() == State.DRAFT && createdPost.getExistingRelation() == null) {
             throw new BoardException(ExceptionCode.MISSING_POST_EXISTING_RELATION, "Existing relation explanation required");
         }
@@ -230,8 +225,9 @@ public class PostService {
                     });
                 }
             }
-    
-            decoratePost(user, post);
+
+            addPostResponseReadiness(post, user);
+            addPostResponse(post, user);
             return post;
         });
     }
@@ -567,14 +563,11 @@ public class PostService {
                 if (action == Action.PUBLISH) {
                     activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
                     activities.add(new Activity().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification
-                        .PUBLISH_POST_NOTIFICATION));
-                    notifications.add(new Notification().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification
-                        .PUBLISH_POST_MEMBER_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
                     activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification
-                        .RETIRE_POST_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
     
                 activityEventService.publishEvent(this, postId, activities);
@@ -611,8 +604,18 @@ public class PostService {
         resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
         return resourceEvent;
     }
-    
-    private void decoratePost(User user, Post post) {
+
+    private void addPostResponseReadiness(Post post, User user) {
+        boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
+        PostResponseReadinessRepresentation responseReadiness =
+            departmentService.makePostResponseReadiness(user, (Department) post.getParent().getParent(), canPursue);
+        post.setResponseReadiness(responseReadiness);
+        if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
+            resourceEventService.createPostReferral(post, user);
+        }
+    }
+
+    private void addPostResponse(Post post, User user) {
         if (user != null) {
             entityManager.flush();
             post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
