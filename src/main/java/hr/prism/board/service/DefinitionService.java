@@ -19,6 +19,9 @@ public class DefinitionService {
     @SuppressWarnings("unchecked")
     private TreeMap<String, Object> definitions;
 
+    @Value("${profile}")
+    private String profile;
+
     @Value("${app.url}")
     private String appUrl;
 
@@ -40,6 +43,7 @@ public class DefinitionService {
                 this.definitions.put(getDefinitionKey(definitionClass), values);
             });
 
+            this.definitions.put("profile", profile);
             this.definitions.put("applicationUrl", appUrl);
             this.definitions.put("cloudinaryFolder", cloudinaryFolder);
             List<Map<String, Object>> oauthProviders = new ArrayList<>();

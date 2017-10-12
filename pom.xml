@@ -283,7 +283,7 @@
             <plugin>
                 <groupId>cz.habarta.typescript-generator</groupId>
                 <artifactId>typescript-generator-maven-plugin</artifactId>
-                <version>1.23.311</version>
+                <version>1.28.343</version>
                 <executions>
                     <execution>
                         <id>generate</id>
@@ -368,7 +368,8 @@
                 <profile.app.url>http://board-uat.prism.hr</profile.app.url>
                 <profile.server.url>http://board-uat.prism.hr/api</profile.server.url>
                 <profile.database.host>board-uat.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.sendgrid.key>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</profile.sendgrid.key>
+                <profile.sendgrid.key>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
+                </profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>d4da5d66c6d3e8a2cb2dc86552296b27</profile.auth.facebook.appSecret>
                 <profile.auth.facebook.clientId>238056723346095</profile.auth.facebook.clientId>
                 <profile.auth.linkedin.appSecret>qqbWOxibjsuCetzN</profile.auth.linkedin.appSecret>
@@ -386,7 +387,8 @@
                 <profile.app.url>https://board.prism.hr</profile.app.url>
                 <profile.server.url>https://board.prism.hr/api</profile.server.url>
                 <profile.database.host>board.cd4p8rv23vn5.eu-west-1.rds.amazonaws.com:3306</profile.database.host>
-                <profile.sendgrid.key>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</profile.sendgrid.key>
+                <profile.sendgrid.key>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
+                </profile.sendgrid.key>
                 <profile.auth.facebook.appSecret>74505e66db6f87c53d8a5baf4d01062d</profile.auth.facebook.appSecret>
                 <profile.auth.facebook.clientId>237813276703773</profile.auth.facebook.clientId>
                 <profile.auth.linkedin.appSecret>CETAZgHuCY0EauA8</profile.auth.linkedin.appSecret>
@@ -396,5 +398,9 @@
             </properties>
         </profile>
     </profiles>
+
+    <prerequisites>
+        <maven>3.0</maven>
+    </prerequisites>
 
 </project>
