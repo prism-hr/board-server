@@ -7,6 +7,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
@@ -64,6 +65,10 @@ public class ActionService {
     private ApplicationContext applicationContext;
 
     public Resource executeAction(User user, Resource resource, Action action, Execution execution) {
+        if (resource == null) {
+            throw new BoardNotFoundException(ExceptionCode.RESOURCE_NOT_FOUND);
+        }
+        
         List<ActionRepresentation> actions = resource.getActions();
         if (actions != null) {
             for (ActionRepresentation actionRepresentation : actions) {
