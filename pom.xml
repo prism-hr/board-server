@@ -200,7 +200,13 @@
         <dependency>
             <groupId>com.rollbar</groupId>
             <artifactId>rollbar</artifactId>
-            <version>0.5.3</version>
+            <version>0.5.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.tapstream</groupId>
+            <artifactId>rollbar-logback</artifactId>
+            <version>0.1.4</version>
         </dependency>
 
         <dependency>

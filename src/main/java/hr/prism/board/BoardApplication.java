@@ -1,5 +1,8 @@
 package hr.prism.board;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.filter.LevelFilter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -7,6 +10,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Joiner;
 import com.sendgrid.SendGrid;
+import com.tapstream.rollbar.RollbarAppender;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import freemarker.template.TemplateException;
@@ -65,6 +69,8 @@ import java.util.concurrent.Executors;
 @Import(SecurityConfiguration.class)
 public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncConfigurer, SchedulingConfigurer {
 
+    private static final String ROLLBAR_APIKEY = "f22ab8d8627945fcb587d757fc4e6a71";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
     @Value("${database.host}")
@@ -78,7 +84,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
 
     @Value("${clean.db.on.startup}")
     private boolean cleanDbOnStartup;
-    
+
     @Value("${database.migration.on}")
     private boolean databaseMigrationOn;
 
@@ -90,8 +96,25 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
             propertiesStream = classLoader.getResourceAsStream("application.properties");
             properties.load(propertiesStream);
 
+            String profile = properties.get("profile").toString();
+            if ("uat".equals(profile) || "prod".equals(profile)) {
+                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+                RollbarAppender rollbarAppender = new RollbarAppender();
+                rollbarAppender.setApiKey(ROLLBAR_APIKEY);
+                rollbarAppender.setEnvironment(profile);
+                rollbarAppender.setContext(loggerContext);
+
+                LevelFilter levelFilter = new LevelFilter();
+                levelFilter.setLevel(Level.ERROR);
+                levelFilter.setContext(loggerContext);
+                levelFilter.start();
+                
+                rollbarAppender.addFilter(levelFilter);
+                rollbarAppender.start();
+            }
+
             SpringApplication springApplication = new SpringApplication(BoardApplication.class);
-            springApplication.setAdditionalProfiles(properties.get("profile").toString());
+            springApplication.setAdditionalProfiles(profile);
             springApplication.run(args);
         } catch (Exception e) {
             LOGGER.error("Unable to start application", e);
@@ -126,7 +149,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
     public Flyway flyway(DataSource dataSource) {
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
-    
+
         if (databaseMigrationOn) {
             flyway.setLocations("classpath:database/core", "classpath:database/migration");
         } else {
