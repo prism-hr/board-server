@@ -2,7 +2,7 @@ package hr.prism.board;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.filter.LevelFilter;
+import ch.qos.logback.classic.filter.ThresholdFilter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -108,12 +108,12 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
                 rollbarAppender.setEnvironment(profile);
                 rollbarAppender.setContext(loggerContext);
 
-                LevelFilter levelFilter = new LevelFilter();
-                levelFilter.setLevel(Level.ERROR);
-                levelFilter.setContext(loggerContext);
-                levelFilter.start();
+                ThresholdFilter thresholdFilter = new ThresholdFilter();
+                thresholdFilter.setLevel(Level.ERROR.levelStr);
+                thresholdFilter.setContext(loggerContext);
+                thresholdFilter.start();
 
-                rollbarAppender.addFilter(levelFilter);
+                rollbarAppender.addFilter(thresholdFilter);
                 ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
                 rootLogger.addAppender(rollbarAppender);
                 rollbarAppender.start();
