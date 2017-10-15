@@ -50,6 +50,8 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
                 responseStatus = HttpStatus.CONFLICT;
             } else if (exceptionClass == BoardNotModifiedException.class) {
                 responseStatus = HttpStatus.NOT_MODIFIED;
+            } else if (exceptionClass == BoardNotFoundException.class) {
+                responseStatus = HttpStatus.NOT_FOUND;
             }
         }
 

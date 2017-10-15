@@ -39,7 +39,7 @@ import java.util.*;
 @Service
 @Transactional
 public class UserService {
-
+    
     @SuppressWarnings("SqlResolve")
     private static final String USER_SEARCH_STATEMENT =
         "SELECT user.id, user.given_name, user.surname, user.email_display, document_image.cloudinary_id, document_image.cloudinary_url, document_image.file_name " +
@@ -52,52 +52,52 @@ public class UserService {
             "OR user.email LIKE :searchTerm " +
             "ORDER BY user.given_name, user.surname, user.email " +
             "LIMIT 10";
-
+    
     @Inject
     private UserRepository userRepository;
-
+    
     @Inject
     private UserSearchRepository userSearchRepository;
-
+    
     @Inject
     private UserCacheService userCacheService;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     @Inject
     private UserPatchService userPatchService;
-
+    
     @Inject
     private LocationService locationService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private PostService postService;
-
+    
     @PersistenceContext
     private EntityManager entityManager;
-
+    
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-
+    
     @Value("${password.reset.timeout.seconds}")
     private Long passwordResetTimeoutSeconds;
-
+    
     public User getCurrentUser() {
         return getCurrentUser(false);
     }
-
+    
     public User getCurrentUserSecured() {
         return getCurrentUserSecured(false);
     }
-
+    
     public User getUserForRepresentation() {
         User user = getCurrentUserSecured().setRevealEmail(true);
         if (!userRoleService.hasAdministratorRole(user)) {
@@ -108,23 +108,19 @@ public class UserService {
                 user.setDefaultLocation(latestPost.getLocation());
             }
         }
-
+        
         return user;
     }
-
+    
     public User findByUuid(String uuid) {
         return userRepository.findByUuid(uuid);
     }
-
-    public List<Long> findAllIds() {
-        return userRepository.findAllIds();
-    }
-
+    
     public User updateUser(UserPatchDTO userDTO) {
         User user = getCurrentUserSecured(true);
         userPatchService.patchProperty(user, user::getGivenName, user::setGivenName, userDTO.getGivenName());
         userPatchService.patchProperty(user, user::getSurname, user::setSurname, userDTO.getSurname());
-
+        
         Optional<String> emailOptional = userDTO.getEmail();
         if (emailOptional != null) {
             if (emailOptional.isPresent()) {
@@ -139,7 +135,7 @@ public class UserService {
                 throw new BoardException(ExceptionCode.MISSING_USER_EMAIL, "Cannot unset email address");
             }
         }
-
+        
         userPatchService.patchDocument(user, user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
         userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState, userDTO.getDocumentImageRequestState());
         userPatchService.patchProperty(user, user::getGender, user::setGender, userDTO.getGender());
@@ -149,58 +145,58 @@ public class UserService {
         userPatchService.patchProperty(user, user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
         return userCacheService.updateUser(user);
     }
-
+    
     public void updateUserDemographicData(User user, UserDTO userDTO) {
         Gender gender = userDTO.getGender();
         if (gender != null) {
             user.setGender(gender);
         }
-
+        
         AgeRange ageRange = userDTO.getAgeRange();
         if (ageRange != null) {
             user.setAgeRange(ageRange);
         }
-
+        
         LocationDTO locationNationality = userDTO.getLocationNationality();
         if (locationNationality != null) {
             user.setLocationNationality(locationService.getOrCreateLocation(locationNationality));
         }
     }
-
+    
     public void updateUserResume(User user, Document documentResume, String websiteResume) {
         user.setDocumentResume(documentResume);
         user.setWebsiteResume(websiteResume);
     }
-
+    
     public void resetPassword(UserPasswordDTO userPasswordDTO) {
         String uuid = userPasswordDTO.getUuid();
         User user = userRepository.findByPasswordResetUuid(uuid);
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET, "Invalid password reset token");
         }
-
+        
         LocalDateTime baseline = LocalDateTime.now();
         if (user.getPasswordResetTimestamp().plusSeconds(passwordResetTimeoutSeconds).isBefore(baseline)) {
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PASSWORD_RESET, "Expired password reset token");
         }
-
+        
         user.setPassword(DigestUtils.sha256Hex(userPasswordDTO.getPassword()));
         user.setPasswordHash(PasswordHash.SHA256);
         user.setPasswordResetUuid(null);
         user.setPasswordResetTimestamp(null);
     }
-
+    
     public User getOrCreateUser(UserDTO userDTO, UserFinder userFinder) {
         User user = null;
         if (userDTO.getId() != null) {
             user = userRepository.findOne(userDTO.getId());
         }
-
+        
         String email = userDTO.getEmail();
         if (user == null && email != null) {
             user = userFinder.getByEmail(email);
         }
-
+        
         if (user == null) {
             user = new User();
             user.setUuid(UUID.randomUUID().toString());
@@ -211,38 +207,39 @@ public class UserService {
             userCacheService.setIndexData(user);
             return user;
         }
-
+        
         return user;
     }
-
+    
     public List<Long> findByResourceAndUserIds(Resource resource, Collection<Long> userIds) {
         return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
-
+    
     public List<UserNotification> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRole(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
     }
-
+    
     public List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
-        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategory(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, LocalDate.now());
+        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategory(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, LocalDate.now
+            ());
     }
-
+    
     public List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {
         return userRepository.findByRoleWithoutRole(resource, role, withoutResource, withoutRole);
     }
-
+    
     @SuppressWarnings("unchecked")
     public List<UserRepresentation> findBySimilarNameAndEmail(Scope scope, Long resourceId, String searchTerm) {
         // Apply security to the lookup request
         User currentUser = getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
-
+        
         List<Object[]> results = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
                 .setParameter("searchTerm", searchTerm + "%")
                 .getResultList());
-
+        
         List<UserRepresentation> userRepresentations = new ArrayList<>();
         for (Object[] result : results) {
             UserRepresentation userRepresentation = new UserRepresentation();
@@ -250,7 +247,7 @@ public class UserService {
             userRepresentation.setGivenName(result[1].toString());
             userRepresentation.setSurname(result[2].toString());
             userRepresentation.setEmail(result[3].toString());
-
+    
             Object cloudinaryId = result[4];
             if (cloudinaryId != null) {
                 DocumentRepresentation documentRepresentation = new DocumentRepresentation();
@@ -259,64 +256,57 @@ public class UserService {
                 documentRepresentation.setFileName(result[6].toString());
                 userRepresentation.setDocumentImage(documentRepresentation);
             }
-
+    
             userRepresentations.add(userRepresentation);
         }
-
+        
         return userRepresentations;
     }
-
+    
     public User getCurrentUser(boolean fresh) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
         }
-
+        
         if (fresh) {
             return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
         }
-
+        
         return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
     }
-
+    
     public User getCurrentUserSecured(boolean fresh) {
         User user = getCurrentUser(fresh);
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "User cannot be authenticated");
         }
-
+        
         return user;
     }
-
+    
     public List<Long> findByResourceAndRoleAndStates(Resource resource, List<Role> roles, State state) {
         return userRepository.findByResourceAndRolesAndState(resource, roles, state);
     }
-
+    
     public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
         return userRepository.findByResourceAndEvent(resource, event);
     }
-
+    
     public List<Long> findByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
         return userRepository.findByResourceAndEvents(resource, events);
     }
-
+    
     public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
         userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
     }
-
+    
     public void deleteSearchResults(String search) {
         userSearchRepository.deleteBySearch(search);
     }
-
-    public void migrate(Long id) {
-        User user = userCacheService.findOneFresh(id);
-        userCacheService.setIndexData(user);
-        // Reset email to trigger setting display value
-        user.setEmail(user.getEmail());
-    }
-
+    
     public interface UserFinder {
         User getByEmail(String email);
     }
-
+    
 }

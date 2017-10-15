@@ -12,22 +12,16 @@ import java.util.List;
 
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
 public interface ResourceEventRepository extends MyRepository<ResourceEvent, Long> {
-
-    @Query(value =
-        "select resourceEvent.id " +
-            "from ResourceEvent resourceEvent " +
-            "order by resourceEvent.id")
-    List<Long> findAllIds();
-
+    
     ResourceEvent findByReferral(String referral);
-
+    
     @Query(value =
         "select resourceEvent " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.id in (:ids)")
     List<ResourceEvent> findOnes(@Param("ids") List<Long> ids);
-
-
+    
+    
     @Query(value =
         "select resourceEvent " +
             "from ResourceEvent resourceEvent " +
@@ -35,7 +29,7 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.ipAddress in (:ipAddresses) " +
             "and resourceEvent.user is null")
     List<ResourceEvent> findByEventAndIpAddresses(@Param("event") hr.prism.board.enums.ResourceEvent event, @Param("ipAddresses") Collection<String> ipAddresses);
-
+    
     @Query(value =
         "select max(resourceEvent.id) " +
             "from ResourceEvent resourceEvent " +
@@ -43,8 +37,9 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.event = :event " +
             "and resourceEvent.user = :user " +
             "group by resourceEvent.resource")
-    <T extends Resource> List<Long> findMaxIdsByResourcesAndEventAndUser(@Param("resources") List<T> resources, @Param("event") hr.prism.board.enums.ResourceEvent event, @Param("user") User user);
-
+    <T extends Resource> List<Long> findMaxIdsByResourcesAndEventAndUser(@Param("resources") List<T> resources, @Param("event") hr.prism.board.enums.ResourceEvent event, @Param
+        ("user") User user);
+    
     @Query(value =
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, count(distinct resourceEvent.user), max(resourceEvent.createdTimestamp)) " +
             "from ResourceEvent resourceEvent " +
@@ -53,7 +48,7 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.referral is null " +
             "group by resourceEvent.event")
     List<ResourceEventSummary> findUserSummaryByResource(@Param("resource") Resource resource);
-
+    
     @Query(value =
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, count(distinct resourceEvent.ipAddress), max(resourceEvent.createdTimestamp)) " +
             "from ResourceEvent resourceEvent " +
@@ -62,5 +57,5 @@ public interface ResourceEventRepository extends MyRepository<ResourceEvent, Lon
             "and resourceEvent.referral is null " +
             "group by resourceEvent.event")
     List<ResourceEventSummary> findIpAddressSummaryByResource(@Param("resource") Resource resource);
-
+    
 }

@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 @Transactional
 @SuppressWarnings("SqlResolve")
 public class DepartmentService {
-
+    
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
             "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
@@ -54,7 +54,7 @@ public class DepartmentService {
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
             "LIMIT 10";
-
+    
     private static final String SIMILAR_DEPARTMENT_PROGRAM =
         "SELECT user_role.member_program, " +
             "IF(user_role.member_program LIKE :searchTermHard, 1, 0) AS similarityHard, " +
@@ -65,61 +65,61 @@ public class DepartmentService {
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, user_role.member_program " +
             "LIMIT 10";
-
+    
     @Inject
     private DepartmentRepository departmentRepository;
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private DocumentService documentService;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     @Inject
     private ResourcePatchService resourcePatchService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private UserRoleCacheService userRoleCacheService;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     @Inject
     private ActivityService activityService;
-
+    
     @Inject
     private UserRoleEventService userRoleEventService;
-
+    
     @Inject
     private UniversityService universityService;
-
+    
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
-
+    
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
-
+    
     @PersistenceContext
     private EntityManager entityManager;
-
+    
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-
+    
     public Department getDepartment(Long id) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, Action.VIEW, () -> department);
     }
-
+    
     public Department getDepartment(String handle) {
         User currentUser = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, handle);
@@ -128,11 +128,7 @@ public class DepartmentService {
         }
         return null;
     }
-
-    public List<Long> findAllIds() {
-        return departmentRepository.findAllIds();
-    }
-
+    
     public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -143,30 +139,30 @@ public class DepartmentService {
                 .setOrderStatement("resource.name"))
             .stream().map(resource -> (Department) resource).collect(Collectors.toList());
     }
-
+    
     public Department createDepartment(DepartmentDTO departmentDTO) {
         User currentUser = userService.getCurrentUserSecured();
         resourceService.validateUniqueName(Scope.DEPARTMENT, null, null, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
         return getOrCreateDepartment(currentUser, departmentDTO);
     }
-
+    
     public Department getOrCreateDepartment(User currentUser, DepartmentDTO departmentDTO) {
         Long id = departmentDTO.getId();
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
-
+        
         Department departmentById = null;
         Department departmentByName = null;
         for (Department department : departmentRepository.findByIdOrName(id, name)) {
             if (department.getId().equals(id)) {
                 departmentById = department;
             }
-
+    
             if (department.getName().equals(name)) {
                 departmentByName = department;
                 break;
             }
         }
-
+        
         if (departmentById != null) {
             return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentById.getId());
         } else if (departmentByName != null) {
@@ -179,12 +175,12 @@ public class DepartmentService {
             if (departmentDTO.getDocumentLogo() != null) {
                 department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
             }
-
+            
             Resource university = universityService.getOrCreateUniversity(UniversityService.UNIVERSITY_COLLEGE_LONDON, UniversityService.UCL);
             String handle = resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle);
             resourceService.updateHandle(department, handle);
             department = departmentRepository.save(department);
-
+            
             resourceService.updateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
             resourceService.createResourceRelation(university, department);
             resourceService.setIndexDataAndQuarter(department);
@@ -193,7 +189,7 @@ public class DepartmentService {
             return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
         }
     }
-
+    
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
@@ -209,7 +205,7 @@ public class DepartmentService {
             return department;
         });
     }
-
+    
     public List<DepartmentRepresentation> findBySimilarName(String searchTerm) {
         List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
@@ -218,7 +214,7 @@ public class DepartmentService {
                 .setParameter("scope", Scope.DEPARTMENT.name())
                 .setParameter("state", State.ACCEPTED.name())
                 .getResultList());
-
+        
         List<DepartmentRepresentation> departmentRepresentations = new ArrayList<>();
         for (Object[] row : rows) {
             DepartmentRepresentation departmentRepresentation =
@@ -229,13 +225,13 @@ public class DepartmentService {
                     new DocumentRepresentation().setCloudinaryId(cloudinaryId.toString()).setCloudinaryUrl(row[3].toString()).setFileName(row[4].toString());
                 departmentRepresentation.setDocumentLogo(documentLogoRepresentation);
             }
-
+    
             departmentRepresentations.add(departmentRepresentation);
         }
-
+        
         return departmentRepresentations;
     }
-
+    
     public List<String> findProgramsBySimilarName(Long departmentId, String searchTerm) {
         List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(SIMILAR_DEPARTMENT_PROGRAM)
@@ -245,12 +241,12 @@ public class DepartmentService {
                 .getResultList());
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
-
+    
     public Department postMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
         if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != Role.MEMBER)) {
             throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER, "Only members can be bulk created");
         }
-
+        
         User currentUser = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
@@ -259,42 +255,42 @@ public class DepartmentService {
             return department;
         });
     }
-
+    
     public User postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(departmentId);
-
+        
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
         if (userRole != null) {
             if (userRole.getState() == State.REJECTED) {
                 // User has been rejected already, don't let them be a nuisance by repeatedly retrying
                 throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION, "User has already been rejected as a member");
             }
-
+    
             throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION, "User has already requested membership");
         }
-
-
+        
+        
         UserDTO userDTO = userRoleDTO.getUser();
         if (userDTO != null) {
             // We validate the membership later - avoid NPE now
             userService.updateUserDemographicData(user, userDTO);
         }
-
+        
         userRoleDTO.setRole(Role.MEMBER);
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
         validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
-
+        
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
         activityEventService.publishEvent(this, departmentId, userRole, Collections.singletonList(activity));
-
+        
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
         return user;
     }
-
+    
     public UserRole viewMembershipRequest(Long departmentId, Long userId) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
@@ -303,7 +299,7 @@ public class DepartmentService {
         activityService.viewActivity(userRole.getActivity(), user);
         return userRole.setViewed(true);
     }
-
+    
     public void putMembershipRequest(Long departmentId, Long userId, State state) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
@@ -313,64 +309,53 @@ public class DepartmentService {
                 userRole.setState(state);
                 activityEventService.publishEvent(this, departmentId, userRole.getId());
             }
-
+    
             return department;
         });
     }
-
+    
     public User putMembershipUpdate(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(departmentId);
-
+        
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
         if (userRole == null || userRole.getState() == State.REJECTED) {
             throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION, "User is not a member");
         }
-
+        
         UserDTO userDTO = userRoleDTO.getUser();
         if (userDTO != null) {
             // We validate the membership later - avoid NPE now
             userService.updateUserDemographicData(user, userDTO);
         }
-
+        
         userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
         validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
         return user;
     }
-
+    
     public void decrementMemberCountPending(Long departmentId) {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
-
-    public void migrate(Long id) {
-        Department department = (Department) resourceService.findOne(id);
-        if (department.getHandle() == null) {
-            String handle = resourceService.createHandle(department.getParent(), department.getName(), departmentRepository::findHandleByLikeSuggestedHandle);
-            department.setHandle(handle);
-        }
-
-        resourceService.setIndexDataAndQuarter(department);
-        userRoleCacheService.updateUserRolesSummary(department);
-    }
-
+    
     public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
         PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
         if (!responseReadiness.isReady()) {
             if (responseReadiness.isRequireUserDemographicData()) {
                 BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
             }
-
+    
             BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
         }
     }
-
+    
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
         PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
             // User data incomplete
             responseReadiness.setRequireUserDemographicData(true);
         }
-
+        
         if (!department.getMemberCategories().isEmpty()) {
             // Member category required - user role data expected
             UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
@@ -395,7 +380,7 @@ public class DepartmentService {
                         // Academic year started last year
                         academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
                     }
-
+    
                     if (academicYearStart.isAfter(userRole.getMemberDate())) {
                         // User role data out of date
                         responseReadiness.setRequireUserRoleDemographicData(true)
@@ -404,8 +389,8 @@ public class DepartmentService {
                 }
             }
         }
-
+        
         return responseReadiness;
     }
-
+    
 }

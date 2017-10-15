@@ -9,20 +9,14 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface BoardRepository extends MyRepository<Board, Long> {
-
-    @Query(value =
-        "select board.id " +
-            "from Board board " +
-            "order by board.id")
-    List<Long> findAllIds();
-
+    
     @Query(value =
         "select board.handle " +
             "from Board board " +
             "where board.handle like concat('%', :suggestedHandle) " +
             "order by board.handle desc")
     List<String> findHandleLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
-
+    
     @Modifying
     @Query(value =
         "UPDATE resource " +
@@ -40,5 +34,5 @@ public interface BoardRepository extends MyRepository<Board, Long> {
             "SET resource.post_count = post_summary.post_count",
         nativeQuery = true)
     void updateBoardPostCounts(@Param("postIds") List<Long> postIds, @Param("state") String state);
-
+    
 }
