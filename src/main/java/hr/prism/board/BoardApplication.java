@@ -69,8 +69,6 @@ import java.util.concurrent.Executors;
 @Import(SecurityConfiguration.class)
 public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncConfigurer, SchedulingConfigurer {
 
-    private static final String ROLLBAR_APIKEY = "f22ab8d8627945fcb587d757fc4e6a71";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
     @Value("${database.host}")
@@ -104,7 +102,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
             if ("uat".equals(profile) || "prod".equals(profile)) {
                 LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
                 RollbarAppender rollbarAppender = new RollbarAppender();
-                rollbarAppender.setApiKey(ROLLBAR_APIKEY);
+                rollbarAppender.setApiKey("f22ab8d8627945fcb587d757fc4e6a71");
                 rollbarAppender.setEnvironment(profile);
                 rollbarAppender.setContext(loggerContext);
 
