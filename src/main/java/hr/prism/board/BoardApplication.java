@@ -97,6 +97,10 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
             properties.load(propertiesStream);
 
             String profile = properties.get("profile").toString();
+            SpringApplication springApplication = new SpringApplication(BoardApplication.class);
+            springApplication.setAdditionalProfiles(profile);
+            springApplication.run(args);
+
             if ("uat".equals(profile) || "prod".equals(profile)) {
                 LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
                 RollbarAppender rollbarAppender = new RollbarAppender();
@@ -105,7 +109,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
                 rollbarAppender.setContext(loggerContext);
 
                 LevelFilter levelFilter = new LevelFilter();
-                levelFilter.setLevel(Level.INFO);
+                levelFilter.setLevel(Level.ERROR);
                 levelFilter.setContext(loggerContext);
                 levelFilter.start();
 
@@ -114,10 +118,6 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
                 rootLogger.addAppender(rollbarAppender);
                 rollbarAppender.start();
             }
-
-            SpringApplication springApplication = new SpringApplication(BoardApplication.class);
-            springApplication.setAdditionalProfiles(profile);
-            springApplication.run(args);
         } catch (Exception e) {
             LOGGER.error("Unable to start application", e);
         } finally {
