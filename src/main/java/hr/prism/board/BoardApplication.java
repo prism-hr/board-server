@@ -108,7 +108,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
                 levelFilter.setLevel(Level.ERROR);
                 levelFilter.setContext(loggerContext);
                 levelFilter.start();
-                
+
                 rollbarAppender.addFilter(levelFilter);
                 rollbarAppender.start();
             }

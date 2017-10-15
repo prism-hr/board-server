@@ -57,7 +57,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
 
         User user = userService.getCurrentUser();
         String userPrefix = user == null ? "Anonymous" : user.toString();
-        if (responseStatus == HttpStatus.INTERNAL_SERVER_ERROR) {
+        if (responseStatus == HttpStatus.INTERNAL_SERVER_ERROR || responseStatus == HttpStatus.NOT_FOUND) {
             LOGGER.error(userPrefix + ": " + responseStatus + " - " + exception.getMessage(), exception);
         } else {
             LOGGER.info(userPrefix + ": " + responseStatus + " - " + exception.getMessage());
