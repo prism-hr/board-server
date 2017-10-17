@@ -70,8 +70,8 @@ public class UserRoleCacheService {
             notify = false;
         }
 
-        UserRole userRole = userRoleRepository.save(
-            new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+        UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString())
+            .setResource(resource).setUser(user).setEmail(user.getEmail()).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
         updateUserRoleDemographicData(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
 

@@ -10,6 +10,8 @@ public class UserRoleDTO {
 
     private UserDTO user;
 
+    private String email;
+
     private Role role;
 
     private MemberCategory memberCategory;
@@ -39,6 +41,15 @@ public class UserRoleDTO {
 
     public UserRoleDTO setUser(UserDTO user) {
         this.user = user;
+        return this;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public UserRoleDTO setEmail(String email) {
+        this.email = email;
         return this;
     }
 
