@@ -5,7 +5,6 @@ import hr.prism.board.enums.Role;
 import org.hibernate.validator.constraints.Email;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -17,7 +16,6 @@ public class UserRoleDTO {
     @Email
     private String email;
 
-    @NotNull
     private Role role;
 
     private MemberCategory memberCategory;
