@@ -22,7 +22,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +64,6 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
 
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
         ImmutableMap.Builder<String, Object> responseBuilder = ImmutableMap.<String, Object>builder()
-            .put("timestamp", LocalDateTime.now())
             .put("uri", Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString()))
             .put("status", responseStatus.value())
             .put("error", responseStatus.getReasonPhrase())

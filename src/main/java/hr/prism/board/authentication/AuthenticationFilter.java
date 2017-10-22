@@ -2,6 +2,10 @@ package hr.prism.board.authentication;
 
 import hr.prism.board.service.AuthenticationService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -13,9 +17,12 @@ import java.io.IOException;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFilter.class);
+
     private String jwsSecret;
 
     private AuthenticationService authenticationService;
+
 
     public AuthenticationFilter(AuthenticationService authenticationService) {
         this.jwsSecret = authenticationService.getJwsSecret();
@@ -27,11 +34,17 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
         if (authorization != null) {
             String accessToken = authorization.replaceFirst("Bearer ", "");
-            Claims token = authenticationService.decodeAccessToken(accessToken, jwsSecret);
-            long userId = Long.parseLong(token.getSubject());
+            try {
+                Claims token = authenticationService.decodeAccessToken(accessToken, jwsSecret);
+                long userId = Long.parseLong(token.getSubject());
 
-            SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
-            response.setHeader("Authorization", "Bearer " + authenticationService.makeAccessToken(userId, jwsSecret));
+                SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
+                response.setHeader("Authorization", "Bearer " + authenticationService.makeAccessToken(userId, jwsSecret));
+            } catch (ExpiredJwtException e) {
+                LOGGER.warn("Jwt token is already expired");
+            } catch (MalformedJwtException e) {
+                LOGGER.error("Malformed Jwt token for: " + request.getRequestURI(), e);
+            }
         }
 
         filterChain.doFilter(request, response);

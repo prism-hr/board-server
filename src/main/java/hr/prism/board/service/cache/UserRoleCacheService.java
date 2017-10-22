@@ -1,5 +1,6 @@
 package hr.prism.board.service.cache;
 
+import com.google.common.base.Strings;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
@@ -70,8 +71,13 @@ public class UserRoleCacheService {
             notify = false;
         }
 
-        UserRole userRole = userRoleRepository.save(
-            new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource).setUser(user).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+        String email = userRoleDTO.getEmail();
+        if (email != null) {
+            email = Strings.emptyToNull(email.trim());
+        }
+        UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString())
+            .setResource(resource).setUser(user).setEmail(email).setRole(role).setState(state)
+            .setExpiryDate(userRoleDTO.getExpiryDate()));
         updateUserRoleDemographicData(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
 
