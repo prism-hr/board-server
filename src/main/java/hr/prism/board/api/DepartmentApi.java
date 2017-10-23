@@ -45,7 +45,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.POST)
     public DepartmentRepresentation postDepartment(@RequestBody @Valid DepartmentDTO departmentDTO) {
-        return departmentMapper.apply(departmentService.createDepartment(departmentDTO));
+        return departmentMapper.apply(departmentService.postDepartment(departmentDTO));
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET)

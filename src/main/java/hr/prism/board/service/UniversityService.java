@@ -12,10 +12,6 @@ import javax.inject.Inject;
 @Transactional
 public class UniversityService {
 
-    public static final String UCL = "ucl";
-
-    public static final String UNIVERSITY_COLLEGE_LONDON = "University College London";
-
     @Inject
     private UniversityRepository universityRepository;
 

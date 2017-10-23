@@ -69,7 +69,7 @@ public class BoardApi {
         ObjectMapper objectMapper = new ObjectMapper();
         WidgetOptionsDTO widgetOptions = objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
         });
-        return boardService.getBoardBadge(boardService.getBoard(id), widgetOptions);
+        return boardService.getBoardBadge(id, widgetOptions);
     }
 
     @RequestMapping(value = "/api/boards", method = RequestMethod.GET, params = "handle")

@@ -134,10 +134,6 @@ public class ResourceService {
         return resourceRepository.findOne(id);
     }
 
-    public Resource findByHandle(String handle) {
-        return resourceRepository.findByHandle(handle);
-    }
-
     public Resource getResource(User user, Scope scope, Long id) {
         List<Resource> resources = getResources(user, new ResourceFilter().setScope(scope).setId(id).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
@@ -563,7 +559,7 @@ public class ResourceService {
         List<String> similarHandles = similarHandleFinder.find(handle);
         return ResourceService.confirmHandle(handle, similarHandles);
     }
-    
+
     public static String suggestHandle(String name) {
         String suggestion = "";
         name = StringUtils.stripAccents(name.toLowerCase());
@@ -577,15 +573,15 @@ public class ResourceService {
                 } else {
                     newSuggestion = part;
                 }
-        
+
                 if (newSuggestion.length() > 20) {
                     if (i == 0) {
                         return newSuggestion.substring(0, 20);
                     }
-            
+
                     return suggestion;
                 }
-        
+
                 suggestion = newSuggestion;
             }
         }

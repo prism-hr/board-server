@@ -146,7 +146,7 @@ public abstract class AbstractIT {
             Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
             restoreForeignKeyChecks.executeUpdate();
 
-            universityService.getOrCreateUniversity(UniversityService.UNIVERSITY_COLLEGE_LONDON, UniversityService.UCL);
+            universityService.getOrCreateUniversity("University College London", "ucl");
             return null;
         });
     }
