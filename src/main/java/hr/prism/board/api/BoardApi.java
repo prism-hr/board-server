@@ -41,7 +41,7 @@ public class BoardApi {
 
     @RequestMapping(value = "/api/boards", method = RequestMethod.POST)
     public BoardRepresentation postBoard(@RequestBody @Valid BoardDTO boardDTO) {
-        Board board = boardService.createBoard(boardDTO);
+        Board board = boardService.postBoard(boardDTO);
         return boardMapper.apply(board);
     }
 

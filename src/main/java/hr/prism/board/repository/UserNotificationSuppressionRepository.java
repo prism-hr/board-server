@@ -31,7 +31,7 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
 
     @Modifying
     @Query(value =
-        "INSERT INTO user_notification_suppression(user_id, resource_id, created_timestamp) " +
+        "INSERT INTO user_notification_suppression (user_id, resource_id, created_timestamp) " +
             "SELECT user_role.user_id, suppressed.id, NOW() " +
             "FROM user_role " +
             "INNER JOIN resource_relation " +

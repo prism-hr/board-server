@@ -79,7 +79,7 @@ public class BoardService {
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
 
-    public Board createBoard(BoardDTO boardDTO) {
+    public Board postBoard(BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource department = resourceService.findOne(boardDTO.getDepartment().getId());
         return (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {

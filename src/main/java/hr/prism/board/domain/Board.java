@@ -10,13 +10,19 @@ import javax.persistence.*;
     name = "board.extended",
     attributeNodes = {
         @NamedAttributeNode(value = "parent", subgraph = "department"),
-        @NamedAttributeNode(value = "categories"),
-        @NamedAttributeNode(value = "documentLogo")},
+        @NamedAttributeNode(value = "documentLogo"),
+        @NamedAttributeNode(value = "categories")},
     subgraphs = {
         @NamedSubgraph(
             name = "department",
             attributeNodes = {
+                @NamedAttributeNode(value = "parent", subgraph = "university"),
+                @NamedAttributeNode(value = "documentLogo"),
                 @NamedAttributeNode(value = "categories"),
+                @NamedAttributeNode(value = "tasks")}),
+        @NamedSubgraph(
+            name = "university",
+            attributeNodes = {
                 @NamedAttributeNode(value = "documentLogo")})})
 public class Board extends Resource {
 

@@ -9,9 +9,15 @@ import javax.persistence.*;
 @NamedEntityGraph(
     name = "department.extended",
     attributeNodes = {
-        @NamedAttributeNode(value = "parent"),
+        @NamedAttributeNode(value = "parent", subgraph = "university"),
+        @NamedAttributeNode(value = "documentLogo"),
         @NamedAttributeNode(value = "categories"),
-        @NamedAttributeNode(value = "documentLogo")})
+        @NamedAttributeNode(value = "tasks")},
+    subgraphs = {
+        @NamedSubgraph(
+            name = "university",
+            attributeNodes = {
+                @NamedAttributeNode(value = "documentLogo")})})
 public class Department extends Resource {
 
     @Column(name = "board_count")
@@ -47,7 +53,7 @@ public class Department extends Resource {
         this.memberToBeUploadedCount = memberToBeUploadedCount;
     }
 
-    public void addToMemberToBeUploadedCount(Long memberCountPending) {
+    public void increaseMemberTobeUploadedCount(Long memberCountPending) {
         if (this.memberToBeUploadedCount == null) {
             this.memberToBeUploadedCount = memberCountPending;
         } else {

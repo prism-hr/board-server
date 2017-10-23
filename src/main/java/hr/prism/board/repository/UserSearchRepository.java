@@ -12,7 +12,7 @@ public interface UserSearchRepository extends SearchRepository<UserSearch> {
 
     @Modifying
     @Query(value =
-        "INSERT INTO user_search(user_id, search, created_timestamp) " +
+        "INSERT INTO user_search (user_id, search, created_timestamp) " +
             "SELECT user_search_result.user_id, user_search_result.search, :baseline " +
             "FROM (" +
             "SELECT user.id as user_id, :search as search, MATCH(user.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +

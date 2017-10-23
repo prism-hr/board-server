@@ -12,7 +12,7 @@ public interface ResourceEventSearchRepository extends SearchRepository<Resource
 
     @Modifying
     @Query(value =
-        "INSERT INTO resource_event_search(resource_event_id, search, created_timestamp) " +
+        "INSERT INTO resource_event_search (resource_event_id, search, created_timestamp) " +
             "SELECT resource_event_search_result.resource_event_id, resource_event_search_result.search, :baseline " +
             "FROM (" +
             "SELECT resource_event.id as resource_event_id, :search as search, MATCH(resource_event.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +

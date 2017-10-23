@@ -77,6 +77,9 @@ public class Resource extends BoardEntity {
     @OneToMany(mappedBy = "resource")
     private Set<ResourceSearch> searches = new HashSet<>();
 
+    @OneToMany(mappedBy = "resource")
+    private Set<ResourceTask> tasks = new HashSet<>();
+
     @Transient
     private List<ActionRepresentation> actions;
 
@@ -204,6 +207,10 @@ public class Resource extends BoardEntity {
 
     public Set<ResourceSearch> getSearches() {
         return searches;
+    }
+
+    public Set<ResourceTask> getTasks() {
+        return tasks;
     }
 
     public List<ActionRepresentation> getActions() {

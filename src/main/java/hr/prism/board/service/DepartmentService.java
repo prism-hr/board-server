@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -17,6 +18,7 @@ import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -63,6 +65,20 @@ public class DepartmentService {
             "ORDER BY similarityHard DESC, similaritySoft DESC, user_role.member_program " +
             "LIMIT 10";
 
+    private static final List<String> MEMBER_CATEGORY_STRINGS = Stream.of(MemberCategory.values()).map(MemberCategory::name).collect(Collectors.toList());
+
+    private static final String STUDY_NAME = "Study Opportunities";
+
+    private static final String CAREER_NAME = "Career Opportunities";
+
+    private static final String STUDY_SUMMARY = "Forum for partner organizations and staff to share jobs, internships and study placements opportunities.";
+
+    private static final String CAREER_SUMMARY = "Forum for partner organizations and staff to share follow-on study and PhD research opportunities.";
+
+    private static final List<String> STUDY_CATEGORIES = ImmutableList.of("Masters (Taught)", "Masters (Research)", "PhD");
+
+    private static final List<String> CAREER_CATEGORIES = ImmutableList.of("Employment", "Internship", "Placement", "Voluteering");
+
     @Inject
     private DepartmentRepository departmentRepository;
 
@@ -98,6 +114,9 @@ public class DepartmentService {
 
     @Inject
     private BoardService boardService;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
 
     @Lazy
     @Inject
@@ -158,17 +177,32 @@ public class DepartmentService {
         resourceService.updateHandle(department, handle);
         department = departmentRepository.save(department);
 
-        resourceService.updateCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
+        List<String> memberCategoryStrings;
+        List<MemberCategory> memberCategories = departmentDTO.getMemberCategories();
+        if (CollectionUtils.isEmpty(memberCategories)) {
+            memberCategoryStrings = MEMBER_CATEGORY_STRINGS;
+        } else {
+            memberCategoryStrings = MemberCategory.toStrings(departmentDTO.getMemberCategories());
+        }
+
+        resourceService.updateCategories(department, CategoryType.MEMBER, memberCategoryStrings);
         resourceService.createResourceRelation(university, department);
         resourceService.setIndexDataAndQuarter(department);
         resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
         userRoleService.createOrUpdateUserRole(department, currentUser, Role.ADMINISTRATOR);
+
+        Long departmentId = department.getId();
+        departmentDTO.setId(departmentId);
+
+        // Create the initial boards
+        boardService.postBoard(new BoardDTO().setName(STUDY_NAME).setSummary(STUDY_SUMMARY).setDepartment(departmentDTO).setPostCategories(STUDY_CATEGORIES));
+        boardService.postBoard(new BoardDTO().setName(CAREER_NAME).setSummary(CAREER_SUMMARY).setDepartment(departmentDTO).setPostCategories(CAREER_CATEGORIES));
+
+        // Create the initial tasks
+        resourceTaskService.createForNewResource(departmentId);
+        entityManager.flush();
+
         department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, department.getId());
-
-        departmentDTO.setId(department.getId());
-        BoardDTO boardStudyDTO = new BoardDTO().setDepartment(departmentDTO);
-        BoardDTO boardCareerDTO = new BoardDTO().setDepartment(departmentDTO);
-
         return department;
     }
 
@@ -232,7 +266,7 @@ public class DepartmentService {
         User currentUser = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
-            department.addToMemberToBeUploadedCount((long) userRoleDTOs.size());
+            department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
             return department;
         });

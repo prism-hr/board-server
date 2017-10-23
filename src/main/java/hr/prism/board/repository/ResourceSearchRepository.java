@@ -12,7 +12,7 @@ public interface ResourceSearchRepository extends SearchRepository<ResourceSearc
 
     @Modifying
     @Query(value =
-        "INSERT INTO resource_search(resource_id, search, created_timestamp) " +
+        "INSERT INTO resource_search (resource_id, search, created_timestamp) " +
             "SELECT resource_search_result.resource_id, resource_search_result.search, :baseline " +
             "FROM (" +
             "SELECT resource.id as resource_id, :search as search, MATCH(resource.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
