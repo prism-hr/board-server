@@ -16,6 +16,8 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     private Optional<String> description;
 
+    private Optional<Boolean> internal;
+
     @Size(min = 3, max = 255)
     private Optional<String> organizationName;
 
@@ -48,6 +50,15 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     public PostPatchDTO setDescription(Optional<String> description) {
         this.description = description;
+        return this;
+    }
+
+    public Optional<Boolean> getInternal() {
+        return internal;
+    }
+
+    public PostPatchDTO setInternal(Optional<Boolean> internal) {
+        this.internal = internal;
         return this;
     }
 

@@ -3,16 +3,11 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.MemberCategory;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class DepartmentDTO extends ResourceDTO<DepartmentDTO> {
 
     private Long id;
-
-    @Valid
-    @NotNull
-    private UniversityDTO university;
 
     @Valid
     private DocumentDTO documentLogo;
@@ -25,15 +20,6 @@ public class DepartmentDTO extends ResourceDTO<DepartmentDTO> {
 
     public DepartmentDTO setId(Long id) {
         this.id = id;
-        return this;
-    }
-
-    public UniversityDTO getUniversity() {
-        return university;
-    }
-
-    public DepartmentDTO setUniversity(UniversityDTO university) {
-        this.university = university;
         return this;
     }
 

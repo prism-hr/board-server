@@ -41,6 +41,9 @@ public class Post extends Resource {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "internal")
+    private Boolean internal;
+
     @Column(name = "organization_name", nullable = false)
     private String organizationName;
 
@@ -107,6 +110,14 @@ public class Post extends Resource {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getInternal() {
+        return internal;
+    }
+
+    public void setInternal(Boolean internal) {
+        this.internal = internal;
     }
 
     public String getOrganizationName() {

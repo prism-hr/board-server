@@ -6,6 +6,7 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,9 @@ public class ResourceApi {
 
     @Inject
     private ResourceService resourceService;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.GET)
     public UserRolesRepresentation getUserRoles(@ModelAttribute Scope scope, @PathVariable Long resourceId,

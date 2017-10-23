@@ -1,13 +1,12 @@
 package hr.prism.board.domain;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "resource_task", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "task"}))
-public class ResourceTask {
+public class ResourceTask extends BoardEntity {
 
     @ManyToOne
     @JoinColumn(name = "resource_id", nullable = false)
@@ -19,9 +18,6 @@ public class ResourceTask {
 
     @Column(name = "notified_count")
     private Integer notifiedCount;
-
-    @Column(name = "notified_timestamp")
-    private LocalDateTime notifiedTimestamp;
 
     @OneToMany(mappedBy = "resourceTask")
     private Set<ResourceTaskSuppression> suppressions = new HashSet<>();
@@ -50,15 +46,6 @@ public class ResourceTask {
 
     public ResourceTask setNotifiedCount(Integer notifiedCount) {
         this.notifiedCount = notifiedCount;
-        return this;
-    }
-
-    public LocalDateTime getNotifiedTimestamp() {
-        return notifiedTimestamp;
-    }
-
-    public ResourceTask setNotifiedTimestamp(LocalDateTime notifiedTimestamp) {
-        this.notifiedTimestamp = notifiedTimestamp;
         return this;
     }
 

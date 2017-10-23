@@ -1,19 +1,27 @@
 package hr.prism.board.dto;
 
+import hr.prism.board.enums.BoardType;
+
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class BoardDTO extends ResourceDTO<BoardDTO> {
 
+    private BoardType type;
+
     @Valid
     private DocumentDTO documentLogo;
 
-    @Valid
-    @NotNull
-    private DepartmentDTO department;
-
     private List<String> postCategories;
+
+    public BoardType getType() {
+        return type;
+    }
+
+    public BoardDTO setType(BoardType type) {
+        this.type = type;
+        return this;
+    }
 
     public DocumentDTO getDocumentLogo() {
         return documentLogo;
@@ -21,15 +29,6 @@ public class BoardDTO extends ResourceDTO<BoardDTO> {
 
     public BoardDTO setDocumentLogo(DocumentDTO documentLogo) {
         this.documentLogo = documentLogo;
-        return this;
-    }
-
-    public DepartmentDTO getDepartment() {
-        return department;
-    }
-
-    public BoardDTO setDepartment(DepartmentDTO department) {
-        this.department = department;
         return this;
     }
 

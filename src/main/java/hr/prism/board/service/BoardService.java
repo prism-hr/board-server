@@ -7,6 +7,7 @@ import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.WidgetOptionsDTO;
 import hr.prism.board.enums.*;
+import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
@@ -20,6 +21,7 @@ import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BoardService {
+
+    private static final List<ResourceTask> BADGE_TASKS = Collections.singletonList(ResourceTask.DEPLOY_BADGE);
 
     @Inject
     private BoardRepository boardRepository;
@@ -54,21 +58,24 @@ public class BoardService {
     private PostService postService;
 
     @Inject
+    private ResourceTaskService resourceTaskService;
+
+    @Inject
     private FreeMarkerConfig freemarkerConfig;
 
     @Value("${app.url}")
     private String appUrl;
 
     public Board getBoard(Long id) {
-        User currentUser = userService.getCurrentUser();
-        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
-        return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
+        User user = userService.getCurrentUser();
+        Board board = (Board) resourceService.getResource(user, Scope.BOARD, id);
+        return (Board) actionService.executeAction(user, board, Action.VIEW, () -> board);
     }
 
     public Board getBoard(String handle) {
-        User currentUser = userService.getCurrentUser();
-        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, handle);
-        return (Board) actionService.executeAction(currentUser, board, Action.VIEW, () -> board);
+        User user = userService.getCurrentUser();
+        Board board = (Board) resourceService.getResource(user, Scope.BOARD, handle);
+        return (Board) actionService.executeAction(user, board, Action.VIEW, () -> board);
     }
 
     public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
@@ -79,9 +86,9 @@ public class BoardService {
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
 
-    public Board postBoard(BoardDTO boardDTO) {
+    public Board createBoard(Long departmentId, BoardDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
-        Resource department = resourceService.findOne(boardDTO.getDepartment().getId());
+        Resource department = resourceService.findOne(departmentId);
         return (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
             resourceService.validateUniqueName(Scope.BOARD, null, department, name, ExceptionCode.DUPLICATE_BOARD);
@@ -89,6 +96,9 @@ public class BoardService {
             Board board = new Board();
             board.setName(name);
             board.setSummary(boardDTO.getSummary());
+
+            BoardType type = boardDTO.getType();
+            board.setType(type == null ? BoardType.CUSTOM : type);
 
             DocumentDTO documentLogoDTO = boardDTO.getDocumentLogo();
             if (documentLogoDTO != null) {
@@ -143,6 +153,7 @@ public class BoardService {
             throw new Error(e);
         }
 
+        resourceTaskService.deleteTasks(department, BADGE_TASKS);
         return stringWriter.toString();
     }
 

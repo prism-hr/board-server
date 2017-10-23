@@ -4,10 +4,19 @@ import hr.prism.board.domain.Department;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface DepartmentRepository extends MyRepository<Department, Long> {
+
+    @Query(value =
+        "select department.id " +
+            "from Department department " +
+            "where department.lastMemberTimestamp < :baseline " +
+            "or department.lastInternalPostTimestamp < :baseline " +
+            "order by department.id")
+    List<Long> findAllIds(LocalDateTime baseline);
 
     @Query(value =
         "select department " +

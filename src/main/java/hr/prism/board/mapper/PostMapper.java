@@ -45,6 +45,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
         PostRepresentation representation =
             resourceMapper.apply(post, PostRepresentation.class)
                 .setDescription(post.getDescription())
+                .setInternal(post.getInternal())
                 .setOrganizationName(post.getOrganizationName())
                 .setLocation(locationMapper.apply(post.getLocation()))
                 .setExistingRelation(post.getExistingRelation())

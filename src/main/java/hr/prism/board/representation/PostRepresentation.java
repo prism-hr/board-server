@@ -11,6 +11,8 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private String description;
 
+    private Boolean internal;
+
     private String organizationName;
 
     private LocationRepresentation location;
@@ -59,6 +61,15 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     public PostRepresentation setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public Boolean getInternal() {
+        return internal;
+    }
+
+    public PostRepresentation setInternal(Boolean internal) {
+        this.internal = internal;
         return this;
     }
 

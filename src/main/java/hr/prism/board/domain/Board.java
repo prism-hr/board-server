@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.BoardType;
 import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
@@ -26,6 +27,10 @@ import javax.persistence.*;
                 @NamedAttributeNode(value = "documentLogo")})})
 public class Board extends Resource {
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "board_type")
+    private BoardType type;
+
     @Column(name = "post_count")
     private Long postCount;
 
@@ -46,6 +51,14 @@ public class Board extends Resource {
 
     public void setAuthorCount(Long authorCount) {
         this.authorCount = authorCount;
+    }
+
+    public BoardType getType() {
+        return type;
+    }
+
+    public void setType(BoardType type) {
+        this.type = type;
     }
 
 }

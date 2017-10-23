@@ -39,9 +39,9 @@ public class BoardApi {
     @Inject
     private ResourceOperationMapper resourceOperationMapper;
 
-    @RequestMapping(value = "/api/boards", method = RequestMethod.POST)
-    public BoardRepresentation postBoard(@RequestBody @Valid BoardDTO boardDTO) {
-        Board board = boardService.postBoard(boardDTO);
+    @RequestMapping(value = "/api/departments/{departmentId}/boards", method = RequestMethod.POST)
+    public BoardRepresentation postBoard(@PathVariable Long departmentId, @RequestBody @Valid BoardDTO boardDTO) {
+        Board board = boardService.createBoard(departmentId, boardDTO);
         return boardMapper.apply(board);
     }
 
@@ -58,18 +58,18 @@ public class BoardApi {
         return boardService.getBoards(departmentId, includePublic, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/api/boards/{id}", method = RequestMethod.GET)
-    public BoardRepresentation getBoard(@PathVariable Long id) {
-        return boardMapper.apply(boardService.getBoard(id));
+    @RequestMapping(value = "/api/boards/{boardId}", method = RequestMethod.GET)
+    public BoardRepresentation getBoard(@PathVariable Long boardId) {
+        return boardMapper.apply(boardService.getBoard(boardId));
     }
 
-    @RequestMapping(value = "/api/boards/{id}/badge", method = RequestMethod.GET)
-    public String getBoardBadge(@PathVariable Long id, @RequestParam String options, HttpServletResponse response) throws IOException {
+    @RequestMapping(value = "/api/boards/{boardId}/badge", method = RequestMethod.GET)
+    public String getBoardBadge(@PathVariable Long boardId, @RequestParam String options, HttpServletResponse response) throws IOException {
         response.setHeader("X-Frame-Options", "ALLOW");
         ObjectMapper objectMapper = new ObjectMapper();
         WidgetOptionsDTO widgetOptions = objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
         });
-        return boardService.getBoardBadge(id, widgetOptions);
+        return boardService.getBoardBadge(boardId, widgetOptions);
     }
 
     @RequestMapping(value = "/api/boards", method = RequestMethod.GET, params = "handle")
@@ -77,20 +77,20 @@ public class BoardApi {
         return boardMapper.apply(boardService.getBoard(handle));
     }
 
-    @RequestMapping(value = "/api/boards/{id}/operations", method = RequestMethod.GET)
-    public List<ResourceOperationRepresentation> getBoardOperations(@PathVariable Long id) {
-        return resourceService.getResourceOperations(Scope.BOARD, id).stream()
+    @RequestMapping(value = "/api/boards/{boardId}/operations", method = RequestMethod.GET)
+    public List<ResourceOperationRepresentation> getBoardOperations(@PathVariable Long boardId) {
+        return resourceService.getResourceOperations(Scope.BOARD, boardId).stream()
             .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/api/boards/{id}", method = RequestMethod.PATCH)
-    public BoardRepresentation patchBoard(@PathVariable Long id, @RequestBody @Valid BoardPatchDTO boardDTO) {
-        return boardMapper.apply(boardService.executeAction(id, Action.EDIT, boardDTO));
+    @RequestMapping(value = "/api/boards/{boardId}", method = RequestMethod.PATCH)
+    public BoardRepresentation patchBoard(@PathVariable Long boardId, @RequestBody @Valid BoardPatchDTO boardDTO) {
+        return boardMapper.apply(boardService.executeAction(boardId, Action.EDIT, boardDTO));
     }
 
-    @RequestMapping(value = "/api/boards/{id}/actions/{action:accept|reject}", method = RequestMethod.POST)
-    public BoardRepresentation executeAction(@PathVariable Long id, @PathVariable String action, @RequestBody @Valid BoardPatchDTO boardDTO) {
-        return boardMapper.apply(boardService.executeAction(id, Action.exchangeAndValidate(action, boardDTO), boardDTO));
+    @RequestMapping(value = "/api/boards/{boardId}/actions/{action:accept|reject}", method = RequestMethod.POST)
+    public BoardRepresentation executeAction(@PathVariable Long boardId, @PathVariable String action, @RequestBody @Valid BoardPatchDTO boardDTO) {
+        return boardMapper.apply(boardService.executeAction(boardId, Action.exchangeAndValidate(action, boardDTO), boardDTO));
     }
 
 }

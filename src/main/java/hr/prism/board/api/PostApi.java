@@ -44,9 +44,9 @@ public class PostApi {
     @Inject
     private ResourceEventMapper resourceEventMapper;
 
-    @RequestMapping(value = "/api/boards/{id}/posts", method = RequestMethod.POST)
-    public PostRepresentation postPost(@PathVariable Long id, @RequestBody @Valid PostDTO postDTO) {
-        Post post = postService.createPost(id, postDTO);
+    @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.POST)
+    public PostRepresentation postPost(@PathVariable Long boardId, @RequestBody @Valid PostDTO postDTO) {
+        Post post = postService.createPost(boardId, postDTO);
         return postMapper.apply(post);
     }
 
@@ -63,25 +63,25 @@ public class PostApi {
         return postService.getPosts(boardId, includePublic, state, quarter, searchTerm).stream().map(postMapper).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.GET)
-    public PostRepresentation getPost(@PathVariable Long id, HttpServletRequest request) {
-        return postMapper.apply(postService.getPost(id, BoardUtils.getClientIpAddress(request), true));
+    @RequestMapping(value = "/api/posts/{postId}", method = RequestMethod.GET)
+    public PostRepresentation getPost(@PathVariable Long postId, HttpServletRequest request) {
+        return postMapper.apply(postService.getPost(postId, BoardUtils.getClientIpAddress(request), true));
     }
 
-    @RequestMapping(value = "/api/posts/{id}/operations", method = RequestMethod.GET)
-    public List<ResourceOperationRepresentation> getPostOperations(@PathVariable Long id) {
-        return resourceService.getResourceOperations(Scope.POST, id).stream()
+    @RequestMapping(value = "/api/posts/{postId}/operations", method = RequestMethod.GET)
+    public List<ResourceOperationRepresentation> getPostOperations(@PathVariable Long postId) {
+        return resourceService.getResourceOperations(Scope.POST, postId).stream()
             .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/api/posts/{id}", method = RequestMethod.PATCH)
-    public PostRepresentation patchPost(@PathVariable Long id, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(id, Action.EDIT, postDTO));
+    @RequestMapping(value = "/api/posts/{postId}", method = RequestMethod.PATCH)
+    public PostRepresentation patchPost(@PathVariable Long postId, @RequestBody @Valid PostPatchDTO postDTO) {
+        return postMapper.apply(postService.executeAction(postId, Action.EDIT, postDTO));
     }
 
-    @RequestMapping(value = "/api/posts/{id}/actions/{action}", method = RequestMethod.POST)
-    public PostRepresentation executeAction(@PathVariable Long id, @PathVariable String action, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(id, Action.exchangeAndValidate(action, postDTO), postDTO));
+    @RequestMapping(value = "/api/posts/{postId}/actions/{action}", method = RequestMethod.POST)
+    public PostRepresentation executeAction(@PathVariable Long postId, @PathVariable String action, @RequestBody @Valid PostPatchDTO postDTO) {
+        return postMapper.apply(postService.executeAction(postId, Action.exchangeAndValidate(action, postDTO), postDTO));
     }
 
     @RequestMapping(value = "/api/posts/organizations", method = RequestMethod.GET)
@@ -96,7 +96,7 @@ public class PostApi {
 
     @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)
     public ResourceEventRepresentation postPostResponse(@PathVariable Long postId, @RequestBody @Valid ResourceEventDTO resourceEvent) {
-        return resourceEventMapper.apply(postService.postPostResponse(postId, resourceEvent));
+        return resourceEventMapper.apply(postService.createPostResponse(postId, resourceEvent));
     }
 
     @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)

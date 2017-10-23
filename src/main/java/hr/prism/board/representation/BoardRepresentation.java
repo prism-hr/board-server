@@ -1,8 +1,12 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.enums.BoardType;
+
 import java.util.List;
 
 public class BoardRepresentation extends ResourceRepresentation<BoardRepresentation> {
+
+    private BoardType type;
 
     private DocumentRepresentation documentLogo;
 
@@ -15,6 +19,15 @@ public class BoardRepresentation extends ResourceRepresentation<BoardRepresentat
     private Long postCount;
 
     private Long authorCount;
+
+    public BoardType getType() {
+        return type;
+    }
+
+    public BoardRepresentation setType(BoardType type) {
+        this.type = type;
+        return this;
+    }
 
     public DocumentRepresentation getDocumentLogo() {
         return documentLogo;

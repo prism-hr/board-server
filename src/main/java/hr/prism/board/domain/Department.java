@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @DiscriminatorValue(value = Scope.Value.DEPARTMENT)
@@ -29,6 +30,12 @@ public class Department extends Resource {
     @Column(name = "member_to_be_uploaded_count")
     private Long memberToBeUploadedCount;
 
+    @Column(name = "last_member_timestamp")
+    private LocalDateTime lastMemberTimestamp;
+
+    @Column(name = "last_internal_post_timestamp")
+    private LocalDateTime lastInternalPostTimestamp;
+
     public Long getBoardCount() {
         return boardCount;
     }
@@ -51,6 +58,22 @@ public class Department extends Resource {
 
     public void setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
         this.memberToBeUploadedCount = memberToBeUploadedCount;
+    }
+
+    public LocalDateTime getLastMemberTimestamp() {
+        return lastMemberTimestamp;
+    }
+
+    public void setLastMemberTimestamp(LocalDateTime lastMemberTimestamp) {
+        this.lastMemberTimestamp = lastMemberTimestamp;
+    }
+
+    public LocalDateTime getLastInternalPostTimestamp() {
+        return lastInternalPostTimestamp;
+    }
+
+    public void setLastInternalPostTimestamp(LocalDateTime lastInternalPostTimestamp) {
+        this.lastInternalPostTimestamp = lastInternalPostTimestamp;
     }
 
     public void increaseMemberTobeUploadedCount(Long memberCountPending) {

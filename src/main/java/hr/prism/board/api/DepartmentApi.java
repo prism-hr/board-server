@@ -43,9 +43,9 @@ public class DepartmentApi {
     @Inject
     private UserMapper userMapper;
 
-    @RequestMapping(value = "/api/departments", method = RequestMethod.POST)
-    public DepartmentRepresentation postDepartment(@RequestBody @Valid DepartmentDTO departmentDTO) {
-        return departmentMapper.apply(departmentService.postDepartment(departmentDTO));
+    @RequestMapping(value = "/api/universities/{universityId}/departments", method = RequestMethod.POST)
+    public DepartmentRepresentation postDepartment(@PathVariable("universityId") Long universityId, @RequestBody @Valid DepartmentDTO departmentDTO) {
+        return departmentMapper.apply(departmentService.createDepartment(universityId, departmentDTO));
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET)
@@ -58,9 +58,9 @@ public class DepartmentApi {
         return departmentService.findBySimilarName(query);
     }
 
-    @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.GET)
-    public DepartmentRepresentation getDepartment(@PathVariable Long id) {
-        return departmentMapper.apply(departmentService.getDepartment(id));
+    @RequestMapping(value = "/api/departments/{departmentId}", method = RequestMethod.GET)
+    public DepartmentRepresentation getDepartment(@PathVariable Long departmentId) {
+        return departmentMapper.apply(departmentService.getDepartment(departmentId));
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "handle")
@@ -68,15 +68,15 @@ public class DepartmentApi {
         return departmentMapper.apply(departmentService.getDepartment(handle));
     }
 
-    @RequestMapping(value = "/api/departments/{id}/operations", method = RequestMethod.GET)
-    public List<ResourceOperationRepresentation> getDepartmentOperations(@PathVariable Long id) {
-        return resourceService.getResourceOperations(Scope.DEPARTMENT, id).stream()
+    @RequestMapping(value = "/api/departments/{departmentId}/operations", method = RequestMethod.GET)
+    public List<ResourceOperationRepresentation> getDepartmentOperations(@PathVariable Long departmentId) {
+        return resourceService.getResourceOperations(Scope.DEPARTMENT, departmentId).stream()
             .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/api/departments/{id}", method = RequestMethod.PATCH)
-    public DepartmentRepresentation patchDepartment(@PathVariable Long id, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
-        return departmentMapper.apply(departmentService.updateDepartment(id, departmentDTO));
+    @RequestMapping(value = "/api/departments/{departmentId}", method = RequestMethod.PATCH)
+    public DepartmentRepresentation patchDepartment(@PathVariable Long departmentId, @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
+        return departmentMapper.apply(departmentService.updateDepartment(departmentId, departmentDTO));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/bulk", method = RequestMethod.POST)
@@ -107,6 +107,11 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{departmentId}/programs", method = RequestMethod.GET)
     public List<String> getDepartmentPrograms(@PathVariable Long departmentId, @RequestParam String searchTerm) {
         return departmentService.findProgramsBySimilarName(departmentId, searchTerm);
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/tasks/{taskId}", method = RequestMethod.PUT)
+    public void putTask(@PathVariable Long departmentId, @PathVariable Long taskId) {
+        departmentService.putTask(departmentId, taskId);
     }
 
 }

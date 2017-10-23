@@ -14,6 +14,8 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     private String description;
 
+    private Boolean internal;
+
     @Size(min = 3, max = 255)
     private String organizationName;
 
@@ -46,6 +48,15 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     public PostDTO setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public Boolean getInternal() {
+        return internal;
+    }
+
+    public PostDTO setInternal(Boolean internal) {
+        this.internal = internal;
         return this;
     }
 

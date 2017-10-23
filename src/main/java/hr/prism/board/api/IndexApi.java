@@ -17,7 +17,7 @@ import javax.inject.Inject;
 
 @Controller
 public class IndexApi {
-    
+
     private static final String SOCIAL_LOGO_URL = "http://res.cloudinary.com/board-prism-hr/image/upload/v1507475419/static/social.png";
 
     @Inject
