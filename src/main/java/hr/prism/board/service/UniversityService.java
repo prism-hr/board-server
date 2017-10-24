@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.util.List;
 
 @Service
 @Transactional
@@ -17,6 +18,10 @@ public class UniversityService {
 
     @Inject
     private ResourceService resourceService;
+
+    public List<University> findAll() {
+        return universityRepository.findAll();
+    }
 
     public University getUniversity(Long id) {
         return (University) resourceService.findOne(id);

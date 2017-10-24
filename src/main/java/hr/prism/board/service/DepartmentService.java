@@ -186,8 +186,12 @@ public class DepartmentService {
         resourceService.updateState(department, State.ACCEPTED);
         department.setName(name);
         department.setSummary(departmentDTO.getSummary());
-        if (departmentDTO.getDocumentLogo() != null) {
-            department.setDocumentLogo(documentService.getOrCreateDocument(departmentDTO.getDocumentLogo()));
+
+        DocumentDTO documentLogoDTO = departmentDTO.getDocumentLogo();
+        if (documentLogoDTO == null) {
+            department.setDocumentLogo(university.getDocumentLogo());
+        } else {
+            department.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
         }
 
         String handle = resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle);

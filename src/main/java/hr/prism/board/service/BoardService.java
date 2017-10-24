@@ -101,10 +101,10 @@ public class BoardService {
             board.setType(type == null ? BoardType.CUSTOM : type);
 
             DocumentDTO documentLogoDTO = boardDTO.getDocumentLogo();
-            if (documentLogoDTO != null) {
-                board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
-            } else {
+            if (documentLogoDTO == null) {
                 board.setDocumentLogo(department.getDocumentLogo());
+            } else {
+                board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
             }
 
             String handle = resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle);

@@ -6,7 +6,6 @@ import hr.prism.board.domain.ResourceTaskSuppression;
 import hr.prism.board.domain.User;
 import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.repository.ResourceTaskSuppressionRepository;
-import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -35,10 +34,6 @@ public class ResourceTaskService {
 
     @Inject
     private ResourceTaskSuppressionRepository resourceTaskSuppressionRepository;
-
-    @Lazy
-    @Inject
-    private ActivityEventService activityEventService;
 
     @Lazy
     @Inject

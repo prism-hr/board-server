@@ -2,22 +2,32 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.mapper.UniversityMapper;
 import org.apache.commons.text.WordUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class DefinitionService {
 
+    private static final String TEST_QUERY = "SELECT 1";
+
     @SuppressWarnings("unchecked")
-    private TreeMap<String, Object> definitions;
+    private volatile TreeMap<String, Object> definitions;
 
     @Value("${profile}")
     private String profile;
@@ -34,25 +44,49 @@ public class DefinitionService {
     @Value("${cloudinary.folder}")
     private String cloudinaryFolder;
 
+    @Inject
+    private UniversityService universityService;
+
+    @Inject
+    private UniversityMapper universityMapper;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    private PlatformTransactionManager platformTransactionManager;
+
     @PostConstruct
     public TreeMap<String, Object> getDefinitions() {
-        if (this.definitions == null) {
-            this.definitions = new TreeMap<>();
-            getDefinitionClasses().forEach(definitionClass -> {
-                List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
-                this.definitions.put(getDefinitionKey(definitionClass), values);
-            });
+        try {
+            // Check that the database connection is running
+            new TransactionTemplate(platformTransactionManager).execute(status -> entityManager.createNativeQuery(TEST_QUERY).getResultList());
+            if (this.definitions == null) {
+                synchronized (this) {
+                    if (this.definitions == null) {
+                        this.definitions = new TreeMap<>();
+                        getDefinitionClasses().forEach(definitionClass -> {
+                            List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
+                            this.definitions.put(getDefinitionKey(definitionClass), values);
+                        });
 
-            this.definitions.put("profile", profile);
-            this.definitions.put("applicationUrl", appUrl);
-            this.definitions.put("cloudinaryFolder", cloudinaryFolder);
-            List<Map<String, Object>> oauthProviders = new ArrayList<>();
-            oauthProviders.add(ImmutableMap.of("id", OauthProvider.FACEBOOK, "clientId", facebookClientId));
-            oauthProviders.add(ImmutableMap.of("id", OauthProvider.LINKEDIN, "clientId", linkedinClientId));
-            this.definitions.put("oauthProvider", oauthProviders);
+                        this.definitions.put("profile", profile);
+                        this.definitions.put("applicationUrl", appUrl);
+                        this.definitions.put("cloudinaryFolder", cloudinaryFolder);
+                        List<Map<String, Object>> oauthProviders = new ArrayList<>();
+                        oauthProviders.add(ImmutableMap.of("id", OauthProvider.FACEBOOK, "clientId", facebookClientId));
+                        oauthProviders.add(ImmutableMap.of("id", OauthProvider.LINKEDIN, "clientId", linkedinClientId));
+                        this.definitions.put("oauthProvider", oauthProviders);
+                        this.definitions.put("universities", universityService.findAll().stream().map(universityMapper).collect(Collectors.toList()));
+                    }
+                }
+            }
+
+            return this.definitions;
+        } catch (Exception e) {
+            throw new BoardException(ExceptionCode.INITIALIZATION_ERROR, "Could not initialize application", e);
         }
-
-        return this.definitions;
     }
 
     @SuppressWarnings("unchecked")
