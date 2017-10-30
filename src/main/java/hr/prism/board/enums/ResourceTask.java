@@ -6,7 +6,6 @@ public enum ResourceTask {
     UPDATE_MEMBER,
     CREATE_INTERNAL_POST,
     UPDATE_INTERNAL_POST,
-    DEPLOY_BADGE,
-    NOTIFY_AUTHOR
+    DEPLOY_BADGE
 
 }

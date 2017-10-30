@@ -81,8 +81,8 @@ public class DepartmentService {
     private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
 
-    private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(hr.prism.board.enums.ResourceTask.CREATE_MEMBER,
-        hr.prism.board.enums.ResourceTask.CREATE_INTERNAL_POST, hr.prism.board.enums.ResourceTask.NOTIFY_AUTHOR, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
+    private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
+        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_INTERNAL_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
     @Inject
     private DepartmentRepository departmentRepository;
