@@ -137,6 +137,7 @@ public abstract class AbstractIT {
             Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
             removeForeignKeyChecks.executeUpdate();
 
+            @SuppressWarnings("unchecked")
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
             tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
                 Query truncateTable = entityManager.createNativeQuery("DELETE FROM " + tableName);
@@ -154,21 +155,22 @@ public abstract class AbstractIT {
     LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, int departmentSuffix, int boardSuffix) {
         LinkedHashMap<Scope, User> unprivilegedUsers = new LinkedHashMap<>();
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+
         transactionTemplate.execute(status -> {
-            boardApi.postBoard(
-                new BoardDTO()
-                    .setName("board" + departmentSuffix)
-                    .setDepartment(new DepartmentDTO()
-                        .setName("department" + departmentSuffix)));
+            departmentApi.postDepartment(
+                universityId,
+                new DepartmentDTO()
+                    .setName("department" + departmentSuffix)
+                    .setSummary("department summary"));
             return null;
         });
 
         unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(
+            departmentId,
             new BoardDTO()
-                .setName("board" + boardSuffix)
-                .setDepartment(new DepartmentDTO()
-                    .setId(departmentId))));
+                .setName("board" + boardSuffix)));
 
         User departmentAdmin = transactionTemplate.execute(status -> {
             Resource department = resourceService.findOne(departmentId);
