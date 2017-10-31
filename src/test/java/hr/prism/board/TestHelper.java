@@ -27,10 +27,7 @@ import java.util.stream.Collectors;
 public class TestHelper {
 
     public static BoardDTO smallSampleBoard() {
-        return new BoardDTO()
-            .setName("board")
-            .setDepartment(new DepartmentDTO()
-                .setName("department"));
+        return new BoardDTO().setName("board");
     }
 
     public static DepartmentDTO sampleDepartment() {
@@ -42,10 +39,7 @@ public class TestHelper {
     public static BoardDTO sampleBoard() {
         return new BoardDTO()
             .setName("board")
-            .setPostCategories(Arrays.asList("p1", "p2", "p3"))
-            .setDepartment(new DepartmentDTO()
-                .setName("department")
-                .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)));
+            .setPostCategories(Arrays.asList("p1", "p2", "p3"));
     }
 
     public static PostDTO smallSamplePost() {

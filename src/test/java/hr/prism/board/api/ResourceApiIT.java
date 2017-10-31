@@ -6,6 +6,7 @@ import hr.prism.board.TestHelper;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.MemberCategory;
@@ -38,8 +39,10 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     public void shouldAddAndRemoveRoles() {
         User currentUser = testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
         addAndRemoveUserRoles(currentUser, Scope.BOARD, boardR.getId());
         addAndRemoveUserRoles(currentUser, Scope.DEPARTMENT, boardR.getDepartment().getId());
@@ -48,10 +51,8 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     public void shouldNotRemoveLastAdminRole() {
         User creator = testUserService.authenticate();
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        boardDTO.getDepartment().setName("last-admin-role");
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-        Long departmentId = boardR.getDepartment().getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("last-admin-role").setSummary("last-admin-role summary")).getId();
 
         // add another administrator
         UserDTO newUserDTO = new UserDTO().setEmail("last-admin-role@mail.com").setGivenName("Sample").setSurname("User");
@@ -82,11 +83,8 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     public void shouldNotRemoveLastAdminUser() {
         User creator = testUserService.authenticate();
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        boardDTO.getDepartment().setName("last-admin-user");
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
-        Long departmentId = boardR.getDepartment().getId();
-
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("last-admin-user").setSummary("last-admin-user summary")).getId();
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(BoardException.class,
                 () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode.IRREMOVABLE_USER, status);
@@ -101,8 +99,10 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     public void shouldNotAddUserWithNotExistingMemberCategory() {
         testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
 
@@ -122,8 +122,10 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     public void shouldNotAddUserRoleWithUnactivatedMemberCategory() {
         User currentUser = testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
         // try with a board
         ExceptionUtils.verifyException(BoardException.class,
@@ -142,9 +144,9 @@ public class ResourceApiIT extends AbstractIT {
     @Sql("classpath:data/user_autosuggest_setup.sql")
     public void shouldGetSimilarUsers() {
         testUserService.authenticate();
-        BoardRepresentation boardR = boardApi.postBoard(TestHelper.sampleBoard());
-        Long departmentId = boardR.getDepartment().getId();
-        Long boardId = boardR.getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
 
         List<UserRepresentation> userRs = resourceApi.getSimilarUsers(Scope.DEPARTMENT, departmentId, "alas");
         Assert.assertEquals(3, userRs.size());

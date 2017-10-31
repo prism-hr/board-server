@@ -61,30 +61,31 @@ public class UserApiIT extends AbstractIT {
     @Test
     public void shouldCreateAndUpdateNotificationSuppressions() {
         User adminUser = testUserService.authenticate();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         Long department1id = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(new DepartmentDTO().setName("department1"))).getId();
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1"))).getId();
 
         Long board11id = transactionTemplate.execute(status ->
-            boardApi.postBoard(new BoardDTO().setName("board11").setDepartment(new DepartmentDTO().setId(department1id)))).getId();
+            boardApi.postBoard(department1id, new BoardDTO().setName("board11"))).getId();
 
         Long board12id = transactionTemplate.execute(status ->
-            boardApi.postBoard(new BoardDTO().setName("board12").setDepartment(new DepartmentDTO().setId(department1id)))).getId();
+            boardApi.postBoard(department1id, new BoardDTO().setName("board12"))).getId();
 
         transactionTemplate.execute(status ->
-            boardApi.postBoard(new BoardDTO().setName("board13").setDepartment(new DepartmentDTO().setId(department1id))));
+            boardApi.postBoard(department1id, new BoardDTO().setName("board13")));
 
         Long department2id = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(new DepartmentDTO().setName("department2")
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2")
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
 
         Long board21id = transactionTemplate.execute(status ->
-            boardApi.postBoard(new BoardDTO().setName("board21").setDepartment(new DepartmentDTO().setId(department2id)))).getId();
+            boardApi.postBoard(department2id, new BoardDTO().setName("board21"))).getId();
 
         Long board22id = transactionTemplate.execute(status ->
-            boardApi.postBoard(new BoardDTO().setName("board22").setDepartment(new DepartmentDTO().setId(department2id)))).getId();
+            boardApi.postBoard(department2id, new BoardDTO().setName("board22"))).getId();
 
         transactionTemplate.execute(status ->
-            boardApi.postBoard(new BoardDTO().setName("board23").setDepartment(new DepartmentDTO().setId(department2id))));
+            boardApi.postBoard(department2id, new BoardDTO().setName("board23")));
 
         User memberUser1 = testUserService.authenticate();
         User memberUser2 = testUserService.authenticate();

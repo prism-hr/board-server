@@ -287,9 +287,12 @@ public class AuthenticationApiIT extends AbstractIT {
     @Test
     public void shouldReconcileAuthenticationsWithInvitations() {
         Long userId1 = testUserService.authenticate().getId();
-        BoardRepresentation boardR1 = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()));
-        DepartmentRepresentation departmentR1 = boardR1.getDepartment();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        DepartmentRepresentation departmentR1 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1")));
         Long departmentId1 = departmentR1.getId();
+
+        BoardRepresentation boardR1 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, TestHelper.smallSampleBoard()));
         Long boardId1 = boardR1.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId1, Arrays.asList(
@@ -378,14 +381,11 @@ public class AuthenticationApiIT extends AbstractIT {
             ExceptionCode.DUPLICATE_AUTHENTICATION, status));
 
         Long userId2 = testUserService.authenticate().getId();
-        BoardRepresentation boardR2 = transactionTemplate.execute(status -> boardApi.postBoard(
-            new BoardDTO()
-                .setName("board2")
-                .setDepartment(new DepartmentDTO()
-                    .setName("department2"))));
-
-        DepartmentRepresentation departmentR2 = boardR2.getDepartment();
+        DepartmentRepresentation departmentR2 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2")));
         Long departmentId2 = departmentR2.getId();
+
+        BoardRepresentation boardR2 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, new BoardDTO().setName("board2")));
         Long boardId2 = boardR2.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId2, Arrays.asList(
@@ -452,14 +452,11 @@ public class AuthenticationApiIT extends AbstractIT {
         verifyContains(emails2, BoardUtils.obfuscateEmail("member1@member1.com"), BoardUtils.obfuscateEmail("member4@member4.com"));
 
         Long userId3 = testUserService.authenticate().getId();
-        BoardRepresentation boardR3 = transactionTemplate.execute(status -> boardApi.postBoard(
-            new BoardDTO()
-                .setName("board3")
-                .setDepartment(new DepartmentDTO()
-                    .setName("department3"))));
-
-        DepartmentRepresentation departmentR3 = boardR3.getDepartment();
+        DepartmentRepresentation departmentR3 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department3")));
         Long departmentId3 = departmentR3.getId();
+
+        BoardRepresentation boardR3 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId3, new BoardDTO().setName("board3")));
         Long boardId3 = boardR3.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId3, Arrays.asList(
@@ -547,14 +544,11 @@ public class AuthenticationApiIT extends AbstractIT {
             BoardUtils.obfuscateEmail("jakub@prism.hr"), BoardUtils.obfuscateEmail("member1@member1.com"));
 
         Long userId4 = testUserService.authenticate().getId();
-        BoardRepresentation boardR4 = transactionTemplate.execute(status -> boardApi.postBoard(
-            new BoardDTO()
-                .setName("board4")
-                .setDepartment(new DepartmentDTO()
-                    .setName("department4"))));
-
-        DepartmentRepresentation departmentR4 = boardR4.getDepartment();
+        DepartmentRepresentation departmentR4 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department4")));
         Long departmentId4 = departmentR4.getId();
+
+        BoardRepresentation boardR4 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId4, new BoardDTO().setName("board4")));
         Long boardId4 = boardR4.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId4, Collections.singletonList(
