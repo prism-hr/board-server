@@ -1,6 +1,7 @@
 package hr.prism.board.enums;
 
-import java.util.Arrays;
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,11 +16,11 @@ public enum State {
     WITHDRAWN, // Post filter
     ARCHIVED, // Post only - not in filter for active posts, provides hard-coded filter for separate archive section
     PREVIOUS;
-
-    public static final List<State> ACTIVE_USER_ROLE_STATES = Arrays.asList(PENDING, ACCEPTED);
-
-    public static final List<String> ACTIVE_USER_ROLE_STATE_STRINGS = ACTIVE_USER_ROLE_STATES.stream().map(State::name).collect(Collectors.toList());
-
-    public static final List<State> RESOURCE_STATES_TO_ARCHIVE_FROM = Arrays.asList(DRAFT, SUSPENDED, EXPIRED, REJECTED, WITHDRAWN);
+    
+    public static final List<State> ACTIVE_USER_ROLE_STATES = ImmutableList.of(PENDING, ACCEPTED);
+    
+    public static final List<String> ACTIVE_USER_ROLE_STATE_STRINGS = ImmutableList.copyOf(ACTIVE_USER_ROLE_STATES.stream().map(State::name).collect(Collectors.toList()));
+    
+    public static final List<State> RESOURCE_STATES_TO_ARCHIVE_FROM = ImmutableList.of(DRAFT, SUSPENDED, EXPIRED, REJECTED, WITHDRAWN);
 
 }
