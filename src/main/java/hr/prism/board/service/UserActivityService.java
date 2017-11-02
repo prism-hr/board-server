@@ -19,8 +19,8 @@ public class UserActivityService {
     public synchronized List<Long> getUserIds() {
         return ImmutableList.copyOf(requests.keySet());
     }
-
-    public void storeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
+    
+    public synchronized void storeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
         requests.put(userId, request);
     }
 
