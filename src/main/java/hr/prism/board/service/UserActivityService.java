@@ -1,13 +1,13 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.exception.BoardNotModifiedException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.ActivityRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -15,9 +15,9 @@ import java.util.Set;
 public class UserActivityService {
 
     private HashMultimap<Long, DeferredResult<List<ActivityRepresentation>>> requests = HashMultimap.create();
-
-    public Collection<Long> getUserIds() {
-        return requests.keySet();
+    
+    public List<Long> getUserIds() {
+        return ImmutableList.copyOf(requests.keySet());
     }
 
     public void storeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {

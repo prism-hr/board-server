@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -61,9 +60,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "where relation.resource2 = :resource " +
             "and userRole.user.id in (:userIds) " +
             "and userRole.state in (:userRoleStates)")
-    List<Long> findByResourceAndUserIds(@Param("resource") Resource resource,
-        @Param("userIds") Collection<Long> userIds,
-        @Param("userRoleStates") List<State> userRoleStates);
+    List<Long> findByResourceAndUserIds(@Param("resource") Resource resource, @Param("userIds") List<Long> userIds, @Param("userRoleStates") List<State> userRoleStates);
     
     @Query(value =
         "select distinct new hr.prism.board.value.UserNotification(userRole.user) " +

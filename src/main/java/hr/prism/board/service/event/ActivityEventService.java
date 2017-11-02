@@ -15,7 +15,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,8 +120,8 @@ public class ActivityEventService {
                 }
             });
         }
-
-        Collection<Long> userIds = userActivityService.getUserIds();
+    
+        List<Long> userIds = userActivityService.getUserIds();
         if (!userIds.isEmpty()) {
             for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
                 userActivityService.processRequests(userId, activityService.getActivities(userId));

@@ -211,7 +211,7 @@ public class UserService {
         return user;
     }
     
-    public List<Long> findByResourceAndUserIds(Resource resource, Collection<Long> userIds) {
+    public List<Long> findByResourceAndUserIds(Resource resource, List<Long> userIds) {
         return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
     
