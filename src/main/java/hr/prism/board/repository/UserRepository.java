@@ -53,8 +53,6 @@ public interface UserRepository extends MyRepository<User, Long> {
     
     User findByPasswordResetUuid(String passwordResetUuid);
     
-    User findByEmailAndPassword(String email, String password);
-    
     @Query(value =
         "select distinct userRole.user.id " +
             "from ResourceRelation relation " +
