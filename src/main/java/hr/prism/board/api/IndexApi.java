@@ -32,6 +32,9 @@ public class IndexApi {
     @Value("${app.url}")
     private String appUrl;
 
+    @Value("${auth.facebook.clientId}")
+    private String facebookClientId;
+
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = RequestMethod.GET)
     public String getDepartment(@PathVariable String universityHandle, @PathVariable String departmentHandle, Model model) {
         fillGenericModel(model);
@@ -92,8 +95,10 @@ public class IndexApi {
         model.addAttribute("title", "Prism");
         model.addAttribute("description", "Student job board");
         model.addAttribute("url", appUrl);
+        model.addAttribute("type", "website");
         model.addAttribute("image", SOCIAL_LOGO_URL);
         model.addAttribute("imageAlt", SOCIAL_LOGO_URL);
+        model.addAttribute("facebookAppId", facebookClientId);
     }
 
 }
