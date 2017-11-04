@@ -87,9 +87,9 @@ public class BoardService {
     }
 
     public Board createBoard(Long departmentId, BoardDTO boardDTO) {
-        User currentUser = userService.getCurrentUserSecured();
-        Resource department = resourceService.findOne(departmentId);
-        return (Board) actionService.executeAction(currentUser, department, Action.EXTEND, () -> {
+        User user = userService.getCurrentUserSecured();
+        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        return (Board) actionService.executeAction(user, department, Action.EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
             resourceService.validateUniqueName(Scope.BOARD, null, department, name, ExceptionCode.DUPLICATE_BOARD);
 
@@ -114,7 +114,7 @@ public class BoardService {
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
             resourceService.setIndexDataAndQuarter(board);
-            userRoleService.createOrUpdateUserRole(board, currentUser, Role.ADMINISTRATOR);
+            userRoleService.createOrUpdateUserRole(board, user, Role.ADMINISTRATOR);
             return board;
         });
     }
