@@ -396,7 +396,7 @@ public class PostService {
         return resourceEvent.setViewed(true);
     }
 
-    @Scheduled(initialDelay = 60000, fixedRate = 60000)
+    @Scheduled(initialDelay = 10000, fixedRate = 10000)
     public void publishAndRetirePostsScheduled() {
         if (BooleanUtils.isTrue(schedulerOn)) {
             publishAndRetirePosts();

@@ -66,7 +66,7 @@ import java.util.concurrent.Executors;
 @EnableScheduling
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
-@Import(SecurityConfiguration.class)
+@Import(BoardSecurity.class)
 public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncConfigurer, SchedulingConfigurer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);

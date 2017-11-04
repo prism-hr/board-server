@@ -2,14 +2,18 @@ package hr.prism.board.dto;
 
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
+import org.hibernate.validator.constraints.Email;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Objects;
 
 public class UserRoleDTO {
 
+    @Valid
     private UserDTO user;
 
+    @Email
     private String email;
 
     private Role role;

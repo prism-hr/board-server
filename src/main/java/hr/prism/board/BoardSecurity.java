@@ -12,7 +12,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import javax.inject.Inject;
 
 @Configuration
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class BoardSecurity extends WebSecurityConfigurerAdapter {
 
     @Inject
     private AuthenticationService authenticationService;

@@ -38,7 +38,8 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users", method = RequestMethod.POST)
-    public UserRoleRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestBody @Valid UserRoleDTO user) {
+    public UserRoleRepresentation createResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId,
+                                                     @RequestBody @Valid UserRoleDTO user) {
         return userRoleService.createResourceUser(scope, resourceId, user);
     }
 
@@ -48,12 +49,14 @@ public class ResourceApi {
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/users/{userId}", method = RequestMethod.PUT)
-    public UserRoleRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId, @PathVariable Long userId, @RequestBody @Valid UserRoleDTO user) {
+    public UserRoleRepresentation updateResourceUser(@ModelAttribute Scope scope, @PathVariable Long resourceId,
+                                                     @PathVariable Long userId, @RequestBody @Valid UserRoleDTO user) {
         return userRoleService.updateResourceUser(scope, resourceId, userId, user);
     }
 
     @RequestMapping(value = "/api/{scopePlural:departments|boards}/{resourceId}/lookupUsers", method = RequestMethod.GET)
-    public List<UserRepresentation> getSimilarUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId, @RequestParam String query) {
+    public List<UserRepresentation> getSimilarUsers(@ModelAttribute Scope scope, @PathVariable Long resourceId,
+                                                    @RequestParam String query) {
         return userService.findBySimilarNameAndEmail(scope, resourceId, query);
     }
 

@@ -32,10 +32,13 @@ public class IndexApi {
     @Value("${app.url}")
     private String appUrl;
 
+    @Value("${auth.facebook.clientId}")
+    private String facebookClientId;
+
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = RequestMethod.GET)
-    public String getDepartment(@PathVariable String departmentHandle, Model model) {
+    public String getDepartment(@PathVariable String universityHandle, @PathVariable String departmentHandle, Model model) {
         fillGenericModel(model);
-        Department department = departmentService.getDepartment(departmentHandle);
+        Department department = departmentService.getDepartment(universityHandle + "/" + departmentHandle);
         if (department != null) {
             model.addAttribute("title", department.getName());
             model.addAttribute("description", department.getSummary());
@@ -49,13 +52,14 @@ public class IndexApi {
     }
 
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
-    public String getBoard(@PathVariable String departmentHandle, @PathVariable String boardHandle, Model model) {
+    public String getBoard(@PathVariable String universityHandle, @PathVariable String departmentHandle,
+                           @PathVariable String boardHandle, Model model) {
         fillGenericModel(model);
-        Board board = boardService.getBoard(departmentHandle + "/" + boardHandle);
+        Board board = boardService.getBoard(universityHandle + "/" + departmentHandle + "/" + boardHandle);
         if (board != null) {
             model.addAttribute("title", board.getName());
             model.addAttribute("description", board.getSummary());
-            model.addAttribute("url", appUrl + "/" + board.getParent().getHandle() + "/" + boardHandle);
+            model.addAttribute("url", appUrl + "/" + board.getHandle());
             if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
@@ -72,8 +76,7 @@ public class IndexApi {
             Board board = (Board) post.getParent();
             model.addAttribute("title", post.getName());
             model.addAttribute("description", post.getSummary());
-            model.addAttribute("url", appUrl + "/" + board.getParent().getHandle()
-                + "/" + board.getHandle() + "/" + post.getId());
+            model.addAttribute("url", appUrl + "/" + board.getHandle() + "/" + post.getId());
             if (board.getDocumentLogo() != null) {
                 model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
             }
@@ -92,8 +95,10 @@ public class IndexApi {
         model.addAttribute("title", "Prism");
         model.addAttribute("description", "Student job board");
         model.addAttribute("url", appUrl);
+        model.addAttribute("type", "website");
         model.addAttribute("image", SOCIAL_LOGO_URL);
         model.addAttribute("imageAlt", SOCIAL_LOGO_URL);
+        model.addAttribute("facebookAppId", facebookClientId);
     }
 
 }
