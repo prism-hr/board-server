@@ -13,7 +13,7 @@ public class ResourceTaskScheduledService {
     @Inject
     private ResourceTaskService resourceTaskService;
 
-    @Scheduled(cron = "0 0 7 1/1 * ? *")
+    @Scheduled(cron = "0 0 7 * * ?")
     public void updateTasks() {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime baseline1 = baseline.minusWeeks(1);
