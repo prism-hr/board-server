@@ -80,13 +80,10 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private PostRepository postRepository;
 
-    private static List<Attachments> makeTestAttachments(String name) {
-        InputStream inputStream = null;
-        try {
-            URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
-            URLConnection connection = url.openConnection();
-            inputStream = connection.getInputStream();
-
+    private static List<Attachments> makeTestAttachments(String name) throws IOException {
+        URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
+        URLConnection connection = url.openConnection();
+        try (InputStream inputStream = connection.getInputStream()) {
             Attachments attachments = new Attachments();
             attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
             attachments.setType(connection.getContentType());
@@ -96,8 +93,6 @@ public class PostApiIT extends AbstractIT {
             return Collections.singletonList(attachments);
         } catch (IOException e) {
             throw new Error(e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
     }
 
@@ -105,12 +100,16 @@ public class PostApiIT extends AbstractIT {
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId1 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+        Long departmentId2 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
 
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
-        boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11");
-        BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO11));
+        BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, boardDTO11));
 
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -122,9 +121,8 @@ public class PostApiIT extends AbstractIT {
 
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
-        boardDTO12.getDepartment().setName("department1");
         boardDTO12.setName("board12");
-        BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO12));
+        BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, boardDTO12));
         testUserService.setAuthentication(user11.getId());
         boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user12.getId());
@@ -139,9 +137,8 @@ public class PostApiIT extends AbstractIT {
 
         User user21 = testUserService.authenticate();
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
-        boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
-        BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO21));
+        BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, boardDTO21));
 
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -152,9 +149,8 @@ public class PostApiIT extends AbstractIT {
 
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
-        boardDTO22.getDepartment().setName("department2");
         boardDTO22.setName("board22");
-        BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO22));
+        BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, boardDTO22));
         testUserService.setAuthentication(user21.getId());
         boardApi.executeAction(boardR22.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user22.getId());
@@ -319,7 +315,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithMissingApply() {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post")
@@ -339,7 +338,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithCorruptedApply() {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
                 .setName("post")
@@ -361,7 +363,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithMissingRelationForUserWithoutAuthorRole() {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
         testUserService.authenticate();
         transactionTemplate.execute(status -> {
             PostDTO postDTO = new PostDTO()
@@ -383,7 +388,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithCategoriesForBoardWithoutCategories() {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()).getId());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId());
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
@@ -401,7 +409,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithoutCategoriesForBoardWithCategories() {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
@@ -419,7 +430,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithInvalidCategoriesForBoardWithCategories() {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()).getId());
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
 
         transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
@@ -437,8 +451,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotCorruptPostByPatching() {
         testUserService.authenticate();
-        BoardRepresentation boardRepresentation = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()));
-        Long departmentId = boardRepresentation.getDepartment().getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        BoardRepresentation boardRepresentation = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()));
         Long boardId = boardRepresentation.getId();
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
 
@@ -498,8 +514,10 @@ public class PostApiIT extends AbstractIT {
     public void shouldSupportPostLifecycleAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.sampleBoard()));
-        Long departmentId = boardR.getDepartment().getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()));
         Long boardId = boardR.getId();
 
         // Allow department to have research students
@@ -1093,8 +1111,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldCountPostViewsReferralsAndResponses() throws IOException {
         Long boardUserId = testUserService.authenticate().getId();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()));
-        Long departmentId = boardR.getDepartment().getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()));
         Long boardId = boardR.getId();
 
         transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
@@ -1192,10 +1212,12 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldNotifyAndListPostResponses() {
+    public void shouldNotifyAndListPostResponses() throws IOException {
         Long boardUserId = testUserService.authenticate().getId();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard()));
-        Long departmentId = boardR.getDepartment().getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()));
         Long boardId = boardR.getId();
 
         User postUser = testUserService.authenticate();
@@ -1403,7 +1425,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldArchivePosts() throws InterruptedException {
         testUserService.authenticate();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard())).getId();
         Long postId1 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post1"))).getId();
 
         testUserService.authenticate();
