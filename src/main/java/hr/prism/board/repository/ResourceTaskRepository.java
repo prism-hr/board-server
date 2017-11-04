@@ -33,7 +33,7 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
         "select resourceTask " +
             "from ResourceTask resourceTask " +
             "inner join resourceTask.suppressions suppression " +
-            "where reosurceTask.resource = :resource " +
+            "where resourceTask.resource = :resource " +
             "and suppression.user = :user")
     List<ResourceTask> findByResourceAndSuppressions(@Param("resource") Resource resource, @Param("user") User user);
 
