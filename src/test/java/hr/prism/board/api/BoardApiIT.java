@@ -59,20 +59,23 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldCreateAndListBoards() {
         Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId1 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+        Long departmentId2 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
 
         User user11 = testUserService.authenticate();
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
-        boardDTO11.getDepartment().setName("department1");
         boardDTO11.setName("board11").setDocumentLogo(new DocumentDTO().setCloudinaryId("board1logo").setCloudinaryUrl("board1logo").setFileName("board1logo"));
-        BoardRepresentation boardR11 = verifyPostBoard(boardDTO11, "board11");
+        BoardRepresentation boardR11 = verifyPostBoard(departmentId1, boardDTO11, "board11");
         unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
             TestHelper.samplePost()));
 
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
-        boardDTO12.getDepartment().setName("department1");
         boardDTO12.setName("board12").setDocumentLogo(new DocumentDTO().setCloudinaryId("board2logo").setCloudinaryUrl("board2logo").setFileName("board2logo"));
-        BoardRepresentation boardR12 = verifyPostBoard(boardDTO12, "board12");
+        BoardRepresentation boardR12 = verifyPostBoard(departmentId1, boardDTO12, "board12");
         testUserService.setAuthentication(user11.getId());
         boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user12.getId());
@@ -82,17 +85,15 @@ public class BoardApiIT extends AbstractIT {
 
         User user21 = testUserService.authenticate();
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
-        boardDTO21.getDepartment().setName("department2");
         boardDTO21.setName("board21");
-        BoardRepresentation boardR21 = verifyPostBoard(boardDTO21, "board21");
+        BoardRepresentation boardR21 = verifyPostBoard(departmentId2, boardDTO21, "board21");
         unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
             TestHelper.smallSamplePost()));
 
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
-        boardDTO22.getDepartment().setName("department2");
         boardDTO22.setName("board22");
-        BoardRepresentation boardR22 = verifyPostBoard(boardDTO22, "board22");
+        BoardRepresentation boardR22 = verifyPostBoard(departmentId2, boardDTO22, "board22");
         testUserService.setAuthentication(user21.getId());
         boardApi.executeAction(boardR22.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user22.getId());
@@ -139,11 +140,14 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldNotCreateDuplicateBoard() {
         testUserService.authenticate();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(boardDTO));
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, boardDTO));
         transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyDuplicateException(() -> boardApi.postBoard(boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId(), status);
+            ExceptionUtils.verifyDuplicateException(() -> boardApi.postBoard(departmentId, boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId(), status);
             return null;
         });
     }
@@ -151,12 +155,13 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldNotCreateDuplicateBoardHandle() {
         testUserService.authenticate();
-        BoardDTO boardDTO = new BoardDTO()
-            .setName("new board with long name")
-            .setDepartment(new DepartmentDTO()
-                .setName("new department"));
-        verifyPostBoard(boardDTO, "new-board-with-long");
-        Long boardId = verifyPostBoard(boardDTO.setName("new board with long name too"), "new-board-with-long-2").getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+
+        BoardDTO boardDTO = new BoardDTO().setName("new board with long name");
+        verifyPostBoard(departmentId, boardDTO, "new-board-with-long");
+        Long boardId = verifyPostBoard(departmentId, boardDTO.setName("new board with long name too"), "new-board-with-long-2").getId();
 
         transactionTemplate.execute(status -> {
             BoardRepresentation boardR = boardApi.patchBoard(boardId,
@@ -166,7 +171,7 @@ public class BoardApiIT extends AbstractIT {
             return null;
         });
 
-        verifyPostBoard(boardDTO.setName("new board with long name also"), "new-board-with-long-2");
+        verifyPostBoard(departmentId, boardDTO.setName("new board with long name also"), "new-board-with-long-2");
     }
 
     @Test
@@ -196,20 +201,12 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldUpdateBoardHandleWhenUpdatingDepartmentHandle() {
         testUserService.authenticate();
-        Long departmentId = verifyPostBoard(
-            new BoardDTO()
-                .setName("board 1")
-                .setDepartment(new DepartmentDTO()
-                    .setName("department")),
-            "board-1")
-            .getDepartment().getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
 
-        verifyPostBoard(
-            new BoardDTO()
-                .setName("board 2")
-                .setDepartment(new DepartmentDTO()
-                    .setId(departmentId)),
-            "board-2");
+        verifyPostBoard(departmentId, new BoardDTO().setName("board 1"), "board-1");
+        verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
 
         transactionTemplate.execute(status -> {
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId, true, null, null, null);
@@ -244,9 +241,10 @@ public class BoardApiIT extends AbstractIT {
     public void shouldSupportBoardLifeCycleAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
-        BoardRepresentation boardR = verifyPostBoard(TestHelper.smallSampleBoard(), "board");
-        DepartmentRepresentation departmentR = boardR.getDepartment();
-        Long departmentId = departmentR.getId();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
 
         // Create a board in the draft state
         testUserActivityService.record();
@@ -259,19 +257,13 @@ public class BoardApiIT extends AbstractIT {
         Long boardUserId = boardUser.getId();
         listenForNewActivities(boardUserId);
 
-        boardR = verifyPostBoard(
-            TestHelper.smallSampleBoard()
-                .setName("board 1")
-                .setDepartment(
-                    new DepartmentDTO()
-                        .setId(departmentId)),
-            "board-1");
+        BoardRepresentation boardR = verifyPostBoard(departmentId, TestHelper.smallSampleBoard().setName("board 1"), "board-1");
         Long boardId = boardR.getId();
         testUserActivityService.stop();
         testNotificationService.stop();
 
         String departmentUserGivenName = departmentUser.getGivenName();
-        String departmentName = departmentR.getName();
+        String departmentName = "department";
         String boardUserGivenName = boardUser.getGivenName();
         String resourceRedirect = serverUrl + "/redirect?resource=" + boardId;
         String homeRedirect = serverUrl + "/redirect";
@@ -464,12 +456,14 @@ public class BoardApiIT extends AbstractIT {
     public void shouldPostAndReplaceLogo() {
         // Create department and board
         User user = testUserService.authenticate();
-        BoardDTO boardDTO = TestHelper.smallSampleBoard();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         DocumentDTO initialLogo = new DocumentDTO().setCloudinaryId("postingLogo").setCloudinaryUrl("postingLogo").setFileName("postingLogo");
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary").setDocumentLogo(initialLogo))).getId();
+
+        BoardDTO boardDTO = TestHelper.smallSampleBoard();
         boardDTO.setDocumentLogo(initialLogo);
-        boardDTO.getDepartment().setDocumentLogo(initialLogo);
-        BoardRepresentation boardR = verifyPostBoard(boardDTO, "board");
-        Long departmentId = boardR.getDepartment().getId();
+        BoardRepresentation boardR = verifyPostBoard(departmentId, boardDTO, "board");
         Long boardId = boardR.getId();
 
         // Check that we can make further changes and set default / nullable values
@@ -486,8 +480,12 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldCountPostsAndAuthors() {
         Long boardUserId = testUserService.authenticate().getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard())).getId();
-        transactionTemplate.execute(status -> boardApi.postBoard(TestHelper.smallSampleBoard().setName("other")));
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard())).getId();
+        transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("other")));
 
         testUserService.authenticate();
         Long post1id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
@@ -540,20 +538,15 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldArchiveBoards() throws InterruptedException {
         testUserService.authenticate();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(new BoardDTO()
-            .setName("board1")
-            .setDepartment(new DepartmentDTO()
-                .setName("department"))));
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
 
-        Long departmentId = boardR.getDepartment().getId();
+        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, new BoardDTO().setName("board1")));
         Long boardId1 = boardR.getId();
 
         testUserService.authenticate();
-        Long boardId2 = transactionTemplate.execute(status -> boardApi.postBoard(
-            new BoardDTO()
-                .setName("board2")
-                .setDepartment(new DepartmentDTO()
-                    .setId(departmentId)))).getId();
+        Long boardId2 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, new BoardDTO().setName("board2"))).getId();
 
         TimeUnit.SECONDS.sleep(resourceArchiveDurationSeconds + 1);
 
@@ -568,20 +561,17 @@ public class BoardApiIT extends AbstractIT {
 
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         testUserService.authenticate();
-        BoardRepresentation boardR1 = verifyPostBoard(TestHelper.smallSampleBoard(), "board");
-        BoardRepresentation boardR2 = verifyPostBoard(
-            new BoardDTO()
-                .setName("board 2")
-                .setDepartment(new DepartmentDTO()
-                    .setId(boardR1.getDepartment().getId())),
-            "board-2");
-
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentId = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        BoardRepresentation boardR1 = verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
+        BoardRepresentation boardR2 = verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
         return new Pair<>(boardR1, boardR2);
     }
 
-    private BoardRepresentation verifyPostBoard(BoardDTO boardDTO, String expectedHandle) {
+    private BoardRepresentation verifyPostBoard(Long departmentId, BoardDTO boardDTO, String expectedHandle) {
         return transactionTemplate.execute(status -> {
-            BoardRepresentation boardR = boardApi.postBoard(boardDTO);
+            BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
             Assert.assertEquals(boardDTO.getName(), boardR.getName());
             Assert.assertEquals(expectedHandle, boardR.getHandle());
