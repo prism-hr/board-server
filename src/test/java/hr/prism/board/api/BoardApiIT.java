@@ -497,6 +497,7 @@ public class BoardApiIT extends AbstractIT {
 
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard())).getId();
         transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("other")));
+        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.emptyList()))));
 
         testUserService.authenticate();
         Long post1id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
