@@ -378,7 +378,8 @@ public class BoardApiIT extends AbstractIT {
 
         // Create post
         User postUser = testUserService.authenticate();
-        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUsers.add(postUser);
 
         // Check that we can make changes and leave nullable values null
