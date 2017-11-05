@@ -18,7 +18,6 @@ import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
@@ -155,22 +154,24 @@ public abstract class AbstractIT {
     LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, int departmentSuffix, int boardSuffix) {
         LinkedHashMap<Scope, User> unprivilegedUsers = new LinkedHashMap<>();
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
 
-        transactionTemplate.execute(status -> {
-            departmentApi.postDepartment(
-                universityId,
-                new DepartmentDTO()
-                    .setName("department" + departmentSuffix)
-                    .setSummary("department summary"));
-            return null;
-        });
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long otherDepartmentId = transactionTemplate.execute(status -> departmentApi.postDepartment(
+            universityId,
+            new DepartmentDTO()
+                .setName("department" + departmentSuffix)
+                .setSummary("department summary")).getId());
+
+        transactionTemplate.execute(status -> boardApi.postBoard(
+            otherDepartmentId,
+            new BoardDTO()
+                .setName("board" + departmentSuffix)).getId());
 
         unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(
+        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(
             departmentId,
             new BoardDTO()
-                .setName("board" + boardSuffix)));
+                .setName("board" + boardSuffix)).getId());
 
         User departmentAdmin = transactionTemplate.execute(status -> {
             Resource department = resourceService.findOne(departmentId);
@@ -185,7 +186,7 @@ public abstract class AbstractIT {
         });
 
         testUserService.setAuthentication(departmentAdmin.getId());
-        transactionTemplate.execute(status -> boardApi.executeAction(boardR.getId(), "accept", new BoardPatchDTO()));
+        transactionTemplate.execute(status -> boardApi.executeAction(boardId, "accept", new BoardPatchDTO()));
         return unprivilegedUsers;
     }
 

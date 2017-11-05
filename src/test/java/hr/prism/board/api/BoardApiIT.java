@@ -60,12 +60,11 @@ public class BoardApiIT extends AbstractIT {
     public void shouldCreateAndListBoards() {
         Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId1 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
-        Long departmentId2 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
 
         User user11 = testUserService.authenticate();
+        Long departmentId1 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.setName("board11").setDocumentLogo(new DocumentDTO().setCloudinaryId("board1logo").setCloudinaryUrl("board1logo").setFileName("board1logo"));
         BoardRepresentation boardR11 = verifyPostBoard(departmentId1, boardDTO11, "board11");
@@ -84,11 +83,15 @@ public class BoardApiIT extends AbstractIT {
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         User user21 = testUserService.authenticate();
+        Long departmentId2 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
+
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = verifyPostBoard(departmentId2, boardDTO21, "board21");
         unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
-            TestHelper.smallSamplePost()));
+            TestHelper.smallSamplePost()
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
@@ -99,7 +102,8 @@ public class BoardApiIT extends AbstractIT {
         testUserService.setAuthentication(user22.getId());
         unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
             TestHelper.smallSamplePost()
-                .setPostCategories(Collections.singletonList("p1"))));
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         List<String> boardNames = Arrays.asList(
             "board11", "board110", "board1100", "board12", "board120", "board1200", "board21", "board210", "board2100", "board22", "board220", "board2200");
@@ -659,25 +663,37 @@ public class BoardApiIT extends AbstractIT {
         List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(null, null, null, null)),
+            transactionTemplate.execute(status ->
+                boardApi.getBoards(null, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList())),
             Collections.emptyList(),
             null);
 
         TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
             .add(publicActions);
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(true, null, null, null)),
+            transactionTemplate.execute(status ->
+                boardApi.getBoards(true, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList())),
             boardNames,
             expectedActions);
 
         for (Long departmentId : boardNamesByDepartment.keySet()) {
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null, null, null, null)),
+                transactionTemplate.execute(status ->
+                    boardApi.getBoardsByDepartment(departmentId, null, null, null, null)
+                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                        .collect(Collectors.toList())),
                 Collections.emptyList(),
                 null);
 
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true, null, null, null)),
+                transactionTemplate.execute(status ->
+                    boardApi.getBoardsByDepartment(departmentId, true, null, null, null)
+                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                        .collect(Collectors.toList())),
                 Lists.newArrayList(boardNamesByDepartment.get(departmentId)),
                 expectedActions);
         }
@@ -688,13 +704,19 @@ public class BoardApiIT extends AbstractIT {
         List<Action> publicActionList = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(null, null, null, null)),
+            transactionTemplate.execute(status ->
+                boardApi.getBoards(null, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList())),
             adminBoardNames,
             new TestHelper.ExpectedActions()
                 .addAll(adminBoardNames, adminActionList));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> boardApi.getBoards(true, null, null, null)),
+            transactionTemplate.execute(status ->
+                boardApi.getBoards(true, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList())),
             boardNames,
             new TestHelper.ExpectedActions()
                 .add(publicActionList)
@@ -704,13 +726,19 @@ public class BoardApiIT extends AbstractIT {
             List<String> departmentBoardNames = Lists.newArrayList(boardNamesByDepartment.get(departmentId));
             @SuppressWarnings("unchecked") List<String> adminDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, adminBoardNames);
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, null, null, null, null)),
+                transactionTemplate.execute(status ->
+                    boardApi.getBoardsByDepartment(departmentId, null, null, null, null)
+                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                        .collect(Collectors.toList())),
                 adminDepartmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .addAll(adminDepartmentBoardNames, adminActionList));
 
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> boardApi.getBoardsByDepartment(departmentId, true, null, null, null)),
+                transactionTemplate.execute(status ->
+                    boardApi.getBoardsByDepartment(departmentId, true, null, null, null)
+                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                        .collect(Collectors.toList())),
                 departmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .add(publicActionList)
