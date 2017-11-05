@@ -88,7 +88,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId1 = departmentR1.getId();
         Long boardId1 = boardApi.getBoardsByDepartment(departmentId1, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department1", makeUnprivilegedUsers(departmentId1, boardId1, 10, 2, TestHelper.samplePost()));
+        unprivilegedUsers.put("department1", makeUnprivilegedUsers(departmentId1, boardId1, 10, 2,
+            TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
         testUserService.setAuthentication(user1.getId());
         DepartmentDTO departmentDTO2 = new DepartmentDTO().setName("department2").setSummary("department summary");
@@ -96,7 +97,10 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId2 = departmentR2.getId();
         Long boardId2 = boardApi.getBoardsByDepartment(departmentId2, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department2", makeUnprivilegedUsers(departmentId2, boardId2, 20, 2, TestHelper.smallSamplePost()));
+        unprivilegedUsers.put("department2", makeUnprivilegedUsers(departmentId2, boardId2, 20, 2,
+            TestHelper.smallSamplePost()
+                .setPostCategories(Collections.singletonList("Employment"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         User user2 = testUserService.authenticate();
         DepartmentDTO departmentDTO3 = new DepartmentDTO().setName("department3").setSummary("department summary");
@@ -104,15 +108,19 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId3 = departmentR3.getId();
         Long boardId3 = boardApi.getBoardsByDepartment(departmentId3, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department3", makeUnprivilegedUsers(departmentId3, boardId3, 30, 2, TestHelper.samplePost()));
+        unprivilegedUsers.put("department3", makeUnprivilegedUsers(departmentId3, boardId3, 30, 2,
+            TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
         testUserService.setAuthentication(user2.getId());
         DepartmentDTO departmentDTO4 = new DepartmentDTO().setName("department4").setSummary("department summary");
-        DepartmentRepresentation departmentR4 = verifyPostDepartment(universityId, departmentDTO4, "department3");
+        DepartmentRepresentation departmentR4 = verifyPostDepartment(universityId, departmentDTO4, "department4");
 
         Long departmentId4 = departmentR4.getId();
         Long boardId4 = boardApi.getBoardsByDepartment(departmentId4, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department4", makeUnprivilegedUsers(departmentId4, boardId4, 40, 2, TestHelper.smallSamplePost()));
+        unprivilegedUsers.put("department4", makeUnprivilegedUsers(departmentId4, boardId4, 40, 2,
+            TestHelper.smallSamplePost()
+                .setPostCategories(Collections.singletonList("Employment"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         List<String> departmentNames = Arrays.asList(
             "department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40");
