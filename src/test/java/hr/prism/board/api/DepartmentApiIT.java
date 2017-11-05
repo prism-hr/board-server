@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -691,7 +692,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         DepartmentDTO departmentDTO1 = new DepartmentDTO().setName("department 1").setSummary("department summary");
         DepartmentDTO departmentDTO2 = new DepartmentDTO().setName("department 2").setSummary("department summary");
-        DepartmentRepresentation departmentR1 = verifyPostDepartment(universityId, departmentDTO1, "department");
+        DepartmentRepresentation departmentR1 = verifyPostDepartment(universityId, departmentDTO1, "department-1");
         DepartmentRepresentation departmentR2 = verifyPostDepartment(universityId, departmentDTO2, "department-2");
         return new Pair<>(departmentR1, departmentR2);
     }
@@ -701,7 +702,8 @@ public class DepartmentApiIT extends AbstractIT {
             DepartmentRepresentation departmentR = departmentApi.postDepartment(universityId, departmentDTO);
             Assert.assertEquals(departmentDTO.getName(), departmentR.getName());
             Assert.assertEquals(expectedHandle, departmentR.getHandle());
-            Assert.assertEquals(Optional.ofNullable(departmentDTO.getMemberCategories()).orElse(new ArrayList<>()), departmentR.getMemberCategories());
+            Assert.assertEquals(Optional.ofNullable(departmentDTO.getMemberCategories())
+                .orElse(Stream.of(MemberCategory.values()).collect(Collectors.toList())), departmentR.getMemberCategories());
 
             Department department = departmentService.getDepartment(departmentR.getId());
             University university = universityService.getUniversity(departmentR.getUniversity().getId());
