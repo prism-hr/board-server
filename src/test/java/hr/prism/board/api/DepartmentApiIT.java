@@ -194,7 +194,7 @@ public class DepartmentApiIT extends AbstractIT {
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
 
-        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
         Long boardId = boardApi.getBoardsByDepartment(departmentId, null, null, null, null).get(0).getId();
@@ -707,7 +707,8 @@ public class DepartmentApiIT extends AbstractIT {
 
             Department department = departmentService.getDepartment(departmentR.getId());
             University university = universityService.getUniversity(departmentR.getUniversity().getId());
-            Assert.assertThat(department.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.contains(university, department));
+            Assert.assertThat(department.getParents().stream()
+                .map(ResourceRelation::getResource1).collect(Collectors.toList()), Matchers.containsInAnyOrder(university, department));
             return departmentR;
         });
     }
