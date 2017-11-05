@@ -296,12 +296,16 @@ public class AuthenticationApiIT extends AbstractIT {
         Long boardId1 = boardR1.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId1, Arrays.asList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member1").setSurname("member1").setEmail("member1@member1.com")).setRole(Role.MEMBER),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member2").setSurname("member2").setEmail("member2@member2.com")).setRole(Role.MEMBER),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member3").setSurname("member3").setEmail("member3@member3.com")).setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member1").setSurname("member1").setEmail("member1@member1.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member2").setSurname("member2").setEmail("member2@member2.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member3").setSurname("member3").setEmail("member3@member3.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2017))));
 
         testNotificationService.record();
-        PostRepresentation postR1 = transactionTemplate.execute(status -> postApi.postPost(boardId1, TestHelper.smallSamplePost()));
+        PostRepresentation postR1 = transactionTemplate.execute(status -> postApi.postPost(boardId1,
+            TestHelper.smallSamplePost().setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -389,11 +393,14 @@ public class AuthenticationApiIT extends AbstractIT {
         Long boardId2 = boardR2.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId2, Arrays.asList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member1").setSurname("member1").setEmail("member1@member1.com")).setRole(Role.MEMBER),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member3").setSurname("member3").setEmail("member3@member3.com")).setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member1").setSurname("member1").setEmail("member1@member1.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member3").setSurname("member3").setEmail("member3@member3.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017))));
 
         testNotificationService.record();
-        PostRepresentation postR2 = transactionTemplate.execute(status -> postApi.postPost(boardId2, TestHelper.smallSamplePost()));
+        PostRepresentation postR2 = transactionTemplate.execute(status -> postApi.postPost(boardId2,
+            TestHelper.smallSamplePost().setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -460,12 +467,16 @@ public class AuthenticationApiIT extends AbstractIT {
         Long boardId3 = boardR3.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId3, Arrays.asList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member5").setSurname("member5").setEmail("member5@member5.com")).setRole(Role.MEMBER),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member6").setSurname("member6").setEmail("member6@member6.com")).setRole(Role.MEMBER),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member7").setSurname("member7").setEmail("member7@member7.com")).setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member5").setSurname("member5").setEmail("member5@member5.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member6").setSurname("member6").setEmail("member6@member6.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017),
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member7").setSurname("member7").setEmail("member7@member7.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2017))));
 
         testNotificationService.record();
-        PostRepresentation postR3 = transactionTemplate.execute(status -> postApi.postPost(boardId3, TestHelper.smallSamplePost()));
+        PostRepresentation postR3 = transactionTemplate.execute(status -> postApi.postPost(boardId3,
+            TestHelper.smallSamplePost().setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -552,10 +563,12 @@ public class AuthenticationApiIT extends AbstractIT {
         Long boardId4 = boardR4.getId();
 
         transactionTemplate.execute(status -> departmentApi.postMembers(departmentId4, Collections.singletonList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member8").setSurname("member8").setEmail("member8@member8.com")).setRole(Role.MEMBER))));
+            new UserRoleDTO().setUser(new UserDTO().setGivenName("member8").setSurname("member8").setEmail("member8@member8.com")).setRole(Role.MEMBER)
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2017))));
 
         testNotificationService.record();
-        PostRepresentation postR4 = transactionTemplate.execute(status -> postApi.postPost(boardId4, TestHelper.smallSamplePost()));
+        PostRepresentation postR4 = transactionTemplate.execute(status -> postApi.postPost(boardId4,
+            TestHelper.smallSamplePost().setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
