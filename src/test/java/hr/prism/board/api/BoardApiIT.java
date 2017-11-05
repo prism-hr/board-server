@@ -210,10 +210,10 @@ public class BoardApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> {
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(departmentId, true, null, null, null);
-            Assert.assertEquals(2, boardRs.size());
+            Assert.assertEquals(4, boardRs.size());
 
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
-            Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2"));
+            Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2", "Career Opportunities", "Study Opportunities"));
 
             departmentApi.patchDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -227,10 +227,21 @@ public class BoardApiIT extends AbstractIT {
 
             int index = 1;
             List<BoardRepresentation> boardRs = boardApi.getBoardsByDepartment(department.getId(), true, null, null, null);
-            Assert.assertEquals(2, boardRs.size());
+            Assert.assertEquals(4, boardRs.size());
             for (BoardRepresentation boardR : boardRs) {
-                Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
-                index++;
+                String boardName = boardR.getName();
+                switch (boardName) {
+                    case "Career Opportunities":
+                        Assert.assertEquals("new-department-updated/career-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                        break;
+                    case "Study Opportunities":
+                        Assert.assertEquals("new-department-updated/study-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                        break;
+                    default:
+                        Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                        index++;
+                        break;
+                }
             }
 
             return null;
