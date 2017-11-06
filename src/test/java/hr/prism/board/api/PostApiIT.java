@@ -442,6 +442,11 @@ public class PostApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
+            departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
             PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
             ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
             return null;
