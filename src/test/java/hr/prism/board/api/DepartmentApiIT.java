@@ -667,14 +667,16 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
                 new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
             return null;
         });
 
         Long memberUser2Id = testUserService.authenticate().getId();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
             return null;
         });
 
@@ -803,7 +805,7 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyNullableCount(boardCount, departmentRs.get(0).getBoardCount());
         TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
 
-        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getBoardCount());
+        TestHelper.verifyNullableCount(2L, departmentRs.get(1).getBoardCount());
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
     }
 
