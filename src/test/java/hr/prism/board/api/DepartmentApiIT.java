@@ -206,27 +206,37 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
         Long boardId = boardApi.getBoardsByDepartment(departmentId, null, null, null, null).get(0).getId();
-        Long departmentUserId = departmentUser.getId();
 
-        listenForNewActivities(departmentUserId);
+        User boardUser = testUserService.authenticate();
+        Long boardUserId = boardUser.getId();
+
+        listenForNewActivities(boardUserId);
         testUserActivityService.record();
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
             new UserRoleDTO()
-                .setUser(new UserDTO().setId(departmentUserId))
+                .setUser(new UserDTO().setId(boardUserId))
                 .setRole(Role.ADMINISTRATOR)));
 
-        testUserActivityService.verify(departmentUserId, new TestUserActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
+        testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
         testUserActivityService.stop();
 
         // Create post
         User postUser = testUserService.authenticate();
-        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
+        transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost()
+                .setPostCategories(Collections.singletonList("Employment"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
 
         // Create unprivileged users
-        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.smallSamplePost()).values());
-        unprivilegedUsers.add(departmentUser);
+        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, boardId, 2, 2,
+            TestHelper.smallSamplePost()
+                .setPostCategories(Collections.singletonList("Employment"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))
+            .values());
+
+        unprivilegedUsers.add(boardUser);
         unprivilegedUsers.add(postUser);
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
@@ -323,10 +333,12 @@ public class DepartmentApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(2), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
                 .put("name", "department 2", "department 3")
-                .put("summary", null, "department 3 summary")
+                .put("summary", "department summary", "department 3 summary")
                 .put("handle", "department-2", "department-3")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"))
-                .put("memberCategories", new ArrayList<>(), Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT")));
+                .put("memberCategories",
+                    Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT", "RESEARCH_STUDENT", "RESEARCH_STAFF"),
+                    Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
@@ -336,7 +348,9 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("documentLogo",
                     ObjectUtils.orderedMap("cloudinaryId", "c", "cloudinaryUrl", "u", "fileName", "f"),
                     ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"))
-                .put("memberCategories", Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT"), Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT")));
+                .put("memberCategories",
+                    Arrays.asList("UNDERGRADUATE_STUDENT", "MASTER_STUDENT"),
+                    Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
@@ -742,7 +756,7 @@ public class DepartmentApiIT extends AbstractIT {
             Assert.assertEquals(handleOptional == null ? department.getHandle().split("/")[1] : handleOptional.orElse(null), departmentR.getHandle());
 
             Optional<List<MemberCategory>> memberCategoriesOptional = departmentDTO.getMemberCategories();
-            Assert.assertEquals(memberCategoriesOptional == null ? resourceService.getCategories(department, CategoryType.MEMBER) :
+            Assert.assertEquals(memberCategoriesOptional == null ? MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)) :
                 memberCategoriesOptional.orElse(new ArrayList<>()), departmentR.getMemberCategories());
 
             Assert.assertEquals(expectedState, departmentR.getState());
