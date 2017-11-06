@@ -13,6 +13,8 @@ public class ResourceTaskScheduledService {
     @Inject
     private ResourceTaskService resourceTaskService;
 
+    // FIXME: persist last run time so we don't run it twice if system restarted
+    // Probably used scheduled job e.g. once / hour to check against date - impossible to test cron
     @Scheduled(cron = "0 0 7 * * ?")
     public void updateTasks() {
         LocalDateTime baseline = LocalDateTime.now();

@@ -13,6 +13,8 @@ public class DepartmentScheduledService {
     @Inject
     private DepartmentService departmentService;
 
+    // FIXME: persist last run time so we don't run it twice if system restarted
+    // Probably used scheduled job e.g. once / hour to check against date - impossible to test cron
     @Scheduled(cron = "0 0 7 1 9 ?")
     public void updateTasks() {
         LocalDateTime baseline = LocalDateTime.now().minusMonths(1);
