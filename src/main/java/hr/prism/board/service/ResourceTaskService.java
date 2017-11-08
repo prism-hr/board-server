@@ -47,7 +47,7 @@ public class ResourceTaskService {
     private PlatformTransactionManager platformTransactionManager;
 
     public List<Long> findAllIds(LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
-        return resourceTaskRepository.findAllIds(baseline1, 1, baseline2, 2, baseline3);
+        return resourceTaskRepository.findAllIds(1, 2, baseline1, baseline2, baseline3);
     }
 
     public void createForNewResource(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {

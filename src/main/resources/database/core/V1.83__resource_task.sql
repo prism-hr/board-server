@@ -37,8 +37,11 @@ ALTER TABLE resource
   AFTER board_type,
   ADD COLUMN last_member_timestamp DATETIME
   AFTER member_to_be_uploaded_count,
-  ADD COLUMN last_internal_post_timestamp DATETIME
+  ADD COLUMN last_task_creation_timestamp DATETIME
   AFTER last_member_timestamp,
+  ADD COLUMN last_internal_post_timestamp DATETIME
+  AFTER last_task_creation_timestamp,
   ADD INDEX (board_type),
   ADD INDEX (last_member_timestamp),
+  ADD INDEX (last_task_creation_timestamp),
   ADD INDEX (last_internal_post_timestamp);

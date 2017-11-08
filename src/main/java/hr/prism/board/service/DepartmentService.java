@@ -138,8 +138,8 @@ public class DepartmentService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
-    public List<Long> findAllIds(LocalDateTime baseline) {
-        return departmentRepository.findAllIds(baseline);
+    public List<Long> findAllIds(LocalDateTime baseline1, LocalDateTime baseline2) {
+        return departmentRepository.findAllIds(baseline1, baseline2);
     }
 
     public Department getDepartment(Long id) {
@@ -397,6 +397,7 @@ public class DepartmentService {
         }
 
         resourceTaskService.createForExistingResource(departmentId, tasks);
+        department.setLastTaskCreationTimestamp(baseline);
     }
 
     public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {

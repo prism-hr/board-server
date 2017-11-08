@@ -396,14 +396,14 @@ public class PostService {
         return resourceEvent.setViewed(true);
     }
 
-    @Scheduled(initialDelay = 10000, fixedRate = 10000)
+    @Scheduled(initialDelay = 60000, fixedDelay = 10000)
     public void publishAndRetirePostsScheduled() {
         if (BooleanUtils.isTrue(schedulerOn)) {
             publishAndRetirePosts();
         }
     }
 
-    public synchronized void publishAndRetirePosts() {
+    public void publishAndRetirePosts() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> postToRetireIds = postRepository.findPostsToRetire(Arrays.asList(State.PENDING, State.ACCEPTED), baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);

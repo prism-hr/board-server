@@ -17,10 +17,10 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
         "select resourceTask.id " +
             "from ResourceTask resourceTask " +
             "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp < :baseline1 " +
-            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline2) " +
-            "or (resourceTask.notifiedCount = :notifiedCount3 and resourceTask.createdTimestamp < :baseline3)")
-    List<Long> findAllIds(@Param("baseline1") LocalDateTime baseline1, @Param("notifiedCount2") Integer notifiedCount2, @Param("baseline2") LocalDateTime baseline2,
-                          @Param("notifiedCount3") Integer notifiedCount3, @Param("baseline3") LocalDateTime baseline3);
+            "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp < :baseline2) " +
+            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3)")
+    List<Long> findAllIds(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
+                          @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2, @Param("baseline3") LocalDateTime baseline3);
 
     @Query(value =
         "select resourceTask " +

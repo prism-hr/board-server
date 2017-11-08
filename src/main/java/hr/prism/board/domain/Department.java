@@ -33,6 +33,9 @@ public class Department extends Resource {
     @Column(name = "last_member_timestamp")
     private LocalDateTime lastMemberTimestamp;
 
+    @Column(name = "last_task_creation_timestamp")
+    private LocalDateTime lastTaskCreationTimestamp;
+
     @Column(name = "last_internal_post_timestamp")
     private LocalDateTime lastInternalPostTimestamp;
 
@@ -66,6 +69,15 @@ public class Department extends Resource {
 
     public void setLastMemberTimestamp(LocalDateTime lastMemberTimestamp) {
         this.lastMemberTimestamp = lastMemberTimestamp;
+    }
+
+    public LocalDateTime getLastTaskCreationTimestamp() {
+        return lastTaskCreationTimestamp;
+    }
+
+    public Department setLastTaskCreationTimestamp(LocalDateTime lastTaskCreationTimestamp) {
+        this.lastTaskCreationTimestamp = lastTaskCreationTimestamp;
+        return this;
     }
 
     public LocalDateTime getLastInternalPostTimestamp() {

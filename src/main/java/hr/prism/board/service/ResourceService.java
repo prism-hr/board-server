@@ -538,14 +538,14 @@ public class ResourceService {
         return resourceRepository.findSummaryByUserAndRole(user, role);
     }
 
-    @Scheduled(initialDelay = 60000, fixedRate = 60000)
+    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
     public void archiveResourcesScheduled() {
         if (BooleanUtils.isTrue(schedulerOn)) {
             archiveResources();
         }
     }
 
-    public synchronized void archiveResources() {
+    public void archiveResources() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
             State.RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));

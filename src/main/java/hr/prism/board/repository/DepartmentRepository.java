@@ -13,17 +13,11 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
     @Query(value =
         "select department.id " +
             "from Department department " +
-            "where department.lastMemberTimestamp < :baseline " +
-            "or department.lastInternalPostTimestamp < :baseline " +
+            "where department.createdTimestamp < :baseline1 " +
+            "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
+            "and (department.lastMemberTimestamp < :baseline1 or department.lastInternalPostTimestamp < :baseline1) " +
             "order by department.id")
-    List<Long> findAllIds(LocalDateTime baseline);
-
-    @Query(value =
-        "select department " +
-            "from Department department " +
-            "where department.id = :id " +
-            "or department.name = :name")
-    List<Department> findByIdOrName(@Param("id") Long id, @Param("name") String name);
+    List<Long> findAllIds(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
         "select department.handle " +
