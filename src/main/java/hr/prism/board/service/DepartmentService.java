@@ -218,6 +218,7 @@ public class DepartmentService {
         boardService.createBoard(departmentId, new BoardDTO().setType(BoardType.CAREER).setName(CAREER_NAME).setSummary(CAREER_SUMMARY).setPostCategories(CAREER_CATEGORIES));
 
         // Create the initial tasks
+        department.setLastTaskCreationTimestamp(LocalDateTime.now());
         resourceTaskService.createForNewResource(departmentId, DEPARTMENT_TASKS);
         return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
     }
@@ -396,8 +397,8 @@ public class DepartmentService {
             tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_INTERNAL_POST);
         }
 
-        resourceTaskService.createForExistingResource(departmentId, tasks);
         department.setLastTaskCreationTimestamp(baseline);
+        resourceTaskService.createForExistingResource(departmentId, tasks);
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
