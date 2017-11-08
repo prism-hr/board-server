@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 @Service
 @Transactional
-@SuppressWarnings("SqlResolve")
+@SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection"})
 public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
@@ -400,7 +400,7 @@ public class DepartmentService {
         department.setLastTaskCreationTimestamp(baseline);
     }
 
-    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
+    void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
         PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
         if (!responseReadiness.isReady()) {
             if (responseReadiness.isRequireUserDemographicData()) {
@@ -411,7 +411,7 @@ public class DepartmentService {
         }
     }
 
-    public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
+    PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
         PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
             // User data incomplete
