@@ -6,6 +6,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@SuppressWarnings("unused")
 @Table(name = "resource_operation")
 @NamedEntityGraph(
     name = "resource.operation",

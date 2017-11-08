@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestControllerAdvice
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiAdvice.class);

@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import javax.persistence.*;
 
 @Entity
+@SuppressWarnings("unused")
 @Table(name = "resource_task_suppression", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_task_id", "user_id"}))
 public class ResourceTaskSuppression extends BoardEntity {
 

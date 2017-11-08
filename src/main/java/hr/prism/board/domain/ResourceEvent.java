@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
+@SuppressWarnings("unused")
 @Table(name = "resource_event")
 public class ResourceEvent extends BoardEntity {
 
@@ -257,7 +258,7 @@ public class ResourceEvent extends BoardEntity {
         this.history = history;
         return this;
     }
-    
+
     public boolean hasDemographicData() {
         return Stream.of(gender, ageRange, locationNationality, memberCategory, memberProgram, memberYear).anyMatch(Objects::nonNull);
     }

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "resource")
+@SuppressWarnings("unused")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "scope", discriminatorType = DiscriminatorType.STRING)
 public class Resource extends BoardEntity {

@@ -14,6 +14,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "user")
+@SuppressWarnings({"unused", "SameParameterValue"})
 public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "uuid", nullable = false)
@@ -329,6 +330,7 @@ public class User extends BoardEntity implements Comparable<User> {
     }
 
     @Override
+    @SuppressWarnings("NullableProblems")
     public int compareTo(User other) {
         int compare = ObjectUtils.compare(givenName, other.getGivenName());
         compare = compare == 0 ? ObjectUtils.compare(surname, other.getSurname()) : compare;

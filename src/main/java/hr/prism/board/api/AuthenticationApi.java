@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @RestController
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class AuthenticationApi {
 
     @Inject

@@ -17,6 +17,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceApi {
 
     @Inject

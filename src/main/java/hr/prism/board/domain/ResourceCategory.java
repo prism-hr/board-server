@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "resource_category")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class ResourceCategory extends BoardEntity {
 
     @ManyToOne

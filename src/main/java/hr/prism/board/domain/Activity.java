@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@SuppressWarnings("unused")
 @Table(name = "activity", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_role_id", "resource_event_id", "activity"}))
 public class Activity extends BoardEntity {
 

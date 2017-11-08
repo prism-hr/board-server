@@ -6,6 +6,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@SuppressWarnings("unused")
 @DiscriminatorValue(value = Scope.Value.DEPARTMENT)
 @NamedEntityGraph(
     name = "department.extended",

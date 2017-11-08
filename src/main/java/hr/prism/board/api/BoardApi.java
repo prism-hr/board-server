@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BoardApi {
 
     @Inject

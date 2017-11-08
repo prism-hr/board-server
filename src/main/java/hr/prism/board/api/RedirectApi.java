@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class RedirectApi {
 
     @Inject
