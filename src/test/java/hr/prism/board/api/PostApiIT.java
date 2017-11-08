@@ -1427,11 +1427,14 @@ public class PostApiIT extends AbstractIT {
         Long departmentId = transactionTemplate.execute(status ->
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard())).getId();
-        Long postId1 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post1"))).getId();
+        Long postId1 = transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setName("post1").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
 
         testUserService.authenticate();
-        Long postId2 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post2"))).getId();
-        Long postId3 = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setName("post3"))).getId();
+        Long postId2 = transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setName("post2").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
+        Long postId3 = transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setName("post3").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
 
         TimeUnit.SECONDS.sleep(resourceArchiveDurationSeconds + 1);
 
