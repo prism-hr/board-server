@@ -101,14 +101,12 @@ public class PostApiIT extends AbstractIT {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId1 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
-        Long departmentId2 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
 
         User user11 = testUserService.authenticate();
-        BoardDTO boardDTO11 = TestHelper.sampleBoard();
-        boardDTO11.setName("board11");
+        Long departmentId1 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+
+        BoardDTO boardDTO11 = TestHelper.sampleBoard().setName("board11");
         BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, boardDTO11));
 
         Long board11Id = boardR11.getId();
@@ -118,10 +116,8 @@ public class PostApiIT extends AbstractIT {
                 .setName(board11PostName)));
         unprivilegedUserPosts.put(board11Id, board11PostName);
 
-
         User user12 = testUserService.authenticate();
-        BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
-        boardDTO12.setName("board12");
+        BoardDTO boardDTO12 = TestHelper.smallSampleBoard().setName("board12");
         BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, boardDTO12));
         testUserService.setAuthentication(user11.getId());
         boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
@@ -130,37 +126,36 @@ public class PostApiIT extends AbstractIT {
         Long board12Id = boardR12.getId();
         String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
-            TestHelper.smallSamplePost()
-                .setName(board12PostName)
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+            TestHelper.smallSamplePost().setName(board12PostName).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUserPosts.put(board12Id, board12PostName);
 
         User user21 = testUserService.authenticate();
-        BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
-        boardDTO21.setName("board21");
+        Long departmentId2 = transactionTemplate.execute(status ->
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
+
+        BoardDTO boardDTO21 = TestHelper.smallSampleBoard().setName("board21");
         BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, boardDTO21));
 
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
-            TestHelper.smallSamplePost()
-                .setName(board21PostName)));
+            TestHelper.smallSamplePost().setName(board21PostName).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUserPosts.put(board21Id, board21PostName);
 
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
         boardDTO22.setName("board22");
         BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, boardDTO22));
-        testUserService.setAuthentication(user21.getId());
-        boardApi.executeAction(boardR22.getId(), "accept", new BoardPatchDTO());
-        testUserService.setAuthentication(user22.getId());
 
         Long board22Id = boardR22.getId();
+        testUserService.setAuthentication(user21.getId());
+        boardApi.executeAction(board22Id, "accept", new BoardPatchDTO());
+
+        testUserService.setAuthentication(user22.getId());
         String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
         unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
-            TestHelper.smallSamplePost()
-                .setName(board22PostName)
-                .setPostCategories(Collections.singletonList("p1"))));
+            TestHelper.smallSamplePost().setName(board22PostName)
+                .setPostCategories(Collections.singletonList("p1")).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUserPosts.put(board22Id, board22PostName);
 
         LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
@@ -216,8 +211,7 @@ public class PostApiIT extends AbstractIT {
             for (int i = 1; i < 3; i++) {
                 String name = boardR21.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board21Id,
-                    TestHelper.smallSamplePost()
-                        .setName(name),
+                    TestHelper.smallSamplePost().setName(name).setMemberCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)),
                     state, posts, baseline, postCount);
                 boardPostNames21.put(state, name);
                 postCount++;
@@ -233,8 +227,7 @@ public class PostApiIT extends AbstractIT {
                 String name = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
                 verifyPostPostAndSetState(postUser2, board22Id,
                     TestHelper.smallSamplePost()
-                        .setName(name)
-                        .setPostCategories(Collections.singletonList("p1")),
+                        .setName(name).setPostCategories(Collections.singletonList("p1")).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)),
                     state, posts, baseline, postCount);
                 boardPostNames22.put(state, name);
                 postCount++;
