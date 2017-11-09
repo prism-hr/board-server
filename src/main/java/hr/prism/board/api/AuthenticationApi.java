@@ -7,6 +7,7 @@ import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.AuthenticationService;
+import org.springframework.mobile.device.Device;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -24,21 +25,21 @@ public class AuthenticationApi {
     private AuthenticationService authenticationService;
 
     @RequestMapping(value = "/api/auth/login", method = RequestMethod.POST)
-    public Map<String, String> login(@RequestBody @Valid LoginDTO loginDTO) {
+    public Map<String, String> login(@RequestBody @Valid LoginDTO loginDTO, Device device) {
         User user = authenticationService.login(loginDTO);
-        return makeAccessTokenResponse(user);
+        return makeAccessTokenResponse(user, device);
     }
 
     @RequestMapping(value = "/api/auth/register", method = RequestMethod.POST)
-    public Map<String, String> register(@RequestBody @Valid RegisterDTO registerDTO) {
+    public Map<String, String> register(@RequestBody @Valid RegisterDTO registerDTO, Device device) {
         User user = authenticationService.register(registerDTO);
-        return makeAccessTokenResponse(user);
+        return makeAccessTokenResponse(user, device);
     }
 
     @RequestMapping(value = "/api/auth/{provider}", method = RequestMethod.POST)
-    public Map<String, String> signin(@PathVariable String provider, @RequestBody @Valid SigninDTO signinDTO) {
+    public Map<String, String> signin(@PathVariable String provider, @RequestBody @Valid SigninDTO signinDTO, Device device) {
         User user = authenticationService.signin(OauthProvider.valueOf(provider.toUpperCase()), signinDTO);
-        return makeAccessTokenResponse(user);
+        return makeAccessTokenResponse(user, device);
     }
 
     @RequestMapping(value = "/api/auth/resetPassword", method = RequestMethod.POST)
@@ -51,8 +52,10 @@ public class AuthenticationApi {
         return authenticationService.refreshToken(request, response);
     }
 
-    private Map<String, String> makeAccessTokenResponse(User user) {
-        return Collections.singletonMap("token", authenticationService.makeAccessToken(user.getId(), authenticationService.getJwsSecret()));
+    private Map<String, String> makeAccessTokenResponse(User user, Device device) {
+        String token = authenticationService.makeAccessToken(
+            user.getId(), authenticationService.getJwsSecret(), device == null || device.isNormal());
+        return Collections.singletonMap("token", token);
     }
 
 }

@@ -212,10 +212,10 @@ public class AuthenticationService {
             Collections.singletonList(new Notification().setUserId(user.getId()).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
-    public String makeAccessToken(Long userId, String jwsSecret) {
+    public String makeAccessToken(Long userId, String jwsSecret, boolean specifyExpirationDate) {
         return Jwts.builder()
             .setSubject(userId.toString())
-            .setExpiration(new Date(System.currentTimeMillis() + sessionDurationMillis))
+            .setExpiration(specifyExpirationDate ? new Date(System.currentTimeMillis() + sessionDurationMillis) : null)
             .signWith(SignatureAlgorithm.HS512, jwsSecret)
             .compact();
     }
@@ -237,7 +237,7 @@ public class AuthenticationService {
         try {
             Claims token = decodeAccessToken(accessToken, jwsSecret);
             long userId = Long.parseLong(token.getSubject());
-            return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret()));
+            return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret(), true));
         } catch (ExpiredJwtException e) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
             return null;
