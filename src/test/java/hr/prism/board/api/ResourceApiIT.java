@@ -5,10 +5,7 @@ import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -29,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @TestContext
@@ -107,6 +105,8 @@ public class ResourceApiIT extends AbstractIT {
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
 
         // try to add a user to a board
+        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))));
         ExceptionUtils.verifyException(BoardException.class,
             () -> resourceApi.createResourceUser(Scope.BOARD, boardR.getId(),
                 new UserRoleDTO().setUser(newUser).setRole(Role.MEMBER).setMemberCategory(MemberCategory.RESEARCH_STUDENT)),
@@ -121,21 +121,23 @@ public class ResourceApiIT extends AbstractIT {
 
     @Test
     public void shouldNotAddUserRoleWithUnactivatedMemberCategory() {
-        User currentUser = testUserService.authenticate();
+        User user = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
         BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
         // try with a board
+        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))));
         ExceptionUtils.verifyException(BoardException.class,
-            () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), currentUser.getId(),
+            () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), user.getId(),
                 new UserRoleDTO().setRole(Role.MEMBER).setMemberCategory(MemberCategory.RESEARCH_STUDENT)),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
 
         // try with a department
         ExceptionUtils.verifyException(BoardException.class,
-            () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, boardR.getDepartment().getId(), currentUser.getId(),
+            () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, boardR.getDepartment().getId(), user.getId(),
                 new UserRoleDTO().setRole(Role.MEMBER).setMemberCategory(MemberCategory.RESEARCH_STUDENT)),
             ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
     }

@@ -128,13 +128,13 @@ public class UserApiIT extends AbstractIT {
 
         testUserService.setAuthentication(adminUserId);
         List<UserNotificationSuppressionRepresentation> adminUserSuppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
-        Assert.assertEquals(6, adminUserSuppressions.size());
+        Assert.assertEquals(10, adminUserSuppressions.size());
         adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.setAuthentication(memberUser1Id);
         transactionTemplate.execute(status -> userApi.postSuppressions());
         List<UserNotificationSuppressionRepresentation> memberUser1Suppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
-        Assert.assertEquals(6, memberUser1Suppressions.size());
+        Assert.assertEquals(7, memberUser1Suppressions.size());
         memberUser1Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
