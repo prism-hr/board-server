@@ -1228,8 +1228,8 @@ public class PostApiIT extends AbstractIT {
         User postUser = testUserService.authenticate();
         Long postUserId = postUser.getId();
         String postUserEmail = postUser.getEmail();
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setApplyWebsite(null).setApplyEmail(postUserEmail))).getId();
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()
+            .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)).setApplyWebsite(null).setApplyEmail(postUserEmail))).getId();
 
         User memberUser1 = testUserService.authenticate();
         Long memberUser1Id = memberUser1.getId();
@@ -1264,7 +1264,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser1Id);
         departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
         Long responseId = transactionTemplate.execute(status -> postApi.postPostResponse(postId,
@@ -1296,7 +1297,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser2Id);
         departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments2.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
@@ -1341,7 +1343,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser3Id);
         departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments3.pdf");
         transactionTemplate.execute(status -> postApi.postPostResponse(postId,
