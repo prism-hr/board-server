@@ -1116,8 +1116,10 @@ public class PostApiIT extends AbstractIT {
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()));
         Long boardId = boardR.getId();
 
-        transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()));
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+        transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
         postService.publishAndRetirePosts();
 
         Long memberUser1 = testUserService.authenticate().getId();
@@ -1132,7 +1134,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser1);
         departmentApi.putMembershipUpdate(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
         PostRepresentation viewPostMemberUser1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
         String referral1 = viewPostMemberUser1.getReferral().getReferral();
@@ -1144,7 +1147,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(memberUser2);
         departmentApi.putMembershipUpdate(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
+                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
         PostRepresentation viewPostMemberUser2 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
         String referral2 = viewPostMemberUser2.getReferral().getReferral();
