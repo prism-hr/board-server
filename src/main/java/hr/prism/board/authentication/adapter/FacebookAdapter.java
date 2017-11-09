@@ -7,6 +7,7 @@ import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.social.ServerException;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.facebook.api.Facebook;
 import org.springframework.social.facebook.connect.FacebookConnectionFactory;
@@ -31,7 +32,7 @@ public class FacebookAdapter implements OauthAdapter {
 
             return new User().setGivenName(user.getFirstName()).setSurname(user.getLastName()).setEmail(user.getEmail())
                 .setOauthProvider(OauthProvider.FACEBOOK).setOauthAccountId(user.getId()).setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST);
-        } catch (ResourceAccessException e) {
+        } catch (ResourceAccessException | ServerException e) {
             throw new BoardException(ExceptionCode.OAUTH_ERROR, "Fault calling Facebook API", e);
         }
     }

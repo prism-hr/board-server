@@ -33,7 +33,7 @@
 
 [#if options.badgeType == "SIMPLE"]
     <div class="prism-main">
-        [#include "board_badge_footer.ftl"]
+        [#include "badge_footer.ftl"]
     </div>
 [#else] [#-- LIST --]
 
@@ -41,14 +41,14 @@
         <ul>
             [#list posts as post]
                 <li>
-                    [#include "board_post_partial.ftl"]
+                    [#include "badge_post_partial.ftl"]
                 </li>
             [/#list]
         </ul>
     </div>
 
     <div class="prism-footer">
-        [#include "board_badge_footer.ftl"]
+        [#include "badge_footer.ftl"]
     </div>
 [/#if]
 </div>
