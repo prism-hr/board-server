@@ -74,17 +74,17 @@ public class ResourceTaskService {
     public void sendNotification(Pair<Long, Integer> resource, List<hr.prism.board.enums.ResourceTask> tasks) {
         Long resourceId = resource.getKey();
         Integer notifiedCount = resource.getValue();
-        String suffix = CREATE_TASKS.contains(tasks.get(0)) ? "request" : "reminder";
+        String notificationContext = CREATE_TASKS.contains(tasks.get(0)) ? "create" : "update";
         if (notifiedCount == null) {
             tasks.forEach(task -> {
                 Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-                    .setActivity(hr.prism.board.enums.Activity.valueOf("task_" + suffix + "_activity"));
+                    .setActivity(hr.prism.board.enums.Activity.valueOf("task_" + notificationContext + "_activity"));
                 activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
             });
         }
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-            .setNotification(Notification.valueOf("task_" + suffix + (notifiedCount == null ? "1" : (notifiedCount + 1)) + "_notification"));
+            .setNotification(Notification.valueOf("task_" + notificationContext + (notifiedCount == null ? "1" : (notifiedCount + 1)) + "_notification"));
 
         notificationEventService.publishEvent(this, resourceId, tasks, Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);

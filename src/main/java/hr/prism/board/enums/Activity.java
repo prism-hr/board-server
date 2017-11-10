@@ -18,7 +18,9 @@ public enum Activity {
     RESTORE_POST_ACTIVITY(false),
     RETIRE_POST_ACTIVITY(false),
     SUSPEND_POST_ACTIVITY(false),
-    RESPOND_POST_ACTIVITY(false);
+    RESPOND_POST_ACTIVITY(false),
+    TASK_CREATE_ACTIVITY(false),
+    TASK_UPDATE_ACTIVITY(false);
 
     private boolean filterByCategory;
 
