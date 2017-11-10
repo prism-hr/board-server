@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "SpringAutowiredFieldsWarningInspection"})
 public class ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
@@ -118,9 +118,6 @@ public class ResourceService {
     private UserService userService;
 
     @Inject
-    private UserRoleService userRoleService;
-
-    @Inject
     private ObjectMapper objectMapper;
 
     @PersistenceContext
@@ -144,13 +141,167 @@ public class ResourceService {
         return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
     }
 
-    public void updateHandle(Resource resource, String newHandle) {
+    public List<String> getCategories(Resource resource, CategoryType categoryType) {
+        List<ResourceCategory> categories = resource.getCategories(categoryType);
+        return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("JpaQlInspection")
+    public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
+        User user = userService.getCurrentUserSecured();
+        Resource resource = getResource(user, scope, id);
+        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
+
+        return new ArrayList<>(entityManager.createQuery(
+            "select resourceOperation " +
+                "from ResourceOperation resourceOperation " +
+                "where resourceOperation.resource.id = :resourceId " +
+                "order by resourceOperation.id desc", ResourceOperation.class)
+            .setParameter("resourceId", id)
+            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("resource.operation"))
+            .getResultList());
+    }
+
+    public void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
+        List<ResourceCategory> referenceCategories = reference.getCategories(type);
+        if (!referenceCategories.isEmpty()) {
+            if (CollectionUtils.isEmpty(categories)) {
+                throw new BoardException(missing, "Categories must be specified");
+            } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
+                throw new BoardException(invalid, "Valid categories must be specified - check parent categories");
+            }
+        } else if (CollectionUtils.isNotEmpty(categories)) {
+            throw new BoardException(corrupted, "Categories must not be specified");
+        }
+    }
+
+    public ResourceOperation getLatestResourceOperation(Resource resource, Action action) {
+        return resourceOperationRepository.findFirstByResourceAndActionOrderByIdDesc(resource, action);
+    }
+
+    public Resource findByResourceAndEnclosingScope(Resource resource, Scope scope) {
+        return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
+    }
+
+    public void setIndexDataAndQuarter(Resource resource) {
+        setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
+    }
+
+    public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
+        String statement =
+            SECURE_QUARTER + " " +
+                "AND resource.state = :archiveState";
+
+        User user = userService.getCurrentUserSecured();
+        Map<String, Object> filterParameters = getSecureFilterParameters(user);
+        filterParameters.put("scope", scope.name());
+        filterParameters.put("archiveState", State.ARCHIVED.name());
+
+        if (parentId != null) {
+            statement =
+                statement + " " +
+                    "AND resource.parent_id = :parentId";
+            filterParameters.put("parentId", parentId);
+        }
+
+        statement =
+            statement + " " +
+                "order by resource.quarter desc";
+
+        Query query = entityManager.createNativeQuery(statement);
+        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+        return query.getResultList();
+    }
+
+    public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
+        return resourceRepository.findSummaryByUserAndRole(user, role);
+    }
+
+    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
+    public void archiveResourcesScheduled() {
+        if (BooleanUtils.isTrue(schedulerOn)) {
+            archiveResources();
+        }
+    }
+
+    public void archiveResources() {
+        LocalDateTime baseline = LocalDateTime.now();
+        List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
+            State.RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
+        if (!resourceIds.isEmpty()) {
+            actionService.executeInBulk(resourceIds, Action.ARCHIVE, State.ARCHIVED, baseline);
+        }
+    }
+
+    @SuppressWarnings("JpaQlInspection")
+    void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
+        String statement =
+            "select resource.id " +
+                "from Resource resource " +
+                "where resource.scope = :scope " +
+                "and resource.name = :name";
+
+        Map<String, Object> constraints = new HashMap<>();
+        if (id != null) {
+            statement += " and resource.id <> :id";
+            constraints.put("id", id);
+        }
+
+        if (parent != null && !Objects.equals(scope, parent.getScope())) {
+            statement += " and resource.parent = :parent";
+            constraints.put("parent", parent);
+        }
+
+        Query query = entityManager.createQuery(statement)
+            .setParameter("scope", scope)
+            .setParameter("name", name);
+        constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
+
+        List<Long> resourceIds = query.getResultList();
+        if (!resourceIds.isEmpty()) {
+            throw new BoardDuplicateException(exceptionCode, scope.name() + " with name " + name + " exists already", resourceIds.get(0));
+        }
+    }
+
+    @SuppressWarnings("JpaQlInspection")
+    void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
+        Query query = entityManager.createQuery(
+            "select resource.id " +
+                "from Resource resource " +
+                "where resource.handle = :handle " +
+                "and resource.id <> :id")
+            .setParameter("handle", handle)
+            .setParameter("id", resource.getId());
+
+        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
+            throw new BoardException(exceptionCode, "Specified handle would not be unique");
+        }
+    }
+
+    List<Resource> getSuppressableResources(Scope scope, User user) {
+        return resourceRepository.findByScopeAndUserAndRolesOrCategory(
+            scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
+    }
+
+    void setIndexDataAndQuarter(Resource resource, String... parts) {
+        Resource parent = resource.getParent();
+        if (resource.equals(parent)) {
+            resource.setIndexData(BoardUtils.makeSoundex(parts));
+        } else {
+            resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.makeSoundex(parts)));
+        }
+
+        LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
+        resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil((double) createdTimestamp.getMonthValue() / 3));
+    }
+
+    void updateHandle(Resource resource, String newHandle) {
         String handle = resource.getHandle();
         resource.setHandle(newHandle);
         resourceRepository.updateHandle(handle, newHandle);
     }
 
-    public void createResourceRelation(Resource resource1, Resource resource2) {
+    void createResourceRelation(Resource resource1, Resource resource2) {
         entityManager.flush();
         entityManager.refresh(resource1);
         entityManager.refresh(resource2);
@@ -169,30 +320,22 @@ public class ResourceService {
             "Arguments passed were: " + Joiner.on(", ").join(resource1, resource2));
     }
 
-    public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
-        // Index the insertion order
-        Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
-        if (orderIndex == null) {
-            orderIndex = Collections.emptyMap();
-        }
-
-        // Reorder / remove existing records
+    void updateCategories(Resource resource, CategoryType type, List<String> categories) {
+        // Delete the old records
+        deleteResourceCategories(resource, type);
         Set<ResourceCategory> oldCategories = resource.getCategories();
-        for (ResourceCategory oldCategory : oldCategories) {
-            oldCategory.setOrdinal(orderIndex.remove(oldCategory.getName()));
-            resourceCategoryRepository.update(oldCategory);
-        }
+        oldCategories.removeIf(next -> next.getType() == type);
 
-        // Write new records
-        for (Map.Entry<String, Integer> insert : orderIndex.entrySet()) {
-            ResourceCategory newResourceCategory = new ResourceCategory().setResource(resource).setName(insert.getKey()).setType(type).setOrdinal(insert.getValue());
-            newResourceCategory.setCreatedTimestamp(LocalDateTime.now());
-            resourceCategoryRepository.save(newResourceCategory);
-            oldCategories.add(newResourceCategory);
+        if (categories != null) {
+            // Write the new records
+            categories.forEach(category ->
+                oldCategories.add(
+                    createResourceCategory(
+                        new ResourceCategory().setResource(resource).setName(category).setType(type))));
         }
     }
 
-    public void updateState(Resource resource, State state) {
+    void updateState(Resource resource, State state) {
         State previousState = resource.getState();
         if (previousState == null) {
             previousState = state;
@@ -216,7 +359,7 @@ public class ResourceService {
         }
     }
 
-    public List<Resource> getResources(User user, ResourceFilter filter) {
+    List<Resource> getResources(User user, ResourceFilter filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role ");
 
@@ -371,7 +514,7 @@ public class ResourceService {
         return resources;
     }
 
-    public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
+    ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
         ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
         if (action == Action.EDIT) {
             ChangeListRepresentation changeList = resource.getChangeList();
@@ -392,175 +535,13 @@ public class ResourceService {
         return resourceOperation;
     }
 
-    public List<String> getCategories(Resource resource, CategoryType categoryType) {
-        List<ResourceCategory> categories = resource.getCategories(categoryType);
-        return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
-    }
-
-    @SuppressWarnings("JpaQlInspection")
-    public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
-        User user = userService.getCurrentUserSecured();
-        Resource resource = getResource(user, scope, id);
-        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
-
-        return new ArrayList<>(entityManager.createQuery(
-            "select resourceOperation " +
-                "from ResourceOperation resourceOperation " +
-                "where resourceOperation.resource.id = :resourceId " +
-                "order by resourceOperation.id desc", ResourceOperation.class)
-            .setParameter("resourceId", id)
-            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("resource.operation"))
-            .getResultList());
-    }
-
-    @SuppressWarnings("JpaQlInspection")
-    public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
-        String statement =
-            "select resource.id " +
-                "from Resource resource " +
-                "where resource.scope = :scope " +
-                "and resource.name = :name";
-
-        Map<String, Object> constraints = new HashMap<>();
-        if (id != null) {
-            statement += " and resource.id <> :id";
-            constraints.put("id", id);
-        }
-
-        if (parent != null && !Objects.equals(scope, parent.getScope())) {
-            statement += " and resource.parent = :parent";
-            constraints.put("parent", parent);
-        }
-
-        Query query = entityManager.createQuery(statement)
-            .setParameter("scope", scope)
-            .setParameter("name", name);
-        constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
-
-        List<Long> resourceIds = query.getResultList();
-        if (!resourceIds.isEmpty()) {
-            throw new BoardDuplicateException(exceptionCode, scope.name() + " with name " + name + " exists already", resourceIds.get(0));
-        }
-    }
-
-    @SuppressWarnings("JpaQlInspection")
-    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
-        Query query = entityManager.createQuery(
-            "select resource.id " +
-                "from Resource resource " +
-                "where resource.handle = :handle " +
-                "and resource.id <> :id")
-            .setParameter("handle", handle)
-            .setParameter("id", resource.getId());
-
-        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new BoardException(exceptionCode, "Specified handle would not be unique");
-        }
-    }
-
-    public ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {
-        return resourceCategoryRepository.save(resourceCategory);
-    }
-
-    public void deleteResourceCategories(Resource resource, CategoryType type) {
-        resourceCategoryRepository.deleteByResourceAndType(resource, type);
-    }
-
-    public void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
-        List<ResourceCategory> referenceCategories = reference.getCategories(type);
-        if (!referenceCategories.isEmpty()) {
-            if (CollectionUtils.isEmpty(categories)) {
-                throw new BoardException(missing, "Categories must be specified");
-            } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
-                throw new BoardException(invalid, "Valid categories must be specified - check parent categories");
-            }
-        } else if (CollectionUtils.isNotEmpty(categories)) {
-            throw new BoardException(corrupted, "Categories must not be specified");
-        }
-    }
-
-    public ResourceOperation getLatestResourceOperation(Resource resource, Action action) {
-        return resourceOperationRepository.findFirstByResourceAndActionOrderByIdDesc(resource, action);
-    }
-
-    public Resource findByResourceAndEnclosingScope(Resource resource, Scope scope) {
-        return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
-    }
-
-    public List<Resource> getSuppressableResources(Scope scope, User user) {
-        return resourceRepository.findByScopeAndUserAndRolesOrCategory(
-            scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
-    }
-
-    public void setIndexDataAndQuarter(Resource resource) {
-        setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
-    }
-
-    public void setIndexDataAndQuarter(Resource resource, String... parts) {
-        Resource parent = resource.getParent();
-        if (resource.equals(parent)) {
-            resource.setIndexData(BoardUtils.makeSoundex(parts));
-        } else {
-            resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.makeSoundex(parts)));
-        }
-
-        LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
-        resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil((double) createdTimestamp.getMonthValue() / 3));
-    }
-
-    public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
-        String statement =
-            SECURE_QUARTER + " " +
-                "AND resource.state = :archiveState";
-
-        User user = userService.getCurrentUserSecured();
-        Map<String, Object> filterParameters = getSecureFilterParameters(user);
-        filterParameters.put("scope", scope.name());
-        filterParameters.put("archiveState", State.ARCHIVED.name());
-
-        if (parentId != null) {
-            statement =
-                statement + " " +
-                    "AND resource.parent_id = :parentId";
-            filterParameters.put("parentId", parentId);
-        }
-
-        statement =
-            statement + " " +
-                "order by resource.quarter desc";
-
-        Query query = entityManager.createNativeQuery(statement);
-        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return query.getResultList();
-    }
-
-    public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
-        return resourceRepository.findSummaryByUserAndRole(user, role);
-    }
-
-    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
-    public void archiveResourcesScheduled() {
-        if (BooleanUtils.isTrue(schedulerOn)) {
-            archiveResources();
-        }
-    }
-
-    public void archiveResources() {
-        LocalDateTime baseline = LocalDateTime.now();
-        List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
-            State.RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
-        if (!resourceIds.isEmpty()) {
-            actionService.executeInBulk(resourceIds, Action.ARCHIVE, State.ARCHIVED, baseline);
-        }
-    }
-
-    public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
+    String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
         String handle = parent.getHandle() + "/" + ResourceService.suggestHandle(name);
         List<String> similarHandles = similarHandleFinder.find(handle);
         return ResourceService.confirmHandle(handle, similarHandles);
     }
 
-    public static String suggestHandle(String name) {
+    static String suggestHandle(String name) {
         String suggestion = "";
         name = StringUtils.stripAccents(name.toLowerCase());
         String[] parts = name.split(" ");
@@ -589,34 +570,7 @@ public class ResourceService {
         return suggestion;
     }
 
-    public static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
-        if (similarHandles.contains(suggestedHandle)) {
-            int ordinal = 2;
-            int suggestedHandleLength = suggestedHandle.length();
-            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
-            for (String similarHandleSuffix : similarHandleSuffixes) {
-                if (similarHandleSuffix.startsWith("-")) {
-                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
-
-                    // We only care about creating a unique value in a formatted sequence
-                    // We can ignore anything else that has been reformatted by an end user
-                    if (parts.length == 1) {
-                        String firstPart = parts[0];
-                        if (StringUtils.isNumeric(firstPart)) {
-                            ordinal = Integer.parseInt(firstPart) + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return suggestedHandle + "-" + ordinal;
-        }
-
-        return suggestedHandle;
-    }
-
-    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
+    static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
         String stateString = null;
         String negatedStateString = State.ARCHIVED.name();
         if (state != null) {
@@ -662,6 +616,41 @@ public class ResourceService {
         return query.getResultList();
     }
 
+    private static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
+        if (similarHandles.contains(suggestedHandle)) {
+            int ordinal = 2;
+            int suggestedHandleLength = suggestedHandle.length();
+            List<String> similarHandleSuffixes = similarHandles.stream().map(similarHandle -> similarHandle.substring(suggestedHandleLength)).collect(Collectors.toList());
+            for (String similarHandleSuffix : similarHandleSuffixes) {
+                if (similarHandleSuffix.startsWith("-")) {
+                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
+
+                    // We only care about creating a unique value in a formatted sequence
+                    // We can ignore anything else that has been reformatted by an end user
+                    if (parts.length == 1) {
+                        String firstPart = parts[0];
+                        if (StringUtils.isNumeric(firstPart)) {
+                            ordinal = Integer.parseInt(firstPart) + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return suggestedHandle + "-" + ordinal;
+        }
+
+        return suggestedHandle;
+    }
+
+    private ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {
+        return resourceCategoryRepository.save(resourceCategory);
+    }
+
+    private void deleteResourceCategories(Resource resource, CategoryType type) {
+        resourceCategoryRepository.deleteByResourceAndType(resource, type);
+    }
+
     public interface SimilarHandleFinder {
         List<String> find(String handle);
     }
@@ -674,7 +663,7 @@ public class ResourceService {
 
         private Scope scope;
 
-        public ResourceActionKey(Long id, Action action, Scope scope) {
+        ResourceActionKey(Long id, Action action, Scope scope) {
             this.id = id;
             this.action = action;
             this.scope = scope;

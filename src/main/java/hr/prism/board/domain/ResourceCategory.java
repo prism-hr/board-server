@@ -20,9 +20,6 @@ public class ResourceCategory extends BoardEntity {
     @Enumerated(EnumType.STRING)
     private CategoryType type;
 
-    @Column(name = "ordinal")
-    private Integer ordinal;
-
     public Resource getResource() {
         return resource;
     }
@@ -47,15 +44,6 @@ public class ResourceCategory extends BoardEntity {
 
     public ResourceCategory setType(CategoryType type) {
         this.type = type;
-        return this;
-    }
-
-    public Integer getOrdinal() {
-        return ordinal;
-    }
-
-    public ResourceCategory setOrdinal(Integer ordinal) {
-        this.ordinal = ordinal;
         return this;
     }
 

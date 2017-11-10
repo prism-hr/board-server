@@ -12,6 +12,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,6 +65,7 @@ public class UserApiIT extends AbstractIT {
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         Long department1id = transactionTemplate.execute(status ->
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1"))).getId();
+        transactionTemplate.execute(status -> departmentApi.patchDepartment(department1id, new DepartmentPatchDTO().setMemberCategories(Optional.empty())));
 
         Long board11id = transactionTemplate.execute(status ->
             boardApi.postBoard(department1id, new BoardDTO().setName("board11"))).getId();
@@ -127,21 +129,25 @@ public class UserApiIT extends AbstractIT {
         Long memberUser3Id = memberUser3.getId();
 
         testUserService.setAuthentication(adminUserId);
-        List<UserNotificationSuppressionRepresentation> adminUserSuppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
-        Assert.assertEquals(10, adminUserSuppressions.size());
+        String[] expectedBoardNames = new String[]{"board11", "board12", "board13", "board21", "board22", "board23"};
+        List<UserNotificationSuppressionRepresentation> adminUserSuppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+        Assert.assertEquals(6, adminUserSuppressions.size());
         adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.setAuthentication(memberUser1Id);
         transactionTemplate.execute(status -> userApi.postSuppressions());
-        List<UserNotificationSuppressionRepresentation> memberUser1Suppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
-        Assert.assertEquals(7, memberUser1Suppressions.size());
+        List<UserNotificationSuppressionRepresentation> memberUser1Suppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+        Assert.assertEquals(6, memberUser1Suppressions.size());
         memberUser1Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
         transactionTemplate.execute(status -> userApi.postSuppression(board11id, memberUser2.getUuid()));
         testUserService.setAuthentication(memberUser2Id);
         transactionTemplate.execute(status -> userApi.postSuppression(board12id, null));
-        List<UserNotificationSuppressionRepresentation> memberUser2Suppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
+        List<UserNotificationSuppressionRepresentation> memberUser2Suppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 2).forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
         memberUser2Suppressions.subList(2, 5).forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
@@ -153,7 +159,8 @@ public class UserApiIT extends AbstractIT {
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(
             BoardForbiddenException.class, () -> userApi.postSuppression(board11id, null), ExceptionCode.FORBIDDEN_RESOURCE, status));
         transactionTemplate.execute(status -> userApi.postSuppressions());
-        List<UserNotificationSuppressionRepresentation> memberUser3Suppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
+        List<UserNotificationSuppressionRepresentation> memberUser3Suppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
         Assert.assertEquals(0, memberUser3Suppressions.size());
 
         testUserService.setAuthentication(memberUser2Id);
@@ -162,12 +169,14 @@ public class UserApiIT extends AbstractIT {
             return null;
         });
 
-        memberUser2Suppressions = transactionTemplate.execute(status -> userApi.getSuppressions());
+        memberUser2Suppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 1).forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
         memberUser2Suppressions.subList(1, 5).forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
-        memberUser2Suppressions = transactionTemplate.execute(status -> userApi.postSuppressions());
+        memberUser2Suppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.postSuppressions()), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
@@ -176,9 +185,16 @@ public class UserApiIT extends AbstractIT {
             return null;
         });
 
-        memberUser2Suppressions = userApi.getSuppressions();
+        memberUser2Suppressions =
+            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
+    }
+
+    private static List<UserNotificationSuppressionRepresentation> removeSuppressionsForAutomaticallyCreatedBoards(
+        List<UserNotificationSuppressionRepresentation> suppressions, String... expectedBoardNames) {
+        suppressions.removeIf(suppression -> !ArrayUtils.contains(expectedBoardNames, suppression.getResource().getName()));
+        return suppressions;
     }
 
 }

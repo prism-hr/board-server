@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BoardService {
 
     private static final List<ResourceTask> BADGE_TASKS = Collections.singletonList(ResourceTask.DEPLOY_BADGE);
@@ -157,7 +158,7 @@ public class BoardService {
         return stringWriter.toString();
     }
 
-    public void updateBoardPostCounts(List<Long> postIds, String state) {
+    void updateBoardPostCounts(List<Long> postIds, String state) {
         boardRepository.updateBoardPostCounts(postIds, state);
     }
 

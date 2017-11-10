@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import hr.prism.board.dto.ResourcePatchDTO;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import org.apache.commons.codec.language.Soundex;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
@@ -18,9 +17,7 @@ import java.util.stream.Stream;
 
 public class BoardUtils {
 
-    public static DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/YYYY");
-
-    public static RandomStringGenerator RANDOM_STRING_GENERATOR =
+    private static RandomStringGenerator RANDOM_STRING_GENERATOR =
         new RandomStringGenerator.Builder()
             .withinRange('0', 'z')
             .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122).contains(codePoint))
@@ -30,22 +27,11 @@ public class BoardUtils {
 
     private static Soundex SOUNDEX = new Soundex();
 
+    public static DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/YYYY");
+
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static boolean isPresent(Optional<?> optional) {
         return optional != null && optional.isPresent();
-    }
-
-    public static <T> Map<T, Integer> getOrderIndex(List<T> objects) {
-        if (CollectionUtils.isNotEmpty(objects)) {
-            Map<T, Integer> index = new HashMap<>();
-            for (int i = 0; i < objects.size(); i++) {
-                index.put(objects.get(i), i);
-            }
-
-            return index;
-        }
-
-        return null;
     }
 
     public static <T extends ResourcePatchDTO> boolean hasUpdates(T resourceDTO) {
@@ -95,6 +81,7 @@ public class BoardUtils {
         return null;
     }
 
+    @SuppressWarnings("SameParameterValue")
     public static String randomAlphanumericString(int length) {
         return RANDOM_STRING_GENERATOR.generate(length);
     }

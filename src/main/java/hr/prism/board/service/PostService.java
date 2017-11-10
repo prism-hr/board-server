@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class PostService {
 
     private static final String SIMILAR_ORGANIZATION =
@@ -143,10 +144,6 @@ public class PostService {
 
     public List<Post> getByName(String name) {
         return postRepository.findByName(name);
-    }
-
-    public List<Post> getPosts(Long boardId) {
-        return getPosts(boardId, true, null, null, null);
     }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
@@ -359,10 +356,9 @@ public class PostService {
         });
 
         if (!userIpAddresses.isEmpty()) {
-            resourceEventService.findByIpAddresses(userIpAddresses.keySet()).forEach(resourceEvent -> {
+            resourceEventService.findByIpAddresses(userIpAddresses.keySet()).forEach(resourceEvent ->
                 userIpAddresses.get(resourceEvent.getIpAddress()).forEach(resourceEventUser ->
-                    appendToResourceEventHistory(userResourceEvents.get(resourceEventUser), resourceEvent));
-            });
+                    appendToResourceEventHistory(userResourceEvents.get(resourceEventUser), resourceEvent)));
         }
 
         Collection<ResourceEvent> headResourceEvents = userResourceEvents.values();
@@ -451,8 +447,12 @@ public class PostService {
         resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
     }
 
-    public Post findLatestPost(User user) {
+    Post findLatestPost(User user) {
         return postRepository.findLatestPost(user, Role.ADMINISTRATOR, Scope.POST);
+    }
+
+    List<Post> getPosts(Long boardId) {
+        return getPosts(boardId, true, null, null, null);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -555,21 +555,7 @@ public class PostService {
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
         }
 
-        // Clear the old records
-        resourceService.deleteResourceCategories(post, type);
-        Set<ResourceCategory> oldCategories = post.getCategories();
-        oldCategories.removeIf(next -> next.getType() == type);
-
-        // Index the insertion order
-        Map<String, Integer> orderIndex = BoardUtils.getOrderIndex(categories);
-        if (orderIndex != null) {
-            // Write the new records
-            categories.forEach(category -> {
-                ResourceCategory resourceCategory = new ResourceCategory().setResource(post).setName(category).setOrdinal(orderIndex.get(category)).setType(type);
-                resourceCategory = resourceService.createResourceCategory(resourceCategory);
-                oldCategories.add(resourceCategory);
-            });
-        }
+        resourceService.updateCategories(post, type, categories);
     }
 
     private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {

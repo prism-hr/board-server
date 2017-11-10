@@ -12,17 +12,17 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
-    
+
     String SUPPRESSION_CONSTRAINT =
         "userRole.user not in (" +
             "select userNotificationSuppression.user " +
             "from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.resource <> :resource)";
-    
+
     User findByUuid(String uuid);
-    
+
     User findByEmail(String email);
-    
+
     @Query(value =
         "select user " +
             "from User user " +
@@ -34,24 +34,24 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and userRole.email = :email " +
             "and userRole.role = :role)")
     List<User> findByEmail(@Param("resource") Resource resource, @Param("email") String email, @Param("role") Role role);
-    
+
     @Query(value =
         "select userRole.user " +
             "from UserRole userRole " +
             "where userRole.uuid = :uuid")
     User findByUserRoleUuid(@Param("uuid") String uuid);
-    
+
     @Query(value =
         "select user " +
             "from User user " +
             "where user.email = :email " +
             "and user.id <> :id")
     User findByEmailAndNotId(@Param("email") String email, @Param("id") Long id);
-    
+
     User findByOauthProviderAndOauthAccountId(OauthProvider provider, String oauthAccountId);
-    
+
     User findByPasswordResetUuid(String passwordResetUuid);
-    
+
     @Query(value =
         "select distinct userRole.user.id " +
             "from ResourceRelation relation " +
@@ -61,7 +61,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and userRole.user.id in (:userIds) " +
             "and userRole.state in (:userRoleStates)")
     List<Long> findByResourceAndUserIds(@Param("resource") Resource resource, @Param("userIds") List<Long> userIds, @Param("userRoleStates") List<State> userRoleStates);
-    
+
     @Query(value =
         "select distinct new hr.prism.board.value.UserNotification(userRole.user) " +
             "from ResourceRelation relation " +
@@ -75,7 +75,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and " + SUPPRESSION_CONSTRAINT)
     List<UserNotification> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
         @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
-    
+
     @Query(value =
         "select distinct new hr.prism.board.value.UserNotification(userRole.user, userRole.uuid) " +
             "from ResourceRelation relation " +
@@ -87,7 +87,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and enclosingResource.scope = :enclosingScope " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
-            "and (resourceCategory.id is null and userRole.memberCategory is null " +
+            "and (resourceCategory.id is null " +
             "or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
             "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
             "and " + SUPPRESSION_CONSTRAINT + " " +
@@ -99,7 +99,7 @@ public interface UserRepository extends MyRepository<User, Long> {
     List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategory(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
         @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
         @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
-    
+
     @Query(value =
         "select userRole.user " +
             "from UserRole userRole " +
@@ -112,7 +112,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and withoutUserRole.role = :withoutRole)")
     List<User> findByRoleWithoutRole(
         @Param("resource") Resource resource, @Param("role") Role role, @Param("withoutResource") Resource withoutResource, @Param("withoutRole") Role withoutRole);
-    
+
     @Query(value =
         "select userRole.user.id " +
             "from UserRole userRole " +
@@ -121,7 +121,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and userRole.state = :state " +
             "order by userRole.id desc")
     List<Long> findByResourceAndRolesAndState(@Param("resource") Resource resource, @Param("roles") List<Role> roles, @Param("state") State state);
-    
+
     @Query(value =
         "select resourceEvent.user.id " +
             "from ResourceEvent resourceEvent " +
@@ -131,7 +131,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "group by resourceEvent.resource, resourceEvent.user " +
             "order by resourceEvent.id desc")
     List<Long> findByResourceAndEvent(@Param("resource") Resource resource, @Param("event") ResourceEvent event);
-    
+
     @Query(value =
         "select resourceEvent.user.id " +
             "from ResourceEvent resourceEvent " +
@@ -141,5 +141,5 @@ public interface UserRepository extends MyRepository<User, Long> {
             "group by resourceEvent.resource, resourceEvent.user " +
             "order by resourceEvent.id desc")
     List<Long> findByResourceAndEvents(@Param("resource") Resource resource, @Param("events") List<ResourceEvent> events);
-    
+
 }

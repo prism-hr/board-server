@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings("JpaQlInspection")
+@SuppressWarnings({"JpaQlInspection", "SpringAutowiredFieldsWarningInspection"})
 public class UserRoleService {
 
     @Inject
@@ -64,10 +64,6 @@ public class UserRoleService {
 
     public UserRole fineOne(Long userRoleId) {
         return userRoleRepository.findOne(userRoleId);
-    }
-
-    public List<UserRole> findByResourceAndUser(Resource resource, User user) {
-        return userRoleRepository.findByResourceAndUser(resource, user);
     }
 
     public UserRolesRepresentation getUserRoles(Scope scope, Long resourceId, String searchTerm) {
@@ -160,11 +156,15 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }
 
-    public UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
+    List<UserRole> findByResourceAndUser(Resource resource, User user) {
+        return userRoleRepository.findByResourceAndUser(resource, user);
+    }
+
+    UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
     }
 
-    public boolean hasAdministratorRole(User user) {
+    boolean hasAdministratorRole(User user) {
         return userRoleRepository.findIdsByUserAndRole(user, Role.ADMINISTRATOR, State.ACTIVE_USER_ROLE_STATES, LocalDate.now()).isEmpty();
     }
 

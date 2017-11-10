@@ -240,8 +240,8 @@ public class Resource extends BoardEntity {
 
     public List<ResourceCategory> getCategories(CategoryType type) {
         return categories.stream()
-            .filter(category -> category.getType() == type && category.getOrdinal() != null)
-            .sorted(Comparator.comparingInt(ResourceCategory::getOrdinal))
+            .filter(category -> category.getType() == type)
+            .sorted(Comparator.comparingLong(ResourceCategory::getId))
             .collect(Collectors.toList());
     }
 
