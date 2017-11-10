@@ -64,29 +64,32 @@ public class ResourceTaskService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
-    public ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> getResourceTasks(LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
-        ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> resourceTasks = ArrayListMultimap.create();
+    public ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> getResourceTasks(
+        LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
+        ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> resourceTasks = ArrayListMultimap.create();
         resourceTaskRepository.findByNotificationHistory(1, 2, baseline1, baseline2, baseline3)
-            .forEach(resourceTask -> resourceTasks.put(Pair.of(resourceTask.getResource().getId(), resourceTask.getNotifiedCount()), resourceTask.getTask()));
+            .forEach(resourceTask -> resourceTasks.put(
+                Pair.of(resourceTask.getResource().getId(), resourceTask.getNotifiedCount()),
+                Pair.of(resourceTask.getId(), resourceTask.getTask())));
         return resourceTasks;
     }
 
-    public void sendNotification(Pair<Long, Integer> resource, List<hr.prism.board.enums.ResourceTask> tasks) {
+    public void sendNotification(Pair<Long, Integer> resource, List<Pair<Long, hr.prism.board.enums.ResourceTask>> tasks) {
         Long resourceId = resource.getKey();
         Integer notifiedCount = resource.getValue();
-        String notificationContext = CREATE_TASKS.contains(tasks.get(0)) ? "create" : "update";
+        String notificationContext = CREATE_TASKS.contains(tasks.get(0).getValue()) ? "create" : "update";
         if (notifiedCount == null) {
             tasks.forEach(task -> {
                 Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-                    .setActivity(hr.prism.board.enums.Activity.valueOf("task_" + notificationContext + "_activity"));
+                    .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_task_activity"));
                 activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
             });
         }
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-            .setNotification(Notification.valueOf("task_" + notificationContext + (notifiedCount == null ? "1" : (notifiedCount + 1)) + "_notification"));
+            .setNotification(Notification.valueOf(notificationContext + "task_" + (notifiedCount == null ? "1" : (notifiedCount + 1)) + "_notification"));
 
-        notificationEventService.publishEvent(this, resourceId, tasks, Collections.singletonList(notification));
+        notificationEventService.publishEvent(this, resourceId, tasks.stream().map(Pair::getValue).collect(Collectors.toList()), Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
     }
 
