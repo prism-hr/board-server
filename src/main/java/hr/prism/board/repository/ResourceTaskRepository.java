@@ -14,13 +14,15 @@ import java.util.List;
 public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long> {
 
     @Query(value =
-        "select resourceTask.id " +
+        "select resourceTask " +
             "from ResourceTask resourceTask " +
             "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp < :baseline1 " +
             "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp < :baseline2) " +
-            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3)")
-    List<Long> findAllIds(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
-                          @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2, @Param("baseline3") LocalDateTime baseline3);
+            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3) " +
+            "order by resourceTask.resource, resourceTask.task")
+    List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
+                                                 @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
+                                                 @Param("baseline3") LocalDateTime baseline3);
 
     @Query(value =
         "select resourceTask " +
@@ -49,5 +51,13 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "where resourceTask.resource = :resource " +
             "and resourceTask.task in (:tasks)")
     void deleteByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks);
+
+    @Modifying
+    @Query(value =
+        "UPDATE resource_task " +
+            "SET resource_task.notified_count = IF(resource_task.notified_count IS NULL, 1, resource_task.notified_count + 1) " +
+            "WHERE resource_task.resource_id = :resourceId",
+        nativeQuery = true)
+    void updateNotifiedCountByResourceId(@Param("resourceId") Long resourceId);
 
 }
