@@ -1,6 +1,7 @@
 package hr.prism.board.service.event;
 
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Service;
@@ -30,4 +31,9 @@ public class TestNotificationEventService extends NotificationEventService {
         super.sendNotifications(new NotificationEvent(source, resourceId, resourceEventId, notifications));
     }
 
+    @Override
+    public void publishEvent(Object source, Long resourceId, List<ResourceTask> tasks, List<Notification> notifications) {
+        super.sendNotifications(new NotificationEvent(source, resourceId, tasks, notifications));
+    }
+    
 }

@@ -36,6 +36,7 @@ import java.util.List;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ActionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
@@ -68,7 +69,7 @@ public class ActionService {
         if (resource == null) {
             throw new BoardNotFoundException(ExceptionCode.RESOURCE_NOT_FOUND);
         }
-        
+
         List<ActionRepresentation> actions = resource.getActions();
         if (actions != null) {
             for (ActionRepresentation actionRepresentation : actions) {
@@ -123,7 +124,7 @@ public class ActionService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    public void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
+    void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             entityManager.createQuery(
                 "update Resource resource " +
@@ -151,7 +152,7 @@ public class ActionService {
         });
     }
 
-    public boolean canExecuteAction(Resource resource, Action action) {
+    boolean canExecuteAction(Resource resource, Action action) {
         List<ActionRepresentation> actions = resource.getActions();
         return actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action::equals);
     }

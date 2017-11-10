@@ -1,6 +1,7 @@
 package hr.prism.board.event;
 
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.workflow.Notification;
 import org.springframework.context.ApplicationEvent;
 
@@ -13,6 +14,8 @@ public class NotificationEvent extends ApplicationEvent {
     private Long resourceEventId;
 
     private Action action;
+
+    private List<ResourceTask> tasks;
 
     private List<Notification> notifications;
 
@@ -41,6 +44,13 @@ public class NotificationEvent extends ApplicationEvent {
         this.notifications = notifications;
     }
 
+    public NotificationEvent(Object source, Long resourceId, List<ResourceTask> tasks, List<Notification> notifications) {
+        super(source);
+        this.resourceId = resourceId;
+        this.tasks = tasks;
+        this.notifications = notifications;
+    }
+
     public Long getResourceId() {
         return resourceId;
     }
@@ -51,6 +61,10 @@ public class NotificationEvent extends ApplicationEvent {
 
     public Action getAction() {
         return action;
+    }
+
+    public List<ResourceTask> getTasks() {
+        return tasks;
     }
 
     public List<Notification> getNotifications() {

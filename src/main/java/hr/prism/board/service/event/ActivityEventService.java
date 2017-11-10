@@ -21,6 +21,7 @@ import java.util.Map;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ActivityEventService {
 
     @Inject
@@ -68,12 +69,13 @@ public class ActivityEventService {
     }
 
     @Async
+    @SuppressWarnings("unused")
     @TransactionalEventListener
     public void sendActivitiesAsync(ActivityEvent activityEvent) {
         sendActivities(activityEvent);
     }
 
-    protected void sendActivities(ActivityEvent activityEvent) {
+    void sendActivities(ActivityEvent activityEvent) {
         Resource resource;
         Long userRoleId = activityEvent.getUserRoleId();
         Long resourceEventId = activityEvent.getResourceEventId();
@@ -120,7 +122,7 @@ public class ActivityEventService {
                 }
             });
         }
-    
+
         List<Long> userIds = userActivityService.getUserIds();
         if (!userIds.isEmpty()) {
             for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {

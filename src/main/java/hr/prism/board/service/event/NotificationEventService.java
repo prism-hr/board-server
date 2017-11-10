@@ -6,6 +6,7 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class NotificationEventService {
 
     @Inject
@@ -67,22 +69,28 @@ public class NotificationEventService {
         applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, resourceEventId, notifications));
     }
 
+    public void publishEvent(Object source, Long resourceId, List<ResourceTask> tasks, List<Notification> notifications) {
+        applicationEventPublisher.publishEvent(new NotificationEvent(source, resourceId, tasks, notifications));
+    }
+
     @Async
+    @SuppressWarnings("unused")
     @TransactionalEventListener
     public void sendNotificationsAsync(NotificationEvent notificationEvent) {
         sendNotifications(notificationEvent);
     }
 
-    protected void sendNotifications(NotificationEvent notificationEvent) {
+    void sendNotifications(NotificationEvent notificationEvent) {
         Resource resource = null;
         Long resourceId = notificationEvent.getResourceId();
         if (resourceId != null) {
             resource = resourceService.findOne(resourceId);
-        }
-
-        Long resourceEventId = notificationEvent.getResourceEventId();
-        if (resourceEventId != null) {
-            ((Post) resource).setResponse(resourceEventService.findOne(resourceEventId));
+            if (resource != null) {
+                Long resourceEventId = notificationEvent.getResourceEventId();
+                if (resourceEventId != null) {
+                    ((Post) resource).setResponse(resourceEventService.findOne(resourceEventId));
+                }
+            }
         }
 
         Action action = notificationEvent.getAction();
@@ -112,24 +120,22 @@ public class NotificationEventService {
     }
 
     private Attachments mapAttachment(Notification.Attachment attachment) {
-        InputStream inputStream = null;
-
         try {
             URL url = new URL(attachment.getUrl());
             URLConnection connection = url.openConnection();
-            inputStream = connection.getInputStream();
-
-            Attachments attachments = new Attachments();
-            attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
-            attachments.setType(connection.getContentType());
-            attachments.setFilename(attachment.getName());
-            attachments.setDisposition("attachment");
-            attachments.setContentId(attachment.getLabel());
-            return attachments;
+            try (InputStream inputStream = connection.getInputStream()) {
+                Attachments attachments = new Attachments();
+                attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
+                attachments.setType(connection.getContentType());
+                attachments.setFilename(attachment.getName());
+                attachments.setDisposition("attachment");
+                attachments.setContentId(attachment.getLabel());
+                return attachments;
+            } catch (IOException e) {
+                throw new BoardException(ExceptionCode.CONNECTION_ERROR, "Could not retrieve attachment data");
+            }
         } catch (IOException e) {
-            throw new BoardException(ExceptionCode.OAUTH_ERROR, "Could not retrieve attachment data");
-        } finally {
-            IOUtils.closeQuietly(inputStream);
+            throw new BoardException(ExceptionCode.CONNECTION_ERROR, "Could not access attachment data");
         }
     }
 
