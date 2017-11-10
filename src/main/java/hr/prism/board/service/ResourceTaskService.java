@@ -58,22 +58,13 @@ public class ResourceTaskService {
     }
 
     public void sendNotifications(Pair<Long, Integer> resource, List<hr.prism.board.enums.ResourceTask> tasks) {
-        ResourceTask task = resourceTaskRepository.findOne(taskId);
-        Integer notifiedCount = task.getNotifiedCount();
+        Long resourceId = resource.getKey();
+        Integer notifiedCount = resource.getValue();
 
-        if (notifiedCount == null) {
-            // TODO: initial notification
-            task.setNotifiedCount(1);
-        } else if (notifiedCount == 1) {
-            // TODO: follow up notification
-            task.setNotifiedCount(2);
-        } else if (notifiedCount == 2) {
-            // TODO: final notification
-            task.setNotifiedCount(3);
-        }
+        // TODO: work out which notification to send and queue it
 
         // TODO: pass this into the notification dispatcher so we can really change state after send
-        resourceTaskRepository.updateNotifiedCountByResourceId(resource);
+        resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
     }
 
     void createForNewResource(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
