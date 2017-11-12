@@ -1,6 +1,9 @@
 package hr.prism.board.notification.property;
 
+import hr.prism.board.domain.Resource;
 import hr.prism.board.enums.ResourceTask;
+import hr.prism.board.exception.BoardNotificationException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.ResourceTaskService;
 import org.apache.commons.lang3.StringUtils;
@@ -16,10 +19,10 @@ public class ResourceTasksProperty implements NotificationProperty {
     private ResourceTaskService resourceTaskService;
 
     // TODO: add the content for each value
-    // TODO: throw an exception we can track if there are no tasks left
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         String value = StringUtils.EMPTY;
-        for (ResourceTask task : resourceTaskService.findByResource(notificationRequest.getResource())) {
+        Resource resource = notificationRequest.getResource();
+        for (ResourceTask task : resourceTaskService.findByResource(resource)) {
             switch (task) {
                 case CREATE_MEMBER:
                     break;
@@ -35,7 +38,7 @@ public class ResourceTasksProperty implements NotificationProperty {
         }
 
         if (StringUtils.isEmpty(value)) {
-            throw new RuntimeException();
+            throw new BoardNotificationException(ExceptionCode.EMPTY_RESOURCE_TASKS, "No tasks for resource " + resource.toString());
         }
 
         return value;

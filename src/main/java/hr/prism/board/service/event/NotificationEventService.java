@@ -9,6 +9,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardNotificationException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.ResourceEventService;
@@ -16,6 +17,8 @@ import hr.prism.board.service.ResourceService;
 import hr.prism.board.value.UserNotification;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
@@ -37,6 +40,8 @@ import java.util.stream.Collectors;
 @Transactional
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class NotificationEventService {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(NotificationEventService.class);
 
     @Inject
     private ResourceService resourceService;
@@ -103,9 +108,13 @@ public class NotificationEventService {
             for (UserNotification recipient : recipients) {
                 User user = recipient.getUser();
                 if (!sent.containsEntry(user, template)) {
-                    notificationService.sendNotification(
-                        new NotificationService.NotificationRequest(template, user, recipient.getInvitation(), resource, action, mapAttachments(notification.getAttachments())));
-                    sent.put(user, template);
+                    try {
+                        notificationService.sendNotification(new NotificationService.NotificationRequest(
+                            template, user, recipient.getInvitation(), resource, action, mapAttachments(notification.getAttachments())));
+                        sent.put(user, template);
+                    } catch (BoardNotificationException e) {
+                        LOGGER.info("Aborted sending notification: " + template + " to " + user.toString());
+                    }
                 }
             }
         }
