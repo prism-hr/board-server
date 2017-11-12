@@ -30,7 +30,7 @@ public class ResourceTaskScheduledService {
             LocalDateTime baseline2 = baseline.minusWeeks(2);
             LocalDateTime baseline3 = baseline.minusWeeks(4);
 
-            ArrayListMultimap<Pair<Long, Integer>, ResourceTask> resourceTasks = resourceTaskService.getResourceTasks(baseline1, baseline2, baseline3);
+            ArrayListMultimap<Pair<Long, Integer>, Pair<Long, ResourceTask>> resourceTasks = resourceTaskService.getResourceTasks(baseline1, baseline2, baseline3);
             resourceTasks.keySet().forEach(resourceId -> resourceTaskService.sendNotification(resourceId, resourceTasks.get(resourceId)));
         }
     }

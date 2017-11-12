@@ -1,5 +1,6 @@
 package hr.prism.board.event;
 
+import hr.prism.board.domain.BoardEntity;
 import hr.prism.board.workflow.Activity;
 import org.springframework.context.ApplicationEvent;
 
@@ -9,9 +10,9 @@ public class ActivityEvent extends ApplicationEvent {
 
     private Long resourceId;
 
-    private Long userRoleId;
+    private Class<? extends BoardEntity> entityClass;
 
-    private Long resourceEventId;
+    private Long entityId;
 
     private List<Activity> activities;
 
@@ -21,30 +22,31 @@ public class ActivityEvent extends ApplicationEvent {
         this.activities = activities;
     }
 
-    public ActivityEvent(Object source, Long resourceId, Long userRoleId, Long resourceEventId, List<Activity> activities) {
+    public ActivityEvent(Object source, Long resourceId, Class<? extends BoardEntity> entityClass, Long entityId) {
         super(source);
         this.resourceId = resourceId;
-        this.userRoleId = userRoleId;
-        this.resourceEventId = resourceEventId;
-        this.activities = activities;
+        this.entityClass = entityClass;
+        this.entityId = entityId;
     }
 
-    public ActivityEvent(Object source, Long resourceId, Long userRoleId) {
+    public ActivityEvent(Object source, Long resourceId, Class<? extends BoardEntity> entityClass, Long entityId, List<Activity> activities) {
         super(source);
         this.resourceId = resourceId;
-        this.userRoleId = userRoleId;
+        this.entityClass = entityClass;
+        this.entityId = entityId;
+        this.activities = activities;
     }
 
     public Long getResourceId() {
         return resourceId;
     }
 
-    public Long getUserRoleId() {
-        return userRoleId;
+    public Class<? extends BoardEntity> getEntityClass() {
+        return entityClass;
     }
 
-    public Long getResourceEventId() {
-        return resourceEventId;
+    public Long getEntityId() {
+        return entityId;
     }
 
     public List<Activity> getActivities() {

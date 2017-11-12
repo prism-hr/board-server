@@ -64,6 +64,8 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
 
     Activity findByResourceEventAndActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity);
 
+    Activity findByResourceTaskAndActivity(ResourceTask resourceTask, hr.prism.board.enums.Activity activity);
+
     @Modifying
     @Query(value =
         "delete from Activity activity " +
@@ -113,6 +115,16 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and userRole.user = :user " +
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.resourceTask in (" +
+            "select resourceTask " +
+            "from ResourceTask resourceTask " +
+            "where resourceTask.resource = :resource " +
+            "and resourceTask.task in (:tasks))")
+    void deleteByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks);
 
     @Query(value =
         "select activity.id " +

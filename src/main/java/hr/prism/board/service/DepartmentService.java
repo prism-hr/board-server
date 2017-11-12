@@ -352,7 +352,7 @@ public class DepartmentService {
             UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
             if (userRole.getState() == State.PENDING) {
                 userRole.setState(state);
-                activityEventService.publishEvent(this, departmentId, userRole.getId());
+                activityEventService.publishEvent(this, departmentId, userRole);
             }
 
             return department;

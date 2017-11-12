@@ -68,4 +68,15 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
 
+    @Modifying
+    @Query(value =
+        "delete from ActivityRole activityRole " +
+            "where activityRole.activity in ( " +
+            "select activity " +
+            "from Activity activity " +
+            "inner join activity.resourceTask resourceTask " +
+            "where resourceTask.resource = :resource " +
+            "and resourceTask.task in (:tasks))")
+    void deleteByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks);
+
 }

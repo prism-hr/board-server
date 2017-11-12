@@ -6,7 +6,6 @@ import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.workflow.Activity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
@@ -37,6 +36,9 @@ public class ActivityEventService {
     private ResourceEventService resourceEventService;
 
     @Inject
+    private ResourceTaskService resourceTaskService;
+
+    @Inject
     private UserActivityService userActivityService;
 
     @Inject
@@ -51,21 +53,16 @@ public class ActivityEventService {
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishEvent(Object source, Long resourceId, List<Activity> activities) {
+    public void publishEvent(Object source, Long resourceId, List<hr.prism.board.workflow.Activity> activities) {
         applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, activities));
     }
 
-    public void publishEvent(Object source, Long resourceId, BoardEntity entity, List<Activity> activities) {
-        Class<? extends BoardEntity> entityClass = entity.getClass();
-        if (entityClass == UserRole.class) {
-            applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, entity.getId(), null, activities));
-        } else if (entityClass == ResourceEvent.class) {
-            applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, null, entity.getId(), activities));
-        }
+    public void publishEvent(Object source, Long resourceId, BoardEntity entity) {
+        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, entity.getClass(), entity.getId()));
     }
 
-    public void publishEvent(Object source, Long resourceId, Long userRoleId) {
-        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, userRoleId));
+    public void publishEvent(Object source, Long resourceId, BoardEntity entity, List<hr.prism.board.workflow.Activity> activities) {
+        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, entity.getClass(), entity.getId(), activities));
     }
 
     @Async
@@ -77,10 +74,33 @@ public class ActivityEventService {
 
     void sendActivities(ActivityEvent activityEvent) {
         Resource resource;
-        Long userRoleId = activityEvent.getUserRoleId();
-        Long resourceEventId = activityEvent.getResourceEventId();
+        Class<? extends BoardEntity> entityClass = activityEvent.getEntityClass();
+
+        Long userRoleId = null;
+        Long resourceEventId = null;
+        Long resourceTaskId = null;
+        if (entityClass == UserRole.class) {
+            userRoleId = activityEvent.getEntityId();
+        } else if (entityClass == ResourceEvent.class) {
+            resourceEventId = activityEvent.getEntityId();
+        } else if (entityClass == ResourceTask.class) {
+            resourceTaskId = activityEvent.getEntityId();
+        } else {
+            throw new UnsupportedOperationException("No registered activities for type: " + entityClass.getSimpleName());
+        }
+
         Map<Pair<BoardEntity, hr.prism.board.enums.Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity = new HashMap<>();
-        if (resourceEventId != null) {
+        if (resourceTaskId != null) {
+            ResourceTask resourceTask = resourceTaskService.findOne(resourceTaskId);
+            activityEvent.getActivities().forEach(activity -> {
+                hr.prism.board.enums.Activity activityEnum = activity.getActivity();
+                hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
+                    .computeIfAbsent(Pair.of(resourceTask, activityEnum), value -> activityService.getOrCreateActivity(resourceTask, activityEnum));
+                activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
+            });
+
+            resource = resourceTask.getResource();
+        } else if (resourceEventId != null) {
             ResourceEvent resourceEvent = resourceEventService.findOne(resourceEventId);
             activityEvent.getActivities().forEach(activity -> {
                 hr.prism.board.enums.Activity activityEnum = activity.getActivity();

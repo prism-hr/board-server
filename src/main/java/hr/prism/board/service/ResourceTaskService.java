@@ -49,6 +49,9 @@ public class ResourceTaskService {
     @Inject
     private ResourceTaskSuppressionRepository resourceTaskSuppressionRepository;
 
+    @Inject
+    private ActivityService activityService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -63,6 +66,10 @@ public class ResourceTaskService {
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
+
+    public ResourceTask findOne(Long id) {
+        return resourceTaskRepository.findOne(id);
+    }
 
     public ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> getResourceTasks(
         LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
@@ -112,6 +119,7 @@ public class ResourceTaskService {
     }
 
     void deleteTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
+        activityService.deleteActivities(resource, tasks);
         resourceTaskSuppressionRepository.deleteByResourceAndTasks(resource, tasks);
         resourceTaskRepository.deleteByResourceAndTasks(resource, tasks);
     }
