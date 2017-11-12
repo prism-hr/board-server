@@ -2,7 +2,7 @@ package hr.prism.board.enums;
 
 public enum BoardType {
 
-    STUDY,
+    RESEARCH,
     CAREER,
     CUSTOM
 

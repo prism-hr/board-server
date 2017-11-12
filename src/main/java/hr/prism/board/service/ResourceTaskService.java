@@ -71,8 +71,8 @@ public class ResourceTaskService {
         return resourceTaskRepository.findOne(id);
     }
 
-    public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource) {
-        return resourceTaskRepository.findByResource(resource);
+    public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource, User user) {
+        return resourceTaskRepository.findByResource(resource, user);
     }
 
     public ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> getResourceTasks(
@@ -97,8 +97,8 @@ public class ResourceTaskService {
             });
         }
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-            .setNotification(Notification.valueOf(notificationContext + "task_" + (notifiedCount == null ? "1" : (notifiedCount + 1)) + "_notification"));
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "task_notification"));
 
         notificationEventService.publishEvent(this, resourceId, tasks.stream().map(Pair::getValue).collect(Collectors.toList()), Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);

@@ -66,17 +66,17 @@ public class DepartmentService {
 
     private static final List<String> MEMBER_CATEGORY_STRINGS = Stream.of(MemberCategory.values()).map(MemberCategory::name).collect(Collectors.toList());
 
-    private static final String STUDY_NAME = "Study Opportunities";
-
     private static final String CAREER_NAME = "Career Opportunities";
 
-    private static final String STUDY_SUMMARY = "Forum for partner organizations and staff to share jobs, internships and study placements opportunities.";
+    private static final String RESEARCH_NAME = "Research Opportunities";
 
-    private static final String CAREER_SUMMARY = "Forum for partner organizations and staff to share follow-on study and PhD research opportunities.";
+    private static final String CAREER_SUMMARY = "Forum for partner organizations and staff to share career opportunities.";
 
-    private static final List<String> STUDY_CATEGORIES = ImmutableList.of("Masters (Taught)", "Masters (Research)", "PhD");
+    private static final String RESEARCH_SUMMARY = "Forum for partner organizations and staff to share research opportunities.";
 
-    private static final List<String> CAREER_CATEGORIES = ImmutableList.of("Employment", "Internship", "Placement", "Volunteering");
+    private static final List<String> CAREER_CATEGORIES = ImmutableList.of("Employment", "Internship", "Volunteering");
+
+    private static final List<String> RESEARCH_CATEGORIES = ImmutableList.of("MRes", "PhD", "Postdoc");
 
     private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
@@ -214,8 +214,10 @@ public class DepartmentService {
 
         // Create the initial boards
         Long departmentId = department.getId();
-        boardService.createBoard(departmentId, new BoardDTO().setType(BoardType.STUDY).setName(STUDY_NAME).setSummary(STUDY_SUMMARY).setPostCategories(STUDY_CATEGORIES));
-        boardService.createBoard(departmentId, new BoardDTO().setType(BoardType.CAREER).setName(CAREER_NAME).setSummary(CAREER_SUMMARY).setPostCategories(CAREER_CATEGORIES));
+        boardService.createBoard(departmentId,
+            new BoardDTO().setType(BoardType.CAREER).setName(CAREER_NAME).setSummary(CAREER_SUMMARY).setPostCategories(CAREER_CATEGORIES));
+        boardService.createBoard(departmentId,
+            new BoardDTO().setType(BoardType.RESEARCH).setName(RESEARCH_NAME).setSummary(RESEARCH_SUMMARY).setPostCategories(RESEARCH_CATEGORIES));
 
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());

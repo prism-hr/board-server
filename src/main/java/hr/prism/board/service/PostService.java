@@ -201,7 +201,7 @@ public class PostService {
             setIndexDataAndQuarter(post);
             userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
 
-            if (BoardType.STUDY.equals(board.getType()) && BooleanUtils.isTrue(internal)) {
+            if (BoardType.RESEARCH.equals(board.getType()) && BooleanUtils.isTrue(internal)) {
                 resourceTaskService.deleteTasks(department, POST_TASKS);
                 department.setLastInternalPostTimestamp(LocalDateTime.now());
             }

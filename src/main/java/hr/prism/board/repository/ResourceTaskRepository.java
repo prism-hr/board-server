@@ -16,8 +16,14 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
     @Query(value =
         "select resourceTask.task " +
             "from ResourceTask resourceTask " +
-            "where resourceTask.resource = :resource")
-    List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource);
+            "where resourceTask.resource = :resource " +
+            "and resourceTask.id not in (" +
+            "select resourceTask.id " +
+            "from ResourceTask resourceTask " +
+            "inner join resourceTask.suppressions suppression " +
+            "where resourceTask.resource = :resource " +
+            "and suppression.user = :user)")
+    List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource, @Param("user") User user);
 
     @Query(value =
         "select resourceTask " +
