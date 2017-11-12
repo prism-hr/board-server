@@ -71,6 +71,10 @@ public class ResourceTaskService {
         return resourceTaskRepository.findOne(id);
     }
 
+    public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource) {
+        return resourceTaskRepository.findByResource(resource);
+    }
+
     public ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> getResourceTasks(
         LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
         ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> resourceTasks = ArrayListMultimap.create();

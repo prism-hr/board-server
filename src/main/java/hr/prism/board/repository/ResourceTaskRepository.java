@@ -14,6 +14,12 @@ import java.util.List;
 public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long> {
 
     @Query(value =
+        "select resourceTask.task " +
+            "from ResourceTask resourceTask " +
+            "where resourceTask.resource = :resource")
+    List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource);
+
+    @Query(value =
         "select resourceTask " +
             "from ResourceTask resourceTask " +
             "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp < :baseline1 " +

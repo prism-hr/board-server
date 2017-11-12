@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class NotificationService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
@@ -162,10 +163,10 @@ public class NotificationService {
     }
 
     private static String toString(org.springframework.core.io.Resource resource) throws IOException {
-        InputStream inputStream = resource.getInputStream();
-        String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
-        IOUtils.closeQuietly(inputStream);
-        return template.trim();
+        try (InputStream inputStream = resource.getInputStream()) {
+            String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
+            return template.trim();
+        }
     }
 
     public static class NotificationRequest {
@@ -211,7 +212,7 @@ public class NotificationService {
             return action;
         }
 
-        public List<Attachments> getAttachments() {
+        List<Attachments> getAttachments() {
             return attachments;
         }
 
