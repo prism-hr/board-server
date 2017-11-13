@@ -538,7 +538,13 @@ public class ResourceService {
     }
 
     String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
-        String handle = parent.getHandle() + "/" + ResourceService.suggestHandle(name);
+        String handle;
+        if (parent == null) {
+            handle = ResourceService.suggestHandle(name);
+        } else {
+            handle = parent.getHandle() + "/" + ResourceService.suggestHandle(name);
+        }
+
         List<String> similarHandles = similarHandleFinder.find(handle);
         return ResourceService.confirmHandle(handle, similarHandles);
     }

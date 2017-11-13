@@ -22,4 +22,11 @@ public interface UniversityRepository extends MyRepository<University, Long> {
             "or university.handle = :handle")
     University findByNameOrHandle(@Param("name") String name, @Param("handle") String handle);
 
+    @Query(value =
+        "select university.handle " +
+            "from University university " +
+            "where university.handle like concat('%', :suggestedHandle) " +
+            "order by university.handle desc")
+    List<String> findHandleByLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
+
 }
