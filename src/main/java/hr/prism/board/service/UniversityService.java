@@ -51,6 +51,9 @@ public class UniversityService {
                     new DocumentDTO().setCloudinaryId(upload.get("public_id").toString()).setCloudinaryUrl(upload.get("secure_url").toString()).setFileName("logo.png"));
                 university.setDocumentLogo(documentLogo);
             }
+
+            resourceService.createResourceRelation(university, university);
+            resourceService.setIndexDataAndQuarter(university);
         }
     }
 

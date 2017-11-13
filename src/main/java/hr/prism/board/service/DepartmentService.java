@@ -194,8 +194,7 @@ public class DepartmentService {
             department.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
         }
 
-        String handle = resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle);
-        resourceService.updateHandle(department, handle);
+        department.setHandle(resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle));
         department = departmentRepository.save(department);
 
         List<String> memberCategoryStrings;

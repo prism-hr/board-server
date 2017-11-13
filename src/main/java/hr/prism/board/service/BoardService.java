@@ -100,8 +100,7 @@ public class BoardService {
                 board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
             }
 
-            String handle = resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle);
-            board.setHandle(handle);
+            board.setHandle(resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle));
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
@@ -130,7 +129,7 @@ public class BoardService {
         });
     }
 
-     public void updateBoardPostCounts(List<Long> postIds, String state) {
+    public void updateBoardPostCounts(List<Long> postIds, String state) {
         boardRepository.updateBoardPostCounts(postIds, state);
     }
 
