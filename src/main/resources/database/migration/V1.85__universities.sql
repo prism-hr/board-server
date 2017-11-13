@@ -1,9 +1,13 @@
 INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
-VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Abbey College', 'Not Specified', 'handle', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Abbey College', 'http://www.abbeycollege.co.uk/', 'abbeycollege', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
-VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'ABI College', 'http://www.abicollege.org.uk', 'handle', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'ABI College', 'http://www.abicollege.org.uk', 'abicollege', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
-VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Activate Learning', 'http://www.activatelearning.ac.uk', 'handle', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'City of Oxford College', 'http://www.cityofoxford.ac.uk/', 'cityofoxford', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
+VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Banbury and Bicester College', 'http://www.banbury-bicester.ac.uk/', 'banbury-bicester', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
+VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Reading College', 'http://www.reading-college.ac.uk/', 'reading', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Amsterdam Fashion Academy', 'http://www.amsterdamfashionacademy.com', 'handle', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 INSERT INTO TABLE (scope, state, previous_state, name, homepage, handle, created_timestamp, updated_timestamp)
