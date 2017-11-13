@@ -1,12 +1,12 @@
 package hr.prism.board.service;
 
-import freemarker.template.TemplateException;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.*;
-import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
@@ -18,10 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,17 +26,11 @@ import java.util.stream.Collectors;
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BoardService {
 
-    private static final List<ResourceTask> BADGE_TASKS = Collections.singletonList(ResourceTask.DEPLOY_BADGE);
-
     @Inject
     private BoardRepository boardRepository;
 
     @Inject
     private ActionService actionService;
-
-    @Inject
-    private DepartmentService departmentService;
-
 
     @Inject
     private ResourceService resourceService;
