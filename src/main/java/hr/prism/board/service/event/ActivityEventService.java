@@ -85,7 +85,7 @@ public class ActivityEventService {
             resourceEventId = activityEvent.getEntityId();
         } else if (entityClass == ResourceTask.class) {
             resourceTaskId = activityEvent.getEntityId();
-        } else {
+        } else if (entityClass != null) {
             throw new UnsupportedOperationException("No registered activities for type: " + entityClass.getSimpleName());
         }
 

@@ -50,7 +50,7 @@ public class TestNotificationService extends NotificationService {
             Assert.assertEquals(expectedAttachmentsSize, actualAttachments.size());
             for (int i = 0; i < expectedAttachmentsSize; i++) {
                 Attachments expectedAttachment = expectedAttachments.get(i);
-                Attachments actualAttachment = expectedAttachments.get(i);
+                Attachments actualAttachment = actualAttachments.get(i);
 
                 Assert.assertEquals(expectedAttachment.getContent(), actualAttachment.getContent());
                 Assert.assertEquals(expectedAttachment.getContentId(), actualAttachment.getContentId());
@@ -94,19 +94,19 @@ public class TestNotificationService extends NotificationService {
             this.attachments = attachments;
         }
 
-        public Notification getNotification() {
+        Notification getNotification() {
             return notification;
         }
 
-        public User getRecipient() {
+        User getRecipient() {
             return recipient;
         }
 
-        public Map<String, String> getProperties() {
+        Map<String, String> getProperties() {
             return properties;
         }
 
-        public List<Attachments> getAttachments() {
+        List<Attachments> getAttachments() {
             return attachments;
         }
 

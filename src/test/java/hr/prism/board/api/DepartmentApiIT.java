@@ -152,21 +152,21 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         verifyPostDepartment(universityId,
-            new DepartmentDTO().setName("new department with long name").setSummary("department summary"), "new-department-with");
+            new DepartmentDTO().setName("new department with long name").setSummary("department summary"), "new-department-with-long");
 
         Long departmentId = verifyPostDepartment(universityId,
-            new DepartmentDTO().setName("new department with long name too").setSummary("department summary"), "new-department-with-2").getId();
+            new DepartmentDTO().setName("new department with long name too").setSummary("department summary"), "new-department-with-long-2").getId();
 
         transactionTemplate.execute(status -> {
             DepartmentRepresentation departmentR = departmentApi.patchDepartment(departmentId,
                 new DepartmentPatchDTO()
-                    .setHandle(Optional.of("new-department-with-long")));
-            Assert.assertEquals("new-department-with-long", departmentR.getHandle());
+                    .setHandle(Optional.of("new-department-with-longer")));
+            Assert.assertEquals("new-department-with-longer", departmentR.getHandle());
             return null;
         });
 
         verifyPostDepartment(universityId,
-            new DepartmentDTO().setName("new department with long name also").setSummary("department summary"), "new-department-with-2");
+            new DepartmentDTO().setName("new department with long name also").setSummary("department summary"), "new-department-with-long-2");
     }
 
     @Test

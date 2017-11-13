@@ -48,6 +48,8 @@ public class ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
+    private static final int MAX_HANDLE_LENGTH = 25;
+
     private static final String RESOURCE_COLUMN_LIST =
         "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification";
 
@@ -555,9 +557,9 @@ public class ResourceService {
                     newSuggestion = part;
                 }
 
-                if (newSuggestion.length() > 20) {
+                if (newSuggestion.length() > MAX_HANDLE_LENGTH) {
                     if (i == 0) {
-                        return newSuggestion.substring(0, 20);
+                        return newSuggestion.substring(0, MAX_HANDLE_LENGTH);
                     }
 
                     return suggestion;

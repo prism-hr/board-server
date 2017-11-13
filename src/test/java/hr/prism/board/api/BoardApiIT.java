@@ -164,18 +164,18 @@ public class BoardApiIT extends AbstractIT {
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
 
         BoardDTO boardDTO = new BoardDTO().setName("new board with long name");
-        verifyPostBoard(departmentId, boardDTO, "new-board-with-long");
-        Long boardId = verifyPostBoard(departmentId, boardDTO.setName("new board with long name too"), "new-board-with-long-2").getId();
+        verifyPostBoard(departmentId, boardDTO, "new-board-with-long-name");
+        Long boardId = verifyPostBoard(departmentId, boardDTO.setName("new board with long name too"), "new-board-with-long-name-2").getId();
 
         transactionTemplate.execute(status -> {
             BoardRepresentation boardR = boardApi.patchBoard(boardId,
                 new BoardPatchDTO()
-                    .setHandle(Optional.of("new-board-with-long-name")));
-            Assert.assertEquals("new-board-with-long-name", boardR.getHandle());
+                    .setHandle(Optional.of("new-board-with-longer-name")));
+            Assert.assertEquals("new-board-with-longer-name", boardR.getHandle());
             return null;
         });
 
-        verifyPostBoard(departmentId, boardDTO.setName("new board with long name also"), "new-board-with-long-2");
+        verifyPostBoard(departmentId, boardDTO.setName("new board with long name also"), "new-board-with-long-name-2");
     }
 
     @Test
@@ -217,7 +217,7 @@ public class BoardApiIT extends AbstractIT {
             Assert.assertEquals(4, boardRs.size());
 
             List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
-            Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2", "Career Opportunities", "Study Opportunities"));
+            Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2", "Career Opportunities", "Research Opportunities"));
 
             departmentApi.patchDepartment(departmentId,
                 new DepartmentPatchDTO()
@@ -238,8 +238,8 @@ public class BoardApiIT extends AbstractIT {
                     case "Career Opportunities":
                         Assert.assertEquals("new-department-updated/career-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                         break;
-                    case "Study Opportunities":
-                        Assert.assertEquals("new-department-updated/study-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                    case "Research Opportunities":
+                        Assert.assertEquals("new-department-updated/research-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
                         break;
                     default:
                         Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
