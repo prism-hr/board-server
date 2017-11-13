@@ -351,7 +351,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Long postId1 = postR1.getId();
         transactionTemplate.execute(status -> authenticationApi.register(
-            new RegisterDTO().setUuid(department1memberRole1Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1")));
+            new RegisterDTO().setUuid(department1memberRole1Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member1.getId());
         departmentApi.putMembershipUpdate(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -360,7 +360,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR1.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.register(
-            new RegisterDTO().setUuid(department1memberRole2Uuid).setGivenName("member4").setSurname("member4").setEmail("member4@member4.com").setPassword("password4")));
+            new RegisterDTO().setUuid(department1memberRole2Uuid).setGivenName("member4").setSurname("member4").setEmail("member4@member4.com").setPassword("password4"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member2.getId());
         departmentApi.putMembershipUpdate(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -376,12 +376,12 @@ public class AuthenticationApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> authenticationApi.register(
-                new RegisterDTO().setUuid(department1memberRole3Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1")),
+                new RegisterDTO().setUuid(department1memberRole3Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1"), TestHelper.mockDevice()),
             ExceptionCode.DUPLICATE_USER, status));
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> authenticationApi.register(
-                new RegisterDTO().setUuid(department1memberRole1Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1")),
+                new RegisterDTO().setUuid(department1memberRole1Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1"), TestHelper.mockDevice()),
             ExceptionCode.DUPLICATE_AUTHENTICATION, status));
 
         Long userId2 = testUserService.authenticate().getId();
@@ -436,7 +436,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Long postId2 = postR2.getId();
         transactionTemplate.execute(status -> authenticationApi.login(
-            new LoginDTO().setUuid(department2memberRole1Uuid).setEmail("member1@member1.com").setPassword("password1")));
+            new LoginDTO().setUuid(department2memberRole1Uuid).setEmail("member1@member1.com").setPassword("password1"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member1.getId());
         departmentApi.putMembershipUpdate(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -445,7 +445,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR2.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.login(
-            new LoginDTO().setUuid(department2memberRole3Uuid).setEmail("member4@member4.com").setPassword("password4")));
+            new LoginDTO().setUuid(department2memberRole3Uuid).setEmail("member4@member4.com").setPassword("password4"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member2.getId());
         departmentApi.putMembershipUpdate(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -522,7 +522,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Long postId3 = postR3.getId();
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department3memberRole1Uuid).setClientId("clientId").setCode("code").setRedirectUri("redirectUri")));
+            new SigninDTO().setUuid(department3memberRole1Uuid).setClientId("clientId").setCode("code").setRedirectUri("redirectUri"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member5.getId());
         departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -531,7 +531,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR3.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department3memberRole2Uuid).setClientId("clientId2").setCode("code2").setRedirectUri("redirectUri2")));
+            new SigninDTO().setUuid(department3memberRole2Uuid).setClientId("clientId2").setCode("code2").setRedirectUri("redirectUri2"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member6.getId());
         departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -540,7 +540,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR3.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department3memberRole3Uuid).setClientId("clientId3").setCode("code3").setRedirectUri("redirectUri3")));
+            new SigninDTO().setUuid(department3memberRole3Uuid).setClientId("clientId3").setCode("code3").setRedirectUri("redirectUri3"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member1.getId());
         departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));
@@ -600,7 +600,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Long postId4 = postR4.getId();
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department4memberRole1Uuid).setClientId("clientId").setCode("code").setRedirectUri("redirectUri")));
+            new SigninDTO().setUuid(department4memberRole1Uuid).setClientId("clientId").setCode("code").setRedirectUri("redirectUri"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member5.getId());
         departmentApi.putMembershipUpdate(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))));

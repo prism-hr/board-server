@@ -39,7 +39,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 long userId = Long.parseLong(token.getSubject());
 
                 SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
-                response.setHeader("Authorization", "Bearer " + authenticationService.makeAccessToken(userId, jwsSecret));
             } catch (ExpiredJwtException e) {
                 LOGGER.warn("Jwt token is already expired");
             } catch (MalformedJwtException e) {

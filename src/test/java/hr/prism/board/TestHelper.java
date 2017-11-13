@@ -14,6 +14,8 @@ import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Assert;
 import org.mockito.Mockito;
+import org.springframework.mobile.device.Device;
+import org.springframework.mobile.device.DevicePlatform;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -149,6 +151,30 @@ public class TestHelper {
         Mockito.doCallRealMethod().when(httpServletResponse).sendRedirect(Mockito.anyString());
         Mockito.when(httpServletResponse.getLocation()).thenCallRealMethod();
         return httpServletResponse;
+    }
+
+    public static Device mockDevice() {
+        return new Device() {
+            @Override
+            public boolean isNormal() {
+                return true;
+            }
+
+            @Override
+            public boolean isMobile() {
+                return false;
+            }
+
+            @Override
+            public boolean isTablet() {
+                return false;
+            }
+
+            @Override
+            public DevicePlatform getDevicePlatform() {
+                return null;
+            }
+        };
     }
 
     public static String toString(LocalDateTime baseline) {

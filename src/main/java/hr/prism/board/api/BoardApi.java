@@ -1,11 +1,8 @@
 package hr.prism.board.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.dto.WidgetOptionsDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
@@ -18,9 +15,7 @@ import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,15 +57,6 @@ public class BoardApi {
     @RequestMapping(value = "/api/boards/{boardId}", method = RequestMethod.GET)
     public BoardRepresentation getBoard(@PathVariable Long boardId) {
         return boardMapper.apply(boardService.getBoard(boardId));
-    }
-
-    @RequestMapping(value = "/api/boards/{boardId}/badge", method = RequestMethod.GET)
-    public String getBoardBadge(@PathVariable Long boardId, @RequestParam String options, HttpServletResponse response) throws IOException {
-        response.setHeader("X-Frame-Options", "ALLOW");
-        ObjectMapper objectMapper = new ObjectMapper();
-        WidgetOptionsDTO widgetOptions = objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
-        });
-        return boardService.getBoardBadge(boardId, widgetOptions);
     }
 
     @RequestMapping(value = "/api/boards", method = RequestMethod.GET, params = "handle")

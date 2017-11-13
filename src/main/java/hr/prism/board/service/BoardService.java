@@ -5,7 +5,6 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.WidgetOptionsDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.ExceptionCode;
@@ -24,7 +23,6 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +37,10 @@ public class BoardService {
 
     @Inject
     private ActionService actionService;
+
+    @Inject
+    private DepartmentService departmentService;
+
 
     @Inject
     private ResourceService resourceService;
@@ -138,37 +140,8 @@ public class BoardService {
         });
     }
 
-    public String getBoardBadge(Long boardId, WidgetOptionsDTO options) {
-        Board board = getBoard(boardId);
-        Department department = (Department) board.getParent();
-        Map<String, Object> model = createBoardBadgeModel(board, department, options);
-
-        List<Post> posts = postService.getPosts(board.getId());
-        posts = posts.subList(0, Math.min(posts.size(), options.getPostCount()));
-        model.put("posts", posts);
-
-        StringWriter stringWriter = new StringWriter();
-        try {
-            freemarkerConfig.getConfiguration().getTemplate("board_badge.ftl").process(model, stringWriter);
-        } catch (IOException | TemplateException e) {
-            throw new Error(e);
-        }
-
-        resourceTaskService.deleteTasks(department, BADGE_TASKS);
-        return stringWriter.toString();
-    }
-
-    void updateBoardPostCounts(List<Long> postIds, String state) {
+     public void updateBoardPostCounts(List<Long> postIds, String state) {
         boardRepository.updateBoardPostCounts(postIds, state);
-    }
-
-    private Map<String, Object> createBoardBadgeModel(Board board, Department department, WidgetOptionsDTO options) {
-        Map<String, Object> model = new HashMap<>();
-        model.put("options", options);
-        model.put("board", board);
-        model.put("department", department);
-        model.put("applicationUrl", appUrl);
-        return model;
     }
 
     @SuppressWarnings("unchecked")
