@@ -34,6 +34,7 @@ public class UniversityService {
     @Inject
     private DocumentService documentService;
 
+    @SuppressWarnings("WeakerAccess")
     public void migrate(Long universityId) throws IOException {
         Cloudinary cloudinary = new Cloudinary(
             ObjectUtils.asMap(

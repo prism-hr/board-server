@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "SpringAutowiredFieldsWarningInspection"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "SpringAutowiredFieldsWarningInspection", "SqlResolve"})
 public class ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);

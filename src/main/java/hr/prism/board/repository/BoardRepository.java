@@ -13,7 +13,8 @@ public interface BoardRepository extends MyRepository<Board, Long> {
     @Query(value =
         "select board.handle " +
             "from Board board " +
-            "where board.handle like concat('%', :suggestedHandle, '-%') " +
+            "where board.handle like concat('%', :suggestedHandle) " +
+            "or board.handle like concat('%', :suggestedHandle, '-%') " +
             "order by board.handle desc")
     List<String> findHandleLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
 
