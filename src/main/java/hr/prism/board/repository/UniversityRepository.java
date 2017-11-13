@@ -10,6 +10,12 @@ import java.util.List;
 public interface UniversityRepository extends MyRepository<University, Long> {
 
     @Query(value =
+        "select university.id " +
+            "from University university " +
+            "order by university.name")
+    List<Long> findAllIds();
+
+    @Query(value =
         "select university " +
             "from University university " +
             "order by university.name")
@@ -25,7 +31,7 @@ public interface UniversityRepository extends MyRepository<University, Long> {
     @Query(value =
         "select university.handle " +
             "from University university " +
-            "where university.handle like concat('%', :suggestedHandle) " +
+            "where university.handle like concat('%', :suggestedHandle, '-%') " +
             "order by university.handle desc")
     List<String> findHandleByLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
 

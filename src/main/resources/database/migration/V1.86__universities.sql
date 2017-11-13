@@ -44,7 +44,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Barnfield College',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage, created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Barnsley College',
-        'https://universitycampus.barnsley.ac.uk', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.universitycampus.barnsley.ac.uk', '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage, created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Basingstoke College of Technology',
@@ -132,7 +132,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Brunel University London',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Buckinghamshire New University',
-        'https://bucks.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.bucks.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Bury College',
@@ -180,11 +180,11 @@ VALUES  ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Central College Nottingham',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Central Film School London',
-        'https://centralfilmschool.com',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.centralfilmschool.com',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Chesterfield College',
-        'www.chesterfield.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.chesterfield.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Chichester College',
@@ -192,7 +192,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Chichester College',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Christ the Redeemer College',
-        'https://christredeemercollege.org',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.christredeemercollege.org',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'City and Islington College',
@@ -368,7 +368,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Fareham College',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp) VALUES
   ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Furness College',
-   'https://furnesscollege.co.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+   'https://www.furnesscollege.co.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Gateshead College',
@@ -380,7 +380,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Glasgow Caledonian University',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Glasgow Kelvin College',
-        'https://northglasgowcollege.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.northglasgowcollege.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Glasgow School of Art',
@@ -536,7 +536,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Kings College London',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Kingston College',
-        'https://kingston-college.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.kingston-college.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Kingston Maurward College',
@@ -568,7 +568,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Lancaster University',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'LCA Business School',
-        'https://lca.anglia.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.lca.anglia.ac.uk',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Leeds Beckett University',
@@ -932,7 +932,7 @@ VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Ruskin College Oxford',
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'SAE Institute Oxford',
-        'https://uk.sae.edu',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
+        'https://www.uk.sae.edu',  '2017-11-13 12:27:31', '2017-11-13 12:27:31');
 
 INSERT INTO resource (scope, state, previous_state, name, homepage,  created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'ACCEPTED', 'Salford City College',
