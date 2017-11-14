@@ -297,7 +297,7 @@ public class DepartmentService {
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
-            resourceTaskService.deleteTasks(department, MEMBER_TASKS);
+            resourceTaskService.completeTasks(department, MEMBER_TASKS);
             department.setLastMemberTimestamp(LocalDateTime.now());
             return department;
         });

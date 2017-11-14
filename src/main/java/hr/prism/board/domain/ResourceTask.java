@@ -17,6 +17,9 @@ public class ResourceTask extends BoardEntity {
     @Column(name = "task", nullable = false)
     private hr.prism.board.enums.ResourceTask task;
 
+    @Column(name = "completed")
+    private Boolean completed;
+
     @Column(name = "notified_count")
     private Integer notifiedCount;
 
@@ -38,6 +41,15 @@ public class ResourceTask extends BoardEntity {
 
     public ResourceTask setTask(hr.prism.board.enums.ResourceTask task) {
         this.task = task;
+        return this;
+    }
+
+    public Boolean getCompleted() {
+        return completed;
+    }
+
+    public ResourceTask setCompleted(Boolean completed) {
+        this.completed = completed;
         return this;
     }
 
