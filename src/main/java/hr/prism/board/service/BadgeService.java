@@ -38,6 +38,7 @@ public class BadgeService {
     @Value("${app.url}")
     private String appUrl;
 
+    // TODO add test coverage
     public String getResourceBadge(Resource resource, WidgetOptionsDTO options) {
         Map<String, Object> model = createResourceBadgeModel(resource, options);
 
