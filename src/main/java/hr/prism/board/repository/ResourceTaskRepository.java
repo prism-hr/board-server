@@ -59,10 +59,11 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
 
     @Modifying
     @Query(value =
-        "delete from ResourceTask resourceTask " +
+        "update ResourceTask resourceTask " +
+            "set resourceTask.completed = :completed " +
             "where resourceTask.resource = :resource " +
             "and resourceTask.task in (:tasks)")
-    void deleteByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks);
+    void updateByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks, @Param("completed") Boolean completed);
 
     @Modifying
     @Query(value =

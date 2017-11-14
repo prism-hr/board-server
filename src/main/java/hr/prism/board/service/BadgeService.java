@@ -4,6 +4,8 @@ import freemarker.template.TemplateException;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.dto.WidgetOptionsDTO;
+import hr.prism.board.enums.ResourceTask;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,16 +14,23 @@ import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BadgeService {
+
+    private static final List<ResourceTask> BADGE_TASKS = Collections.singletonList(ResourceTask.DEPLOY_BADGE);
 
     @Inject
     private PostService postService;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
 
     @Inject
     private FreeMarkerConfig freemarkerConfig;
@@ -42,6 +51,10 @@ public class BadgeService {
             freemarkerConfig.getConfiguration().getTemplate("badge.ftl").process(model, stringWriter);
         } catch (IOException | TemplateException e) {
             throw new Error(e);
+        }
+
+        if (BooleanUtils.isFalse(options.getPreview())) {
+            resourceTaskService.completeTasks(resource, BADGE_TASKS);
         }
 
         return stringWriter.toString();

@@ -122,10 +122,10 @@ public class ResourceTaskService {
         return resourceTaskRepository.findByResourceAndSuppressions(resource, user);
     }
 
-    void deleteTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
+    // TODO: support
+    void completeTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
         activityService.deleteActivities(resource, tasks);
-        resourceTaskSuppressionRepository.deleteByResourceAndTasks(resource, tasks);
-        resourceTaskRepository.deleteByResourceAndTasks(resource, tasks);
+        resourceTaskRepository.updateByResourceAndTasks(resource, tasks, true);
     }
 
     void createSuppression(User user, Long taskId) {
