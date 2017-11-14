@@ -13,6 +13,8 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private String handle;
 
+    private DepartmentSubscriptionRepresentation subscription;
+
     private Long boardCount;
 
     private Long memberCount;
@@ -48,6 +50,14 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
+    public DepartmentSubscriptionRepresentation getSubscription() {
+        return subscription;
+    }
+
+    public DepartmentRepresentation setSubscription(DepartmentSubscriptionRepresentation subscription) {
+        this.subscription = subscription;
+        return this;
+    }
 
     public Long getBoardCount() {
         return boardCount;

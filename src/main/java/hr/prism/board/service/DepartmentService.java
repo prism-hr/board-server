@@ -403,6 +403,19 @@ public class DepartmentService {
         resourceTaskService.createForExistingResource(departmentId, tasks);
     }
 
+    // TODO: write workflow definition to expose a discrete SUBSCRIBE action
+    public Department updateSubscription(Long departmentId, DepartmentSubscriptionDTO subscription) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> {
+            department.setCustomerId(subscription.getCustomerId());
+            department.setSubscriptionId(subscription.getSubscriptionId());
+            return null;
+        });
+
+        return department;
+    }
+
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
         PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
         if (!responseReadiness.isReady()) {

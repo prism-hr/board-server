@@ -152,7 +152,7 @@ public class ActionService {
         });
     }
 
-    boolean canExecuteAction(Resource resource, Action action) {
+    public boolean canExecuteAction(Resource resource, Action action) {
         List<ActionRepresentation> actions = resource.getActions();
         return actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action::equals);
     }
