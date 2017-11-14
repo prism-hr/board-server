@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.mapper.UniversityMapper;
 import org.apache.commons.text.WordUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -22,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class DefinitionService {
 
     private static final String TEST_QUERY = "SELECT 1";
@@ -43,12 +43,6 @@ public class DefinitionService {
 
     @Value("${cloudinary.folder}")
     private String cloudinaryFolder;
-
-    @Inject
-    private UniversityService universityService;
-
-    @Inject
-    private UniversityMapper universityMapper;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -78,7 +72,6 @@ public class DefinitionService {
                         oauthProviders.add(ImmutableMap.of("id", OauthProvider.FACEBOOK, "clientId", facebookClientId));
                         oauthProviders.add(ImmutableMap.of("id", OauthProvider.LINKEDIN, "clientId", linkedinClientId));
                         this.definitions.put("oauthProvider", oauthProviders);
-                        this.definitions.put("universities", universityService.findAll().stream().map(universityMapper).collect(Collectors.toList()));
                     }
                 }
             }

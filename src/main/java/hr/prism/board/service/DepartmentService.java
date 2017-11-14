@@ -48,7 +48,7 @@ public class DepartmentService {
             "FROM resource " +
             "LEFT JOIN document AS document_logo " +
             "ON resource.document_logo_id = document_logo.id " +
-            "WHERE resource.scope = :scope AND resource.state = :state " +
+            "WHERE resource.parent_id = :universityId AND resource.scope = :scope AND resource.state = :state " +
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
             "LIMIT 10";
@@ -240,11 +240,12 @@ public class DepartmentService {
         });
     }
 
-    public List<DepartmentRepresentation> findBySimilarName(String searchTerm) {
+    public List<DepartmentRepresentation> findBySimilarName(Long universityId, String searchTerm) {
         List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
                 .setParameter("searchTermHard", searchTerm + "%")
                 .setParameter("searchTermSoft", searchTerm)
+                .setParameter("universityId", universityId)
                 .setParameter("scope", Scope.DEPARTMENT.name())
                 .setParameter("state", State.ACCEPTED.name())
                 .getResultList());

@@ -361,29 +361,31 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/department_autosuggest_setup.sql")
     public void shouldSuggestDepartments() {
-        List<DepartmentRepresentation> departmentRs = departmentApi.lookupDepartments("Computer");
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+
+        List<DepartmentRepresentation> departmentRs = departmentApi.lookupDepartments(universityId, "Computer");
         Assert.assertEquals(3, departmentRs.size());
 
         verifySuggestedDepartment("Computer Science Department", departmentRs.get(0));
         verifySuggestedDepartment("Department of Computer Science", departmentRs.get(1));
         verifySuggestedDepartment("Laboratory for the Foundations of Computer Science", departmentRs.get(2));
 
-        departmentRs = departmentApi.lookupDepartments("Computer Science Laboratory");
+        departmentRs = departmentApi.lookupDepartments(universityId, "Computer Science Laboratory");
         Assert.assertEquals(3, departmentRs.size());
 
         verifySuggestedDepartment("Laboratory for the Foundations of Computer Science", departmentRs.get(0));
         verifySuggestedDepartment("Computer Science Department", departmentRs.get(1));
         verifySuggestedDepartment("Department of Computer Science", departmentRs.get(2));
 
-        departmentRs = departmentApi.lookupDepartments("School of Informatics");
+        departmentRs = departmentApi.lookupDepartments(universityId,"School of Informatics");
         Assert.assertEquals(1, departmentRs.size());
 
         verifySuggestedDepartment("School of Informatics", departmentRs.get(0));
 
-        departmentRs = departmentApi.lookupDepartments("Physics");
+        departmentRs = departmentApi.lookupDepartments(universityId, "Physics");
         Assert.assertEquals(0, departmentRs.size());
 
-        departmentRs = departmentApi.lookupDepartments("Mathematics");
+        departmentRs = departmentApi.lookupDepartments(universityId, "Mathematics");
         Assert.assertEquals(0, departmentRs.size());
     }
 

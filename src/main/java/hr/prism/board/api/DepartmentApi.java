@@ -45,18 +45,18 @@ public class DepartmentApi {
     private UserMapper userMapper;
 
     @RequestMapping(value = "/api/universities/{universityId}/departments", method = RequestMethod.POST)
-    public DepartmentRepresentation postDepartment(@PathVariable("universityId") Long universityId, @RequestBody @Valid DepartmentDTO departmentDTO) {
+    public DepartmentRepresentation postDepartment(@PathVariable Long universityId, @RequestBody @Valid DepartmentDTO departmentDTO) {
         return departmentMapper.apply(departmentService.createDepartment(universityId, departmentDTO));
+    }
+
+    @RequestMapping(value = "/api/universities/{universityId}/departments", method = RequestMethod.GET, params = "query")
+    public List<DepartmentRepresentation> lookupDepartments(@PathVariable Long universityId, @RequestParam String query) {
+        return departmentService.findBySimilarName(universityId, query);
     }
 
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET)
     public List<DepartmentRepresentation> getDepartments(@RequestParam(required = false) Boolean includePublic, @RequestParam(required = false) String searchTerm) {
         return departmentService.getDepartments(includePublic, searchTerm).stream().map(departmentMapper).collect(Collectors.toList());
-    }
-
-    @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "query")
-    public List<DepartmentRepresentation> lookupDepartments(@RequestParam String query) {
-        return departmentService.findBySimilarName(query);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}", method = RequestMethod.GET)
