@@ -408,6 +408,7 @@ public class DepartmentService {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
+            // TODO: check with Stripe that subscription is valid
             department.setCustomerId(subscription.getCustomerId());
             department.setSubscriptionId(subscription.getSubscriptionId());
             return null;
