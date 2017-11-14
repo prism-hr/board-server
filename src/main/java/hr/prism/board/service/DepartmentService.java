@@ -123,6 +123,9 @@ public class DepartmentService {
     @Inject
     private ResourceTaskService resourceTaskService;
 
+    @Inject
+    private PaymentService paymentService;
+
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
@@ -404,13 +407,18 @@ public class DepartmentService {
     }
 
     // TODO: write workflow definition to expose a discrete SUBSCRIBE action
-    public Department updateSubscription(Long departmentId, DepartmentSubscriptionDTO subscription) {
+    public Department createOrUpdateSubscription(Long departmentId, String source) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
-            // TODO: check with Stripe that subscription is valid
-            department.setCustomerId(subscription.getCustomerId());
-            department.setSubscriptionId(subscription.getSubscriptionId());
+            String customerId = department.getCustomerId();
+            if (customerId == null) {
+                customerId = paymentService.createCustomer(source);
+                department.setCustomerId(customerId);
+            } else {
+                paymentService.updateCustomer(customerId, source);
+            }
+
             return null;
         });
 

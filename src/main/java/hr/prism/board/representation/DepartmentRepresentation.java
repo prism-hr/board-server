@@ -13,7 +13,7 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private String handle;
 
-    private DepartmentSubscriptionRepresentation subscription;
+    private String paymentCustomerId;
 
     private Long boardCount;
 
@@ -50,12 +50,12 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public DepartmentSubscriptionRepresentation getSubscription() {
-        return subscription;
+    public String getPaymentCustomerId() {
+        return paymentCustomerId;
     }
 
-    public DepartmentRepresentation setSubscription(DepartmentSubscriptionRepresentation subscription) {
-        this.subscription = subscription;
+    public DepartmentRepresentation setPaymentCustomerId(String paymentCustomerId) {
+        this.paymentCustomerId = paymentCustomerId;
         return this;
     }
 

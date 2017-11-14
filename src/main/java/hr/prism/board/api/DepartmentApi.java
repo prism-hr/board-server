@@ -2,7 +2,6 @@ package hr.prism.board.api;
 
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.DepartmentSubscriptionDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
@@ -117,8 +116,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.PUT)
-    public DepartmentRepresentation putDepartmentSubscription(@PathVariable Long departmentId, @RequestBody @Valid DepartmentSubscriptionDTO subscriptionDTO) {
-        return departmentMapper.apply(departmentService.updateSubscription(departmentId, subscriptionDTO));
+    public DepartmentRepresentation putDepartmentSubscription(@PathVariable Long departmentId, @RequestParam String source) {
+        return departmentMapper.apply(departmentService.createOrUpdateSubscription(departmentId, source));
     }
 
 }

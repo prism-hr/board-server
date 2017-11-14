@@ -22,11 +22,8 @@ import java.time.LocalDateTime;
                 @NamedAttributeNode(value = "documentLogo")})})
 public class Department extends Resource {
 
-    @Column(name = "payment_customer_id", unique = true)
+    @Column(name = "customer_id", unique = true)
     private String customerId;
-
-    @Column(name = "payment_subscription_id", unique = true)
-    private String subscriptionId;
 
     @Column(name = "board_count")
     private Long boardCount;
@@ -52,14 +49,6 @@ public class Department extends Resource {
 
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
-    }
-
-    public String getSubscriptionId() {
-        return subscriptionId;
-    }
-
-    public void setSubscriptionId(String subscriptionId) {
-        this.subscriptionId = subscriptionId;
     }
 
     public Long getBoardCount() {
