@@ -136,8 +136,8 @@ public class DepartmentApi {
         return departmentService.deletePaymentSource(departmentId, source);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.DELETE)
-    public Customer cancelSubscription(@PathVariable Long departmentId, @PathVariable String source) {
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/cancelSubscription", method = RequestMethod.POST)
+    public Customer cancelSubscription(@PathVariable Long departmentId) {
         return departmentService.cancelSubscription(departmentId);
     }
 
