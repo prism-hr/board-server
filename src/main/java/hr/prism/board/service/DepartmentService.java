@@ -407,7 +407,7 @@ public class DepartmentService {
         resourceTaskService.createForExistingResource(departmentId, tasks);
     }
 
-    public Customer getCustomer(Long departmentId) {
+    public Customer getPaymentSources(Long departmentId) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.getCustomer(customerId);
@@ -430,10 +430,10 @@ public class DepartmentService {
         return customer;
     }
 
-    public Customer putDefaultSource(Long departmentId, String source) {
+    public Customer putDefaultSource(Long departmentId, String defaultSource) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.setDefaultSource(customerId, source);
+        return customerId == null ? null : paymentService.setDefaultSource(customerId, defaultSource);
     }
 
     public Customer deleteSource(Long departmentId, String source) {

@@ -116,22 +116,22 @@ public class DepartmentApi {
         departmentService.putTask(departmentId, taskId);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.GET)
-    public Customer getCustomer(@PathVariable Long departmentId) {
-        return departmentService.getCustomer(departmentId);
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.GET)
+    public Customer getPaymentSources(@PathVariable Long departmentId) {
+        return departmentService.getPaymentSources(departmentId);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.PUT)
     public Customer putPaymentSource(@PathVariable Long departmentId, @RequestParam String source) {
         return departmentService.putSource(departmentId, source);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.PUT)
-    public Customer putDefaultPaymentSource(@PathVariable Long departmentId, @PathVariable String source) {
-        return departmentService.putDefaultSource(departmentId, source);
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.PUT)
+    public Customer putDefaultPaymentSource(@PathVariable Long departmentId, @RequestParam String defaultSource) {
+        return departmentService.putDefaultSource(departmentId, defaultSource);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.DELETE)
     public Customer deletePaymentSource(@PathVariable Long departmentId, @PathVariable String source) {
         return departmentService.deleteSource(departmentId, source);
     }
