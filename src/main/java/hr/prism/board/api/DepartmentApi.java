@@ -117,13 +117,18 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.GET)
-    public Customer getDepartmentCustomer(@PathVariable Long departmentId) {
+    public Customer getCustomer(@PathVariable Long departmentId) {
         return departmentService.getCustomer(departmentId);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.PUT)
-    public DepartmentRepresentation putDepartmentCustomer(@PathVariable Long departmentId, @RequestParam String source) {
-        return departmentMapper.apply(departmentService.putCustomer(departmentId, source));
+    public Customer putCustomer(@PathVariable Long departmentId, @RequestParam String source) {
+        return departmentService.putCustomer(departmentId, source);
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.DELETE)
+    public Customer deleteSource(@PathVariable Long departmentId, @PathVariable String source) {
+        return departmentService.deleteSource(departmentId, source);
     }
 
 }

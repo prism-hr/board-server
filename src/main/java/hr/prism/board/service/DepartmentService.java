@@ -411,27 +411,37 @@ public class DepartmentService {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
+
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.getCustomer(department.getCustomerId());
     }
 
     // TODO: write workflow definition to expose a discrete SUBSCRIBE action
-    public Department putCustomer(Long departmentId, String source) {
+    public Customer putCustomer(Long departmentId, String source) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        actionService.executeAction(user, department, Action.EDIT, () -> {
-            String customerId = department.getCustomerId();
-            if (customerId == null) {
-                customerId = paymentService.createCustomer(source).getId();
-                department.setCustomerId(customerId);
-            } else {
-                paymentService.updateCustomer(customerId, source);
-            }
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
 
-            return department;
-        });
+        Customer customer;
+        String customerId = department.getCustomerId();
+        if (customerId == null) {
+            customer = paymentService.createCustomer(source);
+            customerId = paymentService.createCustomer(source).getId();
+            department.setCustomerId(customerId);
+        } else {
+            customer = paymentService.updateCustomer(customerId, source);
+        }
 
-        return department;
+        return customer;
+    }
+
+    public Customer deleteSource(Long departmentId, String source) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
+
+        String customerId = department.getCustomerId();
+        return customerId == null ? null : paymentService.deleteSource(customerId, source);
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {

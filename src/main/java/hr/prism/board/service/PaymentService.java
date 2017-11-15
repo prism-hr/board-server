@@ -22,27 +22,46 @@ public class PaymentService {
     }
 
     Customer getCustomer(String customerId) {
-        try {
-            return Customer.retrieve(customerId);
-        } catch (Exception e) {
-            throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Could not get customer with id: " + customerId, e);
-        }
+        return performStripeOperation(() ->
+                Customer.retrieve(customerId),
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not get customer with id: " + customerId);
     }
 
     Customer createCustomer(String source) {
-        try {
-            return Customer.create(ImmutableMap.of("source", source));
-        } catch (Exception e) {
-            throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Could not create customer with source: " + source, e);
-        }
+        return performStripeOperation(() ->
+                Customer.create(ImmutableMap.of("source", source)),
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not create customer with source: " + source);
     }
 
     Customer updateCustomer(String customerId, String source) {
+        return performStripeOperation(() ->
+                Customer.retrieve(customerId).update(ImmutableMap.of("source", source)),
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not update customer with id: " + customerId + " and source: " + source);
+    }
+
+    Customer deleteSource(String customerId, String source) {
+        return performStripeOperation(() -> {
+                Customer customer = Customer.retrieve(customerId);
+                customer.getSources().retrieve(source).delete();
+                return customer;
+            },
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not remove source: " + source + " from customer with id: " + customerId);
+    }
+
+    private <T> T performStripeOperation(StripeOperation<T> operation, ExceptionCode exceptionCode, String exceptionMessage) {
         try {
-            return Customer.retrieve(customerId).update(ImmutableMap.of("source", source));
+            return operation.operate();
         } catch (Exception e) {
-            throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Could not update customer with id: " + customerId + " and source: " + source, e);
+            throw new BoardException(exceptionCode, exceptionMessage);
         }
+    }
+
+    private interface StripeOperation<T> {
+        T operate() throws Exception;
     }
 
 }
