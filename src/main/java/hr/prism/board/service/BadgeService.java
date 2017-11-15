@@ -42,7 +42,6 @@ public class BadgeService {
     public String getResourceBadge(Resource resource, WidgetOptionsDTO options) {
         Map<String, Object> model = createResourceBadgeModel(resource, options);
 
-        // FIXME get posts also for department
         List<Post> posts = postService.getPosts(resource.getId());
         posts = posts.subList(0, Math.min(posts.size(), options.getPostCount()));
         model.put("posts", posts);

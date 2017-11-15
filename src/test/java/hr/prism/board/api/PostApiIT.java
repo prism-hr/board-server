@@ -1618,13 +1618,13 @@ public class PostApiIT extends AbstractIT {
 
     private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> postApi.getPosts(null, null, null, null)),
+            transactionTemplate.execute(status -> postApi.getPosts(null, null, null, null, null)),
             Collections.emptyList(),
             null);
 
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(
-            transactionTemplate.execute(status -> postApi.getPosts(true, null, null, null)));
+            transactionTemplate.execute(status -> postApi.getPosts(null, true, null, null, null)));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(statePosts.get(state)),
@@ -1634,13 +1634,13 @@ public class PostApiIT extends AbstractIT {
 
         for (Long boardId : postNames.keySet()) {
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null, null, null, null)),
+                transactionTemplate.execute(status -> postApi.getPosts(boardId, null, null, null, null)),
                 Collections.emptyList(),
                 null);
 
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, true, null, null, null)));
+                transactionTemplate.execute(status -> postApi.getPosts(boardId, true, null, null, null)));
             boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
                     Lists.newArrayList(boardStatePosts.get(state)),
@@ -1654,7 +1654,7 @@ public class PostApiIT extends AbstractIT {
                                           LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames, PostAdminContext adminContext) {
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(
-            transactionTemplate.execute(status -> postApi.getPosts(null, null, null, null)));
+            transactionTemplate.execute(status -> postApi.getPosts(null, null, null, null, null)));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(statePosts.get(state)),
@@ -1664,7 +1664,7 @@ public class PostApiIT extends AbstractIT {
 
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
         LinkedHashMultimap<State, PostRepresentation> mergedStatePosts = getPostsByState(
-            transactionTemplate.execute(status -> postApi.getPosts(true, null, null, null)));
+            transactionTemplate.execute(status -> postApi.getPosts(null, true, null, null, null)));
         LinkedHashMultimap<State, String> mergedStatePostNames = mergePostNamesPreservingOrder(statePostNames, publicStatePostNames);
         mergedStatePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
@@ -1677,7 +1677,7 @@ public class PostApiIT extends AbstractIT {
         for (Long boardId : postNames.keySet()) {
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null, null, null, null)));
+                transactionTemplate.execute(status -> postApi.getPosts(boardId, null, null, null, null)));
             boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
                     Lists.newArrayList(boardStatePosts.get(state)),
@@ -1687,7 +1687,7 @@ public class PostApiIT extends AbstractIT {
 
             LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> mergedBoardStatePosts = getPostsByState(
-                transactionTemplate.execute(status -> postApi.getPostsByBoard(boardId, null, null, null, null)));
+                transactionTemplate.execute(status -> postApi.getPosts(boardId, null, null, null, null)));
             LinkedHashMultimap<State, String> mergedBoardStatePostNames = mergePostNamesPreservingOrder(boardStatePostNames, publicBoardStatePostNames);
             mergedBoardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
@@ -1733,7 +1733,7 @@ public class PostApiIT extends AbstractIT {
         TestHelper.verifyNullableCount(referralCount, post.getReferralCount());
         TestHelper.verifyNullableCount(responseCount, post.getResponseCount());
 
-        List<PostRepresentation> postRs = transactionTemplate.execute(status -> postApi.getPosts(true, null, null, null));
+        List<PostRepresentation> postRs = transactionTemplate.execute(status -> postApi.getPosts(null, true, null, null, null));
         TestHelper.verifyNullableCount(viewCount, postRs.get(0).getViewCount());
         TestHelper.verifyNullableCount(referralCount, postRs.get(0).getReferralCount());
         TestHelper.verifyNullableCount(responseCount, postRs.get(0).getResponseCount());

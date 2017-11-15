@@ -41,17 +41,11 @@ public class BoardApi {
         return boardMapper.apply(board);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoardsByDepartment(@PathVariable Long departmentId, @RequestParam(required = false) Boolean includePublic,
-                                                           @RequestParam(required = false) State state, @RequestParam(required = false) String quarter,
-                                                           @RequestParam(required = false) String searchTerm) {
-        return boardService.getBoards(departmentId, includePublic, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
-    }
-
     @RequestMapping(value = "/api/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Boolean includePublic, @RequestParam(required = false) State state,
-                                               @RequestParam(required = false) String quarter, @RequestParam(required = false) String searchTerm) {
-        return boardService.getBoards(null, includePublic, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
+    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Long parentId, @RequestParam(required = false) Boolean includePublic,
+                                               @RequestParam(required = false) State state, @RequestParam(required = false) String quarter,
+                                               @RequestParam(required = false) String searchTerm) {
+        return boardService.getBoards(parentId, includePublic, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}", method = RequestMethod.GET)
