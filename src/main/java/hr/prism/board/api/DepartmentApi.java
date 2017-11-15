@@ -116,19 +116,19 @@ public class DepartmentApi {
         departmentService.putTask(departmentId, taskId);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = RequestMethod.GET)
     public Customer getPaymentSources(@PathVariable Long departmentId) {
         return departmentService.getPaymentSources(departmentId);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.PUT)
-    public Customer putPaymentSource(@PathVariable Long departmentId, @RequestParam String source) {
-        return departmentService.putPaymentSource(departmentId, source);
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.POST)
+    public Customer addPaymentSource(@PathVariable Long departmentId, @PathVariable String source) {
+        return departmentService.addPaymentSource(departmentId, source);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.PUT)
-    public Customer putDefaultPaymentSource(@PathVariable Long departmentId, @RequestParam String defaultSource) {
-        return departmentService.putDefaultPaymentSource(departmentId, defaultSource);
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}/setDefault", method = RequestMethod.POST)
+    public Customer setPaymentSourceAsDefault(@PathVariable Long departmentId, @PathVariable String source) {
+        return departmentService.setPaymentSourceAsDefault(departmentId, source);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.DELETE)
