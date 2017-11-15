@@ -92,6 +92,24 @@ public class PaymentService {
             "Could not cancel subscriptions for customer: " + customerId);
     }
 
+    Customer reactivateSubscription(String customerId) {
+        return performStripeOperation(() -> {
+                Customer customer = Customer.retrieve(customerId);
+                CustomerSubscriptionCollection subscriptions = customer.getSubscriptions();
+                subscriptions.getData().forEach(subscription -> {
+                    String subscriptionId = subscription.getId();
+                    performStripeOperation(() ->
+                            Subscription.retrieve(subscriptionId).update(ImmutableMap.of("items", SUBSCRIPTION)),
+                        ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+                        "Could not reactivate subscription: " + subscriptionId + " for customer: " + customerId);
+                });
+
+                return Customer.retrieve(customerId);
+            },
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not reactivate subscriptions for customer: " + customerId);
+    }
+
     private <T> T performStripeOperation(StripeOperation<T> operation, ExceptionCode exceptionCode, String exceptionMessage) {
         try {
             return operation.operate();

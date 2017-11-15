@@ -142,8 +142,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.PUT)
-    public Customer restoreSubscription(@PathVariable Long departmentId) {
-        return departmentService.cancelSubscription(departmentId);
+    public Customer reactivateSubscription(@PathVariable Long departmentId) {
+        return departmentService.reactivateSubscription(departmentId);
     }
 
 }

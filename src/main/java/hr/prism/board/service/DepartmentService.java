@@ -450,7 +450,7 @@ public class DepartmentService {
     public Customer reactivateSubscription(Long departmentId) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.cancelSubscription(customerId);
+        return customerId == null ? null : paymentService.reactivateSubscription(customerId);
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
