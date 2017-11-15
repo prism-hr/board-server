@@ -3,15 +3,20 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableMap;
 import com.stripe.Stripe;
 import com.stripe.model.Customer;
+import com.stripe.model.CustomerSubscriptionCollection;
+import com.stripe.model.Subscription;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
 
 @Service
 public class PaymentService {
+
+    private static final Map<String, Object> SUBSCRIPTION = ImmutableMap.of("0", ImmutableMap.of("plan", "department"));
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
@@ -25,12 +30,16 @@ public class PaymentService {
         return performStripeOperation(() ->
                 Customer.retrieve(customerId),
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not get customer ID: " + customerId);
+            "Could not get customer: " + customerId);
     }
 
     Customer createCustomer(String source) {
-        return performStripeOperation(() ->
-                Customer.create(ImmutableMap.of("source", source)),
+        return performStripeOperation(() -> {
+                Customer customer = Customer.create(ImmutableMap.of("source", source));
+                String customerId = customer.getId();
+                Subscription.create(ImmutableMap.of("customer", customerId, "items", SUBSCRIPTION));
+                return Customer.retrieve(customerId);
+            },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
             "Could not create customer with source: " + source);
     }
@@ -42,17 +51,17 @@ public class PaymentService {
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not update customer ID: " + customerId + " with source: " + source);
+            "Could not update customer: " + customerId + " with source: " + source);
     }
 
-    Customer setDefaultSource(String customerId, String source) {
+    Customer setSourceAsDefault(String customerId, String source) {
         return performStripeOperation(() -> {
                 Customer customer = Customer.retrieve(customerId);
                 customer.setDefaultSource(source);
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not not set default source: " + source + " for customer ID: " + customerId);
+            "Could not not set default source: " + source + " for customer: " + customerId);
     }
 
     Customer deleteSource(String customerId, String source) {
@@ -62,7 +71,25 @@ public class PaymentService {
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not remove source: " + source + " from customer ID: " + customerId);
+            "Could not remove source: " + source + " from customer: " + customerId);
+    }
+
+    Customer cancelSubscription(String customerId) {
+        return performStripeOperation(() -> {
+                Customer customer = Customer.retrieve(customerId);
+                CustomerSubscriptionCollection subscriptions = customer.getSubscriptions();
+                subscriptions.getData().forEach(subscription -> {
+                    String subscriptionId = subscription.getId();
+                    performStripeOperation(() ->
+                            Subscription.retrieve(subscriptionId).cancel(ImmutableMap.of("at_period_end", true)),
+                        ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+                        "Could not cancel subscription: " + subscriptionId + " for customer: " + customerId);
+                });
+
+                return Customer.retrieve(customerId);
+            },
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not cancel subscriptions for customer: " + customerId);
     }
 
     private <T> T performStripeOperation(StripeOperation<T> operation, ExceptionCode exceptionCode, String exceptionMessage) {

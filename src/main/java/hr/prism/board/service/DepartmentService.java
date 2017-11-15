@@ -433,13 +433,19 @@ public class DepartmentService {
     public Customer setPaymentSourceAsDefault(Long departmentId, String defaultSource) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.setDefaultSource(customerId, defaultSource);
+        return customerId == null ? null : paymentService.setSourceAsDefault(customerId, defaultSource);
     }
 
     public Customer deletePaymentSource(Long departmentId, String source) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.deleteSource(customerId, source);
+    }
+
+    public Customer cancelSubscription(Long departmentId) {
+        Department department = getDepartmentForEdit(departmentId);
+        String customerId = department.getCustomerId();
+        return customerId == null ? null : paymentService.cancelSubscription(customerId);
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
