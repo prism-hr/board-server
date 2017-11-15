@@ -128,7 +128,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.PUT)
     public Customer putDefaultSource(@PathVariable Long departmentId, @PathVariable String source) {
-        return departmentService.deleteSource(departmentId, source);
+        return departmentService.putDefaultSource(departmentId, source);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.DELETE)
