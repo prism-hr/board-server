@@ -96,7 +96,7 @@ public class PaymentService {
         try {
             return operation.operate();
         } catch (Exception e) {
-            throw new BoardException(exceptionCode, exceptionMessage);
+            throw new BoardException(exceptionCode, exceptionMessage, e);
         }
     }
 

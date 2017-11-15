@@ -421,8 +421,7 @@ public class DepartmentService {
         Customer customer;
         if (customerId == null) {
             customer = paymentService.createCustomer(source);
-            customerId = paymentService.createCustomer(source).getId();
-            department.setCustomerId(customerId);
+            department.setCustomerId(customer.getId());
         } else {
             customer = paymentService.appendSource(customerId, source);
         }
