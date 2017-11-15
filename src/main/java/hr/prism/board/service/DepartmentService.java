@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import com.stripe.model.Customer;
+import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.*;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.dto.*;
@@ -451,6 +452,12 @@ public class DepartmentService {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.reactivateSubscription(customerId);
+    }
+
+    public InvoiceCollection getInvoices(Long departmentId) {
+        Department department = getDepartmentForEdit(departmentId);
+        String customerId = department.getCustomerId();
+        return customerId == null ? null : paymentService.getInvoices(customerId);
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {

@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.stripe.model.Customer;
+import com.stripe.model.InvoiceCollection;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.UserRoleDTO;
@@ -144,6 +145,11 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.PUT)
     public Customer reactivateSubscription(@PathVariable Long departmentId) {
         return departmentService.reactivateSubscription(departmentId);
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/invoices", method = RequestMethod.GET)
+    public InvoiceCollection getInvoices(@PathVariable Long departmentId) {
+        return departmentService.getInvoices(departmentId);
     }
 
 }

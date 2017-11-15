@@ -2,9 +2,7 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.stripe.Stripe;
-import com.stripe.model.Customer;
-import com.stripe.model.CustomerSubscriptionCollection;
-import com.stripe.model.Subscription;
+import com.stripe.model.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,6 +106,13 @@ public class PaymentService {
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
             "Could not reactivate subscriptions for customer: " + customerId);
+    }
+
+    InvoiceCollection getInvoices(String customerId) {
+        return performStripeOperation(() ->
+                Invoice.list(ImmutableMap.of("customer", customerId)),
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not get invoices for customer: " + customerId);
     }
 
     private <T> T performStripeOperation(StripeOperation<T> operation, ExceptionCode exceptionCode, String exceptionMessage) {
