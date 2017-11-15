@@ -123,17 +123,17 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.PUT)
     public Customer putPaymentSource(@PathVariable Long departmentId, @RequestParam String source) {
-        return departmentService.putSource(departmentId, source);
+        return departmentService.putPaymentSource(departmentId, source);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSource", method = RequestMethod.PUT)
     public Customer putDefaultPaymentSource(@PathVariable Long departmentId, @RequestParam String defaultSource) {
-        return departmentService.putDefaultSource(departmentId, defaultSource);
+        return departmentService.putDefaultPaymentSource(departmentId, defaultSource);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.DELETE)
     public Customer deletePaymentSource(@PathVariable Long departmentId, @PathVariable String source) {
-        return departmentService.deleteSource(departmentId, source);
+        return departmentService.deletePaymentSource(departmentId, source);
     }
 
 }

@@ -39,7 +39,7 @@ public class PaymentService {
         return performStripeOperation(() -> {
                 Customer customer = Customer.retrieve(customerId);
                 customer.getSources().create(ImmutableMap.of("source", source));
-                return customer;
+                return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
             "Could not update customer ID: " + customerId + " with source: " + source);
@@ -49,7 +49,7 @@ public class PaymentService {
         return performStripeOperation(() -> {
                 Customer customer = Customer.retrieve(customerId);
                 customer.setDefaultSource(source);
-                return customer;
+                return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
             "Could not not set default source: " + source + " for customer ID: " + customerId);
@@ -59,7 +59,7 @@ public class PaymentService {
         return performStripeOperation(() -> {
                 Customer customer = Customer.retrieve(customerId);
                 customer.getSources().retrieve(source).delete();
-                return customer;
+                return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
             "Could not remove source: " + source + " from customer ID: " + customerId);

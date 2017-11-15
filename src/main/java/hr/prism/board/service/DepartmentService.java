@@ -414,7 +414,7 @@ public class DepartmentService {
     }
 
     // TODO: write workflow definition to expose a discrete SUBSCRIBE action
-    public Customer putSource(Long departmentId, String source) {
+    public Customer putPaymentSource(Long departmentId, String source) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
 
@@ -430,13 +430,13 @@ public class DepartmentService {
         return customer;
     }
 
-    public Customer putDefaultSource(Long departmentId, String defaultSource) {
+    public Customer putDefaultPaymentSource(Long departmentId, String defaultSource) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.setDefaultSource(customerId, defaultSource);
     }
 
-    public Customer deleteSource(Long departmentId, String source) {
+    public Customer deletePaymentSource(Long departmentId, String source) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.deleteSource(customerId, source);
