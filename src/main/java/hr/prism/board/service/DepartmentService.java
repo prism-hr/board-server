@@ -407,7 +407,7 @@ public class DepartmentService {
     }
 
     // TODO: write workflow definition to expose a discrete SUBSCRIBE action
-    public Department createOrUpdateSubscription(Long departmentId, String source) {
+    public Department createOrUpdateCustomer(Long departmentId, String source) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
@@ -419,7 +419,7 @@ public class DepartmentService {
                 paymentService.updateCustomer(customerId, source);
             }
 
-            return null;
+            return department;
         });
 
         return department;
