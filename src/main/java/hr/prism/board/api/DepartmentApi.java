@@ -115,9 +115,9 @@ public class DepartmentApi {
         departmentService.putTask(departmentId, taskId);
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.PUT)
-    public DepartmentRepresentation putDepartmentSubscription(@PathVariable Long departmentId, @RequestParam String source) {
-        return departmentMapper.apply(departmentService.createOrUpdateSubscription(departmentId, source));
+    @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.PUT)
+    public DepartmentRepresentation putDepartmentCustomer(@PathVariable Long departmentId, @RequestParam String source) {
+        return departmentMapper.apply(departmentService.createOrUpdateCustomer(departmentId, source));
     }
 
 }
