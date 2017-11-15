@@ -89,7 +89,7 @@ public class PaymentService {
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not cancel subscriptions for customer: " + customerId);
+            "Could not cancel subscription for customer: " + customerId);
     }
 
     Customer reactivateSubscription(String customerId) {
@@ -111,7 +111,7 @@ public class PaymentService {
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not reactivate subscriptions for customer: " + customerId);
+            "Could not reactivate subscription for customer: " + customerId);
     }
 
     InvoiceCollection getInvoices(String customerId) {
