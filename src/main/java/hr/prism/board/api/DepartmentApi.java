@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.stripe.model.Customer;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.UserRoleDTO;
@@ -115,9 +116,14 @@ public class DepartmentApi {
         departmentService.putTask(departmentId, taskId);
     }
 
+    @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.GET)
+    public Customer getDepartmentCustomer(@PathVariable Long departmentId) {
+        return departmentService.getCustomer(departmentId);
+    }
+
     @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.PUT)
     public DepartmentRepresentation putDepartmentCustomer(@PathVariable Long departmentId, @RequestParam String source) {
-        return departmentMapper.apply(departmentService.createOrUpdateCustomer(departmentId, source));
+        return departmentMapper.apply(departmentService.putCustomer(departmentId, source));
     }
 
 }

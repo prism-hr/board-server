@@ -21,17 +21,25 @@ public class PaymentService {
         Stripe.apiKey = stripeApiKey;
     }
 
-    String createCustomer(String source) {
+    Customer getCustomer(String customerId) {
         try {
-            return Customer.create(ImmutableMap.of("source", source)).getId();
+            return Customer.retrieve(customerId);
+        } catch (Exception e) {
+            throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Could not get customer with id: " + customerId, e);
+        }
+    }
+
+    Customer createCustomer(String source) {
+        try {
+            return Customer.create(ImmutableMap.of("source", source));
         } catch (Exception e) {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Could not create customer with source: " + source, e);
         }
     }
 
-    void updateCustomer(String customerId, String source) {
+    Customer updateCustomer(String customerId, String source) {
         try {
-            Customer.retrieve(customerId).update(ImmutableMap.of("source", source));
+            return Customer.retrieve(customerId).update(ImmutableMap.of("source", source));
         } catch (Exception e) {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Could not update customer with id: " + customerId + " and source: " + source, e);
         }

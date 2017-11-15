@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import com.stripe.model.Customer;
 import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
@@ -42,6 +43,9 @@ public class Department extends Resource {
 
     @Column(name = "last_internal_post_timestamp")
     private LocalDateTime lastInternalPostTimestamp;
+
+    @Transient
+    private Customer customer;
 
     public String getCustomerId() {
         return customerId;

@@ -5,6 +5,7 @@ import hr.prism.board.enums.ResourceTask;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class DepartmentRepresentation extends ResourceRepresentation<DepartmentRepresentation> {
 
     private UniversityRepresentation university;
@@ -12,8 +13,6 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
     private DocumentRepresentation documentLogo;
 
     private String handle;
-
-    private String paymentCustomerId;
 
     private Long boardCount;
 
@@ -47,15 +46,6 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setHandle(String handle) {
         this.handle = handle;
-        return this;
-    }
-
-    public String getPaymentCustomerId() {
-        return paymentCustomerId;
-    }
-
-    public DepartmentRepresentation setPaymentCustomerId(String paymentCustomerId) {
-        this.paymentCustomerId = paymentCustomerId;
         return this;
     }
 

@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
+import com.stripe.model.Customer;
 import hr.prism.board.domain.*;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.dto.*;
@@ -406,14 +407,22 @@ public class DepartmentService {
         resourceTaskService.createForExistingResource(departmentId, tasks);
     }
 
+    public Customer getCustomer(Long departmentId) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
+        String customerId = department.getCustomerId();
+        return customerId == null ? null : paymentService.getCustomer(department.getCustomerId());
+    }
+
     // TODO: write workflow definition to expose a discrete SUBSCRIBE action
-    public Department createOrUpdateCustomer(Long departmentId, String source) {
+    public Department putCustomer(Long departmentId, String source) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
             String customerId = department.getCustomerId();
             if (customerId == null) {
-                customerId = paymentService.createCustomer(source);
+                customerId = paymentService.createCustomer(source).getId();
                 department.setCustomerId(customerId);
             } else {
                 paymentService.updateCustomer(customerId, source);

@@ -3,11 +3,9 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.University;
-import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.service.ActionService;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +29,6 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
     @Inject
     private ResourceService resourceService;
 
-    @Inject
-    private ActionService actionService;
-
     @Override
     public DepartmentRepresentation apply(Department department) {
         if (department == null) {
@@ -45,7 +40,6 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setUniversity(universityMapper.apply(university))
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(resourceMapper.getHandle(department, university))
-            .setPaymentCustomerId(applyCustomerId(department))
             .setBoardCount(department.getBoardCount())
             .setMemberCount(department.getMemberCount())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))
@@ -62,14 +56,6 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setUniversity(universityMapper.apply(university))
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(resourceMapper.getHandle(department, university));
-    }
-
-    private String applyCustomerId(Department department) {
-        if (actionService.canExecuteAction(department, Action.EDIT)) {
-            return department.getCustomerId();
-        }
-
-        return null;
     }
 
 }
