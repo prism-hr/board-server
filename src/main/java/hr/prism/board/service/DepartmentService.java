@@ -447,6 +447,12 @@ public class DepartmentService {
         return customerId == null ? null : paymentService.cancelSubscription(customerId);
     }
 
+    public Customer reactivateSubscription(Long departmentId) {
+        Department department = getDepartmentForEdit(departmentId);
+        String customerId = department.getCustomerId();
+        return customerId == null ? null : paymentService.cancelSubscription(customerId);
+    }
+
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
         PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
         if (!responseReadiness.isReady()) {
