@@ -57,7 +57,7 @@ public class PaymentService {
     Customer setSourceAsDefault(String customerId, String source) {
         return performStripeOperation(() -> {
                 Customer customer = Customer.retrieve(customerId);
-                customer.setDefaultSource(source);
+                customer.update(ImmutableMap.of("default_source", source));
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
