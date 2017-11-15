@@ -408,38 +408,36 @@ public class DepartmentService {
     }
 
     public Customer getCustomer(Long departmentId) {
-        User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        actionService.executeAction(user, department, Action.EDIT, () -> department);
-
+        Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.getCustomer(department.getCustomerId());
+        return customerId == null ? null : paymentService.getCustomer(customerId);
     }
 
     // TODO: write workflow definition to expose a discrete SUBSCRIBE action
-    public Customer putCustomer(Long departmentId, String source) {
-        User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        actionService.executeAction(user, department, Action.EDIT, () -> department);
+    public Customer putSource(Long departmentId, String source) {
+        Department department = getDepartmentForEdit(departmentId);
+        String customerId = department.getCustomerId();
 
         Customer customer;
-        String customerId = department.getCustomerId();
         if (customerId == null) {
             customer = paymentService.createCustomer(source);
             customerId = paymentService.createCustomer(source).getId();
             department.setCustomerId(customerId);
         } else {
-            customer = paymentService.updateCustomer(customerId, source);
+            customer = paymentService.appendSource(customerId, source);
         }
 
         return customer;
     }
 
-    public Customer deleteSource(Long departmentId, String source) {
-        User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        actionService.executeAction(user, department, Action.EDIT, () -> department);
+    public Customer putDefaultSource(Long departmentId, String source) {
+        Department department = getDepartmentForEdit(departmentId);
+        String customerId = department.getCustomerId();
+        return customerId == null ? null : paymentService.setDefaultSource(customerId, source);
+    }
 
+    public Customer deleteSource(Long departmentId, String source) {
+        Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.deleteSource(customerId, source);
     }
@@ -505,6 +503,13 @@ public class DepartmentService {
             department.getTasks().removeAll(suppressedTasks);
             return department;
         });
+    }
+
+    private Department getDepartmentForEdit(Long departmentId) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
+        return department;
     }
 
 }

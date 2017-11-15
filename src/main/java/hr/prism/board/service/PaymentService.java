@@ -25,7 +25,7 @@ public class PaymentService {
         return performStripeOperation(() ->
                 Customer.retrieve(customerId),
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not get customer with id: " + customerId);
+            "Could not get customer ID: " + customerId);
     }
 
     Customer createCustomer(String source) {
@@ -35,11 +35,24 @@ public class PaymentService {
             "Could not create customer with source: " + source);
     }
 
-    Customer updateCustomer(String customerId, String source) {
-        return performStripeOperation(() ->
-                Customer.retrieve(customerId).update(ImmutableMap.of("source", source)),
+    Customer appendSource(String customerId, String source) {
+        return performStripeOperation(() -> {
+                Customer customer = Customer.retrieve(customerId);
+                customer.getSources().create(ImmutableMap.of("source", source));
+                return customer;
+            },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not update customer with id: " + customerId + " and source: " + source);
+            "Could not update customer ID: " + customerId + " with source: " + source);
+    }
+
+    Customer setDefaultSource(String customerId, String source) {
+        return performStripeOperation(() -> {
+                Customer customer = Customer.retrieve(customerId);
+                customer.setDefaultSource(source);
+                return customer;
+            },
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not not set default source: " + source + " for customer ID: " + customerId);
     }
 
     Customer deleteSource(String customerId, String source) {
@@ -49,7 +62,7 @@ public class PaymentService {
                 return customer;
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not remove source: " + source + " from customer with id: " + customerId);
+            "Could not remove source: " + source + " from customer ID: " + customerId);
     }
 
     private <T> T performStripeOperation(StripeOperation<T> operation, ExceptionCode exceptionCode, String exceptionMessage) {

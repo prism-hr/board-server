@@ -122,8 +122,13 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/customer", method = RequestMethod.PUT)
-    public Customer putCustomer(@PathVariable Long departmentId, @RequestParam String source) {
-        return departmentService.putCustomer(departmentId, source);
+    public Customer putSource(@PathVariable Long departmentId, @RequestParam String source) {
+        return departmentService.putSource(departmentId, source);
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.PUT)
+    public Customer putDefaultSource(@PathVariable Long departmentId, @PathVariable String source) {
+        return departmentService.deleteSource(departmentId, source);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/customer/{source}", method = RequestMethod.DELETE)
