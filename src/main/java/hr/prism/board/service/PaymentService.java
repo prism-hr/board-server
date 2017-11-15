@@ -9,12 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Map;
 
 @Service
 public class PaymentService {
-
-    private static final Map<String, Object> SUBSCRIPTION = ImmutableMap.of("0", ImmutableMap.of("plan", "department"));
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
@@ -35,7 +32,12 @@ public class PaymentService {
         return performStripeOperation(() -> {
                 Customer customer = Customer.create(ImmutableMap.of("source", source));
                 String customerId = customer.getId();
-                Subscription.create(ImmutableMap.of("customer", customerId, "items", SUBSCRIPTION));
+                Subscription.create(
+                    ImmutableMap.of(
+                        "customer", customerId,
+                        "items", ImmutableMap.of(
+                            "0", ImmutableMap.of(
+                                "plan", "department"))));
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
@@ -97,7 +99,11 @@ public class PaymentService {
                 subscriptions.getData().forEach(subscription -> {
                     String subscriptionId = subscription.getId();
                     performStripeOperation(() ->
-                            Subscription.retrieve(subscriptionId).update(ImmutableMap.of("items", SUBSCRIPTION)),
+                            Subscription.retrieve(subscriptionId).update(ImmutableMap.of(
+                                "items", ImmutableMap.of(
+                                    "0", ImmutableMap.of(
+                                        "id", subscription.getSubscriptionItems().getData().get(0).getId(),
+                                        "plan", "department")))),
                         ExceptionCode.PAYMENT_INTEGRATION_ERROR,
                         "Could not reactivate subscription: " + subscriptionId + " for customer: " + customerId);
                 });
