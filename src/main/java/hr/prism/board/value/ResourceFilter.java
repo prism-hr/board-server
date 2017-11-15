@@ -28,7 +28,7 @@ public class ResourceFilter {
 
     @ResourceFilterProperty(
         parameter = "parentId",
-        statement = "resource.parent_id = :parentId")
+        statement = "owner.id = :parentId")
     private Long parentId;
 
     @ResourceFilterProperty(

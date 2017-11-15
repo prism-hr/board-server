@@ -214,19 +214,19 @@ public class ResourceApiIT extends AbstractIT {
         Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@administrator.com")).getId();
         testUserService.setAuthentication(userId);
 
-        List<BoardRepresentation> boardRs = boardApi.getBoards(false, null, null, null);
+        List<BoardRepresentation> boardRs = boardApi.getBoards(null, false, null, null, null);
         Assert.assertEquals(3, boardRs.size());
 
         List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Games", "Opportunities", "Housing");
 
-        boardRs = boardApi.getBoards(false, null, null, "student");
+        boardRs = boardApi.getBoards(null, false, null, null, "student");
         Assert.assertEquals(3, boardRs.size());
 
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Games", "Opportunities", "Housing");
 
-        boardRs = boardApi.getBoards(false, null, null, "promote work experience");
+        boardRs = boardApi.getBoards(null, false, null, null, "promote work experience");
         Assert.assertEquals(1, boardRs.size());
 
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
@@ -235,43 +235,43 @@ public class ResourceApiIT extends AbstractIT {
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@author.com")).getId();
         testUserService.setAuthentication(userId);
 
-        boardRs = boardApi.getBoards(false, null, null, null);
+        boardRs = boardApi.getBoards(null, false, null, null, null);
         Assert.assertEquals(1, boardRs.size());
 
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
 
-        boardRs = boardApi.getBoards(false, null, null, "student");
+        boardRs = boardApi.getBoards(null, false, null, null, "student");
         Assert.assertEquals(1, boardRs.size());
 
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
 
-        List<PostRepresentation> postRs = postApi.getPosts(false, null, null, null);
+        List<PostRepresentation> postRs = postApi.getPosts(null, false, null, null, null);
         Assert.assertEquals(2, postRs.size());
 
         List<String> postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer", "Java Web Developer");
 
-        postRs = postApi.getPosts(false, null, null, "optimise");
+        postRs = postApi.getPosts(null, false, null, null, "optimise");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer");
 
-        postRs = postApi.getPosts(false, State.REJECTED, null, null);
+        postRs = postApi.getPosts(null, false, State.REJECTED, null, null);
         Assert.assertEquals(0, postRs.size());
 
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@member.com")).getId();
         testUserService.setAuthentication(userId);
 
-        postRs = postApi.getPosts(false, null, null, null);
+        postRs = postApi.getPosts(null, false, null, null, null);
         Assert.assertEquals(3, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
 
-        postRs = postApi.getPosts(false, null, null, "london");
+        postRs = postApi.getPosts(null, false, null, null, "london");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
@@ -280,13 +280,13 @@ public class ResourceApiIT extends AbstractIT {
         testUserService.unauthenticate();
         Long boardId = transactionTemplate.execute(status -> boardService.getBoard("ed/cs/opportunities")).getId();
 
-        postRs = postApi.getPostsByBoard(boardId, true, null, null, null);
+        postRs = postApi.getPosts(boardId, true, null, null, null);
         Assert.assertEquals(3, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
 
-        postRs = postApi.getPostsByBoard(boardId, true, null, null, "london");
+        postRs = postApi.getPosts(boardId, true, null, null, "london");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
@@ -295,13 +295,13 @@ public class ResourceApiIT extends AbstractIT {
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("post@administrator.com")).getId();
         testUserService.setAuthentication(userId);
 
-        postRs = postApi.getPostsByBoard(boardId, false, null, null, null);
+        postRs = postApi.getPosts(boardId, false, null, null, null);
         Assert.assertEquals(7, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Support Engineer", "UX Designer", "Front-End Developer", "Technical Analyst", "Scrum Leader", "Product Manager", "Test Engineer");
 
-        postRs = postApi.getPostsByBoard(boardId, false, null, null, "madrid krakow");
+        postRs = postApi.getPosts(boardId, false, null, null, "madrid krakow");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
@@ -310,44 +310,44 @@ public class ResourceApiIT extends AbstractIT {
         userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@administrator.com")).getId();
         testUserService.setAuthentication(userId);
 
-        postRs = postApi.getPostsByBoard(boardId, false, null, null, null);
+        postRs = postApi.getPosts(boardId, false, null, null, null);
         Assert.assertEquals(9, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Support Engineer", "UX Designer", "Front-End Developer", "Database Engineer", "Java Web Developer", "Technical Analyst", "Scrum Leader",
             "Product Manager", "Test Engineer");
 
-        postRs = postApi.getPostsByBoard(boardId, false, State.ACCEPTED, null, "service");
+        postRs = postApi.getPosts(boardId, false, State.ACCEPTED, null, "service");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Java Web Developer");
 
-        postRs = postApi.getPostsByBoard(boardId, false, State.ACCEPTED, null, "madrid krakow");
+        postRs = postApi.getPosts(boardId, false, State.ACCEPTED, null, "madrid krakow");
         Assert.assertEquals(2, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Java Web Developer", "Technical Analyst");
 
         ExceptionUtils.verifyException(BoardException.class,
-            () -> postApi.getPosts(false, State.ARCHIVED, null, null), ExceptionCode.INVALID_RESOURCE_FILTER, null);
+            () -> postApi.getPosts(null, false, State.ARCHIVED, null, null), ExceptionCode.INVALID_RESOURCE_FILTER, null);
 
         List<String> archiveQuarters = resourceApi.getResourceArchiveQuarters(Scope.POST, boardId);
         verifyContains(archiveQuarters, "20164", "20171");
 
-        postRs = postApi.getPosts(false, State.ARCHIVED, "20164", null);
+        postRs = postApi.getPosts(null, false, State.ARCHIVED, "20164", null);
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Software Architect");
 
-        postRs = postApi.getPostsByBoard(boardId, false, State.ARCHIVED, "20171", "nuts");
+        postRs = postApi.getPosts(boardId, false, State.ARCHIVED, "20171", "nuts");
         Assert.assertEquals(1, postRs.size());
 
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Business Analyst");
 
-        postRs = postApi.getPostsByBoard(boardId, false, State.ARCHIVED, "20171", "guru");
+        postRs = postApi.getPosts(boardId, false, State.ARCHIVED, "20171", "guru");
         Assert.assertEquals(0, postRs.size());
     }
 

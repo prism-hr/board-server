@@ -87,7 +87,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR1 = verifyPostDepartment(universityId, departmentDTO1, "department1");
 
         Long departmentId1 = departmentR1.getId();
-        Long boardId1 = boardApi.getBoardsByDepartment(departmentId1, null, null, null, null).get(0).getId();
+        Long boardId1 = boardApi.getBoards(departmentId1, null, null, null, null).get(0).getId();
         unprivilegedUsers.put("department1", makeUnprivilegedUsers(departmentId1, boardId1, 10, 2,
             TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
@@ -96,7 +96,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR2 = verifyPostDepartment(universityId, departmentDTO2, "department2");
 
         Long departmentId2 = departmentR2.getId();
-        Long boardId2 = boardApi.getBoardsByDepartment(departmentId2, null, null, null, null).get(0).getId();
+        Long boardId2 = boardApi.getBoards(departmentId2, null, null, null, null).get(0).getId();
         unprivilegedUsers.put("department2", makeUnprivilegedUsers(departmentId2, boardId2, 20, 2,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
@@ -107,7 +107,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR3 = verifyPostDepartment(universityId, departmentDTO3, "department3");
 
         Long departmentId3 = departmentR3.getId();
-        Long boardId3 = boardApi.getBoardsByDepartment(departmentId3, null, null, null, null).get(0).getId();
+        Long boardId3 = boardApi.getBoards(departmentId3, null, null, null, null).get(0).getId();
         unprivilegedUsers.put("department3", makeUnprivilegedUsers(departmentId3, boardId3, 30, 2,
             TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
@@ -116,7 +116,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR4 = verifyPostDepartment(universityId, departmentDTO4, "department4");
 
         Long departmentId4 = departmentR4.getId();
-        Long boardId4 = boardApi.getBoardsByDepartment(departmentId4, null, null, null, null).get(0).getId();
+        Long boardId4 = boardApi.getBoards(departmentId4, null, null, null, null).get(0).getId();
         unprivilegedUsers.put("department4", makeUnprivilegedUsers(departmentId4, boardId4, 40, 2,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
@@ -205,7 +205,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
-        Long boardId = boardApi.getBoardsByDepartment(departmentId, null, null, null, null).get(0).getId();
+        Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
 
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
