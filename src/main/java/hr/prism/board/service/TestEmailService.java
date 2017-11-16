@@ -26,8 +26,8 @@ public class TestEmailService {
         return testEmailRepository.findAllMessages();
     }
 
-    public List<TestEmailMessageRepresentation> findByUserId(Long userId) {
-        return testEmailRepository.findMessagesByUserId(userId);
+    public List<TestEmailMessageRepresentation> findByUserEmail(String email) {
+        return testEmailRepository.findMessagesByUserEmail(email);
     }
 
     public void createTestEmail(User user, String subject, String content, List<String> attachments) {

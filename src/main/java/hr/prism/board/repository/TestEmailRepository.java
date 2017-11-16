@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.TestEmail;
 import hr.prism.board.representation.TestEmailMessageRepresentation;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -18,8 +19,9 @@ public interface TestEmailRepository extends MyRepository<TestEmail, Long> {
     @Query(value =
         "select testEmail.message " +
             "from TestEmail testEmail " +
-            "where testEmail.user.id = :userId " +
+            "inner join testEmail.user user " +
+            "where user.email = :email " +
             "order by testEmail.id desc")
-    List<TestEmailMessageRepresentation> findMessagesByUserId(Long userId);
+    List<TestEmailMessageRepresentation> findMessagesByUserEmail(@Param("email") String email);
 
 }
