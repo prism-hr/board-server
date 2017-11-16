@@ -12,14 +12,14 @@ public interface TestEmailRepository extends MyRepository<TestEmail, Long> {
     @Query(value =
         "select testEmail.message " +
             "from TestEmail testEmail " +
-            "order by testEmail.id")
+            "order by testEmail.id desc")
     List<TestEmailMessageRepresentation> findAllMessages();
 
     @Query(value =
         "select testEmail.message " +
             "from TestEmail testEmail " +
             "where testEmail.user.id = :userId " +
-            "order by testEmail.id")
+            "order by testEmail.id desc")
     List<TestEmailMessageRepresentation> findMessagesByUserId(Long userId);
 
 }
