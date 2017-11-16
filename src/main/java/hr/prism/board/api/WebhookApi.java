@@ -47,7 +47,7 @@ public class WebhookApi {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Event of type: " + eventType + " not expected");
         }
 
-        LOGGER.info("Received event of type: " + event.getType() + " for customer: " + customerId);
+        LOGGER.info("Received event of type: " + eventType + " for customer: " + customerId);
     }
 
 }
