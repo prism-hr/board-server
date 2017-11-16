@@ -1,4 +1,4 @@
-package hr.prism.board.domain;
+package hr.prism.board.domain.converter;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

@@ -3,7 +3,6 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-import com.sendgrid.Attachments;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.definition.LocationDefinition;
@@ -13,6 +12,7 @@ import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.exception.*;
+import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
@@ -80,11 +80,11 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private PostRepository postRepository;
 
-    private static List<Attachments> makeTestAttachments(String name) throws IOException {
+    private static List<BoardAttachments> makeTestAttachments(String name) throws IOException {
         URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
         URLConnection connection = url.openConnection();
         try (InputStream inputStream = connection.getInputStream()) {
-            Attachments attachments = new Attachments();
+            BoardAttachments attachments = new BoardAttachments();
             attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
             attachments.setType(connection.getContentType());
             attachments.setFilename(name);

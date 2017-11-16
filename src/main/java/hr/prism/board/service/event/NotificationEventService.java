@@ -1,7 +1,6 @@
 package hr.prism.board.service.event;
 
 import com.google.common.collect.HashMultimap;
-import com.sendgrid.Attachments;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -11,6 +10,7 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardNotificationException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.ResourceEventService;
 import hr.prism.board.service.ResourceService;
@@ -120,7 +120,7 @@ public class NotificationEventService {
         }
     }
 
-    private List<Attachments> mapAttachments(List<Notification.Attachment> attachments) {
+    private List<BoardAttachments> mapAttachments(List<Notification.Attachment> attachments) {
         if (attachments.isEmpty()) {
             return Collections.emptyList();
         }
@@ -128,17 +128,19 @@ public class NotificationEventService {
         return attachments.stream().map(this::mapAttachment).collect(Collectors.toList());
     }
 
-    private Attachments mapAttachment(Notification.Attachment attachment) {
+    private BoardAttachments mapAttachment(Notification.Attachment attachment) {
         try {
-            URL url = new URL(attachment.getUrl());
+            String urlPath = attachment.getUrl();
+            URL url = new URL(urlPath);
             URLConnection connection = url.openConnection();
             try (InputStream inputStream = connection.getInputStream()) {
-                Attachments attachments = new Attachments();
+                BoardAttachments attachments = new BoardAttachments();
                 attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
                 attachments.setType(connection.getContentType());
                 attachments.setFilename(attachment.getName());
                 attachments.setDisposition("attachment");
                 attachments.setContentId(attachment.getLabel());
+                attachment.setUrl(urlPath);
                 return attachments;
             } catch (IOException e) {
                 throw new BoardException(ExceptionCode.CONNECTION_ERROR, "Could not retrieve attachment data");

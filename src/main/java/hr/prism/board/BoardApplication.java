@@ -71,6 +71,8 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
+    public static final ObjectMapper OBJECT_MAPPER = makeObjectMapper();
+
     @Value("${database.host}")
     private String databaseHost;
 
@@ -196,13 +198,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
 
     @Bean
     public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new Jdk8Module());
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        objectMapper.enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN);
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return objectMapper;
+        return OBJECT_MAPPER;
     }
 
     @Bean
@@ -236,6 +232,16 @@ public class BoardApplication extends WebMvcConfigurerAdapter implements AsyncCo
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         taskRegistrar.setScheduler(taskExecutor());
+    }
+
+    private static ObjectMapper makeObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new Jdk8Module());
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN);
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return objectMapper;
     }
 
     @Override

@@ -7,6 +7,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.notification.property.NotificationProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -49,6 +50,9 @@ public class NotificationService {
     private String senderEmail;
 
     @Inject
+    private TestEmailService testEmailService;
+
+    @Inject
     private SendGrid sendGrid;
 
     @Inject
@@ -86,7 +90,8 @@ public class NotificationService {
     }
 
     public Map<String, String> sendNotification(NotificationRequest request) {
-        String recipientEmail = request.getRecipient().getEmail();
+        User recipient = request.getRecipient();
+        String recipientEmail = recipient.getEmail();
         Notification notification = request.getNotification();
 
         Map<String, String> properties = this.properties.get(notification).entrySet().stream()
@@ -98,29 +103,36 @@ public class NotificationService {
 
         if (BooleanUtils.isTrue(mailOn)) {
             // Production/UAT contexts
-            Mail mail = new Mail();
-            mail.setFrom(new Email(senderEmail, "PRiSM Board"));
+            if (recipientEmail.endsWith("@test.prism.hr")) {
+                // Front end integration tests
+                testEmailService.createTestEmail(recipient, subject, content,
+                    request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()));
+            } else {
+                // Real emails
+                Mail mail = new Mail();
+                mail.setFrom(new Email(senderEmail, "PRiSM Board"));
 
-            Personalization personalization = new Personalization();
-            personalization.addTo(new Email(recipientEmail));
-            mail.addPersonalization(personalization);
+                Personalization personalization = new Personalization();
+                personalization.addTo(new Email(recipientEmail));
+                mail.addPersonalization(personalization);
 
-            mail.setSubject(subject);
-            mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
-            mail.addContent(new Content("text/html", content));
-            request.getAttachments().forEach(mail::addAttachments);
+                mail.setSubject(subject);
+                mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
+                mail.addContent(new Content("text/html", content));
+                request.getAttachments().forEach(mail::addAttachments);
 
-            try {
-                Request sendGridRequest = new Request();
-                sendGridRequest.setMethod(Method.POST);
-                sendGridRequest.setEndpoint("mail/send");
-                sendGridRequest.setBody(mail.build());
-                sendGrid.api(sendGridRequest);
+                try {
+                    Request sendGridRequest = new Request();
+                    sendGridRequest.setMethod(Method.POST);
+                    sendGridRequest.setEndpoint("mail/send");
+                    sendGridRequest.setBody(mail.build());
+                    sendGrid.api(sendGridRequest);
 
-                LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
-            } catch (IOException e) {
-                LOGGER.error("Failed to send notification", e);
-                throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
+                    LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
+                } catch (IOException e) {
+                    LOGGER.error("Failed to send notification", e);
+                    throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
+                }
             }
         } else {
             // Local/Test contexts
@@ -181,9 +193,9 @@ public class NotificationService {
 
         private Action action;
 
-        private List<Attachments> attachments = new ArrayList<>();
+        private List<BoardAttachments> attachments = new ArrayList<>();
 
-        public NotificationRequest(Notification notification, User recipient, String invitation, Resource resource, Action action, List<Attachments> attachments) {
+        public NotificationRequest(Notification notification, User recipient, String invitation, Resource resource, Action action, List<BoardAttachments> attachments) {
             this.notification = notification;
             this.recipient = recipient;
             this.invitation = invitation;
@@ -212,7 +224,7 @@ public class NotificationService {
             return action;
         }
 
-        List<Attachments> getAttachments() {
+        List<BoardAttachments> getAttachments() {
             return attachments;
         }
 
