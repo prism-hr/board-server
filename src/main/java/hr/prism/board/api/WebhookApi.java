@@ -22,26 +22,20 @@ public class WebhookApi {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebhookApi.class);
 
-    private static final String CHARGE_FAILED = "charge.failed";
-
-    private static final String CUSTOMER_SUBSCRIPTION_DELETED = "customer.subscription.deleted";
-
-    private static final String APPLICATION_JSON = "application/json";
-
     @Value("${stripe.api.event.secret}")
     private String stripeApiEventSecret;
 
     // TODO: change the state of the department accordingly
-    @RequestMapping(value = "/api/webhooks/stripe", method = RequestMethod.POST, consumes = APPLICATION_JSON, produces = APPLICATION_JSON)
+    @RequestMapping(value = "/api/webhooks/stripe", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public void postStripeEvent(HttpServletRequest request, @RequestBody String payload) throws SignatureVerificationException {
         String stripeHeader = request.getHeader("Stripe-Signature");
         Event event = Webhook.constructEvent(payload, stripeHeader, stripeApiEventSecret);
 
         String customerId;
         String eventType = event.getType();
-        if (CHARGE_FAILED.equals(eventType)) {
+        if ("charge.failed".equals(eventType)) {
             customerId = ((Customer) event.getData().getObject()).getId();
-        } else if (CUSTOMER_SUBSCRIPTION_DELETED.equals(eventType)) {
+        } else if ("customer.subscription.deleted".equals(eventType)) {
             customerId = ((Charge) event.getData().getObject()).getCustomer();
         } else {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Event of type: " + eventType + " not expected");
