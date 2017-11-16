@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import com.sendgrid.Attachments;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Notification;
+import hr.prism.board.notification.BoardAttachments;
 import org.junit.Assert;
 import org.springframework.stereotype.Service;
 
@@ -43,8 +44,8 @@ public class TestNotificationService extends NotificationService {
             // Any remaining parameters not defined in the expectations should have null values
             actualParameters.keySet().forEach(actualParameterKey -> Assert.assertNull(actualParameters.get(actualParameterKey)));
 
-            List<Attachments> expectedAttachments = expectedNotificationInstance.getAttachments();
-            List<Attachments> actualAttachments = actualNotificationInstance.getAttachments();
+            List<BoardAttachments> expectedAttachments = expectedNotificationInstance.getAttachments();
+            List<BoardAttachments> actualAttachments = actualNotificationInstance.getAttachments();
 
             int expectedAttachmentsSize = expectedAttachments.size();
             Assert.assertEquals(expectedAttachmentsSize, actualAttachments.size());
@@ -79,7 +80,7 @@ public class TestNotificationService extends NotificationService {
 
         private Map<String, String> properties;
 
-        private List<Attachments> attachments = new ArrayList<>();
+        private List<BoardAttachments> attachments = new ArrayList<>();
 
         public NotificationInstance(Notification notification, User recipient, Map<String, String> properties) {
             this.notification = notification;
@@ -87,7 +88,7 @@ public class TestNotificationService extends NotificationService {
             this.properties = properties;
         }
 
-        public NotificationInstance(Notification notification, User recipient, Map<String, String> properties, List<Attachments> attachments) {
+        public NotificationInstance(Notification notification, User recipient, Map<String, String> properties, List<BoardAttachments> attachments) {
             this.notification = notification;
             this.recipient = recipient;
             this.properties = properties;
@@ -106,7 +107,7 @@ public class TestNotificationService extends NotificationService {
             return properties;
         }
 
-        List<Attachments> getAttachments() {
+        List<BoardAttachments> getAttachments() {
             return attachments;
         }
 

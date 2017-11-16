@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.domain.converter.BigDecimalConverter;
 import org.junit.Assert;
 import org.junit.Test;
 
