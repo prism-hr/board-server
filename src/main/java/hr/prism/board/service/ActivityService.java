@@ -132,7 +132,7 @@ public class ActivityService {
         if (activityEvent == null) {
             activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
             Long userId = user.getId();
-            userActivityService.processRequests(userId, getActivities(userId));
+            userActivityService.sendActivities(userId, getActivities(userId));
         }
     }
 

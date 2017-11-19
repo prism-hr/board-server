@@ -1,19 +1,21 @@
 package hr.prism.board.authentication;
 
-import hr.prism.board.service.AuthenticationService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
+import hr.prism.board.service.AuthenticationService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
@@ -40,9 +42,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
             } catch (ExpiredJwtException e) {
-                LOGGER.warn("Jwt token is already expired");
+                LOGGER.warn("JWT token has expired");
             } catch (MalformedJwtException e) {
-                LOGGER.error("Malformed Jwt token for: " + request.getRequestURI(), e);
+                LOGGER.error("JWT token is malformed: " + request.getRequestURI(), e);
             }
         }
 

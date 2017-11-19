@@ -13,28 +13,28 @@ import java.util.Set;
 
 @Service
 public class UserActivityService {
-    
+
     private volatile HashMultimap<Long, DeferredResult<List<ActivityRepresentation>>> requests = HashMultimap.create();
-    
+
     public synchronized List<Long> getUserIds() {
         return ImmutableList.copyOf(requests.keySet());
     }
-    
+
     public synchronized void storeRequest(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
         requests.put(userId, request);
     }
 
-    public Set<DeferredResult<List<ActivityRepresentation>>> processRequests(Long userId, List<ActivityRepresentation> result) {
+    public Set<DeferredResult<List<ActivityRepresentation>>> sendActivities(Long userId, List<ActivityRepresentation> activities) {
         Set<DeferredResult<List<ActivityRepresentation>>> userRequests = getUserRequests(userId);
-        userRequests.forEach(userRequest -> userRequest.setResult(result));
+        userRequests.forEach(userRequest -> userRequest.setResult(activities));
         return userRequests;
     }
-    
+
     public synchronized void processRequestTimeout(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
         requests.remove(userId, request);
         request.setErrorResult(new BoardNotModifiedException(ExceptionCode.USER_ACTIVITY_NOT_MODIFIED, "No new activities for user: " + userId));
     }
-    
+
     private synchronized Set<DeferredResult<List<ActivityRepresentation>>> getUserRequests(Long userId) {
         return requests.removeAll(userId);
     }

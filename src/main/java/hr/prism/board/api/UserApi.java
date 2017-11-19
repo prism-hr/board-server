@@ -50,7 +50,7 @@ public class UserApi {
     private Long deferredRequestTimeoutMillis;
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
-    public UserRepresentation getCurrentUser() {
+    public UserRepresentation getUser() {
         return userMapper.apply(userService.getUserForRepresentation());
     }
 

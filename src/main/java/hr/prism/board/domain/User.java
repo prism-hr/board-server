@@ -1,16 +1,33 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.enums.*;
-import hr.prism.board.util.BoardUtils;
+
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.validator.constraints.Email;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import hr.prism.board.enums.AgeRange;
+import hr.prism.board.enums.DocumentRequestState;
+import hr.prism.board.enums.Gender;
+import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.enums.PasswordHash;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.util.BoardUtils;
 
 @Entity
 @Table(name = "user")

@@ -54,8 +54,8 @@ public class TestUserActivityService extends UserActivityService {
     }
 
     @Override
-    public Set<DeferredResult<List<ActivityRepresentation>>> processRequests(Long userId, List<ActivityRepresentation> result) {
-        Set<DeferredResult<List<ActivityRepresentation>>> userRequests = super.processRequests(userId, result);
+    public Set<DeferredResult<List<ActivityRepresentation>>> sendActivities(Long userId, List<ActivityRepresentation> activities) {
+        Set<DeferredResult<List<ActivityRepresentation>>> userRequests = super.sendActivities(userId, activities);
         if (recording) {
             sentRequests.putAll(userId, userRequests);
         }

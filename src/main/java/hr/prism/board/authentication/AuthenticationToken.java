@@ -14,7 +14,7 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public Long getUserId() {
-        return userId;
+        return this.userId;
     }
 
     @Override

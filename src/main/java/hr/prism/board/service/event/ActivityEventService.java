@@ -51,6 +51,9 @@ public class ActivityEventService {
     private UserRoleCacheService userRoleCacheService;
 
     @Inject
+    private WebSocketService webSocketService;
+
+    @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
     public void publishEvent(Object source, Long resourceId, List<hr.prism.board.workflow.Activity> activities) {
@@ -143,10 +146,17 @@ public class ActivityEventService {
             });
         }
 
-        List<Long> userIds = userActivityService.getUserIds();
-        if (!userIds.isEmpty()) {
-            for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
-                userActivityService.processRequests(userId, activityService.getActivities(userId));
+        List<Long> webSocketUserIds = webSocketService.getUserIds();
+        if (!webSocketUserIds.isEmpty()) {
+            for (Long userId : userService.findByResourceAndUserIds(resource, webSocketUserIds)) {
+                webSocketService.sendActivities(userId, activityService.getActivities(userId));
+            }
+        }
+
+        List<Long> longPollingUserIds = userActivityService.getUserIds();
+        if (!longPollingUserIds.isEmpty()) {
+            for (Long userId : userService.findByResourceAndUserIds(resource, longPollingUserIds)) {
+                userActivityService.sendActivities(userId, activityService.getActivities(userId));
             }
         }
     }
