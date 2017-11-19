@@ -30,5 +30,5 @@ public class AuthenticationChannelAdapter extends ChannelInterceptorAdapter {
 
         return message;
     }
-    
+
 }
