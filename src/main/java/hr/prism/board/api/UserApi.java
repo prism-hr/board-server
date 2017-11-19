@@ -1,5 +1,20 @@
 package hr.prism.board.api;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
+
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
@@ -11,13 +26,6 @@ import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.UserActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import java.util.List;
 
 @RestController
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
@@ -57,49 +65,54 @@ public class UserApi {
         userService.resetPassword(userPasswordDTO);
     }
 
-    @RequestMapping(value = "api/user/suppressions", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/user/suppressions", method = RequestMethod.GET)
     public List<UserNotificationSuppressionRepresentation> getSuppressions() {
         return userNotificationSuppressionService.getSuppressions();
     }
 
-    @RequestMapping(value = "api/user/suppressions/{resourceId}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/user/suppressions/{resourceId}", method = RequestMethod.POST)
     public UserNotificationSuppressionRepresentation postSuppression(@PathVariable Long resourceId, @RequestParam(required = false) String uuid) {
         return userNotificationSuppressionService.postSuppression(uuid, resourceId);
     }
 
-    @RequestMapping(value = "api/user/suppressions", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/user/suppressions", method = RequestMethod.POST)
     public List<UserNotificationSuppressionRepresentation> postSuppressions() {
         return userNotificationSuppressionService.postSuppressions();
     }
 
-    @RequestMapping(value = "api/user/suppressions/{resourceId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/api/user/suppressions/{resourceId}", method = RequestMethod.DELETE)
     public void deleteSuppression(@PathVariable Long resourceId) {
         userNotificationSuppressionService.deleteSuppression(resourceId);
     }
 
-    @RequestMapping(value = "api/user/suppressions", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/api/user/suppressions", method = RequestMethod.DELETE)
     public void deleteSuppressions() {
         userNotificationSuppressionService.deleteSuppressions();
     }
 
-    @RequestMapping(value = "api/user/activities", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/user/activities", method = RequestMethod.GET)
     public List<ActivityRepresentation> getActivities() {
         return activityService.getActivities(userService.getCurrentUserSecured().getId());
     }
 
-    @RequestMapping(value = "api/user/activities/refresh", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/user/activities/refresh", method = RequestMethod.GET)
     public DeferredResult<List<ActivityRepresentation>> refreshActivities() {
         return refreshActivities(userService.getCurrentUserSecured().getId());
     }
 
-    @RequestMapping(value = "api/user/activities/{activityId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.GET)
     public void viewActivity(@PathVariable Long activityId) {
         activityService.viewActivity(activityId);
     }
 
-    @RequestMapping(value = "api/user/activities/{activityId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.DELETE)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);
+    }
+
+    @SubscribeMapping(value = "/api/ws/user/activities")
+    public void subscribeToActivities() {
+
     }
 
     public DeferredResult<List<ActivityRepresentation>> refreshActivities(Long userId) {

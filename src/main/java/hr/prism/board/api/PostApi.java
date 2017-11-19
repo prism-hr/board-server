@@ -84,27 +84,27 @@ public class PostApi {
         return postService.findOrganizationsBySimilarName(query);
     }
 
-    @RequestMapping(value = "api/posts/referrals/{referral}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/posts/referrals/{referral}", method = RequestMethod.GET)
     public void getPostReferral(@PathVariable String referral, HttpServletResponse response) throws IOException {
         response.sendRedirect(postService.getPostReferral(referral));
     }
 
-    @RequestMapping(value = "api/posts/{postId}/respond", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/posts/{postId}/respond", method = RequestMethod.POST)
     public ResourceEventRepresentation postPostResponse(@PathVariable Long postId, @RequestBody @Valid ResourceEventDTO resourceEvent) {
         return resourceEventMapper.apply(postService.createPostResponse(postId, resourceEvent));
     }
 
-    @RequestMapping(value = "api/posts/{postId}/responses", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/posts/{postId}/responses", method = RequestMethod.GET)
     public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId, @RequestParam(required = false) String searchTerm) {
         return postService.getPostResponses(postId, searchTerm).stream().map(resourceEventMapper).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "api/posts/{postId}/responses/{responseId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/posts/{postId}/responses/{responseId}", method = RequestMethod.GET)
     public ResourceEventRepresentation getPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
         return resourceEventMapper.apply(postService.getPostResponse(postId, responseId));
     }
 
-    @RequestMapping(value = "api/posts/{postId}/responses/{responseId}/view", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/posts/{postId}/responses/{responseId}/view", method = RequestMethod.PUT)
     public ResourceEventRepresentation putPostResponseView(@PathVariable Long postId, @PathVariable Long responseId) {
         return resourceEventMapper.apply(postService.putPostResponseView(postId, responseId));
     }
