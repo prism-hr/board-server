@@ -1,26 +1,44 @@
-package hr.prism.board.util;
+package hr.prism.board.utils;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.dto.ResourcePatchDTO;
+
 import opennlp.tools.tokenize.SimpleTokenizer;
+
 import org.apache.commons.codec.language.Soundex;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.servlet.http.HttpServletRequest;
+
+import hr.prism.board.authentication.AuthenticationToken;
+import hr.prism.board.dto.ResourcePatchDTO;
+import hr.prism.board.service.AuthenticationService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+
 public class BoardUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BoardUtils.class);
 
     private static RandomStringGenerator RANDOM_STRING_GENERATOR =
         new RandomStringGenerator.Builder()
             .withinRange('0', 'z')
-            .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122).contains(codePoint))
+            .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122)
+                .contains(codePoint))
             .build();
 
     private static SimpleTokenizer TOKENIZER = SimpleTokenizer.INSTANCE;
@@ -115,6 +133,22 @@ public class BoardUtils {
                 }
             })
             .collect(Collectors.joining(" "));
+    }
+
+    public static AuthenticationToken makeAuthenticationToken(AuthenticationService authenticationService, String authorization) {
+        if (authorization != null) {
+            String accessToken = authorization.replaceFirst("Bearer ", "");
+            try {
+                Claims token = authenticationService.decodeAccessToken(accessToken, authenticationService.getJwsSecret());
+                return new AuthenticationToken(Long.parseLong(token.getSubject()));
+            } catch (ExpiredJwtException e) {
+                LOGGER.warn("JWT token has expired");
+            } catch (MalformedJwtException e) {
+                LOGGER.error("JWT token is malformed", e);
+            }
+        }
+
+        return null;
     }
 
 }

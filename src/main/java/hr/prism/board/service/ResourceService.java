@@ -14,7 +14,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.*;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceSummary;
 import org.apache.commons.collections.CollectionUtils;

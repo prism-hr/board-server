@@ -9,7 +9,7 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

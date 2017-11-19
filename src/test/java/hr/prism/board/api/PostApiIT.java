@@ -17,7 +17,7 @@ import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;

@@ -15,7 +15,7 @@ import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;

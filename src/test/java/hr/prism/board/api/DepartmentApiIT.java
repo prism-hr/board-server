@@ -17,7 +17,7 @@ import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
 import org.hamcrest.Matchers;

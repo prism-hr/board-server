@@ -27,7 +27,7 @@ import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.PasswordHash;
 import hr.prism.board.enums.Scope;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 
 @Entity
 @Table(name = "user")

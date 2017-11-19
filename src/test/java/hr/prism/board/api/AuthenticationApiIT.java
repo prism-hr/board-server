@@ -17,7 +17,7 @@ import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import io.jsonwebtoken.Jwts;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Assert;
