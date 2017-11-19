@@ -1,14 +1,16 @@
 package hr.prism.board.domain.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import hr.prism.board.BoardApplication;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.representation.TestEmailMessageRepresentation;
+
+import java.io.IOException;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
-import java.io.IOException;
+
+import hr.prism.board.configuration.WebMvcConfiguration;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.representation.TestEmailMessageRepresentation;
 
 @SuppressWarnings("unused")
 @Converter(autoApply = true)
@@ -17,7 +19,7 @@ public class TestEmailMessageConverter implements AttributeConverter<TestEmailMe
     @Override
     public String convertToDatabaseColumn(TestEmailMessageRepresentation attribute) {
         try {
-            return attribute == null ? null : BoardApplication.OBJECT_MAPPER.writeValueAsString(attribute);
+            return attribute == null ? null : WebMvcConfiguration.OBJECT_MAPPER.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
             throw new BoardException(ExceptionCode.PROBLEM, "Could not serialize test email", e);
         }
@@ -26,7 +28,7 @@ public class TestEmailMessageConverter implements AttributeConverter<TestEmailMe
     @Override
     public TestEmailMessageRepresentation convertToEntityAttribute(String dbData) {
         try {
-            return dbData == null ? null : BoardApplication.OBJECT_MAPPER.readValue(dbData, TestEmailMessageRepresentation.class);
+            return dbData == null ? null : WebMvcConfiguration.OBJECT_MAPPER.readValue(dbData, TestEmailMessageRepresentation.class);
         } catch (IOException e) {
             throw new BoardException(ExceptionCode.PROBLEM, "Could not deserialize test email", e);
         }

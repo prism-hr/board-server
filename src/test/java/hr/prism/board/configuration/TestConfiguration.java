@@ -1,4 +1,9 @@
-package hr.prism.board;
+package hr.prism.board.configuration;
+
+import org.mockito.Mockito;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
@@ -7,16 +12,14 @@ import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
-import hr.prism.board.service.event.*;
-import org.mockito.Mockito;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
+import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.service.event.TestActivityEventService;
+import hr.prism.board.service.event.TestNotificationEventService;
+import hr.prism.board.service.event.TestUserRoleEventService;
+import hr.prism.board.service.event.UserRoleEventService;
 
 @Configuration
-@Import(BoardApplication.class)
-public class TestBoardApplication {
+public class TestConfiguration {
 
     @Bean
     @Primary

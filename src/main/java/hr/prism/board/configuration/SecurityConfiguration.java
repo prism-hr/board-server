@@ -1,4 +1,4 @@
-package hr.prism.board;
+package hr.prism.board.configuration;
 
 import hr.prism.board.authentication.AuthenticationFilter;
 import hr.prism.board.service.AuthenticationService;
@@ -12,7 +12,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import javax.inject.Inject;
 
 @Configuration
-public class BoardSecurity extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Inject
     private AuthenticationService authenticationService;
