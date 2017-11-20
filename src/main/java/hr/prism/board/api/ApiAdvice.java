@@ -55,8 +55,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
             }
         }
 
-        User user = userService.getCurrentUser();
-        String userPrefix = user == null ? "Anonymous" : user.toString();
+        String userPrefix = getCurrentUsername();
         if (responseStatus == HttpStatus.INTERNAL_SERVER_ERROR) {
             LOGGER.error(userPrefix + ": " + responseStatus + " - " + exception.getMessage(), exception);
         } else {
@@ -83,6 +82,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        LOGGER.error(getCurrentUsername() +  ": 422 - " + ((ServletWebRequest) request).getRequest().getServletPath(), ex);
         List<String> errors = new ArrayList<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.add(error.getField() + ": " + error.getDefaultMessage());
@@ -98,6 +98,11 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         return super.handleExceptionInternal(ex, ex.getMessage(), headers, status, request);
+    }
+
+    private String getCurrentUsername() {
+        User user = userService.getCurrentUser();
+        return user == null ? "Anonymous" : user.toString();
     }
 
 }

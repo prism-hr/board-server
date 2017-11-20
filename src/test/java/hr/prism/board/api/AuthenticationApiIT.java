@@ -382,7 +382,7 @@ public class AuthenticationApiIT extends AbstractIT {
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> authenticationApi.register(
                 new RegisterDTO().setUuid(department1memberRole1Uuid).setGivenName("member1").setSurname("member1").setEmail("member1@member1.com").setPassword("password1"), TestHelper.mockDevice()),
-            ExceptionCode.DUPLICATE_AUTHENTICATION, status));
+            ExceptionCode.DUPLICATE_REGISTRATION, status));
 
         Long userId2 = testUserService.authenticate().getId();
         DepartmentRepresentation departmentR2 = transactionTemplate.execute(status ->

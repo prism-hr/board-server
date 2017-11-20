@@ -1,7 +1,10 @@
 package hr.prism.board;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.filter.ThresholdFilter;
 import com.tapstream.rollbar.RollbarAppender;
-
+import hr.prism.board.repository.MyRepositoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -12,11 +15,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import java.io.InputStream;
 import java.util.Properties;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.filter.ThresholdFilter;
-import hr.prism.board.repository.MyRepositoryImpl;
 
 @Configuration
 @SpringBootApplication
