@@ -58,6 +58,13 @@ public class NotificationService {
     @Inject
     private ApplicationContext applicationContext;
 
+    private static String toString(org.springframework.core.io.Resource resource) throws IOException {
+        try (InputStream inputStream = resource.getInputStream()) {
+            String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
+            return template.trim();
+        }
+    }
+
     @PostConstruct
     public void postConstruct() throws IOException {
         Map<String, NotificationProperty> propertiesMap =
@@ -101,38 +108,35 @@ public class NotificationService {
         String subject = parser.replace(this.subjects.get(notification));
         String content = parser.replace(this.contents.get(notification));
 
-        if (BooleanUtils.isTrue(mailOn)) {
-            // Production/UAT contexts
-            if (recipientEmail.endsWith("@test.prism.hr")) {
-                // Front end integration tests
-                testEmailService.createTestEmail(recipient, subject, content,
-                    request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()));
-            } else {
-                // Real emails
-                Mail mail = new Mail();
-                mail.setFrom(new Email(senderEmail, "PRiSM Board"));
+        if (recipientEmail.endsWith("@test.prism.hr")) {
+            // Front end integration tests
+            testEmailService.createTestEmail(recipient, subject, makePlainTextVersion(content),
+                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()));
+        } else if (BooleanUtils.isTrue(mailOn)) {
+            // Real emails
+            Mail mail = new Mail();
+            mail.setFrom(new Email(senderEmail, "PRiSM Board"));
 
-                Personalization personalization = new Personalization();
-                personalization.addTo(new Email(recipientEmail));
-                mail.addPersonalization(personalization);
+            Personalization personalization = new Personalization();
+            personalization.addTo(new Email(recipientEmail));
+            mail.addPersonalization(personalization);
 
-                mail.setSubject(subject);
-                mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
-                mail.addContent(new Content("text/html", content));
-                request.getAttachments().forEach(mail::addAttachments);
+            mail.setSubject(subject);
+            mail.addContent(new Content("text/plain", makePlainTextVersion(content)));
+            mail.addContent(new Content("text/html", content));
+            request.getAttachments().forEach(mail::addAttachments);
 
-                try {
-                    Request sendGridRequest = new Request();
-                    sendGridRequest.setMethod(Method.POST);
-                    sendGridRequest.setEndpoint("mail/send");
-                    sendGridRequest.setBody(mail.build());
-                    sendGrid.api(sendGridRequest);
+            try {
+                Request sendGridRequest = new Request();
+                sendGridRequest.setMethod(Method.POST);
+                sendGridRequest.setEndpoint("mail/send");
+                sendGridRequest.setBody(mail.build());
+                sendGrid.api(sendGridRequest);
 
-                    LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
-                } catch (IOException e) {
-                    LOGGER.error("Failed to send notification", e);
-                    throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
-                }
+                LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
+            } catch (IOException e) {
+                LOGGER.error("Failed to send notification", e);
+                throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
             }
         } else {
             // Local/Test contexts
@@ -172,13 +176,6 @@ public class NotificationService {
         }
 
         return plainText.replaceAll("\\n$", StringUtils.EMPTY);
-    }
-
-    private static String toString(org.springframework.core.io.Resource resource) throws IOException {
-        try (InputStream inputStream = resource.getInputStream()) {
-            String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
-            return template.trim();
-        }
     }
 
     public static class NotificationRequest {
