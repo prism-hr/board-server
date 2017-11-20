@@ -21,6 +21,15 @@ public class AuthenticationChannelAdapter extends ChannelInterceptorAdapter {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
+        return authenticate(message);
+    }
+
+    @Override
+    public Message<?> postReceive(Message<?> message, MessageChannel channel) {
+        return authenticate(message);
+    }
+
+    private Message<?> authenticate(Message<?> message) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authorization = (String) accessor.getHeader("Authorization");
