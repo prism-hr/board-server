@@ -1,5 +1,7 @@
 package hr.prism.board.api;
 
+import hr.prism.board.TestContext;
+import hr.prism.board.dto.RegisterDTO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +26,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
-import hr.prism.board.TestContext;
-import hr.prism.board.dto.RegisterDTO;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -62,7 +61,7 @@ public class WebSocketIT extends AbstractIT {
         webSocketHttpHeaders.set("Authorization", "Bearer " + loginAccessToken);
 
         StompSession stompSession =
-            webSocketStompClient.connect("ws://localhost:" + localServerPort + "/web-socket", webSocketHttpHeaders, new StompSessionHandlerAdapter() {})
+            webSocketStompClient.connect("ws://localhost:" + localServerPort + "/api/web-socket", webSocketHttpHeaders, new StompSessionHandlerAdapter() {})
                 .get(1, TimeUnit.SECONDS);
 
         stompSession.subscribe("/api/user/activities", new FrameHandler());
