@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -27,13 +26,11 @@ public class WebSocketService {
     @Inject
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    @Async
     @EventListener
     public synchronized void handleSessionConnectedEvent(SessionConnectedEvent sessionConnectedEvent) {
         userIds.add(Long.parseLong(sessionConnectedEvent.getUser().getName()));
     }
 
-    @Async
     @EventListener
     public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
         userIds.remove(Long.parseLong(sessionDisconnectEvent.getUser().getName()));
