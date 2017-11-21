@@ -9,12 +9,19 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 
 public class AuthenticationChannelAdapter extends ChannelInterceptorAdapter {
 
+    private AuthorizationHeaderResolver authorizationHeaderResolver;
+
+    public AuthenticationChannelAdapter(AuthorizationHeaderResolver authorizationHeaderResolver) {
+        this.authorizationHeaderResolver = authorizationHeaderResolver;
+    }
+
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            AuthenticationToken authenticationToken = (AuthenticationToken) accessor.getHeader("simpUser");
-            accessor.setUser(authenticationToken);
+            String authorization = accessor.getNativeHeader("Authorization").get(0);
+            Long userId = authorizationHeaderResolver.resolveUserId(authorization);
+            accessor.setUser(new AuthenticationToken(userId));
         }
 
         return message;

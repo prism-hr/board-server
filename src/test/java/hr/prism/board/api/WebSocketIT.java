@@ -18,11 +18,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
-import org.springframework.web.socket.sockjs.client.SockJsClient;
-import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -54,14 +51,17 @@ public class WebSocketIT extends AbstractIT {
         messageConverter.setObjectMapper(objectMapper);
 
         WebSocketStompClient webSocketStompClient = new WebSocketStompClient(
-            new SockJsClient(Collections.singletonList(new WebSocketTransport(new StandardWebSocketClient()))));
+            new StandardWebSocketClient());
         webSocketStompClient.setMessageConverter(messageConverter);
 
         WebSocketHttpHeaders webSocketHttpHeaders = new WebSocketHttpHeaders();
-        webSocketHttpHeaders.set("Authorization", "Bearer " + loginAccessToken);
+
+        StompHeaders stompHeaders = new StompHeaders();
+        stompHeaders.set("Authorization", "Bearer " + loginAccessToken);
 
         StompSession stompSession =
-            webSocketStompClient.connect("ws://localhost:" + localServerPort + "/api/web-socket", webSocketHttpHeaders, new StompSessionHandlerAdapter() {})
+            webSocketStompClient.connect("ws://localhost:" + localServerPort + "/api/web-socket",
+                webSocketHttpHeaders, stompHeaders, new StompSessionHandlerAdapter() {})
                 .get(1, TimeUnit.SECONDS);
 
         stompSession.subscribe("/api/user/activities", new FrameHandler());

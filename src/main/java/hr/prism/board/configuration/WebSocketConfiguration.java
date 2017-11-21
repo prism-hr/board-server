@@ -1,5 +1,6 @@
 package hr.prism.board.configuration;
 
+import hr.prism.board.authentication.AuthorizationHeaderResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -9,10 +10,15 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 
 import hr.prism.board.authentication.AuthenticationChannelAdapter;
 
+import javax.inject.Inject;
+
 @Configuration
 @EnableWebSocketMessageBroker
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfigurer {
+
+    @Inject
+    private AuthorizationHeaderResolver authorizationHeaderResolver;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -26,7 +32,7 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new AuthenticationChannelAdapter());
+        registration.interceptors(new AuthenticationChannelAdapter(authorizationHeaderResolver));
     }
 
 }

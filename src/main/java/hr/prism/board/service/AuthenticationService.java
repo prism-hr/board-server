@@ -220,7 +220,7 @@ public class AuthenticationService {
             .compact();
     }
 
-    public Claims decodeAccessToken(String accessToken, String jwsSecret) {
+    public Claims decodeAccessToken(String accessToken) {
         return Jwts.parser()
             .setSigningKey(jwsSecret)
             .parseClaimsJws(accessToken)
@@ -235,7 +235,7 @@ public class AuthenticationService {
 
         String accessToken = authorization.replaceFirst("Bearer ", "");
         try {
-            Claims token = decodeAccessToken(accessToken, jwsSecret);
+            Claims token = decodeAccessToken(accessToken);
             long userId = Long.parseLong(token.getSubject());
             return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret(), true));
         } catch (ExpiredJwtException e) {
