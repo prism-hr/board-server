@@ -1,5 +1,24 @@
 package hr.prism.board.api;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
+
+import java.security.Principal;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+
+import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
@@ -11,16 +30,10 @@ import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.UserActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import java.util.List;
+import hr.prism.board.service.WebSocketService;
 
 @RestController
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unused"})
 public class UserApi {
 
     @Inject
@@ -37,6 +50,9 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
+
+    @Inject
+    private WebSocketService webSocketService;
 
     @Value("${deferred.request.timeout.millis}")
     private Long deferredRequestTimeoutMillis;
@@ -100,6 +116,14 @@ public class UserApi {
     @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.DELETE)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);
+    }
+
+    @SubscribeMapping("/api/user/activities")
+    public void subscribeToActivities(Principal principal) {
+        SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
+        Long userId = userService.getCurrentUserSecured().getId();
+        List<ActivityRepresentation> activities = activityService.getActivities(userId);
+        webSocketService.sendActivities(userId, activities);
     }
 
     public DeferredResult<List<ActivityRepresentation>> refreshActivities(Long userId) {

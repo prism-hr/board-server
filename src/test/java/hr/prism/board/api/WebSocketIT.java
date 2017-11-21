@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import hr.prism.board.TestContext;
+import hr.prism.board.dto.RegisterDTO;
+
 @TestContext
 @RunWith(SpringRunner.class)
 public class WebSocketIT extends AbstractIT {
