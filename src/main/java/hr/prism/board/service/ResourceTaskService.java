@@ -88,17 +88,17 @@ public class ResourceTaskService {
     public void sendNotification(Pair<Long, Integer> resource, List<Pair<Long, hr.prism.board.enums.ResourceTask>> tasks) {
         Long resourceId = resource.getKey();
         Integer notifiedCount = resource.getValue();
-        String notificationContext = CREATE_TASKS.contains(tasks.get(0).getValue()) ? "create" : "update";
+        String notificationContext = CREATE_TASKS.contains(tasks.get(0).getValue()) ? "CREATE" : "UPDATE";
         if (notifiedCount == null) {
             tasks.forEach(task -> {
                 Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-                    .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_task_activity"));
+                    .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY"));
                 activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
             });
         }
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "task_notification"));
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "_TASK_NOTIFICATION"));
 
         notificationEventService.publishEvent(this, resourceId, tasks.stream().map(Pair::getValue).collect(Collectors.toList()), Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
