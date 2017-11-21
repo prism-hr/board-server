@@ -13,7 +13,7 @@ public class AuthenticationChannelAdapter extends ChannelInterceptorAdapter {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            AuthenticationToken authenticationToken = (AuthenticationToken) accessor.getHeader("simpUser");
+            AuthenticationToken authenticationToken = (AuthenticationToken) accessor.getNativeHeader("Authorization").get(0);
             accessor.setUser(authenticationToken);
         }
 
