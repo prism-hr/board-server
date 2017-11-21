@@ -1,5 +1,7 @@
 package hr.prism.board.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -29,6 +31,7 @@ import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -115,6 +118,12 @@ public abstract class AbstractIT {
 
     @Inject
     ResourceEventService resourceEventService;
+
+    @Inject
+    MockMvc mockMvc;
+
+    @Inject
+    ObjectMapper objectMapper;
 
     @Value("${server.url}")
     String serverUrl;

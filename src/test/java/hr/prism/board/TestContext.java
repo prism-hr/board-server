@@ -16,6 +16,7 @@ import hr.prism.board.configuration.DatabaseConfiguration;
 import hr.prism.board.configuration.SecurityConfiguration;
 import hr.prism.board.configuration.TestConfiguration;
 import hr.prism.board.configuration.WebMvcConfiguration;
+import hr.prism.board.configuration.WebSocketConfiguration;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -26,7 +27,7 @@ import hr.prism.board.configuration.WebMvcConfiguration;
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     classes = {BoardApplication.class, CacheConfiguration.class, DatabaseConfiguration.class,
-        SecurityConfiguration.class, WebMvcConfiguration.class, TestConfiguration.class})
+        SecurityConfiguration.class, WebMvcConfiguration.class, WebSocketConfiguration.class, TestConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public @interface TestContext {
 

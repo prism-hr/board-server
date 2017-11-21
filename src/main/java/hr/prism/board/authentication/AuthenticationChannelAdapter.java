@@ -6,34 +6,14 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptorAdapter;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.core.Authentication;
-
-import hr.prism.board.service.AuthenticationService;
-import hr.prism.board.utils.BoardUtils;
 
 public class AuthenticationChannelAdapter extends ChannelInterceptorAdapter {
 
-    private AuthenticationService authenticationService;
-
-    public AuthenticationChannelAdapter(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
-    }
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        return authenticate(message);
-    }
-
-    @Override
-    public Message<?> postReceive(Message<?> message, MessageChannel channel) {
-        return authenticate(message);
-    }
-
-    private Message<?> authenticate(Message<?> message) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            String authorization = (String) accessor.getHeader("Authorization");
-            Authentication authenticationToken = BoardUtils.makeAuthenticationToken(authenticationService, authorization);
+            AuthenticationToken authenticationToken = (AuthenticationToken) accessor.getHeader("simpUser");
             accessor.setUser(authenticationToken);
         }
 

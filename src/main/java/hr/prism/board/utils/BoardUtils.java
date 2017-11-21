@@ -8,8 +8,6 @@ import org.apache.commons.codec.language.Soundex;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.time.format.DateTimeFormatter;
@@ -23,16 +21,9 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.dto.ResourcePatchDTO;
-import hr.prism.board.service.AuthenticationService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
 
 public class BoardUtils {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BoardUtils.class);
 
     private static RandomStringGenerator RANDOM_STRING_GENERATOR =
         new RandomStringGenerator.Builder()
@@ -133,22 +124,6 @@ public class BoardUtils {
                 }
             })
             .collect(Collectors.joining(" "));
-    }
-
-    public static AuthenticationToken makeAuthenticationToken(AuthenticationService authenticationService, String authorization) {
-        if (authorization != null) {
-            String accessToken = authorization.replaceFirst("Bearer ", "");
-            try {
-                Claims token = authenticationService.decodeAccessToken(accessToken, authenticationService.getJwsSecret());
-                return new AuthenticationToken(Long.parseLong(token.getSubject()));
-            } catch (ExpiredJwtException e) {
-                LOGGER.warn("JWT token has expired");
-            } catch (MalformedJwtException e) {
-                LOGGER.error("JWT token is malformed", e);
-            }
-        }
-
-        return null;
     }
 
 }

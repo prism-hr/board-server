@@ -7,18 +7,12 @@ import org.springframework.web.socket.config.annotation.AbstractWebSocketMessage
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 
-import javax.inject.Inject;
-
 import hr.prism.board.authentication.AuthenticationChannelAdapter;
-import hr.prism.board.service.AuthenticationService;
 
 @Configuration
 @EnableWebSocketMessageBroker
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfigurer {
-
-    @Inject
-    private AuthenticationService authenticationService;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -32,7 +26,7 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new AuthenticationChannelAdapter(authenticationService));
+        registration.interceptors(new AuthenticationChannelAdapter());
     }
 
 }
