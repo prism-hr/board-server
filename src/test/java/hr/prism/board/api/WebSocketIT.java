@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +70,9 @@ public class WebSocketIT extends AbstractIT {
                 .get(1, TimeUnit.SECONDS);
 
         stompSession.subscribe("/api/user/activities", new FrameHandler());
+        List<?> response = (List<?>) completableFuture.get();
+        Assert.assertNotNull(response);
+        Assert.assertEquals(0, response.size());
     }
 
     private class FrameHandler implements StompFrameHandler {

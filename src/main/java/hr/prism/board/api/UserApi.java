@@ -118,7 +118,7 @@ public class UserApi {
     }
 
     @SubscribeMapping("/api/user/activities")
-    public void subscribeToActivities(Principal principal) {
+    public void subscribe(Principal principal) {
         SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
         Long userId = userService.getCurrentUserSecured().getId();
         List<ActivityRepresentation> activities = activityService.getActivities(userId);

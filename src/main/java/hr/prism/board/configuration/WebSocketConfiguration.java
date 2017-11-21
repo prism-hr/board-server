@@ -22,6 +22,7 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/activities");
         registry.setUserDestinationPrefix("/api/user");
     }
 
