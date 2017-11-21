@@ -1,7 +1,5 @@
 package hr.prism.board.api;
 
-import hr.prism.board.TestContext;
-import hr.prism.board.dto.RegisterDTO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,8 +16,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
+import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -54,11 +55,10 @@ public class WebSocketIT extends AbstractIT {
         messageConverter.setObjectMapper(objectMapper);
 
         WebSocketStompClient webSocketStompClient = new WebSocketStompClient(
-            new StandardWebSocketClient());
+            new SockJsClient(Collections.singletonList(new WebSocketTransport(new StandardWebSocketClient()))));
         webSocketStompClient.setMessageConverter(messageConverter);
 
         WebSocketHttpHeaders webSocketHttpHeaders = new WebSocketHttpHeaders();
-
         StompHeaders stompHeaders = new StompHeaders();
         stompHeaders.set("Authorization", "Bearer " + loginAccessToken);
 
