@@ -210,8 +210,8 @@ public class DepartmentApiIT extends AbstractIT {
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
 
-        listenForNewActivities(boardUserId);
         testWebSocketService.record();
+        listenForNewActivities(boardUserId);
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
@@ -485,11 +485,12 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
+        testWebSocketService.record();
+        testNotificationService.record();
+
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testWebSocketService.record();
-        testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
@@ -548,11 +549,12 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
+        testWebSocketService.record();
+        testNotificationService.record();
+
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testWebSocketService.record();
-        testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId, new UserRoleDTO()
@@ -603,11 +605,12 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
+        testWebSocketService.record();
+        testNotificationService.record();
+
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testWebSocketService.record();
-        testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,

@@ -1,11 +1,13 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Iterables;
 
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -21,9 +23,11 @@ import hr.prism.board.representation.UserRoleRepresentation;
 @Service
 public class TestWebSocketService extends WebSocketService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
+
     private boolean recording = false;
 
-    private HashMultimap<Long, List<ActivityRepresentation>> sentActivities = HashMultimap.create();
+    private ArrayListMultimap<Long, List<ActivityRepresentation>> sentActivities = ArrayListMultimap.create();
 
     public void record() {
         this.recording = true;
@@ -37,8 +41,11 @@ public class TestWebSocketService extends WebSocketService {
 
     @SuppressWarnings("unchecked")
     public Set<ActivityInstance> verify(Long userId, ActivityInstance... expectedActivityInstances) {
-        Iterator<List<ActivityRepresentation>> iterator = sentActivities.removeAll(userId).iterator();
-        Set<ActivityInstance> actualActivityInstances = iterator.next()
+        List<ActivityRepresentation> activityRepresentations = Iterables.getLast(sentActivities.removeAll(userId));
+        LOGGER.info("Checking activities for user: " + userId + " - " +
+            activityRepresentations.stream().map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
+
+        Set<ActivityInstance> actualActivityInstances = activityRepresentations
             .stream().map(ActivityInstance::fromActivityRepresentation).collect(Collectors.toSet());
 
         Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
@@ -52,6 +59,8 @@ public class TestWebSocketService extends WebSocketService {
     @Override
     public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         if (recording) {
+            LOGGER.info("updating activities for user: " + userId + " - " + activities.stream()
+                .map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
             sentActivities.put(userId, activities);
         }
 

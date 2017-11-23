@@ -701,12 +701,14 @@ public class PostApiIT extends AbstractIT {
             .setComment("accepting without time constraints");
 
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.PENDING);
+        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+
         postService.publishAndRetirePosts();
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testWebSocketService.verify(departmentUserId);
         testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
@@ -897,17 +899,18 @@ public class PostApiIT extends AbstractIT {
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.PENDING);
+        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
         postService.publishAndRetirePosts();
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testWebSocketService.verify(departmentUserId);
         testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
-        testWebSocketService.verify(departmentMember1Id);
-        testWebSocketService.verify(departmentMember2Id);
-        testWebSocketService.verify(departmentMember3Id);
+        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testWebSocketService.verify(departmentMember1Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testWebSocketService.verify(departmentMember2Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testWebSocketService.verify(departmentMember3Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
         testWebSocketService.verify(departmentMember4Id);
-        testWebSocketService.verify(departmentMember5Id);
+        testWebSocketService.verify(departmentMember5Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
