@@ -21,7 +21,7 @@ import hr.prism.board.representation.ActivityRepresentation;
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class WebSocketService {
 
-    private volatile Set<Long> userIds = new LinkedHashSet<>();
+    protected volatile Set<Long> userIds = new LinkedHashSet<>();
 
     @Inject
     private SimpMessagingTemplate simpMessagingTemplate;

@@ -16,7 +16,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestUserActivityService;
+import hr.prism.board.service.TestWebSocketService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import javafx.util.Pair;
@@ -211,7 +211,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long boardUserId = boardUser.getId();
 
         listenForNewActivities(boardUserId);
-        testUserActivityService.record();
+        testWebSocketService.record();
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
@@ -219,8 +219,8 @@ public class DepartmentApiIT extends AbstractIT {
                 .setUser(new UserDTO().setId(boardUserId))
                 .setRole(Role.ADMINISTRATOR)));
 
-        testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
-        testUserActivityService.stop();
+        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
+        testWebSocketService.stop();
 
         // Create post
         User postUser = testUserService.authenticate();
@@ -488,7 +488,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testUserActivityService.record();
+        testWebSocketService.record();
         testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
@@ -500,8 +500,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(departmentUserId,
-            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testWebSocketService.verify(departmentUserId,
+            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -526,7 +526,7 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.ACCEPTED, userRole.getState());
 
-        testUserActivityService.stop();
+        testWebSocketService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(boardMemberId);
@@ -551,7 +551,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testUserActivityService.record();
+        testWebSocketService.record();
         testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
@@ -563,8 +563,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(departmentUserId,
-            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testWebSocketService.verify(departmentUserId,
+            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -582,7 +582,7 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.REJECTED, userRole.getState());
 
-        testUserActivityService.stop();
+        testWebSocketService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(boardMemberId);
@@ -606,7 +606,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testUserActivityService.record();
+        testWebSocketService.record();
         testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
@@ -618,8 +618,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(departmentUserId,
-            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testWebSocketService.verify(departmentUserId,
+            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -639,7 +639,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyActivitiesEmpty(departmentUserId);
-        testUserActivityService.stop();
+        testWebSocketService.stop();
         testNotificationService.stop();
     }
 

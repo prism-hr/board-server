@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import java.security.Principal;
 import java.util.List;
@@ -26,7 +25,6 @@ import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ActivityService;
-import hr.prism.board.service.UserActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
 import hr.prism.board.service.WebSocketService;
@@ -43,9 +41,6 @@ public class UserApi {
 
     @Inject
     private UserNotificationSuppressionService userNotificationSuppressionService;
-
-    @Inject
-    private UserActivityService userActivityService;
 
     @Inject
     private UserMapper userMapper;
@@ -97,16 +92,6 @@ public class UserApi {
         userNotificationSuppressionService.deleteSuppressions();
     }
 
-    @RequestMapping(value = "/api/user/activities", method = RequestMethod.GET)
-    public List<ActivityRepresentation> getActivities() {
-        return activityService.getActivities(userService.getCurrentUserSecured().getId());
-    }
-
-    @RequestMapping(value = "/api/user/activities/refresh", method = RequestMethod.GET)
-    public DeferredResult<List<ActivityRepresentation>> refreshActivities() {
-        return refreshActivities(userService.getCurrentUserSecured().getId());
-    }
-
     @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.GET)
     public void viewActivity(@PathVariable Long activityId) {
         activityService.viewActivity(activityId);
@@ -123,13 +108,6 @@ public class UserApi {
         Long userId = userService.getCurrentUserSecured().getId();
         List<ActivityRepresentation> activities = activityService.getActivities(userId);
         webSocketService.sendActivities(userId, activities);
-    }
-
-    public DeferredResult<List<ActivityRepresentation>> refreshActivities(Long userId) {
-        DeferredResult<List<ActivityRepresentation>> request = new DeferredResult<>(deferredRequestTimeoutMillis);
-        request.onTimeout(() -> userActivityService.processRequestTimeout(userId, request));
-        userActivityService.storeRequest(userId, request);
-        return request;
     }
 
 }

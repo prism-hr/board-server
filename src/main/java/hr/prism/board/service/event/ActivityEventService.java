@@ -1,22 +1,35 @@
 package hr.prism.board.service.event;
 
-import hr.prism.board.domain.*;
-import hr.prism.board.enums.State;
-import hr.prism.board.event.ActivityEvent;
-import hr.prism.board.service.*;
-import hr.prism.board.service.cache.UserCacheService;
-import hr.prism.board.service.cache.UserRoleCacheService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import javax.inject.Inject;
-import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+
+import hr.prism.board.domain.BoardEntity;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceEvent;
+import hr.prism.board.domain.ResourceTask;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.enums.State;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.service.ActivityService;
+import hr.prism.board.service.ResourceEventService;
+import hr.prism.board.service.ResourceService;
+import hr.prism.board.service.ResourceTaskService;
+import hr.prism.board.service.UserRoleService;
+import hr.prism.board.service.UserService;
+import hr.prism.board.service.WebSocketService;
+import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.service.cache.UserRoleCacheService;
 
 @Service
 @Transactional
@@ -37,9 +50,6 @@ public class ActivityEventService {
 
     @Inject
     private ResourceTaskService resourceTaskService;
-
-    @Inject
-    private UserActivityService userActivityService;
 
     @Inject
     private UserService userService;
@@ -150,13 +160,6 @@ public class ActivityEventService {
         if (!webSocketUserIds.isEmpty()) {
             for (Long userId : userService.findByResourceAndUserIds(resource, webSocketUserIds)) {
                 webSocketService.sendActivities(userId, activityService.getActivities(userId));
-            }
-        }
-
-        List<Long> longPollingUserIds = userActivityService.getUserIds();
-        if (!longPollingUserIds.isEmpty()) {
-            for (Long userId : userService.findByResourceAndUserIds(resource, longPollingUserIds)) {
-                userActivityService.sendActivities(userId, activityService.getActivities(userId));
             }
         }
     }

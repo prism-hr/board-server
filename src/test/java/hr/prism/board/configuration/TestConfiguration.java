@@ -11,7 +11,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestUserActivityService;
+import hr.prism.board.service.TestWebSocketService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.TestActivityEventService;
 import hr.prism.board.service.event.TestNotificationEventService;
@@ -113,8 +113,8 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public TestUserActivityService userActivityService() {
-        return new TestUserActivityService();
+    public TestWebSocketService userActivityService() {
+        return new TestWebSocketService();
     }
 
 }

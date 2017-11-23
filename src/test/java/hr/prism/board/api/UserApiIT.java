@@ -233,6 +233,7 @@ public class UserApiIT extends AbstractIT {
 
     @Test
     public void shouldSubscribeAndReceiveMessages() throws Exception {
+        testWebSocketService.record();
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse registerResponse =
             mockMvc.perform(
@@ -243,6 +244,7 @@ public class UserApiIT extends AbstractIT {
                 .andReturn()
                 .getResponse();
 
+        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("alastair@prism.hr").getId());
         String loginAccessToken = (String) objectMapper.readValue(registerResponse.getContentAsString(), Map.class).get("token");
 
         MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter();
@@ -265,6 +267,16 @@ public class UserApiIT extends AbstractIT {
         List<?> response = (List<?>) completableFuture.get();
         Assert.assertNotNull(response);
         Assert.assertEquals(0, response.size());
+
+        List<Long> userIds = testWebSocketService.getUserIds();
+        Assert.assertEquals(1, userIds.size());
+        Assert.assertEquals(userId, userIds.get(0));
+
+        stompSession.disconnect();
+        // Give the session disconnect event time to be fired
+        TimeUnit.SECONDS.sleep(1L);
+        userIds = testWebSocketService.getUserIds();
+        Assert.assertEquals(0, userIds.size());
     }
 
     private static List<UserNotificationSuppressionRepresentation> removeSuppressionsForAutomaticallyCreatedBoards(
