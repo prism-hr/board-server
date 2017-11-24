@@ -1,7 +1,29 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.*;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import hr.prism.board.domain.Activity;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
@@ -14,17 +36,6 @@ import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -75,12 +86,11 @@ public class UserRoleService {
         List<UserRole> members = Collections.emptyList();
         List<UserRole> memberRequests = Collections.emptyList();
 
-        Long userId = user.getId();
         if (scope == Scope.DEPARTMENT) {
-            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, userId, searchTerm);
-            members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, userId, searchTerm);
+            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
+            members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, searchTerm);
 
-            memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, userId, searchTerm);
+            memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
             if (!memberRequests.isEmpty()) {
                 Map<Activity, UserRole> indexByActivities = memberRequests.stream()
                     .filter(userRole -> userRole.getActivity() != null).collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
@@ -89,7 +99,7 @@ public class UserRoleService {
                 }
             }
         } else if (scope == Scope.BOARD) {
-            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, userId, searchTerm);
+            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
         } else {
             throw new IllegalStateException("Cannot request user roles for post");
         }
@@ -211,7 +221,7 @@ public class UserRoleService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    private List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, Long userId, String searchTerm) {
+    private List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, String searchTerm) {
         List<Long> userIds = userService.findByResourceAndRoleAndStates(resource, roles, state);
         if (userIds.isEmpty()) {
             return Collections.emptyList();
@@ -220,7 +230,7 @@ public class UserRoleService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            userService.createSearchResults(search, userId, searchTerm, userIds);
+            userService.createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
 

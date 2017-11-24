@@ -1,15 +1,62 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.*;
+
+import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Document;
+import hr.prism.board.domain.Post;
+import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.dto.*;
-import hr.prism.board.enums.*;
+import hr.prism.board.domain.User;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.PostDTO;
+import hr.prism.board.dto.PostPatchDTO;
+import hr.prism.board.dto.ResourceEventDTO;
+import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.BoardType;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.ResourceTask;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -22,24 +69,6 @@ import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
-import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -249,7 +278,8 @@ public class PostService {
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
-        departmentService.validateMembership(resourceEvent.getUser(), (Department) post.getParent().getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_REFERRAL);
+        departmentService.validateMembership(resourceEvent.getUser(), (Department) post.getParent()
+            .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_REFERRAL);
 
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
@@ -265,7 +295,8 @@ public class PostService {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> {
-            departmentService.validateMembership(user, (Department) post.getParent().getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
+            departmentService.validateMembership(user, (Department) post.getParent()
+                .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
             return post;
         });
 
@@ -295,7 +326,7 @@ public class PostService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            resourceEventService.createSearchResults(search, user.getId(), searchTerm, userIds);
+            resourceEventService.createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
 
@@ -444,7 +475,8 @@ public class PostService {
     }
 
     public void setIndexDataAndQuarter(Post post) {
-        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation().getName());
+        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation()
+            .getName());
     }
 
     Post findLatestPost(User user) {
@@ -514,7 +546,8 @@ public class PostService {
                 List<String> newCategories = new ArrayList<>(categories.get());
                 if (!Objects.equals(oldCategories, newCategories)) {
                     updateCategories(post, categoryType, newCategories, reference);
-                    post.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldCategories, resourceService.getCategories(post, categoryType));
+                    post.getChangeList()
+                        .put(categoryType.name().toLowerCase() + "Categories", oldCategories, resourceService.getCategories(post, categoryType));
                 }
             } else if (oldCategories != null) {
                 updateCategories(post, categoryType, null, reference);
@@ -565,13 +598,25 @@ public class PostService {
                 List<Activity> activities = new ArrayList<>();
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
-                    activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
-                    activities.add(new Activity().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
-                    notifications.add(new Notification().setScope(Scope.DEPARTMENT).setRole(Role.MEMBER).setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
+                    activities.add(new Activity().setScope(Scope.POST)
+                        .setRole(Role.ADMINISTRATOR)
+                        .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
+                    activities.add(new Activity().setScope(Scope.DEPARTMENT)
+                        .setRole(Role.MEMBER)
+                        .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+                    notifications.add(new Notification().setScope(Scope.POST)
+                        .setRole(Role.ADMINISTRATOR)
+                        .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
+                    notifications.add(new Notification().setScope(Scope.DEPARTMENT)
+                        .setRole(Role.MEMBER)
+                        .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
-                    activities.add(new Activity().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
+                    activities.add(new Activity().setScope(Scope.POST)
+                        .setRole(Role.ADMINISTRATOR)
+                        .setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
+                    notifications.add(new Notification().setScope(Scope.POST)
+                        .setRole(Role.ADMINISTRATOR)
+                        .setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
 
                 activityEventService.publishEvent(this, postId, activities);

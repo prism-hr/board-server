@@ -324,8 +324,8 @@ public class UserService {
         return userRepository.findByResourceAndEvents(resource, events);
     }
 
-    void createSearchResults(String search, Long userId, String searchTerm, Collection<Long> userIds) {
-        userSearchRepository.insertBySearch(search, userId, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
+    void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
+        userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
     }
 
     void deleteSearchResults(String search) {

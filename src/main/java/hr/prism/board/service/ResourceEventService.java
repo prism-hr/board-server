@@ -71,6 +71,7 @@ public class ResourceEventService {
         ResourceEvent resourceEvent = new ResourceEvent().setResource(post).setEvent(hr.prism.board.enums.ResourceEvent.VIEW);
         if (user == null) {
             resourceEvent.setIpAddress(ipAddress);
+            resourceEvent.setCreatorId(post.getCreatorId());
         } else {
             resourceEvent.setUser(user);
         }
@@ -157,8 +158,8 @@ public class ResourceEventService {
         return resourceEventRepository.findByEventAndIpAddresses(hr.prism.board.enums.ResourceEvent.VIEW, ipAddresses);
     }
 
-    public void createSearchResults(String search, Long userId, String searchTerm, Collection<Long> userIds) {
-        resourceEventSearchRepository.insertBySearch(search, userId, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
+    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
+        resourceEventSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
     }
 
     public void deleteSearchResults(String search) {

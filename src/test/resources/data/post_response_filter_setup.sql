@@ -118,7 +118,7 @@ INSERT INTO document (cloudinary_id, cloudinary_url, file_name, created_timestam
 VALUES ('jakub', 'jakub/jakub', 'jakub', NOW()),
   ('juan', 'juan/juan', 'juan', NOW());
 
-INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, location_nationality_id, document_resume_id, website_resume, covering_note, visible_to_administrator, created_timestamp)
+INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, location_nationality_id, document_resume_id, website_resume, covering_note, created_timestamp)
   SELECT
     resource.id,
     'RESPONSE',
@@ -129,7 +129,6 @@ INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, loca
     document.id,
     'http://www.jakub.com',
     'jakub',
-    1,
     NOW()
   FROM resource
     INNER JOIN user
@@ -138,7 +137,7 @@ INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, loca
         AND user.given_name = 'jakub'
         AND document.cloudinary_id = 'jakub';
 
-INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, location_nationality_id, document_resume_id, website_resume, covering_note, visible_to_administrator, created_timestamp)
+INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, location_nationality_id, document_resume_id, website_resume, covering_note, created_timestamp)
   SELECT
     resource.id,
     'RESPONSE',
@@ -149,7 +148,6 @@ INSERT INTO resource_event (resource_id, event, user_id, gender, age_range, loca
     document.id,
     'http://www.juan.com',
     'juan',
-    1,
     NOW()
   FROM resource
     INNER JOIN user

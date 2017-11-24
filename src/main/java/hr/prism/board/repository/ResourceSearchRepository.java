@@ -13,15 +13,16 @@ public interface ResourceSearchRepository extends SearchRepository<ResourceSearc
     @Modifying
     @Query(value =
         "INSERT INTO resource_search (resource_id, search, creator_id, created_timestamp) " +
-            "SELECT resource_search_result.resource_id, resource_search_result.search, :creatorId, :baseline " +
+            "SELECT resource_search_result.resource_id, resource_search_result.search, resource_search_result.creator_id, :baseline " +
             "FROM (" +
-            "SELECT resource.id as resource_id, :search as search, MATCH(resource.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
+            "SELECT resource.id as resource_id, :search as search, resource.creator_id as creator_id, " +
+            "MATCH(resource.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
             "FROM resource " +
             "WHERE resource.id IN (:resourceIds) " +
             "HAVING SIMILARITY > 0 " +
             "ORDER BY similarity DESC, resource.id DESC) AS resource_search_result",
         nativeQuery = true)
-    void insertBySearch(@Param("search") String search, @Param("creatorId") Long creatorId, @Param("baseline") LocalDateTime localDateTime,
-                        @Param("searchTerm") String searchTerm, @Param("resourceIds") Collection<Long> resourceIds);
+    void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime, @Param("searchTerm") String searchTerm,
+                        @Param("resourceIds") Collection<Long> resourceIds);
 
 }

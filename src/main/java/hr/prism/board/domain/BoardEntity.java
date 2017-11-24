@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @MappedSuperclass
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"id", "creator_id", "createdTimestamp", "updatedTimestamp"})
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"id", "creatorId", "createdTimestamp", "updatedTimestamp"})
 public abstract class BoardEntity {
 
     @Id
