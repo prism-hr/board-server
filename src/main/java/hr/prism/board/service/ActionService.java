@@ -139,8 +139,8 @@ public class ActionService {
 
             //noinspection SqlResolve
             entityManager.createNativeQuery(
-                "INSERT INTO resource_operation (resource_id, action, created_timestamp) " +
-                    "SELECT resource.id AS resource_id, :action AS action, :baseline AS created_timestamp " +
+                "INSERT INTO resource_operation (resource_id, action, creator_id, created_timestamp) " +
+                    "SELECT resource.id AS resource_id, :action AS action, resource.creator_id AS creator_id, :baseline AS created_timestamp " +
                     "FROM resource " +
                     "WHERE resource.id IN (:postIds) " +
                     "ORDER BY resource.id")

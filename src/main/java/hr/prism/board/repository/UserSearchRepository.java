@@ -12,8 +12,8 @@ public interface UserSearchRepository extends SearchRepository<UserSearch> {
 
     @Modifying
     @Query(value =
-        "INSERT INTO user_search (user_id, search, created_timestamp) " +
-            "SELECT user_search_result.user_id, user_search_result.search, :baseline " +
+        "INSERT INTO user_search (user_id, search, creator_id, created_timestamp) " +
+            "SELECT user_search_result.user_id, user_search_result.search, :creatorId, :baseline " +
             "FROM (" +
             "SELECT user.id as user_id, :search as search, MATCH(user.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
             "FROM user " +
@@ -21,7 +21,7 @@ public interface UserSearchRepository extends SearchRepository<UserSearch> {
             "HAVING similarity > 0 " +
             "ORDER BY similarity DESC, user.id DESC) AS user_search_result",
         nativeQuery = true)
-    void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime, @Param("searchTerm") String searchTerm,
-                        @Param("userIds") Collection<Long> userIds);
+    void insertBySearch(@Param("search") String search, @Param("creatorId") Long creatorId, @Param("baseline") LocalDateTime localDateTime,
+                        @Param("searchTerm") String searchTerm, @Param("userIds") Collection<Long> userIds);
 
 }

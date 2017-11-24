@@ -157,8 +157,8 @@ public class ResourceEventService {
         return resourceEventRepository.findByEventAndIpAddresses(hr.prism.board.enums.ResourceEvent.VIEW, ipAddresses);
     }
 
-    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
-        resourceEventSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
+    public void createSearchResults(String search, Long userId, String searchTerm, Collection<Long> userIds) {
+        resourceEventSearchRepository.insertBySearch(search, userId, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
     }
 
     public void deleteSearchResults(String search) {

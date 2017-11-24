@@ -38,7 +38,7 @@ public class ResourceTaskService {
     private static final String SEPARATOR = ", ";
 
     @SuppressWarnings("SqlResolve")
-    private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, created_timestamp) VALUES ";
+    private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, creator_id, created_timestamp) VALUES ";
 
     private static final List<hr.prism.board.enums.ResourceTask> CREATE_TASKS = Arrays.asList(hr.prism.board.enums.ResourceTask.CREATE_MEMBER,
         hr.prism.board.enums.ResourceTask.CREATE_INTERNAL_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
@@ -104,14 +104,14 @@ public class ResourceTaskService {
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
     }
 
-    void createForNewResource(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        insertResourceTasks(resourceId, tasks);
+    void createForNewResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
+        insertResourceTasks(resourceId, userId, tasks);
     }
 
-    void createForExistingResource(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
+    void createForExistingResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
         resourceTaskSuppressionRepository.deleteByResourceId(resourceId);
         resourceTaskRepository.deleteByResourceId(resourceId);
-        insertResourceTasks(resourceId, tasks);
+        insertResourceTasks(resourceId, userId, tasks);
     }
 
     List<ResourceTask> findBySuppressions(User user) {
@@ -122,7 +122,6 @@ public class ResourceTaskService {
         return resourceTaskRepository.findByResourceAndSuppressions(resource, user);
     }
 
-    // TODO: support
     void completeTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
         activityService.deleteActivities(resource, tasks);
         resourceTaskRepository.updateByResourceAndTasks(resource, tasks, true);
@@ -136,11 +135,13 @@ public class ResourceTaskService {
         }
     }
 
-    private void insertResourceTasks(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        String insert = INSERT_RESOURCE_TASK + tasks.stream().map(task -> "(:resourceId, '" + task.name() + "', :baseline)").collect(Collectors.joining(SEPARATOR));
+    private void insertResourceTasks(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
+        String insert = INSERT_RESOURCE_TASK + tasks.stream()
+            .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline)").collect(Collectors.joining(SEPARATOR));
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             Query query = entityManager.createNativeQuery(insert);
             query.setParameter("resourceId", resourceId);
+            query.setParameter("creatorId", userId);
             query.setParameter("baseline", LocalDateTime.now());
             return query.executeUpdate();
         });

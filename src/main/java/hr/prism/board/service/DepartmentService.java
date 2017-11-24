@@ -177,7 +177,7 @@ public class DepartmentService {
     }
 
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
-        User currentUser = userService.getCurrentUserSecured();
+        User user = userService.getCurrentUserSecured();
         Resource university = universityService.getUniversity(universityId);
         resourceService.validateUniqueName(Scope.DEPARTMENT, null, university, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
@@ -208,8 +208,8 @@ public class DepartmentService {
         resourceService.updateCategories(department, CategoryType.MEMBER, memberCategoryStrings);
         resourceService.createResourceRelation(university, department);
         resourceService.setIndexDataAndQuarter(department);
-        resourceService.createResourceOperation(department, Action.EXTEND, currentUser);
-        userRoleService.createOrUpdateUserRole(department, currentUser, Role.ADMINISTRATOR);
+        resourceService.createResourceOperation(department, Action.EXTEND, user);
+        userRoleService.createOrUpdateUserRole(department, user, Role.ADMINISTRATOR);
 
         // Create the initial boards
         Long departmentId = department.getId();
@@ -220,8 +220,8 @@ public class DepartmentService {
 
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());
-        resourceTaskService.createForNewResource(departmentId, DEPARTMENT_TASKS);
-        return (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
+        resourceTaskService.createForNewResource(departmentId, user.getId(), DEPARTMENT_TASKS);
+        return (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
     }
 
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
@@ -400,7 +400,7 @@ public class DepartmentService {
         }
 
         department.setLastTaskCreationTimestamp(baseline);
-        resourceTaskService.createForExistingResource(departmentId, tasks);
+        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {

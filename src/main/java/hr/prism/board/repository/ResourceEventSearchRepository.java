@@ -12,8 +12,8 @@ public interface ResourceEventSearchRepository extends SearchRepository<Resource
 
     @Modifying
     @Query(value =
-        "INSERT INTO resource_event_search (resource_event_id, search, created_timestamp) " +
-            "SELECT resource_event_search_result.resource_event_id, resource_event_search_result.search, :baseline " +
+        "INSERT INTO resource_event_search (resource_event_id, search, creator_id, created_timestamp) " +
+            "SELECT resource_event_search_result.resource_event_id, resource_event_search_result.search, :creatorId, :baseline " +
             "FROM (" +
             "SELECT resource_event.id as resource_event_id, :search as search, MATCH(resource_event.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
             "FROM resource_event " +
@@ -21,7 +21,7 @@ public interface ResourceEventSearchRepository extends SearchRepository<Resource
             "HAVING similarity > 0 " +
             "ORDER BY similarity DESC, resource_event.id DESC) AS resource_event_search_result",
         nativeQuery = true)
-    void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime, @Param("searchTerm") String searchTerm,
-                        @Param("userIds") Collection<Long> userIds);
+    void insertBySearch(@Param("search") String search, @Param("creatorId") Long creatorId, @Param("baseline") LocalDateTime localDateTime, 
+                        @Param("searchTerm") String searchTerm, @Param("userIds") Collection<Long> userIds);
 
 }

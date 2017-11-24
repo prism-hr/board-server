@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -91,7 +93,7 @@ public class UserNotificationSuppressionService {
 
     public List<UserNotificationSuppressionRepresentation> postSuppressions() {
         User user = userService.getCurrentUserSecured();
-        userNotificationSuppressionRepository.insertByUserId(user.getId(), Scope.BOARD.name(), State.ACTIVE_USER_ROLE_STATE_STRINGS);
+        userNotificationSuppressionRepository.insertByUserId(user.getId(), LocalDateTime.now(), Scope.BOARD.name(), State.ACTIVE_USER_ROLE_STATE_STRINGS);
         entityManager.flush();
         return getSuppressions(user);
     }

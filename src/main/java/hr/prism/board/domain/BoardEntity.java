@@ -7,12 +7,15 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @MappedSuperclass
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"id", "createdTimestamp", "updatedTimestamp"})
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"id", "creator_id", "createdTimestamp", "updatedTimestamp"})
 public abstract class BoardEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "creator_id")
+    private Long creatorId;
 
     @Column(name = "created_timestamp", nullable = false)
     private LocalDateTime createdTimestamp;
@@ -26,6 +29,15 @@ public abstract class BoardEntity {
 
     public BoardEntity setId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public Long getCreatorId() {
+        return creatorId;
+    }
+
+    public BoardEntity setCreatorId(Long creatorId) {
+        this.creatorId = creatorId;
         return this;
     }
 

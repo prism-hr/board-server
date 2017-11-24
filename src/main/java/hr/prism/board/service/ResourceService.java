@@ -478,7 +478,7 @@ public class ResourceService {
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             // Apply the search query
-            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), resourceIds);
+            resourceSearchRepository.insertBySearch(search, user.getId(), LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), resourceIds);
             entityManager.flush();
         }
 

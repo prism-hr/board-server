@@ -70,6 +70,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "oauth_account_id")
     private String oauthAccountId;
 
+    @Column(name = "test_user")
+    private Boolean testUser;
+
     @OneToOne
     @JoinColumn(name = "document_image_id")
     private Document documentImage;
@@ -210,6 +213,15 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setOauthAccountId(String oauthAccountId) {
         this.oauthAccountId = oauthAccountId;
+        return this;
+    }
+
+    public Boolean getTestUser() {
+        return testUser;
+    }
+
+    public User setTestUser(Boolean testUser) {
+        this.testUser = testUser;
         return this;
     }
 

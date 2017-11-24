@@ -295,7 +295,7 @@ public class PostService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            resourceEventService.createSearchResults(search, searchTerm, userIds);
+            resourceEventService.createSearchResults(search, user.getId(), searchTerm, userIds);
             entityManager.flush();
         }
 

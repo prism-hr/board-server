@@ -1,14 +1,20 @@
 package hr.prism.board.repository;
 
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.enums.*;
-import hr.prism.board.value.UserNotification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.enums.ResourceEvent;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
+import hr.prism.board.value.UserNotification;
 
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends MyRepository<User, Long> {
@@ -74,7 +80,7 @@ public interface UserRepository extends MyRepository<User, Long> {
             "and " + ACTIVE_USER_ROLE_CONSTRAINT + " " +
             "and " + SUPPRESSION_CONSTRAINT)
     List<UserNotification> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
-        @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
+                                                                  @Param("userRoleStates") List<State> userRoleStates, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select distinct new hr.prism.board.value.UserNotification(userRole.user, userRole.uuid) " +
@@ -97,8 +103,8 @@ public interface UserRepository extends MyRepository<User, Long> {
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.user = userRole.user)")
     List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategory(@Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope,
-        @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
-        @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
+                                                                             @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
+                                                                             @Param("categoryType") CategoryType categoryType, @Param("baseline") LocalDate baseline);
 
     @Query(value =
         "select userRole.user " +
@@ -141,5 +147,11 @@ public interface UserRepository extends MyRepository<User, Long> {
             "group by resourceEvent.resource, resourceEvent.user " +
             "order by resourceEvent.id desc")
     List<Long> findByResourceAndEvents(@Param("resource") Resource resource, @Param("events") List<ResourceEvent> events);
+
+    @Query(value =
+        "select user.id " +
+            "from User user " +
+            "where user.testUser = :testUser")
+    List<Long> findByTestUser(@Param("testUser") Boolean testUser);
 
 }

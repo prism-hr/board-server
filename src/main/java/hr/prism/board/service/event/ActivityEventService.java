@@ -156,9 +156,9 @@ public class ActivityEventService {
             });
         }
 
-        List<Long> webSocketUserIds = webSocketService.getUserIds();
-        if (!webSocketUserIds.isEmpty()) {
-            for (Long userId : userService.findByResourceAndUserIds(resource, webSocketUserIds)) {
+        List<Long> userIds = webSocketService.getUserIds();
+        if (!userIds.isEmpty()) {
+            for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
                 webSocketService.sendActivities(userId, activityService.getActivities(userId));
             }
         }

@@ -110,4 +110,9 @@ public class UserApi {
         webSocketService.sendActivities(userId, activities);
     }
 
+    @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)
+    public void deleteTestUsers() {
+        userService.deleteTestUsers();
+    }
+
 }

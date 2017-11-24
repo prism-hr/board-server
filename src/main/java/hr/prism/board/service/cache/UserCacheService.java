@@ -31,6 +31,8 @@ public class UserCacheService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserCacheService.class);
 
+    private static final String TEST_USER_SUFFIX = "@test.prism.hr";
+
     @Inject
     private CacheManager cacheManager;
 
@@ -73,6 +75,9 @@ public class UserCacheService {
 
     public User saveUser(User user) {
         user = userRepository.save(user);
+        user.setTestUser(user.getEmail().endsWith(TEST_USER_SUFFIX));
+        user.setCreatorId(user.getId());
+
         setIndexData(user);
         appendScopes(user);
         cacheManager.getCache("users").put(user.getId(), user);

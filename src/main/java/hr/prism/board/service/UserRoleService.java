@@ -74,11 +74,13 @@ public class UserRoleService {
         List<UserRole> users;
         List<UserRole> members = Collections.emptyList();
         List<UserRole> memberRequests = Collections.emptyList();
-        if (scope == Scope.DEPARTMENT) {
-            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
-            members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, searchTerm);
 
-            memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
+        Long userId = user.getId();
+        if (scope == Scope.DEPARTMENT) {
+            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, userId, searchTerm);
+            members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, userId, searchTerm);
+
+            memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, userId, searchTerm);
             if (!memberRequests.isEmpty()) {
                 Map<Activity, UserRole> indexByActivities = memberRequests.stream()
                     .filter(userRole -> userRole.getActivity() != null).collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
@@ -87,7 +89,7 @@ public class UserRoleService {
                 }
             }
         } else if (scope == Scope.BOARD) {
-            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
+            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, userId, searchTerm);
         } else {
             throw new IllegalStateException("Cannot request user roles for post");
         }
@@ -209,7 +211,7 @@ public class UserRoleService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    private List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, String searchTerm) {
+    private List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, Long userId, String searchTerm) {
         List<Long> userIds = userService.findByResourceAndRoleAndStates(resource, roles, state);
         if (userIds.isEmpty()) {
             return Collections.emptyList();
@@ -218,7 +220,7 @@ public class UserRoleService {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            userService.createSearchResults(search, searchTerm, userIds);
+            userService.createSearchResults(search, userId, searchTerm, userIds);
             entityManager.flush();
         }
 
