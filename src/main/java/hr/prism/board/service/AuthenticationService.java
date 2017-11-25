@@ -22,6 +22,8 @@ import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -70,6 +72,9 @@ public class AuthenticationService {
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -260,6 +265,7 @@ public class AuthenticationService {
         if (!user.equals(invitee)) {
             UserRole userRole = userRoleCacheService.findByUuid(uuid);
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
+            entityManager.flush();
             userRole.setUser(user);
 
             if (!invitee.isRegistered()) {
