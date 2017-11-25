@@ -980,5 +980,4 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.ACCEPTED, boardR2.getState());
     }
 
-
 }
