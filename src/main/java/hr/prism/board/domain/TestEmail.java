@@ -1,8 +1,12 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.representation.TestEmailMessageRepresentation;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
-import javax.persistence.*;
+import hr.prism.board.representation.TestEmailMessageRepresentation;
 
 @Entity
 @Table(name = "test_email")
@@ -30,4 +34,5 @@ public class TestEmail extends BoardEntity {
     public void setMessage(TestEmailMessageRepresentation message) {
         this.message = message;
     }
+    
 }
