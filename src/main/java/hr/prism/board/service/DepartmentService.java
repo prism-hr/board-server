@@ -82,7 +82,7 @@ public class DepartmentService {
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
 
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
-        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_INTERNAL_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
+        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
     @Inject
     private DepartmentRepository departmentRepository;
@@ -221,6 +221,8 @@ public class DepartmentService {
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());
         resourceTaskService.createForNewResource(departmentId, user.getId(), DEPARTMENT_TASKS);
+
+        entityManager.refresh(department);
         return (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
     }
 

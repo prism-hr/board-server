@@ -86,7 +86,7 @@ public class PostService {
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
             "LIMIT 10";
 
-    private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_INTERNAL_POST, ResourceTask.UPDATE_INTERNAL_POST);
+    private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST, ResourceTask.UPDATE_INTERNAL_POST);
 
     @Value("${scheduler.on}")
     private Boolean schedulerOn;

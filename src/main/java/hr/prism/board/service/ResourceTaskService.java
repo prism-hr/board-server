@@ -41,7 +41,7 @@ public class ResourceTaskService {
     private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, creator_id, created_timestamp) VALUES ";
 
     private static final List<hr.prism.board.enums.ResourceTask> CREATE_TASKS = Arrays.asList(hr.prism.board.enums.ResourceTask.CREATE_MEMBER,
-        hr.prism.board.enums.ResourceTask.CREATE_INTERNAL_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
+        hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
     @Inject
     private ResourceTaskRepository resourceTaskRepository;

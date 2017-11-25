@@ -48,7 +48,7 @@ public class ResourceTaskProperty implements NotificationProperty {
                 case UPDATE_MEMBER:
                     stringBuilder.append(UPDATE_MEMBER);
                     break;
-                case CREATE_INTERNAL_POST:
+                case CREATE_POST:
                     stringBuilder.append(CREATE_RESEARCH_POST);
                     break;
                 case UPDATE_INTERNAL_POST:
