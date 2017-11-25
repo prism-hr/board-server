@@ -34,5 +34,5 @@ public class TestEmail extends BoardEntity {
     public void setMessage(TestEmailMessageRepresentation message) {
         this.message = message;
     }
-    
+
 }

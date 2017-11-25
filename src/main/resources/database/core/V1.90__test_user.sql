@@ -61,6 +61,10 @@ ALTER TABLE resource_task_suppression
   ADD COLUMN creator_id BIGINT UNSIGNED AFTER user_id,
   ADD INDEX (creator_id);
 
+ALTER TABLE test_email
+  ADD COLUMN creator_id BIGINT UNSIGNED AFTER message,
+  ADD INDEX (creator_id);
+
 ALTER TABLE user
   ADD COLUMN test_user INT(1) UNSIGNED AFTER oauth_account_id,
   ADD COLUMN creator_id BIGINT UNSIGNED AFTER index_data,
