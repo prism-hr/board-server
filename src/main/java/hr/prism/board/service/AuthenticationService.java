@@ -1,5 +1,33 @@
 package hr.prism.board.service;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
+
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
@@ -69,6 +97,9 @@ public class AuthenticationService {
     @Inject
     private NotificationEventService notificationEventService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -86,10 +117,12 @@ public class AuthenticationService {
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"))) {
                     jwsSecret = BoardUtils.randomAlphanumericString(256);
                     writer.write(jwsSecret);
+                } catch (IOException e) {
+                    LOGGER.error("Unable to write jws secret", e);
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Unable to start jws context", e);
+            LOGGER.error("Unable to read jws secret", e);
         }
     }
 
@@ -256,6 +289,7 @@ public class AuthenticationService {
         if (!user.equals(invitee)) {
             UserRole userRole = userRoleCacheService.findByUuid(uuid);
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
+            entityManager.flush();
             userRole.setUser(user);
 
             if (!invitee.isRegistered()) {
