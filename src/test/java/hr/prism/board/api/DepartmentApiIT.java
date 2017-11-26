@@ -4,22 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-import hr.prism.board.TestContext;
-import hr.prism.board.TestHelper;
-import hr.prism.board.domain.*;
-import hr.prism.board.dto.*;
-import hr.prism.board.enums.*;
-import hr.prism.board.enums.Activity;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.representation.*;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestUserActivityService;
-import hr.prism.board.util.BoardUtils;
-import hr.prism.board.util.ObjectUtils;
-import javafx.util.Pair;
+
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,9 +15,65 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import hr.prism.board.TestContext;
+import hr.prism.board.TestHelper;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Document;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceRelation;
+import hr.prism.board.domain.University;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserPatchDTO;
+import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Activity;
+import hr.prism.board.enums.AgeRange;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Gender;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Notification;
+import hr.prism.board.enums.ResourceTask;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.repository.DocumentRepository;
+import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.DocumentRepresentation;
+import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
+import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.TestWebSocketService;
+import hr.prism.board.util.ObjectUtils;
+import hr.prism.board.utils.BoardUtils;
+import javafx.util.Pair;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -48,33 +89,82 @@ public class DepartmentApiIT extends AbstractIT {
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
 
+    @Inject
+    private DocumentRepository documentRepository;
+
     @Test
     public void shouldCreateDepartment() {
         testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        transactionTemplate.execute(status -> {
+            University university = universityService.getUniversity(universityId);
+            Document documentLogo = new Document();
+            documentLogo.setCloudinaryId("c");
+            documentLogo.setCloudinaryUrl("u");
+            documentLogo.setFileName("f");
+
+            university.setDocumentLogo(documentRepository.save(documentLogo));
+            return university;
+        });
+
         DepartmentDTO department =
-            TestHelper.sampleDepartment()
-                .setSummary("summary").setDocumentLogo(
-                new DocumentDTO()
-                    .setCloudinaryId("c")
-                    .setCloudinaryUrl("u")
-                    .setFileName("f"));
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("summary");
 
         DepartmentRepresentation departmentR = departmentApi.postDepartment(universityId, department);
+        Long departmentId = departmentR.getId();
 
         String departmentName = department.getName();
         Assert.assertEquals(departmentName, departmentR.getName());
         Assert.assertEquals(departmentName, departmentR.getHandle());
         Assert.assertEquals("summary", departmentR.getSummary());
-        Assert.assertEquals(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT), departmentR.getMemberCategories());
+        Assert.assertEquals(Stream.of(MemberCategory.values()).collect(Collectors.toList()), departmentR.getMemberCategories());
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
         DocumentRepresentation documentR = departmentR.getDocumentLogo();
         Assert.assertEquals("c", documentR.getCloudinaryId());
         Assert.assertEquals("u", documentR.getCloudinaryUrl());
         Assert.assertEquals("f", documentR.getFileName());
 
-        Long departmentId = departmentR.getId();
+        verifyNewDepartmentBoards(departmentId);
+        Assert.assertEquals(ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE), departmentR.getTasks());
         ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
+    }
+
+    @Test
+    public void shouldCreateDepartmentOverridingDefaults() {
+        testUserService.authenticate();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+
+        DepartmentDTO department =
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("summary")
+                .setDocumentLogo(
+                    new DocumentDTO()
+                        .setCloudinaryId("d")
+                        .setCloudinaryUrl("v")
+                        .setFileName("g"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
+
+        DepartmentRepresentation departmentR = departmentApi.postDepartment(universityId, department);
+        Long departmentId = departmentR.getId();
+
+        String departmentName = department.getName();
+        Assert.assertEquals(departmentName, departmentR.getName());
+        Assert.assertEquals(departmentName, departmentR.getHandle());
+        Assert.assertEquals("summary", departmentR.getSummary());
+        Assert.assertEquals(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), departmentR.getMemberCategories());
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+
+        DocumentRepresentation documentR = departmentR.getDocumentLogo();
+        Assert.assertEquals("d", documentR.getCloudinaryId());
+        Assert.assertEquals("v", documentR.getCloudinaryUrl());
+        Assert.assertEquals("g", documentR.getFileName());
+
+        verifyNewDepartmentBoards(departmentId);
+        Assert.assertEquals(ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE), departmentR.getTasks());
     }
 
     @Test
@@ -210,8 +300,8 @@ public class DepartmentApiIT extends AbstractIT {
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
 
+        testWebSocketService.record();
         listenForNewActivities(boardUserId);
-        testUserActivityService.record();
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
@@ -219,8 +309,8 @@ public class DepartmentApiIT extends AbstractIT {
                 .setUser(new UserDTO().setId(boardUserId))
                 .setRole(Role.ADMINISTRATOR)));
 
-        testUserActivityService.verify(boardUserId, new TestUserActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
-        testUserActivityService.stop();
+        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
+        testWebSocketService.stop();
 
         // Create post
         User postUser = testUserService.authenticate();
@@ -305,8 +395,12 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
-            ImmutableMap.<String, String>builder().put("recipient", "admin1").put("department", "department 4").put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
-                .put("modal", "Register").put("invitationUuid", department2UserRole.getUuid()).build()));
+            ImmutableMap.<String, String>builder().put("recipient", "admin1")
+                .put("department", "department 4")
+                .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
+                .put("modal", "Register")
+                .put("invitationUuid", department2UserRole.getUuid())
+                .build()));
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status ->
@@ -377,7 +471,7 @@ public class DepartmentApiIT extends AbstractIT {
         verifySuggestedDepartment("Computer Science Department", departmentRs.get(1));
         verifySuggestedDepartment("Department of Computer Science", departmentRs.get(2));
 
-        departmentRs = departmentApi.lookupDepartments(universityId,"School of Informatics");
+        departmentRs = departmentApi.lookupDepartments(universityId, "School of Informatics");
         Assert.assertEquals(1, departmentRs.size());
 
         verifySuggestedDepartment("School of Informatics", departmentRs.get(0));
@@ -485,23 +579,31 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
+        testWebSocketService.record();
+        testNotificationService.record();
+
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testUserActivityService.record();
-        testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
                 new UserRoleDTO().setUser(new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.SIXTYFIVE_PLUS).setLocationNationality(
-                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(3).setExpiryDate(LocalDate.now().plusYears(2)));
+                    new LocationDTO().setName("London, United Kingdom")
+                        .setDomicile("GBR")
+                        .setGoogleId("googleId")
+                        .setLatitude(BigDecimal.ONE)
+                        .setLongitude(BigDecimal.ONE)))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setMemberProgram("program")
+                    .setMemberYear(3)
+                    .setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(departmentUserId,
-            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testWebSocketService.verify(departmentUserId,
+            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -526,7 +628,7 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.ACCEPTED, userRole.getState());
 
-        testUserActivityService.stop();
+        testWebSocketService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(boardMemberId);
@@ -548,23 +650,31 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
+        testWebSocketService.record();
+        testNotificationService.record();
+
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testUserActivityService.record();
-        testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId, new UserRoleDTO()
                 .setUser(new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.FIFTY_SIXTYFOUR).setLocationNationality(
-                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2).setExpiryDate(LocalDate.now().plusYears(2)));
+                    new LocationDTO().setName("London, United Kingdom")
+                        .setDomicile("GBR")
+                        .setGoogleId("googleId")
+                        .setLatitude(BigDecimal.ONE)
+                        .setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2)
+                .setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(departmentUserId,
-            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testWebSocketService.verify(departmentUserId,
+            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -582,7 +692,7 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.REJECTED, userRole.getState());
 
-        testUserActivityService.stop();
+        testWebSocketService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(boardMemberId);
@@ -603,23 +713,31 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
+        testWebSocketService.record();
+        testNotificationService.record();
+
         Long departmentUserId = departmentUser.getId();
         listenForNewActivities(departmentUserId);
 
-        testUserActivityService.record();
-        testNotificationService.record();
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
                 new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.FIFTY_SIXTYFOUR).setLocationNationality(
-                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(1).setExpiryDate(LocalDate.now().plusYears(2)));
+                    new LocationDTO().setName("London, United Kingdom")
+                        .setDomicile("GBR")
+                        .setGoogleId("googleId")
+                        .setLatitude(BigDecimal.ONE)
+                        .setLongitude(BigDecimal.ONE)))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setMemberProgram("program")
+                    .setMemberYear(1)
+                    .setExpiryDate(LocalDate.now().plusYears(2)));
             return null;
         });
 
         Long boardMemberId = boardMember.getId();
-        testUserActivityService.verify(departmentUserId,
-            new TestUserActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testWebSocketService.verify(departmentUserId,
+            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -639,7 +757,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyActivitiesEmpty(departmentUserId);
-        testUserActivityService.stop();
+        testWebSocketService.stop();
         testNotificationService.stop();
     }
 
@@ -650,7 +768,8 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
 
         Long departmentId = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO)).getId();
-        transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, new DepartmentDTO().setName("other department").setSummary("department summary")));
+        transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, new DepartmentDTO().setName("other department")
+            .setSummary("department summary")));
 
         testUserService.authenticate();
         Long board1Id = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board1"))).getId();
@@ -683,15 +802,25 @@ public class DepartmentApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             departmentApi.postMembershipRequest(departmentId,
                 new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                    new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+                    new LocationDTO().setName("London, United Kingdom")
+                        .setDomicile("GBR")
+                        .setGoogleId("googleId")
+                        .setLatitude(BigDecimal.ONE)
+                        .setLongitude(BigDecimal.ONE)))
                     .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
             return null;
         });
 
         Long memberUser2Id = testUserService.authenticate().getId();
         transactionTemplate.execute(status -> {
-            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
+            departmentApi.postMembershipRequest(departmentId, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+                .setAgeRange(AgeRange.THIRTY_THIRTYNINE)
+                .setLocationNationality(
+                    new LocationDTO().setName("London, United Kingdom")
+                        .setDomicile("GBR")
+                        .setGoogleId("googleId")
+                        .setLatitude(BigDecimal.ONE)
+                        .setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
             return null;
         });
@@ -752,7 +881,8 @@ public class DepartmentApiIT extends AbstractIT {
             Assert.assertEquals(summaryOptional == null ? department.getSummary() : summaryOptional.orElse(null), departmentR.getSummary());
 
             Optional<DocumentDTO> documentLogoOptional = departmentDTO.getDocumentLogo();
-            verifyDocument(documentLogoOptional == null ? department.getDocumentLogo() : departmentDTO.getDocumentLogo().orElse(null), departmentR.getDocumentLogo());
+            verifyDocument(documentLogoOptional == null ? department.getDocumentLogo() : departmentDTO.getDocumentLogo()
+                .orElse(null), departmentR.getDocumentLogo());
 
             Optional<String> handleOptional = departmentDTO.getHandle();
             Assert.assertEquals(handleOptional == null ? department.getHandle().split("/")[1] : handleOptional.orElse(null), departmentR.getHandle());
@@ -829,6 +959,25 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(BoardUtils.obfuscateEmail(expectedEmail), actual.getUser().getEmail());
         Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
         Assert.assertEquals(expectedMemberCategory, actual.getMemberCategory());
+    }
+
+    private void verifyNewDepartmentBoards(Long departmentId) {
+        List<BoardRepresentation> boardRs = boardApi.getBoards(departmentId, null, null, null, null);
+        Assert.assertEquals(boardRs.size(), 2);
+
+        BoardRepresentation boardR1 = boardRs.get(0);
+        Assert.assertEquals("Career Opportunities", boardR1.getName());
+        Assert.assertEquals("career-opportunities", boardR1.getHandle());
+        Assert.assertEquals("Forum for partner organizations and staff to share career opportunities.", boardR1.getSummary());
+        Assert.assertEquals(ImmutableList.of("Employment", "Internship", "Volunteering"), boardR1.getPostCategories());
+        Assert.assertEquals(State.ACCEPTED, boardR1.getState());
+
+        BoardRepresentation boardR2 = boardRs.get(1);
+        Assert.assertEquals("Research Opportunities", boardR2.getName());
+        Assert.assertEquals("research-opportunities", boardR2.getHandle());
+        Assert.assertEquals("Forum for partner organizations and staff to share research opportunities.", boardR2.getSummary());
+        Assert.assertEquals(ImmutableList.of("MRes", "PhD", "Postdoc"), boardR2.getPostCategories());
+        Assert.assertEquals(State.ACCEPTED, boardR2.getState());
     }
 
 }

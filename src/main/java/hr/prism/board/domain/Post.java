@@ -3,7 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;

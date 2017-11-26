@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
@@ -31,8 +32,8 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
 
     @Modifying
     @Query(value =
-        "INSERT INTO user_notification_suppression (user_id, resource_id, created_timestamp) " +
-            "SELECT user_role.user_id, suppressed.id, NOW() " +
+        "INSERT INTO user_notification_suppression (user_id, resource_id, creator_id, created_timestamp) " +
+            "SELECT user_role.user_id, suppressed.id, :userId, :baseline " +
             "FROM user_role " +
             "INNER JOIN resource_relation " +
             "ON user_role.resource_id = resource_relation.resource1_id " +
@@ -47,6 +48,7 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
             "AND user_notification_suppression.id IS NULL " +
             "GROUP BY user_role.user_id, suppressed.id",
         nativeQuery = true)
-    void insertByUserId(@Param("userId") Long userId, @Param("scope") String scope, @Param("userRoleStates") List<String> userRoleStates);
+    void insertByUserId(@Param("userId") Long userId, @Param("baseline") LocalDateTime baseline, @Param("scope") String scope,
+                        @Param("userRoleStates") List<String> userRoleStates);
 
 }

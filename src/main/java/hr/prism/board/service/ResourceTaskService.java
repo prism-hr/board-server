@@ -38,10 +38,10 @@ public class ResourceTaskService {
     private static final String SEPARATOR = ", ";
 
     @SuppressWarnings("SqlResolve")
-    private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, created_timestamp) VALUES ";
+    private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, creator_id, created_timestamp) VALUES ";
 
     private static final List<hr.prism.board.enums.ResourceTask> CREATE_TASKS = Arrays.asList(hr.prism.board.enums.ResourceTask.CREATE_MEMBER,
-        hr.prism.board.enums.ResourceTask.CREATE_INTERNAL_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
+        hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
     @Inject
     private ResourceTaskRepository resourceTaskRepository;
@@ -88,30 +88,30 @@ public class ResourceTaskService {
     public void sendNotification(Pair<Long, Integer> resource, List<Pair<Long, hr.prism.board.enums.ResourceTask>> tasks) {
         Long resourceId = resource.getKey();
         Integer notifiedCount = resource.getValue();
-        String notificationContext = CREATE_TASKS.contains(tasks.get(0).getValue()) ? "create" : "update";
+        String notificationContext = CREATE_TASKS.contains(tasks.get(0).getValue()) ? "CREATE" : "UPDATE";
         if (notifiedCount == null) {
             tasks.forEach(task -> {
                 Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-                    .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_task_activity"));
+                    .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY"));
                 activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
             });
         }
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "task_notification"));
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "_TASK_NOTIFICATION"));
 
         notificationEventService.publishEvent(this, resourceId, tasks.stream().map(Pair::getValue).collect(Collectors.toList()), Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
     }
 
-    void createForNewResource(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        insertResourceTasks(resourceId, tasks);
+    void createForNewResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
+        insertResourceTasks(resourceId, userId, tasks);
     }
 
-    void createForExistingResource(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
+    void createForExistingResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
         resourceTaskSuppressionRepository.deleteByResourceId(resourceId);
         resourceTaskRepository.deleteByResourceId(resourceId);
-        insertResourceTasks(resourceId, tasks);
+        insertResourceTasks(resourceId, userId, tasks);
     }
 
     List<ResourceTask> findBySuppressions(User user) {
@@ -122,7 +122,6 @@ public class ResourceTaskService {
         return resourceTaskRepository.findByResourceAndSuppressions(resource, user);
     }
 
-    // TODO: support
     void completeTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
         activityService.deleteActivities(resource, tasks);
         resourceTaskRepository.updateByResourceAndTasks(resource, tasks, true);
@@ -136,11 +135,13 @@ public class ResourceTaskService {
         }
     }
 
-    private void insertResourceTasks(Long resourceId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        String insert = INSERT_RESOURCE_TASK + tasks.stream().map(task -> "(:resourceId, '" + task.name() + "', :baseline)").collect(Collectors.joining(SEPARATOR));
+    private void insertResourceTasks(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
+        String insert = INSERT_RESOURCE_TASK + tasks.stream()
+            .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline)").collect(Collectors.joining(SEPARATOR));
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             Query query = entityManager.createNativeQuery(insert);
             query.setParameter("resourceId", resourceId);
+            query.setParameter("creatorId", userId);
             query.setParameter("baseline", LocalDateTime.now());
             return query.executeUpdate();
         });

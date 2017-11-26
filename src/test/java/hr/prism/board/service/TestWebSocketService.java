@@ -1,37 +1,38 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.HashMultimap;
-import hr.prism.board.api.UserApi;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Iterables;
+
+import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.enums.Role;
 import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
-import org.junit.Assert;
-import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.async.DeferredResult;
-
-import javax.inject.Inject;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
-public class TestUserActivityService extends UserActivityService {
+public class TestWebSocketService extends WebSocketService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
 
     private boolean recording = false;
 
-    private HashMultimap<Long, DeferredResult<List<ActivityRepresentation>>> sentRequests = HashMultimap.create();
-
-    @Inject
-    private UserApi userApi;
+    private ArrayListMultimap<Long, List<ActivityRepresentation>> sentActivities = ArrayListMultimap.create();
 
     public void record() {
         this.recording = true;
-        this.sentRequests.clear();
+        this.sentActivities.clear();
+        this.userIds.clear();
     }
 
     public void stop() {
@@ -40,8 +41,11 @@ public class TestUserActivityService extends UserActivityService {
 
     @SuppressWarnings("unchecked")
     public Set<ActivityInstance> verify(Long userId, ActivityInstance... expectedActivityInstances) {
-        Iterator<DeferredResult<List<ActivityRepresentation>>> iterator = sentRequests.removeAll(userId).iterator();
-        Set<ActivityInstance> actualActivityInstances = ((List<ActivityRepresentation>) iterator.next().getResult())
+        List<ActivityRepresentation> activityRepresentations = Iterables.getLast(sentActivities.removeAll(userId));
+        LOGGER.info("Checking activities for user: " + userId + " - " +
+            activityRepresentations.stream().map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
+
+        Set<ActivityInstance> actualActivityInstances = activityRepresentations
             .stream().map(ActivityInstance::fromActivityRepresentation).collect(Collectors.toSet());
 
         Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
@@ -49,26 +53,18 @@ public class TestUserActivityService extends UserActivityService {
             Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
         }
 
-        userApi.refreshActivities(userId);
         return actualActivityInstances;
     }
 
     @Override
-    public Set<DeferredResult<List<ActivityRepresentation>>> processRequests(Long userId, List<ActivityRepresentation> result) {
-        Set<DeferredResult<List<ActivityRepresentation>>> userRequests = super.processRequests(userId, result);
+    public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         if (recording) {
-            sentRequests.putAll(userId, userRequests);
+            LOGGER.info("updating activities for user: " + userId + " - " + activities.stream()
+                .map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
+            sentActivities.put(userId, activities);
         }
 
-        return userRequests;
-    }
-
-    @Override
-    public void processRequestTimeout(Long userId, DeferredResult<List<ActivityRepresentation>> request) {
-        super.processRequestTimeout(userId, request);
-        if (recording) {
-            sentRequests.put(userId, request);
-        }
+        super.sendActivities(userId, activities);
     }
 
     public static class ActivityInstance {
@@ -102,7 +98,7 @@ public class TestUserActivityService extends UserActivityService {
             this.activity = activity;
         }
 
-        public static ActivityInstance fromActivityRepresentation(ActivityRepresentation activityRepresentation) {
+        static ActivityInstance fromActivityRepresentation(ActivityRepresentation activityRepresentation) {
             UserRoleRepresentation userRoleRepresentation = activityRepresentation.getUserRole();
             ResourceEventRepresentation resourceEventRepresentation = activityRepresentation.getResourceEvent();
             if (userRoleRepresentation == null && resourceEventRepresentation == null) {
@@ -116,23 +112,23 @@ public class TestUserActivityService extends UserActivityService {
                 userRoleRepresentation.getUser().getId(), userRoleRepresentation.getRole(), activityRepresentation.getActivity());
         }
 
-        public Long getResourceId() {
+        Long getResourceId() {
             return resourceId;
         }
 
-        public Long getUserId() {
+        Long getUserId() {
             return userId;
         }
 
-        public Role getRole() {
+        Role getRole() {
             return role;
         }
 
-        public ResourceEvent getResourceEvent() {
+        ResourceEvent getResourceEvent() {
             return resourceEvent;
         }
 
-        public Activity getActivity() {
+        Activity getActivity() {
             return activity;
         }
 

@@ -1,9 +1,16 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.Action;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedAttributeNode;
+import javax.persistence.NamedEntityGraph;
+import javax.persistence.Table;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
+import hr.prism.board.enums.Action;
 
 @Entity
 @SuppressWarnings("unused")
@@ -30,9 +37,6 @@ public class ResourceOperation extends BoardEntity {
 
     @Column(name = "comment")
     private String comment;
-
-    @Column(name = "notified_timestamp")
-    private LocalDateTime notifiedTimestamp;
 
     public Resource getResource() {
         return resource;
@@ -76,15 +80,6 @@ public class ResourceOperation extends BoardEntity {
 
     public ResourceOperation setComment(String comment) {
         this.comment = comment;
-        return this;
-    }
-
-    public LocalDateTime getNotifiedTimestamp() {
-        return notifiedTimestamp;
-    }
-
-    public ResourceOperation setNotifiedTimestamp(LocalDateTime notifiedTimestamp) {
-        this.notifiedTimestamp = notifiedTimestamp;
         return this;
     }
 

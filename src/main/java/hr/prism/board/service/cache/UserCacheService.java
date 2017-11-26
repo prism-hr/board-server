@@ -9,7 +9,7 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 public class UserCacheService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserCacheService.class);
+
+    private static final String TEST_USER_SUFFIX = "@test.prism.hr";
 
     @Inject
     private CacheManager cacheManager;
@@ -73,6 +75,9 @@ public class UserCacheService {
 
     public User saveUser(User user) {
         user = userRepository.save(user);
+        user.setTestUser(user.getEmail().endsWith(TEST_USER_SUFFIX));
+        user.setCreatorId(user.getId());
+
         setIndexData(user);
         appendScopes(user);
         cacheManager.getCache("users").put(user.getId(), user);

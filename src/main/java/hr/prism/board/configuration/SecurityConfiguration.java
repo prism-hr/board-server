@@ -1,7 +1,7 @@
-package hr.prism.board;
+package hr.prism.board.configuration;
 
 import hr.prism.board.authentication.AuthenticationFilter;
-import hr.prism.board.service.AuthenticationService;
+import hr.prism.board.authentication.AuthorizationHeaderResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -12,10 +12,10 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import javax.inject.Inject;
 
 @Configuration
-public class BoardSecurity extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Inject
-    private AuthenticationService authenticationService;
+    private AuthorizationHeaderResolver authorizationHeaderResolver;
 
     public void configure(WebSecurity web) throws Exception {
         web.ignoring().antMatchers("/api/auth/*", "/api/redirect");
@@ -26,7 +26,7 @@ public class BoardSecurity extends WebSecurityConfigurerAdapter {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and().csrf().disable().anonymous().disable()
             .authorizeRequests().antMatchers("/api/auth/*", "/api/redirect").permitAll()
-            .and().addFilterAt(new AuthenticationFilter(authenticationService), BasicAuthenticationFilter.class);
+            .and().addFilterAt(new AuthenticationFilter(authorizationHeaderResolver), BasicAuthenticationFilter.class);
     }
 
 }

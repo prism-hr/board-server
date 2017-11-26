@@ -1,6 +1,25 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import hr.prism.board.domain.Activity;
+import hr.prism.board.domain.ActivityEvent;
+import hr.prism.board.domain.ActivityRole;
+import hr.prism.board.domain.ActivityUser;
+import hr.prism.board.domain.BoardEntity;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceEvent;
+import hr.prism.board.domain.ResourceTask;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -11,14 +30,6 @@ import hr.prism.board.repository.ActivityRepository;
 import hr.prism.board.repository.ActivityRoleRepository;
 import hr.prism.board.repository.ActivityUserRepository;
 import hr.prism.board.representation.ActivityRepresentation;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.inject.Inject;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -41,7 +52,7 @@ public class ActivityService {
     private UserService userService;
 
     @Inject
-    private UserActivityService userActivityService;
+    private WebSocketService webSocketService;
 
     @Inject
     private ActivityMapper activityMapper;
@@ -62,7 +73,10 @@ public class ActivityService {
         }
 
         List<Long> viewedActivityIds = activityRepository.findIdsByActivitiesAndUserIdAndEvent(activities, userId, hr.prism.board.enums.ActivityEvent.VIEW);
-        return activities.stream().map(activity -> activity.setViewed(viewedActivityIds.contains(activity.getId()))).map(activityMapper).collect(Collectors.toList());
+        return activities.stream()
+            .map(activity -> activity.setViewed(viewedActivityIds.contains(activity.getId())))
+            .map(activityMapper)
+            .collect(Collectors.toList());
     }
 
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
@@ -130,9 +144,11 @@ public class ActivityService {
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
         ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
         if (activityEvent == null) {
-            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
+            activityEventRepository.save(
+                new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
+
             Long userId = user.getId();
-            userActivityService.processRequests(userId, getActivities(userId));
+            webSocketService.sendActivities(userId, getActivities(userId));
         }
     }
 
@@ -166,17 +182,16 @@ public class ActivityService {
         activityRepository.deleteByResourceAndUserAndRole(resource, user, role);
     }
 
-    public void deleteActivities(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
-        activityEventRepository.deleteByResourceAndTasks(resource, tasks);
-        activityRoleRepository.deleteByResourceAndTasks(resource, tasks);
-        activityRepository.deleteByResourceAndTasks(resource, tasks);
-    }
-
-
     public void deleteActivities(List<UserRole> userRoles) {
         activityEventRepository.deleteByUserRoles(userRoles);
         activityRoleRepository.deleteByUserRoles(userRoles);
         activityRepository.deleteByUserRoles(userRoles);
+    }
+
+    void deleteActivities(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
+        activityEventRepository.deleteByResourceAndTasks(resource, tasks);
+        activityRoleRepository.deleteByResourceAndTasks(resource, tasks);
+        activityRepository.deleteByResourceAndTasks(resource, tasks);
     }
 
     List<ActivityEvent> findViews(Collection<Activity> activities, User user) {
@@ -186,7 +201,10 @@ public class ActivityService {
     void viewActivity(Activity activity, User user) {
         ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
         if (activityEvent == null) {
-            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.VIEW).setEventCount(1L));
+            activityEventRepository.save(new ActivityEvent().setActivity(activity)
+                .setUser(user)
+                .setEvent(hr.prism.board.enums.ActivityEvent.VIEW)
+                .setEventCount(1L));
         } else {
             activityEvent.setEventCount(activityEvent.getEventCount() + 1);
             activityEventRepository.update(activityEvent);
@@ -210,7 +228,11 @@ public class ActivityService {
         }
 
         return activityRepository.save(new hr.prism.board.domain.Activity().setResource(resource)
-            .setUserRole(userRole).setResourceEvent(resourceEvent).setResourceTask(resourceTask).setActivity(activity).setFilterByCategory(activity.isFilterByCategory()));
+            .setUserRole(userRole)
+            .setResourceEvent(resourceEvent)
+            .setResourceTask(resourceTask)
+            .setActivity(activity)
+            .setFilterByCategory(activity.isFilterByCategory()));
     }
 
 }

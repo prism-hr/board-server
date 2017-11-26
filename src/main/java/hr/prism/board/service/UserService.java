@@ -1,25 +1,5 @@
 package hr.prism.board.service;
 
-import hr.prism.board.authentication.AuthenticationToken;
-import hr.prism.board.domain.Document;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.dto.LocationDTO;
-import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPasswordDTO;
-import hr.prism.board.dto.UserPatchDTO;
-import hr.prism.board.enums.*;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.UserRepository;
-import hr.prism.board.repository.UserSearchRepository;
-import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.service.cache.UserCacheService;
-import hr.prism.board.util.BoardUtils;
-import hr.prism.board.value.UserNotification;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -29,12 +9,48 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
+import javax.persistence.Query;
+
+import hr.prism.board.authentication.AuthenticationToken;
+import hr.prism.board.domain.Document;
+import hr.prism.board.domain.Post;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserPasswordDTO;
+import hr.prism.board.dto.UserPatchDTO;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.AgeRange;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Gender;
+import hr.prism.board.enums.PasswordHash;
+import hr.prism.board.enums.ResourceEvent;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.repository.UserRepository;
+import hr.prism.board.repository.UserSearchRepository;
+import hr.prism.board.representation.DocumentRepresentation;
+import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.UserNotification;
 
 @Service
 @Transactional
@@ -170,7 +186,8 @@ public class UserService {
     }
 
     public List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategories(Resource resource, Scope enclosingScope, Role role) {
-        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategory(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, LocalDate.now());
+        return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategory(resource, enclosingScope, role, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, LocalDate
+            .now());
     }
 
     @SuppressWarnings("unchecked")
@@ -206,6 +223,28 @@ public class UserService {
         }
 
         return userRepresentations;
+    }
+
+    public void deleteTestUsers() {
+        List<Long> userIds = userRepository.findByTestUser(true);
+        if (!userIds.isEmpty()) {
+            new TransactionTemplate(platformTransactionManager).execute(status -> {
+                Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
+                removeForeignKeyChecks.executeUpdate();
+
+                @SuppressWarnings("unchecked")
+                List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
+                tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
+                    Query deleteUserData = entityManager.createNativeQuery("DELETE FROM " + tableName + " WHERE creator_id IN (:userIds)");
+                    deleteUserData.setParameter("userIds", userIds);
+                    deleteUserData.executeUpdate();
+                });
+
+                Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
+                restoreForeignKeyChecks.executeUpdate();
+                return null;
+            });
+        }
     }
 
     User findByUuid(String uuid) {

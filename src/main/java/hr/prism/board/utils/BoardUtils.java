@@ -1,26 +1,35 @@
-package hr.prism.board.util;
+package hr.prism.board.utils;
 
 import com.google.common.base.Joiner;
-import hr.prism.board.dto.ResourcePatchDTO;
+
 import opennlp.tools.tokenize.SimpleTokenizer;
+
 import org.apache.commons.codec.language.Soundex;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.servlet.http.HttpServletRequest;
+
+import hr.prism.board.dto.ResourcePatchDTO;
 
 public class BoardUtils {
 
     private static RandomStringGenerator RANDOM_STRING_GENERATOR =
         new RandomStringGenerator.Builder()
             .withinRange('0', 'z')
-            .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122).contains(codePoint))
+            .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122)
+                .contains(codePoint))
             .build();
 
     private static SimpleTokenizer TOKENIZER = SimpleTokenizer.INSTANCE;

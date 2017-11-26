@@ -3,7 +3,7 @@ package hr.prism.board.notification.property;
 import hr.prism.board.domain.Post;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.PostService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;

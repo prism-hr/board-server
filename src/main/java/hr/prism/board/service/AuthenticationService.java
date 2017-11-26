@@ -1,5 +1,33 @@
 package hr.prism.board.service;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
+
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
@@ -16,39 +44,16 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.util.BoardUtils;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Notification;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class AuthenticationService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(UserService.class);
@@ -68,6 +73,9 @@ public class AuthenticationService {
     @Inject
     private NotificationEventService notificationEventService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -76,21 +84,21 @@ public class AuthenticationService {
 
     @PostConstruct
     public void postConstruct() {
-        BufferedWriter writer = null;
         try {
             String userHome = System.getProperty("user.home");
             File secretFile = new File(userHome + "/jws.secret");
             if (secretFile.exists()) {
                 jwsSecret = IOUtils.toString(secretFile.toURI(), StandardCharsets.UTF_8);
             } else {
-                writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"));
-                jwsSecret = BoardUtils.randomAlphanumericString(256);
-                writer.write(jwsSecret);
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"))) {
+                    jwsSecret = BoardUtils.randomAlphanumericString(256);
+                    writer.write(jwsSecret);
+                } catch (IOException e) {
+                    LOGGER.error("Unable to write jws secret", e);
+                }
             }
         } catch (IOException e) {
-            LOGGER.error("Unable to start jws context", e);
-        } finally {
-            IOUtils.closeQuietly(writer);
+            LOGGER.error("Unable to read jws secret", e);
         }
     }
 
@@ -181,7 +189,7 @@ public class AuthenticationService {
         } else {
             User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
             if (invitee.isRegistered()) {
-                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_AUTHENTICATION, "User: " + invitee.getEmail() + " is already registered");
+                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_REGISTRATION, "User: " + invitee.getEmail() + " is already registered");
             }
 
             if (!email.equals(invitee.getEmail())) {
@@ -209,7 +217,8 @@ public class AuthenticationService {
         userCacheService.updateUser(user);
 
         notificationEventService.publishEvent(this,
-            Collections.singletonList(new Notification().setUserId(user.getId()).setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
+            Collections.singletonList(new Notification().setUserId(user.getId())
+                .setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
     public String makeAccessToken(Long userId, String jwsSecret, boolean specifyExpirationDate) {
@@ -220,7 +229,7 @@ public class AuthenticationService {
             .compact();
     }
 
-    public Claims decodeAccessToken(String accessToken, String jwsSecret) {
+    public Claims decodeAccessToken(String accessToken) {
         return Jwts.parser()
             .setSigningKey(jwsSecret)
             .parseClaimsJws(accessToken)
@@ -235,7 +244,7 @@ public class AuthenticationService {
 
         String accessToken = authorization.replaceFirst("Bearer ", "");
         try {
-            Claims token = decodeAccessToken(accessToken, jwsSecret);
+            Claims token = decodeAccessToken(accessToken);
             long userId = Long.parseLong(token.getSubject());
             return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret(), true));
         } catch (ExpiredJwtException e) {
@@ -256,6 +265,7 @@ public class AuthenticationService {
         if (!user.equals(invitee)) {
             UserRole userRole = userRoleCacheService.findByUuid(uuid);
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
+            entityManager.flush();
             userRole.setUser(user);
 
             if (!invitee.isRegistered()) {
