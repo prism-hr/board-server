@@ -152,6 +152,7 @@ public interface UserRepository extends MyRepository<User, Long> {
         "select user.id " +
             "from User user " +
             "where user.testUser = :testUser")
+    @SuppressWarnings("SameParameterValue")
     List<Long> findByTestUser(@Param("testUser") Boolean testUser);
 
 }

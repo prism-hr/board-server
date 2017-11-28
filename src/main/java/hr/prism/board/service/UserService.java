@@ -291,6 +291,7 @@ public class UserService {
             user.setSurname(userDTO.getSurname());
             user.setEmail(userDTO.getEmail());
             user = userRepository.save(user);
+            userCacheService.setCreator(user);
             userCacheService.setIndexData(user);
             return user;
         }
