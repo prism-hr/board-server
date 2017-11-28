@@ -19,9 +19,11 @@ public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializabl
 
     @Override
     public <T extends ENTITY> T save(T entity) {
-        AuthenticationToken authentication = (AuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            entity.setCreatorId(authentication.getUserId());
+        if (entity.getCreatorId() == null) {
+            AuthenticationToken authentication = (AuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null) {
+                entity.setCreatorId(authentication.getUserId());
+            }
         }
 
         LocalDateTime baseline = LocalDateTime.now();

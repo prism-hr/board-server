@@ -40,6 +40,7 @@ public class TestEmailService {
                 .setContent(content)
                 .setAttachments(attachments));
 
+        testEmail.setCreatorId(user.getId());
         testEmailRepository.save(testEmail);
     }
 
