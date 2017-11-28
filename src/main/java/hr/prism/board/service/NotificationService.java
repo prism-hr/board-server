@@ -110,8 +110,9 @@ public class NotificationService {
 
         if (recipientEmail.endsWith("@test.prism.hr")) {
             // Front end integration tests
+            Long creatorId = recipient.getId() == null ? request.getResource().getCreatorId() : recipient.getId();
             testEmailService.createTestEmail(recipient, subject, makePlainTextVersion(content),
-                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()));
+                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()), creatorId);
         } else if (BooleanUtils.isTrue(mailOn)) {
             // Real emails
             Mail mail = new Mail();
