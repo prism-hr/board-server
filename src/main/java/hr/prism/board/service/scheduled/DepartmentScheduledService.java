@@ -22,18 +22,8 @@ public class DepartmentScheduledService {
     @Scheduled(initialDelay = 60000, fixedDelay = 86400000)
     public void updateTasks() {
         if (BooleanUtils.isTrue(schedulerOn)) {
-            LocalDateTime baseline = LocalDateTime.now();
-            LocalDateTime baseline1 = baseline.minusMonths(1);
-
-            LocalDateTime baseline2;
-            if (baseline.getMonth().getValue() > 8) {
-                baseline2 = LocalDateTime.of(baseline.getYear(), 9, 1, 0, 0);
-            } else {
-                baseline2 = LocalDateTime.of(baseline.getYear() - 1, 9, 1, 0, 0);
-            }
-
-            departmentService.findAllIds(baseline1, baseline2).forEach(departmentId -> departmentService.updateTasks(departmentId, baseline));
+           departmentService.updateTasks();
         }
     }
-
+    
 }

@@ -111,8 +111,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/tasks/{taskId}", method = RequestMethod.PUT)
-    public void putTask(@PathVariable Long departmentId, @PathVariable Long taskId) {
-        departmentService.putTask(departmentId, taskId);
+    public DepartmentRepresentation putTask(@PathVariable Long departmentId, @PathVariable Long taskId) {
+        return departmentMapper.apply(departmentService.putTask(departmentId, taskId));
     }
 
 }

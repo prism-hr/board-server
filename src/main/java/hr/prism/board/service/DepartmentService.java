@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 @Service
 @Transactional
-@SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection"})
+@SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection", "unchecked"})
 public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
@@ -137,10 +137,6 @@ public class DepartmentService {
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-
-    public List<Long> findAllIds(LocalDateTime baseline1, LocalDateTime baseline2) {
-        return departmentRepository.findAllIds(baseline1, baseline2);
-    }
 
     public Department getDepartment(Long id) {
         User user = userService.getCurrentUser();
@@ -386,23 +382,19 @@ public class DepartmentService {
     public void decrementMemberCountPending(Long departmentId) {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
-
-    public void updateTasks(Long departmentId, LocalDateTime baseline) {
-        List<hr.prism.board.enums.ResourceTask> tasks = new ArrayList<>();
-        Department department = (Department) resourceService.findOne(departmentId);
-
-        LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
-        if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
-            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
+    
+    public void updateTasks() {
+        LocalDateTime baseline = LocalDateTime.now();
+        LocalDateTime baseline1 = baseline.minusMonths(1);
+        
+        LocalDateTime baseline2;
+        if (baseline.getMonth().getValue() > 8) {
+            baseline2 = LocalDateTime.of(baseline.getYear(), 9, 1, 0, 0);
+        } else {
+            baseline2 = LocalDateTime.of(baseline.getYear() - 1, 9, 1, 0, 0);
         }
-
-        LocalDateTime lastInternalPostTimestamp = department.getLastInternalPostTimestamp();
-        if (lastInternalPostTimestamp == null || lastInternalPostTimestamp.isBefore(baseline)) {
-            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_INTERNAL_POST);
-        }
-
-        department.setLastTaskCreationTimestamp(baseline);
-        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
+    
+        departmentRepository.findAllIds(baseline1, baseline2).forEach(departmentId -> updateTasks(departmentId, baseline));
     }
 
     void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
@@ -466,6 +458,24 @@ public class DepartmentService {
             department.getTasks().removeAll(suppressedTasks);
             return department;
         });
+    }
+    
+    private void updateTasks(Long departmentId, LocalDateTime baseline) {
+        List<hr.prism.board.enums.ResourceTask> tasks = new ArrayList<>();
+        Department department = (Department) resourceService.findOne(departmentId);
+        
+        LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
+        if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
+            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
+        }
+        
+        LocalDateTime lastInternalPostTimestamp = department.getLastInternalPostTimestamp();
+        if (lastInternalPostTimestamp == null || lastInternalPostTimestamp.isBefore(baseline)) {
+            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_INTERNAL_POST);
+        }
+        
+        department.setLastTaskCreationTimestamp(baseline);
+        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
     }
 
 }

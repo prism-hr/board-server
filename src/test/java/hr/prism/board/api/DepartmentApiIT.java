@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -287,7 +288,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportDepartmentLifecycleAndPermissions() throws IOException {
+    public void shouldSupportDepartmentLifecycleAndPermissions() throws IOException, InterruptedException {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
@@ -302,6 +303,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         testWebSocketService.record();
         listenForNewActivities(boardUserId);
+        TimeUnit.SECONDS.sleep(1L);
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
@@ -868,12 +870,12 @@ public class DepartmentApiIT extends AbstractIT {
         });
     }
 
-    private DepartmentRepresentation verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
+    private void verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
         Department department = transactionTemplate.execute(status -> departmentService.getDepartment(departmentId));
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, departmentDTO));
 
-        return transactionTemplate.execute(status -> {
+        transactionTemplate.execute(status -> {
             Optional<String> nameOptional = departmentDTO.getName();
             Assert.assertEquals(nameOptional == null ? department.getName() : nameOptional.orElse(null), departmentR.getName());
 
