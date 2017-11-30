@@ -70,6 +70,7 @@ import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
+import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestWebSocketService;
 import hr.prism.board.util.ObjectUtils;
@@ -92,6 +93,9 @@ public class DepartmentApiIT extends AbstractIT {
 
     @Inject
     private DocumentRepository documentRepository;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
 
     @Test
     public void shouldCreateDepartment() {
@@ -292,20 +296,63 @@ public class DepartmentApiIT extends AbstractIT {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentUserId = departmentUser.getId();
+
+        testWebSocketService.record();
+        testNotificationService.record();
+        listenForNewActivities(departmentUserId);
 
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
-        Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
 
+        String recipient = departmentUser.getGivenName();
+        String resourceTask = "<ul><li>Add some members - visit the user management section to build your student list and start sending notifications.</li>" +
+            "<li>Got an opportunity to share - go to the new post form to start adding content.</li><li></li></ul>";
+        String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
+
+        TimeUnit.SECONDS.sleep(1L);
+        resourceTaskService.notifyTasks();
+        testWebSocketService.verify(departmentUserId, new TestWebSocketService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder().put("recipient", recipient)
+                .put("department", "department")
+                .put("resourceTask", resourceTask)
+                .put("resourceTaskRedirect", resourceTaskRedirect)
+                .put("modal", "Login")
+                .build()));
+
+        TimeUnit.SECONDS.sleep(1L);
+        resourceTaskService.notifyTasks();
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder().put("recipient", recipient)
+                .put("department", "department")
+                .put("resourceTask", resourceTask)
+                .put("resourceTaskRedirect", resourceTaskRedirect)
+                .put("modal", "Login")
+                .build()));
+
+        TimeUnit.SECONDS.sleep(2L);
+        resourceTaskService.notifyTasks();
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder().put("recipient", recipient)
+                .put("department", "department")
+                .put("resourceTask", resourceTask)
+                .put("resourceTaskRedirect", resourceTaskRedirect)
+                .put("modal", "Login")
+                .build()));
+
+        resourceTaskService.notifyTasks();
+        testNotificationService.verify();
+
+        Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
 
-        testWebSocketService.record();
         listenForNewActivities(boardUserId);
         TimeUnit.SECONDS.sleep(1L);
 
-        testUserService.setAuthentication(departmentUser.getId());
+        testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
             new UserRoleDTO()
                 .setUser(new UserDTO().setId(boardUserId))

@@ -1,21 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.*;
-import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.dto.*;
-import hr.prism.board.enums.*;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardExceptionFactory;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.DepartmentRepository;
-import hr.prism.board.representation.*;
-import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.service.event.UserRoleEventService;
-import hr.prism.board.value.ResourceFilter;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -24,9 +10,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,6 +18,45 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceTask;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DepartmentPatchDTO;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.BoardType;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Notification;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardExceptionFactory;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.DocumentRepresentation;
+import hr.prism.board.representation.PostResponseReadinessRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.service.cache.UserRoleCacheService;
+import hr.prism.board.service.event.ActivityEventService;
+import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.service.event.UserRoleEventService;
+import hr.prism.board.value.ResourceFilter;
 
 @Service
 @Transactional
@@ -382,18 +404,18 @@ public class DepartmentService {
     public void decrementMemberCountPending(Long departmentId) {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
-    
+
     public void updateTasks() {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime baseline1 = baseline.minusMonths(1);
-        
+
         LocalDateTime baseline2;
         if (baseline.getMonth().getValue() > 8) {
             baseline2 = LocalDateTime.of(baseline.getYear(), 9, 1, 0, 0);
         } else {
             baseline2 = LocalDateTime.of(baseline.getYear() - 1, 9, 1, 0, 0);
         }
-    
+
         departmentRepository.findAllIds(baseline1, baseline2).forEach(departmentId -> updateTasks(departmentId, baseline));
     }
 
@@ -443,7 +465,9 @@ public class DepartmentService {
                     if (academicYearStart.isAfter(userRole.getMemberDate())) {
                         // User role data out of date
                         responseReadiness.setRequireUserRoleDemographicData(true)
-                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
+                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory)
+                                .setMemberProgram(memberProgram)
+                                .setMemberYear(memberYear));
                     }
                 }
             }
@@ -459,21 +483,16 @@ public class DepartmentService {
             return department;
         });
     }
-    
+
     private void updateTasks(Long departmentId, LocalDateTime baseline) {
         List<hr.prism.board.enums.ResourceTask> tasks = new ArrayList<>();
         Department department = (Department) resourceService.findOne(departmentId);
-        
+
         LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
         if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
             tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
         }
-        
-        LocalDateTime lastInternalPostTimestamp = department.getLastInternalPostTimestamp();
-        if (lastInternalPostTimestamp == null || lastInternalPostTimestamp.isBefore(baseline)) {
-            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_INTERNAL_POST);
-        }
-        
+
         department.setLastTaskCreationTimestamp(baseline);
         resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
     }

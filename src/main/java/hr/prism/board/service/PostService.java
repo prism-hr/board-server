@@ -50,7 +50,6 @@ import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.BoardType;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.ResourceTask;
@@ -86,7 +85,7 @@ public class PostService {
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
             "LIMIT 10";
 
-    private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST, ResourceTask.UPDATE_INTERNAL_POST);
+    private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST);
 
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
@@ -229,12 +228,7 @@ public class PostService {
             resourceService.createResourceRelation(board, post);
             setIndexDataAndQuarter(post);
             userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
-
-            if (BoardType.RESEARCH.equals(board.getType()) && BooleanUtils.isTrue(internal)) {
-                resourceTaskService.completeTasks(department, POST_TASKS);
-                department.setLastInternalPostTimestamp(LocalDateTime.now());
-            }
-
+            resourceTaskService.completeTasks(department, POST_TASKS);
             return post;
         });
 

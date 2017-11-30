@@ -28,9 +28,9 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
     @Query(value =
         "select resourceTask " +
             "from ResourceTask resourceTask " +
-            "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp < :baseline1 " +
-            "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp < :baseline2) " +
-            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3) " +
+            "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp <= :baseline1 " +
+            "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp <= :baseline2) " +
+            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp <= :baseline3) " +
             "order by resourceTask.resource, resourceTask.task")
     List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
                                                  @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,

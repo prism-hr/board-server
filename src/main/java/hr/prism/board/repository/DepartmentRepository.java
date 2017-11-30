@@ -15,7 +15,7 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
             "from Department department " +
             "where department.createdTimestamp < :baseline1 " +
             "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
-            "and (department.lastMemberTimestamp < :baseline1 or department.lastInternalPostTimestamp < :baseline1) " +
+            "and department.lastMemberTimestamp < :baseline1 " +
             "order by department.id")
     List<Long> findAllIds(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
 

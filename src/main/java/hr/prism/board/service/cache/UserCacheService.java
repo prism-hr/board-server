@@ -29,6 +29,7 @@ import hr.prism.board.value.ResourceSummary;
 
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserCacheService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserCacheService.class);

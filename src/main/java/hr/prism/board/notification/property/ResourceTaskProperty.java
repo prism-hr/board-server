@@ -1,5 +1,11 @@
 package hr.prism.board.notification.property;
 
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.ResourceTask;
@@ -7,24 +13,18 @@ import hr.prism.board.exception.BoardNotificationException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.ResourceTaskService;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import java.util.List;
 
 @Component
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceTaskProperty implements NotificationProperty {
 
-    private static final String CREATE_MEMBER = "Create your student list";
+    private static final String CREATE_MEMBER = "Add some members - visit the user management section to build your student list and start sending notifications.";
 
-    private static final String UPDATE_MEMBER = "Update your student list";
+    private static final String UPDATE_MEMBER = "Add some new members - visit the user management to add this year's new students to your student list.";
 
-    private static final String CREATE_RESEARCH_POST = "Create your current opportunities";
+    private static final String CREATE_POST = "Got an opportunity to share - go to the new post form to start adding content.";
 
-    private static final String UPDATE_RESEARCH_POST = "Update your current opportunities";
-
-    private static final String DEPLOY_BADGE = "Create referral links to your homepage";
+    private static final String DEPLOY_BADGE = "";
 
     @Inject
     private ResourceTaskService resourceTaskService;
@@ -49,10 +49,7 @@ public class ResourceTaskProperty implements NotificationProperty {
                     stringBuilder.append(UPDATE_MEMBER);
                     break;
                 case CREATE_POST:
-                    stringBuilder.append(CREATE_RESEARCH_POST);
-                    break;
-                case UPDATE_INTERNAL_POST:
-                    stringBuilder.append(UPDATE_RESEARCH_POST);
+                    stringBuilder.append(CREATE_POST);
                     break;
                 case DEPLOY_BADGE:
                     stringBuilder.append(DEPLOY_BADGE);

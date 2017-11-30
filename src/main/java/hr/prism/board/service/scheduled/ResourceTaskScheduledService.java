@@ -11,18 +11,18 @@ import javax.inject.Inject;
 @Service
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceTaskScheduledService {
-    
+
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
-    
+
     @Inject
     private ResourceTaskService resourceTaskService;
-    
+
     @Scheduled(initialDelay = 60000, fixedDelay = 86400000)
-    public void updateTasks() {
+    public void notifyTasks() {
         if (BooleanUtils.isTrue(schedulerOn)) {
-            resourceTaskService.updateTasks();
+            resourceTaskService.notifyTasks();
         }
     }
-    
+
 }

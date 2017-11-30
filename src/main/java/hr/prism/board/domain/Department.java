@@ -1,9 +1,15 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.Scope;
-
-import javax.persistence.*;
 import java.time.LocalDateTime;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.NamedAttributeNode;
+import javax.persistence.NamedEntityGraph;
+import javax.persistence.NamedSubgraph;
+
+import hr.prism.board.enums.Scope;
 
 @Entity
 @SuppressWarnings("unused")
@@ -36,9 +42,6 @@ public class Department extends Resource {
 
     @Column(name = "last_task_creation_timestamp")
     private LocalDateTime lastTaskCreationTimestamp;
-
-    @Column(name = "last_internal_post_timestamp")
-    private LocalDateTime lastInternalPostTimestamp;
 
     public Long getBoardCount() {
         return boardCount;
@@ -79,14 +82,6 @@ public class Department extends Resource {
     public Department setLastTaskCreationTimestamp(LocalDateTime lastTaskCreationTimestamp) {
         this.lastTaskCreationTimestamp = lastTaskCreationTimestamp;
         return this;
-    }
-
-    public LocalDateTime getLastInternalPostTimestamp() {
-        return lastInternalPostTimestamp;
-    }
-
-    public void setLastInternalPostTimestamp(LocalDateTime lastInternalPostTimestamp) {
-        this.lastInternalPostTimestamp = lastInternalPostTimestamp;
     }
 
     public void increaseMemberTobeUploadedCount(Long memberCountPending) {
