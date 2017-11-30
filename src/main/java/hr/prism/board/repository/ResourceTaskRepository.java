@@ -1,8 +1,5 @@
 package hr.prism.board.repository;
 
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.domain.User;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,8 +7,18 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceTask;
+import hr.prism.board.domain.User;
+
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
 public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long> {
+
+    @Query(value =
+        "select resourceTask " +
+            "from ResourceTask resourceTask " +
+            "where resourceTask.resource.id = :resourceId")
+    List<ResourceTask> findByResourceId(@Param("resourceId") Long resourceId);
 
     @Query(value =
         "select resourceTask.task " +
@@ -28,9 +35,9 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
     @Query(value =
         "select resourceTask " +
             "from ResourceTask resourceTask " +
-            "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp <= :baseline1 " +
-            "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp <= :baseline2) " +
-            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp <= :baseline3) " +
+            "where resourceTask.notifiedCount is null and resourceTask.createdTimestamp < :baseline1 " +
+            "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp < :baseline2) " +
+            "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3) " +
             "order by resourceTask.resource, resourceTask.task")
     List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
                                                  @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
@@ -72,5 +79,13 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
     void updateNotifiedCountByResourceId(@Param("resourceId") Long resourceId);
+
+    @Modifying
+    @Query(value =
+        "UPDATE resource_task " +
+            "SET resource_task.created_timestamp = :createdTimestamp " +
+            "WHERE resource_task.resource_id = :resourceId",
+        nativeQuery = true)
+    void updateCreatedTimestampByResourceId(@Param("resourceId") Long resourceId, @Param("createdTimestamp") LocalDateTime createdTimestamp);
 
 }

@@ -15,6 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,6 +62,7 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.repository.DocumentRepository;
+import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
@@ -93,6 +94,9 @@ public class DepartmentApiIT extends AbstractIT {
 
     @Inject
     private DocumentRepository documentRepository;
+
+    @Inject
+    private ResourceTaskRepository resourceTaskRepository;
 
     @Inject
     private ResourceTaskService resourceTaskService;
@@ -306,12 +310,19 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
 
+        LocalDateTime resourceTaskCreatedTimestamp = transactionTemplate.execute(status ->
+            resourceTaskRepository.findByResourceId(departmentId).iterator().next().getCreatedTimestamp());
+
         String recipient = departmentUser.getGivenName();
         String resourceTask = "<ul><li>Add some members - visit the user management section to build your student list and start sending notifications.</li>" +
             "<li>Got an opportunity to share - go to the new post form to start adding content.</li><li></li></ul>";
         String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
 
-        TimeUnit.SECONDS.sleep(1L);
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
+            return null;
+        });
+
         resourceTaskService.notifyTasks();
         testWebSocketService.verify(departmentUserId, new TestWebSocketService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
@@ -322,7 +333,11 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("modal", "Login")
                 .build()));
 
-        TimeUnit.SECONDS.sleep(1L);
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
+            return null;
+        });
+
         resourceTaskService.notifyTasks();
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", recipient)
@@ -332,7 +347,11 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("modal", "Login")
                 .build()));
 
-        TimeUnit.SECONDS.sleep(2L);
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
+            return null;
+        });
+
         resourceTaskService.notifyTasks();
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", recipient)
@@ -350,8 +369,6 @@ public class DepartmentApiIT extends AbstractIT {
         Long boardUserId = boardUser.getId();
 
         listenForNewActivities(boardUserId);
-        TimeUnit.SECONDS.sleep(1L);
-
         testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
             new UserRoleDTO()
