@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserMapper implements Function<User, UserRepresentation> {
 
     @Inject
@@ -29,6 +30,7 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setEmail(user.isRevealEmail() ? user.getEmail() : user.getEmailDisplay())
             .setDocumentImage(documentMapper.apply(user.getDocumentImage()))
             .setDocumentImageRequestState(user.getDocumentImageRequestState())
+            .setSeenWalkThrough(user.getSeenWalkThrough())
             .setGender(user.getGender())
             .setAgeRange(user.getAgeRange())
             .setLocationNationality(locationMapper.apply(user.getLocationNationality()))

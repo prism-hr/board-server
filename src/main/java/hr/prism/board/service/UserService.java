@@ -54,7 +54,7 @@ import hr.prism.board.value.UserNotification;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "SqlResolve"})
 public class UserService {
 
     @SuppressWarnings("SqlResolve")
@@ -151,6 +151,7 @@ public class UserService {
 
         userPatchService.patchDocument(user, user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
         userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState, userDTO.getDocumentImageRequestState());
+        userPatchService.patchProperty(user, user::getSeenWalkThrough, user::setSeenWalkThrough, userDTO.getSeenWalkThrough());
         userPatchService.patchProperty(user, user::getGender, user::setGender, userDTO.getGender());
         userPatchService.patchProperty(user, user::getAgeRange, user::setAgeRange, userDTO.getAgeRange());
         userPatchService.patchLocation(user, user::getLocationNationality, user::setLocationNationality, userDTO.getLocationNationality());
@@ -175,10 +176,6 @@ public class UserService {
         user.setPasswordHash(PasswordHash.SHA256);
         user.setPasswordResetUuid(null);
         user.setPasswordResetTimestamp(null);
-    }
-
-    public List<Long> findByResourceAndUserIds(Resource resource, List<Long> userIds) {
-        return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
 
     public List<UserNotification> findByResourceAndEnclosingScopeAndRole(Resource resource, Scope enclosingScope, Role role) {
@@ -245,6 +242,10 @@ public class UserService {
                 return null;
             });
         }
+    }
+    
+    List<Long> findByResourceAndUserIds(Resource resource, List<Long> userIds) {
+        return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
 
     User findByUuid(String uuid) {

@@ -9,7 +9,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import java.util.Optional;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused"})
 public class UserPatchDTO {
 
     @Size(min = 1, max = 100)
@@ -26,6 +26,8 @@ public class UserPatchDTO {
     private Optional<DocumentDTO> documentImage;
 
     private Optional<DocumentRequestState> documentImageRequestState;
+    
+    private Optional<Boolean> seenWalkThrough;
 
     private Optional<Gender> gender;
 
@@ -83,7 +85,16 @@ public class UserPatchDTO {
         this.documentImageRequestState = documentImageRequestState;
         return this;
     }
-
+    
+    public Optional<Boolean> getSeenWalkThrough() {
+        return seenWalkThrough;
+    }
+    
+    public UserPatchDTO setSeenWalkThrough(Optional<Boolean> seenWalkThrough) {
+        this.seenWalkThrough = seenWalkThrough;
+        return this;
+    }
+    
     public Optional<Gender> getGender() {
         return gender;
     }

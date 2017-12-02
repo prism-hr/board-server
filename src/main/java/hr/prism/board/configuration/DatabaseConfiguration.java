@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
 import java.util.Properties;
@@ -34,6 +35,7 @@ public class DatabaseConfiguration {
     private boolean databaseMigrationOn;
 
     @Bean
+    @Primary
     public DataSource dataSource() {
         LOGGER.info("Creating datasource using: " + databaseHost);
 
