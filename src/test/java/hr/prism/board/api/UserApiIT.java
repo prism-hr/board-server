@@ -233,7 +233,7 @@ public class UserApiIT extends AbstractIT {
 
     @Test
     public void shouldSubscribeAndReceiveMessages() throws Exception {
-        testWebSocketService.record();
+        testActivityService.record();
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse registerResponse =
             mockMvc.perform(
@@ -268,14 +268,14 @@ public class UserApiIT extends AbstractIT {
         Assert.assertNotNull(response);
         Assert.assertEquals(0, response.size());
 
-        List<Long> userIds = testWebSocketService.getUserIds();
+        List<Long> userIds = testActivityService.getUserIds();
         Assert.assertEquals(1, userIds.size());
         Assert.assertEquals(userId, userIds.get(0));
 
         stompSession.disconnect();
         // Give the session disconnect event time to be fired
         TimeUnit.SECONDS.sleep(1L);
-        userIds = testWebSocketService.getUserIds();
+        userIds = testActivityService.getUserIds();
         Assert.assertEquals(0, userIds.size());
     }
 

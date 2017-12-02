@@ -57,7 +57,7 @@ import hr.prism.board.service.ResourceEventService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserService;
-import hr.prism.board.service.TestWebSocketService;
+import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.UniversityService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
@@ -134,7 +134,7 @@ public abstract class AbstractIT {
     TestUserService testUserService;
 
     @Inject
-    TestWebSocketService testWebSocketService;
+    TestActivityService testActivityService;
 
     @Inject
     TestNotificationService testNotificationService;
@@ -266,14 +266,14 @@ public abstract class AbstractIT {
     void listenForNewActivities(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        testWebSocketService.handleSessionConnectedEvent(
+        testActivityService.handleSessionConnectedEvent(
             new SessionConnectedEvent(this, new GenericMessage<>("CONNECTED".getBytes()), new AuthenticationToken(userId)));
     }
 
     void verifyActivitiesEmpty(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        testWebSocketService.verify(userId);
+        testActivityService.verify(userId);
     }
 
     @SafeVarargs

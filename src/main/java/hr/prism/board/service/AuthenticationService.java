@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import hr.prism.board.domain.Resource;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -264,6 +265,8 @@ public class AuthenticationService {
         User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
         if (!user.equals(invitee)) {
             UserRole userRole = userRoleCacheService.findByUuid(uuid);
+            Resource resource = userRole.getResource();
+            
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
             entityManager.flush();
             userRole.setUser(user);
@@ -273,6 +276,8 @@ public class AuthenticationService {
                 activityService.deleteActivityUsers(invitee);
                 userCacheService.deleteUser(invitee);
             }
+            
+            activityService.sendActivities(resource);
         }
     }
 

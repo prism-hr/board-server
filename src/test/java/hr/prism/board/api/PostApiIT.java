@@ -16,7 +16,7 @@ import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestWebSocketService;
+import hr.prism.board.service.TestActivityService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
@@ -535,7 +535,7 @@ public class PostApiIT extends AbstractIT {
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
 
         // Create post
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
@@ -556,8 +556,8 @@ public class PostApiIT extends AbstractIT {
         String postUserGivenName = postUser.getGivenName();
         String resourceRedirect = serverUrl + "/redirect?resource=" + postId;
 
-        testWebSocketService.verify(departmentUserId, new TestWebSocketService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
+        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
@@ -570,13 +570,13 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
                     .put("resourceRedirect", resourceRedirect).put("modal", "Login").build()));
 
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
         // Create unprivileged users
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
 
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         // Clear activity streams for the admin users
@@ -593,7 +593,7 @@ public class PostApiIT extends AbstractIT {
             }
 
             listenForNewActivities(userId);
-            testWebSocketService.verify(userId);
+            testActivityService.verify(userId);
         }
 
         Long postUserId = postUser.getId();
@@ -655,9 +655,9 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -682,9 +682,9 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeAction(postId, "correct", correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
-        testWebSocketService.verify(departmentUserId, new TestWebSocketService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
-        testWebSocketService.verify(postUserId);
+        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
+        testActivityService.verify(postUserId);
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, departmentUser,
@@ -701,14 +701,14 @@ public class PostApiIT extends AbstractIT {
             .setComment("accepting without time constraints");
 
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.PENDING);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         postService.publishAndRetirePosts();
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
@@ -724,9 +724,9 @@ public class PostApiIT extends AbstractIT {
             () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
@@ -744,9 +744,9 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.executeAction(postId, "accept", acceptPendingDTO), State.PENDING);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
@@ -845,14 +845,14 @@ public class PostApiIT extends AbstractIT {
         String departmentMember2Uuid = departmentMember2.getUuid();
         String parentRedirect = serverUrl + "/redirect?resource=" + boardId;
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
-        testWebSocketService.verify(departmentMember1Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember2Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember3Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember4Id);
-        testWebSocketService.verify(departmentMember5Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember2Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember3Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember4Id);
+        testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         Resource department = resourceService.findOne(departmentId);
         UserRole departmentMemberRole1 = userRoleService.findByResourceAndUserAndRole(department, departmentMember1, Role.MEMBER);
@@ -880,14 +880,14 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeAction(postId, "reject", rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.REJECT_POST_ACTIVITY));
-        testWebSocketService.verify(departmentMember1Id);
-        testWebSocketService.verify(departmentMember2Id);
-        testWebSocketService.verify(departmentMember3Id);
-        testWebSocketService.verify(departmentMember4Id);
-        testWebSocketService.verify(departmentMember5Id);
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.REJECT_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id);
+        testActivityService.verify(departmentMember2Id);
+        testActivityService.verify(departmentMember3Id);
+        testActivityService.verify(departmentMember4Id);
+        testActivityService.verify(departmentMember5Id);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -899,18 +899,18 @@ public class PostApiIT extends AbstractIT {
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.PENDING);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
         postService.publishAndRetirePosts();
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
-        testWebSocketService.verify(departmentMember1Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember2Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember3Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember4Id);
-        testWebSocketService.verify(departmentMember5Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember2Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember3Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember4Id);
+        testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
@@ -940,14 +940,14 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.RETIRE_POST_ACTIVITY));
-        testWebSocketService.verify(departmentMember1Id);
-        testWebSocketService.verify(departmentMember2Id);
-        testWebSocketService.verify(departmentMember3Id);
-        testWebSocketService.verify(departmentMember4Id);
-        testWebSocketService.verify(departmentMember5Id);
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.RETIRE_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id);
+        testActivityService.verify(departmentMember2Id);
+        testActivityService.verify(departmentMember3Id);
+        testActivityService.verify(departmentMember4Id);
+        testActivityService.verify(departmentMember5Id);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RETIRE_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -974,14 +974,14 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        testWebSocketService.verify(departmentUserId);
-        testWebSocketService.verify(boardUserId);
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
-        testWebSocketService.verify(departmentMember1Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember2Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember3Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testWebSocketService.verify(departmentMember4Id);
-        testWebSocketService.verify(departmentMember5Id, new TestWebSocketService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentUserId);
+        testActivityService.verify(boardUserId);
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember2Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember3Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember4Id);
+        testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder().put("recipient", postUserGivenName).put("department", departmentName).put("board", boardName).put("post", postName)
@@ -996,7 +996,7 @@ public class PostApiIT extends AbstractIT {
                     .put("organization", "organization name").put("summary", "summary 2").put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", departmentMemberRole2.getUuid()).put("modal", "Register").put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid).build()));
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUser.getId());
@@ -1266,7 +1266,7 @@ public class PostApiIT extends AbstractIT {
             return null;
         }));
 
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
         listenForNewActivities(postUserId);
 
@@ -1290,7 +1290,7 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").build(),
                 makeTestAttachments("attachments1.pdf")));
-        testWebSocketService.verify(postUserId, new TestWebSocketService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
         List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
@@ -1319,9 +1319,9 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser2.getFullName())
                     .put("coveringNote", "note2").put("profile", "website2").build(),
                 makeTestAttachments("attachments2.pdf")));
-        testWebSocketService.verify(postUserId,
-            new TestWebSocketService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
-            new TestWebSocketService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+        testActivityService.verify(postUserId,
+            new TestActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
         responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
@@ -1364,12 +1364,12 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser3.getFullName())
                     .put("coveringNote", "note3").put("profile", "website3").build(),
                 makeTestAttachments("attachments3.pdf")));
-        testWebSocketService.verify(postUserId,
-            new TestWebSocketService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
-            new TestWebSocketService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
-            new TestWebSocketService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+        testActivityService.verify(postUserId,
+            new TestActivityService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new TestActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUserId);

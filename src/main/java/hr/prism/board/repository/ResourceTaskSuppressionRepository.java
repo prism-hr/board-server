@@ -9,9 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("JpaQlInspection")
 public interface ResourceTaskSuppressionRepository extends MyRepository<ResourceTaskSuppression, Long> {
-
+    
     ResourceTaskSuppression findByResourceTaskAndUser(ResourceTask resourceTask, User user);
-
+    
     @Modifying
     @Query(value =
         "delete from ResourceTaskSuppression resourceTaskSuppression " +
@@ -20,5 +20,5 @@ public interface ResourceTaskSuppressionRepository extends MyRepository<Resource
             "from ResourceTask resourceTask " +
             "where resourceTask.resource.id = :resourceId)")
     void deleteByResourceId(@Param("resourceId") Long resourceId);
-
+    
 }

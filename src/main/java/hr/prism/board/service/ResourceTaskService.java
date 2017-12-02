@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.ResourceTaskSuppression;
@@ -36,104 +37,117 @@ import java.util.stream.Collectors;
 @Transactional
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceTaskService {
-
+    
     private static final String SEPARATOR = ", ";
-
+    
     @SuppressWarnings("SqlResolve")
-    private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, creator_id, created_timestamp) VALUES ";
-
+    private static final String INSERT_RESOURCE_TASK = "INSERT INTO resource_task (resource_id, task, creator_id, created_timestamp, updated_timestamp) VALUES ";
+    
     private static final List<hr.prism.board.enums.ResourceTask> CREATE_TASKS = Arrays.asList(hr.prism.board.enums.ResourceTask.CREATE_MEMBER,
         hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
-
+    
     @Value("${resource.task.notification.interval.seconds}")
     private Long resourceTaskNotificationIntervalSeconds;
-
+    
     private Long resourceTaskNotificationIntervalSeconds2;
-
+    
     private Long resourceTaskNotificationIntervalSeconds3;
-
+    
     @Inject
     private ResourceTaskRepository resourceTaskRepository;
-
+    
     @Inject
     private ResourceTaskSuppressionRepository resourceTaskSuppressionRepository;
-
+    
     @Inject
     private ActivityService activityService;
-
+    
     @Lazy
     @Inject
     private ActivityEventService activityEventService;
-
+    
     @Lazy
     @Inject
     private NotificationEventService notificationEventService;
-
+    
     @PersistenceContext
     private EntityManager entityManager;
-
+    
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-
+    
     @PostConstruct
     public void postConstruct() {
         this.resourceTaskNotificationIntervalSeconds2 = 2 * resourceTaskNotificationIntervalSeconds;
         this.resourceTaskNotificationIntervalSeconds3 = 4 * resourceTaskNotificationIntervalSeconds;
     }
-
+    
     public ResourceTask findOne(Long id) {
         return resourceTaskRepository.findOne(id);
     }
-
+    
     public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource, User user) {
         return resourceTaskRepository.findByResource(resource, user);
     }
-
+    
     public void notifyTasks() {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime baseline1 = baseline.minusSeconds(resourceTaskNotificationIntervalSeconds);
         LocalDateTime baseline2 = baseline.minusSeconds(resourceTaskNotificationIntervalSeconds2);
         LocalDateTime baseline3 = baseline.minusSeconds(resourceTaskNotificationIntervalSeconds3);
-
-        ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> resourceTasks = getResourceTasks(baseline1, baseline2, baseline3);
+        
+        ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> resourceTasks = getResourceTasks(baseline1, baseline2, baseline3);
         resourceTasks.keySet().forEach(resourceId -> sendNotification(resourceId, resourceTasks.get(resourceId)));
     }
-
+    
     void createForNewResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
         insertResourceTasks(resourceId, userId, tasks);
     }
-
+    
     void createForExistingResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
         resourceTaskSuppressionRepository.deleteByResourceId(resourceId);
         resourceTaskRepository.deleteByResourceId(resourceId);
         insertResourceTasks(resourceId, userId, tasks);
     }
-
+    
     List<ResourceTask> findBySuppressions(User user) {
         return resourceTaskRepository.findBySuppressions(user);
     }
-
+    
     List<ResourceTask> findByResourceAndSuppressions(Resource resource, User user) {
         return resourceTaskRepository.findByResourceAndSuppressions(resource, user);
     }
-
+    
     void completeTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
-        activityService.deleteActivities(resource, tasks);
         resourceTaskRepository.updateByResourceAndTasks(resource, tasks, true);
-    }
-
-    void createSuppression(User user, Long taskId) {
-        ResourceTask task = resourceTaskRepository.findOne(taskId);
-        ResourceTaskSuppression suppression = resourceTaskSuppressionRepository.findByResourceTaskAndUser(task, user);
-        if (suppression == null) {
-            resourceTaskSuppressionRepository.save(new ResourceTaskSuppression().setResourceTask(task).setUser(user));
+        entityManager.flush();
+        
+        if (resourceTaskRepository.findByResourceAndNotCompleted(resource).isEmpty()) {
+            activityService.deleteActivities(resource, Arrays.asList(hr.prism.board.enums.Activity.CREATE_TASK_ACTIVITY, hr.prism.board.enums.Activity.UPDATE_TASK_ACTIVITY));
+            activityService.sendActivities(resource);
         }
     }
-
+    
+    void createSuppression(User user, Long taskId) {
+        ResourceTask resourceTask = resourceTaskRepository.findOne(taskId);
+        ResourceTaskSuppression suppression = resourceTaskSuppressionRepository.findByResourceTaskAndUser(resourceTask, user);
+        if (suppression == null) {
+            resourceTaskSuppressionRepository.save(new ResourceTaskSuppression().setResourceTask(resourceTask).setUser(user));
+            entityManager.flush();
+            
+            if (resourceTaskRepository.findByResourceAndNotSuppressed(resourceTask.getResource(), user).isEmpty()) {
+                Long userId = user.getId();
+                activityService.dismissActivities(resourceTask.getResource().getId(),
+                    ImmutableList.of(hr.prism.board.enums.Activity.CREATE_TASK_ACTIVITY, hr.prism.board.enums.Activity.UPDATE_TASK_ACTIVITY), userId);
+                activityService.sendActivities(userId);
+            }
+        }
+    }
+    
     private void insertResourceTasks(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
         String insert = INSERT_RESOURCE_TASK + tasks.stream()
-            .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline)").collect(Collectors.joining(SEPARATOR));
+            .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline, :baseline)").collect(Collectors.joining(SEPARATOR));
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             Query query = entityManager.createNativeQuery(insert);
             query.setParameter("resourceId", resourceId);
@@ -141,37 +155,33 @@ public class ResourceTaskService {
             query.setParameter("baseline", LocalDateTime.now());
             return query.executeUpdate();
         });
-
+        
         entityManager.flush();
     }
-
-    private ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> getResourceTasks(
-        LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
-        ArrayListMultimap<Pair<Long, Integer>, Pair<Long, hr.prism.board.enums.ResourceTask>> resourceTasks = ArrayListMultimap.create();
+    
+    private ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> getResourceTasks(LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
+        ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> resourceTasks = ArrayListMultimap.create();
         resourceTaskRepository.findByNotificationHistory(1, 2, baseline1, baseline2, baseline3)
             .forEach(resourceTask -> resourceTasks.put(
-                Pair.of(resourceTask.getResource().getId(), resourceTask.getNotifiedCount()),
-                Pair.of(resourceTask.getId(), resourceTask.getTask())));
+                Pair.of(resourceTask.getResource().getId(), resourceTask.getNotifiedCount()), resourceTask.getTask()));
         return resourceTasks;
     }
-
-    private void sendNotification(Pair<Long, Integer> resource, List<Pair<Long, hr.prism.board.enums.ResourceTask>> tasks) {
+    
+    private void sendNotification(Pair<Long, Integer> resource, List<hr.prism.board.enums.ResourceTask> tasks) {
         Long resourceId = resource.getKey();
         Integer notifiedCount = resource.getValue();
-        String notificationContext = CREATE_TASKS.contains(tasks.get(0).getValue()) ? "CREATE" : "UPDATE";
+        String notificationContext = CREATE_TASKS.contains(tasks.get(0)) ? "CREATE" : "UPDATE";
         if (notifiedCount == null) {
-            tasks.forEach(task -> {
-                Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-                    .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY"));
-                activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
-            });
+            Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
+                .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY"));
+            activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
         }
-
+        
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "_TASK_NOTIFICATION"));
-
-        notificationEventService.publishEvent(this, resourceId, tasks.stream().map(Pair::getValue).collect(Collectors.toList()), Collections.singletonList(notification));
+        
+        notificationEventService.publishEvent(this, resourceId, tasks, Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
     }
-
+    
 }
