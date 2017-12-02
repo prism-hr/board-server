@@ -1,11 +1,5 @@
 package hr.prism.board.notification.property;
 
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-
-import javax.inject.Inject;
-
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.ResourceTask;
@@ -13,22 +7,26 @@ import hr.prism.board.exception.BoardNotificationException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.ResourceTaskService;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.util.List;
 
 @Component
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceTaskProperty implements NotificationProperty {
-
-    private static final String CREATE_MEMBER = "Add some members - visit the user management section to build your student list and start sending notifications.";
-
-    private static final String UPDATE_MEMBER = "Add some new members - visit the user management to add this year's new students to your student list.";
-
-    private static final String CREATE_POST = "Got an opportunity to share - go to the new post form to start adding content.";
-
-    private static final String DEPLOY_BADGE = "";
-
+    
+    private static final String CREATE_MEMBER = "Ready to get started - visit the user management area to build your student list.";
+    
+    private static final String UPDATE_MEMBER = "New students arriving - visit the user management area to update your student list.";
+    
+    private static final String CREATE_POST = "Got something to share - create some posts and start sending notifications.";
+    
+    private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your page on other websites.";
+    
     @Inject
     private ResourceTaskService resourceTaskService;
-
+    
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         User user = notificationRequest.getRecipient();
         Resource resource = notificationRequest.getResource();
@@ -36,7 +34,7 @@ public class ResourceTaskProperty implements NotificationProperty {
         if (tasks.isEmpty()) {
             throw new BoardNotificationException(ExceptionCode.EMPTY_RESOURCE_TASKS, "No tasks for resource " + resource.toString());
         }
-
+        
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("<ul>");
         for (ResourceTask task : tasks) {
@@ -55,12 +53,12 @@ public class ResourceTaskProperty implements NotificationProperty {
                     stringBuilder.append(DEPLOY_BADGE);
                     break;
             }
-
+            
             stringBuilder.append("</li>");
         }
-
+        
         stringBuilder.append("</ul>");
         return stringBuilder.toString();
     }
-
+    
 }
