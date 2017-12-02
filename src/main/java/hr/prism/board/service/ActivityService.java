@@ -187,6 +187,10 @@ public class ActivityService {
         activityRepository.deleteByUserRoles(userRoles);
     }
     
+    public ImmutableList<Long> getUserIds() {
+        return ImmutableList.copyOf(this.userIds);
+    }
+    
     public void sendActivities(Long userId) {
         entityManager.flush();
         sendActivities(userId, getActivities(userId));
@@ -194,7 +198,7 @@ public class ActivityService {
     
     public void sendActivities(Resource resource) {
         entityManager.flush();
-        List<Long> userIds = ImmutableList.copyOf(this.userIds);
+        List<Long> userIds = getUserIds();
         if (!userIds.isEmpty()) {
             for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
                 sendActivities(userId);
