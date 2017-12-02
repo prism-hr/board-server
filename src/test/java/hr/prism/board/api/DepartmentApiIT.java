@@ -262,83 +262,24 @@ public class DepartmentApiIT extends AbstractIT {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentUserId = departmentUser.getId();
-        
-        testActivityService.record();
-        testNotificationService.record();
-        listenForNewActivities(departmentUserId);
-        
+    
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
-        
-        LocalDateTime resourceTaskCreatedTimestamp = transactionTemplate.execute(status ->
-            resourceTaskRepository.findByResourceId(departmentId).iterator().next().getCreatedTimestamp());
-        
-        String recipient = departmentUser.getGivenName();
-        String resourceTask =
-            "<ul><li>Ready to get started - visit the user management area to build your student list.</li>" +
-                "<li>Got something to share - create some posts and start sending notifications.</li>" +
-                "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>";
-        String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
-        
-        transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
-            return null;
-        });
-        
-        resourceTaskService.notifyTasks();
-        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
-            ImmutableMap.<String, String>builder().put("recipient", recipient)
-                .put("department", "department")
-                .put("resourceTask", resourceTask)
-                .put("resourceTaskRedirect", resourceTaskRedirect)
-                .put("modal", "Login")
-                .build()));
-        
-        transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
-            return null;
-        });
-        
-        resourceTaskService.notifyTasks();
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
-            ImmutableMap.<String, String>builder().put("recipient", recipient)
-                .put("department", "department")
-                .put("resourceTask", resourceTask)
-                .put("resourceTaskRedirect", resourceTaskRedirect)
-                .put("modal", "Login")
-                .build()));
-        
-        transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
-            return null;
-        });
-        
-        resourceTaskService.notifyTasks();
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
-            ImmutableMap.<String, String>builder().put("recipient", recipient)
-                .put("department", "department")
-                .put("resourceTask", resourceTask)
-                .put("resourceTaskRedirect", resourceTaskRedirect)
-                .put("modal", "Login")
-                .build()));
-        
-        resourceTaskService.notifyTasks();
-        testNotificationService.verify();
-        
         Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
+    
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
-        
+    
+        testActivityService.record();
         listenForNewActivities(boardUserId);
-        testUserService.setAuthentication(departmentUserId);
+    
+        testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
             new UserRoleDTO()
                 .setUser(new UserDTO().setId(boardUserId))
                 .setRole(Role.ADMINISTRATOR)));
-        
+    
         testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
         testActivityService.stop();
         
@@ -480,6 +421,77 @@ public class DepartmentApiIT extends AbstractIT {
             new ChangeListRepresentation()
                 .put("documentLogo", ObjectUtils.orderedMap("cloudinaryId", "c2", "cloudinaryUrl", "u2", "fileName", "f2"), null)
                 .put("memberCategories", Arrays.asList("MASTER_STUDENT", "UNDERGRADUATE_STUDENT"), null));
+    }
+    
+    @Test
+    public void shouldSupportDepartmentTasks() {
+        User departmentUser = testUserService.authenticate();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentUserId = departmentUser.getId();
+    
+        testActivityService.record();
+        testNotificationService.record();
+        listenForNewActivities(departmentUserId);
+    
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
+        DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
+        Long departmentId = departmentR.getId();
+    
+        LocalDateTime resourceTaskCreatedTimestamp = transactionTemplate.execute(status ->
+            resourceTaskRepository.findByResourceId(departmentId).iterator().next().getCreatedTimestamp());
+    
+        String recipient = departmentUser.getGivenName();
+        String resourceTask =
+            "<ul><li>Ready to get started - visit the user management area to build your student list.</li>" +
+                "<li>Got something to share - create some posts and start sending notifications.</li>" +
+                "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>";
+        String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
+    
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
+            return null;
+        });
+    
+        resourceTaskService.notifyTasks();
+        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder().put("recipient", recipient)
+                .put("department", "department")
+                .put("resourceTask", resourceTask)
+                .put("resourceTaskRedirect", resourceTaskRedirect)
+                .put("modal", "Login")
+                .build()));
+    
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
+            return null;
+        });
+    
+        resourceTaskService.notifyTasks();
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder().put("recipient", recipient)
+                .put("department", "department")
+                .put("resourceTask", resourceTask)
+                .put("resourceTaskRedirect", resourceTaskRedirect)
+                .put("modal", "Login")
+                .build()));
+    
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
+            return null;
+        });
+    
+        resourceTaskService.notifyTasks();
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder().put("recipient", recipient)
+                .put("department", "department")
+                .put("resourceTask", resourceTask)
+                .put("resourceTaskRedirect", resourceTaskRedirect)
+                .put("modal", "Login")
+                .build()));
+    
+        resourceTaskService.notifyTasks();
+        testNotificationService.verify();
     }
     
     @Test
