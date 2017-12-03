@@ -500,6 +500,18 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("modal", "Login")
                     .build()));
         
+        DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR2.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR2.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR2.getTasks().get(1).getCompleted());
+        transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR2.getTasks().get(0).getId()));
+        
+        testUserService.setAuthentication(otherDepartmentUserId);
+        DepartmentRepresentation departmentR3 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR3.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR3.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR3.getTasks().get(1).getCompleted());
+        
         transactionTemplate.execute(status -> {
             resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
             return null;
@@ -510,7 +522,9 @@ public class DepartmentApiIT extends AbstractIT {
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", recipient)
                     .put("department", "department")
-                    .put("resourceTask", resourceTask)
+                    .put("resourceTask",
+                        "<ul><li>Got something to share - create some posts and start sending notifications.</li>" +
+                            "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>")
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("modal", "Login")
                     .build()),
@@ -522,6 +536,20 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("modal", "Login")
                     .build()));
         
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR4 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR4.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR4.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR4.getTasks().get(1).getCompleted());
+        transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR3.getTasks().get(1).getId()));
+        transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR3.getTasks().get(2).getId()));
+        
+        testUserService.setAuthentication(otherDepartmentUserId);
+        DepartmentRepresentation departmentR5 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR5.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
+        
         transactionTemplate.execute(status -> {
             resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
             return null;
@@ -529,20 +557,13 @@ public class DepartmentApiIT extends AbstractIT {
         
         resourceTaskService.notifyTasks();
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
-                ImmutableMap.<String, String>builder().put("recipient", recipient)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("modal", "Login")
-                    .build()),
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, otherDepartmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", otherRecipient)
                     .put("department", "department")
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("modal", "Login")
-                    .build()));h
+                    .build()));
         
         resourceTaskService.notifyTasks();
         testNotificationService.verify();

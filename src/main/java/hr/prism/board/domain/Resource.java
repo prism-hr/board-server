@@ -78,6 +78,7 @@ public class Resource extends BoardEntity {
     @OneToMany(mappedBy = "resource")
     private Set<ResourceSearch> searches = new HashSet<>();
 
+    @OrderBy("id asc")
     @OneToMany(mappedBy = "resource")
     private Set<ResourceTask> tasks = new HashSet<>();
 

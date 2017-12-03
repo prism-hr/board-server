@@ -113,7 +113,7 @@ public class NotificationEventService {
                             template, user, recipient.getInvitation(), resource, action, mapAttachments(notification.getAttachments())));
                         sent.put(user, template);
                     } catch (BoardNotificationException e) {
-                        LOGGER.info("Aborted sending notification: " + template + " to " + user.toString());
+                        LOGGER.info("Aborted sending notification: " + template + " to " + user.toString() + " - " + e.getMessage());
                     }
                 }
             }
