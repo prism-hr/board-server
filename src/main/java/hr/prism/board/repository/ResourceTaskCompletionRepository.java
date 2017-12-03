@@ -1,20 +1,20 @@
 package hr.prism.board.repository;
 
 import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.domain.ResourceTaskSuppression;
+import hr.prism.board.domain.ResourceTaskCompletion;
 import hr.prism.board.domain.User;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("JpaQlInspection")
-public interface ResourceTaskSuppressionRepository extends MyRepository<ResourceTaskSuppression, Long> {
+public interface ResourceTaskCompletionRepository extends MyRepository<ResourceTaskCompletion, Long> {
     
-    ResourceTaskSuppression findByResourceTaskAndUser(ResourceTask resourceTask, User user);
+    ResourceTaskCompletion findByResourceTaskAndUser(ResourceTask resourceTask, User user);
     
     @Modifying
     @Query(value =
-        "delete from ResourceTaskSuppression resourceTaskSuppression " +
+        "delete from ResourceTaskCompletion resourceTaskSuppression " +
             "where resourceTaskSuppression.resourceTask in (" +
             "select resourceTask " +
             "from ResourceTask resourceTask " +

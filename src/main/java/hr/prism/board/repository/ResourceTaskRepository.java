@@ -26,9 +26,9 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "and resourceTask.id not in (" +
             "select resourceTask.id " +
             "from ResourceTask resourceTask " +
-            "inner join resourceTask.suppressions suppression " +
+            "inner join resourceTask.completions completion " +
             "where resourceTask.resource = :resource " +
-            "and suppression.user = :user)")
+            "and completion.user = :user)")
     List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource, @Param("user") User user);
     
     @Query(value =
@@ -41,21 +41,6 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
     List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
         @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
         @Param("baseline3") LocalDateTime baseline3);
-    
-    @Query(value =
-        "select resourceTask " +
-            "from ResourceTask resourceTask " +
-            "inner join resourceTask.suppressions suppression " +
-            "where suppression.user = :user")
-    List<ResourceTask> findBySuppressions(@Param("user") User user);
-    
-    @Query(value =
-        "select resourceTask " +
-            "from ResourceTask resourceTask " +
-            "inner join resourceTask.suppressions suppression " +
-            "where resourceTask.resource = :resource " +
-            "and suppression.user = :user")
-    List<ResourceTask> findByResourceAndSuppressions(@Param("resource") Resource resource, @Param("user") User user);
     
     @Modifying
     @Query(value =
@@ -101,9 +86,9 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "and resourceTask.id not in (" +
             "select resourceTask.id " +
             "from ResourceTask resourceTask " +
-            "inner join resourceTask.suppressions suppression " +
+            "inner join resourceTask.completions completion " +
             "where resourceTask.resource = :resource " +
-            "and suppression.user = :user)")
-    List<Long> findByResourceAndNotSuppressed(@Param("resource") Resource resource, @Param("user") User user);
+            "and completion.user = :user)")
+    List<Long> findByResourceAndNotCompleted(@Param("resource") Resource resource, @Param("user") User user);
     
 }

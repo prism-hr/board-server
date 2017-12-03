@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue"})
 public class DepartmentApi {
 
     @Inject

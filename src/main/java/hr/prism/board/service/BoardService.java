@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -25,52 +24,43 @@ import java.util.stream.Collectors;
 @Transactional
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BoardService {
-
+    
     @Inject
     private BoardRepository boardRepository;
-
+    
     @Inject
     private ActionService actionService;
-
+    
     @Inject
     private ResourceService resourceService;
-
+    
     @Inject
     private ResourcePatchService resourcePatchService;
-
+    
     @Inject
     private UserRoleService userRoleService;
-
+    
     @Inject
     private UserService userService;
-
+    
     @Inject
     private DocumentService documentService;
-
-    @Inject
-    private PostService postService;
-
-    @Inject
-    private ResourceTaskService resourceTaskService;
-
-    @Inject
-    private FreeMarkerConfig freemarkerConfig;
-
+    
     @Value("${app.url}")
     private String appUrl;
-
+    
     public Board getBoard(Long id) {
         User user = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(user, Scope.BOARD, id);
         return (Board) actionService.executeAction(user, board, Action.VIEW, () -> board);
     }
-
+    
     public Board getBoard(String handle) {
         User user = userService.getCurrentUser();
         Board board = (Board) resourceService.getResource(user, Scope.BOARD, handle);
         return (Board) actionService.executeAction(user, board, Action.VIEW, () -> board);
     }
-
+    
     public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
@@ -78,31 +68,31 @@ public class BoardService {
                 .setOrderStatement("resource.name"))
             .stream().map(resource -> (Board) resource).collect(Collectors.toList());
     }
-
+    
     public Board createBoard(Long departmentId, BoardDTO boardDTO) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, Action.EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
             resourceService.validateUniqueName(Scope.BOARD, null, department, name, ExceptionCode.DUPLICATE_BOARD);
-
+            
             Board board = new Board();
             board.setName(name);
             board.setSummary(boardDTO.getSummary());
-
+            
             BoardType type = boardDTO.getType();
             board.setType(type == null ? BoardType.CUSTOM : type);
-
+            
             DocumentDTO documentLogoDTO = boardDTO.getDocumentLogo();
             if (documentLogoDTO == null) {
                 board.setDocumentLogo(department.getDocumentLogo());
             } else {
                 board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
             }
-
+            
             board.setHandle(resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle));
             board = boardRepository.save(board);
-
+            
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
             resourceService.setIndexDataAndQuarter(board);
@@ -110,7 +100,7 @@ public class BoardService {
             return board;
         });
     }
-
+    
     public Board executeAction(Long id, Action action, BoardPatchDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
@@ -124,15 +114,15 @@ public class BoardService {
                     return board;
                 });
             }
-
+            
             return board;
         });
     }
-
-    public void updateBoardPostCounts(List<Long> postIds, String state) {
+    
+    void updateBoardPostCounts(List<Long> postIds, String state) {
         boardRepository.updateBoardPostCounts(postIds, state);
     }
-
+    
     @SuppressWarnings("unchecked")
     private void updateBoard(Board board, BoardPatchDTO boardDTO) {
         board.setChangeList(new ChangeListRepresentation());
@@ -144,5 +134,5 @@ public class BoardService {
         resourceService.setIndexDataAndQuarter(board);
         boardRepository.update(board);
     }
-
+    
 }

@@ -24,7 +24,10 @@ public class ResourceTask extends BoardEntity {
     private Integer notifiedCount;
 
     @OneToMany(mappedBy = "resourceTask")
-    private Set<ResourceTaskSuppression> suppressions = new HashSet<>();
+    private Set<ResourceTaskCompletion> completions = new HashSet<>();
+    
+    @Transient
+    private Boolean completedForUser;
 
     public Resource getResource() {
         return resource;
@@ -62,8 +65,17 @@ public class ResourceTask extends BoardEntity {
         return this;
     }
 
-    public Set<ResourceTaskSuppression> getSuppressions() {
-        return suppressions;
+    public Set<ResourceTaskCompletion> getCompletions() {
+        return completions;
     }
-
+    
+    public Boolean getCompletedForUser() {
+        return completedForUser;
+    }
+    
+    public ResourceTask setCompletedForUser(Boolean completedForUser) {
+        this.completedForUser = completedForUser;
+        return this;
+    }
+    
 }

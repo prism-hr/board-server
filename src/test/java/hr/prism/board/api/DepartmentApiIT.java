@@ -99,7 +99,9 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("f", documentR.getFileName());
         
         verifyNewDepartmentBoards(departmentId);
-        Assert.assertEquals(ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE), departmentR.getTasks());
+        Assert.assertEquals(
+            ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE),
+            departmentR.getTasks().stream().map(ResourceTaskRepresentation::getTask).collect(Collectors.toList()));
         ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
     }
     
@@ -135,7 +137,9 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("g", documentR.getFileName());
         
         verifyNewDepartmentBoards(departmentId);
-        Assert.assertEquals(ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE), departmentR.getTasks());
+        Assert.assertEquals(
+            ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE),
+            departmentR.getTasks().stream().map(ResourceTaskRepresentation::getTask).collect(Collectors.toList()));
     }
     
     @Test
@@ -429,13 +433,23 @@ public class DepartmentApiIT extends AbstractIT {
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         Long departmentUserId = departmentUser.getId();
     
-        testActivityService.record();
-        testNotificationService.record();
-        listenForNewActivities(departmentUserId);
-    
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
+        
+        User otherDepartmentUser = testUserService.authenticate();
+        Long otherDepartmentUserId = otherDepartmentUser.getId();
+        
+        testUserService.setAuthentication(departmentUserId);
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO()
+                .setUser(new UserDTO().setId(otherDepartmentUserId))
+                .setRole(Role.ADMINISTRATOR)));
+    
+        testActivityService.record();
+        testNotificationService.record();
+        listenForNewActivities(departmentUserId);
+        listenForNewActivities(otherDepartmentUserId);
     
         LocalDateTime resourceTaskCreatedTimestamp = transactionTemplate.execute(status ->
             resourceTaskRepository.findByResourceId(departmentId).iterator().next().getCreatedTimestamp());
@@ -454,6 +468,8 @@ public class DepartmentApiIT extends AbstractIT {
     
         resourceTaskService.notifyTasks();
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+        testActivityService.verify(otherDepartmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+        
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", recipient)
                 .put("department", "department")
@@ -461,7 +477,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("resourceTaskRedirect", resourceTaskRedirect)
                 .put("modal", "Login")
                 .build()));
-    
+        
         transactionTemplate.execute(status -> {
             resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
             return null;

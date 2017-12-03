@@ -4,13 +4,13 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.domain.ResourceTaskSuppression;
+import hr.prism.board.domain.ResourceTaskCompletion;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.repository.ResourceTaskCompletionRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
-import hr.prism.board.repository.ResourceTaskSuppressionRepository;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Activity;
@@ -57,7 +57,7 @@ public class ResourceTaskService {
     private ResourceTaskRepository resourceTaskRepository;
     
     @Inject
-    private ResourceTaskSuppressionRepository resourceTaskSuppressionRepository;
+    private ResourceTaskCompletionRepository resourceTaskCompletionRepository;
     
     @Inject
     private ActivityService activityService;
@@ -106,17 +106,9 @@ public class ResourceTaskService {
     }
     
     void createForExistingResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        resourceTaskSuppressionRepository.deleteByResourceId(resourceId);
+        resourceTaskCompletionRepository.deleteByResourceId(resourceId);
         resourceTaskRepository.deleteByResourceId(resourceId);
         insertResourceTasks(resourceId, userId, tasks);
-    }
-    
-    List<ResourceTask> findBySuppressions(User user) {
-        return resourceTaskRepository.findBySuppressions(user);
-    }
-    
-    List<ResourceTask> findByResourceAndSuppressions(Resource resource, User user) {
-        return resourceTaskRepository.findByResourceAndSuppressions(resource, user);
     }
     
     void completeTasks(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
@@ -129,14 +121,14 @@ public class ResourceTaskService {
         }
     }
     
-    void createSuppression(User user, Long taskId) {
+    void createCompletion(User user, Long taskId) {
         ResourceTask resourceTask = resourceTaskRepository.findOne(taskId);
-        ResourceTaskSuppression suppression = resourceTaskSuppressionRepository.findByResourceTaskAndUser(resourceTask, user);
-        if (suppression == null) {
-            resourceTaskSuppressionRepository.save(new ResourceTaskSuppression().setResourceTask(resourceTask).setUser(user));
+        ResourceTaskCompletion completion = resourceTaskCompletionRepository.findByResourceTaskAndUser(resourceTask, user);
+        if (completion == null) {
+            resourceTaskCompletionRepository.save(new ResourceTaskCompletion().setResourceTask(resourceTask).setUser(user));
             entityManager.flush();
             
-            if (resourceTaskRepository.findByResourceAndNotSuppressed(resourceTask.getResource(), user).isEmpty()) {
+            if (resourceTaskRepository.findByResourceAndNotCompleted(resourceTask.getResource(), user).isEmpty()) {
                 Long userId = user.getId();
                 activityService.dismissActivities(resourceTask.getResource().getId(),
                     ImmutableList.of(hr.prism.board.enums.Activity.CREATE_TASK_ACTIVITY, hr.prism.board.enums.Activity.UPDATE_TASK_ACTIVITY), userId);
