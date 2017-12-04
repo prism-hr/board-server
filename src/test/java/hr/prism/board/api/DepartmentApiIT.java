@@ -556,6 +556,13 @@ public class DepartmentApiIT extends AbstractIT {
         });
         
         testActivityService.verify(departmentUserId);
+        transactionTemplate.execute(status -> {
+            List<ActivityRepresentation> activities = activityService.getActivities(otherDepartmentUserId);
+            Assert.assertEquals(
+                Arrays.asList(Activity.CREATE_TASK_ACTIVITY, Activity.JOIN_DEPARTMENT_ACTIVITY),
+                activities.stream().map(ActivityRepresentation::getActivity).collect(Collectors.toList()));
+            return null;
+        });
         
         resourceTaskService.notifyTasks();
         testNotificationService.verify(
@@ -581,6 +588,9 @@ public class DepartmentApiIT extends AbstractIT {
         
         resourceTaskService.notifyTasks();
         testNotificationService.verify();
+        
+        // TODO: verify that tasks are removed for all users when actions are completed
+        // TODO: verify that update tasks work as expected
     }
     
     @Test

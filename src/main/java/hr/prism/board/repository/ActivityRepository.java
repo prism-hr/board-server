@@ -129,6 +129,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "where activity.resource = :resource " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<Long> findByResourceWithActivityUsers(@Param("resource") Resource resource);
     
 }

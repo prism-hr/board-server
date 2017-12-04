@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-@SuppressWarnings("JpaQlInspection")
+@SuppressWarnings({"JpaQlInspection", "SqlResolve"})
 public interface ActivityEventRepository extends MyRepository<ActivityEvent, Long> {
     
     ActivityEvent findByActivityAndUserAndEvent(Activity activity, User user, hr.prism.board.enums.ActivityEvent event);
@@ -90,8 +90,8 @@ public interface ActivityEventRepository extends MyRepository<ActivityEvent, Lon
     
     @Modifying
     @Query(value =
-        "INSERT INTO activity_event (activity_id, user_id, event, created_timestamp, updated_timestamp) " +
-            "SELECT activity.id, :userId, :event, :baseline, :baseline " +
+        "INSERT INTO activity_event (activity_id, user_id, event, creator_id, created_timestamp, updated_timestamp) " +
+            "SELECT activity.id, :userId, :event, :userId, :baseline, :baseline " +
             "FROM activity " +
             "WHERE activity.resource_id = :resourceId " +
             "AND activity.activity IN (:activities)",

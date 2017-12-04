@@ -208,7 +208,7 @@ public class ActivityService {
     void dismissActivities(Long resourceId, List<hr.prism.board.enums.Activity> activities, Long userId) {
         activityEventRepository.insertByResourceIdActivitiesUserIdAndEvent(resourceId,
             activities.stream().map(hr.prism.board.enums.Activity::name).collect(Collectors.toList()), userId,
-            hr.prism.board.enums.ActivityEvent.VIEW.name(), LocalDateTime.now());
+            hr.prism.board.enums.ActivityEvent.DISMISSAL.name(), LocalDateTime.now());
     }
     
     void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {
