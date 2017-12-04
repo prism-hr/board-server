@@ -1,38 +1,35 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.representation.TestEmailMessageRepresentation;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import hr.prism.board.representation.TestEmailMessageRepresentation;
 
 @Entity
 @Table(name = "test_email")
 public class TestEmail extends BoardEntity {
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
+    
+    @Column(name = "email", nullable = false)
+    private String email;
+    
     @Column(name = "message", nullable = false)
     private TestEmailMessageRepresentation message;
-
-    public User getUser() {
-        return user;
+    
+    public String getEmail() {
+        return email;
     }
-
-    public void setUser(User user) {
-        this.user = user;
+    
+    public void setEmail(String email) {
+        this.email = email;
     }
-
+    
     public TestEmailMessageRepresentation getMessage() {
         return message;
     }
-
+    
     public void setMessage(TestEmailMessageRepresentation message) {
         this.message = message;
     }
-
+    
 }

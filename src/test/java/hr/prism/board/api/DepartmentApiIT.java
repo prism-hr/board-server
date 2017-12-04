@@ -540,7 +540,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR4 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         Assert.assertTrue(departmentR4.getTasks().get(0).getCompleted());
         Assert.assertFalse(departmentR4.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR4.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR4.getTasks().get(2).getCompleted());
         transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR3.getTasks().get(1).getId()));
         transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR3.getTasks().get(2).getId()));
         
@@ -548,12 +548,14 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR5 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         Assert.assertFalse(departmentR5.getTasks().get(0).getCompleted());
         Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR5.getTasks().get(2).getCompleted());
         
         transactionTemplate.execute(status -> {
             resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
             return null;
         });
+        
+        testActivityService.verify(departmentUserId);
         
         resourceTaskService.notifyTasks();
         testNotificationService.verify(
@@ -564,6 +566,18 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("modal", "Login")
                     .build()));
+    
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR6 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR6.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR6.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR6.getTasks().get(2).getCompleted());
+    
+        testUserService.setAuthentication(otherDepartmentUserId);
+        DepartmentRepresentation departmentR7 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR7.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR7.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR7.getTasks().get(2).getCompleted());
         
         resourceTaskService.notifyTasks();
         testNotificationService.verify();

@@ -9,19 +9,18 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface TestEmailRepository extends MyRepository<TestEmail, Long> {
-
+    
     @Query(value =
         "select testEmail.message " +
             "from TestEmail testEmail " +
             "order by testEmail.id desc")
     List<TestEmailMessageRepresentation> findAllMessages();
-
+    
     @Query(value =
         "select testEmail.message " +
             "from TestEmail testEmail " +
-            "inner join testEmail.user user " +
-            "where user.email = :email " +
+            "where testEmail.email = :email " +
             "order by testEmail.id desc")
     List<TestEmailMessageRepresentation> findMessagesByUserEmail(@Param("email") String email);
-
+    
 }
