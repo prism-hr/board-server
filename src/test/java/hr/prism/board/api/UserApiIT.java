@@ -259,7 +259,7 @@ public class UserApiIT extends AbstractIT {
         stompHeaders.set("Authorization", "Bearer " + loginAccessToken);
 
         StompSession stompSession =
-            webSocketStompClient.connect("ws://localhost:" + localServerPort + "/api/web-socket",
+            webSocketStompClient.connect("ws://127.0.0.1:" + localServerPort + "/api/web-socket", 
                 webSocketHttpHeaders, stompHeaders, new StompSessionHandlerAdapter() {})
                 .get(1, TimeUnit.SECONDS);
 
