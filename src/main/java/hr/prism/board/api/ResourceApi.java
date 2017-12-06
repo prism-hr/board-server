@@ -10,7 +10,6 @@ import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.BadgeService;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
 import org.apache.commons.lang3.StringUtils;
@@ -34,9 +33,6 @@ public class ResourceApi {
 
     @Inject
     private ResourceService resourceService;
-
-    @Inject
-    private ResourceTaskService resourceTaskService;
 
     @Inject
     private BadgeService badgeService;
