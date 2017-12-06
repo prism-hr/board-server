@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
@@ -242,9 +243,8 @@ public abstract class AbstractIT {
     void listenForNewActivities(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-
-        GenericMessage message = new GenericMessage<>("CONNECTED".getBytes());
-        message.getHeaders().put("simpUser", new AuthenticationToken(userId));
+        
+        GenericMessage<byte[]> message = new GenericMessage<>("CONNECTED".getBytes(), ImmutableMap.of("simpUser", new AuthenticationToken(userId)));
         testActivityService.handleSessionConnectedEvent(new SessionConnectedEvent(this, message));
     }
 
