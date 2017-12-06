@@ -94,8 +94,8 @@ public class UserApi {
     public void subscribe(Principal principal) {
         SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
         Long userId = userService.getCurrentUserSecured().getId();
-        activityService.sendActivities(userId);
         ActivityService.addUserId(userId);
+        activityService.sendActivities(userId);
     }
 
     @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)
