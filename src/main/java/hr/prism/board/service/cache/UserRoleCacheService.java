@@ -26,10 +26,9 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import hr.prism.board.workflow.Activity;
-
 @Service
 @Transactional
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserRoleCacheService {
 
     @Inject
@@ -66,8 +65,7 @@ public class UserRoleCacheService {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
-        if (notify && (role == Role.MEMBER || Objects.equals(currentUser, user)
-            || !userRoleRepository.findByResourceAndUserAndNotRole(resource, user, Role.MEMBER).isEmpty())) {
+        if (notify && (Objects.equals(currentUser, user) || !userRoleRepository.findByResourceAndUserAndRoles(resource, user, Role.NOTIFIABLE).isEmpty())) {
             notify = false;
         }
 

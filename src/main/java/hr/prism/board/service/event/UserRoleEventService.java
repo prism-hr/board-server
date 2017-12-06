@@ -37,11 +37,12 @@ public class UserRoleEventService {
 
     @Async
     @TransactionalEventListener
+    @SuppressWarnings("unused")
     public void createResourceUsersAsync(UserRoleEvent userRoleEvent) {
         createResourceUsers(userRoleEvent, true);
     }
 
-    protected void createResourceUsers(UserRoleEvent userRoleEvent, boolean invokedAsynchronously) {
+    void createResourceUsers(UserRoleEvent userRoleEvent, boolean invokedAsynchronously) {
         Long resourceId = userRoleEvent.getResourceId();
         User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
         for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {

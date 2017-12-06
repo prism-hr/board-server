@@ -44,8 +44,8 @@ public interface UserRoleRepository extends MyRepository<UserRole, Long> {
             "from UserRole userRole " +
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
-            "and userRole.role <> :role")
-    List<UserRole> findByResourceAndUserAndNotRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+            "and userRole.role in (:roles)")
+    List<UserRole> findByResourceAndUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") List<Role> roles);
 
     @Query(value =
         "select new hr.prism.board.value.UserRoleSummary(userRole.role, count(userRole.id), max(userRole.createdTimestamp)) " +

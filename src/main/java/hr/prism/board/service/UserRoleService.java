@@ -30,55 +30,55 @@ import java.util.stream.Collectors;
 @Transactional
 @SuppressWarnings({"JpaQlInspection", "SpringAutowiredFieldsWarningInspection"})
 public class UserRoleService {
-    
+
     @Inject
     private UserRoleRepository userRoleRepository;
-    
+
     @Inject
     private UserRoleCacheService userRoleCacheService;
-    
+
     @Inject
     private ActivityService activityService;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserService userService;
-    
+
     @Inject
     private UserCacheService userCacheService;
-    
+
     @Inject
     private ActionService actionService;
-    
+
     @Inject
     private UserRoleMapper userRoleMapper;
-    
+
     @PersistenceContext
     private EntityManager entityManager;
-    
+
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
-    
+
     public UserRole fineOne(Long userRoleId) {
         return userRoleRepository.findOne(userRoleId);
     }
-    
+
     public UserRolesRepresentation getUserRoles(Scope scope, Long resourceId, String searchTerm) {
         User user = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(user, scope, resourceId);
         actionService.executeAction(user, resource, Action.EDIT, () -> resource);
-        
+
         List<UserRole> users;
         List<UserRole> members = Collections.emptyList();
         List<UserRole> memberRequests = Collections.emptyList();
-        
+
         if (scope == Scope.DEPARTMENT) {
             users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
             members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, searchTerm);
-            
+
             memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
             if (!memberRequests.isEmpty()) {
                 Map<Activity, UserRole> indexByActivities = memberRequests.stream()
@@ -92,45 +92,45 @@ public class UserRoleService {
         } else {
             throw new IllegalStateException("Cannot request user roles for post");
         }
-        
+
         return new UserRolesRepresentation()
             .setUsers(users.stream().map(userRoleMapper).collect(Collectors.toList()))
             .setMembers(members.stream().map(userRoleMapper).collect(Collectors.toList()))
             .setMemberRequests(memberRequests.stream().map(userRoleMapper).collect(Collectors.toList()))
             .setMemberToBeUploadedCount(scope == Scope.DEPARTMENT ? ((Department) resource).getMemberToBeUploadedCount() : null);
     }
-    
+
     public void createOrUpdateUserRole(Resource resource, User user, Role role) {
         createOrUpdateUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
-    
+
     public UserRoleRepresentation createResourceUser(Scope scope, Long resourceId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        
+
         UserDTO userDTO = userRoleDTO.getUser();
         User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(email));
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
             return resource;
         });
-        
+
         return getUserRole(resource, user, userRoleDTO.getRole());
     }
-    
+
     public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
         if (invokedAsynchronously && userService.getCurrentUser() != null) {
             // There should never be an authenticated user inside this method invocation
             throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
         }
-        
+
         UserDTO userDTO = userRoleDTO.getUser();
         Resource resource = resourceService.findOne(resourceId);
         User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(resource, email, Role.MEMBER));
         UserRole userRole = createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
         userRole.setEmail(userDTO.getEmail());
     }
-    
+
     public void deleteResourceUser(Scope scope, Long resourceId, Long userId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
@@ -141,7 +141,7 @@ public class UserRoleService {
             return resource;
         });
     }
-    
+
     public UserRoleRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
@@ -151,34 +151,35 @@ public class UserRoleService {
             activityService.sendActivities(resource);
             return resource;
         });
-        
+
         return getUserRole(resource, user, userRoleDTO.getRole());
     }
-    
+
     public UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role) {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }
-    
+
     List<UserRole> findByResourceAndUser(Resource resource, User user) {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
-    
+
     UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
     }
-    
+
     boolean hasAdministratorRole(User user) {
         return userRoleRepository.findIdsByUserAndRole(user, Role.ADMINISTRATOR, State.ACTIVE_USER_ROLE_STATES, LocalDate.now()).isEmpty();
     }
-    
+
     private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         if (userRoleDTO.getRole() == Role.PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
-        
+
+        Role role = userRoleDTO.getRole();
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, userRoleDTO.getRole());
         if (userRole == null) {
-            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
+            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, Role.NOTIFIABLE.contains(role));
         } else {
             userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);
@@ -187,7 +188,7 @@ public class UserRoleService {
             return userRole;
         }
     }
-    
+
     private UserRoleRepresentation getUserRole(Resource resource, User user, Role role) {
         entityManager.flush();
         List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
@@ -207,24 +208,24 @@ public class UserRoleService {
         if (userRoles.isEmpty()) {
             return null;
         }
-        
+
         return userRoleMapper.apply(userRoles.get(0));
     }
-    
+
     @SuppressWarnings("JpaQlInspection")
     private List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, String searchTerm) {
         List<Long> userIds = userService.findByResourceAndRoleAndStates(resource, roles, state);
         if (userIds.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             userService.createSearchResults(search, searchTerm, userIds);
             entityManager.flush();
         }
-        
+
         List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status -> {
             String statement =
                 "select distinct userRole " +
@@ -238,7 +239,7 @@ public class UserRoleService {
             if (searchTermApplied) {
                 statement += "and search.id is not null ";
             }
-            
+
             statement += "order by search.id, user.id desc";
             return entityManager.createQuery(statement, UserRole.class)
                 .setParameter("search", search)
@@ -249,12 +250,12 @@ public class UserRoleService {
                 .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
                 .getResultList();
         });
-        
+
         if (searchTermApplied) {
             userService.deleteSearchResults(search);
         }
-        
+
         return userRoles;
     }
-    
+
 }
