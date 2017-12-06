@@ -1,15 +1,14 @@
 package hr.prism.board.authentication;
 
+import hr.prism.board.service.AuthenticationService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-
-import hr.prism.board.service.AuthenticationService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
 
 @Component
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
