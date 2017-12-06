@@ -1,5 +1,6 @@
 package hr.prism.board.configuration;
 
+import hr.prism.board.authentication.AuthenticationChannelAdapter;
 import hr.prism.board.authentication.AuthorizationHeaderResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -7,8 +8,6 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.AbstractWebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-
-import hr.prism.board.authentication.AuthenticationChannelAdapter;
 
 import javax.inject.Inject;
 

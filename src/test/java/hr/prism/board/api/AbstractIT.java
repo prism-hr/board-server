@@ -1,8 +1,6 @@
 package hr.prism.board.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -32,11 +30,9 @@ import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -243,9 +239,7 @@ public abstract class AbstractIT {
     void listenForNewActivities(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        
-        GenericMessage<byte[]> message = new GenericMessage<>("CONNECTED".getBytes(), ImmutableMap.of("simpUser", new AuthenticationToken(userId)));
-        testActivityService.handleSessionConnectedEvent(new SessionConnectedEvent(this, message));
+        ActivityService.addUserId(userId);
     }
 
     void verifyActivitiesEmpty(Long userId) {

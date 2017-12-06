@@ -1,7 +1,6 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
@@ -17,7 +16,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import javax.inject.Inject;
@@ -32,7 +30,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue"})
 public class ActivityService {
 
-    protected volatile Set<Long> userIds = new LinkedHashSet<>();
+    static volatile Set<Long> USER_IDS = new LinkedHashSet<>();
 
     @Inject
     private ActivityRepository activityRepository;
@@ -58,14 +56,13 @@ public class ActivityService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @EventListener
-    public synchronized void handleSessionConnectedEvent(SessionConnectedEvent sessionConnectedEvent) {
-        userIds.add(((AuthenticationToken) sessionConnectedEvent.getMessage().getHeaders().get("simpUser")).getUserId());
+    public static synchronized void addUserId(Long userId) {
+        USER_IDS.add(userId);
     }
 
     @EventListener
     public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
-        userIds.remove(((AuthenticationToken) sessionDisconnectEvent.getMessage().getHeaders().get("simpUser")).getUserId());
+        USER_IDS.remove(Long.parseLong(sessionDisconnectEvent.getUser().getName()));
     }
 
     public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
@@ -188,7 +185,7 @@ public class ActivityService {
     }
 
     public ImmutableList<Long> getUserIds() {
-        return ImmutableList.copyOf(this.userIds);
+        return ImmutableList.copyOf(USER_IDS);
     }
 
     public void sendActivities(Long userId) {
@@ -198,9 +195,9 @@ public class ActivityService {
 
     public void sendActivities(Resource resource) {
         entityManager.flush();
-        List<Long> userIds = getUserIds();
-        if (!userIds.isEmpty()) {
-            for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
+        List<Long> USER_IDS = getUserIds();
+        if (!USER_IDS.isEmpty()) {
+            for (Long userId : userService.findByResourceAndUserIds(resource, USER_IDS)) {
                 sendActivities(userId);
             }
         }
