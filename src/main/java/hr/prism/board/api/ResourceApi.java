@@ -1,7 +1,7 @@
 package hr.prism.board.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import hr.prism.board.configuration.WebMvcConfiguration;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.dto.WidgetOptionsDTO;
 import hr.prism.board.enums.Scope;
@@ -75,10 +75,9 @@ public class ResourceApi {
     public String getResourceBadge(@ModelAttribute Scope scope, @PathVariable Long id,
                                    @RequestParam String options, HttpServletResponse response) throws IOException {
         response.setHeader("X-Frame-Options", "ALLOW");
-        ObjectMapper objectMapper = new ObjectMapper();
-        WidgetOptionsDTO widgetOptions = objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
-        });
-        return badgeService.getResourceBadge(resourceService.getResource(null, scope, id), widgetOptions);
+        return badgeService.getResourceBadge(resourceService.getResource(null, scope, id),
+            WebMvcConfiguration.OBJECT_MAPPER.readValue(options, new TypeReference<WidgetOptionsDTO>() {
+            }));
     }
 
     @ModelAttribute
