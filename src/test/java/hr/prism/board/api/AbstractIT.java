@@ -242,8 +242,10 @@ public abstract class AbstractIT {
     void listenForNewActivities(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        testActivityService.handleSessionConnectedEvent(
-            new SessionConnectedEvent(this, new GenericMessage<>("CONNECTED".getBytes()), new AuthenticationToken(userId)));
+
+        GenericMessage message = new GenericMessage<>("CONNECTED".getBytes());
+        message.getHeaders().put("simpUser", new AuthenticationToken(userId));
+        testActivityService.handleSessionConnectedEvent(new SessionConnectedEvent(this, message));
     }
 
     void verifyActivitiesEmpty(Long userId) {
