@@ -71,7 +71,7 @@ import hr.prism.board.workflow.Notification;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "LambdaBodyCanBeCodeBlock", "unchecked"})
 public class PostService {
 
     private static final String SIMILAR_ORGANIZATION =
@@ -481,7 +481,7 @@ public class PostService {
         return getPosts(boardId, true, null, null, null);
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ChangeListRepresentation());
         resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
