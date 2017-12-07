@@ -54,7 +54,7 @@ import hr.prism.board.value.UserNotification;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "SqlResolve"})
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "SqlResolve", "WeakerAccess"})
 public class UserService {
 
     @SuppressWarnings("SqlResolve")
@@ -243,16 +243,16 @@ public class UserService {
             });
         }
     }
-    
-    List<Long> findByResourceAndUserIds(Resource resource, List<Long> userIds) {
+
+    public List<Long> findByResourceAndUserIds(Resource resource, List<Long> userIds) {
         return userRepository.findByResourceAndUserIds(resource, userIds, State.ACTIVE_USER_ROLE_STATES);
     }
 
-    User findByUuid(String uuid) {
+    public User findByUuid(String uuid) {
         return userRepository.findByUuid(uuid);
     }
 
-    void updateUserDemographicData(User user, UserDTO userDTO) {
+    public void updateUserDemographicData(User user, UserDTO userDTO) {
         Gender gender = userDTO.getGender();
         if (gender != null) {
             user.setGender(gender);
@@ -269,12 +269,12 @@ public class UserService {
         }
     }
 
-    void updateUserResume(User user, Document documentResume, String websiteResume) {
+    public void updateUserResume(User user, Document documentResume, String websiteResume) {
         user.setDocumentResume(documentResume);
         user.setWebsiteResume(websiteResume);
     }
 
-    User getOrCreateUser(UserDTO userDTO, UserFinder userFinder) {
+    public User getOrCreateUser(UserDTO userDTO, UserFinder userFinder) {
         User user = null;
         if (userDTO.getId() != null) {
             user = userRepository.findOne(userDTO.getId());
@@ -301,11 +301,11 @@ public class UserService {
     }
 
 
-    List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {
+    public List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {
         return userRepository.findByRoleWithoutRole(resource, role, withoutResource, withoutRole);
     }
 
-    User getCurrentUserSecured(boolean fresh) {
+    public User getCurrentUserSecured(boolean fresh) {
         User user = getCurrentUser(fresh);
         if (user == null) {
             throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "User cannot be authenticated");
@@ -314,23 +314,23 @@ public class UserService {
         return user;
     }
 
-    List<Long> findByResourceAndRoleAndStates(Resource resource, List<Role> roles, State state) {
+    public List<Long> findByResourceAndRoleAndStates(Resource resource, List<Role> roles, State state) {
         return userRepository.findByResourceAndRolesAndState(resource, roles, state);
     }
 
-    List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
+    public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
         return userRepository.findByResourceAndEvent(resource, event);
     }
 
-    List<Long> findByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
+    public List<Long> findByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
         return userRepository.findByResourceAndEvents(resource, events);
     }
 
-    void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
+    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
         userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
     }
 
-    void deleteSearchResults(String search) {
+    public void deleteSearchResults(String search) {
         userSearchRepository.deleteBySearch(search);
     }
 

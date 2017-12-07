@@ -7,14 +7,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.time.LocalDateTime;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class DepartmentScheduledService {
 
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
-
 
     @Inject
     private DepartmentService departmentService;
@@ -22,8 +21,8 @@ public class DepartmentScheduledService {
     @Scheduled(initialDelay = 60000, fixedDelay = 86400000)
     public void updateTasks() {
         if (BooleanUtils.isTrue(schedulerOn)) {
-           departmentService.updateTasks();
+            departmentService.updateTasks();
         }
     }
-    
+
 }

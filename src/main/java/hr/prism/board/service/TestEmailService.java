@@ -13,24 +13,24 @@ import java.util.List;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class TestEmailService {
-    
+
     @Inject
     private TestEmailRepository testEmailRepository;
-    
+
     @Inject
     private UserMapper userMapper;
-    
+
     public List<TestEmailMessageRepresentation> findAll() {
         return testEmailRepository.findAllMessages();
     }
-    
+
     public List<TestEmailMessageRepresentation> findByUserEmail(String email) {
         return testEmailRepository.findMessagesByUserEmail(email);
     }
-    
-    void createTestEmail(User user, String subject, String content, List<String> attachments, Long creatorId) {
+
+    public void createTestEmail(User user, String subject, String content, List<String> attachments, Long creatorId) {
         TestEmail testEmail = new TestEmail();
         testEmail.setEmail(user.getEmail());
         testEmail.setMessage(
@@ -39,9 +39,9 @@ public class TestEmailService {
                 .setSubject(subject)
                 .setContent(content)
                 .setAttachments(attachments));
-        
+
         testEmail.setCreatorId(creatorId);
         testEmailRepository.save(testEmail);
     }
-    
+
 }

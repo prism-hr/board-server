@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class BoardService {
 
     @Inject

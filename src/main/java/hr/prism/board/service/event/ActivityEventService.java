@@ -24,53 +24,53 @@ import java.util.Map;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class ActivityEventService {
-    
+
     @Inject
     private ActivityService activityService;
-    
+
     @Inject
     private ResourceService resourceService;
-    
+
     @Inject
     private UserRoleService userRoleService;
-    
+
     @Inject
     private ResourceEventService resourceEventService;
-    
+
     @Inject
     private UserCacheService userCacheService;
-    
+
     @Inject
     private UserRoleCacheService userRoleCacheService;
-    
+
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
-    
+
     public void publishEvent(Object source, Long resourceId, List<hr.prism.board.workflow.Activity> activities) {
         applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, activities));
     }
-    
+
     public void publishEvent(Object source, Long resourceId, BoardEntity entity) {
         applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, entity.getClass(), entity.getId()));
     }
-    
+
     public void publishEvent(Object source, Long resourceId, BoardEntity entity, List<hr.prism.board.workflow.Activity> activities) {
         applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, entity.getClass(), entity.getId(), activities));
     }
-    
+
     @Async
     @SuppressWarnings("unused")
     @TransactionalEventListener
     public void sendActivitiesAsync(ActivityEvent activityEvent) {
         sendActivities(activityEvent);
     }
-    
-    void sendActivities(ActivityEvent activityEvent) {
+
+    public void sendActivities(ActivityEvent activityEvent) {
         Resource resource;
         Class<? extends BoardEntity> entityClass = activityEvent.getEntityClass();
-        
+
         Long userRoleId = null;
         Long resourceEventId = null;
         if (entityClass == UserRole.class) {
@@ -80,7 +80,7 @@ public class ActivityEventService {
         } else if (entityClass != null) {
             throw new UnsupportedOperationException("No known activities for type: " + entityClass.getSimpleName());
         }
-        
+
         Map<Pair<BoardEntity, hr.prism.board.enums.Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity = new HashMap<>();
         if (resourceEventId != null) {
             resource = processResourceEvent(activityEvent, resourceEventId, activityEntitiesByEntity);
@@ -89,10 +89,10 @@ public class ActivityEventService {
         } else {
             resource = processResource(activityEvent, activityEntitiesByEntity);
         }
-        
+
         activityService.sendActivities(resource);
     }
-    
+
     private Resource processResourceEvent(ActivityEvent activityEvent, Long resourceEventId, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity>
         activityEntitiesByEntity) {
         Resource resource;
@@ -103,11 +103,11 @@ public class ActivityEventService {
                 .computeIfAbsent(Pair.of(resourceEvent, activityEnum), value -> activityService.getOrCreateActivity(resourceEvent, activityEnum));
             activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
         });
-        
+
         resource = resourceEvent.getResource();
         return resource;
     }
-    
+
     private Resource processUserRole(ActivityEvent activityEvent, Long userRoleId, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
         UserRole userRole = userRoleService.fineOne(userRoleId);
         if (userRole.getState() == State.PENDING) {
@@ -120,12 +120,12 @@ public class ActivityEventService {
         } else {
             activityService.deleteActivities(userRole);
         }
-        
+
         Resource resource = userRole.getResource();
         userRoleCacheService.updateUserRolesSummary(resource);
         return resource;
     }
-    
+
     private Resource processResource(ActivityEvent activityEvent, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
         Resource resource = resourceService.findOne(activityEvent.getResourceId());
         activityService.deleteActivities(resource);
@@ -133,7 +133,7 @@ public class ActivityEventService {
             Activity activityEnum = activity.getActivity();
             hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
                 .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.getOrCreateActivity(resource, activityEnum));
-            
+
             Long userId = activity.getUserId();
             if (userId == null) {
                 activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
@@ -142,8 +142,8 @@ public class ActivityEventService {
                 activityService.getOrCreateActivityUser(activityEntity, user);
             }
         });
-        
+
         return resource;
     }
-    
+
 }

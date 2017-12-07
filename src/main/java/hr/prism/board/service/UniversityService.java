@@ -70,6 +70,7 @@ public class UniversityService {
         return university;
     }
 
+    @SuppressWarnings("unchecked")
     public List<UniversityRepresentation> findBySimilarName(String searchTerm) {
         List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
             entityManager.createNativeQuery(SIMILAR_UNIVERSITY)

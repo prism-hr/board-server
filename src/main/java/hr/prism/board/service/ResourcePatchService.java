@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Service
 @Transactional
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "WeakerAccess", "SpringAutowiredFieldsWarningInspection"})
 public class ResourcePatchService extends PatchService<Resource> {
 
     @Inject

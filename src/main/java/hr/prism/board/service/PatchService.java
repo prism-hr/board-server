@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "WeakerAccess", "SpringAutowiredFieldsWarningInspection"})
 public abstract class PatchService<T extends BoardEntity> {
 
     @Inject

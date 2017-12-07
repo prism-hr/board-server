@@ -234,7 +234,7 @@ public class ActivityService {
         activityUserRepository.deleteByUser(user);
     }
 
-    void sendActivities(Long userId, List<ActivityRepresentation> activities) {
+    public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
         LOGGER.info("Sending " + activities.size() + " activities to: " + userId);
     }

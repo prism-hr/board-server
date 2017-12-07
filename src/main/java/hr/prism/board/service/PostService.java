@@ -71,7 +71,7 @@ import hr.prism.board.workflow.Notification;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "LambdaBodyCanBeCodeBlock", "unchecked"})
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "LambdaBodyCanBeCodeBlock", "unchecked", "WeakerAccess"})
 public class PostService {
 
     private static final String SIMILAR_ORGANIZATION =
@@ -473,11 +473,11 @@ public class PostService {
             .getName());
     }
 
-    Post findLatestPost(User user) {
+    public Post findLatestPost(User user) {
         return postRepository.findLatestPost(user, Role.ADMINISTRATOR, Scope.POST);
     }
 
-    List<Post> getPosts(Long boardId) {
+    public List<Post> getPosts(Long boardId) {
         return getPosts(boardId, true, null, null, null);
     }
 

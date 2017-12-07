@@ -53,7 +53,7 @@ public class TestActivityService extends ActivityService {
     }
 
     @Override
-    void sendActivities(Long userId, List<ActivityRepresentation> activities) {
+    public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         if (recording) {
             LOGGER.info("updating activities for user: " + userId + " - " + activities.stream()
                 .map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));

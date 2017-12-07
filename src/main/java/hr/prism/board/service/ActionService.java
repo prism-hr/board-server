@@ -36,7 +36,7 @@ import java.util.List;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class ActionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
@@ -124,7 +124,7 @@ public class ActionService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
+    public void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             entityManager.createQuery(
                 "update Resource resource " +
@@ -152,7 +152,7 @@ public class ActionService {
         });
     }
 
-    boolean canExecuteAction(Resource resource, Action action) {
+    public boolean canExecuteAction(Resource resource, Action action) {
         List<ActionRepresentation> actions = resource.getActions();
         return actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action::equals);
     }
