@@ -254,6 +254,7 @@ public class PostService {
             throw new BoardException(ExceptionCode.INVALID_REFERRAL, "Post no longer accepting referrals");
         }
 
+        // TODO: replace with check that page can be opened on save
         if (!redirect.startsWith("http://") && !redirect.startsWith("https://")) {
             redirect = "http://" + redirect;
         }
