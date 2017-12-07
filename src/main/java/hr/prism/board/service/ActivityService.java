@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue"})
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
 public class ActivityService {
 
     static volatile Set<Long> USER_IDS = new LinkedHashSet<>();
@@ -236,7 +236,7 @@ public class ActivityService {
 
     void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
-        LOGGER.info("Sending activities to: " + userId);
+        LOGGER.info("Sending " + activities.size() + " activities to: " + userId);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
