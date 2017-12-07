@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserNotificationSuppressionMapper {
 
     @Inject

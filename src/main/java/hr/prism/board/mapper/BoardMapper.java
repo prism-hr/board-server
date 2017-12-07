@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BoardMapper implements Function<Board, BoardRepresentation> {
 
     @Inject
@@ -42,7 +43,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
             .setAuthorCount(board.getAuthorCount());
     }
 
-    public BoardRepresentation applySmall(Board board) {
+    BoardRepresentation applySmall(Board board) {
         if (board == null) {
             return null;
         }

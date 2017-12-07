@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceOperationMapper implements Function<ResourceOperation, ResourceOperationRepresentation> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceOperationMapper.class);

@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceEventMapper implements Function<ResourceEvent, ResourceEventRepresentation> {
 
     @Inject

@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ActivityMapper implements Function<Activity, ActivityRepresentation> {
 
     @Inject
