@@ -12,6 +12,8 @@ import hr.prism.board.repository.ActivityRepository;
 import hr.prism.board.repository.ActivityRoleRepository;
 import hr.prism.board.repository.ActivityUserRepository;
 import hr.prism.board.representation.ActivityRepresentation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
 public class ActivityService {
 
     static volatile Set<Long> USER_IDS = new LinkedHashSet<>();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
 
     @Inject
     private ActivityRepository activityRepository;
@@ -232,6 +236,7 @@ public class ActivityService {
 
     void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
+        LOGGER.info("Sending activities to: " + userId);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {

@@ -10,6 +10,8 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +25,8 @@ import java.util.List;
 @RestController
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unused"})
 public class UserApi {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserApi.class);
 
     @Inject
     private ActivityService activityService;
@@ -96,6 +100,7 @@ public class UserApi {
         Long userId = userService.getCurrentUserSecured().getId();
         ActivityService.addUserId(userId);
         activityService.sendActivities(userId);
+        LOGGER.info("Subscribed user " + userId + " to activities");
     }
 
     @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)
