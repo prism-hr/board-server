@@ -18,6 +18,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import javax.inject.Inject;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
 public class ActivityService {
 
-    static volatile Set<Long> USER_IDS = new LinkedHashSet<>();
+    volatile Set<Long> userIds = new LinkedHashSet<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
 
@@ -60,13 +61,18 @@ public class ActivityService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public static synchronized void addUserId(Long userId) {
-        USER_IDS.add(userId);
+    @EventListener
+    public synchronized void handleSessionConnectEvent(SessionConnectEvent sessionConnectEvent) {
+        Long userId = Long.parseLong(sessionConnectEvent.getUser().getName());
+        LOGGER.info("Connecting user: " + userId + " to activities");
+        userIds.add(userId);
     }
 
     @EventListener
     public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
-        USER_IDS.remove(Long.parseLong(sessionDisconnectEvent.getUser().getName()));
+        Long userId = Long.parseLong(sessionDisconnectEvent.getUser().getName());
+        LOGGER.info("Disconnecting user: " + userId + " from activities");
+        userIds.remove(userId);
     }
 
     public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
@@ -189,7 +195,7 @@ public class ActivityService {
     }
 
     public ImmutableList<Long> getUserIds() {
-        return ImmutableList.copyOf(USER_IDS);
+        return ImmutableList.copyOf(userIds);
     }
 
     public void sendActivities(Long userId) {

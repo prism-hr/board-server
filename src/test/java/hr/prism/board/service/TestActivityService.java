@@ -30,7 +30,7 @@ public class TestActivityService extends ActivityService {
     public void record() {
         this.recording = true;
         this.sentActivities.clear();
-        USER_IDS.clear();
+        userIds.clear();
     }
 
     public void stop() {
