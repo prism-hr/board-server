@@ -1,61 +1,15 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Document;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.Resource;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
+import hr.prism.board.domain.*;
 import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.domain.User;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.PostDTO;
-import hr.prism.board.dto.PostPatchDTO;
-import hr.prism.board.dto.ResourceEventDTO;
-import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.dto.*;
+import hr.prism.board.enums.*;
 import hr.prism.board.enums.ResourceTask;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -68,6 +22,24 @@ import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
+import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -280,6 +252,10 @@ public class PostService {
         if (post.getState() != State.ACCEPTED || redirect == null) {
             // We may no longer be redirecting - throw an exception so client can refresh
             throw new BoardException(ExceptionCode.INVALID_REFERRAL, "Post no longer accepting referrals");
+        }
+
+        if (!redirect.startsWith("http://") && !redirect.startsWith("https://")) {
+            redirect = "http://" + redirect;
         }
 
         return redirect;
