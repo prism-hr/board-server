@@ -100,7 +100,7 @@ public class UserApi {
         Long userId = userService.getCurrentUserSecured().getId();
         ActivityService.addUserId(userId);
         activityService.sendActivities(userId);
-        LOGGER.info("Subscribed user " + userId + " to activities");
+        LOGGER.info("Subscribed user: " + userId + " to activities");
     }
 
     @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)

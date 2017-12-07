@@ -236,7 +236,7 @@ public class ActivityService {
 
     public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
-        LOGGER.info("Sending " + activities.size() + " activities to: " + userId);
+        LOGGER.info("Sending " + activities.size() + " activities to user: " + userId);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
