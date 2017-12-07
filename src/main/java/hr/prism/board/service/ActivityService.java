@@ -207,30 +207,30 @@ public class ActivityService {
         }
     }
 
-    void dismissActivities(Long resourceId, List<hr.prism.board.enums.Activity> activities, Long userId) {
+    public void dismissActivities(Long resourceId, List<hr.prism.board.enums.Activity> activities, Long userId) {
         activityEventRepository.insertByResourceIdActivitiesUserIdAndEvent(resourceId,
             activities.stream().map(hr.prism.board.enums.Activity::name).collect(Collectors.toList()), userId,
             hr.prism.board.enums.ActivityEvent.DISMISSAL.name(), LocalDateTime.now());
     }
 
-    void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {
+    public void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {
         activityEventRepository.deleteByResourceAndActivities(resource, activities);
         activityRoleRepository.deleteByResourceAndActivities(resource, activities);
         activityRepository.deleteByResourceAndActivities(resource, activities);
     }
 
-    List<ActivityEvent> findViews(Collection<Activity> activities, User user) {
+    public List<ActivityEvent> findViews(Collection<Activity> activities, User user) {
         return activityEventRepository.findByActivitiesAndUserAndEvent(activities, user, hr.prism.board.enums.ActivityEvent.VIEW);
     }
 
-    void viewActivity(Activity activity, User user) {
+    public void viewActivity(Activity activity, User user) {
         ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
         if (activityEvent == null) {
             activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.VIEW));
         }
     }
 
-    void deleteActivityUsers(User user) {
+    public void deleteActivityUsers(User user) {
         activityUserRepository.deleteByUser(user);
     }
 
