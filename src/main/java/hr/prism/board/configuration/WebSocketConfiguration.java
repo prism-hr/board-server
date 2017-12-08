@@ -3,8 +3,12 @@ package hr.prism.board.configuration;
 import hr.prism.board.authentication.AuthenticationChannelAdapter;
 import hr.prism.board.authentication.AuthorizationHeaderResolver;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.support.ChannelInterceptorAdapter;
 import org.springframework.web.socket.config.annotation.AbstractWebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -35,4 +39,23 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
         registration.interceptors(new AuthenticationChannelAdapter(authorizationHeaderResolver));
     }
 
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ConnectAckDeferAdapter());
+    }
+
+    private class ConnectAckDeferAdapter extends ChannelInterceptorAdapter {
+        @Override
+        public Message<?> preSend(Message<?> message, MessageChannel channel) {
+            if (message.getHeaders().get("simpMessageType").equals(SimpMessageType.CONNECT_ACK)) {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    throw new Error();
+                }
+            }
+            return message;
+        }
+    }
 }
+
