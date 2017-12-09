@@ -262,8 +262,9 @@ public class AuthenticationService {
 
     public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
         String channel = pusherAuthentication.getChannel();
+        String channelUserId = channel.split("-")[1];
         Long userId = userService.getCurrentUserSecured().getId();
-        if (channel.endsWith(userId.toString())) {
+        if (channelUserId.equals(userId.toString())) {
             LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
             return pusher.authenticate(pusherAuthentication.getSocketId(), channel);
         } else {
