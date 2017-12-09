@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
+import com.pusher.rest.Pusher;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
@@ -54,6 +55,9 @@ public class ActivityService {
 
     @Inject
     private ActivityMapper activityMapper;
+
+    @Inject
+    private Pusher pusher;
 
     @Inject
     private SimpMessagingTemplate simpMessagingTemplate;
@@ -242,6 +246,7 @@ public class ActivityService {
 
     public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
+        pusher.trigger("activities-" + userId, "activities", activities);
         LOGGER.info("Sending " + activities.size() + " activities to user: " + userId);
     }
 

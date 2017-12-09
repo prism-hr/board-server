@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import hr.prism.board.authentication.PusherAuthenticationDTO;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LoginDTO;
 import hr.prism.board.dto.RegisterDTO;
@@ -51,6 +52,11 @@ public class AuthenticationApi {
     @RequestMapping(value = "/api/auth/refreshToken", method = RequestMethod.GET)
     public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         return authenticationService.refreshToken(request, response);
+    }
+
+    @RequestMapping(value = "/api/auth/pusher", method = RequestMethod.POST)
+    public void authenticatePusher(@RequestBody PusherAuthenticationDTO pusherAuthentication) {
+        authenticationService.authenticatePusher(pusherAuthentication);
     }
 
     private Map<String, String> makeAccessTokenResponse(User user, Device device) {
