@@ -190,6 +190,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.pusher</groupId>
+            <artifactId>pusher-http-java</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.11.2</version>
@@ -376,6 +382,9 @@
                 <profile.auth.linkedin.clientId>772yxzl30r2opy</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>local</profile.cloudinary.folder>
                 <profile.mail.on>false</profile.mail.on>
+                <profile.pusher.app>442395</profile.pusher.app>
+                <profile.pusher.key>ec7ba70c43883cc8964d</profile.pusher.key>
+                <profile.pusher.secret>f0b7657965c0fcaebf0d</profile.pusher.secret>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -398,6 +407,9 @@
                 <profile.auth.linkedin.clientId>77tm9xfc3d1bxd</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>uat</profile.cloudinary.folder>
                 <profile.mail.on>true</profile.mail.on>
+                <profile.pusher.app>442395</profile.pusher.app>
+                <profile.pusher.key>ec7ba70c43883cc8964d</profile.pusher.key>
+                <profile.pusher.secret>f0b7657965c0fcaebf0d</profile.pusher.secret>
             </properties>
         </profile>
 
@@ -417,6 +429,9 @@
                 <profile.auth.linkedin.clientId>775lbiy4vugg19</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>prod</profile.cloudinary.folder>
                 <profile.mail.on>true</profile.mail.on>
+                <profile.pusher.app>442398</profile.pusher.app>
+                <profile.pusher.key>5d2f4afe45a2f74273ee</profile.pusher.key>
+                <profile.pusher.secret>b1fd5f2c406a47294e9d</profile.pusher.secret>
             </properties>
         </profile>
     </profiles>
