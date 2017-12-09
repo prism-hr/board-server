@@ -260,12 +260,12 @@ public class AuthenticationService {
         }
     }
 
-    public void authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
+    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
         String channel = pusherAuthentication.getChannel();
         Long userId = userService.getCurrentUserSecured().getId();
         if (channel.endsWith(userId.toString())) {
-            pusher.authenticate(pusherAuthentication.getSocketId(), channel);
             LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
+            return pusher.authenticate(pusherAuthentication.getSocketId(), channel);
         } else {
             throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER,
                 "User ID: " + userId + " does not have permission to connect to channel: " + channel);

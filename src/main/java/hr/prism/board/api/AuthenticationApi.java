@@ -55,8 +55,8 @@ public class AuthenticationApi {
     }
 
     @RequestMapping(value = "/api/auth/pusher", method = RequestMethod.POST)
-    public void authenticatePusher(@RequestBody PusherAuthenticationDTO pusherAuthentication) {
-        authenticationService.authenticatePusher(pusherAuthentication);
+    public String authenticatePusher(@RequestBody PusherAuthenticationDTO pusherAuthentication) {
+        return authenticationService.authenticatePusher(pusherAuthentication);
     }
 
     private Map<String, String> makeAccessTokenResponse(User user, Device device) {
