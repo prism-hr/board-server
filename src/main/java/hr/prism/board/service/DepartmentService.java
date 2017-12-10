@@ -380,7 +380,7 @@ public class DepartmentService {
     }
 
     public void updateTasks() {
-        LocalDateTime baseline = LocalDateTime.now();
+        LocalDateTime baseline = getBaseline();
         LocalDateTime baseline1 = baseline.minusMonths(1);
 
         LocalDateTime baseline2;
@@ -448,6 +448,10 @@ public class DepartmentService {
         }
 
         return responseReadiness;
+    }
+
+    public LocalDateTime getBaseline() {
+        return LocalDateTime.now();
     }
 
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {

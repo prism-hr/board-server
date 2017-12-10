@@ -10,15 +10,18 @@ public class ActivityEvent extends ApplicationEvent {
 
     private Long resourceId;
 
+    private boolean stateChange;
+
     private Class<? extends BoardEntity> entityClass;
 
     private Long entityId;
 
     private List<Activity> activities;
 
-    public ActivityEvent(Object source, Long resourceId, List<Activity> activities) {
+    public ActivityEvent(Object source, Long resourceId, boolean stateChange, List<Activity> activities) {
         super(source);
         this.resourceId = resourceId;
+        this.stateChange = stateChange;
         this.activities = activities;
     }
 
@@ -39,6 +42,10 @@ public class ActivityEvent extends ApplicationEvent {
 
     public Long getResourceId() {
         return resourceId;
+    }
+
+    public boolean isStateChange() {
+        return stateChange;
     }
 
     public Class<? extends BoardEntity> getEntityClass() {

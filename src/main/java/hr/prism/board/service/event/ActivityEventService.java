@@ -48,8 +48,8 @@ public class ActivityEventService {
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishEvent(Object source, Long resourceId, List<hr.prism.board.workflow.Activity> activities) {
-        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, activities));
+    public void publishEvent(Object source, Long resourceId, boolean stateChange, List<hr.prism.board.workflow.Activity> activities) {
+        applicationEventPublisher.publishEvent(new ActivityEvent(source, resourceId, stateChange, activities));
     }
 
     public void publishEvent(Object source, Long resourceId, BoardEntity entity) {
@@ -128,7 +128,10 @@ public class ActivityEventService {
 
     private Resource processResource(ActivityEvent activityEvent, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
         Resource resource = resourceService.findOne(activityEvent.getResourceId());
-        activityService.deleteActivities(resource);
+        if (activityEvent.isStateChange()) {
+            activityService.deleteActivities(resource);
+        }
+
         activityEvent.getActivities().forEach(activity -> {
             Activity activityEnum = activity.getActivity();
             hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity

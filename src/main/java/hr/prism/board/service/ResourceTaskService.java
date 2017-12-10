@@ -166,7 +166,7 @@ public class ResourceTaskService {
         if (notifiedCount == null) {
             Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
                 .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY"));
-            activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
+            activityEventService.publishEvent(this, resourceId, false, Collections.singletonList(activity));
         }
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()

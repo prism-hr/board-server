@@ -590,7 +590,7 @@ public class PostService {
                         .setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
 
-                activityEventService.publishEvent(this, postId, activities);
+                activityEventService.publishEvent(this, postId, true, activities);
                 notificationEventService.publishEvent(this, postId, notifications);
             }
         }

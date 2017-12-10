@@ -101,7 +101,7 @@ public class ActionService {
                     Long newResourceId = newResource.getId();
                     List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
                     if (activities != null) {
-                        activityEventService.publishEvent(this, newResourceId, activities);
+                        activityEventService.publishEvent(this, newResourceId, true, activities);
                     }
 
                     List<Notification> notifications = deserializeUpdates(actionRepresentation.getNotification(), Notification.class);

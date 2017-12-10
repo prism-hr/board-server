@@ -9,16 +9,16 @@ import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
 public interface DepartmentRepository extends MyRepository<Department, Long> {
-    
+
     @Query(value =
         "select department.id " +
             "from Department department " +
             "where department.createdTimestamp < :baseline1 " +
-            "and department.lastMemberTimestamp < :baseline1 " +
+            "and (department.lastMemberTimestamp is null or department.lastMemberTimestamp < :baseline1) " +
             "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
             "order by department.id")
     List<Long> findAllIds(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
-    
+
     @Query(value =
         "select department.handle " +
             "from Department department " +
@@ -26,5 +26,5 @@ public interface DepartmentRepository extends MyRepository<Department, Long> {
             "or department.handle like concat('%', :suggestedHandle, '-%') " +
             "order by department.handle desc")
     List<String> findHandleByLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
-    
+
 }

@@ -97,7 +97,7 @@ public class UserRoleCacheService {
 
             Activity activity = new Activity().setUserId(user.getId())
                 .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY"));
-            activityEventService.publishEvent(this, resourceId, Collections.singletonList(activity));
+            activityEventService.publishEvent(this, resourceId, false, Collections.singletonList(activity));
 
             Notification notification = new Notification().setInvitation(userRole.getUuid())
                 .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION"));

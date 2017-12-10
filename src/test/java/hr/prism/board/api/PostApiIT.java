@@ -15,10 +15,10 @@ import hr.prism.board.exception.*;
 import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestActivityService;
-import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
+import hr.prism.board.utils.BoardUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matchers;
@@ -79,22 +79,6 @@ public class PostApiIT extends AbstractIT {
 
     @Inject
     private PostRepository postRepository;
-
-    private static List<BoardAttachments> makeTestAttachments(String name) throws IOException {
-        URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
-        URLConnection connection = url.openConnection();
-        try (InputStream inputStream = connection.getInputStream()) {
-            BoardAttachments attachments = new BoardAttachments();
-            attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
-            attachments.setType(connection.getContentType());
-            attachments.setFilename(name);
-            attachments.setDisposition("attachment");
-            attachments.setContentId("Application");
-            return Collections.singletonList(attachments);
-        } catch (IOException e) {
-            throw new Error(e);
-        }
-    }
 
     @Test
     public void shouldCreateAndListPosts() {
@@ -313,16 +297,17 @@ public class PostApiIT extends AbstractIT {
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
-                .setName("post")
-                .setSummary("summary")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
-                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+            PostDTO postDTO =
+                new PostDTO()
+                    .setName("post")
+                    .setSummary("summary")
+                    .setOrganizationName("organization name")
+                    .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                        .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                    .setPostCategories(Collections.singletonList("p1"))
+                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                    .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY, status);
             return null;
         });
@@ -336,18 +321,19 @@ public class PostApiIT extends AbstractIT {
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
         Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
         transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
-                .setName("post")
-                .setSummary("summary")
-                .setOrganizationName("organization name")
-                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
-                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                .setApplyWebsite("http://www.google.com")
-                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+            PostDTO postDTO =
+                new PostDTO()
+                    .setName("post")
+                    .setSummary("summary")
+                    .setOrganizationName("organization name")
+                    .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                        .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                    .setPostCategories(Collections.singletonList("p1"))
+                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                    .setApplyWebsite("http://www.google.com")
+                    .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+                    .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
             ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_APPLY, status);
             return null;
         });
@@ -1720,7 +1706,7 @@ public class PostApiIT extends AbstractIT {
 
     private LinkedHashMultimap<State, String> getPostNamesByState(LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNameMap) {
         LinkedHashMultimap<State, String> postNamesByState = LinkedHashMultimap.create();
-        boardPostNameMap.entrySet().forEach(entry -> postNamesByState.putAll(entry.getValue()));
+        boardPostNameMap.forEach((key, value) -> postNamesByState.putAll(value));
         return postNamesByState;
     }
 
@@ -1764,6 +1750,22 @@ public class PostApiIT extends AbstractIT {
         });
 
         Assert.assertEquals(expectedLocation, response.getLocation());
+    }
+
+    private static List<BoardAttachments> makeTestAttachments(String name) throws IOException {
+        URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
+        URLConnection connection = url.openConnection();
+        try (InputStream inputStream = connection.getInputStream()) {
+            BoardAttachments attachments = new BoardAttachments();
+            attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
+            attachments.setType(connection.getContentType());
+            attachments.setFilename(name);
+            attachments.setDisposition("attachment");
+            attachments.setContentId("Application");
+            return Collections.singletonList(attachments);
+        } catch (IOException e) {
+            throw new Error(e);
+        }
     }
 
     private enum PostAdminContext {

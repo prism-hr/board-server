@@ -1,22 +1,18 @@
 package hr.prism.board.configuration;
 
-import org.mockito.Mockito;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestActivityService;
-import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.service.event.TestActivityEventService;
-import hr.prism.board.service.event.TestNotificationEventService;
-import hr.prism.board.service.event.TestUserRoleEventService;
-import hr.prism.board.service.event.UserRoleEventService;
+import hr.prism.board.service.TestDepartmentService;
+import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.event.*;
+import org.mockito.Mockito;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class TestConfiguration {
@@ -115,6 +111,12 @@ public class TestConfiguration {
     @Primary
     public TestActivityService userActivityService() {
         return new TestActivityService();
+    }
+
+    @Bean
+    @Primary
+    public TestDepartmentService departmentService() {
+        return new TestDepartmentService();
     }
 
 }

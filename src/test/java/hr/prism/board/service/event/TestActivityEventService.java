@@ -10,8 +10,8 @@ import java.util.List;
 public class TestActivityEventService extends ActivityEventService {
 
     @Override
-    public void publishEvent(Object source, Long resourceId, List<hr.prism.board.workflow.Activity> activities) {
-        super.sendActivities(new ActivityEvent(source, resourceId, activities));
+    public void publishEvent(Object source, Long resourceId, boolean stateChange, List<hr.prism.board.workflow.Activity> activities) {
+        super.sendActivities(new ActivityEvent(source, resourceId, stateChange, activities));
     }
 
     @Override
