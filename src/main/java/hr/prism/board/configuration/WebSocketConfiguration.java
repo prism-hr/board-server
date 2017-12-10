@@ -1,7 +1,10 @@
 package hr.prism.board.configuration;
 
+import com.pusher.rest.Pusher;
 import hr.prism.board.authentication.AuthenticationChannelAdapter;
 import hr.prism.board.authentication.AuthorizationHeaderResolver;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -20,8 +23,27 @@ import javax.inject.Inject;
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfigurer {
 
+    @Value("${pusher.app}")
+    private String pusherApp;
+
+    @Value("${pusher.key}")
+    private String pusherKey;
+
+    @Value("${pusher.secret}")
+    private String pusherSecret;
+
+    @Value("${pusher.cluster}")
+    private String pusherCluster;
+
     @Inject
     private AuthorizationHeaderResolver authorizationHeaderResolver;
+
+    @Bean
+    public Pusher pusher() {
+        Pusher pusher = new Pusher(pusherApp, pusherKey, pusherSecret);
+        pusher.setCluster(pusherCluster);
+        return pusher;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
