@@ -126,6 +126,7 @@ public class ActivityEventService {
         return resource;
     }
 
+    // TODO: handle sticky activities versus state specific ones
     private Resource processResource(ActivityEvent activityEvent, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
         Resource resource = resourceService.findOne(activityEvent.getResourceId());
         if (activityEvent.isStateChange()) {
