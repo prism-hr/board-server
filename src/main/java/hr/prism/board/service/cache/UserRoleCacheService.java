@@ -1,6 +1,7 @@
 package hr.prism.board.service.cache;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
@@ -9,6 +10,7 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Activity;
@@ -31,6 +33,9 @@ import java.util.stream.Collectors;
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserRoleCacheService {
 
+    private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
+        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
+
     @Inject
     private UserRoleRepository userRoleRepository;
 
@@ -39,6 +44,9 @@ public class UserRoleCacheService {
 
     @Inject
     private ActivityService activityService;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
 
     @Lazy
     @Inject
@@ -57,6 +65,10 @@ public class UserRoleCacheService {
 
     @CacheEvict(key = "#user.id", value = "users")
     public UserRole createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
+        if (Role.MEMBER.equals(userRoleDTO.getRole())) {
+            resourceTaskService.completeTasks(resource, MEMBER_TASKS);
+        }
+
         return createUserRole(currentUser, resource, user, userRoleDTO, State.ACCEPTED, notify);
     }
 

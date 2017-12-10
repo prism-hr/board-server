@@ -80,9 +80,6 @@ public class DepartmentService {
 
     private static final List<String> RESEARCH_CATEGORIES = ImmutableList.of("MRes", "PhD", "Postdoc");
 
-    private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
-        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
-
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
@@ -295,7 +292,6 @@ public class DepartmentService {
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
-            resourceTaskService.completeTasks(department, MEMBER_TASKS);
             department.setLastMemberTimestamp(LocalDateTime.now());
             return department;
         });
