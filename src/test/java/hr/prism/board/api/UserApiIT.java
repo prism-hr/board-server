@@ -261,7 +261,7 @@ public class UserApiIT extends AbstractIT {
         StompSession stompSession =
             webSocketStompClient.connect("ws://127.0.0.1:" + localServerPort + "/api/web-socket",
                 webSocketHttpHeaders, stompHeaders, new StompSessionHandlerAdapter() {})
-                .get(1, TimeUnit.SECONDS);
+                .get(5, TimeUnit.SECONDS);
 
         stompSession.subscribe("/api/user/activities", new FrameHandler());
         List<?> response = (List<?>) completableFuture.get();
