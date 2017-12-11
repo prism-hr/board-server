@@ -74,6 +74,7 @@ public class AuthenticationService {
     private ActivityService activityService;
 
     @Inject
+    @Lazy
     private Pusher pusher;
 
     @Lazy
