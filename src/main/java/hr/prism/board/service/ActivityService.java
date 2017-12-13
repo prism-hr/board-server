@@ -61,8 +61,8 @@ public class ActivityService {
     @Inject
     private ActivityMapper activityMapper;
 
-    @Inject
     @Lazy
+    @Inject
     private Pusher pusher;
 
     @Inject
