@@ -16,6 +16,7 @@ import hr.prism.board.representation.ActivityRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,7 @@ public class ActivityService {
     private ActivityMapper activityMapper;
 
     @Inject
+    @Lazy
     private Pusher pusher;
 
     @Inject

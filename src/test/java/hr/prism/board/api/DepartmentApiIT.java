@@ -23,7 +23,7 @@ import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
 import hr.prism.board.utils.BoardUtils;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -1252,7 +1252,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO2 = new DepartmentDTO().setName("department 2").setSummary("department summary");
         DepartmentRepresentation departmentR1 = verifyPostDepartment(universityId, departmentDTO1, "department-1");
         DepartmentRepresentation departmentR2 = verifyPostDepartment(universityId, departmentDTO2, "department-2");
-        return new Pair<>(departmentR1, departmentR2);
+        return Pair.of(departmentR1, departmentR2);
     }
 
     private DepartmentRepresentation verifyPostDepartment(Long universityId, DepartmentDTO departmentDTO, String expectedHandle) {
