@@ -252,8 +252,12 @@ public class ActivityService {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
         LOGGER.info("Sending " + activities.size() + " activities to user: " + userId);
         if (pusherOn) {
-            pusher.trigger("activities-" + userId, "activities", activities);
+            pusher.trigger("presence-activities-" + userId, "activities", activities);
         }
+    }
+
+    public synchronized void removeUserId(Long userId) {
+        userIds.remove(userId);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
