@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
@@ -38,7 +39,7 @@ public class ActivityScheduledService {
                 result.getMessage(), new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {
                 });
 
-            channels.get("message").keySet().forEach(channel -> activityService.removeUserId(Long.parseLong(channel.split("-")[2])));
+            activityService.setUserIds(channels.get("message").keySet().stream().map(channel -> Long.parseLong(channel.split("-")[2])).collect(Collectors.toList()));
         }
     }
 

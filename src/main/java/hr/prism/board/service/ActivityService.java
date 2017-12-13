@@ -258,8 +258,9 @@ public class ActivityService {
         }
     }
 
-    public synchronized void removeUserId(Long userId) {
-        userIds.remove(userId);
+    public synchronized void setUserIds(List<Long> userIds) {
+        this.userIds.clear();
+        this.userIds.addAll(userIds);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
