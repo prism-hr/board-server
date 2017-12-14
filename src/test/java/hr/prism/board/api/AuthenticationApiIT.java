@@ -1,49 +1,12 @@
 package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableMap;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.LocationDTO;
-import hr.prism.board.dto.LoginDTO;
-import hr.prism.board.dto.RegisterDTO;
-import hr.prism.board.dto.ResetPasswordDTO;
-import hr.prism.board.dto.SigninDTO;
-import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPasswordDTO;
-import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.AgeRange;
-import hr.prism.board.enums.Gender;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.Notification;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
+import hr.prism.board.dto.*;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
@@ -55,17 +18,34 @@ import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.utils.BoardUtils;
 import io.jsonwebtoken.Jwts;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import javax.inject.Inject;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @TestContext
 @RunWith(SpringRunner.class)
 public class AuthenticationApiIT extends AbstractIT {
 
-    @Inject
-    private AuthenticationService authenticationService;
-
     @Value("${environment}")
     String environment;
-
+    @Inject
+    private AuthenticationService authenticationService;
     @Value("${password.reset.timeout.seconds}")
     private Long passwordResetTimeoutSeconds;
 
@@ -277,7 +257,9 @@ public class AuthenticationApiIT extends AbstractIT {
                 MockMvcRequestBuilders.post("/api/auth/facebook")
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .content(objectMapper.writeValueAsString(
-                        new SigninDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
+                        new SigninDTO()
+                            .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                            .setOauthData(new OAuthDataDTO().setCode("code")))))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
                 .getResponse()
@@ -305,7 +287,9 @@ public class AuthenticationApiIT extends AbstractIT {
             MockMvcRequestBuilders.post("/api/auth/linkedin")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(
-                    new SigninDTO().setClientId("clientId").setCode("code").setRedirectUri("redirectUri"))))
+                    new SigninDTO()
+                        .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                        .setOauthData(new OAuthDataDTO().setCode("code")))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
         user = userCacheService.findOneFresh(userId);
@@ -719,10 +703,10 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Long postId3 = postR3.getId();
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department3memberRole1Uuid)
-                .setClientId("clientId")
-                .setCode("code")
-                .setRedirectUri("redirectUri"), TestHelper.mockDevice()));
+            new SigninDTO()
+                .setUuid(department3memberRole1Uuid)
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice()));
         testUserService.setAuthentication(member5.getId());
         departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
@@ -736,10 +720,10 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR3.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department3memberRole2Uuid)
-                .setClientId("clientId2")
-                .setCode("code2")
-                .setRedirectUri("redirectUri2"), TestHelper.mockDevice()));
+            new SigninDTO()
+                .setUuid(department3memberRole2Uuid)
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
+                .setOauthData(new OAuthDataDTO().setCode("code2")), TestHelper.mockDevice()));
         testUserService.setAuthentication(member6.getId());
         departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
@@ -753,10 +737,11 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR3.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department3memberRole3Uuid)
-                .setClientId("clientId3")
-                .setCode("code3")
-                .setRedirectUri("redirectUri3"), TestHelper.mockDevice()));
+            new SigninDTO()
+                .setUuid(department3memberRole3Uuid)
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId3").setRedirectUri("redirectUri3"))
+                .setOauthData(new OAuthDataDTO().setCode("code3")),
+            TestHelper.mockDevice()));
         testUserService.setAuthentication(member1.getId());
         departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
@@ -842,10 +827,10 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Long postId4 = postR4.getId();
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
-            new SigninDTO().setUuid(department4memberRole1Uuid)
-                .setClientId("clientId")
-                .setCode("code")
-                .setRedirectUri("redirectUri"), TestHelper.mockDevice()));
+            new SigninDTO()
+                .setUuid(department4memberRole1Uuid)
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice()));
         testUserService.setAuthentication(member5.getId());
         departmentApi.putMembershipUpdate(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)

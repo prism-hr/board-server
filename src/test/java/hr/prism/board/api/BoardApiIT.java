@@ -10,15 +10,15 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
-import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestActivityService;
+import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
@@ -196,7 +196,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-            ExceptionUtils.verifyException(BoardException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
+            ExceptionUtils.verifyException(BoardDuplicateException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
                 status);
             return null;
         });

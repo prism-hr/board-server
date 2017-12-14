@@ -3,6 +3,8 @@ package hr.prism.board.configuration;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.OAuthAuthorizationDataDTO;
+import hr.prism.board.dto.OAuthDataDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestActivityService;
@@ -23,9 +25,8 @@ public class TestConfiguration {
         FacebookAdapter facebookAdapter = Mockito.mock(FacebookAdapter.class);
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId")
-                .setCode("code")
-                .setRedirectUri("redirectUri")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                .setOauthData(new OAuthDataDTO().setCode("code"))))
             .thenReturn(
                 new User()
                     .setGivenName("alastair")
@@ -36,9 +37,8 @@ public class TestConfiguration {
 
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId2")
-                .setCode("code2")
-                .setRedirectUri("redirectUri2")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
+                .setOauthData(new OAuthDataDTO().setCode("code2"))))
             .thenReturn(
                 new User()
                     .setGivenName("jakub")
@@ -49,9 +49,8 @@ public class TestConfiguration {
 
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId3")
-                .setCode("code3")
-                .setRedirectUri("redirectUri3")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId3").setRedirectUri("redirectUri3"))
+                .setOauthData(new OAuthDataDTO().setCode("code3"))))
             .thenReturn(
                 new User()
                     .setGivenName("member1")
@@ -69,9 +68,8 @@ public class TestConfiguration {
         LinkedinAdapter linkedinAdapter = Mockito.mock(LinkedinAdapter.class);
         Mockito.when(linkedinAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId")
-                .setCode("code")
-                .setRedirectUri("redirectUri")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                .setOauthData(new OAuthDataDTO().setCode("code"))))
             .thenReturn(
                 new User()
                     .setGivenName("alastair")

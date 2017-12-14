@@ -12,7 +12,6 @@ import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -39,9 +38,6 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
-
-    @Value("${deferred.request.timeout.millis}")
-    private Long deferredRequestTimeoutMillis;
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getUser() {
