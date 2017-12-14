@@ -73,9 +73,10 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
-                    throw new Error();
+                    throw new Error(e);
                 }
             }
+
             return message;
         }
 

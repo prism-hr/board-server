@@ -61,8 +61,8 @@ public class ActivityService {
     @Inject
     private ActivityMapper activityMapper;
 
-    @Inject
     @Lazy
+    @Inject
     private Pusher pusher;
 
     @Inject
@@ -254,8 +254,13 @@ public class ActivityService {
         simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
         LOGGER.info("Sending " + activities.size() + " activities to user: " + userId);
         if (pusherOn) {
-            pusher.trigger("activities-" + userId, "activities", activities);
+            pusher.trigger("presence-activities-" + userId, "activities", activities);
         }
+    }
+
+    public synchronized void setUserIds(List<Long> userIds) {
+        this.userIds.clear();
+        this.userIds.addAll(userIds);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {

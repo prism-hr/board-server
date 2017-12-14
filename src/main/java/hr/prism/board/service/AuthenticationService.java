@@ -1,6 +1,8 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableMap;
 import com.pusher.rest.Pusher;
+import com.pusher.rest.data.PresenceUser;
 import hr.prism.board.authentication.PusherAuthenticationDTO;
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.Resource;
@@ -73,8 +75,8 @@ public class AuthenticationService {
     @Inject
     private ActivityService activityService;
 
-    @Inject
     @Lazy
+    @Inject
     private Pusher pusher;
 
     @Lazy
@@ -263,11 +265,14 @@ public class AuthenticationService {
 
     public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
         String channel = pusherAuthentication.getChannel();
-        String channelUserId = channel.split("-")[1];
-        Long userId = userService.getCurrentUserSecured().getId();
+        String channelUserId = channel.split("-")[2];
+
+        User user = userService.getCurrentUserSecured();
+        Long userId = user.getId();
         if (channelUserId.equals(userId.toString())) {
             LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
-            return pusher.authenticate(pusherAuthentication.getSocketId(), channel);
+            return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
+                new PresenceUser(userId, ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
         } else {
             throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER,
                 "User ID: " + userId + " does not have permission to connect to channel: " + channel);
