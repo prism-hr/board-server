@@ -6,6 +6,8 @@ import com.pusher.rest.Pusher;
 import com.pusher.rest.data.Result;
 import hr.prism.board.service.ActivityService;
 import org.apache.commons.lang3.BooleanUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 @Service
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ActivityScheduledService {
+
+    private Logger LOGGER = LoggerFactory.getLogger(ActivityScheduledService.class);
 
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
@@ -35,11 +39,15 @@ public class ActivityScheduledService {
     public void updateUserIds() throws IOException {
         if (BooleanUtils.isTrue(schedulerOn)) {
             Result result = pusher.get("/channels");
-            Map<String, Map<String, Map<String, Object>>> channels = objectMapper.readValue(
-                result.getMessage(), new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {
-                });
+            String message = result.getMessage();
+            if (message != null) {
+                Map<String, Map<String, Map<String, Object>>> channels = objectMapper.readValue(
+                    result.getMessage(), new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {
+                    });
 
-            activityService.setUserIds(channels.get("message").keySet().stream().map(channel -> Long.parseLong(channel.split("-")[2])).collect(Collectors.toList()));
+                LOGGER.info("Updating users subscribed to activity stream");
+                activityService.setUserIds(channels.get("message").keySet().stream().map(channel -> Long.parseLong(channel.split("-")[2])).collect(Collectors.toList()));
+            }
         }
     }
 

@@ -28,6 +28,9 @@ public class Activity extends BoardEntity {
     @Column(name = "filter_by_category", nullable = false)
     private Boolean filterByCategory;
 
+    @Column(name = "sticky")
+    private Boolean sticky;
+
     @OneToMany(mappedBy = "activity")
     private Set<ActivityRole> activityRoles = new HashSet<>();
 
@@ -79,6 +82,15 @@ public class Activity extends BoardEntity {
 
     public Activity setFilterByCategory(Boolean filterByCategory) {
         this.filterByCategory = filterByCategory;
+        return this;
+    }
+
+    public Boolean getSticky() {
+        return sticky;
+    }
+
+    public Activity setSticky(Boolean sticky) {
+        this.sticky = sticky;
         return this;
     }
 

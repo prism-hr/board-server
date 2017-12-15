@@ -107,6 +107,7 @@ public class ActivityService {
             .collect(Collectors.toList());
     }
 
+    // TODO: refresh the ID if it is a new one
     public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
         if (entity == null) {
@@ -116,6 +117,7 @@ public class ActivityService {
         return entity;
     }
 
+    // TODO: refresh the ID if it is a new one
     public Activity getOrCreateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByUserRoleAndActivity(userRole, activity);
         if (entity == null) {
@@ -125,6 +127,7 @@ public class ActivityService {
         return entity;
     }
 
+    // TODO: refresh the ID if it is a new one
     public Activity getOrCreateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceEventAndActivity(resourceEvent, activity);
         if (entity == null) {
