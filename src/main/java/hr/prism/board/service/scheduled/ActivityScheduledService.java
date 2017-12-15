@@ -41,12 +41,17 @@ public class ActivityScheduledService {
             Result result = pusher.get("/channels");
             String message = result.getMessage();
             if (message != null) {
-                Map<String, Map<String, Map<String, Object>>> channels = objectMapper.readValue(
-                    result.getMessage(), new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {
+                Map<String, Map<String, Map<String, Object>>> wrapper = objectMapper.readValue(
+                    message, new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {
                     });
 
-                LOGGER.info("Updating users subscribed to activity stream");
-                activityService.setUserIds(channels.get("message").keySet().stream().map(channel -> Long.parseLong(channel.split("-")[2])).collect(Collectors.toList()));
+                Map<String, Map<String, Object>> channels = wrapper.get("channels");
+                if (channels != null) {
+                    LOGGER.info("Updating users subscribed to activity stream");
+                    activityService.setUserIds(wrapper.get("channels").keySet().stream()
+                        .filter(channel -> channel.startsWith("presence-activities-"))
+                        .map(channel -> Long.parseLong(channel.split("-")[2])).collect(Collectors.toList()));
+                }
             }
         }
     }
