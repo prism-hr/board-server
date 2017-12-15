@@ -24,8 +24,9 @@ public class LinkedinAdapter implements OauthAdapter {
     @Override
     public User exchangeForUser(SigninDTO signinDTO) {
         try {
-            LinkedInConnectionFactory cf = new LinkedInConnectionFactory(signinDTO.getClientId(), linkedinAppSecret);
-            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(signinDTO.getCode(), signinDTO.getRedirectUri(), null);
+            LinkedInConnectionFactory cf = new LinkedInConnectionFactory(signinDTO.getAuthorizationData().getClientId(), linkedinAppSecret);
+            AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(
+                signinDTO.getOauthData().getCode(), signinDTO.getAuthorizationData().getRedirectUri(), null);
             Connection<LinkedIn> connection = cf.createConnection(accessGrant);
             LinkedInProfile user = connection.getApi().profileOperations().getUserProfile();
 

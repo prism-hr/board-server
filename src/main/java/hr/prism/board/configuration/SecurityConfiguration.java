@@ -2,6 +2,8 @@ package hr.prism.board.configuration;
 
 import hr.prism.board.authentication.AuthenticationFilter;
 import hr.prism.board.authentication.AuthorizationHeaderResolver;
+import hr.prism.board.service.AuthenticationService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -17,16 +19,23 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Inject
     private AuthorizationHeaderResolver authorizationHeaderResolver;
 
+    @Inject
+    private AuthenticationService authenticationService;
+
+    @Value("${session.refreshBeforeExpiration.seconds}")
+    private Long sessionRefreshBeforeExpirationSeconds;
+
     public void configure(WebSecurity web) throws Exception {
         web.ignoring().antMatchers("/api/auth/*", "/api/redirect");
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        AuthenticationFilter filter = new AuthenticationFilter(authenticationService, authorizationHeaderResolver, sessionRefreshBeforeExpirationSeconds);
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and().csrf().disable().anonymous().disable()
             .authorizeRequests().antMatchers("/api/auth/*", "/api/redirect").permitAll()
-            .and().addFilterAt(new AuthenticationFilter(authorizationHeaderResolver), BasicAuthenticationFilter.class);
+            .and().addFilterAt(filter, BasicAuthenticationFilter.class);
     }
 
 }

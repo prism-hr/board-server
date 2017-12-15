@@ -1,5 +1,6 @@
 package hr.prism.board.authentication;
 
+import io.jsonwebtoken.Claims;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -20,7 +21,8 @@ public class AuthenticationChannelAdapter extends ChannelInterceptorAdapter {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authorization = accessor.getNativeHeader("Authorization").get(0);
-            Long userId = authorizationHeaderResolver.resolveUserId(authorization);
+            Claims claims = authorizationHeaderResolver.decodeClaims(authorization);
+            Long userId = authorizationHeaderResolver.resolveUserId(claims);
             accessor.setUser(new AuthenticationToken(userId));
         }
 

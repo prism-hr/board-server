@@ -19,18 +19,20 @@ public class AuthorizationHeaderResolver {
     @Inject
     private AuthenticationService authenticationService;
 
-    Long resolveUserId(String authorization) {
+    Claims decodeClaims(String authorization) {
         String accessToken = authorization.replaceFirst("Bearer ", "");
         try {
-            Claims token = authenticationService.decodeAccessToken(accessToken);
-            return Long.parseLong(token.getSubject());
+            return authenticationService.decodeAccessToken(accessToken);
         } catch (ExpiredJwtException e) {
             LOGGER.warn("JWT token has expired");
         } catch (MalformedJwtException e) {
             LOGGER.error("JWT token is malformed", e);
         }
-
         return null;
+    }
+
+    Long resolveUserId(Claims claims) {
+        return Long.parseLong(claims.getSubject());
     }
 
 }

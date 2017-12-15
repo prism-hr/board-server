@@ -1,13 +1,22 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import hr.prism.board.domain.*;
+import hr.prism.board.enums.*;
+import hr.prism.board.exception.BoardDuplicateException;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.repository.*;
+import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceSummary;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -21,53 +30,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.lang.reflect.Field;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceCategory;
-import hr.prism.board.domain.ResourceOperation;
-import hr.prism.board.domain.ResourceRelation;
-import hr.prism.board.domain.User;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardDuplicateException;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.ResourceCategoryRepository;
-import hr.prism.board.repository.ResourceOperationRepository;
-import hr.prism.board.repository.ResourceRelationRepository;
-import hr.prism.board.repository.ResourceRepository;
-import hr.prism.board.repository.ResourceSearchRepository;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.utils.BoardUtils;
-import hr.prism.board.value.ResourceFilter;
-import hr.prism.board.value.ResourceSummary;
+import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -304,7 +276,7 @@ public class ResourceService {
             .setParameter("id", resource.getId());
 
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new BoardException(exceptionCode, "Specified handle would not be unique");
+            throw new BoardDuplicateException(exceptionCode, "Specified handle would not be unique");
         }
     }
 

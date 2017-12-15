@@ -89,8 +89,8 @@ public class AuthenticationService {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Value("${session.duration.millis}")
-    private Long sessionDurationMillis;
+    @Value("${session.duration.seconds}")
+    private Long sessionDurationSeconds;
 
     @PostConstruct
     public void postConstruct() {
@@ -231,11 +231,11 @@ public class AuthenticationService {
                 .setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
-    public String makeAccessToken(Long userId, String jwsSecret, boolean specifyExpirationDate) {
+    public String makeAccessToken(Long userId, boolean specifyExpirationDate) {
         return Jwts.builder()
             .setSubject(userId.toString())
-            .setExpiration(specifyExpirationDate ? new Date(System.currentTimeMillis() + sessionDurationMillis) : null)
-            .signWith(SignatureAlgorithm.HS512, jwsSecret)
+            .setExpiration(specifyExpirationDate ? new Date(System.currentTimeMillis() + sessionDurationSeconds * 1000) : null)
+            .signWith(SignatureAlgorithm.HS512, getJwsSecret())
             .compact();
     }
 
@@ -256,7 +256,7 @@ public class AuthenticationService {
         try {
             Claims token = decodeAccessToken(accessToken);
             long userId = Long.parseLong(token.getSubject());
-            return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret(), true));
+            return Collections.singletonMap("token", makeAccessToken(userId, true));
         } catch (ExpiredJwtException e) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
             return null;

@@ -11,10 +11,7 @@ import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceTask;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtils;
+import hr.prism.board.exception.*;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.representation.*;
@@ -252,7 +249,7 @@ public class DepartmentApiIT extends AbstractIT {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(
-                BoardException.class,
+                BoardDuplicateException.class,
                 () -> departmentApi.patchDepartment(departmentRs.getKey().getId(),
                     new DepartmentPatchDTO()
                         .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
