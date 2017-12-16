@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface UserNotificationSuppressionRepository extends MyRepository<UserNotificationSuppression, Long> {
+public interface UserNotificationSuppressionRepository extends BoardEntityRepository<UserNotificationSuppression, Long> {
 
     List<UserNotificationSuppression> findByUser(User user);
 

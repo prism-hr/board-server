@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface UserRoleRepository extends MyRepository<UserRole, Long> {
+public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long> {
 
     UserRole findByUuid(String uuid);
 

@@ -10,10 +10,10 @@ import javax.persistence.EntityManager;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class MyRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializable>
-    extends SimpleJpaRepository<ENTITY, ID> implements MyRepository<ENTITY, ID> {
+public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializable>
+    extends SimpleJpaRepository<ENTITY, ID> implements BoardEntityRepository<ENTITY, ID> {
 
-    public MyRepositoryImpl(JpaEntityInformation<ENTITY, ID> entityInformation, EntityManager entityManager) {
+    public BoardEntityRepositoryImpl(JpaEntityInformation<ENTITY, ID> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
     }
 

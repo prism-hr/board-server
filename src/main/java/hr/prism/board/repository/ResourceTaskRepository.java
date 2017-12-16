@@ -11,14 +11,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue", "SpringDataRepositoryMethodReturnTypeInspection", "SqlResolve"})
-public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long> {
-    
+public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTask, Long> {
+
     @Query(value =
         "select resourceTask " +
             "from ResourceTask resourceTask " +
             "where resourceTask.resource.id = :resourceId")
     List<ResourceTask> findByResourceId(@Param("resourceId") Long resourceId);
-    
+
     @Query(value =
         "select resourceTask.task " +
             "from ResourceTask resourceTask " +
@@ -30,7 +30,7 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "where resourceTask.resource = :resource " +
             "and completion.user = :user)")
     List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource, @Param("user") User user);
-    
+
     @Query(value =
         "select resourceTask " +
             "from ResourceTask resourceTask " +
@@ -41,13 +41,13 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
     List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
         @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
         @Param("baseline3") LocalDateTime baseline3);
-    
+
     @Modifying
     @Query(value =
         "delete from ResourceTask resourceTask " +
             "where resourceTask.resource.id = :resourceId")
     void deleteByResourceId(@Param("resourceId") Long resourceId);
-    
+
     @Modifying
     @Query(value =
         "update ResourceTask resourceTask " +
@@ -55,7 +55,7 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "where resourceTask.resource = :resource " +
             "and resourceTask.task in (:tasks)")
     void updateByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks, @Param("completed") Boolean completed);
-    
+
     @Modifying
     @Query(value =
         "UPDATE resource_task " +
@@ -63,7 +63,7 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
     void updateNotifiedCountByResourceId(@Param("resourceId") Long resourceId);
-    
+
     @Modifying
     @Query(value =
         "UPDATE resource_task " +
@@ -71,14 +71,14 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
     void updateCreatedTimestampByResourceId(@Param("resourceId") Long resourceId, @Param("createdTimestamp") LocalDateTime createdTimestamp);
-    
+
     @Query(value =
         "select resourceTask.id " +
             "from ResourceTask resourceTask " +
             "where resourceTask.resource = :resource " +
             "and resourceTask.completed is null")
     List<Long> findByResourceAndNotCompleted(@Param("resource") Resource resource);
-    
+
     @Query(value =
         "select resourceTask.id " +
             "from ResourceTask resourceTask " +
@@ -90,5 +90,5 @@ public interface ResourceTaskRepository extends MyRepository<ResourceTask, Long>
             "where resourceTask.resource = :resource " +
             "and completion.user = :user)")
     List<Long> findByResourceAndNotCompleted(@Param("resource") Resource resource, @Param("user") User user);
-    
+
 }

@@ -107,34 +107,25 @@ public class ActivityService {
             .collect(Collectors.toList());
     }
 
-    // TODO: refresh the ID if it is a new one
-    public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
+    public Activity createOrUpdateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
-        if (entity == null) {
-            entity = createActivity(resource, null, null, activity);
-        }
-
-        return entity;
+        return entity == null ?
+            createActivity(resource, null, null, activity) :
+            activityRepository.update(entity);
     }
 
-    // TODO: refresh the ID if it is a new one
-    public Activity getOrCreateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
+    public Activity createOrUpdateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByUserRoleAndActivity(userRole, activity);
-        if (entity == null) {
-            entity = createActivity(userRole.getResource(), userRole, null, activity);
-        }
-
-        return entity;
+        return entity == null ?
+            createActivity(userRole.getResource(), userRole, null, activity) :
+            activityRepository.update(entity);
     }
 
-    // TODO: refresh the ID if it is a new one
-    public Activity getOrCreateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
+    public Activity createOrUpdateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceEventAndActivity(resourceEvent, activity);
-        if (entity == null) {
-            entity = createActivity(resourceEvent.getResource(), null, resourceEvent, activity);
-        }
-
-        return entity;
+        return entity == null ?
+            createActivity(resourceEvent.getResource(), null, resourceEvent, activity) :
+            activityRepository.update(entity);
     }
 
     public ActivityRole getOrCreateActivityRole(Activity activity, Scope scope, Role role) {
@@ -267,11 +258,13 @@ public class ActivityService {
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
-        return activityRepository.save(new hr.prism.board.domain.Activity().setResource(resource)
-            .setUserRole(userRole)
-            .setResourceEvent(resourceEvent)
-            .setActivity(activity)
-            .setFilterByCategory(activity.isFilterByCategory()));
+        return activityRepository.save(
+            new hr.prism.board.domain.Activity()
+                .setResource(resource)
+                .setUserRole(userRole)
+                .setResourceEvent(resourceEvent)
+                .setActivity(activity)
+                .setFilterByCategory(activity.isFilterByCategory()));
     }
 
 }

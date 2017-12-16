@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("JpaQlInspection")
-public interface ResourceCategoryRepository extends MyRepository<ResourceCategory, Long> {
+public interface ResourceCategoryRepository extends BoardEntityRepository<ResourceCategory, Long> {
 
     @Modifying
     @Query(value =

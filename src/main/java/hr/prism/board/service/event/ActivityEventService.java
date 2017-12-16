@@ -100,7 +100,7 @@ public class ActivityEventService {
         activityEvent.getActivities().forEach(activity -> {
             Activity activityEnum = activity.getActivity();
             hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
-                .computeIfAbsent(Pair.of(resourceEvent, activityEnum), value -> activityService.getOrCreateActivity(resourceEvent, activityEnum));
+                .computeIfAbsent(Pair.of(resourceEvent, activityEnum), value -> activityService.createOrUpdateActivity(resourceEvent, activityEnum));
             activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
         });
 
@@ -114,7 +114,7 @@ public class ActivityEventService {
             activityEvent.getActivities().forEach(activity -> {
                 Activity activityEnum = activity.getActivity();
                 hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
-                    .computeIfAbsent(Pair.of(userRole, activityEnum), value -> activityService.getOrCreateActivity(userRole, activityEnum));
+                    .computeIfAbsent(Pair.of(userRole, activityEnum), value -> activityService.createOrUpdateActivity(userRole, activityEnum));
                 activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
             });
         } else {
@@ -126,7 +126,6 @@ public class ActivityEventService {
         return resource;
     }
 
-    // TODO: handle sticky activities versus state specific ones
     private Resource processResource(ActivityEvent activityEvent, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
         Resource resource = resourceService.findOne(activityEvent.getResourceId());
         if (activityEvent.isStateChange()) {
@@ -136,7 +135,7 @@ public class ActivityEventService {
         activityEvent.getActivities().forEach(activity -> {
             Activity activityEnum = activity.getActivity();
             hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity
-                .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.getOrCreateActivity(resource, activityEnum));
+                .computeIfAbsent(Pair.of(resource, activityEnum), value -> activityService.createOrUpdateActivity(resource, activityEnum));
 
             Long userId = activity.getUserId();
             if (userId == null) {

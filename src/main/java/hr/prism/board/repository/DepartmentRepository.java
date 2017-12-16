@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface DepartmentRepository extends MyRepository<Department, Long> {
+public interface DepartmentRepository extends BoardEntityRepository<Department, Long> {
 
     @Query(value =
         "select department.id " +

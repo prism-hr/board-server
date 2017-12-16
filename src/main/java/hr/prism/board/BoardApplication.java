@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import com.tapstream.rollbar.RollbarAppender;
-import hr.prism.board.repository.MyRepositoryImpl;
+import hr.prism.board.repository.BoardEntityRepositoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -18,7 +18,7 @@ import java.util.Properties;
 
 @Configuration
 @SpringBootApplication
-@EnableJpaRepositories(repositoryBaseClass = MyRepositoryImpl.class)
+@EnableJpaRepositories(repositoryBaseClass = BoardEntityRepositoryImpl.class)
 public class BoardApplication extends WebMvcConfigurerAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);

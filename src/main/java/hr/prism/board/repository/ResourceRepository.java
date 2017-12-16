@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface ResourceRepository extends MyRepository<Resource, Long> {
+public interface ResourceRepository extends BoardEntityRepository<Resource, Long> {
 
     Resource findByHandle(String handle);
 

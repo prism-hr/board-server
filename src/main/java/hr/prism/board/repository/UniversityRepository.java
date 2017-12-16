@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface UniversityRepository extends MyRepository<University, Long> {
+public interface UniversityRepository extends BoardEntityRepository<University, Long> {
 
     @Query(value =
         "select university " +
