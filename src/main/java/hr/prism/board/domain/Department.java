@@ -45,9 +45,6 @@ public class Department extends Resource {
     @Column(name = "last_task_creation_timestamp")
     private LocalDateTime lastTaskCreationTimestamp;
 
-    @Column(name = "last_internal_post_timestamp")
-    private LocalDateTime lastInternalPostTimestamp;
-
     @Transient
     private Customer customer;
 
