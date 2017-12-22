@@ -120,23 +120,27 @@ public class ActivityService {
     }
 
     public void viewActivity(Activity activity, User user) {
-        ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
-        if (activityEvent == null) {
-            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.VIEW).setEventCount(1L));
-        } else {
-            activityEvent.setEventCount(activityEvent.getEventCount() + 1);
-            activityEventRepository.update(activityEvent);
+        if (activity != null) {
+            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
+            if (activityEvent == null) {
+                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.VIEW).setEventCount(1L));
+            } else {
+                activityEvent.setEventCount(activityEvent.getEventCount() + 1);
+                activityEventRepository.update(activityEvent);
+            }
         }
     }
 
     public void dismissActivity(Long activityId) {
         User user = userService.getCurrentUserSecured();
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
-        ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
-        if (activityEvent == null) {
-            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
-            Long userId = user.getId();
-            userActivityService.processRequests(userId, getActivities(userId));
+        if (activity != null) {
+            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+            if (activityEvent == null) {
+                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
+                Long userId = user.getId();
+                userActivityService.processRequests(userId, getActivities(userId));
+            }
         }
     }
 
