@@ -28,12 +28,15 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
     @Query(value =
         "select post.id " +
             "from Post post " +
+            "inner join post.parent board " +
+            "inner join board.parent department " +
             "where post.state in (:states) " +
+            "and department.state <> :rejectedState " +
             "and (post.liveTimestamp <= :baseline " +
             "or post.liveTimestamp is null) " +
             "and (post.deadTimestamp >= :baseline " +
             "or post.deadTimestamp is null)")
-    List<Long> findPostsToPublish(@Param("states") Collection<State> states, @Param("baseline") LocalDateTime baseline);
+    List<Long> findPostsToPublish(@Param("states") Collection<State> states, @Param("rejectedState") State rejectedState, @Param("baseline") LocalDateTime baseline);
 
     @Query(value =
         "select post " +

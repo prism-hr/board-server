@@ -64,7 +64,7 @@ public class ResourceService {
             "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
-            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state)";
+            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state <> owner.state)";
 
     private static final String SECURE_RESOURCE_ACTION =
         "FROM resource " +
@@ -76,7 +76,7 @@ public class ResourceService {
             "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
-            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state = owner.state) " +
+            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state <> owner.state) " +
             "INNER JOIN resource_relation " +
             "ON resource.id = resource_relation.resource2_id " +
             "INNER JOIN resource as parent " +

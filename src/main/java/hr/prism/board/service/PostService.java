@@ -405,7 +405,7 @@ public class PostService {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> postToRetireIds = postRepository.findPostsToRetire(Arrays.asList(State.PENDING, State.ACCEPTED), baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
-        List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), baseline);
+        List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), State.REJECTED, baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
 
         List<Long> postToModifyIds = new ArrayList<>();

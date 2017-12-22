@@ -39,6 +39,24 @@ public class Installer {
     @PostConstruct
     public void install() {
         Workflow workflow = new Workflow(objectMapper)
+            // Department trial state
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(TRIAL)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(TRIAL).creating(BOARD).inState(DRAFT)
+            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
+            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
+            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(TRIAL)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(TRIAL).creating(BOARD).inState(ACCEPTED)
+
+            // Department conversion state
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(CONVERSION)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(CONVERSION).creating(BOARD).inState(DRAFT)
+            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
+            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
+            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(CONVERSION)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(CONVERSION).creating(BOARD).inState(ACCEPTED)
+
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(DRAFT)
@@ -47,6 +65,19 @@ public class Installer {
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
+
+            // Department defaulted state
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DEFAULTED)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(DEFAULTED).creating(BOARD).inState(DRAFT)
+            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
+            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
+            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DEFAULTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DEFAULTED).creating(BOARD).inState(ACCEPTED)
+
+            // Department rejected state
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(REJECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(REJECTED)
 
             // Board draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
@@ -62,7 +93,7 @@ public class Installer {
 
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(DRAFT)
+            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .prompting(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
@@ -73,9 +104,9 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(ACCEPTED).transitioningTo(REJECTED)
             .prompting(BOARD, ADMINISTRATOR).with(REJECT_BOARD_ACTIVITY)
             .notifying(BOARD, ADMINISTRATOR).with(REJECT_BOARD_NOTIFICATION)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
-            .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).creating(POST).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
+            .permitThat(BOARD, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .prompting(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
@@ -147,7 +178,7 @@ public class Installer {
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
 
             // Post accepted state
-            .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED).andParentState(ACCEPTED)
+            .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
@@ -164,10 +195,10 @@ public class Installer {
             .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
-            .permitThat(DEPARTMENT, MEMBER).can(PURSUE, POST).inState(ACCEPTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
-            .permitThat(POST, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .permitThat(DEPARTMENT, MEMBER).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .permitThat(POST, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
 
             // Post expired state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)

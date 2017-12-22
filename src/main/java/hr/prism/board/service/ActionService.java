@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.BoardNotFoundException;

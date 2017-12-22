@@ -38,7 +38,7 @@ public class Workflow extends ArrayList<Permission> {
         return this.permission.setResource3Scope(scope);
     }
 
-    public Workflow andParentState(State state) {
+    public Workflow andParentStateNot(State state) {
         this.permission.setResource4State(state);
         return this;
     }
