@@ -152,25 +152,13 @@ public class ActivityService {
         viewActivity(activity, user);
     }
 
-    public void viewActivity(Activity activity, User user) {
-        if (activity != null) {
-            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
-            if (activityEvent == null) {
-                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.VIEW).setEventCount(1L));
-            } else {
-                activityEvent.setEventCount(activityEvent.getEventCount() + 1);
-                activityEventRepository.update(activityEvent);
-            }
-        }
-    }
-
     public void dismissActivity(Long activityId) {
         User user = userService.getCurrentUserSecured();
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
         if (activity != null) {
             ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
             if (activityEvent == null) {
-                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
+                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL));
                 sendActivities(user.getId());
             }
         }
