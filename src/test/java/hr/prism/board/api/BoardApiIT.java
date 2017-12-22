@@ -20,9 +20,9 @@ import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
 import hr.prism.board.util.ObjectUtils;
-import javafx.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -576,7 +576,7 @@ public class BoardApiIT extends AbstractIT {
                     .setId(boardR1.getDepartment().getId())),
             "board-2");
 
-        return new Pair<>(boardR1, boardR2);
+        return Pair.of(boardR1, boardR2);
     }
 
     private BoardRepresentation verifyPostBoard(BoardDTO boardDTO, String expectedHandle) {

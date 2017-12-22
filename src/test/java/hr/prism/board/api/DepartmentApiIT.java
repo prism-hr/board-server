@@ -19,7 +19,7 @@ import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestUserActivityService;
 import hr.prism.board.util.BoardUtils;
 import hr.prism.board.util.ObjectUtils;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -697,7 +697,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setName("department 2")),
             "department-2").getDepartment();
 
-        return new Pair<>(departmentR1, departmentR2);
+        return Pair.of(departmentR1, departmentR2);
     }
 
     private BoardRepresentation verifyPostDepartment(BoardDTO boardDTO, String expectedHandle) {
