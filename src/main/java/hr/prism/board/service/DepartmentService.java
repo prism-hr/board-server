@@ -1,14 +1,12 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
+import com.stripe.model.Customer;
+import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
-import com.stripe.model.Customer;
-import com.stripe.model.InvoiceCollection;
-import hr.prism.board.domain.*;
-import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -401,6 +399,16 @@ public class DepartmentService {
     }
 
     public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
+        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
+        if (!responseReadiness.isReady()) {
+            if (responseReadiness.isRequireUserDemographicData()) {
+                BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
+            }
+
+            BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
+        }
+    }
+
     public Customer getPaymentSources(Long departmentId) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
@@ -451,17 +459,6 @@ public class DepartmentService {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
         return customerId == null ? null : paymentService.getInvoices(customerId);
-    }
-
-    void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
-        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
-        if (!responseReadiness.isReady()) {
-            if (responseReadiness.isRequireUserDemographicData()) {
-                BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
-            }
-
-            BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
-        }
     }
 
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
