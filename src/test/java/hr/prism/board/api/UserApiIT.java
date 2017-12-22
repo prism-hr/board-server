@@ -233,7 +233,7 @@ public class UserApiIT extends AbstractIT {
 
     @Test
     public void shouldSubscribeAndReceiveMessages() throws Exception {
-        testWebSocketService.record();
+        testActivityService.record();
         RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse registerResponse =
             mockMvc.perform(
@@ -259,23 +259,23 @@ public class UserApiIT extends AbstractIT {
         stompHeaders.set("Authorization", "Bearer " + loginAccessToken);
 
         StompSession stompSession =
-            webSocketStompClient.connect("ws://localhost:" + localServerPort + "/api/web-socket",
+            webSocketStompClient.connect("ws://127.0.0.1:" + localServerPort + "/api/web-socket",
                 webSocketHttpHeaders, stompHeaders, new StompSessionHandlerAdapter() {})
-                .get(1, TimeUnit.SECONDS);
+                .get(5, TimeUnit.SECONDS);
 
         stompSession.subscribe("/api/user/activities", new FrameHandler());
         List<?> response = (List<?>) completableFuture.get();
         Assert.assertNotNull(response);
         Assert.assertEquals(0, response.size());
 
-        List<Long> userIds = testWebSocketService.getUserIds();
+        List<Long> userIds = testActivityService.getUserIds();
         Assert.assertEquals(1, userIds.size());
         Assert.assertEquals(userId, userIds.get(0));
 
         stompSession.disconnect();
         // Give the session disconnect event time to be fired
         TimeUnit.SECONDS.sleep(1L);
-        userIds = testWebSocketService.getUserIds();
+        userIds = testActivityService.getUserIds();
         Assert.assertEquals(0, userIds.size());
     }
 

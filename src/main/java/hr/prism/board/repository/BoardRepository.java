@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface BoardRepository extends MyRepository<Board, Long> {
+public interface BoardRepository extends BoardEntityRepository<Board, Long> {
 
     @Query(value =
         "select board.handle " +

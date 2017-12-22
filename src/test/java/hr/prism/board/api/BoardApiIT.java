@@ -10,19 +10,19 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
-import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestWebSocketService;
 import hr.prism.board.util.ObjectUtils;
-import javafx.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -196,7 +196,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> {
             BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
             boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-            ExceptionUtils.verifyException(BoardException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
+            ExceptionUtils.verifyException(BoardDuplicateException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
                 status);
             return null;
         });
@@ -262,7 +262,7 @@ public class BoardApiIT extends AbstractIT {
         verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
 
         // Create a board in the draft state
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
@@ -274,7 +274,7 @@ public class BoardApiIT extends AbstractIT {
 
         BoardRepresentation boardR = verifyPostBoard(departmentId, TestHelper.smallSampleBoard().setName("board 1"), "board-1");
         Long boardId = boardR.getId();
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
         String departmentUserGivenName = departmentUser.getGivenName();
@@ -283,7 +283,7 @@ public class BoardApiIT extends AbstractIT {
         String resourceRedirect = serverUrl + "/redirect?resource=" + boardId;
         String homeRedirect = serverUrl + "/redirect";
 
-        testWebSocketService.verify(departmentUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.NEW_BOARD_PARENT_ACTIVITY));
+        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(boardId, Activity.NEW_BOARD_PARENT_ACTIVITY));
 
         Resource board = resourceService.findOne(boardId);
         Long activityId = activityService.findByResourceAndActivity(board, Activity.NEW_BOARD_PARENT_ACTIVITY).getId();
@@ -317,7 +317,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> boardApi.getBoard(boardId));
 
         // Check that department user can reject the board
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         listenForNewActivities(departmentUserId);
@@ -327,8 +327,8 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
 
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.REJECT_BOARD_ACTIVITY));
-        testWebSocketService.verify(departmentUserId);
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.REJECT_BOARD_ACTIVITY));
+        testActivityService.verify(departmentUserId);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we cannot accept this")
@@ -338,8 +338,8 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made a mistake", State.DRAFT);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.DRAFT, operations);
 
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.RESTORE_BOARD_ACTIVITY));
-        testWebSocketService.verify(departmentUserId);
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.RESTORE_BOARD_ACTIVITY));
+        testActivityService.verify(departmentUserId);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
@@ -349,8 +349,8 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "accept", null, State.ACCEPTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
 
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.ACCEPT_BOARD_ACTIVITY));
-        testWebSocketService.verify(departmentUserId);
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.ACCEPT_BOARD_ACTIVITY));
+        testActivityService.verify(departmentUserId);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.ACCEPT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
@@ -360,8 +360,8 @@ public class BoardApiIT extends AbstractIT {
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we really cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
 
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.REJECT_BOARD_ACTIVITY));
-        testWebSocketService.verify(departmentUserId);
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.REJECT_BOARD_ACTIVITY));
+        testActivityService.verify(departmentUserId);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("comment", "we really cannot accept this")
@@ -370,11 +370,11 @@ public class BoardApiIT extends AbstractIT {
         // Check that the department user can restore the board to accepted
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made another mistake", State.ACCEPTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.RESTORE_BOARD_ACTIVITY));
-        testWebSocketService.verify(departmentUserId);
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.RESTORE_BOARD_ACTIVITY));
+        testActivityService.verify(departmentUserId);
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
             ImmutableMap.<String, String>builder().put("recipient", boardUserGivenName).put("department", departmentName).put("board", "board 1").put("resourceRedirect", resourceRedirect)
@@ -583,7 +583,7 @@ public class BoardApiIT extends AbstractIT {
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
         BoardRepresentation boardR1 = verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
         BoardRepresentation boardR2 = verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
-        return new Pair<>(boardR1, boardR2);
+        return Pair.of(boardR1, boardR2);
     }
 
     private BoardRepresentation verifyPostBoard(Long departmentId, BoardDTO boardDTO, String expectedHandle) {

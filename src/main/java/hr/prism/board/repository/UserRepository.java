@@ -17,7 +17,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.value.UserNotification;
 
 @SuppressWarnings("JpaQlInspection")
-public interface UserRepository extends MyRepository<User, Long> {
+public interface UserRepository extends BoardEntityRepository<User, Long> {
 
     String SUPPRESSION_CONSTRAINT =
         "userRole.user not in (" +
@@ -152,6 +152,7 @@ public interface UserRepository extends MyRepository<User, Long> {
         "select user.id " +
             "from User user " +
             "where user.testUser = :testUser")
+    @SuppressWarnings("SameParameterValue")
     List<Long> findByTestUser(@Param("testUser") Boolean testUser);
 
 }

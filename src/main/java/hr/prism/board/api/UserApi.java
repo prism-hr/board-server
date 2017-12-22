@@ -1,37 +1,31 @@
 package hr.prism.board.api;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.security.Principal;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.mapper.UserMapper;
-import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ActivityService;
 import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
-import hr.prism.board.service.WebSocketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+import java.security.Principal;
+import java.util.List;
 
 @RestController
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unused"})
 public class UserApi {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserApi.class);
 
     @Inject
     private ActivityService activityService;
@@ -44,12 +38,6 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
-
-    @Inject
-    private WebSocketService webSocketService;
-
-    @Value("${deferred.request.timeout.millis}")
-    private Long deferredRequestTimeoutMillis;
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getUser() {
@@ -106,8 +94,7 @@ public class UserApi {
     public void subscribe(Principal principal) {
         SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
         Long userId = userService.getCurrentUserSecured().getId();
-        List<ActivityRepresentation> activities = activityService.getActivities(userId);
-        webSocketService.sendActivities(userId, activities);
+        activityService.sendActivities(userId);
     }
 
     @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)

@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation> {
 
     @Inject

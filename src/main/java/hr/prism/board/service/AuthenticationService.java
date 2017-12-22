@@ -1,34 +1,11 @@
 package hr.prism.board.service;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
-
+import com.google.common.collect.ImmutableMap;
+import com.pusher.rest.Pusher;
+import com.pusher.rest.data.PresenceUser;
+import hr.prism.board.authentication.PusherAuthenticationDTO;
 import hr.prism.board.authentication.adapter.OauthAdapter;
+import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.LoginDTO;
@@ -50,6 +27,32 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -59,6 +62,9 @@ public class AuthenticationService {
     private static Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
     private String jwsSecret;
+
+    @Inject
+    private UserService userService;
 
     @Inject
     private UserCacheService userCacheService;
@@ -71,6 +77,10 @@ public class AuthenticationService {
 
     @Lazy
     @Inject
+    private Pusher pusher;
+
+    @Lazy
+    @Inject
     private NotificationEventService notificationEventService;
 
     @PersistenceContext
@@ -79,8 +89,8 @@ public class AuthenticationService {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Value("${session.duration.millis}")
-    private Long sessionDurationMillis;
+    @Value("${session.duration.seconds}")
+    private Long sessionDurationSeconds;
 
     @PostConstruct
     public void postConstruct() {
@@ -221,11 +231,11 @@ public class AuthenticationService {
                 .setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
-    public String makeAccessToken(Long userId, String jwsSecret, boolean specifyExpirationDate) {
+    public String makeAccessToken(Long userId, boolean specifyExpirationDate) {
         return Jwts.builder()
             .setSubject(userId.toString())
-            .setExpiration(specifyExpirationDate ? new Date(System.currentTimeMillis() + sessionDurationMillis) : null)
-            .signWith(SignatureAlgorithm.HS512, jwsSecret)
+            .setExpiration(specifyExpirationDate ? new Date(System.currentTimeMillis() + sessionDurationSeconds * 1000) : null)
+            .signWith(SignatureAlgorithm.HS512, getJwsSecret())
             .compact();
     }
 
@@ -246,10 +256,26 @@ public class AuthenticationService {
         try {
             Claims token = decodeAccessToken(accessToken);
             long userId = Long.parseLong(token.getSubject());
-            return Collections.singletonMap("token", makeAccessToken(userId, getJwsSecret(), true));
+            return Collections.singletonMap("token", makeAccessToken(userId, true));
         } catch (ExpiredJwtException e) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
             return null;
+        }
+    }
+
+    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
+        String channel = pusherAuthentication.getChannel();
+        String channelUserId = channel.split("-")[2];
+
+        User user = userService.getCurrentUserSecured();
+        Long userId = user.getId();
+        if (channelUserId.equals(userId.toString())) {
+            LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
+            return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
+                new PresenceUser(userId, ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
+        } else {
+            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER,
+                "User ID: " + userId + " does not have permission to connect to channel: " + channel);
         }
     }
 
@@ -264,6 +290,8 @@ public class AuthenticationService {
         User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
         if (!user.equals(invitee)) {
             UserRole userRole = userRoleCacheService.findByUuid(uuid);
+            Resource resource = userRole.getResource();
+
             userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
             entityManager.flush();
             userRole.setUser(user);
@@ -273,6 +301,8 @@ public class AuthenticationService {
                 activityService.deleteActivityUsers(invitee);
                 userCacheService.deleteUser(invitee);
             }
+
+            activityService.sendActivities(resource);
         }
     }
 

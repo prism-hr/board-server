@@ -1,7 +1,6 @@
 package hr.prism.board.representation;
 
 import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.ResourceTask;
 
 import java.util.List;
 
@@ -20,7 +19,7 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private List<MemberCategory> memberCategories;
 
-    private List<ResourceTask> tasks;
+    private List<ResourceTaskRepresentation> tasks;
 
     public UniversityRepresentation getUniversity() {
         return university;
@@ -76,11 +75,11 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public List<ResourceTask> getTasks() {
+    public List<ResourceTaskRepresentation> getTasks() {
         return tasks;
     }
 
-    public DepartmentRepresentation setTasks(List<ResourceTask> tasks) {
+    public DepartmentRepresentation setTasks(List<ResourceTaskRepresentation> tasks) {
         this.tasks = tasks;
         return this;
     }

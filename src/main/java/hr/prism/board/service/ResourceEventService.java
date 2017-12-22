@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess", "UnusedReturnValue"})
 public class ResourceEventService {
 
     @Inject

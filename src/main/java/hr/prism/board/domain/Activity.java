@@ -21,10 +21,6 @@ public class Activity extends BoardEntity {
     @JoinColumn(name = "resource_event_id")
     private ResourceEvent resourceEvent;
 
-    @OneToOne
-    @JoinColumn(name = "resource_task_id")
-    private ResourceTask resourceTask;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "activity", nullable = false)
     private hr.prism.board.enums.Activity activity;
@@ -65,15 +61,6 @@ public class Activity extends BoardEntity {
 
     public Activity setResourceEvent(ResourceEvent resourceEvent) {
         this.resourceEvent = resourceEvent;
-        return this;
-    }
-
-    public ResourceTask getResourceTask() {
-        return resourceTask;
-    }
-
-    public Activity setResourceTask(ResourceTask resourceTask) {
-        this.resourceTask = resourceTask;
         return this;
     }
 

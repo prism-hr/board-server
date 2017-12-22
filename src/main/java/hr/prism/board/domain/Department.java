@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 @DiscriminatorValue(value = Scope.Value.DEPARTMENT)
 @NamedEntityGraph(
     name = "department.extended",
@@ -15,12 +15,16 @@ import java.time.LocalDateTime;
         @NamedAttributeNode(value = "parent", subgraph = "university"),
         @NamedAttributeNode(value = "documentLogo"),
         @NamedAttributeNode(value = "categories"),
-        @NamedAttributeNode(value = "tasks")},
+        @NamedAttributeNode(value = "tasks", subgraph = "tasks")},
     subgraphs = {
-        @NamedSubgraph(
-            name = "university",
+            @NamedSubgraph(
+                name = "university",
             attributeNodes = {
-                @NamedAttributeNode(value = "documentLogo")})})
+                @NamedAttributeNode(value = "documentLogo")}),
+        @NamedSubgraph(
+            name = "tasks",
+            attributeNodes = {
+                @NamedAttributeNode(value = "completions")})})
 public class Department extends Resource {
 
     @Column(name = "customer_id", unique = true)
@@ -94,14 +98,6 @@ public class Department extends Resource {
     public Department setLastTaskCreationTimestamp(LocalDateTime lastTaskCreationTimestamp) {
         this.lastTaskCreationTimestamp = lastTaskCreationTimestamp;
         return this;
-    }
-
-    public LocalDateTime getLastInternalPostTimestamp() {
-        return lastInternalPostTimestamp;
-    }
-
-    public void setLastInternalPostTimestamp(LocalDateTime lastInternalPostTimestamp) {
-        this.lastInternalPostTimestamp = lastInternalPostTimestamp;
     }
 
     public void increaseMemberTobeUploadedCount(Long memberCountPending) {

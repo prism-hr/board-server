@@ -2,7 +2,12 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
-
+import hr.prism.board.enums.Activity;
+import hr.prism.board.enums.ResourceEvent;
+import hr.prism.board.enums.Role;
+import hr.prism.board.representation.ActivityRepresentation;
+import hr.prism.board.representation.ResourceEventRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +18,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import hr.prism.board.enums.Activity;
-import hr.prism.board.enums.ResourceEvent;
-import hr.prism.board.enums.Role;
-import hr.prism.board.representation.ActivityRepresentation;
-import hr.prism.board.representation.ResourceEventRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
-
 @Service
-public class TestWebSocketService extends WebSocketService {
+public class TestActivityService extends ActivityService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
 
     private boolean recording = false;
 
@@ -32,7 +30,7 @@ public class TestWebSocketService extends WebSocketService {
     public void record() {
         this.recording = true;
         this.sentActivities.clear();
-        this.userIds.clear();
+        userIds.clear();
     }
 
     public void stop() {
@@ -40,7 +38,7 @@ public class TestWebSocketService extends WebSocketService {
     }
 
     @SuppressWarnings("unchecked")
-    public Set<ActivityInstance> verify(Long userId, ActivityInstance... expectedActivityInstances) {
+    public void verify(Long userId, ActivityInstance... expectedActivityInstances) {
         List<ActivityRepresentation> activityRepresentations = Iterables.getLast(sentActivities.removeAll(userId));
         LOGGER.info("Checking activities for user: " + userId + " - " +
             activityRepresentations.stream().map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
@@ -52,8 +50,6 @@ public class TestWebSocketService extends WebSocketService {
         for (ActivityInstance expectedActivityInstance : expectedActivityInstances) {
             Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
         }
-
-        return actualActivityInstances;
     }
 
     @Override

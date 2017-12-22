@@ -1,25 +1,8 @@
 package hr.prism.board.service;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.ActivityEvent;
-import hr.prism.board.domain.ActivityRole;
-import hr.prism.board.domain.ActivityUser;
-import hr.prism.board.domain.BoardEntity;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import com.google.common.collect.ImmutableList;
+import com.pusher.rest.Pusher;
+import hr.prism.board.domain.*;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -30,11 +13,35 @@ import hr.prism.board.repository.ActivityRepository;
 import hr.prism.board.repository.ActivityRoleRepository;
 import hr.prism.board.repository.ActivityUserRepository;
 import hr.prism.board.representation.ActivityRepresentation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
 public class ActivityService {
+
+    volatile Set<Long> userIds = new LinkedHashSet<>();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
+
+    @Value("${pusher.on}")
+    private boolean pusherOn;
 
     @Inject
     private ActivityRepository activityRepository;
@@ -52,10 +59,31 @@ public class ActivityService {
     private UserService userService;
 
     @Inject
-    private WebSocketService webSocketService;
+    private ActivityMapper activityMapper;
+
+    @Lazy
+    @Inject
+    private Pusher pusher;
 
     @Inject
-    private ActivityMapper activityMapper;
+    private SimpMessagingTemplate simpMessagingTemplate;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @EventListener
+    public synchronized void handleSessionConnectEvent(SessionConnectEvent sessionConnectEvent) {
+        Long userId = Long.parseLong(sessionConnectEvent.getUser().getName());
+        LOGGER.info("Connecting user: " + userId + " to activities");
+        userIds.add(userId);
+    }
+
+    @EventListener
+    public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
+        Long userId = Long.parseLong(sessionDisconnectEvent.getUser().getName());
+        LOGGER.info("Disconnecting user: " + userId + " from activities");
+        userIds.remove(userId);
+    }
 
     public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         return activityRepository.findByResourceAndActivity(resource, activity);
@@ -79,40 +107,25 @@ public class ActivityService {
             .collect(Collectors.toList());
     }
 
-    public Activity getOrCreateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
+    public Activity createOrUpdateActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
-        if (entity == null) {
-            entity = createActivity(resource, null, activity);
-        }
-
-        return entity;
+        return entity == null ?
+            createActivity(resource, null, null, activity) :
+            activityRepository.update(entity);
     }
 
-    public Activity getOrCreateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
+    public Activity createOrUpdateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByUserRoleAndActivity(userRole, activity);
-        if (entity == null) {
-            entity = createActivity(userRole.getResource(), userRole, activity);
-        }
-
-        return entity;
+        return entity == null ?
+            createActivity(userRole.getResource(), userRole, null, activity) :
+            activityRepository.update(entity);
     }
 
-    public Activity getOrCreateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
+    public Activity createOrUpdateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceEventAndActivity(resourceEvent, activity);
-        if (entity == null) {
-            entity = createActivity(resourceEvent.getResource(), resourceEvent, activity);
-        }
-
-        return entity;
-    }
-
-    public Activity getOrCreateActivity(ResourceTask resourceTask, hr.prism.board.enums.Activity activity) {
-        Activity entity = activityRepository.findByResourceTaskAndActivity(resourceTask, activity);
-        if (entity == null) {
-            entity = createActivity(resourceTask.getResource(), resourceTask, activity);
-        }
-
-        return entity;
+        return entity == null ?
+            createActivity(resourceEvent.getResource(), null, resourceEvent, activity) :
+            activityRepository.update(entity);
     }
 
     public ActivityRole getOrCreateActivityRole(Activity activity, Scope scope, Role role) {
@@ -142,13 +155,12 @@ public class ActivityService {
     public void dismissActivity(Long activityId) {
         User user = userService.getCurrentUserSecured();
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
-        ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
-        if (activityEvent == null) {
-            activityEventRepository.save(
-                new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL).setEventCount(1L));
-
-            Long userId = user.getId();
-            webSocketService.sendActivities(userId, getActivities(userId));
+        if (activity != null) {
+            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+            if (activityEvent == null) {
+                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL));
+                sendActivities(user.getId());
+            }
         }
     }
 
@@ -188,51 +200,73 @@ public class ActivityService {
         activityRepository.deleteByUserRoles(userRoles);
     }
 
-    void deleteActivities(Resource resource, List<hr.prism.board.enums.ResourceTask> tasks) {
-        activityEventRepository.deleteByResourceAndTasks(resource, tasks);
-        activityRoleRepository.deleteByResourceAndTasks(resource, tasks);
-        activityRepository.deleteByResourceAndTasks(resource, tasks);
+    public ImmutableList<Long> getUserIds() {
+        return ImmutableList.copyOf(userIds);
     }
 
-    List<ActivityEvent> findViews(Collection<Activity> activities, User user) {
+    public void sendActivities(Long userId) {
+        entityManager.flush();
+        sendActivities(userId, getActivities(userId));
+    }
+
+    public void sendActivities(Resource resource) {
+        entityManager.flush();
+        List<Long> USER_IDS = getUserIds();
+        if (!USER_IDS.isEmpty()) {
+            for (Long userId : userService.findByResourceAndUserIds(resource, USER_IDS)) {
+                sendActivities(userId);
+            }
+        }
+    }
+
+    public void dismissActivities(Long resourceId, List<hr.prism.board.enums.Activity> activities, Long userId) {
+        activityEventRepository.insertByResourceIdActivitiesUserIdAndEvent(resourceId,
+            activities.stream().map(hr.prism.board.enums.Activity::name).collect(Collectors.toList()), userId,
+            hr.prism.board.enums.ActivityEvent.DISMISSAL.name(), LocalDateTime.now());
+    }
+
+    public void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {
+        activityEventRepository.deleteByResourceAndActivities(resource, activities);
+        activityRoleRepository.deleteByResourceAndActivities(resource, activities);
+        activityRepository.deleteByResourceAndActivities(resource, activities);
+    }
+
+    public List<ActivityEvent> findViews(Collection<Activity> activities, User user) {
         return activityEventRepository.findByActivitiesAndUserAndEvent(activities, user, hr.prism.board.enums.ActivityEvent.VIEW);
     }
 
-    void viewActivity(Activity activity, User user) {
+    public void viewActivity(Activity activity, User user) {
         ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.VIEW);
         if (activityEvent == null) {
-            activityEventRepository.save(new ActivityEvent().setActivity(activity)
-                .setUser(user)
-                .setEvent(hr.prism.board.enums.ActivityEvent.VIEW)
-                .setEventCount(1L));
-        } else {
-            activityEvent.setEventCount(activityEvent.getEventCount() + 1);
-            activityEventRepository.update(activityEvent);
+            activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.VIEW));
         }
     }
 
-    void deleteActivityUsers(User user) {
+    public void deleteActivityUsers(User user) {
         activityUserRepository.deleteByUser(user);
     }
 
-    private Activity createActivity(Resource resource, BoardEntity entity, hr.prism.board.enums.Activity activity) {
-        UserRole userRole = null;
-        ResourceEvent resourceEvent = null;
-        ResourceTask resourceTask = null;
-        if (entity instanceof UserRole) {
-            userRole = (UserRole) entity;
-        } else if (entity instanceof ResourceEvent) {
-            resourceEvent = (ResourceEvent) entity;
-        } else if (entity instanceof ResourceTask) {
-            resourceTask = (ResourceTask) entity;
+    public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
+        simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
+        LOGGER.info("Sending " + activities.size() + " activities to user: " + userId);
+        if (pusherOn) {
+            pusher.trigger("presence-activities-" + userId, "activities", activities);
         }
+    }
 
-        return activityRepository.save(new hr.prism.board.domain.Activity().setResource(resource)
-            .setUserRole(userRole)
-            .setResourceEvent(resourceEvent)
-            .setResourceTask(resourceTask)
-            .setActivity(activity)
-            .setFilterByCategory(activity.isFilterByCategory()));
+    public synchronized void setUserIds(List<Long> userIds) {
+        this.userIds.clear();
+        this.userIds.addAll(userIds);
+    }
+
+    private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
+        return activityRepository.save(
+            new hr.prism.board.domain.Activity()
+                .setResource(resource)
+                .setUserRole(userRole)
+                .setResourceEvent(resourceEvent)
+                .setActivity(activity)
+                .setFilterByCategory(activity.isFilterByCategory()));
     }
 
 }

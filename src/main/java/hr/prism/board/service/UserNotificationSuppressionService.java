@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class UserNotificationSuppressionService {
 
     @Inject

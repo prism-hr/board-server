@@ -10,6 +10,7 @@ import javax.inject.Inject;
 
 @Service
 @Transactional
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class LocationService {
 
     @Inject

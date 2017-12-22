@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class PostMapper implements Function<Post, PostRepresentation> {
 
     @Inject
@@ -76,7 +77,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setResponse(resourceEventMapper.apply(post.getResponse()));
     }
 
-    public PostRepresentation applySmall(Post post) {
+    PostRepresentation applySmall(Post post) {
         if (post == null) {
             return null;
         }

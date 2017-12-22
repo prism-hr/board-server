@@ -8,6 +8,7 @@ import hr.prism.board.enums.Scope;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class UserRepresentation {
 
     private Long id;
@@ -21,6 +22,8 @@ public class UserRepresentation {
     private DocumentRepresentation documentImage;
 
     private DocumentRequestState documentImageRequestState;
+    
+    private Boolean seenWalkThrough;
 
     private Gender gender;
 
@@ -91,7 +94,16 @@ public class UserRepresentation {
         this.documentImageRequestState = documentImageRequestState;
         return this;
     }
-
+    
+    public Boolean getSeenWalkThrough() {
+        return seenWalkThrough;
+    }
+    
+    public UserRepresentation setSeenWalkThrough(Boolean seenWalkThrough) {
+        this.seenWalkThrough = seenWalkThrough;
+        return this;
+    }
+    
     public Gender getGender() {
         return gender;
     }
@@ -168,8 +180,9 @@ public class UserRepresentation {
     public int hashCode() {
         return Objects.hash(email);
     }
-
+    
     @Override
+    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object object) {
         if (object == null || object.getClass() != getClass()) {
             return false;

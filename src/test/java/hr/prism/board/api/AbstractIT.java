@@ -1,34 +1,6 @@
 package hr.prism.board.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.support.GenericMessage;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
@@ -49,23 +21,30 @@ import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.service.ActivityService;
-import hr.prism.board.service.BoardService;
-import hr.prism.board.service.DepartmentService;
-import hr.prism.board.service.PostService;
-import hr.prism.board.service.ResourceEventService;
-import hr.prism.board.service.ResourceService;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestUserService;
-import hr.prism.board.service.TestWebSocketService;
-import hr.prism.board.service.UniversityService;
-import hr.prism.board.service.UserRoleService;
-import hr.prism.board.service.UserService;
+import hr.prism.board.service.*;
 import hr.prism.board.service.cache.UserCacheService;
+import org.apache.commons.lang3.ArrayUtils;
+import org.hamcrest.Matchers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.support.GenericMessage;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.*;
 
 public abstract class AbstractIT {
 
@@ -116,9 +95,6 @@ public abstract class AbstractIT {
     ResourceService resourceService;
 
     @Inject
-    UserService userService;
-
-    @Inject
     UserCacheService userCacheService;
 
     @Inject
@@ -134,7 +110,7 @@ public abstract class AbstractIT {
     TestUserService testUserService;
 
     @Inject
-    TestWebSocketService testWebSocketService;
+    TestActivityService testActivityService;
 
     @Inject
     TestNotificationService testNotificationService;
@@ -266,14 +242,14 @@ public abstract class AbstractIT {
     void listenForNewActivities(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        testWebSocketService.handleSessionConnectedEvent(
-            new SessionConnectedEvent(this, new GenericMessage<>("CONNECTED".getBytes()), new AuthenticationToken(userId)));
+        testActivityService.handleSessionConnectEvent(
+            new SessionConnectEvent(this, new GenericMessage<>("CONNECTED".getBytes()), new AuthenticationToken(userId)));
     }
 
     void verifyActivitiesEmpty(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        testWebSocketService.verify(userId);
+        testActivityService.verify(userId);
     }
 
     @SafeVarargs

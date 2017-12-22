@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface UserNotificationSuppressionRepository extends MyRepository<UserNotificationSuppression, Long> {
+public interface UserNotificationSuppressionRepository extends BoardEntityRepository<UserNotificationSuppression, Long> {
 
     List<UserNotificationSuppression> findByUser(User user);
 
@@ -32,8 +32,8 @@ public interface UserNotificationSuppressionRepository extends MyRepository<User
 
     @Modifying
     @Query(value =
-        "INSERT INTO user_notification_suppression (user_id, resource_id, creator_id, created_timestamp) " +
-            "SELECT user_role.user_id, suppressed.id, :userId, :baseline " +
+        "INSERT INTO user_notification_suppression (user_id, resource_id, creator_id, created_timestamp, updated_timestamp) " +
+            "SELECT user_role.user_id, suppressed.id, :userId, :baseline, :baseline " +
             "FROM user_role " +
             "INNER JOIN resource_relation " +
             "ON user_role.resource_id = resource_relation.resource1_id " +

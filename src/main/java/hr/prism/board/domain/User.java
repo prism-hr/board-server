@@ -31,7 +31,7 @@ import hr.prism.board.utils.BoardUtils;
 
 @Entity
 @Table(name = "user")
-@SuppressWarnings({"unused", "SameParameterValue"})
+@SuppressWarnings({"unused", "SameParameterValue", "UnusedReturnValue"})
 public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "uuid", nullable = false)
@@ -80,6 +80,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @Enumerated(EnumType.STRING)
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
+    
+    @Column(name = "seen_walk_through")
+    private Boolean seenWalkThrough;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "gender")
@@ -242,7 +245,16 @@ public class User extends BoardEntity implements Comparable<User> {
         this.documentImageRequestState = documentImageRequestState;
         return this;
     }
-
+    
+    public Boolean getSeenWalkThrough() {
+        return seenWalkThrough;
+    }
+    
+    public User setSeenWalkThrough(Boolean seenWalkThrough) {
+        this.seenWalkThrough = seenWalkThrough;
+        return this;
+    }
+    
     public Gender getGender() {
         return gender;
     }

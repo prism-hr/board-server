@@ -7,7 +7,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import java.io.Serializable;
 
 @NoRepositoryBean
-public interface MyRepository<ENTITY extends BoardEntity, ID extends Serializable>
+public interface BoardEntityRepository<ENTITY extends BoardEntity, ID extends Serializable>
     extends PagingAndSortingRepository<ENTITY, ID> {
 
     String ACTIVE_USER_ROLE_CONSTRAINT =

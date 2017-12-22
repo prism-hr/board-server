@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long> {
+public interface ActivityRoleRepository extends BoardEntityRepository<ActivityRole, Long> {
 
     ActivityRole findByActivityAndScopeAndRole(Activity activity, Scope scope, Role role);
 
@@ -26,6 +26,16 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "and activity.resourceEvent is null " +
             "and activityUser.id is null)")
     void deleteByResource(@Param("resource") Resource resource);
+
+    @Modifying
+    @Query(value =
+        "delete from ActivityRole activityRole " +
+            "where activityRole.activity in (" +
+            "select activity " +
+            "from Activity activity " +
+            "where activity.resource = :resource " +
+            "and activity.activity in (:activities))")
+    void deleteByResourceAndActivities(@Param("resource") Resource resource, @Param("activities") List<hr.prism.board.enums.Activity> activities);
 
     @Modifying
     @Query(value =
@@ -67,16 +77,5 @@ public interface ActivityRoleRepository extends MyRepository<ActivityRole, Long>
             "and userRole.user = :user " +
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
-
-    @Modifying
-    @Query(value =
-        "delete from ActivityRole activityRole " +
-            "where activityRole.activity in ( " +
-            "select activity " +
-            "from Activity activity " +
-            "inner join activity.resourceTask resourceTask " +
-            "where resourceTask.resource = :resource " +
-            "and resourceTask.task in (:tasks))")
-    void deleteByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks);
 
 }

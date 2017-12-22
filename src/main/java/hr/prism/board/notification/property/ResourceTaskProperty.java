@@ -15,20 +15,18 @@ import java.util.List;
 @Component
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceTaskProperty implements NotificationProperty {
-
-    private static final String CREATE_MEMBER = "Create your student list";
-
-    private static final String UPDATE_MEMBER = "Update your student list";
-
-    private static final String CREATE_RESEARCH_POST = "Create your current opportunities";
-
-    private static final String UPDATE_RESEARCH_POST = "Update your current opportunities";
-
-    private static final String DEPLOY_BADGE = "Create referral links to your homepage";
-
+    
+    private static final String CREATE_MEMBER = "Ready to get started - visit the user management area to build your student list.";
+    
+    private static final String UPDATE_MEMBER = "New students arriving - visit the user management area to update your student list.";
+    
+    private static final String CREATE_POST = "Got something to share - create some posts and start sending notifications.";
+    
+    private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your page on other websites.";
+    
     @Inject
     private ResourceTaskService resourceTaskService;
-
+    
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         User user = notificationRequest.getRecipient();
         Resource resource = notificationRequest.getResource();
@@ -36,7 +34,7 @@ public class ResourceTaskProperty implements NotificationProperty {
         if (tasks.isEmpty()) {
             throw new BoardNotificationException(ExceptionCode.EMPTY_RESOURCE_TASKS, "No tasks for resource " + resource.toString());
         }
-
+        
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("<ul>");
         for (ResourceTask task : tasks) {
@@ -49,21 +47,18 @@ public class ResourceTaskProperty implements NotificationProperty {
                     stringBuilder.append(UPDATE_MEMBER);
                     break;
                 case CREATE_POST:
-                    stringBuilder.append(CREATE_RESEARCH_POST);
-                    break;
-                case UPDATE_INTERNAL_POST:
-                    stringBuilder.append(UPDATE_RESEARCH_POST);
+                    stringBuilder.append(CREATE_POST);
                     break;
                 case DEPLOY_BADGE:
                     stringBuilder.append(DEPLOY_BADGE);
                     break;
             }
-
+            
             stringBuilder.append("</li>");
         }
-
+        
         stringBuilder.append("</ul>");
         return stringBuilder.toString();
     }
-
+    
 }

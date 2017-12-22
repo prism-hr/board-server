@@ -1,6 +1,10 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import com.stripe.model.Customer;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.*;
@@ -40,7 +44,7 @@ import java.util.stream.Stream;
 
 @Service
 @Transactional
-@SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection"})
+@SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class DepartmentService {
 
     private static final String SIMILAR_DEPARTMENT =
@@ -79,9 +83,6 @@ public class DepartmentService {
     private static final List<String> CAREER_CATEGORIES = ImmutableList.of("Employment", "Internship", "Volunteering");
 
     private static final List<String> RESEARCH_CATEGORIES = ImmutableList.of("MRes", "PhD", "Postdoc");
-
-    private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
-        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
 
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
@@ -143,10 +144,6 @@ public class DepartmentService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
-    public List<Long> findAllIds(LocalDateTime baseline1, LocalDateTime baseline2) {
-        return departmentRepository.findAllIds(baseline1, baseline2);
-    }
-
     public Department getDepartment(Long id) {
         User user = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
@@ -161,8 +158,6 @@ public class DepartmentService {
 
     public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
         User user = userService.getCurrentUser();
-        List<hr.prism.board.domain.ResourceTask> suppressedTasks = resourceTaskService.findBySuppressions(user);
-
         List<Resource> resources =
             resourceService.getResources(user,
                 new ResourceFilter()
@@ -174,7 +169,7 @@ public class DepartmentService {
         List<Department> departments = new ArrayList<>();
         resources.forEach(resource -> {
             Department department = (Department) resource;
-            department.getTasks().removeAll(suppressedTasks);
+            setTaskCompletion(user, department);
             departments.add(department);
         });
 
@@ -288,7 +283,7 @@ public class DepartmentService {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(user, department, Action.EDIT, () -> {
-            resourceTaskService.createSuppression(user, taskId);
+            resourceTaskService.createCompletion(user, taskId);
             entityManager.flush();
             return resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         });
@@ -304,7 +299,6 @@ public class DepartmentService {
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
-            resourceTaskService.completeTasks(department, MEMBER_TASKS);
             department.setLastMemberTimestamp(LocalDateTime.now());
             return department;
         });
@@ -392,24 +386,21 @@ public class DepartmentService {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
 
-    public void updateTasks(Long departmentId, LocalDateTime baseline) {
-        List<hr.prism.board.enums.ResourceTask> tasks = new ArrayList<>();
-        Department department = (Department) resourceService.findOne(departmentId);
+    public void updateTasks() {
+        LocalDateTime baseline = getBaseline();
+        LocalDateTime baseline1 = baseline.minusMonths(1);
 
-        LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
-        if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
-            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
+        LocalDateTime baseline2;
+        if (baseline.getMonth().getValue() > 8) {
+            baseline2 = LocalDateTime.of(baseline.getYear(), 9, 1, 0, 0);
+        } else {
+            baseline2 = LocalDateTime.of(baseline.getYear() - 1, 9, 1, 0, 0);
         }
 
-        LocalDateTime lastInternalPostTimestamp = department.getLastInternalPostTimestamp();
-        if (lastInternalPostTimestamp == null || lastInternalPostTimestamp.isBefore(baseline)) {
-            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_INTERNAL_POST);
-        }
-
-        department.setLastTaskCreationTimestamp(baseline);
-        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
+        departmentRepository.findAllIds(baseline1, baseline2).forEach(departmentId -> updateTasks(departmentId, baseline));
     }
 
+    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
     public Customer getPaymentSources(Long departmentId) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
@@ -473,7 +464,7 @@ public class DepartmentService {
         }
     }
 
-    PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
+    public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
         PostResponseReadinessRepresentation responseReadiness = new PostResponseReadinessRepresentation();
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
             // User data incomplete
@@ -508,7 +499,9 @@ public class DepartmentService {
                     if (academicYearStart.isAfter(userRole.getMemberDate())) {
                         // User role data out of date
                         responseReadiness.setRequireUserRoleDemographicData(true)
-                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
+                            .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory)
+                                .setMemberProgram(memberProgram)
+                                .setMemberYear(memberYear));
                     }
                 }
             }
@@ -517,10 +510,13 @@ public class DepartmentService {
         return responseReadiness;
     }
 
+    public LocalDateTime getBaseline() {
+        return LocalDateTime.now();
+    }
+
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
-            List<ResourceTask> suppressedTasks = resourceTaskService.findByResourceAndSuppressions(department, user);
-            department.getTasks().removeAll(suppressedTasks);
+            setTaskCompletion(user, department);
             return department;
         });
     }
@@ -530,6 +526,27 @@ public class DepartmentService {
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
         return department;
+    }
+
+    private void updateTasks(Long departmentId, LocalDateTime baseline) {
+        List<hr.prism.board.enums.ResourceTask> tasks = new ArrayList<>();
+        Department department = (Department) resourceService.findOne(departmentId);
+
+        LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
+        if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
+            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
+        }
+
+        department.setLastTaskCreationTimestamp(baseline);
+        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
+    }
+
+    private void setTaskCompletion(User user, Department department) {
+        if (user != null) {
+            department.getTasks().stream()
+                .filter(task -> task.getCompletions().stream().anyMatch(completion -> user.equals(completion.getUser())))
+                .forEach(task -> task.setCompletedForUser(true));
+        }
     }
 
 }

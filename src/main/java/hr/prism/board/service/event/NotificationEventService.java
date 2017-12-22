@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class NotificationEventService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(NotificationEventService.class);
@@ -85,7 +85,7 @@ public class NotificationEventService {
         sendNotifications(notificationEvent);
     }
 
-    void sendNotifications(NotificationEvent notificationEvent) {
+    public void sendNotifications(NotificationEvent notificationEvent) {
         Resource resource = null;
         Long resourceId = notificationEvent.getResourceId();
         if (resourceId != null) {
@@ -113,7 +113,7 @@ public class NotificationEventService {
                             template, user, recipient.getInvitation(), resource, action, mapAttachments(notification.getAttachments())));
                         sent.put(user, template);
                     } catch (BoardNotificationException e) {
-                        LOGGER.info("Aborted sending notification: " + template + " to " + user.toString());
+                        LOGGER.info("Aborted sending notification: " + template + " to " + user.toString() + " - " + e.getMessage());
                     }
                 }
             }

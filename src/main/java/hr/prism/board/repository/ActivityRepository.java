@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface ActivityRepository extends MyRepository<Activity, Long> {
+public interface ActivityRepository extends BoardEntityRepository<Activity, Long> {
 
     @Query(value =
         "select distinct activity " +
@@ -39,9 +39,9 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "from ActivityEvent activityEvent " +
             "where activityEvent.user.id = :userId " +
             "and activityEvent.event = :activityEvent) " +
-            "order by activity.id desc")
+            "order by activity.updatedTimestamp desc, activity.id desc")
     List<Activity> findByUserId(@Param("userId") Long userId, @Param("userRoleStates") List<State> state, @Param("categoryType") CategoryType categoryType,
-                                @Param("activityEvent") ActivityEvent activityEvent);
+        @Param("activityEvent") ActivityEvent activityEvent);
 
     @Query(value =
         "select activityEvent.activity.id " +
@@ -49,8 +49,9 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "where activityEvent.activity in (:activities) " +
             "and activityEvent.user.id = :userId " +
             "and activityEvent.event = :event")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<Long> findIdsByActivitiesAndUserIdAndEvent(@Param("activities") Collection<Activity> activities, @Param("userId") Long userId,
-                                                    @Param("event") hr.prism.board.enums.ActivityEvent event);
+        @Param("event") hr.prism.board.enums.ActivityEvent event);
 
     @Query(value =
         "select activity " +
@@ -63,8 +64,6 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
     Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity);
 
     Activity findByResourceEventAndActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity);
-
-    Activity findByResourceTaskAndActivity(ResourceTask resourceTask, hr.prism.board.enums.Activity activity);
 
     @Modifying
     @Query(value =
@@ -82,6 +81,13 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
     void deleteByResourceWithIgnores(@Param("resource") Resource resource, @Param("ignores") List<Long> ignores);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.resource = :resource " +
+            "and activity.activity in (:activities)")
+    void deleteByResourceAndActivities(@Param("resource") Resource resource, @Param("activities") List<hr.prism.board.enums.Activity> activities);
 
     @Modifying
     @Query(value =
@@ -116,16 +122,6 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
 
-    @Modifying
-    @Query(value =
-        "delete from Activity activity " +
-            "where activity.resourceTask in (" +
-            "select resourceTask " +
-            "from ResourceTask resourceTask " +
-            "where resourceTask.resource = :resource " +
-            "and resourceTask.task in (:tasks))")
-    void deleteByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks);
-
     @Query(value =
         "select activity.id " +
             "from Activity activity " +
@@ -133,6 +129,7 @@ public interface ActivityRepository extends MyRepository<Activity, Long> {
             "where activity.resource = :resource " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<Long> findByResourceWithActivityUsers(@Param("resource") Resource resource);
 
 }

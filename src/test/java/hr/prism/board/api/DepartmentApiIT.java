@@ -4,7 +4,23 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-
+import hr.prism.board.TestContext;
+import hr.prism.board.TestHelper;
+import hr.prism.board.domain.*;
+import hr.prism.board.dto.*;
+import hr.prism.board.enums.*;
+import hr.prism.board.enums.Activity;
+import hr.prism.board.enums.ResourceTask;
+import hr.prism.board.exception.*;
+import hr.prism.board.repository.DocumentRepository;
+import hr.prism.board.repository.ResourceTaskRepository;
+import hr.prism.board.representation.*;
+import hr.prism.board.service.ResourceTaskService;
+import hr.prism.board.service.TestActivityService;
+import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.util.ObjectUtils;
+import hr.prism.board.utils.BoardUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,68 +28,14 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.inject.Inject;
-
-import hr.prism.board.TestContext;
-import hr.prism.board.TestHelper;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Document;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceRelation;
-import hr.prism.board.domain.University;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
-import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.LocationDTO;
-import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPatchDTO;
-import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.Activity;
-import hr.prism.board.enums.AgeRange;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Gender;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.Notification;
-import hr.prism.board.enums.ResourceTask;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.repository.DocumentRepository;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
-import hr.prism.board.representation.UserRolesRepresentation;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestWebSocketService;
-import hr.prism.board.util.ObjectUtils;
-import hr.prism.board.utils.BoardUtils;
-import javafx.util.Pair;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -91,6 +53,12 @@ public class DepartmentApiIT extends AbstractIT {
 
     @Inject
     private DocumentRepository documentRepository;
+
+    @Inject
+    private ResourceTaskRepository resourceTaskRepository;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
 
     @Test
     public void shouldCreateDepartment() {
@@ -128,7 +96,9 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("f", documentR.getFileName());
 
         verifyNewDepartmentBoards(departmentId);
-        Assert.assertEquals(ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE), departmentR.getTasks());
+        Assert.assertEquals(
+            ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE),
+            departmentR.getTasks().stream().map(ResourceTaskRepresentation::getTask).collect(Collectors.toList()));
         ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
     }
 
@@ -164,7 +134,9 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("g", documentR.getFileName());
 
         verifyNewDepartmentBoards(departmentId);
-        Assert.assertEquals(ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE), departmentR.getTasks());
+        Assert.assertEquals(
+            ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE),
+            departmentR.getTasks().stream().map(ResourceTaskRepresentation::getTask).collect(Collectors.toList()));
     }
 
     @Test
@@ -277,7 +249,7 @@ public class DepartmentApiIT extends AbstractIT {
         Pair<DepartmentRepresentation, DepartmentRepresentation> departmentRs = verifyPostTwoDepartments();
         transactionTemplate.execute(status -> {
             ExceptionUtils.verifyException(
-                BoardException.class,
+                BoardDuplicateException.class,
                 () -> departmentApi.patchDepartment(departmentRs.getKey().getId(),
                     new DepartmentPatchDTO()
                         .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
@@ -287,7 +259,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportDepartmentLifecycleAndPermissions() throws IOException {
+    public void shouldSupportDepartmentLifecycleAndPermissions() throws IOException, InterruptedException {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
@@ -300,7 +272,7 @@ public class DepartmentApiIT extends AbstractIT {
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
 
-        testWebSocketService.record();
+        testActivityService.record();
         listenForNewActivities(boardUserId);
 
         testUserService.setAuthentication(departmentUser.getId());
@@ -309,8 +281,8 @@ public class DepartmentApiIT extends AbstractIT {
                 .setUser(new UserDTO().setId(boardUserId))
                 .setRole(Role.ADMINISTRATOR)));
 
-        testWebSocketService.verify(boardUserId, new TestWebSocketService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
-        testWebSocketService.stop();
+        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
+        testActivityService.stop();
 
         // Create post
         User postUser = testUserService.authenticate();
@@ -453,6 +425,434 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
+    public void shouldSupportDepartmentTasks() {
+        User departmentUser = testUserService.authenticate();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentUserId = departmentUser.getId();
+
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
+        DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
+        Long departmentId = departmentR.getId();
+
+        User departmentUser2 = testUserService.authenticate();
+        Long departmentUser2Id = departmentUser2.getId();
+
+        User departmentUser3 = testUserService.authenticate();
+        Long departmentUser3Id = departmentUser3.getId();
+
+        testActivityService.record();
+        testNotificationService.record();
+        listenForNewActivities(departmentUserId);
+        listenForNewActivities(departmentUser2Id);
+        listenForNewActivities(departmentUser3Id);
+
+        testUserService.setAuthentication(departmentUserId);
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO()
+                .setUser(new UserDTO().setId(departmentUser2Id))
+                .setRole(Role.ADMINISTRATOR)));
+
+        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO()
+                .setUser(new UserDTO().setId(departmentUser3Id))
+                .setRole(Role.ADMINISTRATOR)));
+
+        UserRole departmentUserRole2 = transactionTemplate.execute(status ->
+            userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR));
+        UserRole departmentUserRole3 = transactionTemplate.execute(status ->
+            userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser3, Role.ADMINISTRATOR));
+
+        String recipient2 = departmentUser2.getGivenName();
+        String recipient3 = departmentUser3.getGivenName();
+        testActivityService.verify(departmentUser2Id, new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY));
+        testActivityService.verify(departmentUser3Id, new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY));
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
+                ImmutableMap.<String, String>builder().put("recipient", recipient2)
+                    .put("department", "department")
+                    .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
+                    .put("modal", "Login")
+                    .put("invitationUuid", departmentUserRole2.getUuid())
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser3Id),
+                ImmutableMap.<String, String>builder().put("recipient", recipient3)
+                    .put("department", "department")
+                    .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
+                    .put("modal", "Login")
+                    .put("invitationUuid", departmentUserRole3.getUuid())
+                    .build()));
+
+        LocalDateTime resourceTaskCreatedTimestamp = transactionTemplate.execute(status ->
+            resourceTaskRepository.findByResourceId(departmentId).iterator().next().getCreatedTimestamp());
+
+        String recipient = departmentUser.getGivenName();
+        String resourceTask =
+            "<ul><li>Ready to get started - visit the user management area to build your student list.</li>" +
+                "<li>Got something to share - create some posts and start sending notifications.</li>" +
+                "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>";
+        String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
+
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            resourceTaskService.notifyTasks();
+            return null;
+        });
+
+        testActivityService.verify(departmentUserId,
+            new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+        testActivityService.verify(departmentUser2Id,
+            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
+            new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+        testActivityService.verify(departmentUser3Id,
+            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
+            new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+                ImmutableMap.<String, String>builder().put("recipient", recipient)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
+                ImmutableMap.<String, String>builder().put("recipient", recipient2)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
+                ImmutableMap.<String, String>builder().put("recipient", recipient3)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()));
+
+        DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR2.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR2.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR2.getTasks().get(2).getCompleted());
+        transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR2.getTasks().get(0).getId()));
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR3 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR3.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR3.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR3.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR4 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR4.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR4.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR4.getTasks().get(2).getCompleted());
+
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            resourceTaskService.notifyTasks();
+            return null;
+        });
+
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+                ImmutableMap.<String, String>builder().put("recipient", recipient)
+                    .put("department", "department")
+                    .put("resourceTask",
+                        "<ul><li>Got something to share - create some posts and start sending notifications.</li>" +
+                            "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>")
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
+                ImmutableMap.<String, String>builder().put("recipient", recipient2)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
+                ImmutableMap.<String, String>builder().put("recipient", recipient3)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()));
+
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR5 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR5.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR5.getTasks().get(2).getCompleted());
+        transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR5.getTasks().get(1).getId()));
+        transactionTemplate.execute(status -> departmentApi.putTask(departmentId, departmentR5.getTasks().get(2).getId()));
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR6 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR6.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR6.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR6.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR7 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR7.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR7.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR7.getTasks().get(2).getCompleted());
+
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
+            return null;
+        });
+
+        testActivityService.verify(departmentUserId);
+        transactionTemplate.execute(status -> {
+            List<ActivityRepresentation> activities = activityService.getActivities(departmentUser2Id);
+            Assert.assertEquals(
+                Arrays.asList(Activity.CREATE_TASK_ACTIVITY, Activity.JOIN_DEPARTMENT_ACTIVITY),
+                activities.stream().map(ActivityRepresentation::getActivity).collect(Collectors.toList()));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            List<ActivityRepresentation> activities = activityService.getActivities(departmentUser3Id);
+            Assert.assertEquals(
+                Arrays.asList(Activity.CREATE_TASK_ACTIVITY, Activity.JOIN_DEPARTMENT_ACTIVITY),
+                activities.stream().map(ActivityRepresentation::getActivity).collect(Collectors.toList()));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            resourceTaskService.notifyTasks();
+            return null;
+        });
+
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
+                ImmutableMap.<String, String>builder().put("recipient", recipient2)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
+                ImmutableMap.<String, String>builder().put("recipient", recipient3)
+                    .put("department", "department")
+                    .put("resourceTask", resourceTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()));
+
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR8 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR8.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR8.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR8.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR9 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR9.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR9.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR9.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR10 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertFalse(departmentR10.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR10.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR10.getTasks().get(2).getCompleted());
+
+        transactionTemplate.execute(status -> {
+            resourceTaskService.notifyTasks();
+            return null;
+        });
+
+        testNotificationService.verify();
+        testUserService.setAuthentication(departmentUserId);
+        transactionTemplate.execute(status ->
+            departmentApi.postMembers(departmentId,
+                Collections.singletonList(
+                    new UserRoleDTO()
+                        .setUser(
+                            new UserDTO()
+                                .setGivenName("member")
+                                .setSurname("member")
+                                .setEmail("member@member.com"))
+                        .setEmail("member@member.com")
+                        .setRole(Role.MEMBER)
+                        .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                        .setMemberProgram("program")
+                        .setMemberYear(1)
+                        .setExpiryDate(LocalDate.now().plusYears(3)))));
+
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR11 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR11.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR11.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR11.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR12 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR12.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR12.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR12.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR13 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR13.getTasks().get(0).getCompleted());
+        Assert.assertFalse(departmentR13.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR13.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUserId);
+        transactionTemplate.execute(status -> {
+            Long boardId = boardApi.getBoards(departmentId, true, null, null, null).get(0).getId();
+            return postApi.postPost(boardId,
+                new PostDTO()
+                    .setName("name")
+                    .setSummary("summary")
+                    .setDescription("description")
+                    .setOrganizationName("organization name")
+                    .setLocation(new LocationDTO().setName("location").setDomicile("GB")
+                        .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                    .setPostCategories(Collections.singletonList("Employment"))
+                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                    .setApplyWebsite("http://www.google.co.uk"));
+        });
+
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR14 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR14.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR14.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR14.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR15 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR15.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR15.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR15.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR16 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR16.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR16.getTasks().get(1).getCompleted());
+        Assert.assertFalse(departmentR16.getTasks().get(2).getCompleted());
+
+        transactionTemplate.execute(status -> {
+            WidgetOptionsDTO optionsDTO = new WidgetOptionsDTO();
+            try {
+                return resourceApi.getResourceBadge(Scope.DEPARTMENT, departmentId, objectMapper.writeValueAsString(optionsDTO), TestHelper.mockHttpServletResponse());
+            } catch (IOException e) {
+                throw new Error(e);
+            }
+        });
+
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR17 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR17.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR17.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR17.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR18 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR18.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR18.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR18.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR19 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR19.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR19.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR19.getTasks().get(2).getCompleted());
+
+        departmentService.updateTasks();
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentRepresentation departmentR20 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR20.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR20.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR20.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser2Id);
+        DepartmentRepresentation departmentR21 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR21.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR21.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR21.getTasks().get(2).getCompleted());
+
+        testUserService.setAuthentication(departmentUser3Id);
+        DepartmentRepresentation departmentR22 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertTrue(departmentR22.getTasks().get(0).getCompleted());
+        Assert.assertTrue(departmentR22.getTasks().get(1).getCompleted());
+        Assert.assertTrue(departmentR22.getTasks().get(2).getCompleted());
+
+        LocalDateTime baseline = departmentService.getBaseline();
+        LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
+        transactionTemplate.execute(status -> {
+            Department department = departmentService.getDepartment(departmentId);
+            department.setCreatedTimestamp(baseline1);
+            department.setLastMemberTimestamp(baseline1);
+            department.setLastTaskCreationTimestamp(baseline.minusYears(1));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            departmentService.updateTasks();
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            resourceTaskService.notifyTasks();
+            return null;
+        });
+
+        testActivityService.verify(departmentUserId,
+            new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
+        testActivityService.verify(departmentUser2Id,
+            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
+            new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
+        testActivityService.verify(departmentUser3Id,
+            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
+            new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
+
+        String resourceUpdateTask =
+            "<ul><li>New students arriving - visit the user management area to update your student list.</li></ul>";
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser,
+                ImmutableMap.<String, String>builder().put("recipient", recipient)
+                    .put("department", "department")
+                    .put("resourceTask", resourceUpdateTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser2,
+                ImmutableMap.<String, String>builder().put("recipient", recipient2)
+                    .put("department", "department")
+                    .put("resourceTask", resourceUpdateTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()),
+            new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser3,
+                ImmutableMap.<String, String>builder().put("recipient", recipient3)
+                    .put("department", "department")
+                    .put("resourceTask", resourceUpdateTask)
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("modal", "Login")
+                    .build()));
+
+        testActivityService.stop();
+        testNotificationService.stop();
+    }
+
+    @Test
     @Sql("classpath:data/department_autosuggest_setup.sql")
     public void shouldSuggestDepartments() {
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
@@ -579,7 +979,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
@@ -602,8 +1002,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         Long boardMemberId = boardMember.getId();
-        testWebSocketService.verify(departmentUserId,
-            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testActivityService.verify(departmentUserId,
+            new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -628,7 +1028,7 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.ACCEPTED, userRole.getState());
 
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(boardMemberId);
@@ -650,7 +1050,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
@@ -673,8 +1073,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         Long boardMemberId = boardMember.getId();
-        testWebSocketService.verify(departmentUserId,
-            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testActivityService.verify(departmentUserId,
+            new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -692,7 +1092,7 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER));
         Assert.assertEquals(State.REJECTED, userRole.getState());
 
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
 
         testUserService.setAuthentication(boardMemberId);
@@ -713,7 +1113,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.postDepartment(universityId, departmentDTO));
         Long departmentId = departmentR.getId();
 
-        testWebSocketService.record();
+        testActivityService.record();
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
@@ -736,8 +1136,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         Long boardMemberId = boardMember.getId();
-        testWebSocketService.verify(departmentUserId,
-            new TestWebSocketService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+        testActivityService.verify(departmentUserId,
+            new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder().put("recipient", departmentUser.getGivenName()).put("department", departmentR.getName())
@@ -757,7 +1157,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         verifyActivitiesEmpty(departmentUserId);
-        testWebSocketService.stop();
+        testActivityService.stop();
         testNotificationService.stop();
     }
 
@@ -849,7 +1249,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO2 = new DepartmentDTO().setName("department 2").setSummary("department summary");
         DepartmentRepresentation departmentR1 = verifyPostDepartment(universityId, departmentDTO1, "department-1");
         DepartmentRepresentation departmentR2 = verifyPostDepartment(universityId, departmentDTO2, "department-2");
-        return new Pair<>(departmentR1, departmentR2);
+        return Pair.of(departmentR1, departmentR2);
     }
 
     private DepartmentRepresentation verifyPostDepartment(Long universityId, DepartmentDTO departmentDTO, String expectedHandle) {
@@ -868,12 +1268,12 @@ public class DepartmentApiIT extends AbstractIT {
         });
     }
 
-    private DepartmentRepresentation verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
+    private void verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
         Department department = transactionTemplate.execute(status -> departmentService.getDepartment(departmentId));
         DepartmentRepresentation departmentR = transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, departmentDTO));
 
-        return transactionTemplate.execute(status -> {
+        transactionTemplate.execute(status -> {
             Optional<String> nameOptional = departmentDTO.getName();
             Assert.assertEquals(nameOptional == null ? department.getName() : nameOptional.orElse(null), departmentR.getName());
 

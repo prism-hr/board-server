@@ -1,13 +1,22 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import hr.prism.board.domain.*;
+import hr.prism.board.enums.*;
+import hr.prism.board.exception.BoardDuplicateException;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.repository.*;
+import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceSummary;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -21,57 +30,20 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.lang.reflect.Field;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceCategory;
-import hr.prism.board.domain.ResourceOperation;
-import hr.prism.board.domain.ResourceRelation;
-import hr.prism.board.domain.User;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardDuplicateException;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.ResourceCategoryRepository;
-import hr.prism.board.repository.ResourceOperationRepository;
-import hr.prism.board.repository.ResourceRelationRepository;
-import hr.prism.board.repository.ResourceRepository;
-import hr.prism.board.repository.ResourceSearchRepository;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.utils.BoardUtils;
-import hr.prism.board.value.ResourceFilter;
-import hr.prism.board.value.ResourceSummary;
+import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "SpringAutowiredFieldsWarningInspection", "SqlResolve"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "SpringAutowiredFieldsWarningInspection", "SqlResolve", "WeakerAccess", "UnusedReturnValue"})
 public class ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
@@ -264,7 +236,7 @@ public class ResourceService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
+    public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement =
             "select resource.id " +
                 "from Resource resource " +
@@ -294,7 +266,7 @@ public class ResourceService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
+    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
         Query query = entityManager.createQuery(
             "select resource.id " +
                 "from Resource resource " +
@@ -304,16 +276,16 @@ public class ResourceService {
             .setParameter("id", resource.getId());
 
         if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new BoardException(exceptionCode, "Specified handle would not be unique");
+            throw new BoardDuplicateException(exceptionCode, "Specified handle would not be unique");
         }
     }
 
-    List<Resource> getSuppressableResources(Scope scope, User user) {
+    public List<Resource> getSuppressableResources(Scope scope, User user) {
         return resourceRepository.findByScopeAndUserAndRolesOrCategory(
             scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
     }
 
-    void setIndexDataAndQuarter(Resource resource, String... parts) {
+    public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
             resource.setIndexData(BoardUtils.makeSoundex(parts));
@@ -325,13 +297,13 @@ public class ResourceService {
         resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil((double) createdTimestamp.getMonthValue() / 3));
     }
 
-    void updateHandle(Resource resource, String newHandle) {
+    public void updateHandle(Resource resource, String newHandle) {
         String handle = resource.getHandle();
         resource.setHandle(newHandle);
         resourceRepository.updateHandle(handle, newHandle);
     }
 
-    void createResourceRelation(Resource resource1, Resource resource2) {
+    public void createResourceRelation(Resource resource1, Resource resource2) {
         entityManager.flush();
         entityManager.refresh(resource1);
         entityManager.refresh(resource2);
@@ -350,7 +322,7 @@ public class ResourceService {
             "Arguments passed were: " + Joiner.on(", ").join(resource1, resource2));
     }
 
-    void updateCategories(Resource resource, CategoryType type, List<String> categories) {
+    public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
         // Delete the old records
         deleteResourceCategories(resource, type);
         Set<ResourceCategory> oldCategories = resource.getCategories();
@@ -365,7 +337,7 @@ public class ResourceService {
         }
     }
 
-    void updateState(Resource resource, State state) {
+    public void updateState(Resource resource, State state) {
         State previousState = resource.getState();
         if (previousState == null) {
             previousState = state;
@@ -389,7 +361,7 @@ public class ResourceService {
         }
     }
 
-    List<Resource> getResources(User user, ResourceFilter filter) {
+    public List<Resource> getResources(User user, ResourceFilter filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role ");
 
@@ -548,7 +520,7 @@ public class ResourceService {
         return resources;
     }
 
-    ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
+    public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
         ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
         if (action == Action.EDIT) {
             ChangeListRepresentation changeList = resource.getChangeList();
@@ -569,7 +541,7 @@ public class ResourceService {
         return resourceOperation;
     }
 
-    String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
+    public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
         String handle;
         if (parent == null) {
             handle = ResourceService.suggestHandle(name);
@@ -581,7 +553,7 @@ public class ResourceService {
         return ResourceService.confirmHandle(handle, similarHandles);
     }
 
-    static String suggestHandle(String name) {
+    public static String suggestHandle(String name) {
         String suggestion = "";
         name = StringUtils.stripAccents(name.toLowerCase());
         String[] parts = name.split(" ");
@@ -610,7 +582,7 @@ public class ResourceService {
         return suggestion;
     }
 
-    static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
+    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
         String stateString = null;
         String negatedStateString = State.ARCHIVED.name();
         if (state != null) {

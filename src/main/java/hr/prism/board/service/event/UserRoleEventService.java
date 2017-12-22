@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 @Service
+@SuppressWarnings("WeakerAccess")
 public class UserRoleEventService {
 
     @Inject
@@ -37,11 +38,12 @@ public class UserRoleEventService {
 
     @Async
     @TransactionalEventListener
+    @SuppressWarnings("unused")
     public void createResourceUsersAsync(UserRoleEvent userRoleEvent) {
         createResourceUsers(userRoleEvent, true);
     }
 
-    protected void createResourceUsers(UserRoleEvent userRoleEvent, boolean invokedAsynchronously) {
+    public void createResourceUsers(UserRoleEvent userRoleEvent, boolean invokedAsynchronously) {
         Long resourceId = userRoleEvent.getResourceId();
         User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
         for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {

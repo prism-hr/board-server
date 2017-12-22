@@ -1,29 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.Action;
@@ -36,10 +14,21 @@ import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings({"JpaQlInspection", "SpringAutowiredFieldsWarningInspection"})
+@SuppressWarnings({"JpaQlInspection", "SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class UserRoleService {
 
     @Inject
@@ -148,6 +137,7 @@ public class UserRoleService {
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             User user = userCacheService.findOne(userId);
             userRoleCacheService.deleteResourceUser(resource, user);
+            activityService.sendActivities(resource);
             return resource;
         });
     }
@@ -158,6 +148,7 @@ public class UserRoleService {
         User user = userCacheService.findOne(userId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
             userRoleCacheService.updateResourceUser(currentUser, resource, user, userRoleDTO);
+            activityService.sendActivities(resource);
             return resource;
         });
 
@@ -168,15 +159,15 @@ public class UserRoleService {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }
 
-    List<UserRole> findByResourceAndUser(Resource resource, User user) {
+    public List<UserRole> findByResourceAndUser(Resource resource, User user) {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
 
-    UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
+    public UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
     }
 
-    boolean hasAdministratorRole(User user) {
+    public boolean hasAdministratorRole(User user) {
         return userRoleRepository.findIdsByUserAndRole(user, Role.ADMINISTRATOR, State.ACTIVE_USER_ROLE_STATES, LocalDate.now()).isEmpty();
     }
 
@@ -185,9 +176,10 @@ public class UserRoleService {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
 
+        Role role = userRoleDTO.getRole();
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, userRoleDTO.getRole());
         if (userRole == null) {
-            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, true);
+            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, Role.NOTIFIABLE.contains(role));
         } else {
             userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);

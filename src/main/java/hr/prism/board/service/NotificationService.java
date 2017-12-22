@@ -9,7 +9,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.notification.property.NotificationProperty;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -110,8 +109,9 @@ public class NotificationService {
 
         if (recipientEmail.endsWith("@test.prism.hr")) {
             // Front end integration tests
+            Long creatorId = recipient.getId() == null ? request.getResource().getCreatorId() : recipient.getId();
             testEmailService.createTestEmail(recipient, subject, makePlainTextVersion(content),
-                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()));
+                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()), creatorId);
         } else if (BooleanUtils.isTrue(mailOn)) {
             // Real emails
             Mail mail = new Mail();
@@ -158,26 +158,36 @@ public class NotificationService {
 
     private String makePlainTextVersion(String html) {
         Document document = Jsoup.parse(html);
-        Element body = document.select("body").first();
+        Element contentBody = document.getElementsByClass("comment_body_td").first();
 
-        String plainText = StringUtils.EMPTY;
-        for (Element p : body.select("p")) {
-            List<Element> as = p.select("a");
-            if (CollectionUtils.isEmpty(as)) {
-                String[] lines = p.html().split("<br>");
-                plainText += Arrays.stream(lines).map(String::trim).collect(Collectors.joining("\n")) + "\n\n";
-            } else {
-                for (Element a : p.select("a")) {
-                    plainText += "\t- " + a.text() + ": " + a.attr("abs:href") + "\n";
+        StringBuilder stringBuilder = new StringBuilder(StringUtils.EMPTY);
+        for (Element element : contentBody.children()) {
+            String tagName = element.tagName();
+            if (tagName.equals("p")) {
+                List<Element> as = element.select("a");
+                if (as.isEmpty()) {
+                    String[] lines = element.html().split("<br>");
+                    stringBuilder.append(Arrays.stream(lines).map(String::trim).collect(Collectors.joining("\n"))).append("\n\n");
+                } else {
+                    for (Element a : as) {
+                        stringBuilder.append("\t- ").append(a.text()).append(": ").append(a.attr("abs:href")).append("\n");
+                    }
+
+                    stringBuilder.append("\n");
+                }
+            } else if (tagName.equals("ul")) {
+                for (Element li : element.select("li")) {
+                    stringBuilder.append("\t- ").append(li.text()).append("\n");
                 }
 
-                plainText += "\n";
+                stringBuilder.append("\n");
             }
         }
 
-        return plainText.replaceAll("\\n$", StringUtils.EMPTY);
+        return stringBuilder.toString().replaceAll("\\n$", StringUtils.EMPTY);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class NotificationRequest {
 
         private Notification notification;
@@ -221,7 +231,7 @@ public class NotificationService {
             return action;
         }
 
-        List<BoardAttachments> getAttachments() {
+        public List<BoardAttachments> getAttachments() {
             return attachments;
         }
 

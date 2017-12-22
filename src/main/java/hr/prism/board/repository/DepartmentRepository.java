@@ -8,14 +8,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("JpaQlInspection")
-public interface DepartmentRepository extends MyRepository<Department, Long> {
+public interface DepartmentRepository extends BoardEntityRepository<Department, Long> {
 
     @Query(value =
         "select department.id " +
             "from Department department " +
             "where department.createdTimestamp < :baseline1 " +
+            "and (department.lastMemberTimestamp is null or department.lastMemberTimestamp < :baseline1) " +
             "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
-            "and (department.lastMemberTimestamp < :baseline1 or department.lastInternalPostTimestamp < :baseline1) " +
             "order by department.id")
     List<Long> findAllIds(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
 

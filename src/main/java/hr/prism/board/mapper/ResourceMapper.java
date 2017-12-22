@@ -17,15 +17,15 @@ public class ResourceMapper {
             .setActions(resource.getActions());
     }
 
-    public <T extends ResourceRepresentation<T>> T applySmall(Resource resource, Class<T> representationClass) {
+    public String getHandle(Resource resource, Resource parent) {
+        return resource.getHandle().replaceFirst(parent.getHandle() + "/", "");
+    }
+
+    <T extends ResourceRepresentation<T>> T applySmall(Resource resource, Class<T> representationClass) {
         return BeanUtils.instantiate(representationClass)
             .setId(resource.getId())
             .setScope(resource.getScope())
             .setName(resource.getName());
-    }
-
-    public String getHandle(Resource resource, Resource parent) {
-        return resource.getHandle().replaceFirst(parent.getHandle() + "/", "");
     }
 
 }

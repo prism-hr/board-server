@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class BoardService {
 
     @Inject
@@ -46,15 +45,6 @@ public class BoardService {
 
     @Inject
     private DocumentService documentService;
-
-    @Inject
-    private PostService postService;
-
-    @Inject
-    private ResourceTaskService resourceTaskService;
-
-    @Inject
-    private FreeMarkerConfig freemarkerConfig;
 
     @Value("${app.url}")
     private String appUrl;

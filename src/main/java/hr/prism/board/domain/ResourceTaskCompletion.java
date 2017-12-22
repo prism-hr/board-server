@@ -4,8 +4,8 @@ import javax.persistence.*;
 
 @Entity
 @SuppressWarnings("unused")
-@Table(name = "resource_task_suppression", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_task_id", "user_id"}))
-public class ResourceTaskSuppression extends BoardEntity {
+@Table(name = "resource_task_completion", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_task_id", "user_id"}))
+public class ResourceTaskCompletion extends BoardEntity {
 
     @ManyToOne
     @JoinColumn(name = "resource_task_id", nullable = false)
@@ -19,7 +19,7 @@ public class ResourceTaskSuppression extends BoardEntity {
         return resourceTask;
     }
 
-    public ResourceTaskSuppression setResourceTask(ResourceTask resourceTask) {
+    public ResourceTaskCompletion setResourceTask(ResourceTask resourceTask) {
         this.resourceTask = resourceTask;
         return this;
     }
@@ -28,7 +28,7 @@ public class ResourceTaskSuppression extends BoardEntity {
         return user;
     }
 
-    public ResourceTaskSuppression setUser(User user) {
+    public ResourceTaskCompletion setUser(User user) {
         this.user = user;
         return this;
     }

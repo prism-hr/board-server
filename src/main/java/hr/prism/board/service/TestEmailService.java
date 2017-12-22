@@ -13,7 +13,7 @@ import java.util.List;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class TestEmailService {
 
     @Inject
@@ -30,9 +30,9 @@ public class TestEmailService {
         return testEmailRepository.findMessagesByUserEmail(email);
     }
 
-    public void createTestEmail(User user, String subject, String content, List<String> attachments) {
+    public void createTestEmail(User user, String subject, String content, List<String> attachments, Long creatorId) {
         TestEmail testEmail = new TestEmail();
-        testEmail.setUser(user);
+        testEmail.setEmail(user.getEmail());
         testEmail.setMessage(
             new TestEmailMessageRepresentation()
                 .setRecipient(userMapper.apply(user))
@@ -40,6 +40,7 @@ public class TestEmailService {
                 .setContent(content)
                 .setAttachments(attachments));
 
+        testEmail.setCreatorId(creatorId);
         testEmailRepository.save(testEmail);
     }
 

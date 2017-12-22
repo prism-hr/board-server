@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue"})
 public class DepartmentApi {
 
     @Inject
@@ -113,8 +113,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/tasks/{taskId}", method = RequestMethod.PUT)
-    public void putTask(@PathVariable Long departmentId, @PathVariable Long taskId) {
-        departmentService.putTask(departmentId, taskId);
+    public DepartmentRepresentation putTask(@PathVariable Long departmentId, @PathVariable Long taskId) {
+        return departmentMapper.apply(departmentService.putTask(departmentId, taskId));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = RequestMethod.GET)

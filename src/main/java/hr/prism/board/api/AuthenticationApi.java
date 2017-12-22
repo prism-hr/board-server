@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import hr.prism.board.authentication.PusherAuthenticationDTO;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LoginDTO;
 import hr.prism.board.dto.RegisterDTO;
@@ -11,10 +12,7 @@ import org.springframework.mobile.device.Device;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -48,14 +46,14 @@ public class AuthenticationApi {
         authenticationService.resetPassword(resetPasswordDTO);
     }
 
-    @RequestMapping(value = "/api/auth/refreshToken", method = RequestMethod.GET)
-    public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        return authenticationService.refreshToken(request, response);
+    @RequestMapping(value = "/api/auth/pusher", method = RequestMethod.POST)
+    public String authenticatePusher(@RequestBody PusherAuthenticationDTO pusherAuthentication) {
+        return authenticationService.authenticatePusher(pusherAuthentication);
     }
 
     private Map<String, String> makeAccessTokenResponse(User user, Device device) {
         String token = authenticationService.makeAccessToken(
-            user.getId(), authenticationService.getJwsSecret(), device == null || device.isNormal());
+            user.getId(), device == null || device.isNormal());
         return Collections.singletonMap("token", token);
     }
 

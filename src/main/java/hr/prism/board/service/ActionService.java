@@ -36,7 +36,7 @@ import java.util.List;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class ActionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionService.class);
@@ -101,7 +101,7 @@ public class ActionService {
                     Long newResourceId = newResource.getId();
                     List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
                     if (activities != null) {
-                        activityEventService.publishEvent(this, newResourceId, activities);
+                        activityEventService.publishEvent(this, newResourceId, true, activities);
                     }
 
                     List<Notification> notifications = deserializeUpdates(actionRepresentation.getNotification(), Notification.class);
@@ -124,7 +124,7 @@ public class ActionService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
+    public void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             entityManager.createQuery(
                 "update Resource resource " +
@@ -139,8 +139,8 @@ public class ActionService {
 
             //noinspection SqlResolve
             entityManager.createNativeQuery(
-                "INSERT INTO resource_operation (resource_id, action, creator_id, created_timestamp) " +
-                    "SELECT resource.id AS resource_id, :action AS action, resource.creator_id AS creator_id, :baseline AS created_timestamp " +
+                "INSERT INTO resource_operation (resource_id, action, creator_id, created_timestamp, updated_timestamp) " +
+                    "SELECT resource.id, :action, resource.creator_id, :baseline, :baseline " +
                     "FROM resource " +
                     "WHERE resource.id IN (:postIds) " +
                     "ORDER BY resource.id")

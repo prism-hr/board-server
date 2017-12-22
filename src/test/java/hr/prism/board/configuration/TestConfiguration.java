@@ -1,22 +1,20 @@
 package hr.prism.board.configuration;
 
+import hr.prism.board.authentication.adapter.FacebookAdapter;
+import hr.prism.board.authentication.adapter.LinkedinAdapter;
+import hr.prism.board.domain.User;
+import hr.prism.board.dto.OAuthAuthorizationDataDTO;
+import hr.prism.board.dto.OAuthDataDTO;
+import hr.prism.board.dto.SigninDTO;
+import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.service.TestActivityService;
+import hr.prism.board.service.TestDepartmentService;
+import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.event.*;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-
-import hr.prism.board.authentication.adapter.FacebookAdapter;
-import hr.prism.board.authentication.adapter.LinkedinAdapter;
-import hr.prism.board.domain.User;
-import hr.prism.board.dto.SigninDTO;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestWebSocketService;
-import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.service.event.TestActivityEventService;
-import hr.prism.board.service.event.TestNotificationEventService;
-import hr.prism.board.service.event.TestUserRoleEventService;
-import hr.prism.board.service.event.UserRoleEventService;
 
 @Configuration
 public class TestConfiguration {
@@ -27,9 +25,8 @@ public class TestConfiguration {
         FacebookAdapter facebookAdapter = Mockito.mock(FacebookAdapter.class);
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId")
-                .setCode("code")
-                .setRedirectUri("redirectUri")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                .setOauthData(new OAuthDataDTO().setCode("code"))))
             .thenReturn(
                 new User()
                     .setGivenName("alastair")
@@ -40,9 +37,8 @@ public class TestConfiguration {
 
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId2")
-                .setCode("code2")
-                .setRedirectUri("redirectUri2")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
+                .setOauthData(new OAuthDataDTO().setCode("code2"))))
             .thenReturn(
                 new User()
                     .setGivenName("jakub")
@@ -53,9 +49,8 @@ public class TestConfiguration {
 
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId3")
-                .setCode("code3")
-                .setRedirectUri("redirectUri3")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId3").setRedirectUri("redirectUri3"))
+                .setOauthData(new OAuthDataDTO().setCode("code3"))))
             .thenReturn(
                 new User()
                     .setGivenName("member1")
@@ -73,9 +68,8 @@ public class TestConfiguration {
         LinkedinAdapter linkedinAdapter = Mockito.mock(LinkedinAdapter.class);
         Mockito.when(linkedinAdapter.exchangeForUser(
             new SigninDTO()
-                .setClientId("clientId")
-                .setCode("code")
-                .setRedirectUri("redirectUri")))
+                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
+                .setOauthData(new OAuthDataDTO().setCode("code"))))
             .thenReturn(
                 new User()
                     .setGivenName("alastair")
@@ -113,8 +107,14 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public TestWebSocketService userActivityService() {
-        return new TestWebSocketService();
+    public TestActivityService userActivityService() {
+        return new TestActivityService();
+    }
+
+    @Bean
+    @Primary
+    public TestDepartmentService departmentService() {
+        return new TestDepartmentService();
     }
 
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 
 @Service
+@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceMapperFactory {
 
     @Inject
@@ -21,7 +22,7 @@ public class ResourceMapperFactory {
     @Inject
     private PostMapper postMapper;
 
-    public ResourceRepresentation applySmall(Resource resource) {
+    ResourceRepresentation applySmall(Resource resource) {
         if (resource instanceof Department) {
             return departmentMapper.applySmall((Department) resource);
         } else if (resource instanceof Board) {
