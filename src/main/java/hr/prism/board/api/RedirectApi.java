@@ -30,7 +30,7 @@ public class RedirectApi {
         String contextPath = "home";
         String resource = request.getParameter("resource");
         if (resource != null) {
-            contextPath = resourceService.findOne(Long.parseLong(resource)).getHandle();
+            contextPath = Joiner.on("/").skipNulls().join(resourceService.findOne(Long.parseLong(resource)).getHandle(), request.getParameter("view"));
         }
 
         List<String> parameters = Stream.of("uuid", "resetPasswordUuid", "unsubscribeUuid")
