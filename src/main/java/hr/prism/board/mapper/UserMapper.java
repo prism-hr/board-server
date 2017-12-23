@@ -38,7 +38,8 @@ public class UserMapper implements Function<User, UserRepresentation> {
             .setWebsiteResume(user.getWebsiteResume())
             .setScopes(user.getScopes())
             .setDefaultOrganizationName(user.getDefaultOrganizationName())
-            .setDefaultLocation(locationMapper.apply(user.getDefaultLocation()));
+            .setDefaultLocation(locationMapper.apply(user.getDefaultLocation()))
+            .setRegistered(user.isRegistered());
     }
 
 }

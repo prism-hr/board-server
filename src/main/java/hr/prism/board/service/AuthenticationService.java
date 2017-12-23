@@ -231,6 +231,10 @@ public class AuthenticationService {
                 .setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
     }
 
+    public User getInvitee(String invitationUuid) {
+        return userCacheService.findByUserRoleUuidSecured(invitationUuid);
+    }
+
     public String makeAccessToken(Long userId, boolean specifyExpirationDate) {
         return Jwts.builder()
             .setSubject(userId.toString())

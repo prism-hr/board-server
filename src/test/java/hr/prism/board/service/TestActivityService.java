@@ -39,7 +39,8 @@ public class TestActivityService extends ActivityService {
 
     @SuppressWarnings("unchecked")
     public void verify(Long userId, ActivityInstance... expectedActivityInstances) {
-        List<ActivityRepresentation> activityRepresentations = Iterables.getLast(sentActivities.removeAll(userId));
+        List<List<ActivityRepresentation>> removed = sentActivities.removeAll(userId);
+        List<ActivityRepresentation> activityRepresentations = Iterables.getLast(removed);
         LOGGER.info("Checking activities for user: " + userId + " - " +
             activityRepresentations.stream().map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
 
