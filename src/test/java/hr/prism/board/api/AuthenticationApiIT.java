@@ -334,6 +334,7 @@ public class AuthenticationApiIT extends AbstractIT {
         PostRepresentation postR1 = transactionTemplate.execute(status -> postApi.postPost(boardId1,
             TestHelper.smallSamplePost()
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
+        Long postId1 = postR1.getId();
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -348,16 +349,19 @@ public class AuthenticationApiIT extends AbstractIT {
         User member3 = transactionTemplate.execute(status -> userRepository.findByEmail("member3@member3.com"));
 
         Resource department1 = transactionTemplate.execute(status -> resourceService.findOne(departmentId1));
-        String department1memberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department1, member1, Role.MEMBER))
+        Resource post1 = transactionTemplate.execute(status -> resourceService.findOne(postId1));
+        User user1 = transactionTemplate.execute(status -> userCacheService.findOne(userId1));
+        String post1AdminRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(post1, user1, Role.ADMINISTRATOR))
             .getUuid();
-        String department1memberRole2Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department1, member2, Role.MEMBER))
+        String department1MemberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department1, member1, Role.MEMBER))
             .getUuid();
-        String department1memberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department1, member3, Role.MEMBER))
+        String department1MemberRole2Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department1, member2, Role.MEMBER))
+            .getUuid();
+        String department1MemberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department1, member3, Role.MEMBER))
             .getUuid();
 
         String parentRedirect1 = serverUrl + "/redirect?resource=" + boardId1;
-        String resourceRedirect1 = serverUrl + "/redirect?resource=" + postR1.getId();
-        User user1 = transactionTemplate.execute(status -> userCacheService.findOne(userId1));
+        String resourceRedirect1 = serverUrl + "/redirect?resource=" + postId1;
 
         testNotificationService.stop();
         testNotificationService.verify(
@@ -367,7 +371,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("board", boardName1)
                     .put("post", postName1)
                     .put("resourceRedirect", resourceRedirect1)
-                    .put("modal", "Login")
+                    .put("invitationUuid", post1AdminRole1Uuid)
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member1,
                 ImmutableMap.<String, String>builder().put("recipient", "member1")
@@ -377,8 +381,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect1)
-                    .put("invitationUuid", department1memberRole1Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department1MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member1.getUuid())
                     .build()),
@@ -390,8 +393,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect1)
-                    .put("invitationUuid", department1memberRole2Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department1MemberRole2Uuid)
                     .put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member2.getUuid())
                     .build()),
@@ -403,15 +405,18 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect1)
-                    .put("invitationUuid", department1memberRole3Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department1MemberRole3Uuid)
                     .put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member3.getUuid())
                     .build()));
 
-        Long postId1 = postR1.getId();
+        Assert.assertTrue(authenticationApi.getInvitee(post1AdminRole1Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department1MemberRole1Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department1MemberRole2Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department1MemberRole3Uuid).isRegistered());
+
         transactionTemplate.execute(status -> authenticationApi.register(
-            new RegisterDTO().setUuid(department1memberRole1Uuid)
+            new RegisterDTO().setUuid(department1MemberRole1Uuid)
                 .setGivenName("member1")
                 .setSurname("member1")
                 .setEmail("member1@member1.com")
@@ -428,8 +433,9 @@ public class AuthenticationApiIT extends AbstractIT {
         postR1 = transactionTemplate.execute(status -> postApi.getPost(postId1, TestHelper.mockHttpServletRequest("ip1")));
         Assert.assertNotNull(postR1.getReferral());
 
+
         transactionTemplate.execute(status -> authenticationApi.register(
-            new RegisterDTO().setUuid(department1memberRole2Uuid)
+            new RegisterDTO().setUuid(department1MemberRole2Uuid)
                 .setGivenName("member4")
                 .setSurname("member4")
                 .setEmail("member4@member4.com")
@@ -454,7 +460,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> authenticationApi.register(
-                new RegisterDTO().setUuid(department1memberRole3Uuid)
+                new RegisterDTO().setUuid(department1MemberRole3Uuid)
                     .setGivenName("member1")
                     .setSurname("member1")
                     .setEmail("member1@member1.com")
@@ -463,7 +469,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> authenticationApi.register(
-                new RegisterDTO().setUuid(department1memberRole1Uuid)
+                new RegisterDTO().setUuid(department1MemberRole1Uuid)
                     .setGivenName("member1")
                     .setSurname("member1")
                     .setEmail("member1@member1.com")
@@ -499,6 +505,7 @@ public class AuthenticationApiIT extends AbstractIT {
         PostRepresentation postR2 = transactionTemplate.execute(status -> postApi.postPost(boardId2,
             TestHelper.smallSamplePost()
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
+        Long postId2 = postR2.getId();
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -509,14 +516,17 @@ public class AuthenticationApiIT extends AbstractIT {
         String departmentName2 = departmentR2.getName();
 
         Resource department2 = transactionTemplate.execute(status -> resourceService.findOne(departmentId2));
-        String department2memberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department2, member1, Role.MEMBER))
+        Resource post2 = transactionTemplate.execute(status -> resourceService.findOne(postId2));
+        User user2 = transactionTemplate.execute(status -> userCacheService.findOne(userId2));
+        String post2AdminRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(post2, user2, Role.ADMINISTRATOR))
             .getUuid();
-        String department2memberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department2, member3, Role.MEMBER))
+        String department2MemberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department2, member1, Role.MEMBER))
+            .getUuid();
+        String department2MemberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department2, member3, Role.MEMBER))
             .getUuid();
 
         String parentRedirect2 = serverUrl + "/redirect?resource=" + boardId2;
         String resourceRedirect2 = serverUrl + "/redirect?resource=" + postR2.getId();
-        User user2 = transactionTemplate.execute(status -> userCacheService.findOne(userId2));
 
         testNotificationService.stop();
         testNotificationService.verify(
@@ -526,7 +536,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("board", boardName2)
                     .put("post", postName2)
                     .put("resourceRedirect", resourceRedirect2)
-                    .put("modal", "Login")
+                    .put("invitationUuid", post2AdminRole1Uuid)
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member1,
                 ImmutableMap.<String, String>builder().put("recipient", "member1")
@@ -536,8 +546,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect2)
-                    .put("invitationUuid", department2memberRole1Uuid)
-                    .put("modal", "Login")
+                    .put("invitationUuid", department2MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect2)
                     .put("recipientUuid", member1.getUuid())
                     .build()),
@@ -549,15 +558,17 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect2)
-                    .put("invitationUuid", department2memberRole3Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department2MemberRole3Uuid)
                     .put("parentRedirect", parentRedirect2)
                     .put("recipientUuid", member3.getUuid())
                     .build()));
 
-        Long postId2 = postR2.getId();
+        Assert.assertTrue(authenticationApi.getInvitee(post2AdminRole1Uuid).isRegistered());
+        Assert.assertTrue(authenticationApi.getInvitee(department2MemberRole1Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department2MemberRole3Uuid).isRegistered());
+
         transactionTemplate.execute(status -> authenticationApi.login(
-            new LoginDTO().setUuid(department2memberRole1Uuid)
+            new LoginDTO().setUuid(department2MemberRole1Uuid)
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member1.getId());
@@ -573,7 +584,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR2.getReferral());
 
         transactionTemplate.execute(status -> authenticationApi.login(
-            new LoginDTO().setUuid(department2memberRole3Uuid)
+            new LoginDTO().setUuid(department2MemberRole3Uuid)
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice()));
         testUserService.setAuthentication(member2.getId());
@@ -626,6 +637,7 @@ public class AuthenticationApiIT extends AbstractIT {
         PostRepresentation postR3 = transactionTemplate.execute(status -> postApi.postPost(boardId3,
             TestHelper.smallSamplePost()
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
+        Long postId3 = postR3.getId();
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -640,16 +652,19 @@ public class AuthenticationApiIT extends AbstractIT {
         User member7 = transactionTemplate.execute(status -> userRepository.findByEmail("member7@member7.com"));
 
         Resource department3 = transactionTemplate.execute(status -> resourceService.findOne(departmentId3));
-        String department3memberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member5, Role.MEMBER))
+        Resource post3 = transactionTemplate.execute(status -> resourceService.findOne(postId3));
+        User user3 = transactionTemplate.execute(status -> userCacheService.findOne(userId3));
+        String post3AdminRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(post3, user3, Role.ADMINISTRATOR))
             .getUuid();
-        String department3memberRole2Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member6, Role.MEMBER))
+        String department3MemberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member5, Role.MEMBER))
             .getUuid();
-        String department3memberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member7, Role.MEMBER))
+        String department3MemberRole2Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member6, Role.MEMBER))
+            .getUuid();
+        String department3MemberRole3Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department3, member7, Role.MEMBER))
             .getUuid();
 
         String parentRedirect3 = serverUrl + "/redirect?resource=" + boardId3;
         String resourceRedirect3 = serverUrl + "/redirect?resource=" + postR3.getId();
-        User user3 = transactionTemplate.execute(status -> userCacheService.findOne(userId3));
 
         testNotificationService.stop();
         testNotificationService.verify(
@@ -659,7 +674,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("board", boardName3)
                     .put("post", postName3)
                     .put("resourceRedirect", resourceRedirect3)
-                    .put("modal", "Login")
+                    .put("invitationUuid", post3AdminRole1Uuid)
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member5,
                 ImmutableMap.<String, String>builder().put("recipient", "member5")
@@ -669,8 +684,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect3)
-                    .put("invitationUuid", department3memberRole1Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department3MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member5.getUuid())
                     .build()),
@@ -682,8 +696,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect3)
-                    .put("invitationUuid", department3memberRole2Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department3MemberRole2Uuid)
                     .put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member6.getUuid())
                     .build()),
@@ -695,16 +708,19 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect3)
-                    .put("invitationUuid", department3memberRole3Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department3MemberRole3Uuid)
                     .put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member7.getUuid())
                     .build()));
 
-        Long postId3 = postR3.getId();
+        Assert.assertTrue(authenticationApi.getInvitee(post3AdminRole1Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department3MemberRole1Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department3MemberRole2Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department3MemberRole3Uuid).isRegistered());
+
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
             new SigninDTO()
-                .setUuid(department3memberRole1Uuid)
+                .setUuid(department3MemberRole1Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice()));
         testUserService.setAuthentication(member5.getId());
@@ -721,7 +737,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
             new SigninDTO()
-                .setUuid(department3memberRole2Uuid)
+                .setUuid(department3MemberRole2Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
                 .setOauthData(new OAuthDataDTO().setCode("code2")), TestHelper.mockDevice()));
         testUserService.setAuthentication(member6.getId());
@@ -738,7 +754,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
             new SigninDTO()
-                .setUuid(department3memberRole3Uuid)
+                .setUuid(department3MemberRole3Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId3").setRedirectUri("redirectUri3"))
                 .setOauthData(new OAuthDataDTO().setCode("code3")),
             TestHelper.mockDevice()));
@@ -782,6 +798,7 @@ public class AuthenticationApiIT extends AbstractIT {
         PostRepresentation postR4 = transactionTemplate.execute(status -> postApi.postPost(boardId4,
             TestHelper.smallSamplePost()
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
+        Long postId4 = postR4.getId();
         transactionTemplate.execute(status -> {
             postService.publishAndRetirePosts();
             return null;
@@ -793,13 +810,16 @@ public class AuthenticationApiIT extends AbstractIT {
 
         User member8 = transactionTemplate.execute(status -> userRepository.findByEmail("member8@member8.com"));
 
+        User user4 = transactionTemplate.execute(status -> userCacheService.findOne(userId4));
         Resource department4 = transactionTemplate.execute(status -> resourceService.findOne(departmentId4));
-        String department4memberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department4, member8, Role.MEMBER))
+        Resource post4 = transactionTemplate.execute(status -> resourceService.findOne(postId4));
+        String post4AdminRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(post4, user4, Role.ADMINISTRATOR))
+            .getUuid();
+        String department4MemberRole1Uuid = transactionTemplate.execute(status -> userRoleService.findByResourceAndUserAndRole(department4, member8, Role.MEMBER))
             .getUuid();
 
         String parentRedirect4 = serverUrl + "/redirect?resource=" + boardId4;
         String resourceRedirect4 = serverUrl + "/redirect?resource=" + postR4.getId();
-        User user4 = transactionTemplate.execute(status -> userCacheService.findOne(userId4));
 
         testNotificationService.stop();
         testNotificationService.verify(
@@ -809,7 +829,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("board", boardName4)
                     .put("post", postName4)
                     .put("resourceRedirect", resourceRedirect4)
-                    .put("modal", "Login")
+                    .put("invitationUuid", post4AdminRole1Uuid)
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member8,
                 ImmutableMap.<String, String>builder().put("recipient", "member8")
@@ -819,16 +839,17 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("organization", "organization name")
                     .put("summary", "summary")
                     .put("resourceRedirect", resourceRedirect4)
-                    .put("invitationUuid", department4memberRole1Uuid)
-                    .put("modal", "Register")
+                    .put("invitationUuid", department4MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect4)
                     .put("recipientUuid", member8.getUuid())
                     .build()));
 
-        Long postId4 = postR4.getId();
+        Assert.assertTrue(authenticationApi.getInvitee(post4AdminRole1Uuid).isRegistered());
+        Assert.assertFalse(authenticationApi.getInvitee(department4MemberRole1Uuid).isRegistered());
+
         transactionTemplate.execute(status -> authenticationApi.signin("facebook",
             new SigninDTO()
-                .setUuid(department4memberRole1Uuid)
+                .setUuid(department4MemberRole1Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice()));
         testUserService.setAuthentication(member5.getId());

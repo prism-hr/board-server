@@ -7,6 +7,8 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.mapper.UserMapper;
+import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.AuthenticationService;
 import org.springframework.mobile.device.Device;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,9 @@ public class AuthenticationApi {
 
     @Inject
     private AuthenticationService authenticationService;
+
+    @Inject
+    private UserMapper userMapper;
 
     @RequestMapping(value = "/api/auth/login", method = RequestMethod.POST)
     public Map<String, String> login(@RequestBody @Valid LoginDTO loginDTO, Device device) {
@@ -44,6 +49,13 @@ public class AuthenticationApi {
     @RequestMapping(value = "/api/auth/resetPassword", method = RequestMethod.POST)
     public void resetPassword(@RequestBody @Valid ResetPasswordDTO resetPasswordDTO) {
         authenticationService.resetPassword(resetPasswordDTO);
+    }
+
+    @RequestMapping(value = "/api/auth/invitee/{invitationUuid}", method = RequestMethod.GET)
+    public UserRepresentation getInvitee(@PathVariable String invitationUuid) {
+        User invitee = authenticationService.getInvitee(invitationUuid);
+        invitee.setRevealEmail(true);
+        return userMapper.apply(invitee);
     }
 
     @RequestMapping(value = "/api/auth/pusher", method = RequestMethod.POST)

@@ -22,7 +22,7 @@ public class UserRepresentation {
     private DocumentRepresentation documentImage;
 
     private DocumentRequestState documentImageRequestState;
-    
+
     private Boolean seenWalkThrough;
 
     private Gender gender;
@@ -40,6 +40,8 @@ public class UserRepresentation {
     private String defaultOrganizationName;
 
     private LocationRepresentation defaultLocation;
+
+    private boolean registered;
 
     public Long getId() {
         return id;
@@ -94,16 +96,16 @@ public class UserRepresentation {
         this.documentImageRequestState = documentImageRequestState;
         return this;
     }
-    
+
     public Boolean getSeenWalkThrough() {
         return seenWalkThrough;
     }
-    
+
     public UserRepresentation setSeenWalkThrough(Boolean seenWalkThrough) {
         this.seenWalkThrough = seenWalkThrough;
         return this;
     }
-    
+
     public Gender getGender() {
         return gender;
     }
@@ -176,11 +178,20 @@ public class UserRepresentation {
         return this;
     }
 
+    public boolean isRegistered() {
+        return registered;
+    }
+
+    public UserRepresentation setRegistered(boolean registered) {
+        this.registered = registered;
+        return this;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(email);
     }
-    
+
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object object) {

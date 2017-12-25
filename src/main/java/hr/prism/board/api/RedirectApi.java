@@ -27,18 +27,13 @@ public class RedirectApi {
 
     @RequestMapping(value = "/api/redirect", method = RequestMethod.GET)
     public void redirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String modal = request.getParameter("modal");
-        if (modal == null) {
-            throw new IllegalArgumentException("redirect must specify a modal action");
-        }
-
         String contextPath = "home";
         String resource = request.getParameter("resource");
         if (resource != null) {
             contextPath = Joiner.on("/").skipNulls().join(resourceService.findOne(Long.parseLong(resource)).getHandle(), request.getParameter("view"));
         }
 
-        List<String> parameters = Stream.of("modal", "view", "filter", "uuid")
+        List<String> parameters = Stream.of("uuid", "resetPasswordUuid", "unsubscribeUuid")
             .filter(param -> request.getParameter(param) != null)
             .map(param -> param + "=" + request.getParameter(param))
             .collect(Collectors.toList());
