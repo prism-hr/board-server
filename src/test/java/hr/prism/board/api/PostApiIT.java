@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
 @TestContext
+@SuppressWarnings("unused")
 @RunWith(SpringRunner.class)
 public class PostApiIT extends AbstractIT {
 
@@ -514,7 +515,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportPostLifecycleAndPermissions() throws InterruptedException {
+    public void shouldSupportPostLifecycleAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
