@@ -7,13 +7,10 @@ import java.util.stream.Collectors;
 
 public enum State {
 
-    DRAFT, // Board filter, Post filter
-    SUSPENDED, // Post filter
-    PENDING, // Post filter
-    TRIAL, // Department filter
-    CONVERSION, // Department filter
+    DRAFT, // Department filter, Board filter, Post filter
+    SUSPENDED, // Department filter, Post filter
+    PENDING, // Department filter, Post filter
     ACCEPTED, // Department filter, Board filter, Post filter
-    DEFAULTED, // Department filter
     EXPIRED, // Post filter
     REJECTED, // Department filter, Board filter, Post filter
     WITHDRAWN, // Post filter

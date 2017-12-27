@@ -39,23 +39,23 @@ public class Installer {
     @PostConstruct
     public void install() {
         Workflow workflow = new Workflow(objectMapper)
-            // Department trial state
-            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(TRIAL)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(TRIAL).creating(BOARD).inState(DRAFT)
+            // Department draft state
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(TRIAL)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(TRIAL).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DRAFT)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(ACCEPTED)
 
             // Department conversion state
-            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(CONVERSION)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(CONVERSION).creating(BOARD).inState(DRAFT)
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(PENDING)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD).inState(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(CONVERSION)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(CONVERSION).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(PENDING)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD).inState(ACCEPTED)
 
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
@@ -66,14 +66,14 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
 
-            // Department defaulted state
-            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DEFAULTED)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(DEFAULTED).creating(BOARD).inState(DRAFT)
+            // Department suspended state
+            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(SUSPENDED)
+            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DEFAULTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DEFAULTED).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(SUSPENDED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(ACCEPTED)
 
             // Department rejected state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(REJECTED)
