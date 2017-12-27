@@ -2,6 +2,7 @@ package hr.prism.board.utils;
 
 import com.google.common.base.Joiner;
 
+import com.google.common.base.Strings;
 import opennlp.tools.tokenize.SimpleTokenizer;
 
 import org.apache.commons.codec.language.Soundex;
@@ -124,6 +125,10 @@ public class BoardUtils {
                 }
             })
             .collect(Collectors.joining(" "));
+    }
+
+    public static String emptyToNull(String string) {
+        return string == null ? null : Strings.emptyToNull(string.trim());
     }
 
 }

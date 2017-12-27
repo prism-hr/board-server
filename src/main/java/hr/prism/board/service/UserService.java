@@ -276,8 +276,9 @@ public class UserService {
 
     public User getOrCreateUser(UserDTO userDTO, UserFinder userFinder) {
         User user = null;
-        if (userDTO.getId() != null) {
-            user = userRepository.findOne(userDTO.getId());
+        Long userId = userDTO.getId();
+        if (userId != null) {
+            user = userRepository.findOne(userId);
         }
 
         String email = userDTO.getEmail();

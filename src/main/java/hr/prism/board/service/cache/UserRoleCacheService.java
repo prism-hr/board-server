@@ -13,6 +13,7 @@ import hr.prism.board.service.ResourceService;
 import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
+import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
@@ -81,13 +82,10 @@ public class UserRoleCacheService {
             notify = false;
         }
 
-        String email = userRoleDTO.getEmail();
-        if (email != null) {
-            email = Strings.emptyToNull(email.trim());
-        }
-        UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString())
-            .setResource(resource).setUser(user).setEmail(email).setRole(role).setState(state)
-            .setExpiryDate(userRoleDTO.getExpiryDate()));
+        UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource)
+            .setUser(user).setEmail(BoardUtils.emptyToNull(userRoleDTO.getEmail())).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+        userRole.setCreatorId(resource.getCreatorId());
+
         updateUserRoleDemographicData(userRole, userRoleDTO);
         updateUserRolesSummary(resource);
 

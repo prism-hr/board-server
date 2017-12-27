@@ -69,7 +69,7 @@ public interface UserRepository extends BoardEntityRepository<User, Long> {
     List<Long> findByResourceAndUserIds(@Param("resource") Resource resource, @Param("userIds") List<Long> userIds, @Param("userRoleStates") List<State> userRoleStates);
 
     @Query(value =
-        "select distinct new hr.prism.board.value.UserNotification(userRole.user) " +
+        "select distinct new hr.prism.board.value.UserNotification(userRole.user, userRole.uuid) " +
             "from ResourceRelation relation " +
             "inner join relation.resource1 enclosingResource " +
             "inner join enclosingResource.userRoles userRole " +
