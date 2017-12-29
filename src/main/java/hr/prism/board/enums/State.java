@@ -1,15 +1,29 @@
 package hr.prism.board.enums;
 
 import com.google.common.collect.ImmutableList;
+import hr.prism.board.enums.Labels.Label;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public enum State {
 
-    DRAFT, // Department filter, Board filter, Post filter
-    SUSPENDED, // Department filter, Post filter
-    PENDING, // Department filter, Post filter
+    @Label(scope = Scope.DEPARTMENT, value = "Trial")
+    @Label(scope = Scope.BOARD, value = "Awaiting moderation")
+    @Label(scope = Scope.POST, value = "Awaiting moderation")
+    DRAFT,
+
+    @Label(scope = Scope.DEPARTMENT, value = "Awaiting payment")
+    @Label(scope = Scope.POST, value = "Awaiting resubmission")
+    SUSPENDED,
+
+    @Label(scope = Scope.DEPARTMENT, value = "Awaiting subscription")
+    @Label(scope = Scope.POST, value = "Awaiting publication")
+    PENDING,
+
+    @Label(scope = Scope.DEPARTMENT, value = "Active")
+    @Label(scope = Scope.BOARD, value = "Active")
+    @Label(scope = Scope.POST, value = "Active")
     ACCEPTED, // Department filter, Board filter, Post filter
     EXPIRED, // Post filter
     REJECTED, // Department filter, Board filter, Post filter
