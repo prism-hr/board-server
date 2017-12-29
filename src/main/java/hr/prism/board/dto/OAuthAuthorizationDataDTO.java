@@ -9,12 +9,12 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OAuthAuthorizationDataDTO {
 
-    @JsonProperty("client_id")
     @NotEmpty
+    @JsonProperty("client_id")
     private String clientId;
 
-    @JsonProperty("redirect_uri")
     @NotEmpty
+    @JsonProperty("redirect_uri")
     private String redirectUri;
 
     public String getClientId() {
@@ -36,17 +36,17 @@ public class OAuthAuthorizationDataDTO {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OAuthAuthorizationDataDTO that = (OAuthAuthorizationDataDTO) o;
+    public int hashCode() {
+        return Objects.hash(clientId, redirectUri);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        OAuthAuthorizationDataDTO that = (OAuthAuthorizationDataDTO) other;
         return Objects.equals(clientId, that.clientId) &&
             Objects.equals(redirectUri, that.redirectUri);
     }
 
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(clientId, redirectUri);
-    }
 }

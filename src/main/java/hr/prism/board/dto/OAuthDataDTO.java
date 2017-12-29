@@ -21,16 +21,16 @@ public class OAuthDataDTO {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OAuthDataDTO that = (OAuthDataDTO) o;
-        return Objects.equals(code, that.code);
+    public int hashCode() {
+        return Objects.hash(code);
     }
 
     @Override
-    public int hashCode() {
-
-        return Objects.hash(code);
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        OAuthDataDTO that = (OAuthDataDTO) other;
+        return Objects.equals(code, that.code);
     }
+
 }

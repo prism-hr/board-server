@@ -9,12 +9,12 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SigninDTO extends AuthenticateDTO<SigninDTO> {
 
-    @NotNull
     @Valid
+    @NotNull
     private OAuthAuthorizationDataDTO authorizationData;
 
-    @NotNull
     @Valid
+    @NotNull
     private OAuthDataDTO oauthData;
 
     public OAuthAuthorizationDataDTO getAuthorizationData() {
@@ -36,17 +36,17 @@ public class SigninDTO extends AuthenticateDTO<SigninDTO> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SigninDTO signinDTO = (SigninDTO) o;
+    public int hashCode() {
+        return Objects.hash(authorizationData, oauthData);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        SigninDTO signinDTO = (SigninDTO) other;
         return Objects.equals(authorizationData, signinDTO.authorizationData) &&
             Objects.equals(oauthData, signinDTO.oauthData);
     }
 
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(authorizationData, oauthData);
-    }
 }
