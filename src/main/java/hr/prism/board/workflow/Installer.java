@@ -1,7 +1,5 @@
 package hr.prism.board.workflow;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.configuration.WebMvcConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +12,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
-import java.util.Map;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Activity.*;
@@ -25,43 +22,13 @@ import static hr.prism.board.enums.State.*;
 
 @Service
 @Transactional
+@SuppressWarnings("unused")
 public class Installer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Installer.class);
 
-    private static final Map<String, Workflow> WORKFLOWS = ImmutableMap.of(
-        "department", Department.WORKFLOW, "board", Board.WORKFLOW, "post", Post.WORKFLOW);
-
-    @PersistenceContext
-    private EntityManager entityManager;
-
-    @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
-
-    @Inject
-    private ObjectMapper objectMapper;
-
-    @PostConstruct
-    public void install() {
-        new TransactionTemplate(platformTransactionManager).execute(transactionStatus -> {
-            LOGGER.info("Deleting old workflow definition");
-            entityManager.createNativeQuery("TRUNCATE TABLE workflow").executeUpdate();
-            WORKFLOWS.keySet().forEach(workflow -> install(workflow, WORKFLOWS.get(workflow)));
-            return null;
-        });
-    }
-
-    private void install(String scope, Workflow workflow) {
-        LOGGER.info("Inserting new " + scope + " workflow definition");
-        entityManager.createNativeQuery("INSERT INTO workflow(" +
-            "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, activity, notification) " +
-            "VALUES" + workflow.toString()).executeUpdate();
-    }
-
-    private static class Department {
-
-        static final Workflow WORKFLOW = new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
+    private static final Workflow DEPARTMENT_WORKFLOW =
+        new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
             // Department draft state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(DRAFT)
@@ -97,22 +64,20 @@ public class Installer {
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(SUSPENDED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(SUSPENDED).transitioningTo(ACCEPTED)
 
             // Department rejected state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(REJECTED).transitioningTo(PREVIOUS)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED)
 
             // Board archived state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(ARCHIVED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ARCHIVED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(ARCHIVED).transitioningTo(PREVIOUS);
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(ARCHIVED).transitioningTo(ACCEPTED);
 
-    }
-
-    private static class Board {
-
-        static final Workflow WORKFLOW = new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
+    private static final Workflow BOARD_WORKFLOW =
+        new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
             // Board draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
@@ -164,11 +129,8 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(ARCHIVED).transitioningTo(PREVIOUS)
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, BOARD).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
-    }
-
-    private static class Post {
-
-        static final Workflow WORKFLOW = new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
+    private static final Workflow POST_WORKFLOW =
+        new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
@@ -334,6 +296,31 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Inject
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    private PlatformTransactionManager platformTransactionManager;
+
+    @PostConstruct
+    public void install() {
+        new TransactionTemplate(platformTransactionManager).execute(transactionStatus -> {
+            LOGGER.info("Deleting old workflow definition");
+            entityManager.createNativeQuery("TRUNCATE TABLE workflow").executeUpdate();
+
+            LOGGER.info("Inserting new workflow definition");
+            install(DEPARTMENT_WORKFLOW);
+            install(BOARD_WORKFLOW);
+            install(POST_WORKFLOW);
+            return null;
+        });
+    }
+
+    private void install(Workflow workflow) {
+        entityManager.createNativeQuery("INSERT INTO workflow(" +
+            "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, activity, notification) " +
+            "VALUES" + workflow.toString()).executeUpdate();
     }
 
 }

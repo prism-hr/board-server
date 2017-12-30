@@ -24,11 +24,24 @@ public enum State {
     @Label(scope = Scope.DEPARTMENT, value = "Active")
     @Label(scope = Scope.BOARD, value = "Active")
     @Label(scope = Scope.POST, value = "Active")
-    ACCEPTED, // Department filter, Board filter, Post filter
-    EXPIRED, // Post filter
-    REJECTED, // Department filter, Board filter, Post filter
-    WITHDRAWN, // Post filter
-    ARCHIVED, // Post only - not in filter for active posts, provides hard-coded filter for separate archive section
+    ACCEPTED,
+
+    @Label(scope = Scope.POST, value = "Closed")
+    EXPIRED,
+
+    @Label(scope = Scope.DEPARTMENT, value = "Deactivated")
+    @Label(scope = Scope.BOARD, value = "Deactivated")
+    @Label(scope = Scope.POST, value = "Rejected")
+    REJECTED,
+
+    WITHDRAWN,
+    @Label(scope = Scope.POST, value = "Withdrawn")
+
+    @Label(scope = Scope.DEPARTMENT, value = "Archived")
+    @Label(scope = Scope.BOARD, value = "Archived")
+    @Label(scope = Scope.POST, value = "Archived")
+    ARCHIVED,
+
     PREVIOUS;
 
     public static final List<State> ACTIVE_USER_ROLE_STATES = ImmutableList.of(PENDING, ACCEPTED);

@@ -70,8 +70,9 @@ public class DefinitionApiIT {
         Assert.assertEquals(value, definitions.get(key));
     }
 
-    private <T extends Enum<T>> void verifyDefinition(TreeMap<String, Object> definitions, String key, Class<T> clazz) {
-        Assert.assertThat((List<String>) definitions.get(key), Matchers.containsInAnyOrder(Arrays.stream(clazz.getEnumConstants()).map(Enum::name).toArray(String[]::new)));
+    private <T extends Enum<T>> void verifyDefinition(TreeMap<String, Object> definitions, String key, Class<T> definitionClass) {
+        Assert.assertThat((List<String>) definitions.get(key),
+            Matchers.containsInAnyOrder(Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).toArray(String[]::new)));
     }
 
 }
