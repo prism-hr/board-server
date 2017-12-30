@@ -34,8 +34,8 @@ public enum State {
     @Label(scope = Scope.POST, value = "Rejected")
     REJECTED,
 
-    WITHDRAWN,
     @Label(scope = Scope.POST, value = "Withdrawn")
+    WITHDRAWN,
 
     @Label(scope = Scope.DEPARTMENT, value = "Archived")
     @Label(scope = Scope.BOARD, value = "Archived")

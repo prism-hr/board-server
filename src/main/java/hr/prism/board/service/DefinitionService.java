@@ -116,7 +116,9 @@ public class DefinitionService {
             if (labels == null) {
                 values.add(value);
             } else {
-                values.add(ImmutableMap.of(value, Stream.of(labels.value()).collect(Collectors.toMap(Label::scope, Label::value))));
+                Map<String, String> labelMap = new TreeMap<>();
+                Stream.of(labels.value()).forEach(label -> labelMap.put(label.scope().name(), label.value()));
+                values.add(ImmutableMap.of(value, labelMap));
             }
         }
 
