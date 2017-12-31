@@ -349,6 +349,9 @@ public class ResourceService {
 
         resource.setState(state);
         resource.setPreviousState(previousState);
+        if (resource.getStateChangeTimestamp() == null || !state.equals(previousState)) {
+            resource.setStateChangeTimestamp(LocalDateTime.now());
+        }
 
         entityManager.flush();
         Resource parent = resource.getParent();

@@ -17,6 +17,7 @@ public enum Action {
     PUBLISH(false),
     RETIRE(false),
     RESTORE(false), // Comment optional for restore from reject, no comment for restore from withdrawn
+    SUBSCRIBE(false),
     WITHDRAW(false),
     ARCHIVE(false);
 

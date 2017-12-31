@@ -1,6 +1,7 @@
 package hr.prism.board.repository;
 
 import hr.prism.board.domain.Department;
+import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,5 +27,14 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "or department.handle like concat('%', :suggestedHandle, '-%') " +
             "order by department.handle desc")
     List<String> findHandleByLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
+
+    @Query(value =
+        "select department.id " +
+            "from Department department " +
+            "where (state = :draftState && stateChangeTimestamp < :draftExpiryTimestamp) " +
+            "or (state = :suspendedState && stateChangeTimestamp < :suspendedExpiryTimestamp)")
+    List<Long> findDepartmentsToMoveToPendingOrRejected(
+        @Param("draftState") State draftState, @Param("draftExpiryTimestamp") LocalDateTime draftExpiryTimestamp,
+        @Param("suspendedState") State suspendedState, @Param("suspendedExpiryTimestamp") LocalDateTime suspendedExpiryTimestamp);
 
 }

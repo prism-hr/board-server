@@ -37,6 +37,7 @@ public class Installer {
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(DRAFT).transitioningTo(ACCEPTED)
 
             // Department pending state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(PENDING)
@@ -46,6 +47,7 @@ public class Installer {
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(PENDING)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(PENDING).transitioningTo(ACCEPTED)
 
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
@@ -55,6 +57,7 @@ public class Installer {
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)
 
             // Department suspended state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(SUSPENDED)
@@ -64,17 +67,17 @@ public class Installer {
             .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(SUSPENDED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(SUSPENDED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(SUSPENDED).transitioningTo(ACCEPTED)
 
             // Department rejected state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED)
 
             // Board archived state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(ARCHIVED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ARCHIVED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, DEPARTMENT).inState(ARCHIVED).transitioningTo(ACCEPTED);
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ARCHIVED).transitioningTo(ACCEPTED);
 
     private static final Workflow BOARD_WORKFLOW =
         new Workflow(WebMvcConfiguration.OBJECT_MAPPER)

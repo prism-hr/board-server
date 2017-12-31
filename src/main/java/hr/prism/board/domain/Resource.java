@@ -8,6 +8,7 @@ import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,9 @@ public class Resource extends BoardEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "previousState")
     private State previousState;
+
+    @Column(name = "state_change_timestamp")
+    private LocalDateTime stateChangeTimestamp;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -121,6 +125,14 @@ public class Resource extends BoardEntity {
 
     public void setPreviousState(State previousState) {
         this.previousState = previousState;
+    }
+
+    public LocalDateTime getStateChangeTimestamp() {
+        return stateChangeTimestamp;
+    }
+
+    public void setStateChangeTimestamp(LocalDateTime stateChangeTimestamp) {
+        this.stateChangeTimestamp = stateChangeTimestamp;
     }
 
     public String getName() {

@@ -415,7 +415,6 @@ public class DepartmentService {
         return customerId == null ? null : paymentService.getCustomer(customerId);
     }
 
-    // TODO: write workflow definition to expose a discrete SUBSCRIBE action
     public Customer addPaymentSource(Long departmentId, String source) {
         Department department = getDepartmentForEdit(departmentId);
         String customerId = department.getCustomerId();
@@ -509,6 +508,10 @@ public class DepartmentService {
 
     public LocalDateTime getBaseline() {
         return LocalDateTime.now();
+    }
+
+    public List<Long> getDepartmentsToMoveToPendingOrRejected(LocalDateTime draftExpiryTimestamp, LocalDateTime suspendedExpiryTimestamp) {
+        return departmentRepository.findDepartmentsToMoveToPendingOrRejected(State.DRAFT, draftExpiryTimestamp, State.SUSPENDED, suspendedExpiryTimestamp);
     }
 
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {
