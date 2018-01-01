@@ -4,16 +4,14 @@ import com.google.common.collect.ImmutableList;
 import com.stripe.model.Customer;
 import com.stripe.model.ExternalAccountCollection;
 import com.stripe.model.InvoiceCollection;
+import hr.prism.board.api.WebhookApi;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardExceptionFactory;
-import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
+import hr.prism.board.exception.*;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.cache.UserRoleCacheService;
@@ -23,6 +21,8 @@ import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -46,6 +46,8 @@ import java.util.stream.Stream;
 @Transactional
 @SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class DepartmentService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentService.class);
 
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
@@ -524,6 +526,16 @@ public class DepartmentService {
         });
 
         return department.getCustomer();
+    }
+
+    public void processStripeWebhookEvent(String customerId, String eventType) {
+        LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
+        Department department = departmentRepository.findByCustomerId(customerId);
+        if (department == null) {
+            throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "No department with customer ID: " + customerId);
+        }
+
+        // TODO: execute the action
     }
 
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {

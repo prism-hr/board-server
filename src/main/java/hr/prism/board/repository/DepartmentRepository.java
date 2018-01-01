@@ -35,4 +35,6 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "and stateChangeTimestamp < :expiryTimestamp")
     List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state, @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
 
+    Department findByCustomerId(String customerId);
+
 }
