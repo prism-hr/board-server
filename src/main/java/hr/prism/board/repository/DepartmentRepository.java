@@ -31,10 +31,14 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
     @Query(value =
         "select department.id " +
             "from Department department " +
-            "where state = :state " +
-            "and stateChangeTimestamp < :expiryTimestamp")
+            "where department.state = :state " +
+            "and department.stateChangeTimestamp < :expiryTimestamp")
     List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state, @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
 
-    Department findByCustomerId(String customerId);
+    @Query(value =
+        "select department.id " +
+            "from Department department " +
+            "where department.customerId = :customerId")
+    Long findByCustomerId(@Param("customerId") String customerId);
 
 }

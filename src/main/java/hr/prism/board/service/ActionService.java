@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.BoardNotFoundException;
@@ -125,7 +124,7 @@ public class ActionService {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    public void executeInBulk(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
+    public void executeAnonymously(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             entityManager.createQuery(
                 "update Resource resource " +

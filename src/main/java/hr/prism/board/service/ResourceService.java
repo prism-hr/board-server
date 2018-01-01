@@ -231,7 +231,7 @@ public class ResourceService {
         List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
             State.RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
         if (!resourceIds.isEmpty()) {
-            actionService.executeInBulk(resourceIds, Action.ARCHIVE, State.ARCHIVED, baseline);
+            actionService.executeAnonymously(resourceIds, Action.ARCHIVE, State.ARCHIVED, baseline);
         }
     }
 

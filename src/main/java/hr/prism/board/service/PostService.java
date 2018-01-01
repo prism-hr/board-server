@@ -564,7 +564,7 @@ public class PostService {
 
     private void executeActions(List<Long> postIds, Action action, State newState, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
-            actionService.executeInBulk(postIds, action, newState, baseline);
+            actionService.executeAnonymously(postIds, action, newState, baseline);
             for (Long postId : postIds) {
                 List<Activity> activities = new ArrayList<>();
                 List<Notification> notifications = new ArrayList<>();

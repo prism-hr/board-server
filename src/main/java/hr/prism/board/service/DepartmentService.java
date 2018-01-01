@@ -4,14 +4,16 @@ import com.google.common.collect.ImmutableList;
 import com.stripe.model.Customer;
 import com.stripe.model.ExternalAccountCollection;
 import com.stripe.model.InvoiceCollection;
-import hr.prism.board.api.WebhookApi;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
-import hr.prism.board.exception.*;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardExceptionFactory;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.cache.UserRoleCacheService;
@@ -409,10 +411,10 @@ public class DepartmentService {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime suspendedExpiryTimestamp = baseline.minusSeconds(departmentSuspendedExpirySeconds);
         List<Long> departmentToRejectIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(State.SUSPENDED, suspendedExpiryTimestamp);
-        actionService.executeInBulk(departmentToRejectIds, Action.REJECT, State.REJECTED, baseline);
+        actionService.executeAnonymously(departmentToRejectIds, Action.REJECT, State.REJECTED, baseline);
         LocalDateTime draftExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
         List<Long> departmentToConvertIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(State.DRAFT, draftExpiryTimestamp);
-        actionService.executeInBulk(departmentToConvertIds, Action.CONVERT, State.PENDING, baseline);
+        actionService.executeAnonymously(departmentToConvertIds, Action.CONVERT, State.PENDING, baseline);
     }
 
     public void updateTasks() {
@@ -530,12 +532,12 @@ public class DepartmentService {
 
     public void processStripeWebhookEvent(String customerId, String eventType) {
         LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
-        Department department = departmentRepository.findByCustomerId(customerId);
-        if (department == null) {
+        Long departmentId = departmentRepository.findByCustomerId(customerId);
+        if (departmentId == null) {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "No department with customer ID: " + customerId);
         }
 
-        // TODO: execute the action
+        actionService.executeAnonymously(Collections.singletonList(departmentId), Action.SUSPEND, State.SUSPENDED, LocalDateTime.now());
     }
 
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
