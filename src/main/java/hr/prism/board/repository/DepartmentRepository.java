@@ -31,10 +31,8 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
     @Query(value =
         "select department.id " +
             "from Department department " +
-            "where (state = :draftState && stateChangeTimestamp < :draftExpiryTimestamp) " +
-            "or (state = :suspendedState && stateChangeTimestamp < :suspendedExpiryTimestamp)")
-    List<Long> findDepartmentsToMoveToPendingOrRejected(
-        @Param("draftState") State draftState, @Param("draftExpiryTimestamp") LocalDateTime draftExpiryTimestamp,
-        @Param("suspendedState") State suspendedState, @Param("suspendedExpiryTimestamp") LocalDateTime suspendedExpiryTimestamp);
+            "where state = :state " +
+            "and stateChangeTimestamp < :expiryTimestamp")
+    List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state, @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
 
 }

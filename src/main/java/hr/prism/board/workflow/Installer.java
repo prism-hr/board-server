@@ -58,6 +58,7 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(REJECTED)
 
             // Department suspended state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(SUSPENDED)
@@ -68,11 +69,13 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(SUSPENDED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(SUSPENDED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(SUSPENDED).transitioningTo(REJECTED)
 
             // Department rejected state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(REJECTED)
 
             // Board archived state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(ARCHIVED)

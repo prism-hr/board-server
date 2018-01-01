@@ -18,17 +18,14 @@ public class DepartmentScheduledService {
     @Inject
     private DepartmentService departmentService;
 
-    // TODO: state change logic
-    @Scheduled(initialDelay = 60000, fixedDelay = 86400000)
+    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
     public void updateState() {
         if (BooleanUtils.isTrue(schedulerOn)) {
-            departmentService.getDepartmentsToMoveToPendingOrRejected(null, null).forEach(departmentId -> {
-
-            });
+            departmentService.updateState();
         }
     }
 
-    @Scheduled(initialDelay = 60000, fixedDelay = 86400000)
+    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
     public void updateTasks() {
         if (BooleanUtils.isTrue(schedulerOn)) {
             departmentService.updateTasks();

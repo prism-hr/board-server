@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import com.stripe.model.Customer;
+import com.stripe.model.ExternalAccountCollection;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
@@ -22,6 +23,7 @@ import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -84,6 +86,12 @@ public class DepartmentService {
 
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
+
+    @Value("${department.draft.expiry.seconds}")
+    private Long departmentDraftExpirySeconds;
+
+    @Value("${department.suspended.expiry.seconds}")
+    private Long departmentSuspendedExpirySeconds;
 
     @Inject
     private DepartmentRepository departmentRepository;
@@ -380,8 +388,29 @@ public class DepartmentService {
         return user;
     }
 
+    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
+        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
+        if (!responseReadiness.isReady()) {
+            if (responseReadiness.isRequireUserDemographicData()) {
+                BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
+            }
+
+            BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
+        }
+    }
+
     public void decrementMemberCountPending(Long departmentId) {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
+    }
+
+    public void updateState() {
+        LocalDateTime baseline = LocalDateTime.now();
+        LocalDateTime suspendedExpiryTimestamp = baseline.minusSeconds(departmentSuspendedExpirySeconds);
+        List<Long> departmentToRejectIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(State.SUSPENDED, suspendedExpiryTimestamp);
+        actionService.executeInBulk(departmentToRejectIds, Action.REJECT, State.REJECTED, baseline);
+        LocalDateTime draftExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
+        List<Long> departmentToConvertIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(State.DRAFT, draftExpiryTimestamp);
+        actionService.executeInBulk(departmentToConvertIds, Action.CONVERT, State.PENDING, baseline);
     }
 
     public void updateTasks() {
@@ -398,66 +427,103 @@ public class DepartmentService {
         departmentRepository.findAllIds(baseline1, baseline2).forEach(departmentId -> updateTasks(departmentId, baseline));
     }
 
-    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
-        PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
-        if (!responseReadiness.isReady()) {
-            if (responseReadiness.isRequireUserDemographicData()) {
-                BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
-            }
-
-            BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
-        }
-    }
-
     public Customer getPaymentSources(Long departmentId) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
+        String customerId = getCustomerIdSecured(departmentId);
         return customerId == null ? null : paymentService.getCustomer(customerId);
     }
 
+    public InvoiceCollection getInvoices(Long departmentId) {
+        String customerId = getCustomerIdSecured(departmentId);
+        return customerId == null ? null : paymentService.getInvoices(customerId);
+    }
+
     public Customer addPaymentSource(Long departmentId, String source) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
+        User user = userService.getCurrentUserSecured();
+        Department department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.SUBSCRIBE, () -> {
+            Customer customer;
+            String customerId = department.getCustomerId();
+            if (customerId == null) {
+                customer = paymentService.createCustomer(source);
+                department.setCustomerId(customer.getId());
+            } else {
+                customer = paymentService.appendSource(customerId, source);
+            }
 
-        Customer customer;
-        if (customerId == null) {
-            customer = paymentService.createCustomer(source);
-            department.setCustomerId(customer.getId());
-        } else {
-            customer = paymentService.appendSource(customerId, source);
-        }
+            department.setCustomer(customer);
+            return department;
+        });
 
-        return customer;
+        return department.getCustomer();
     }
 
     public Customer setPaymentSourceAsDefault(Long departmentId, String defaultSource) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.setSourceAsDefault(customerId, defaultSource);
+        User user = userService.getCurrentUserSecured();
+        Department department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.SUBSCRIBE, () -> {
+            String customerId = department.getCustomerId();
+            if (customerId != null) {
+                Customer customer = paymentService.setSourceAsDefault(customerId, defaultSource);
+                department.setCustomer(customer);
+            }
+
+            return department;
+        });
+
+        return department.getCustomer();
     }
 
     public Customer deletePaymentSource(Long departmentId, String source) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.deleteSource(customerId, source);
+        User user = userService.getCurrentUserSecured();
+        Department department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.EDIT, () -> {
+            String customerId = department.getCustomerId();
+            if (customerId != null) {
+                Customer customer = paymentService.deleteSource(customerId, source);
+                department.setCustomer(customer);
+
+                ExternalAccountCollection sources = customer.getSources();
+                if (sources == null || CollectionUtils.isEmpty(sources.getData())) {
+                    actionService.executeAction(user, department, Action.UNSUBSCRIBE, () -> department);
+                }
+            }
+
+            return department;
+        });
+
+        return department.getCustomer();
     }
 
     public Customer cancelSubscription(Long departmentId) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.cancelSubscription(customerId);
+        User user = userService.getCurrentUserSecured();
+        Department department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.UNSUBSCRIBE, () -> {
+            String customerId = department.getCustomerId();
+            if (customerId != null) {
+                Customer customer = paymentService.cancelSubscription(customerId);
+                department.setCustomer(customer);
+            }
+
+            return department;
+        });
+
+        return department.getCustomer();
     }
 
     public Customer reactivateSubscription(Long departmentId) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.reactivateSubscription(customerId);
-    }
+        User user = userService.getCurrentUserSecured();
+        Department department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.SUBSCRIBE, () -> {
+            String customerId = department.getCustomerId();
+            if (customerId != null) {
+                Customer customer = paymentService.reactivateSubscription(customerId);
+                department.setCustomer(customer);
+            }
 
-    public InvoiceCollection getInvoices(Long departmentId) {
-        Department department = getDepartmentForEdit(departmentId);
-        String customerId = department.getCustomerId();
-        return customerId == null ? null : paymentService.getInvoices(customerId);
+            return department;
+        });
+
+        return department.getCustomer();
     }
 
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {
@@ -510,10 +576,6 @@ public class DepartmentService {
         return LocalDateTime.now();
     }
 
-    public List<Long> getDepartmentsToMoveToPendingOrRejected(LocalDateTime draftExpiryTimestamp, LocalDateTime suspendedExpiryTimestamp) {
-        return departmentRepository.findDepartmentsToMoveToPendingOrRejected(State.DRAFT, draftExpiryTimestamp, State.SUSPENDED, suspendedExpiryTimestamp);
-    }
-
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
             setTaskCompletion(user, department);
@@ -521,11 +583,11 @@ public class DepartmentService {
         });
     }
 
-    private Department getDepartmentForEdit(Long departmentId) {
+    private String getCustomerIdSecured(Long departmentId) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
-        return department;
+        return department.getCustomerId();
     }
 
     private void updateTasks(Long departmentId, LocalDateTime baseline) {

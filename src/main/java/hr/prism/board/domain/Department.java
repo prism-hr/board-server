@@ -97,6 +97,14 @@ public class Department extends Resource {
         return this;
     }
 
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
     public void increaseMemberTobeUploadedCount(Long memberCountPending) {
         if (this.memberToBeUploadedCount == null) {
             this.memberToBeUploadedCount = memberCountPending;

@@ -9,15 +9,17 @@ public enum Action {
     VIEW(false),
     PURSUE(false),
     EDIT(false),
-    EXTEND(false),
-    ACCEPT(false), // Comment optional
     SUSPEND(true), // Comment required
     CORRECT(false), // Comment optional
+    EXTEND(false),
+    ACCEPT(false), // Comment optional
     REJECT(true), // Comment required
     PUBLISH(false),
     RETIRE(false),
     RESTORE(false), // Comment optional for restore from reject, no comment for restore from withdrawn
+    CONVERT(false),
     SUBSCRIBE(false),
+    UNSUBSCRIBE(false),
     WITHDRAW(false),
     ARCHIVE(false);
 
