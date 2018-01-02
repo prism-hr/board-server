@@ -15,9 +15,10 @@ import hr.prism.board.exception.*;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.scheduled.DepartmentScheduledService;
+import hr.prism.board.service.scheduled.ResourceTaskScheduledService;
 import hr.prism.board.util.ObjectUtils;
 import hr.prism.board.utils.BoardUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,7 +59,10 @@ public class DepartmentApiIT extends AbstractIT {
     private ResourceTaskRepository resourceTaskRepository;
 
     @Inject
-    private ResourceTaskService resourceTaskService;
+    private ResourceTaskScheduledService resourceTaskScheduledService;
+
+    @Inject
+    private DepartmentScheduledService departmentScheduledService;
 
     @Test
     public void shouldCreateDepartment() {
@@ -259,7 +263,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportDepartmentLifecycleAndPermissions() throws IOException, InterruptedException {
+    public void shouldSupportDepartmentLifecycleAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
@@ -495,7 +499,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskService.notifyTasks();
+            resourceTaskScheduledService.notifyTasks();
             return null;
         });
 
@@ -560,7 +564,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskService.notifyTasks();
+            resourceTaskScheduledService.notifyTasks();
             return null;
         });
 
@@ -632,7 +636,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskService.notifyTasks();
+            resourceTaskScheduledService.notifyTasks();
             return null;
         });
 
@@ -671,7 +675,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertFalse(departmentR10.getTasks().get(2).getCompleted());
 
         transactionTemplate.execute(status -> {
-            resourceTaskService.notifyTasks();
+            resourceTaskScheduledService.notifyTasks();
             return null;
         });
 
@@ -772,7 +776,11 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertTrue(departmentR19.getTasks().get(1).getCompleted());
         Assert.assertTrue(departmentR19.getTasks().get(2).getCompleted());
 
-        departmentService.updateTasks();
+        transactionTemplate.execute(status -> {
+            departmentScheduledService.updateTasks();
+            return null;
+        });
+
         testUserService.setAuthentication(departmentUserId);
         DepartmentRepresentation departmentR20 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         Assert.assertTrue(departmentR20.getTasks().get(0).getCompleted());
@@ -791,7 +799,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertTrue(departmentR22.getTasks().get(1).getCompleted());
         Assert.assertTrue(departmentR22.getTasks().get(2).getCompleted());
 
-        LocalDateTime baseline = departmentService.getBaseline();
+        LocalDateTime baseline = departmentScheduledService.getBaseline();
         LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
         transactionTemplate.execute(status -> {
             Department localDepartment = departmentService.getDepartment(departmentId);
@@ -802,7 +810,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            departmentService.updateTasks();
+            departmentScheduledService.updateTasks();
             return null;
         });
 
@@ -812,7 +820,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskService.notifyTasks();
+            resourceTaskScheduledService.notifyTasks();
             return null;
         });
 
@@ -886,7 +894,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldPostMembers() throws InterruptedException {
+    public void shouldPostMembers() {
         User user = testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");

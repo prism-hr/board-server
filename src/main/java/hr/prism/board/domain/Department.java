@@ -27,6 +27,9 @@ import java.time.LocalDateTime;
                 @NamedAttributeNode(value = "completions")})})
 public class Department extends Resource {
 
+    @Column(name = "notified_count")
+    private Integer notifiedCount;
+
     @Column(name = "customer_id", unique = true)
     private String customerId;
 
@@ -47,6 +50,14 @@ public class Department extends Resource {
 
     @Transient
     private Customer customer;
+
+    public Integer getNotifiedCount() {
+        return notifiedCount;
+    }
+
+    public void setNotifiedCount(Integer notifiedCount) {
+        this.notifiedCount = notifiedCount;
+    }
 
     public String getCustomerId() {
         return customerId;

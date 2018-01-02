@@ -22,7 +22,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -46,12 +45,14 @@ public class ResourceTaskService {
     private static final List<hr.prism.board.enums.ResourceTask> CREATE_TASKS = Arrays.asList(hr.prism.board.enums.ResourceTask.CREATE_MEMBER,
         hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
-    @Value("${resource.task.notification.interval.seconds}")
-    private Long resourceTaskNotificationIntervalSeconds;
+    @Value("${resource.task.notification.interval1.seconds}")
+    private Long resourceTaskNotificationInterval1Seconds;
 
-    private Long resourceTaskNotificationIntervalSeconds2;
+    @Value("${resource.task.notification.interval2.seconds}")
+    private Long resourceTaskNotificationInterval2Seconds;
 
-    private Long resourceTaskNotificationIntervalSeconds3;
+    @Value("${resource.task.notification.interval3.seconds}")
+    private Long resourceTaskNotificationInterval3Seconds;
 
     @Inject
     private ResourceTaskRepository resourceTaskRepository;
@@ -77,28 +78,12 @@ public class ResourceTaskService {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
-    @PostConstruct
-    public void postConstruct() {
-        this.resourceTaskNotificationIntervalSeconds2 = 2 * resourceTaskNotificationIntervalSeconds;
-        this.resourceTaskNotificationIntervalSeconds3 = 4 * resourceTaskNotificationIntervalSeconds;
-    }
-
     public ResourceTask findOne(Long id) {
         return resourceTaskRepository.findOne(id);
     }
 
     public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource, User user) {
         return resourceTaskRepository.findByResource(resource, user);
-    }
-
-    public void notifyTasks() {
-        LocalDateTime baseline = LocalDateTime.now();
-        LocalDateTime baseline1 = baseline.minusSeconds(resourceTaskNotificationIntervalSeconds);
-        LocalDateTime baseline2 = baseline.minusSeconds(resourceTaskNotificationIntervalSeconds2);
-        LocalDateTime baseline3 = baseline.minusSeconds(resourceTaskNotificationIntervalSeconds3);
-
-        ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> resourceTasks = getResourceTasks(baseline1, baseline2, baseline3);
-        resourceTasks.keySet().forEach(resourceId -> sendNotification(resourceId, resourceTasks.get(resourceId)));
     }
 
     public void createForNewResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
@@ -137,21 +122,11 @@ public class ResourceTaskService {
         }
     }
 
-    private void insertResourceTasks(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        String insert = INSERT_RESOURCE_TASK + tasks.stream()
-            .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline, :baseline)").collect(Collectors.joining(SEPARATOR));
-        new TransactionTemplate(platformTransactionManager).execute(status -> {
-            Query query = entityManager.createNativeQuery(insert);
-            query.setParameter("resourceId", resourceId);
-            query.setParameter("creatorId", userId);
-            query.setParameter("baseline", LocalDateTime.now());
-            return query.executeUpdate();
-        });
+    public ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> getResourceTasks(LocalDateTime baseline) {
+        LocalDateTime baseline1 = baseline.minusSeconds(resourceTaskNotificationInterval1Seconds);
+        LocalDateTime baseline2 = baseline.minusSeconds(resourceTaskNotificationInterval2Seconds);
+        LocalDateTime baseline3 = baseline.minusSeconds(resourceTaskNotificationInterval3Seconds);
 
-        entityManager.flush();
-    }
-
-    private ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> getResourceTasks(LocalDateTime baseline1, LocalDateTime baseline2, LocalDateTime baseline3) {
         ArrayListMultimap<Pair<Long, Integer>, hr.prism.board.enums.ResourceTask> resourceTasks = ArrayListMultimap.create();
         resourceTaskRepository.findByNotificationHistory(1, 2, baseline1, baseline2, baseline3)
             .forEach(resourceTask -> resourceTasks.put(
@@ -159,7 +134,7 @@ public class ResourceTaskService {
         return resourceTasks;
     }
 
-    private void sendNotification(Pair<Long, Integer> resource, List<hr.prism.board.enums.ResourceTask> tasks) {
+    public void sendNotification(Pair<Long, Integer> resource, List<hr.prism.board.enums.ResourceTask> tasks) {
         Long resourceId = resource.getKey();
         Integer notifiedCount = resource.getValue();
         String notificationContext = CREATE_TASKS.contains(tasks.get(0)) ? "CREATE" : "UPDATE";
@@ -174,6 +149,20 @@ public class ResourceTaskService {
 
         notificationEventService.publishEvent(this, resourceId, tasks, Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
+    }
+
+    private void insertResourceTasks(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
+        String insert = INSERT_RESOURCE_TASK + tasks.stream()
+            .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline, :baseline)").collect(Collectors.joining(SEPARATOR));
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            Query query = entityManager.createNativeQuery(insert);
+            query.setParameter("resourceId", resourceId);
+            query.setParameter("creatorId", userId);
+            query.setParameter("baseline", LocalDateTime.now());
+            return query.executeUpdate();
+        });
+
+        entityManager.flush();
     }
 
 }

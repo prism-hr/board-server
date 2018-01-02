@@ -8,7 +8,7 @@ import hr.prism.board.dto.OAuthDataDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestActivityService;
-import hr.prism.board.service.TestDepartmentService;
+import hr.prism.board.service.TestDepartmentScheduledService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.event.*;
 import org.mockito.Mockito;
@@ -113,8 +113,8 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public TestDepartmentService departmentService() {
-        return new TestDepartmentService();
+    public TestDepartmentScheduledService departmentScheduledService() {
+        return new TestDepartmentScheduledService();
     }
 
 }

@@ -36,7 +36,7 @@ public class ActivityScheduledService {
     private ObjectMapper objectMapper;
 
     @Scheduled(initialDelay = 60000, fixedDelay = 60000)
-    public void updateUserIds() throws IOException {
+    public void executeScheduled() throws IOException {
         if (BooleanUtils.isTrue(schedulerOn)) {
             Result result = pusher.get("/channels");
             String message = result.getMessage();

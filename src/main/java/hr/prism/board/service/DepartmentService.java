@@ -91,11 +91,20 @@ public class DepartmentService {
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
+    @Value("${department.conversion.notification.interval1.seconds}")
+    private Long departmentConversionNotificationInterval1Seconds;
+
+    @Value("${department.conversion.notification.interval2.seconds}")
+    private Long departmentConversionNotificationInterval2Seconds;
+
     @Value("${department.draft.expiry.seconds}")
     private Long departmentDraftExpirySeconds;
 
     @Value("${department.suspended.expiry.seconds}")
     private Long departmentSuspendedExpirySeconds;
+
+    @Value("${department.pending.expiry.seconds}")
+    private Long departmentPendingExpirySeconds;
 
     @Inject
     private DepartmentRepository departmentRepository;
@@ -193,7 +202,7 @@ public class DepartmentService {
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
 
         Department department = new Department();
-        resourceService.updateState(department, State.ACCEPTED);
+        resourceService.updateState(department, State.DRAFT);
         department.setName(name);
         department.setSummary(departmentDTO.getSummary());
 
@@ -407,18 +416,7 @@ public class DepartmentService {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
 
-    public void updateState() {
-        LocalDateTime baseline = LocalDateTime.now();
-        LocalDateTime suspendedExpiryTimestamp = baseline.minusSeconds(departmentSuspendedExpirySeconds);
-        List<Long> departmentToRejectIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(State.SUSPENDED, suspendedExpiryTimestamp);
-        actionService.executeAnonymously(departmentToRejectIds, Action.REJECT, State.REJECTED, baseline);
-        LocalDateTime draftExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
-        List<Long> departmentToConvertIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(State.DRAFT, draftExpiryTimestamp);
-        actionService.executeAnonymously(departmentToConvertIds, Action.CONVERT, State.PENDING, baseline);
-    }
-
-    public void updateTasks() {
-        LocalDateTime baseline = getBaseline();
+    public List<Long> findAllIdsForTaskNotification(LocalDateTime baseline) {
         LocalDateTime baseline1 = baseline.minusMonths(1);
 
         LocalDateTime baseline2;
@@ -428,7 +426,55 @@ public class DepartmentService {
             baseline2 = LocalDateTime.of(baseline.getYear() - 1, 9, 1, 0, 0);
         }
 
-        departmentRepository.findAllIds(baseline1, baseline2).forEach(departmentId -> updateTasks(departmentId, baseline));
+        return departmentRepository.findAllIdsForTaskNotification(baseline1, baseline2);
+    }
+
+    public void updateTasks(Long departmentId, LocalDateTime baseline) {
+        List<ResourceTask> tasks = new ArrayList<>();
+        Department department = (Department) resourceService.findOne(departmentId);
+
+        LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
+        if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
+            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
+        }
+
+        department.setLastTaskCreationTimestamp(baseline);
+        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
+    }
+
+    public void updateSubscriptions(LocalDateTime baseline) {
+        LocalDateTime suspendedExpiryTimestamp = baseline.minusSeconds(departmentSuspendedExpirySeconds);
+        executeActions(State.SUSPENDED, suspendedExpiryTimestamp, Action.REJECT, State.REJECTED);
+
+        LocalDateTime draftExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
+        executeActions(State.DRAFT, draftExpiryTimestamp, Action.CONVERT, State.PENDING);
+
+        LocalDateTime pendingExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
+        executeActions(State.PENDING, pendingExpiryTimestamp, Action.REJECT, State.REJECTED);
+    }
+
+    public List<Long> findAllIdsForSubscriptionNotification(LocalDateTime baseline) {
+        LocalDateTime baseline1 = baseline.minusSeconds(departmentConversionNotificationInterval1Seconds);
+        LocalDateTime baseline2 = baseline.minusSeconds(departmentConversionNotificationInterval2Seconds);
+        return departmentRepository.findAllIdsForSubscriptionNotification(State.PENDING, 1, 2, baseline1, baseline2);
+    }
+
+    public void sendSubscriptionNotification(Long departmentId) {
+        Department department = (Department) resourceService.findOne(departmentId);
+        Integer notifiedCount = department.getNotifiedCount();
+
+        if (notifiedCount == null) {
+
+            department.setNotifiedCount(1);
+        } else {
+            if (notifiedCount == 1) {
+
+            } else if (notifiedCount == 2) {
+
+            }
+
+            department.setNotifiedCount(notifiedCount + 1);
+        }
     }
 
     public Customer getPaymentSources(Long departmentId) {
@@ -586,10 +632,6 @@ public class DepartmentService {
         return responseReadiness;
     }
 
-    public LocalDateTime getBaseline() {
-        return LocalDateTime.now();
-    }
-
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
             setTaskCompletion(user, department);
@@ -604,25 +646,17 @@ public class DepartmentService {
         return department.getCustomerId();
     }
 
-    private void updateTasks(Long departmentId, LocalDateTime baseline) {
-        List<hr.prism.board.enums.ResourceTask> tasks = new ArrayList<>();
-        Department department = (Department) resourceService.findOne(departmentId);
-
-        LocalDateTime lastMemberTimestamp = department.getLastMemberTimestamp();
-        if (lastMemberTimestamp == null || lastMemberTimestamp.isBefore(baseline)) {
-            tasks.add(hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
-        }
-
-        department.setLastTaskCreationTimestamp(baseline);
-        resourceTaskService.createForExistingResource(departmentId, department.getCreatorId(), tasks);
-    }
-
     private void setTaskCompletion(User user, Department department) {
         if (user != null) {
             department.getTasks().stream()
                 .filter(task -> task.getCompletions().stream().anyMatch(completion -> user.equals(completion.getUser())))
                 .forEach(task -> task.setCompletedForUser(true));
         }
+    }
+
+    private void executeActions(State state, LocalDateTime baseline, Action action, State newState) {
+        List<Long> departmentIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(state, baseline);
+        actionService.executeAnonymously(departmentIds, action, newState, baseline);
     }
 
 }

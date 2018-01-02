@@ -18,7 +18,19 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "and (department.lastMemberTimestamp is null or department.lastMemberTimestamp < :baseline1) " +
             "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
             "order by department.id")
-    List<Long> findAllIds(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
+    List<Long> findAllIdsForTaskNotification(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
+
+    @Query(value =
+        "select department.id " +
+            "from Department department " +
+            "where department.state = :departmentState " +
+            "and (department.notifiedCount is null " +
+            "or (department.notifiedCount = :notifiedCount1 and department.stateChangeTimestamp < :baseline1) " +
+            "or (department.notifiedCount = :notifiedCount2 and department.stateChangeTimestamp < :baseline2)) " +
+            "order by department.id")
+    List<Long> findAllIdsForSubscriptionNotification(@Param("pendingState") State pendingState, @Param("notifiedCount1") Integer notifiedCount1,
+                                                     @Param("notifiedCount2") Integer notifiedCount2, @Param("baseline1") LocalDateTime baseline1,
+                                                     @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
         "select department.handle " +
