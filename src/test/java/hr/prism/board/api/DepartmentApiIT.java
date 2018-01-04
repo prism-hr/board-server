@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
@@ -41,13 +42,12 @@ import java.util.stream.Stream;
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
-
     private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
 
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
 
     static {
-        ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.EXTEND));
+        ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE));
 
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
@@ -92,7 +92,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentName, departmentR.getHandle());
         Assert.assertEquals("summary", departmentR.getSummary());
         Assert.assertEquals(Stream.of(MemberCategory.values()).collect(Collectors.toList()), departmentR.getMemberCategories());
-        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+        Assert.assertEquals(State.DRAFT, departmentR.getState());
 
         DocumentRepresentation documentR = departmentR.getDocumentLogo();
         Assert.assertEquals("c", documentR.getCloudinaryId());
@@ -130,7 +130,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentName, departmentR.getHandle());
         Assert.assertEquals("summary", departmentR.getSummary());
         Assert.assertEquals(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), departmentR.getMemberCategories());
-        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+        Assert.assertEquals(State.DRAFT, departmentR.getState());
 
         DocumentRepresentation documentR = departmentR.getDocumentLogo();
         Assert.assertEquals("d", documentR.getCloudinaryId());
@@ -319,7 +319,7 @@ public class DepartmentApiIT extends AbstractIT {
             new DepartmentPatchDTO()
                 .setName(Optional.of("department 2"))
                 .setHandle(Optional.of("department-2")),
-            State.ACCEPTED);
+            State.DRAFT);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
@@ -331,7 +331,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setHandle(Optional.of("department-3"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
                 .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))),
-            State.ACCEPTED);
+            State.DRAFT);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
@@ -343,7 +343,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setHandle(Optional.of("department-4"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
                 .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER_STUDENT, MemberCategory.UNDERGRADUATE_STUDENT))),
-            State.ACCEPTED);
+            State.DRAFT);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
@@ -352,7 +352,7 @@ public class DepartmentApiIT extends AbstractIT {
             new DepartmentPatchDTO()
                 .setDocumentLogo(Optional.empty())
                 .setMemberCategories(Optional.empty()),
-            State.ACCEPTED);
+            State.DRAFT);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 

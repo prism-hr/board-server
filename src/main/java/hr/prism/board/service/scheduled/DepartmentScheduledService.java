@@ -51,8 +51,10 @@ public class DepartmentScheduledService {
 
     private void updateSubscriptions(LocalDateTime baseline) {
         departmentService.updateSubscriptions(baseline);
-        departmentService.findAllIdsForSubscriptionNotification(baseline)
-            .forEach(departmentId -> departmentService.sendSubscriptionNotification(departmentId));
+        departmentService.findAllIdsForSubscribeNotification(baseline)
+            .forEach(departmentId -> departmentService.sendSubscribeNotification(departmentId));
+        departmentService.findAllIdsForSuspendNotification(baseline)
+            .forEach(departmentId -> departmentService.sendSuspendNotification(departmentId));
     }
 
 }

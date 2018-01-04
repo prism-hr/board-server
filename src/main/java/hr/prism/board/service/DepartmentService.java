@@ -459,13 +459,13 @@ public class DepartmentService {
         executeActions(State.PENDING, pendingExpiryTimestamp, Action.REJECT, State.REJECTED);
     }
 
-    public List<Long> findAllIdsForSubscriptionNotification(LocalDateTime baseline) {
+    public List<Long> findAllIdsForSubscribeNotification(LocalDateTime baseline) {
         LocalDateTime baseline1 = baseline.minusSeconds(departmentPendingNotificationInterval1Seconds);
         LocalDateTime baseline2 = baseline.minusSeconds(departmentPendingNotificationInterval2Seconds);
-        return departmentRepository.findAllIdsForSubscriptionNotification(State.PENDING, 1, 2, baseline1, baseline2);
+        return departmentRepository.findAllIdsForSubscribeNotification(State.PENDING, 1, 2, baseline1, baseline2);
     }
 
-    public void sendSubscriptionNotification(Long departmentId) {
+    public void sendSubscribeNotification(Long departmentId) {
         Department department = (Department) resourceService.findOne(departmentId);
         Integer notifiedCount = department.getNotifiedCount();
         if (notifiedCount == null) {
@@ -479,6 +479,21 @@ public class DepartmentService {
 
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
         department.setNotifiedCount(notifiedCount == null ? 1 : notifiedCount + 1);
+    }
+
+    public List<Long> findAllIdsForSuspendNotification(LocalDateTime baseline) {
+        LocalDateTime baseline1 = baseline.minusSeconds(departmentSuspendedNotificationInterval1Seconds);
+        LocalDateTime baseline2 = baseline.minusSeconds(departmentSuspendedNotificationInterval2Seconds);
+        return departmentRepository.findAllIdsForSuspendNotification(State.SUSPENDED, 1, 2, baseline1, baseline2);
+    }
+
+    public void sendSuspendNotification(Long departmentId) {
+        Department department = (Department) resourceService.findOne(departmentId);
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION);
+
+        notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+        department.setNotifiedCount(department.getNotifiedCount() + 1);
     }
 
     public Customer getPaymentSources(Long departmentId) {
