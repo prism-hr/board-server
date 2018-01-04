@@ -2,7 +2,7 @@ package hr.prism.board.api;
 
 import hr.prism.board.TestContext;
 import hr.prism.board.enums.*;
-import hr.prism.board.enums.Labels.Label;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,11 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -70,28 +69,14 @@ public class DefinitionApiIT {
         verifyProperty(linkedin, "clientId", linkedinClientId);
     }
 
-    private <T extends Enum<T>> void verifyDefinition(TreeMap<String, Object> definitions, String key, Class<T> definitionClass) throws NoSuchFieldException {
-        List<Object> values = (List<Object>) definitions.get(key);
-        List<String> constants = Stream.of(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
-        for (Object value : values) {
-            if (value instanceof String) {
-                Assert.assertTrue(constants.contains(value));
-            } else {
-                Map<String, Map<String, String>> valueMap = (Map<String, Map<String, String>>) value;
-                String valueString = valueMap.keySet().iterator().next();
-                Assert.assertTrue(constants.contains(valueString));
-
-                Labels labels = definitionClass.getField(valueString).getAnnotation(Labels.class);
-                Map<String, String> labelMap = new TreeMap<>();
-                Stream.of(labels.value()).forEach(label -> labelMap.put(label.scope().name(), label.value()));
-                Assert.assertEquals(labelMap, valueMap.values().iterator().next());
-            }
-        }
-    }
-
     private void verifyProperty(Map<String, Object> definitions, String key, Object value) {
         Assert.assertNotNull(value);
         Assert.assertEquals(value, definitions.get(key));
+    }
+
+    private <T extends Enum<T>> void verifyDefinition(TreeMap<String, Object> definitions, String key, Class<T> definitionClass) {
+        Assert.assertThat((List<String>) definitions.get(key),
+            Matchers.containsInAnyOrder(Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).toArray(String[]::new)));
     }
 
 }

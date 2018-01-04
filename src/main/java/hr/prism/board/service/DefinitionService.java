@@ -1,8 +1,6 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.enums.Labels;
-import hr.prism.board.enums.Labels.Label;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
@@ -19,10 +17,8 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.validation.constraints.Future;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
@@ -64,9 +60,10 @@ public class DefinitionService {
                 synchronized (this) {
                     if (this.definitions == null) {
                         this.definitions = new TreeMap<>();
-                        for (Class<? extends Enum<?>> definitionClass : getDefinitionClasses()) {
-                            this.definitions.put(getDefinitionKey(definitionClass), getDefinitionValues(definitionClass));
-                        }
+                        getDefinitionClasses().forEach(definitionClass -> {
+                            List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
+                            this.definitions.put(getDefinitionKey(definitionClass), values);
+                        });
 
                         this.definitions.put("profile", profile);
                         this.definitions.put("applicationUrl", appUrl);
@@ -107,22 +104,6 @@ public class DefinitionService {
 
     private String getDefinitionKey(Class<? extends Enum<?>> definitionClass) {
         return WordUtils.uncapitalize(definitionClass.getSimpleName());
-    }
-
-    private List<Object> getDefinitionValues(Class<? extends Enum<?>> definitionClass) throws NoSuchFieldException {
-        List<Object> values = new ArrayList<>();
-        for (String value : Stream.of(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList())) {
-            Labels labels = definitionClass.getField(value).getAnnotation(Labels.class);
-            if (labels == null) {
-                values.add(value);
-            } else {
-                Map<String, String> labelMap = new TreeMap<>();
-                Stream.of(labels.value()).forEach(label -> labelMap.put(label.scope().name(), label.value()));
-                values.add(ImmutableMap.of(value, labelMap));
-            }
-        }
-
-        return values;
     }
 
 }
