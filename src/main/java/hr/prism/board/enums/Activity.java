@@ -20,7 +20,9 @@ public enum Activity {
     SUSPEND_POST_ACTIVITY(false),
     RESPOND_POST_ACTIVITY(false),
     CREATE_TASK_ACTIVITY(false),
-    UPDATE_TASK_ACTIVITY(false);
+    UPDATE_TASK_ACTIVITY(false),
+    SUBSCRIBE_DEPARTMENT_ACTIVITY(false),
+    SUSPEND_DEPARTMENT_ACTIVITY(false);
 
     private boolean filterByCategory;
 

@@ -91,11 +91,17 @@ public class DepartmentService {
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
-    @Value("${department.conversion.notification.interval1.seconds}")
-    private Long departmentConversionNotificationInterval1Seconds;
+    @Value("${department.pending.notification.interval1.seconds}")
+    private Long departmentPendingNotificationInterval1Seconds;
 
-    @Value("${department.conversion.notification.interval2.seconds}")
-    private Long departmentConversionNotificationInterval2Seconds;
+    @Value("${department.pending.notification.interval2.seconds}")
+    private Long departmentPendingNotificationInterval2Seconds;
+
+    @Value("${department.suspended.notification.interval1.seconds}")
+    private Long departmentSuspendedNotificationInterval1Seconds;
+
+    @Value("${department.suspended.notification.interval2.seconds}")
+    private Long departmentSuspendedNotificationInterval2Seconds;
 
     @Value("${department.draft.expiry.seconds}")
     private Long departmentDraftExpirySeconds;
@@ -454,27 +460,25 @@ public class DepartmentService {
     }
 
     public List<Long> findAllIdsForSubscriptionNotification(LocalDateTime baseline) {
-        LocalDateTime baseline1 = baseline.minusSeconds(departmentConversionNotificationInterval1Seconds);
-        LocalDateTime baseline2 = baseline.minusSeconds(departmentConversionNotificationInterval2Seconds);
+        LocalDateTime baseline1 = baseline.minusSeconds(departmentPendingNotificationInterval1Seconds);
+        LocalDateTime baseline2 = baseline.minusSeconds(departmentPendingNotificationInterval2Seconds);
         return departmentRepository.findAllIdsForSubscriptionNotification(State.PENDING, 1, 2, baseline1, baseline2);
     }
 
     public void sendSubscriptionNotification(Long departmentId) {
         Department department = (Department) resourceService.findOne(departmentId);
         Integer notifiedCount = department.getNotifiedCount();
-
         if (notifiedCount == null) {
-
-            department.setNotifiedCount(1);
-        } else {
-            if (notifiedCount == 1) {
-
-            } else if (notifiedCount == 2) {
-
-            }
-
-            department.setNotifiedCount(notifiedCount + 1);
+            hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
+                .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY);
+            activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
         }
+
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION);
+
+        notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+        department.setNotifiedCount(notifiedCount == null ? 1 : notifiedCount + 1);
     }
 
     public Customer getPaymentSources(Long departmentId) {
@@ -578,12 +582,23 @@ public class DepartmentService {
 
     public void processStripeWebhookEvent(String customerId, String eventType) {
         LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
-        Long departmentId = departmentRepository.findByCustomerId(customerId);
-        if (departmentId == null) {
+        Department department = departmentRepository.findByCustomerId(customerId);
+        if (department == null) {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "No department with customer ID: " + customerId);
         }
 
-        actionService.executeAnonymously(Collections.singletonList(departmentId), Action.SUSPEND, State.SUSPENDED, LocalDateTime.now());
+        Long departmentId = department.getId();
+        actionService.executeAnonymously(Collections.singletonList(department.getId()), Action.SUSPEND, State.SUSPENDED, LocalDateTime.now());
+
+        hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
+        activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
+
+        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
+
+        notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+        department.setNotifiedCount(1);
     }
 
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {

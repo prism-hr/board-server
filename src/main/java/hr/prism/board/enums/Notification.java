@@ -25,7 +25,9 @@ public enum Notification {
     SUSPEND_POST_NOTIFICATION(AuthorizedRecipientList.class),
     RESPOND_POST_NOTIFICATION(PostRecipientList.class),
     CREATE_TASK_NOTIFICATION(AuthorizedRecipientList.class),
-    UPDATE_TASK_NOTIFICATION(AuthorizedRecipientList.class);
+    UPDATE_TASK_NOTIFICATION(AuthorizedRecipientList.class),
+    SUBSCRIBE_DEPARTMENT_NOTIFICATION(AuthorizedRecipientList.class),
+    SUSPEND_DEPARTMENT_NOTIFICATION(AuthorizedRecipientList.class);
 
     private Class<? extends NotificationRecipientList> recipients;
 

@@ -47,10 +47,6 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "and department.stateChangeTimestamp < :expiryTimestamp")
     List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state, @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
 
-    @Query(value =
-        "select department.id " +
-            "from Department department " +
-            "where department.customerId = :customerId")
-    Long findByCustomerId(@Param("customerId") String customerId);
+    Department findByCustomerId(String customerId);
 
 }

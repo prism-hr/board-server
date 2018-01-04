@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SubscribeRedirectProperty implements NotificationProperty {
+public class AccountRedirectProperty implements NotificationProperty {
 
     @Value("${server.url}")
     private String serverUrl;
