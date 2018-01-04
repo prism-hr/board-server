@@ -26,7 +26,7 @@ public class FacebookAdapter implements OauthAdapter {
         try {
             FacebookConnectionFactory cf = new FacebookConnectionFactory(signinDTO.getAuthorizationData().getClientId(), facebookAppSecret);
             AccessGrant accessGrant = cf.getOAuthOperations().exchangeForAccess(
-                signinDTO.getOauthData().getCode(), signinDTO.getAuthorizationData().getRedirectUri() + '/', null);
+                signinDTO.getOauthData().getCode(), signinDTO.getAuthorizationData().getRedirectUri(), null);
             Connection<Facebook> connection = cf.createConnection(accessGrant);
             org.springframework.social.facebook.api.User user = connection.getApi().fetchObject(
                 "me", org.springframework.social.facebook.api.User.class, "first_name", "last_name", "email", "id");

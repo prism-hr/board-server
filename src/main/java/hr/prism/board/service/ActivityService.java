@@ -27,6 +27,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,10 +37,8 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
 public class ActivityService {
 
-    volatile Set<Long> userIds = new LinkedHashSet<>();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
-
+    volatile Set<Long> userIds = new LinkedHashSet<>();
     @Value("${pusher.on}")
     private boolean pusherOn;
 
@@ -80,9 +79,12 @@ public class ActivityService {
 
     @EventListener
     public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
-        Long userId = Long.parseLong(sessionDisconnectEvent.getUser().getName());
-        LOGGER.info("Disconnecting user: " + userId + " from activities");
-        userIds.remove(userId);
+        Principal user = sessionDisconnectEvent.getUser();
+        if (user != null) {
+            Long userId = Long.parseLong(user.getName());
+            LOGGER.info("Disconnecting user: " + userId + " from activities");
+            userIds.remove(userId);
+        }
     }
 
     public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
@@ -204,6 +206,11 @@ public class ActivityService {
         return ImmutableList.copyOf(userIds);
     }
 
+    public synchronized void setUserIds(List<Long> userIds) {
+        this.userIds.clear();
+        this.userIds.addAll(userIds);
+    }
+
     public void sendActivities(Long userId) {
         entityManager.flush();
         sendActivities(userId, getActivities(userId));
@@ -252,11 +259,6 @@ public class ActivityService {
         if (pusherOn) {
             pusher.trigger("presence-activities-" + userId, "activities", activities);
         }
-    }
-
-    public synchronized void setUserIds(List<Long> userIds) {
-        this.userIds.clear();
-        this.userIds.addAll(userIds);
     }
 
     private Activity createActivity(Resource resource, UserRole userRole, ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
