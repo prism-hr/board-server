@@ -81,6 +81,7 @@ public class ActivityService {
     public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
         Principal user = sessionDisconnectEvent.getUser();
         if (user != null) {
+            // FIXME: shouldn't be possible that no user is associated with the session - fix the underlying problem
             Long userId = Long.parseLong(user.getName());
             LOGGER.info("Disconnecting user: " + userId + " from activities");
             userIds.remove(userId);
