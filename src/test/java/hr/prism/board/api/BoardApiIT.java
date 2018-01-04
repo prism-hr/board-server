@@ -308,6 +308,7 @@ public class BoardApiIT extends AbstractIT {
                     .put("department", departmentName)
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", departmentAdminRoleUuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder()
@@ -315,6 +316,7 @@ public class BoardApiIT extends AbstractIT {
                     .put("department", departmentName)
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", boardAdminRoleUuid)
+                    .put("authenticationAction", "Login")
                     .build()));
 
         // Create unprivileged users
@@ -354,6 +356,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("comment", "we cannot accept this")
                 .put("homeRedirect", homeRedirect)
                 .put("invitationUuid", boardAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         // Check that the department user can restore the board to draft
@@ -370,6 +373,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("board", "board 1")
                 .put("resourceRedirect", resourceRedirect)
                 .put("invitationUuid", boardAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         // Check that the department user can accept the board
@@ -386,6 +390,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("board", "board 1")
                 .put("resourceRedirect", resourceRedirect)
                 .put("invitationUuid", boardAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         // Check that the department user can reject the board
@@ -403,6 +408,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("comment", "we really cannot accept this")
                 .put("homeRedirect", homeRedirect)
                 .put("invitationUuid", boardAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         // Check that the department user can restore the board to accepted
@@ -421,6 +427,7 @@ public class BoardApiIT extends AbstractIT {
                 .put("board", "board 1")
                 .put("resourceRedirect", resourceRedirect)
                 .put("invitationUuid", boardAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         // Create post

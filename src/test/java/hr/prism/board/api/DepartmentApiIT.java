@@ -375,6 +375,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("department", "department 4")
                 .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
                 .put("invitationUuid", department2UserRole.getUuid())
+                .put("authenticationAction", "Register")
                 .build()));
 
         testUserService.setAuthentication(departmentUser.getId());
@@ -475,12 +476,14 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("department", "department")
                     .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
                     .put("invitationUuid", departmentUserRole2.getUuid())
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser3Id),
                 ImmutableMap.<String, String>builder().put("recipient", recipient3)
                     .put("department", "department")
                     .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
                     .put("invitationUuid", departmentUserRole3.getUuid())
+                    .put("authenticationAction", "Login")
                     .build()));
 
         LocalDateTime resourceTaskCreatedTimestamp = transactionTemplate.execute(status ->
@@ -524,6 +527,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole1Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
                 ImmutableMap.<String, String>builder().put("recipient", recipient2)
@@ -531,6 +535,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole2Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
                 ImmutableMap.<String, String>builder().put("recipient", recipient3)
@@ -538,6 +543,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole3Uuid)
+                    .put("authenticationAction", "Login")
                     .build()));
 
         DepartmentRepresentation departmentR2 = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
@@ -577,6 +583,7 @@ public class DepartmentApiIT extends AbstractIT {
                             "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>")
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole1Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
                 ImmutableMap.<String, String>builder().put("recipient", recipient2)
@@ -584,6 +591,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole2Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
                 ImmutableMap.<String, String>builder().put("recipient", recipient3)
@@ -591,6 +599,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole3Uuid)
+                    .put("authenticationAction", "Login")
                     .build()));
 
         testUserService.setAuthentication(departmentUserId);
@@ -647,6 +656,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole2Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
                 ImmutableMap.<String, String>builder().put("recipient", recipient3)
@@ -654,6 +664,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole3Uuid)
+                    .put("authenticationAction", "Login")
                     .build()));
 
         testUserService.setAuthentication(departmentUserId);
@@ -842,6 +853,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceUpdateTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole1Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser2,
                 ImmutableMap.<String, String>builder().put("recipient", recipient2)
@@ -849,6 +861,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceUpdateTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole2Uuid)
+                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser3,
                 ImmutableMap.<String, String>builder().put("recipient", recipient3)
@@ -856,6 +869,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceUpdateTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole3Uuid)
+                    .put("authenticationAction", "Login")
                     .build()));
 
         testActivityService.stop();
@@ -1024,6 +1038,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("department", departmentR.getName())
                 .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=users&fragment=memberRequests")
                 .put("invitationUuid", departmentAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         testUserService.setAuthentication(boardMemberId);
@@ -1100,6 +1115,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("department", departmentR.getName())
                 .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=users&fragment=memberRequests")
                 .put("invitationUuid", departmentAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         testUserService.setAuthentication(departmentUserId);
@@ -1168,6 +1184,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("department", departmentR.getName())
                 .put("resourceUserRedirect", serverUrl + "/redirect?resource=" + departmentId + "&view=users&fragment=memberRequests")
                 .put("invitationUuid", departmentAdminRoleUuid)
+                .put("authenticationAction", "Login")
                 .build()));
 
         Long activityId = transactionTemplate.execute(status -> {
