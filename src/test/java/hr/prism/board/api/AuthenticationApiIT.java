@@ -372,7 +372,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("post", postName1)
                     .put("resourceRedirect", resourceRedirect1)
                     .put("invitationUuid", post1AdminRole1Uuid)
-                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member1,
                 ImmutableMap.<String, String>builder().put("recipient", "member1")
@@ -385,7 +384,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department1MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member1.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member2,
                 ImmutableMap.<String, String>builder().put("recipient", "member2")
@@ -398,7 +396,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department1MemberRole2Uuid)
                     .put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member2.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member3,
                 ImmutableMap.<String, String>builder().put("recipient", "member3")
@@ -411,7 +408,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department1MemberRole3Uuid)
                     .put("parentRedirect", parentRedirect1)
                     .put("recipientUuid", member3.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()));
 
         Assert.assertTrue(authenticationApi.getInvitee(post1AdminRole1Uuid).isRegistered());
@@ -541,7 +537,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("post", postName2)
                     .put("resourceRedirect", resourceRedirect2)
                     .put("invitationUuid", post2AdminRole1Uuid)
-                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member1,
                 ImmutableMap.<String, String>builder().put("recipient", "member1")
@@ -554,7 +549,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department2MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect2)
                     .put("recipientUuid", member1.getUuid())
-                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member3,
                 ImmutableMap.<String, String>builder().put("recipient", "member3")
@@ -567,7 +561,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department2MemberRole3Uuid)
                     .put("parentRedirect", parentRedirect2)
                     .put("recipientUuid", member3.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()));
 
         Assert.assertTrue(authenticationApi.getInvitee(post2AdminRole1Uuid).isRegistered());
@@ -682,7 +675,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("post", postName3)
                     .put("resourceRedirect", resourceRedirect3)
                     .put("invitationUuid", post3AdminRole1Uuid)
-                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member5,
                 ImmutableMap.<String, String>builder().put("recipient", "member5")
@@ -695,7 +687,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department3MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member5.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member6,
                 ImmutableMap.<String, String>builder().put("recipient", "member6")
@@ -708,7 +699,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department3MemberRole2Uuid)
                     .put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member6.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member7,
                 ImmutableMap.<String, String>builder().put("recipient", "member7")
@@ -721,7 +711,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department3MemberRole3Uuid)
                     .put("parentRedirect", parentRedirect3)
                     .put("recipientUuid", member7.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()));
 
         Assert.assertTrue(authenticationApi.getInvitee(post3AdminRole1Uuid).isRegistered());
@@ -841,7 +830,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("post", postName4)
                     .put("resourceRedirect", resourceRedirect4)
                     .put("invitationUuid", post4AdminRole1Uuid)
-                    .put("authenticationAction", "Login")
                     .build()),
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, member8,
                 ImmutableMap.<String, String>builder().put("recipient", "member8")
@@ -854,7 +842,6 @@ public class AuthenticationApiIT extends AbstractIT {
                     .put("invitationUuid", department4MemberRole1Uuid)
                     .put("parentRedirect", parentRedirect4)
                     .put("recipientUuid", member8.getUuid())
-                    .put("authenticationAction", "Register")
                     .build()));
 
         Assert.assertTrue(authenticationApi.getInvitee(post4AdminRole1Uuid).isRegistered());

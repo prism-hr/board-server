@@ -686,7 +686,9 @@ public class DepartmentService {
 
     private void executeActions(State state, LocalDateTime baseline, Action action, State newState) {
         List<Long> departmentIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(state, baseline);
-        actionService.executeAnonymously(departmentIds, action, newState, baseline);
+        if (!departmentIds.isEmpty()) {
+            actionService.executeAnonymously(departmentIds, action, newState, baseline);
+        }
     }
 
 }
