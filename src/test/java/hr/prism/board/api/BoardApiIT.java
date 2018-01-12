@@ -31,7 +31,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @TestContext
@@ -596,7 +595,7 @@ public class BoardApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldArchiveBoards() throws InterruptedException {
+    public void shouldArchiveBoards() {
         testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         Long departmentId = transactionTemplate.execute(status ->
@@ -608,7 +607,12 @@ public class BoardApiIT extends AbstractIT {
         testUserService.authenticate();
         Long boardId2 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, new BoardDTO().setName("board2"))).getId();
 
-        TimeUnit.SECONDS.sleep(resourceArchiveDurationSeconds + 1);
+        transactionTemplate.execute(status -> {
+            Board board2 = (Board) resourceRepository.findOne(boardId2);
+            resourceRepository.updateUpdatedTimestampById(boardId2,
+                board2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
+            return null;
+        });
 
         transactionTemplate.execute(status -> {
             resourceService.archiveResources();
@@ -659,12 +663,12 @@ public class BoardApiIT extends AbstractIT {
         Assert.assertEquals(expectedState, boardR.getState());
     }
 
-    private BoardRepresentation verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
+    private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
         Board board = transactionTemplate.execute(status -> boardService.getBoard(boardId));
         BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.patchBoard(boardId, boardDTO));
 
-        return transactionTemplate.execute(status -> {
+        transactionTemplate.execute(status -> {
             Optional<String> nameOptional = boardDTO.getName();
             Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
 

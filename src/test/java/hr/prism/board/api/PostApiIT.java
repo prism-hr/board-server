@@ -38,7 +38,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -1589,7 +1588,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldArchivePosts() throws InterruptedException {
+    public void shouldArchivePosts() {
         testUserService.authenticate();
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
         Long departmentId = transactionTemplate.execute(status ->
@@ -1604,7 +1603,15 @@ public class PostApiIT extends AbstractIT {
         Long postId3 = transactionTemplate.execute(status -> postApi.postPost(boardId,
             TestHelper.smallSamplePost().setName("post3").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
 
-        TimeUnit.SECONDS.sleep(resourceArchiveDurationSeconds + 1);
+        transactionTemplate.execute(status -> {
+            Post post2 = (Post) resourceRepository.findOne(postId2);
+            Post post3 = (Post) resourceRepository.findOne(postId3);
+            resourceRepository.updateUpdatedTimestampById(postId2,
+                post2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
+            resourceRepository.updateUpdatedTimestampById(postId3,
+                post3.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
+            return null;
+        });
 
         transactionTemplate.execute(status -> {
             resourceService.archiveResources();

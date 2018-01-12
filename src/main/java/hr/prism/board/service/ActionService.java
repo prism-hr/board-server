@@ -130,6 +130,7 @@ public class ActionService {
                 "update Resource resource " +
                     "set resource.previousState = resource.state, " +
                     "resource.state = :newState, " +
+                    "resource.stateChangeTimestamp = :baseline, " +
                     "resource.updatedTimestamp = :baseline " +
                     "where resource.id in (:resourceIds)")
                 .setParameter("newState", newState)

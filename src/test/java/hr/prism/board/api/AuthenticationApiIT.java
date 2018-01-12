@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @TestContext
@@ -44,8 +43,10 @@ public class AuthenticationApiIT extends AbstractIT {
 
     @Value("${environment}")
     String environment;
+
     @Inject
     private AuthenticationService authenticationService;
+
     @Value("${password.reset.timeout.seconds}")
     private Long passwordResetTimeoutSeconds;
 
@@ -86,7 +87,6 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Assert.assertEquals(DigestUtils.sha256Hex("password"), user.getPassword());
 
-        Thread.sleep(1000);
         LoginDTO loginDTO = new LoginDTO().setEmail("alastair@prism.hr").setPassword("password");
         MockHttpServletResponse loginResponse =
             mockMvc.perform(
@@ -100,7 +100,6 @@ public class AuthenticationApiIT extends AbstractIT {
         loginAccessToken = (String) objectMapper.readValue(loginResponse.getContentAsString(), Map.class).get("token");
         verifyAccessToken(loginAccessToken, userId);
 
-        Thread.sleep(1000);
         userResponse =
             mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/user")
@@ -240,7 +239,12 @@ public class AuthenticationApiIT extends AbstractIT {
                 .build()));
         testNotificationService.stop();
 
-        TimeUnit.SECONDS.sleep(passwordResetTimeoutSeconds + 1);
+        // Simulate password reset timeout expiry
+        transactionTemplate.execute(status -> {
+            User updatedUser = userRepository.findOne(userId);
+            updatedUser.setPasswordResetTimestamp(updatedUser.getPasswordResetTimestamp().minusSeconds(passwordResetTimeoutSeconds + 1));
+            return userRepository.save(updatedUser);
+        });
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")

@@ -455,7 +455,7 @@ public class DepartmentService {
         LocalDateTime draftExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
         executeActions(State.DRAFT, draftExpiryTimestamp, Action.CONVERT, State.PENDING);
 
-        LocalDateTime pendingExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
+        LocalDateTime pendingExpiryTimestamp = baseline.minusSeconds(departmentPendingExpirySeconds);
         executeActions(State.PENDING, pendingExpiryTimestamp, Action.REJECT, State.REJECTED);
     }
 
@@ -687,7 +687,7 @@ public class DepartmentService {
     private void executeActions(State state, LocalDateTime baseline, Action action, State newState) {
         List<Long> departmentIds = departmentRepository.findByStateAndStateChangeTimestampLessThan(state, baseline);
         if (!departmentIds.isEmpty()) {
-            actionService.executeAnonymously(departmentIds, action, newState, baseline);
+            actionService.executeAnonymously(departmentIds, action, newState, LocalDateTime.now());
         }
     }
 

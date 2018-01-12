@@ -27,6 +27,7 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -51,6 +52,24 @@ public class DepartmentApiIT extends AbstractIT {
 
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
+
+    @Value("${resource.task.notification.interval1.seconds}")
+    private Long resourceTaskNotificationInterval1Seconds;
+
+    @Value("${resource.task.notification.interval2.seconds}")
+    private Long resourceTaskNotificationInterval2Seconds;
+
+    @Value("${resource.task.notification.interval3.seconds}")
+    private Long resourceTaskNotificationInterval3Seconds;
+
+    @Value("${department.draft.expiry.seconds}")
+    private Long departmentDraftExpirySeconds;
+
+    @Value("${department.suspended.expiry.seconds}")
+    private Long departmentSuspendedExpirySeconds;
+
+    @Value("${department.pending.expiry.seconds}")
+    private Long departmentPendingExpirySeconds;
 
     @Inject
     private DocumentRepository documentRepository;
@@ -494,7 +513,8 @@ public class DepartmentApiIT extends AbstractIT {
         String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
 
         transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
+                resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval1Seconds + 1));
             return null;
         });
 
@@ -559,7 +579,8 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertFalse(departmentR4.getTasks().get(2).getCompleted());
 
         transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(3L));
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
+                resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval2Seconds + 1));
             return null;
         });
 
@@ -614,7 +635,8 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertFalse(departmentR7.getTasks().get(2).getCompleted());
 
         transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(5L));
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
+                resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval3Seconds + 1));
             return null;
         });
 
@@ -815,7 +837,8 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId, resourceTaskCreatedTimestamp.minusSeconds(2L));
+            resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
+                resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval1Seconds + 1));
             return null;
         });
 
@@ -860,6 +883,33 @@ public class DepartmentApiIT extends AbstractIT {
 
         testActivityService.stop();
         testNotificationService.stop();
+    }
+
+    @Test
+    public void shouldSupportDepartmentSubscriptions() {
+        User departmentUser = testUserService.authenticate();
+        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long departmentUserId = departmentUser.getId();
+
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
+        DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
+        Assert.assertEquals(State.DRAFT, departmentR.getState());
+        Long departmentId = departmentR.getId();
+
+        transactionTemplate.execute(status -> {
+            Department department = (Department) resourceRepository.findOne(departmentId);
+            resourceRepository.updateStateChangeTimestampById(departmentId,
+                department.getStateChangeTimestamp().minusSeconds(departmentDraftExpirySeconds + 1));
+            return null;
+        });
+
+        transactionTemplate.execute(status -> {
+            departmentService.updateSubscriptions(LocalDateTime.now());
+            return null;
+        });
+
+        departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
+        Assert.assertEquals(State.PENDING, departmentR.getState());
     }
 
     @Test

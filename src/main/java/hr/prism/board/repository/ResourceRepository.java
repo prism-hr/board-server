@@ -77,4 +77,18 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
             "and resource.updatedTimestamp < :baseline")
     List<Long> findByStatesAndLessThanUpdatedTimestamp(@Param("states") List<State> states, @Param("baseline") LocalDateTime baseline);
 
+    @Modifying
+    @Query(value =
+        "update Resource resource " +
+            "set resource.updatedTimestamp = :baseline " +
+            "where resource.id = :id")
+    void updateUpdatedTimestampById(@Param("id") Long id, @Param("baseline") LocalDateTime baseline);
+
+    @Modifying
+    @Query(value =
+        "update Resource resource " +
+            "set resource.stateChangeTimestamp = :baseline " +
+            "where resource.id = :id")
+    void updateStateChangeTimestampById(@Param("id") Long id, @Param("baseline") LocalDateTime baseline);
+
 }
