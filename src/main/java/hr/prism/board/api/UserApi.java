@@ -1,10 +1,10 @@
 package hr.prism.board.api;
 
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.mapper.UserMapper;
+import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ActivityService;
@@ -12,13 +12,10 @@ import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -80,6 +77,11 @@ public class UserApi {
         userNotificationSuppressionService.deleteSuppressions();
     }
 
+    @RequestMapping(value = "/api/user/activities", method = RequestMethod.GET)
+    public List<ActivityRepresentation> getActivities() {
+        return activityService.getActivities();
+    }
+
     @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.GET)
     public void viewActivity(@PathVariable Long activityId) {
         activityService.viewActivity(activityId);
@@ -88,13 +90,6 @@ public class UserApi {
     @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.DELETE)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);
-    }
-
-    @SubscribeMapping("/api/user/activities")
-    public void subscribe(Principal principal) {
-        SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
-        Long userId = userService.getCurrentUserSecured().getId();
-        activityService.sendActivities(userId);
     }
 
     @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)

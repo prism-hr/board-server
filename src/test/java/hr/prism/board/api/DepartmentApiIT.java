@@ -296,7 +296,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long boardUserId = boardUser.getId();
 
         testActivityService.record();
-        listenForNewActivities(boardUserId);
+        listenForActivities(boardUserId);
 
         testUserService.setAuthentication(departmentUser.getId());
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.BOARD, boardId,
@@ -464,9 +464,9 @@ public class DepartmentApiIT extends AbstractIT {
 
         testActivityService.record();
         testNotificationService.record();
-        listenForNewActivities(departmentUserId);
-        listenForNewActivities(departmentUser2Id);
-        listenForNewActivities(departmentUser3Id);
+        listenForActivities(departmentUserId);
+        listenForActivities(departmentUser2Id);
+        listenForActivities(departmentUser3Id);
 
         testUserService.setAuthentication(departmentUserId);
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
@@ -1043,7 +1043,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForNewActivities(departmentUserId);
+        listenForActivities(departmentUserId);
 
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
@@ -1119,7 +1119,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForNewActivities(departmentUserId);
+        listenForActivities(departmentUserId);
 
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {
@@ -1187,7 +1187,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForNewActivities(departmentUserId);
+        listenForActivities(departmentUserId);
 
         User boardMember = testUserService.authenticate();
         transactionTemplate.execute(status -> {

@@ -1,10 +1,7 @@
 package hr.prism.board.repository;
 
 import hr.prism.board.domain.*;
-import hr.prism.board.enums.ActivityEvent;
-import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
-import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,34 +13,6 @@ import java.util.List;
 public interface ActivityRepository extends BoardEntityRepository<Activity, Long> {
 
     @Query(value =
-        "select distinct activity " +
-            "from Activity activity " +
-            "left join activity.activityRoles activityRole " +
-            "left join activity.resource resource " +
-            "left join resource.parents parentRelation " +
-            "left join parentRelation.resource1 parent " +
-            "left join parent.userRoles userRole " +
-            "left join resource.categories resourceCategory " +
-            "left join activity.activityUsers activityUser " +
-            "where (activityUser.id is null " +
-            "and activityRole.scope = parent.scope " +
-            "and activityRole.role = userRole.role " +
-            "and userRole.user.id = :userId " +
-            "and userRole.state in (:userRoleStates) " +
-            "and (activity.filterByCategory = false " +
-            "or resourceCategory.id is null " +
-            "or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
-            "or activityUser.user.id = :userId) " +
-            "and activity.id not in (" +
-            "select activityEvent.activity.id " +
-            "from ActivityEvent activityEvent " +
-            "where activityEvent.user.id = :userId " +
-            "and activityEvent.event = :activityEvent) " +
-            "order by activity.updatedTimestamp desc, activity.id desc")
-    List<Activity> findByUserId(@Param("userId") Long userId, @Param("userRoleStates") List<State> state, @Param("categoryType") CategoryType categoryType,
-        @Param("activityEvent") ActivityEvent activityEvent);
-
-    @Query(value =
         "select activityEvent.activity.id " +
             "from ActivityEvent activityEvent " +
             "where activityEvent.activity in (:activities) " +
@@ -51,7 +20,7 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "and activityEvent.event = :event")
     @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<Long> findIdsByActivitiesAndUserIdAndEvent(@Param("activities") Collection<Activity> activities, @Param("userId") Long userId,
-        @Param("event") hr.prism.board.enums.ActivityEvent event);
+                                                    @Param("event") hr.prism.board.enums.ActivityEvent event);
 
     @Query(value =
         "select activity " +

@@ -1,44 +1,8 @@
 package hr.prism.board.api;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.simp.stomp.StompFrameHandler;
-import org.springframework.messaging.simp.stomp.StompHeaders;
-import org.springframework.messaging.simp.stomp.StompSession;
-import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.web.socket.WebSocketHttpHeaders;
-import org.springframework.web.socket.client.standard.StandardWebSocketClient;
-import org.springframework.web.socket.messaging.WebSocketStompClient;
-import org.springframework.web.socket.sockjs.client.SockJsClient;
-import org.springframework.web.socket.sockjs.client.WebSocketTransport;
-
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
 import hr.prism.board.TestContext;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.DocumentDTO;
-import hr.prism.board.dto.RegisterDTO;
-import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPatchDTO;
-import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -48,6 +12,17 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
+import org.apache.commons.lang3.ArrayUtils;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -231,73 +206,11 @@ public class UserApiIT extends AbstractIT {
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
     }
 
-    @Test
-    public void shouldSubscribeAndReceiveMessages() throws Exception {
-        testActivityService.record();
-        RegisterDTO registerDTO = new RegisterDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@prism.hr").setPassword("password");
-        MockHttpServletResponse registerResponse =
-            mockMvc.perform(
-                MockMvcRequestBuilders.post("/api/auth/register")
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)
-                    .content(objectMapper.writeValueAsString(registerDTO)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn()
-                .getResponse();
-
-        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("alastair@prism.hr").getId());
-        String loginAccessToken = (String) objectMapper.readValue(registerResponse.getContentAsString(), Map.class).get("token");
-
-        MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter();
-        messageConverter.setObjectMapper(objectMapper);
-
-        WebSocketStompClient webSocketStompClient = new WebSocketStompClient(
-            new SockJsClient(Collections.singletonList(new WebSocketTransport(new StandardWebSocketClient()))));
-        webSocketStompClient.setMessageConverter(messageConverter);
-
-        WebSocketHttpHeaders webSocketHttpHeaders = new WebSocketHttpHeaders();
-        StompHeaders stompHeaders = new StompHeaders();
-        stompHeaders.set("Authorization", "Bearer " + loginAccessToken);
-
-        StompSession stompSession =
-            webSocketStompClient.connect("ws://127.0.0.1:" + localServerPort + "/api/web-socket",
-                webSocketHttpHeaders, stompHeaders, new StompSessionHandlerAdapter() {})
-                .get(5, TimeUnit.SECONDS);
-
-        stompSession.subscribe("/api/user/activities", new FrameHandler());
-        List<?> response = (List<?>) completableFuture.get();
-        Assert.assertNotNull(response);
-        Assert.assertEquals(0, response.size());
-
-        List<Long> userIds = testActivityService.getUserIds();
-        Assert.assertEquals(1, userIds.size());
-        Assert.assertEquals(userId, userIds.get(0));
-
-        stompSession.disconnect();
-        // Give the session disconnect event time to be fired
-        TimeUnit.SECONDS.sleep(1L);
-        userIds = testActivityService.getUserIds();
-        Assert.assertEquals(0, userIds.size());
-    }
-
     private static List<UserNotificationSuppressionRepresentation> removeSuppressionsForAutomaticallyCreatedBoards(
         List<UserNotificationSuppressionRepresentation> suppressions, String... expectedBoardNames) {
         suppressions.removeIf(suppression -> !ArrayUtils.contains(expectedBoardNames, suppression.getResource()
             .getName()));
         return suppressions;
-    }
-
-    private class FrameHandler implements StompFrameHandler {
-
-        @Override
-        public Type getPayloadType(StompHeaders headers) {
-            return Object.class;
-        }
-
-        @Override
-        public void handleFrame(StompHeaders headers, Object payload) {
-            completableFuture.complete(payload);
-        }
-
     }
 
 }

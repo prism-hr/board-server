@@ -265,11 +265,11 @@ public class BoardApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForNewActivities(departmentUserId);
+        listenForActivities(departmentUserId);
 
         User boardUser = testUserService.authenticate();
         Long boardUserId = boardUser.getId();
-        listenForNewActivities(boardUserId);
+        listenForActivities(boardUserId);
 
         BoardRepresentation boardR = verifyPostBoard(departmentId, TestHelper.smallSampleBoard().setName("board 1"), "board-1");
         Long boardId = boardR.getId();
@@ -335,8 +335,8 @@ public class BoardApiIT extends AbstractIT {
         testActivityService.record();
         testNotificationService.record();
 
-        listenForNewActivities(departmentUserId);
-        listenForNewActivities(boardUserId);
+        listenForActivities(departmentUserId);
+        listenForActivities(boardUserId);
         testUserService.setAuthentication(departmentUserId);
 
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we cannot accept this", State.REJECTED);

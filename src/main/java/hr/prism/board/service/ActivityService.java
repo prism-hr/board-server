@@ -17,17 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.messaging.SessionConnectEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,8 +34,36 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
 public class ActivityService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
     volatile Set<Long> userIds = new LinkedHashSet<>();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
+
+    private static final String USER_ACTIVITY =
+        "select distinct activity " +
+            "from Activity activity " +
+            "left join activity.activityRoles activityRole " +
+            "left join activity.resource resource " +
+            "left join resource.parents parentRelation " +
+            "left join parentRelation.resource1 parent " +
+            "left join parent.userRoles userRole " +
+            "left join resource.categories resourceCategory " +
+            "left join activity.activityUsers activityUser " +
+            "where (activityUser.id is null " +
+            "and activityRole.scope = parent.scope " +
+            "and activityRole.role = userRole.role " +
+            "and userRole.user.id = :userId " +
+            "and userRole.state in (:userRoleStates) " +
+            "and (activity.filterByCategory = false " +
+            "or resourceCategory.id is null " +
+            "or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
+            "or activityUser.user.id = :userId) " +
+            "and activity.id not in (" +
+            "select activityEvent.activity.id " +
+            "from ActivityEvent activityEvent " +
+            "where activityEvent.user.id = :userId " +
+            "and activityEvent.event = :activityEvent) " +
+            "order by activity.updatedTimestamp desc, activity.id desc";
+
     @Value("${pusher.on}")
     private boolean pusherOn;
 
@@ -64,29 +89,11 @@ public class ActivityService {
     @Inject
     private Pusher pusher;
 
-    @Inject
-    private SimpMessagingTemplate simpMessagingTemplate;
-
     @PersistenceContext
     private EntityManager entityManager;
 
-    @EventListener
-    public synchronized void handleSessionConnectEvent(SessionConnectEvent sessionConnectEvent) {
-        Long userId = Long.parseLong(sessionConnectEvent.getUser().getName());
-        LOGGER.info("Connecting user: " + userId + " to activities");
-        userIds.add(userId);
-    }
-
-    @EventListener
-    public synchronized void handleSessionDisconnectedEvent(SessionDisconnectEvent sessionDisconnectEvent) {
-        Principal user = sessionDisconnectEvent.getUser();
-        if (user != null) {
-            // FIXME: shouldn't be possible that no user is associated with the session - fix the underlying problem
-            Long userId = Long.parseLong(user.getName());
-            LOGGER.info("Disconnecting user: " + userId + " from activities");
-            userIds.remove(userId);
-        }
-    }
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
 
     public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         return activityRepository.findByResourceAndActivity(resource, activity);
@@ -96,9 +103,25 @@ public class ActivityService {
         return activityRepository.findByUserRoleAndActivity(userRole, activity);
     }
 
+    public List<ActivityRepresentation> getActivities() {
+        Long userId = userService.getCurrentUserSecured().getId();
+        synchronized (this) {
+            userIds.add(userId);
+        }
+
+        return getActivities(userId);
+    }
+
     public List<ActivityRepresentation> getActivities(Long userId) {
-        List<Activity> activities =
-            activityRepository.findByUserId(userId, State.ACTIVE_USER_ROLE_STATES, CategoryType.MEMBER, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+        List<Activity> activities = new TransactionTemplate(platformTransactionManager).execute(status ->
+            entityManager.createQuery(USER_ACTIVITY, Activity.class)
+                .setParameter("userId", userId)
+                .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
+                .setParameter("categoryType", CategoryType.MEMBER)
+                .setParameter("activityEvent", hr.prism.board.enums.ActivityEvent.DISMISSAL)
+                .setMaxResults(25)
+                .getResultList());
+
         if (activities.isEmpty()) {
             return Collections.emptyList();
         }
@@ -219,9 +242,9 @@ public class ActivityService {
 
     public void sendActivities(Resource resource) {
         entityManager.flush();
-        List<Long> USER_IDS = getUserIds();
-        if (!USER_IDS.isEmpty()) {
-            for (Long userId : userService.findByResourceAndUserIds(resource, USER_IDS)) {
+        List<Long> userIds = getUserIds();
+        if (!userIds.isEmpty()) {
+            for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
                 sendActivities(userId);
             }
         }
@@ -255,7 +278,6 @@ public class ActivityService {
     }
 
     public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
-        simpMessagingTemplate.convertAndSendToUser(Objects.toString(userId), "/activities", activities);
         LOGGER.info("Sending " + activities.size() + " activities to user: " + userId);
         if (pusherOn) {
             pusher.trigger("presence-activities-" + userId, "activities", activities);

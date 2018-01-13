@@ -1,7 +1,6 @@
 package hr.prism.board.configuration;
 
 import hr.prism.board.authentication.AuthenticationFilter;
-import hr.prism.board.authentication.AuthorizationHeaderResolver;
 import hr.prism.board.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +16,6 @@ import javax.inject.Inject;
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Inject
-    private AuthorizationHeaderResolver authorizationHeaderResolver;
-
-    @Inject
     private AuthenticationService authenticationService;
 
     @Value("${session.refreshBeforeExpiration.seconds}")
@@ -31,7 +27,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        AuthenticationFilter filter = new AuthenticationFilter(authenticationService, authorizationHeaderResolver, sessionRefreshBeforeExpirationSeconds);
+        AuthenticationFilter filter = new AuthenticationFilter(authenticationService, sessionRefreshBeforeExpirationSeconds);
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and().csrf().disable().anonymous().disable()
             .authorizeRequests().antMatchers("/api/auth/*", "/api/redirect").permitAll()
