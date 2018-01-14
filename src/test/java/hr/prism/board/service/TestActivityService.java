@@ -100,7 +100,7 @@ public class TestActivityService extends ActivityService {
                 return new ActivityInstance(activityRepresentation.getResourceId(), activityRepresentation.getActivity());
             } else if (role == null) {
                 return new ActivityInstance(activityRepresentation.getResourceId(),
-                    userId, activityRepresentation.getResourceEvent(), activityRepresentation.getActivity());
+                    userId, activityRepresentation.getEvent(), activityRepresentation.getActivity());
             }
 
             return new ActivityInstance(

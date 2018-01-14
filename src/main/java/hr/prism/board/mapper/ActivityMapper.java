@@ -22,8 +22,7 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
 
         Resource resource = activity.getResource();
         representation.setResourceId(resource.getId());
-        representation.setResourceScope(resource.getScope());
-        representation.setResourceHandle(resource.getHandle());
+        representation.setHandle(resource.getHandle());
 
         Scope scope = resource.getScope();
         switch (scope) {
@@ -62,14 +61,14 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
         ResourceEvent resourceEvent = activity.getResourceEvent();
         if (resourceEvent != null) {
             representation.setUserId(resourceEvent.getUser().getId());
-            representation.setResourceEvent(resourceEvent.getEvent());
+            representation.setEvent(resourceEvent.getEvent());
 
             representation.setGender(resourceEvent.getGender());
             representation.setAgeRange(resourceEvent.getAgeRange());
             representation.setLocation(resourceEvent.getLocationNationality().getName());
         }
 
-        return representation.setViewed(activity.isViewed()).setCreated(activity.getCreatedTimestamp().toString());
+        return representation.setViewed(activity.isViewed()).setCreated(activity.getCreatedTimestamp());
     }
 
     private String getResourceImage(Resource resource) {

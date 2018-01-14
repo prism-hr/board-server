@@ -3,7 +3,9 @@ package hr.prism.board.representation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hr.prism.board.enums.*;
 
-@JsonIgnoreProperties({"resourceId", "userId", "role", "resourceEvent"})
+import java.time.LocalDateTime;
+
+@JsonIgnoreProperties({"resourceId", "userId", "role", "event"})
 public class ActivityRepresentation {
 
     private Long id;
@@ -14,9 +16,7 @@ public class ActivityRepresentation {
 
     private Long resourceId;
 
-    private Scope resourceScope;
-
-    private String resourceHandle;
+    private String handle;
 
     private String department;
 
@@ -32,7 +32,7 @@ public class ActivityRepresentation {
 
     private String surname;
 
-    private ResourceEvent resourceEvent;
+    private ResourceEvent event;
 
     private Gender gender;
 
@@ -42,7 +42,7 @@ public class ActivityRepresentation {
 
     private Boolean viewed;
 
-    private String created;
+    private LocalDateTime created;
 
     public Long getId() {
         return id;
@@ -80,21 +80,12 @@ public class ActivityRepresentation {
         return this;
     }
 
-    public Scope getResourceScope() {
-        return resourceScope;
+    public String getHandle() {
+        return handle;
     }
 
-    public ActivityRepresentation setResourceScope(Scope resourceScope) {
-        this.resourceScope = resourceScope;
-        return this;
-    }
-
-    public String getResourceHandle() {
-        return resourceHandle;
-    }
-
-    public ActivityRepresentation setResourceHandle(String resourceHandle) {
-        this.resourceHandle = resourceHandle;
+    public ActivityRepresentation setHandle(String handle) {
+        this.handle = handle;
         return this;
     }
 
@@ -161,12 +152,12 @@ public class ActivityRepresentation {
         return this;
     }
 
-    public ResourceEvent getResourceEvent() {
-        return resourceEvent;
+    public ResourceEvent getEvent() {
+        return event;
     }
 
-    public ActivityRepresentation setResourceEvent(ResourceEvent resourceEvent) {
-        this.resourceEvent = resourceEvent;
+    public ActivityRepresentation setEvent(ResourceEvent event) {
+        this.event = event;
         return this;
     }
 
@@ -206,11 +197,11 @@ public class ActivityRepresentation {
         return this;
     }
 
-    public String getCreated() {
+    public LocalDateTime getCreated() {
         return created;
     }
 
-    public ActivityRepresentation setCreated(String created) {
+    public ActivityRepresentation setCreated(LocalDateTime created) {
         this.created = created;
         return this;
     }
