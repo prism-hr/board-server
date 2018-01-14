@@ -6,8 +6,6 @@ import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.enums.Role;
 import hr.prism.board.representation.ActivityRepresentation;
-import hr.prism.board.representation.ResourceEventRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,17 +94,17 @@ public class TestActivityService extends ActivityService {
         }
 
         static ActivityInstance fromActivityRepresentation(ActivityRepresentation activityRepresentation) {
-            UserRoleRepresentation userRoleRepresentation = activityRepresentation.getUserRole();
-            ResourceEventRepresentation resourceEventRepresentation = activityRepresentation.getResourceEvent();
-            if (userRoleRepresentation == null && resourceEventRepresentation == null) {
-                return new ActivityInstance(activityRepresentation.getResource().getId(), activityRepresentation.getActivity());
-            } else if (userRoleRepresentation == null) {
-                return new ActivityInstance(activityRepresentation.getResource().getId(),
-                    resourceEventRepresentation.getUser().getId(), resourceEventRepresentation.getEvent(), activityRepresentation.getActivity());
+            Long userId = activityRepresentation.getUserId();
+            Role role = activityRepresentation.getRole();
+            if (userId == null && role == null) {
+                return new ActivityInstance(activityRepresentation.getResourceId(), activityRepresentation.getActivity());
+            } else if (role == null) {
+                return new ActivityInstance(activityRepresentation.getResourceId(),
+                    userId, activityRepresentation.getResourceEvent(), activityRepresentation.getActivity());
             }
 
-            return new ActivityInstance(activityRepresentation.getResource().getId(),
-                userRoleRepresentation.getUser().getId(), userRoleRepresentation.getRole(), activityRepresentation.getActivity());
+            return new ActivityInstance(
+                activityRepresentation.getResourceId(), userId, role, activityRepresentation.getActivity());
         }
 
         Long getResourceId() {

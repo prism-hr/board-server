@@ -8,6 +8,7 @@ import hr.prism.board.dto.PusherAuthenticationDTO;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.mapper.UserMapper;
+import hr.prism.board.representation.ActivityRepresentation;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.ActivityService;
@@ -15,8 +16,6 @@ import hr.prism.board.service.UserNotificationSuppressionService;
 import hr.prism.board.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -85,6 +84,11 @@ public class UserApi {
     @RequestMapping(value = "/api/user/suppressions", method = RequestMethod.DELETE)
     public void deleteSuppressions() {
         userNotificationSuppressionService.deleteSuppressions();
+    }
+
+    @RequestMapping(value = "/api/user/activities", method = RequestMethod.GET)
+    public List<ActivityRepresentation> getActivities() {
+        return activityService.getActivities();
     }
 
     @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.GET)

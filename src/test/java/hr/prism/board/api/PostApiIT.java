@@ -541,10 +541,10 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForNewActivities(departmentUserId);
+        listenForActivities(departmentUserId);
 
         Long boardUserId = boardUser.getId();
-        listenForNewActivities(boardUserId);
+        listenForActivities(boardUserId);
 
         User postUser = testUserService.authenticate();
         PostRepresentation postR = verifyPostPost(boardId, TestHelper.samplePost());
@@ -617,12 +617,12 @@ public class PostApiIT extends AbstractIT {
                 });
             }
 
-            listenForNewActivities(userId);
+            listenForActivities(userId);
             testActivityService.verify(userId);
         }
 
         Long postUserId = postUser.getId();
-        listenForNewActivities(postUserId);
+        listenForActivities(postUserId);
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")))
@@ -895,11 +895,11 @@ public class PostApiIT extends AbstractIT {
                     .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                     .setExpiryDate(LocalDate.now().minusDays(1))).getUser().getId());
 
-        listenForNewActivities(departmentMember1Id);
-        listenForNewActivities(departmentMember2Id);
-        listenForNewActivities(departmentMember3Id);
-        listenForNewActivities(departmentMember4Id);
-        listenForNewActivities(departmentMember5Id);
+        listenForActivities(departmentMember1Id);
+        listenForActivities(departmentMember2Id);
+        listenForActivities(departmentMember3Id);
+        listenForActivities(departmentMember4Id);
+        listenForActivities(departmentMember5Id);
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
@@ -1416,7 +1416,7 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.record();
         testNotificationService.record();
-        listenForNewActivities(postUserId);
+        listenForActivities(postUserId);
 
         testUserService.setAuthentication(memberUser1Id);
         departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(

@@ -1,29 +1,15 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.Activity;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.ActivityRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.function.Function;
 
 @Service
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ActivityMapper implements Function<Activity, ActivityRepresentation> {
-
-    @Inject
-    private ResourceMapperFactory resourceMapperFactory;
-
-    @Inject
-    private UserRoleMapper userRoleMapper;
-
-    @Inject
-    private UserMapper userMapper;
-
-    @Inject
-    private ResourceEventMapper resourceEventMapper;
 
     @Override
     public ActivityRepresentation apply(Activity activity) {
@@ -31,19 +17,67 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
             return null;
         }
 
-        return new ActivityRepresentation()
-            .setId(activity.getId())
-            .setResource(resourceMapperFactory.applySmall(activity.getResource()))
-            .setUserRole(mapUserRole(activity.getUserRole()))
-            .setResourceEvent(resourceEventMapper.apply(activity.getResourceEvent()))
-            .setActivity(activity.getActivity())
-            .setViewed(activity.isViewed())
-            .setCreatedTimestamp(activity.getCreatedTimestamp());
+        ActivityRepresentation representation =
+            new ActivityRepresentation().setId(activity.getId()).setActivity(activity.getActivity());
+
+        Resource resource = activity.getResource();
+        representation.setResourceId(resource.getId());
+
+        Scope scope = resource.getScope();
+        switch (scope) {
+            case DEPARTMENT:
+                representation.setImage(getResourceImage(resource));
+                representation.setDepartment(resource.getName());
+                break;
+            case BOARD:
+                representation.setImage(getResourceImage(resource));
+                representation.setDepartment(resource.getParent().getName());
+                representation.setBoard(resource.getName());
+                break;
+            case POST:
+                Resource parent = resource.getParent();
+                representation.setImage(getResourceImage(parent));
+                representation.setDepartment(parent.getParent().getName());
+                representation.setBoard(parent.getName());
+                representation.setPost(resource.getName());
+                break;
+            default:
+                throw new UnsupportedOperationException("Not expecting resource of scope: " + scope);
+        }
+
+        UserRole userRole = activity.getUserRole();
+        if (userRole != null) {
+            User user = userRole.getUser();
+            representation.setUserId(user.getId());
+            representation.setRole(userRole.getRole());
+
+            Document documentImage = user.getDocumentImage();
+            representation.setImage(getDocumentCloudinaryId(documentImage));
+            representation.setGivenName(user.getGivenName());
+            representation.setSurname(user.getSurname());
+        }
+
+        ResourceEvent resourceEvent = activity.getResourceEvent();
+        if (resourceEvent != null) {
+            representation.setUserId(resourceEvent.getUser().getId());
+            representation.setResourceEvent(resourceEvent.getEvent());
+
+            representation.setGender(resourceEvent.getGender());
+            representation.setAgeRange(resourceEvent.getAgeRange());
+            representation.setLocation(resourceEvent.getLocationNationality().getName());
+        }
+
+
+        return representation.setViewed(activity.isViewed()).setCreated(activity.getCreatedTimestamp());
     }
 
-    private UserRoleRepresentation mapUserRole(UserRole userRole) {
-        UserRoleRepresentation userRoleRepresentation = userRoleMapper.apply(userRole);
-        return userRoleRepresentation == null ? null : userRoleRepresentation.setUser(userMapper.apply(userRole.getUser()));
+    private String getResourceImage(Resource resource) {
+        Document documentLogo = resource.getDocumentLogo();
+        return getDocumentCloudinaryId(documentLogo);
+    }
+
+    private String getDocumentCloudinaryId(Document documentLogo) {
+        return documentLogo == null ? null : documentLogo.getCloudinaryId();
     }
 
 }
