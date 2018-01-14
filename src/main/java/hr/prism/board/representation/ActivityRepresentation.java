@@ -3,8 +3,6 @@ package hr.prism.board.representation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hr.prism.board.enums.*;
 
-import java.time.LocalDateTime;
-
 @JsonIgnoreProperties({"resourceId", "userId", "role", "resourceEvent"})
 public class ActivityRepresentation {
 
@@ -15,6 +13,10 @@ public class ActivityRepresentation {
     private String image;
 
     private Long resourceId;
+
+    private Scope resourceScope;
+
+    private String resourceHandle;
 
     private String department;
 
@@ -40,7 +42,7 @@ public class ActivityRepresentation {
 
     private Boolean viewed;
 
-    private LocalDateTime created;
+    private String created;
 
     public Long getId() {
         return id;
@@ -75,6 +77,24 @@ public class ActivityRepresentation {
 
     public ActivityRepresentation setResourceId(Long resourceId) {
         this.resourceId = resourceId;
+        return this;
+    }
+
+    public Scope getResourceScope() {
+        return resourceScope;
+    }
+
+    public ActivityRepresentation setResourceScope(Scope resourceScope) {
+        this.resourceScope = resourceScope;
+        return this;
+    }
+
+    public String getResourceHandle() {
+        return resourceHandle;
+    }
+
+    public ActivityRepresentation setResourceHandle(String resourceHandle) {
+        this.resourceHandle = resourceHandle;
         return this;
     }
 
@@ -186,11 +206,11 @@ public class ActivityRepresentation {
         return this;
     }
 
-    public LocalDateTime getCreated() {
+    public String getCreated() {
         return created;
     }
 
-    public ActivityRepresentation setCreated(LocalDateTime created) {
+    public ActivityRepresentation setCreated(String created) {
         this.created = created;
         return this;
     }

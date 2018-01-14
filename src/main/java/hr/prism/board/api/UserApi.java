@@ -2,7 +2,6 @@ package hr.prism.board.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.PusherAuthenticationDTO;
 import hr.prism.board.dto.UserPasswordDTO;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.io.IOException;
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -99,13 +97,6 @@ public class UserApi {
     @RequestMapping(value = "/api/user/activities/{activityId}", method = RequestMethod.DELETE)
     public void dismissActivity(@PathVariable Long activityId) {
         activityService.dismissActivity(activityId);
-    }
-
-    @SubscribeMapping("/api/user/activities")
-    public void subscribe(Principal principal) {
-        SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
-        Long userId = userService.getCurrentUserSecured().getId();
-        activityService.sendActivities(userId);
     }
 
     @RequestMapping(value = "/api/pusher/authenticate", method = RequestMethod.POST)
