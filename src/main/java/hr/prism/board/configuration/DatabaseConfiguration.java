@@ -2,7 +2,6 @@ package hr.prism.board.configuration;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
+import javax.sql.DataSource;
 import java.util.Properties;
 import java.util.TimeZone;
-
-import javax.sql.DataSource;
 
 @Configuration
 public class DatabaseConfiguration {
@@ -68,6 +66,7 @@ public class DatabaseConfiguration {
             flyway.setLocations("classpath:database.core");
         }
 
+        flyway.setOutOfOrder(true);
         if (cleanDbOnStartup) {
             flyway.clean();
         }
