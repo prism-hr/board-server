@@ -1,46 +1,15 @@
 package hr.prism.board.service;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
+import com.google.common.collect.ImmutableMap;
+import com.pusher.rest.Pusher;
+import com.pusher.rest.data.PresenceUser;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.LocationDTO;
-import hr.prism.board.dto.UserDTO;
-import hr.prism.board.dto.UserPasswordDTO;
-import hr.prism.board.dto.UserPatchDTO;
-import hr.prism.board.enums.Action;
-import hr.prism.board.enums.AgeRange;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Gender;
-import hr.prism.board.enums.PasswordHash;
-import hr.prism.board.enums.ResourceEvent;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
+import hr.prism.board.dto.*;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -51,11 +20,32 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.UserNotification;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 @Transactional
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "SqlResolve", "WeakerAccess"})
 public class UserService {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
     @SuppressWarnings("SqlResolve")
     private static final String USER_SEARCH_STATEMENT =
@@ -103,6 +93,10 @@ public class UserService {
     @Inject
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
+
+    @Lazy
+    @Inject
+    private Pusher pusher;
 
     @Value("${password.reset.timeout.seconds}")
     private Long passwordResetTimeoutSeconds;
@@ -333,6 +327,22 @@ public class UserService {
 
     public void deleteSearchResults(String search) {
         userSearchRepository.deleteBySearch(search);
+    }
+
+    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
+        String channel = pusherAuthentication.getChannelName();
+        String channelUserId = channel.split("-")[2];
+
+        User user = getCurrentUserSecured();
+        Long userId = user.getId();
+        if (channelUserId.equals(userId.toString())) {
+            LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
+            return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
+                new PresenceUser(userId, ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
+        } else {
+            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER,
+                "User ID: " + userId + " does not have permission to connect to channel: " + channel);
+        }
     }
 
     private User getCurrentUser(boolean fresh) {

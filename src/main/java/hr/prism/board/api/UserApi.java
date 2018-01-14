@@ -1,7 +1,10 @@
 package hr.prism.board.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.PusherAuthenticationDTO;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.mapper.UserMapper;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -38,6 +42,9 @@ public class UserApi {
 
     @Inject
     private UserMapper userMapper;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET)
     public UserRepresentation getUser() {
@@ -95,6 +102,11 @@ public class UserApi {
         SecurityContextHolder.getContext().setAuthentication((AuthenticationToken) principal);
         Long userId = userService.getCurrentUserSecured().getId();
         activityService.sendActivities(userId);
+    }
+
+    @RequestMapping(value = "/api/pusher/authenticate", method = RequestMethod.POST)
+    public JsonNode authenticatePusher(@RequestBody PusherAuthenticationDTO pusherAuthentication) throws IOException {
+        return objectMapper.readTree(userService.authenticatePusher(pusherAuthentication));
     }
 
     @RequestMapping(value = "/api/user/test", method = RequestMethod.DELETE)

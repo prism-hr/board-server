@@ -1,9 +1,5 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.ImmutableMap;
-import com.pusher.rest.Pusher;
-import com.pusher.rest.data.PresenceUser;
-import hr.prism.board.authentication.PusherAuthenticationDTO;
 import hr.prism.board.authentication.adapter.OauthAdapter;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -59,12 +55,9 @@ import java.util.UUID;
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class AuthenticationService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(UserService.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 
     private String jwsSecret;
-
-    @Inject
-    private UserService userService;
 
     @Inject
     private UserCacheService userCacheService;
@@ -74,10 +67,6 @@ public class AuthenticationService {
 
     @Inject
     private ActivityService activityService;
-
-    @Lazy
-    @Inject
-    private Pusher pusher;
 
     @Lazy
     @Inject
@@ -264,22 +253,6 @@ public class AuthenticationService {
         } catch (ExpiredJwtException e) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
             return null;
-        }
-    }
-
-    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
-        String channel = pusherAuthentication.getChannel();
-        String channelUserId = channel.split("-")[2];
-
-        User user = userService.getCurrentUserSecured();
-        Long userId = user.getId();
-        if (channelUserId.equals(userId.toString())) {
-            LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
-            return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
-                new PresenceUser(userId, ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
-        } else {
-            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER,
-                "User ID: " + userId + " does not have permission to connect to channel: " + channel);
         }
     }
 

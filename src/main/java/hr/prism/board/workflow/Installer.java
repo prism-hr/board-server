@@ -1,6 +1,7 @@
 package hr.prism.board.workflow;
 
-import hr.prism.board.configuration.WebMvcConfiguration;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hr.prism.board.utils.ObjectMapperProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,11 @@ public class Installer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Installer.class);
 
+    @Inject
+    private ObjectMapper objectMapper;
+
     private static final Workflow DEPARTMENT_WORKFLOW =
-        new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
+        new Workflow(ObjectMapperProvider.getObjectMapper())
             // Department draft state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
             .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(DRAFT)
@@ -83,7 +87,7 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ARCHIVED).transitioningTo(ACCEPTED);
 
     private static final Workflow BOARD_WORKFLOW =
-        new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
+        new Workflow(ObjectMapperProvider.getObjectMapper())
             // Board draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(DRAFT)
@@ -136,7 +140,7 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, BOARD).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
     private static final Workflow POST_WORKFLOW =
-        new Workflow(WebMvcConfiguration.OBJECT_MAPPER)
+        new Workflow(ObjectMapperProvider.getObjectMapper())
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)

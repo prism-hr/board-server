@@ -387,6 +387,7 @@
                 <profile.auth.linkedin.appSecret>S9rG2e7FWFRY5YFh</profile.auth.linkedin.appSecret>
                 <profile.auth.linkedin.clientId>772yxzl30r2opy</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>local</profile.cloudinary.folder>
+                <profile.jackson.pretty>true</profile.jackson.pretty>
                 <profile.mail.on>false</profile.mail.on>
                 <profile.pusher.app>442395</profile.pusher.app>
                 <profile.pusher.key>ec7ba70c43883cc8964d</profile.pusher.key>
@@ -412,6 +413,7 @@
                 <profile.auth.linkedin.appSecret>qqbWOxibjsuCetzN</profile.auth.linkedin.appSecret>
                 <profile.auth.linkedin.clientId>77tm9xfc3d1bxd</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>uat</profile.cloudinary.folder>
+                <profile.jackson.pretty>false</profile.jackson.pretty>
                 <profile.mail.on>true</profile.mail.on>
                 <profile.pusher.app>442395</profile.pusher.app>
                 <profile.pusher.key>ec7ba70c43883cc8964d</profile.pusher.key>
@@ -434,6 +436,7 @@
                 <profile.auth.linkedin.appSecret>CETAZgHuCY0EauA8</profile.auth.linkedin.appSecret>
                 <profile.auth.linkedin.clientId>775lbiy4vugg19</profile.auth.linkedin.clientId>
                 <profile.cloudinary.folder>prod</profile.cloudinary.folder>
+                <profile.jackson.pretty>false</profile.jackson.pretty>
                 <profile.mail.on>true</profile.mail.on>
                 <profile.pusher.app>442398</profile.pusher.app>
                 <profile.pusher.key>5d2f4afe45a2f74273ee</profile.pusher.key>

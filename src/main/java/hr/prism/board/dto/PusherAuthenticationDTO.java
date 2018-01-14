@@ -1,4 +1,4 @@
-package hr.prism.board.authentication;
+package hr.prism.board.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,7 +18,7 @@ public class PusherAuthenticationDTO {
         this.socketId = socketId;
     }
 
-    public String getChannel() {
+    public String getChannelName() {
         return channelName;
     }
 
