@@ -18,7 +18,7 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "and (department.lastMemberTimestamp is null or department.lastMemberTimestamp < :baseline1) " +
             "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
             "order by department.id")
-    List<Long> findAllIdsForTaskNotification(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
+    List<Long> findAllIdsForTaskUpdates(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
         "select department.id " +

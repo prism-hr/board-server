@@ -1,7 +1,10 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.pusher.rest.Pusher;
+import com.pusher.rest.data.Result;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
@@ -16,7 +19,6 @@ import hr.prism.board.representation.ActivityRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,9 +88,11 @@ public class ActivityService {
     @Inject
     private ActivityMapper activityMapper;
 
-    @Lazy
     @Inject
     private Pusher pusher;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -275,6 +280,24 @@ public class ActivityService {
 
     public void deleteActivityUsers(User user) {
         activityUserRepository.deleteByUser(user);
+    }
+
+    public void updateActivities() throws IOException {
+        Result result = pusher.get("/channels");
+        String message = result.getMessage();
+        if (message != null) {
+            Map<String, Map<String, Map<String, Object>>> wrapper = objectMapper.readValue(
+                message, new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {
+                });
+
+            Map<String, Map<String, Object>> channels = wrapper.get("channels");
+            if (channels != null) {
+                LOGGER.info("Updating users subscribed to activity stream");
+                setUserIds(wrapper.get("channels").keySet().stream()
+                    .filter(channel -> channel.startsWith("presence-activities-"))
+                    .map(channel -> Long.parseLong(channel.split("-")[2])).collect(Collectors.toList()));
+            }
+        }
     }
 
     public void sendActivities(Long userId, List<ActivityRepresentation> activities) {

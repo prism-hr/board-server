@@ -22,10 +22,8 @@ import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
-import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -394,15 +392,7 @@ public class PostService {
         return resourceEvent.setViewed(true);
     }
 
-    @Scheduled(initialDelay = 60000, fixedDelay = 10000)
-    public void publishAndRetirePostsScheduled() {
-        if (BooleanUtils.isTrue(schedulerOn)) {
-            publishAndRetirePosts();
-        }
-    }
-
-    public void publishAndRetirePosts() {
-        LocalDateTime baseline = LocalDateTime.now();
+    public void publishAndRetirePosts(LocalDateTime baseline) {
         List<Long> postToRetireIds = postRepository.findPostsToRetire(Arrays.asList(State.PENDING, State.ACCEPTED), baseline);
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
         List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), State.REJECTED, baseline);

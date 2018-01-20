@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -340,7 +341,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         Long postId1 = postR1.getId();
         transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
+            postService.publishAndRetirePosts(LocalDateTime.now());
             return null;
         });
 
@@ -511,7 +512,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         Long postId2 = postR2.getId();
         transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
+            postService.publishAndRetirePosts(LocalDateTime.now());
             return null;
         });
 
@@ -643,7 +644,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         Long postId3 = postR3.getId();
         transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
+            postService.publishAndRetirePosts(LocalDateTime.now());
             return null;
         });
 
@@ -804,7 +805,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setMemberCategories(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         Long postId4 = postR4.getId();
         transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
+            postService.publishAndRetirePosts(LocalDateTime.now());
             return null;
         });
 

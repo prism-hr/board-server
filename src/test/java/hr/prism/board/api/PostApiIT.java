@@ -745,7 +745,7 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.PENDING);
         testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
-        postService.publishAndRetirePosts();
+        postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testActivityService.verify(departmentUserId);
@@ -994,7 +994,7 @@ public class PostApiIT extends AbstractIT {
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.PENDING);
         testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
-        postService.publishAndRetirePosts();
+        postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testActivityService.verify(departmentUserId);
@@ -1279,7 +1279,7 @@ public class PostApiIT extends AbstractIT {
             TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
             TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
-        postService.publishAndRetirePosts();
+        postService.publishAndRetirePosts(LocalDateTime.now());
 
         Long memberUser1 = testUserService.authenticate().getId();
         Long memberUser2 = testUserService.authenticate().getId();
@@ -1405,7 +1405,7 @@ public class PostApiIT extends AbstractIT {
         transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER)));
         transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
-        postService.publishAndRetirePosts();
+        postService.publishAndRetirePosts(LocalDateTime.now());
 
         testUserService.setAuthentication(postUserId);
         List<ActivityRepresentation> activities = transactionTemplate.execute(status -> activityService.getActivities(postUserId));
@@ -1721,7 +1721,7 @@ public class PostApiIT extends AbstractIT {
         // Check that the scheduler does not create duplicate operations
         for (int i = 0; i < 2; i++) {
             transactionTemplate.execute(status -> {
-                postService.publishAndRetirePosts();
+                postService.publishAndRetirePosts(LocalDateTime.now());
                 return null;
             });
         }

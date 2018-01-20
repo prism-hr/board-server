@@ -422,7 +422,7 @@ public class DepartmentService {
         ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
     }
 
-    public List<Long> findAllIdsForTaskNotification(LocalDateTime baseline) {
+    public List<Long> findAllIdsForTaskUpdates(LocalDateTime baseline) {
         LocalDateTime baseline1 = baseline.minusMonths(1);
 
         LocalDateTime baseline2;
@@ -432,7 +432,7 @@ public class DepartmentService {
             baseline2 = LocalDateTime.of(baseline.getYear() - 1, 9, 1, 0, 0);
         }
 
-        return departmentRepository.findAllIdsForTaskNotification(baseline1, baseline2);
+        return departmentRepository.findAllIdsForTaskUpdates(baseline1, baseline2);
     }
 
     public void updateTasks(Long departmentId, LocalDateTime baseline) {

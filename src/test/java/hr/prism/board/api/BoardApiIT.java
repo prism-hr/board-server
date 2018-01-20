@@ -561,7 +561,7 @@ public class BoardApiIT extends AbstractIT {
         transactionTemplate.execute(status -> postApi.executeAction(post2id, "accept", new PostPatchDTO()));
         transactionTemplate.execute(status -> postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment")));
 
-        postService.publishAndRetirePosts();
+        postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostAndAuthorCount(boardId, 2L, 2L);
 
         transactionTemplate.execute(status -> postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment")));
@@ -576,7 +576,7 @@ public class BoardApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> postApi.patchPost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1)))));
         transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
+            postService.publishAndRetirePosts(LocalDateTime.now());
             return null;
         });
 
@@ -587,7 +587,7 @@ public class BoardApiIT extends AbstractIT {
 
         transactionTemplate.execute(status -> postApi.patchPost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty())));
         transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts();
+            postService.publishAndRetirePosts(LocalDateTime.now());
             return null;
         });
 

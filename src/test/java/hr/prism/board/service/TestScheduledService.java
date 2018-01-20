@@ -1,12 +1,11 @@
 package hr.prism.board.service;
 
-import hr.prism.board.service.scheduled.DepartmentScheduledService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
-public class TestDepartmentScheduledService extends DepartmentScheduledService {
+public class TestScheduledService extends ScheduledService {
 
     @Override
     public LocalDateTime getBaseline() {

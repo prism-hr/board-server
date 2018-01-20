@@ -16,10 +16,9 @@ import hr.prism.board.exception.*;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.representation.*;
+import hr.prism.board.service.ScheduledService;
 import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.scheduled.DepartmentScheduledService;
-import hr.prism.board.service.scheduled.ResourceTaskScheduledService;
 import hr.prism.board.util.ObjectUtils;
 import hr.prism.board.utils.BoardUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -78,10 +77,7 @@ public class DepartmentApiIT extends AbstractIT {
     private ResourceTaskRepository resourceTaskRepository;
 
     @Inject
-    private ResourceTaskScheduledService resourceTaskScheduledService;
-
-    @Inject
-    private DepartmentScheduledService departmentScheduledService;
+    private ScheduledService scheduledService;
 
     @Test
     public void shouldCreateDepartment() {
@@ -519,7 +515,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskScheduledService.notifyTasks();
+            scheduledService.notifyDepartmentTasks(LocalDateTime.now());
             return null;
         });
 
@@ -585,7 +581,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskScheduledService.notifyTasks();
+            scheduledService.notifyDepartmentTasks(LocalDateTime.now());
             return null;
         });
 
@@ -658,7 +654,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskScheduledService.notifyTasks();
+            scheduledService.notifyDepartmentTasks(LocalDateTime.now());
             return null;
         });
 
@@ -697,7 +693,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertFalse(departmentR10.getTasks().get(2).getCompleted());
 
         transactionTemplate.execute(status -> {
-            resourceTaskScheduledService.notifyTasks();
+            scheduledService.notifyDepartmentTasks(LocalDateTime.now());
             return null;
         });
 
@@ -799,7 +795,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertTrue(departmentR19.getTasks().get(2).getCompleted());
 
         transactionTemplate.execute(status -> {
-            departmentScheduledService.updateTasks();
+            scheduledService.updateDepartmentTasks(scheduledService.getBaseline());
             return null;
         });
 
@@ -821,7 +817,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertTrue(departmentR22.getTasks().get(1).getCompleted());
         Assert.assertTrue(departmentR22.getTasks().get(2).getCompleted());
 
-        LocalDateTime baseline = departmentScheduledService.getBaseline();
+        LocalDateTime baseline = scheduledService.getBaseline();
         LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
         transactionTemplate.execute(status -> {
             Department localDepartment = departmentService.getDepartment(departmentId);
@@ -832,7 +828,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            departmentScheduledService.updateTasks();
+            scheduledService.updateDepartmentTasks(scheduledService.getBaseline());
             return null;
         });
 
@@ -843,7 +839,7 @@ public class DepartmentApiIT extends AbstractIT {
         });
 
         transactionTemplate.execute(status -> {
-            resourceTaskScheduledService.notifyTasks();
+            scheduledService.notifyDepartmentTasks(LocalDateTime.now());
             return null;
         });
 
