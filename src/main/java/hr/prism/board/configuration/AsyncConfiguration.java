@@ -1,7 +1,8 @@
 package hr.prism.board.configuration;
 
 import com.google.common.base.Joiner;
-
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
@@ -13,9 +14,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
 
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-
 @EnableAsync
 @Configuration
 public class AsyncConfiguration implements AsyncConfigurer {
@@ -24,8 +22,8 @@ public class AsyncConfiguration implements AsyncConfigurer {
     @Override
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(20);
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
         executor.setWaitForTasksToCompleteOnShutdown(true);
         return executor;
     }
