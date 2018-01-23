@@ -386,7 +386,8 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
-            ImmutableMap.<String, String>builder().put("recipient", "admin1")
+            ImmutableMap.<String, String>builder()
+                .put("recipient", "admin1")
                 .put("department", "department 4")
                 .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
                 .put("invitationUuid", department2UserRole.getUuid())
@@ -906,6 +907,40 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentR = transactionTemplate.execute(status -> departmentApi.getDepartment(departmentId));
         Assert.assertEquals(State.PENDING, departmentR.getState());
+
+        testActivityService.record();
+        testNotificationService.record();
+        listenForActivities(departmentUserId);
+
+        String recipient = departmentUser.getGivenName();
+        Department department = transactionTemplate.execute(status -> (Department) resourceService.findOne(departmentId));
+        Assert.assertNull(department.getNotifiedCount());
+
+        String departmentAdminRoleUuid = transactionTemplate
+            .execute(status -> userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR)).getUuid();
+        String pendingExpiryDeadline = department.getStateChangeTimestamp()
+            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
+        String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
+
+        LocalDateTime baseline = LocalDateTime.now();
+        scheduledService.updateDepartmentSubscriptions(baseline);
+        scheduledService.updateDepartmentSubscriptions(baseline);
+
+        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY));
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder()
+                .put("recipient", recipient)
+                .put("pendingExpiryDeadline", pendingExpiryDeadline)
+                .put("department", "department")
+                .put("accountRedirect", accountRedirect)
+                .put("invitationUuid", departmentAdminRoleUuid)
+                .build()));
+
+        Department updatedDepartment = transactionTemplate.execute(status -> (Department) resourceService.findOne(departmentId));
+        Assert.assertEquals(new Integer(1), updatedDepartment.getNotifiedCount());
+
+        testNotificationService.record();
+        testActivityService.stop();
     }
 
     @Test
