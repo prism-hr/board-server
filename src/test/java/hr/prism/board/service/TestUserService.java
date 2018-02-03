@@ -3,8 +3,11 @@ package hr.prism.board.service;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.RegisterDTO;
+import hr.prism.board.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.math.BigInteger;
@@ -14,7 +17,13 @@ import java.security.SecureRandom;
 public class TestUserService {
 
     @Inject
+    private UserRepository userRepository;
+
+    @Inject
     private AuthenticationService authenticationService;
+
+    @Value("${password.reset.timeout.seconds}")
+    private Long passwordResetTimeoutSeconds;
 
     private SecureRandom random = new SecureRandom();
 
@@ -36,6 +45,13 @@ public class TestUserService {
 
     public void unauthenticate() {
         SecurityContextHolder.getContext().setAuthentication(null);
+    }
+
+    @Transactional
+    public void expirePasswordResetTimestamp(Long userId) {
+        User updatedUser = userRepository.findOne(userId);
+        updatedUser.setPasswordResetTimestamp(updatedUser.getPasswordResetTimestamp().minusSeconds(passwordResetTimeoutSeconds + 1));
+        userRepository.save(updatedUser);
     }
 
 }

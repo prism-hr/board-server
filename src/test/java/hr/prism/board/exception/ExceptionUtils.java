@@ -6,6 +6,11 @@ import org.springframework.transaction.TransactionStatus;
 public class ExceptionUtils {
 
     @SuppressWarnings("unchecked")
+    public static <T extends BoardException> T verifyException(Class<T> exceptionClass, Runnable operation, ExceptionCode exceptionCode) {
+        return verifyException(exceptionClass, operation, exceptionCode, null);
+    }
+
+    @SuppressWarnings("unchecked")
     public static <T extends BoardException> T verifyException(Class<T> exceptionClass, Runnable operation, ExceptionCode exceptionCode, TransactionStatus status) {
         BoardException boardException = null;
         try {
