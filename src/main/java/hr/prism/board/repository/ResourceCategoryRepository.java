@@ -6,7 +6,9 @@ import hr.prism.board.enums.CategoryType;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @SuppressWarnings("JpaQlInspection")
 public interface ResourceCategoryRepository extends BoardEntityRepository<ResourceCategory, Long> {
 

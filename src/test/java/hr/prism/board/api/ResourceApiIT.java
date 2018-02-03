@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.google.common.collect.Streams;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.Post;
@@ -65,13 +64,10 @@ public class ResourceApiIT extends AbstractIT {
         testUserService.setAuthentication(newUser.getId());
 
         // try to remove yourself as administrator
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class,
-                () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, boardManager.getUser().getId(),
-                    new UserRoleDTO().setUser(newUserDTO).setRole(Role.MEMBER).setMemberCategory(MemberCategory.MASTER_STUDENT)),
-                ExceptionCode.IRREMOVABLE_USER_ROLE, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, boardManager.getUser().getId(),
+                new UserRoleDTO().setUser(newUserDTO).setRole(Role.MEMBER).setMemberCategory(MemberCategory.MASTER_STUDENT)),
+            ExceptionCode.IRREMOVABLE_USER_ROLE);
 
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
@@ -83,11 +79,8 @@ public class ResourceApiIT extends AbstractIT {
         User creator = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("last-admin-user").setSummary("last-admin-user summary")).getId();
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class,
-                () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode.IRREMOVABLE_USER, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> resourceApi.deleteResourceUser(Scope.DEPARTMENT, departmentId, creator.getId()), ExceptionCode.IRREMOVABLE_USER);
 
         List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
@@ -105,8 +98,8 @@ public class ResourceApiIT extends AbstractIT {
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
 
         // try to add a user to a board
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId,
-            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))));
+        departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         ExceptionUtils.verifyException(BoardException.class,
             () -> resourceApi.createResourceUser(Scope.BOARD, boardR.getId(),
                 new UserRoleDTO().setUser(newUser).setRole(Role.MEMBER).setMemberCategory(MemberCategory.RESEARCH_STUDENT)),
@@ -128,8 +121,8 @@ public class ResourceApiIT extends AbstractIT {
         BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
         // try with a board
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId,
-            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))));
+        departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         ExceptionUtils.verifyException(BoardException.class,
             () -> resourceApi.updateResourceUser(Scope.BOARD, boardR.getId(), user.getId(),
                 new UserRoleDTO().setRole(Role.MEMBER).setMemberCategory(MemberCategory.RESEARCH_STUDENT)),
@@ -199,8 +192,8 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/resource_filter_setup.sql")
     public void shouldListAndFilterResources() {
-        transactionTemplate.execute(status -> {
-            Streams.stream(resourceRepository.findAll()).sorted((resource1, resource2) -> ObjectUtils.compare(resource1.getId(), resource2.getId())).forEach(resource -> {
+        resourceRepository.findAll().stream().sorted((resource1, resource2) -> ObjectUtils.compare(resource1.getId(), resource2.getId()))
+            .forEach(resource -> {
                 if (Arrays.asList(Scope.UNIVERSITY, Scope.DEPARTMENT, Scope.BOARD).contains(resource.getScope())) {
                     resourceService.setIndexDataAndQuarter(resource);
                 } else {
@@ -208,10 +201,7 @@ public class ResourceApiIT extends AbstractIT {
                 }
             });
 
-            return null;
-        });
-
-        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@administrator.com")).getId();
+        Long userId = userCacheService.findByEmail("department@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         List<BoardRepresentation> boardRs = boardApi.getBoards(null, false, null, null, null);
@@ -232,7 +222,7 @@ public class ResourceApiIT extends AbstractIT {
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
 
-        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@author.com")).getId();
+        userId = userCacheService.findByEmail("board@author.com").getId();
         testUserService.setAuthentication(userId);
 
         boardRs = boardApi.getBoards(null, false, null, null, null);
@@ -262,7 +252,7 @@ public class ResourceApiIT extends AbstractIT {
         postRs = postApi.getPosts(null, false, State.REJECTED, null, null);
         Assert.assertEquals(0, postRs.size());
 
-        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("department@member.com")).getId();
+        userId = userCacheService.findByEmail("department@member.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(null, false, null, null, null);
@@ -278,7 +268,7 @@ public class ResourceApiIT extends AbstractIT {
         verifyContains(postNames, "Database Engineer");
 
         testUserService.unauthenticate();
-        Long boardId = transactionTemplate.execute(status -> boardService.getBoard("ed/cs/opportunities")).getId();
+        Long boardId = boardService.getBoard("ed/cs/opportunities").getId();
 
         postRs = postApi.getPosts(boardId, true, null, null, null);
         Assert.assertEquals(3, postRs.size());
@@ -292,7 +282,7 @@ public class ResourceApiIT extends AbstractIT {
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer");
 
-        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("post@administrator.com")).getId();
+        userId = userCacheService.findByEmail("post@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(boardId, false, null, null, null);
@@ -307,7 +297,7 @@ public class ResourceApiIT extends AbstractIT {
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Technical Analyst");
 
-        userId = transactionTemplate.execute(status -> userCacheService.findByEmail("board@administrator.com")).getId();
+        userId = userCacheService.findByEmail("board@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(boardId, false, null, null, null);
@@ -354,19 +344,15 @@ public class ResourceApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/user_role_filter_setup.sql")
     public void shouldListAndFilterUserRoles() {
-        transactionTemplate.execute(status -> {
-            for (User user : userRepository.findAll()) {
-                userCacheService.setIndexData(user);
-                userRepository.update(user);
-            }
+        for (User user : userRepository.findAll()) {
+            userCacheService.setIndexData(user);
+            userRepository.update(user);
+        }
 
-            return null;
-        });
-
-        Long userId = transactionTemplate.execute(status -> userCacheService.findByEmail("alastair@knowles.com")).getId();
+        Long userId = userCacheService.findByEmail("alastair@knowles.com").getId();
         testUserService.setAuthentication(userId);
 
-        Long departmentId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs")).getId();
+        Long departmentId = resourceRepository.findByHandle("cs").getId();
         UserRolesRepresentation userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null);
         Assert.assertEquals(2, userRoles.getUsers().size());
         Assert.assertEquals(2, userRoles.getMembers().size());
@@ -407,7 +393,7 @@ public class ResourceApiIT extends AbstractIT {
             () -> resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null), ExceptionCode.UNAUTHENTICATED_USER, null);
 
         testUserService.setAuthentication(userId);
-        Long boardId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs/opportunities")).getId();
+        Long boardId = resourceRepository.findByHandle("cs/opportunities").getId();
         userRoles = resourceApi.getUserRoles(Scope.BOARD, boardId, null);
         Assert.assertEquals(4, userRoles.getUsers().size());
         Assert.assertEquals(0, userRoles.getMembers().size());

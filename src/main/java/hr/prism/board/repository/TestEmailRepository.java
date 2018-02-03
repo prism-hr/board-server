@@ -4,9 +4,11 @@ import hr.prism.board.domain.TestEmail;
 import hr.prism.board.representation.TestEmailMessageRepresentation;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Transactional
 @SuppressWarnings("JpaQlInspection")
 public interface TestEmailRepository extends BoardEntityRepository<TestEmail, Long> {
 

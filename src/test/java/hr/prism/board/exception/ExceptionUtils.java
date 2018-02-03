@@ -29,6 +29,11 @@ public class ExceptionUtils {
         return (T) boardException;
     }
 
+    public static void verifyDuplicateException(Runnable operation, ExceptionCode exceptionCode, Long id) {
+        BoardDuplicateException boardDuplicateException = verifyException(BoardDuplicateException.class, operation, exceptionCode, null);
+        Assert.assertEquals(id, boardDuplicateException.getId());
+    }
+
     public static void verifyDuplicateException(Runnable operation, ExceptionCode exceptionCode, Long id, TransactionStatus status) {
         BoardDuplicateException boardDuplicateException = verifyException(BoardDuplicateException.class, operation, exceptionCode, status);
         Assert.assertEquals(id, boardDuplicateException.getId());

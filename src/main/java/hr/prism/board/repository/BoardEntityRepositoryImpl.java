@@ -5,6 +5,7 @@ import hr.prism.board.domain.BoardEntity;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.Serializable;
@@ -18,6 +19,7 @@ public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Se
     }
 
     @Override
+    @Transactional
     public <T extends ENTITY> T save(T entity) {
         if (entity.getCreatorId() == null) {
             AuthenticationToken authentication = (AuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -33,6 +35,7 @@ public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Se
     }
 
     @Override
+    @Transactional
     public <T extends ENTITY> T update(T entity) {
         entity.setUpdatedTimestamp(LocalDateTime.now());
         return entity;

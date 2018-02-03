@@ -100,14 +100,14 @@ public class PostApiIT extends AbstractIT {
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
         Map<Long, String> unprivilegedUserPosts = new LinkedHashMap<>();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
         User user11 = testUserService.authenticate();
-        Long departmentId1 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+        Long departmentId1 =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
 
         BoardDTO boardDTO11 = TestHelper.sampleBoard().setName("board11");
-        BoardRepresentation boardR11 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, boardDTO11));
+        BoardRepresentation boardR11 = boardApi.postBoard(departmentId1, boardDTO11);
 
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -118,7 +118,7 @@ public class PostApiIT extends AbstractIT {
 
         User user12 = testUserService.authenticate();
         BoardDTO boardDTO12 = TestHelper.smallSampleBoard().setName("board12");
-        BoardRepresentation boardR12 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId1, boardDTO12));
+        BoardRepresentation boardR12 = boardApi.postBoard(departmentId1, boardDTO12);
         testUserService.setAuthentication(user11.getId());
         boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
         testUserService.setAuthentication(user12.getId());
@@ -130,11 +130,11 @@ public class PostApiIT extends AbstractIT {
         unprivilegedUserPosts.put(board12Id, board12PostName);
 
         User user21 = testUserService.authenticate();
-        Long departmentId2 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
+        Long departmentId2 =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary")).getId();
 
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard().setName("board21");
-        BoardRepresentation boardR21 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, boardDTO21));
+        BoardRepresentation boardR21 = boardApi.postBoard(departmentId2, boardDTO21);
 
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -145,7 +145,7 @@ public class PostApiIT extends AbstractIT {
         User user22 = testUserService.authenticate();
         BoardDTO boardDTO22 = TestHelper.sampleBoard();
         boardDTO22.setName("board22");
-        BoardRepresentation boardR22 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId2, boardDTO22));
+        BoardRepresentation boardR22 = boardApi.postBoard(departmentId2, boardDTO22);
 
         Long board22Id = boardR22.getId();
         testUserService.setAuthentication(user21.getId());
@@ -308,63 +308,12 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldNotAcceptPostWithMissingApply() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO =
-                new PostDTO()
-                    .setName("post")
-                    .setSummary("summary")
-                    .setOrganizationName("organization name")
-                    .setLocation(new LocationDTO().setName("location").setDomicile("PL")
-                        .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                    .setPostCategories(Collections.singletonList("p1"))
-                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                    .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY, status);
-            return null;
-        });
-    }
-
-    @Test
-    public void shouldNotAcceptPostWithCorruptedApply() {
-        testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO =
-                new PostDTO()
-                    .setName("post")
-                    .setSummary("summary")
-                    .setOrganizationName("organization name")
-                    .setLocation(new LocationDTO().setName("location").setDomicile("PL")
-                        .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
-                    .setPostCategories(Collections.singletonList("p1"))
-                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
-                    .setApplyWebsite("http://www.google.com")
-                    .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
-                    .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_APPLY, status);
-            return null;
-        });
-    }
-
-    @Test
-    public void shouldNotAcceptPostWithMissingRelationForUserWithoutAuthorRole() {
-        testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
-        testUserService.authenticate();
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = new PostDTO()
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+        PostDTO postDTO =
+            new PostDTO()
                 .setName("post")
                 .setSummary("summary")
                 .setOrganizationName("organization name")
@@ -372,167 +321,166 @@ public class PostApiIT extends AbstractIT {
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY);
+    }
+
+    @Test
+    public void shouldNotAcceptPostWithCorruptedApply() {
+        testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+        PostDTO postDTO =
+            new PostDTO()
+                .setName("post")
+                .setSummary("summary")
+                .setOrganizationName("organization name")
+                .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                    .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+                .setPostCategories(Collections.singletonList("p1"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                .setApplyWebsite("http://www.google.com")
                 .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
                 .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_APPLY);
+    }
+
+    @Test
+    public void shouldNotAcceptPostWithMissingRelationForUserWithoutAuthorRole() {
+        testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+        testUserService.authenticate();
+        PostDTO postDTO = new PostDTO()
+            .setName("post")
+            .setSummary("summary")
+            .setOrganizationName("organization name")
+            .setLocation(new LocationDTO().setName("location").setDomicile("PL")
+                .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
+            .setPostCategories(Collections.singletonList("p1"))
+            .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+            .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
+            .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+            .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION);
     }
 
     @Test
     public void shouldNotAcceptPostWithCategoriesForBoardWithoutCategories() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId());
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId();
 
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
-            return null;
-        });
+        PostDTO postDTO0 = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
 
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty())));
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
+        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
+        PostDTO postDTO1 = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
     }
 
     @Test
     public void shouldNotAcceptPostWithoutCategoriesForBoardWithCategories() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
 
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
-            return null;
-        });
+        PostDTO postDTO0 = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.MISSING_POST_POST_CATEGORIES);
 
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
+        PostDTO postDTO1 = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.MISSING_POST_MEMBER_CATEGORIES);
     }
 
     @Test
     public void shouldNotAcceptPostWithInvalidCategoriesForBoardWithCategories() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId());
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
 
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
-            return null;
-        });
+        PostDTO postDTO0 = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.INVALID_POST_POST_CATEGORIES);
 
-        transactionTemplate.execute(status -> {
-            departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
-            return null;
-        });
-
-        transactionTemplate.execute(status -> {
-            PostDTO postDTO = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
-            ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
+        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
+        PostDTO postDTO1 = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
+        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
     }
 
     @Test
     public void shouldNotCorruptPostByPatching() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        BoardRepresentation boardRepresentation = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()));
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        BoardRepresentation boardRepresentation = boardApi.postBoard(departmentId, TestHelper.sampleBoard());
         Long boardId = boardRepresentation.getId();
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.samplePost()).getId());
+        Long postId = postApi.postPost(boardId, TestHelper.samplePost()).getId();
 
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.patchPost(postId, new PostPatchDTO()
-                        .setPostCategories(Optional.empty())),
-                ExceptionCode.MISSING_POST_POST_CATEGORIES, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class, () ->
+                postApi.patchPost(postId, new PostPatchDTO()
+                    .setPostCategories(Optional.empty())),
+            ExceptionCode.MISSING_POST_POST_CATEGORIES);
 
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.patchPost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.empty())),
-                ExceptionCode.MISSING_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class, () ->
+                postApi.patchPost(postId, new PostPatchDTO()
+                    .setMemberCategories(Optional.empty())),
+            ExceptionCode.MISSING_POST_MEMBER_CATEGORIES);
 
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.patchPost(postId, new PostPatchDTO()
-                        .setPostCategories(Optional.of(Collections.singletonList("p4")))),
-                ExceptionCode.INVALID_POST_POST_CATEGORIES, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class, () ->
+                postApi.patchPost(postId, new PostPatchDTO()
+                    .setPostCategories(Optional.of(Collections.singletonList("p4")))),
+            ExceptionCode.INVALID_POST_POST_CATEGORIES);
 
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId,
-            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))));
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.patchPost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
-                ExceptionCode.INVALID_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
+        departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
+        ExceptionUtils.verifyException(BoardException.class, () ->
+                postApi.patchPost(postId, new PostPatchDTO()
+                    .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
+            ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
 
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty())));
-        transactionTemplate.execute(status -> boardApi.patchBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty())));
+        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
+        boardApi.patchBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty()));
 
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.patchPost(postId, new PostPatchDTO()
-                        .setPostCategories(Optional.of(Collections.singletonList("p1")))),
-                ExceptionCode.CORRUPTED_POST_POST_CATEGORIES, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class, () ->
+                postApi.patchPost(postId, new PostPatchDTO()
+                    .setPostCategories(Optional.of(Collections.singletonList("p1")))),
+            ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
 
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyException(BoardException.class, () ->
-                    postApi.patchPost(postId, new PostPatchDTO()
-                        .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
-                ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES, status);
-            return null;
-        });
+        ExceptionUtils.verifyException(BoardException.class, () ->
+                postApi.patchPost(postId, new PostPatchDTO()
+                    .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
+            ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
     }
 
     @Test
     public void shouldSupportPostLifecycleAndPermissions() {
-        // Create department and board
+        // Create departmentResource and board
         User departmentUser = testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.sampleBoard()));
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("departmentResource summary")).getId();
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, TestHelper.sampleBoard());
         Long boardId = boardR.getId();
 
-        // Allow department to have research students
+        // Allow departmentResource to have research students
         departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(
             Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT, MemberCategory.RESEARCH_STUDENT))));
 
         User boardUser = testUserService.authenticate();
-        transactionTemplate.execute(status -> {
-            Board board = boardService.getBoard(boardId);
-            userRoleService.createOrUpdateUserRole(board, boardUser, Role.ADMINISTRATOR);
-            return null;
-        });
+        Board board = boardService.getBoard(boardId);
+        userRoleService.createOrUpdateUserRole(board, boardUser, Role.ADMINISTRATOR);
 
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
 
@@ -561,12 +509,12 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
         testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
 
-        Resource department = resourceService.findOne(departmentId);
-        Resource board = resourceService.findOne(boardId);
-        Resource post = resourceService.findOne(postId);
-        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
-        String boardAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(board, boardUser, Role.ADMINISTRATOR).getUuid();
-        String postAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(post, postUser, Role.ADMINISTRATOR).getUuid();
+        Resource departmentResource = resourceService.findOne(departmentId);
+        Resource boardResource = resourceService.findOne(boardId);
+        Resource postResource = resourceService.findOne(postId);
+        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentUser, Role.ADMINISTRATOR).getUuid();
+        String boardAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(boardResource, boardUser, Role.ADMINISTRATOR).getUuid();
+        String postAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(postResource, postUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
@@ -607,14 +555,11 @@ public class PostApiIT extends AbstractIT {
         // Clear activity streams for the admin users
         for (Long userId : new Long[]{departmentUserId, boardUserId}) {
             testUserService.setAuthentication(userId);
-            List<Long> activityIds = transactionTemplate.execute(status ->
-                activityService.getActivities(userId).stream().map(ActivityRepresentation::getId).collect(Collectors.toList()));
+            List<Long> activityIds =
+                activityService.getActivities(userId).stream().map(ActivityRepresentation::getId).collect(Collectors.toList());
             Assert.assertEquals(2, activityIds.size());
             for (Long activityId : activityIds) {
-                transactionTemplate.execute(status -> {
-                    userApi.dismissActivity(activityId);
-                    return null;
-                });
+                userApi.dismissActivity(activityId);
             }
 
             listenForActivities(userId);
@@ -638,7 +583,7 @@ public class PostApiIT extends AbstractIT {
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         // Check that we do not audit viewing
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
 
         LocalDateTime liveTimestamp = postR.getLiveTimestamp();
         LocalDateTime deadTimestamp = postR.getDeadTimestamp();
@@ -824,17 +769,13 @@ public class PostApiIT extends AbstractIT {
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
-
-        transactionTemplate.execute(status -> {
-            Post localPost = postService.getPost(postId);
-            localPost.setLiveTimestamp(liveTimestamp);
-            localPost.setDeadTimestamp(deadTimestamp);
-            return null;
-        });
+        Post localPost0 = postService.getPost(postId);
+        localPost0.setLiveTimestamp(liveTimestamp);
+        localPost0.setDeadTimestamp(deadTimestamp);
 
         // Should be notified
         testUserService.setAuthentication(departmentUserId);
-        Long departmentMember1Id = transactionTemplate.execute(status ->
+        Long departmentMember1Id =
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
@@ -843,10 +784,10 @@ public class PostApiIT extends AbstractIT {
                         .setEmail("student1@student1.com"))
                     .setRole(Role.MEMBER)
                     .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
-                    .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId());
+                    .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId();
 
         // Should be notified
-        Long departmentMember2Id = transactionTemplate.execute(status ->
+        Long departmentMember2Id =
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
@@ -854,10 +795,10 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student2")
                         .setEmail("student2@student2.com"))
                     .setRole(Role.MEMBER)
-                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId());
+                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId();
 
         // Should not be notified - suppressed
-        Long departmentMember3Id = transactionTemplate.execute(status ->
+        Long departmentMember3Id =
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
@@ -865,14 +806,14 @@ public class PostApiIT extends AbstractIT {
                         .setSurname("student3")
                         .setEmail("student3@student3.com"))
                     .setRole(Role.MEMBER)
-                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId());
+                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId();
 
         testUserService.setAuthentication(departmentMember3Id);
         userApi.postSuppressions();
 
         // Should not be notified
         testUserService.setAuthentication(departmentUserId);
-        Long departmentMember4Id = transactionTemplate.execute(status ->
+        Long departmentMember4Id =
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
@@ -881,10 +822,10 @@ public class PostApiIT extends AbstractIT {
                         .setEmail("student4@student4.com"))
                     .setRole(Role.MEMBER)
                     .setMemberCategory(MemberCategory.RESEARCH_STUDENT)
-                    .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId());
+                    .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId();
 
         // Should not be notified
-        Long departmentMember5Id = transactionTemplate.execute(status ->
+        Long departmentMember5Id =
             resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
@@ -893,7 +834,7 @@ public class PostApiIT extends AbstractIT {
                         .setEmail("student5@student5.com"))
                     .setRole(Role.MEMBER)
                     .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
-                    .setExpiryDate(LocalDate.now().minusDays(1))).getUser().getId());
+                    .setExpiryDate(LocalDate.now().minusDays(1))).getUser().getId();
 
         listenForActivities(departmentMember1Id);
         listenForActivities(departmentMember2Id);
@@ -921,8 +862,8 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentMember4Id);
         testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
-        UserRole departmentMemberRole1 = userRoleService.findByResourceAndUserAndRole(department, departmentMember1, Role.MEMBER);
-        UserRole departmentMemberRole2 = userRoleService.findByResourceAndUserAndRole(department, departmentMember2, Role.MEMBER);
+        UserRole departmentMemberRole1 = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentMember1, Role.MEMBER);
+        UserRole departmentMemberRole2 = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentMember2, Role.MEMBER);
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
@@ -1050,11 +991,8 @@ public class PostApiIT extends AbstractIT {
                     .put("recipientUuid", departmentMember2Uuid)
                     .build()));
 
-        transactionTemplate.execute(status -> {
-            Post localPost = postService.getPost(postId);
-            localPost.setDeadTimestamp(liveTimestamp.minusSeconds(1));
-            return null;
-        });
+        Post localPost1 = postService.getPost(postId);
+        localPost1.setDeadTimestamp(liveTimestamp.minusSeconds(1));
 
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
@@ -1090,11 +1028,8 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeAction(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
-        transactionTemplate.execute(status -> {
-            Post localPost = postService.getPost(postId);
-            localPost.setDeadTimestamp(null);
-            return null;
-        });
+        Post localPost2 = postService.getPost(postId);
+        localPost2.setDeadTimestamp(null);
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
@@ -1148,7 +1083,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUser.getId());
-        List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> postApi.getPostOperations(postId));
+        List<ResourceOperationRepresentation> resourceOperationRs = postApi.getPostOperations(postId);
         Assert.assertEquals(20, resourceOperationRs.size());
 
         // Operations are returned most recent first - reverse the order to make it easier to test
@@ -1269,38 +1204,38 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldCountPostViewsReferralsAndResponses() throws IOException {
         Long boardUserId = testUserService.authenticate().getId();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()));
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard());
         Long boardId = boardR.getId();
 
-        transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
+        postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+        Long postId = postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
         postService.publishAndRetirePosts(LocalDateTime.now());
 
         Long memberUser1 = testUserService.authenticate().getId();
         Long memberUser2 = testUserService.authenticate().getId();
 
         testUserService.setAuthentication(boardUserId);
-        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1)).setRole(Role.MEMBER)));
-        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER)));
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1)).setRole(Role.MEMBER));
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER));
 
         testUserService.setAuthentication(memberUser1);
         departmentApi.putMembershipUpdate(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
-        PostRepresentation viewPostMemberUser1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
+        PostRepresentation viewPostMemberUser1 = postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1"));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
         String referral1 = viewPostMemberUser1.getReferral().getReferral();
         Assert.assertNotNull(referral1);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1"));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
 
         testUserService.setAuthentication(memberUser2);
@@ -1308,85 +1243,85 @@ public class PostApiIT extends AbstractIT {
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
-        PostRepresentation viewPostMemberUser2 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
+        PostRepresentation viewPostMemberUser2 = postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2"));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
         String referral2 = viewPostMemberUser2.getReferral().getReferral();
         Assert.assertNotNull(referral2);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2"));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
 
         testUserService.unauthenticate();
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1"));
         verifyViewReferralAndResponseCounts(postId, 3L, 0L, 0L);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1"));
         verifyViewReferralAndResponseCounts(postId, 3L, 0L, 0L);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2"));
         verifyViewReferralAndResponseCounts(postId, 4L, 0L, 0L);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2", "proxy2")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown2", "proxy2"));
         verifyViewReferralAndResponseCounts(postId, 4L, 0L, 0L);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown3", "proxy3")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown3", "proxy3"));
         verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
 
-        transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown3", "proxy3")));
+        postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown3", "proxy3"));
         verifyViewReferralAndResponseCounts(postId, 5L, 0L, 0L);
 
-        PostRepresentation viewPostUnknown1 = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1")));
+        PostRepresentation viewPostUnknown1 = postApi.getPost(postId, TestHelper.mockHttpServletRequest("unknown1"));
         Assert.assertNull(viewPostUnknown1.getReferral());
 
         TestHelper.MockHttpServletResponse response = TestHelper.mockHttpServletResponse();
         verifyPostReferral(referral1, response, "http://www.google.co.uk");
         verifyViewReferralAndResponseCounts(postId, 5L, 1L, 0L);
 
-        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardForbiddenException.class,
-            () -> verifyPostReferral(referral1, response, "http://www.google.co.uk"), ExceptionCode.FORBIDDEN_REFERRAL, status));
+        ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> verifyPostReferral(referral1, response, "http://www.google.co.uk"), ExceptionCode.FORBIDDEN_REFERRAL);
 
         testUserService.setAuthentication(boardUserId);
         DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
-        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty())));
+        postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty()));
 
         testUserService.setAuthentication(memberUser2);
         verifyPostReferral(referral2, response, "http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
 
-        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardException.class,
-            () -> postApi.postPostResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT, status));
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> postApi.postPostResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT);
 
         testUserService.setAuthentication(boardUserId);
-        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.empty()).setApplyEmail(Optional.of("email@email.com"))));
+        postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.empty()).setApplyEmail(Optional.of("email@email.com")));
 
         testUserService.setAuthentication(memberUser1);
         ResourceEventDTO resourceEventDTO = new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website").setCoveringNote("note");
-        transactionTemplate.execute(status -> postApi.postPostResponse(postId, resourceEventDTO));
+        postApi.postPostResponse(postId, resourceEventDTO);
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 1L);
 
-        transactionTemplate.execute(status -> ExceptionUtils.verifyException(BoardDuplicateException.class, () ->
-            postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT, status));
+        ExceptionUtils.verifyException(BoardDuplicateException.class, () ->
+            postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT);
 
         testUserService.setAuthentication(memberUser2);
-        transactionTemplate.execute(status -> postApi.postPostResponse(postId, resourceEventDTO));
+        postApi.postPostResponse(postId, resourceEventDTO);
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 2L);
     }
 
     @Test
     public void shouldNotifyAndListPostResponses() throws IOException {
         Long boardUserId = testUserService.authenticate().getId();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()));
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard());
         Long boardId = boardR.getId();
 
         User postUser = testUserService.authenticate();
         Long postUserId = postUser.getId();
         String postUserEmail = postUser.getEmail();
-        Long postId = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost()
-            .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)).setApplyWebsite(null).setApplyEmail(postUserEmail))).getId();
+        Long postId = postApi.postPost(boardId, TestHelper.smallSamplePost()
+            .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)).setApplyWebsite(null).setApplyEmail(postUserEmail)).getId();
 
         User memberUser1 = testUserService.authenticate();
         Long memberUser1Id = memberUser1.getId();
@@ -1398,21 +1333,18 @@ public class PostApiIT extends AbstractIT {
         Long memberUser3Id = memberUser3.getId();
 
         testUserService.setAuthentication(boardUserId);
-        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(Role.MEMBER)));
-        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(Role.MEMBER)));
-        transactionTemplate.execute(status -> resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER)));
-        transactionTemplate.execute(status -> postApi.executeAction(postId, "accept", new PostPatchDTO()));
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(Role.MEMBER));
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(Role.MEMBER));
+        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER));
+        postApi.executeAction(postId, "accept", new PostPatchDTO());
         postService.publishAndRetirePosts(LocalDateTime.now());
 
         testUserService.setAuthentication(postUserId);
-        List<ActivityRepresentation> activities = transactionTemplate.execute(status -> activityService.getActivities(postUserId));
-        activities.forEach(activity -> transactionTemplate.execute(status -> {
-            userApi.dismissActivity(activity.getId());
-            return null;
-        }));
+        List<ActivityRepresentation> activities = activityService.getActivities(postUserId);
+        activities.forEach(activity -> userApi.dismissActivity(activity.getId()));
 
         testActivityService.record();
         testNotificationService.record();
@@ -1425,8 +1357,8 @@ public class PostApiIT extends AbstractIT {
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
-        Long responseId = transactionTemplate.execute(status -> postApi.postPostResponse(postId,
-            new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1"))).getId();
+        Long responseId = postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1")).getId();
 
         User postEmailUser = new User();
         postEmailUser.setGivenName("Author");
@@ -1441,15 +1373,15 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
-        List<ResourceEventRepresentation> responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        List<ResourceEventRepresentation> responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(1, responses.size());
         Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(1, responses.size());
         Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
-        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
+        postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
         testUserService.setAuthentication(memberUser2Id);
         departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
@@ -1458,8 +1390,8 @@ public class PostApiIT extends AbstractIT {
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments2.pdf");
-        transactionTemplate.execute(status -> postApi.postPostResponse(postId,
-            new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2")));
+        postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2"));
 
         postEmailUser.setEmail("other@other.com");
         testNotificationService.verify(
@@ -1472,30 +1404,30 @@ public class PostApiIT extends AbstractIT {
             new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
-        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail))));
+        postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail)));
 
         testUserService.setAuthentication(postUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
-        transactionTemplate.execute(status -> postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com"))));
+        postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
         testUserService.setAuthentication(memberUser3Id);
         departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
@@ -1504,8 +1436,8 @@ public class PostApiIT extends AbstractIT {
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments3.pdf");
-        transactionTemplate.execute(status -> postApi.postPostResponse(postId,
-            new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3")));
+        postApi.postPostResponse(postId,
+            new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3"));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
@@ -1521,45 +1453,38 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(3, responses.size());
         Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertEquals(3, responses.size());
         Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
         testUserService.setAuthentication(postUserId);
-        transactionTemplate.execute(status -> {
-            postApi.putPostResponseView(postId, responseId);
-            return null;
-        });
+        postApi.putPostResponseView(postId, responseId);
 
-        ResourceEventRepresentation response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
+        ResourceEventRepresentation response1 = postApi.getPostResponse(postId, responseId);
         Assert.assertEquals(memberUser1Id, response1.getUser().getId());
 
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertFalse(responses.get(0).isViewed());
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());
 
         testUserService.setAuthentication(boardUserId);
-        transactionTemplate.execute(status -> postApi.getPostResponses(postId, null)).forEach(response -> Assert.assertFalse(response.isViewed()));
+        postApi.getPostResponses(postId, null).forEach(response -> Assert.assertFalse(response.isViewed()));
+        postApi.putPostResponseView(postId, responseId);
 
-        transactionTemplate.execute(status -> {
-            postApi.putPostResponseView(postId, responseId);
-            return null;
-        });
-
-        response1 = transactionTemplate.execute(status -> postApi.getPostResponse(postId, responseId));
+        response1 = postApi.getPostResponse(postId, responseId);
         Assert.assertEquals(memberUser1Id, response1.getUser().getId());
 
-        responses = transactionTemplate.execute(status -> postApi.getPostResponses(postId, null));
+        responses = postApi.getPostResponses(postId, null);
         Assert.assertFalse(responses.get(0).isViewed());
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());
@@ -1568,13 +1493,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/post_response_filter_setup.sql")
     public void shouldListAndFilterPostResponses() {
-        transactionTemplate.execute(status -> {
-            resourceEventRepository.findAll().forEach(resourceEventService::setIndexData);
-            return null;
-        });
+        resourceEventRepository.findAll().forEach(resourceEventService::setIndexData);
 
-        Long userId = transactionTemplate.execute(status -> userRepository.findByEmail("alastair@knowles.com")).getId();
-        Long postId = transactionTemplate.execute(status -> resourceRepository.findByHandle("cs/opportunities/4")).getId();
+        Long userId = userRepository.findByEmail("alastair@knowles.com").getId();
+        Long postId = resourceRepository.findByHandle("cs/opportunities/4").getId();
         testUserService.setAuthentication(userId);
 
         List<ResourceEventRepresentation> responses = postApi.getPostResponses(postId, null);
@@ -1590,143 +1512,127 @@ public class PostApiIT extends AbstractIT {
     @Test
     public void shouldArchivePosts() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard())).getId();
-        Long postId1 = transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setName("post1").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId();
+        Long postId1 = postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setName("post1").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
 
         testUserService.authenticate();
-        Long postId2 = transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setName("post2").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
-        Long postId3 = transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setName("post3").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
+        Long postId2 = postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setName("post2").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
+        Long postId3 = postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setName("post3").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
 
-        transactionTemplate.execute(status -> {
-            Post post2 = (Post) resourceRepository.findOne(postId2);
-            Post post3 = (Post) resourceRepository.findOne(postId3);
-            resourceRepository.updateUpdatedTimestampById(postId2,
-                post2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
-            resourceRepository.updateUpdatedTimestampById(postId3,
-                post3.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
-            return null;
-        });
+        Post post2 = (Post) resourceRepository.findOne(postId2);
+        Post post3 = (Post) resourceRepository.findOne(postId3);
+        resourceRepository.updateUpdatedTimestampById(postId2,
+            post2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
+        resourceRepository.updateUpdatedTimestampById(postId3,
+            post3.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
 
-        transactionTemplate.execute(status -> {
-            resourceService.archiveResources();
-            return null;
-        });
-
-        Assert.assertEquals(State.PENDING, transactionTemplate.execute(status -> resourceRepository.findOne(postId1)).getState());
-        Assert.assertEquals(State.ARCHIVED, transactionTemplate.execute(status -> resourceRepository.findOne(postId2)).getState());
-        Assert.assertEquals(State.ARCHIVED, transactionTemplate.execute(status -> resourceRepository.findOne(postId3)).getState());
+        resourceService.archiveResources();
+        Assert.assertEquals(State.PENDING, resourceRepository.findOne(postId1).getState());
+        Assert.assertEquals(State.ARCHIVED, resourceRepository.findOne(postId2).getState());
+        Assert.assertEquals(State.ARCHIVED, resourceRepository.findOne(postId3).getState());
     }
 
     private PostRepresentation verifyPostPost(Long boardId, PostDTO postDTO) {
-        return transactionTemplate.execute(status -> {
-            PostRepresentation postR = postApi.postPost(boardId, postDTO);
+        PostRepresentation postR = postApi.postPost(boardId, postDTO);
+        assertEquals(postDTO.getName(), postR.getName());
+        assertEquals(postDTO.getSummary(), postR.getSummary());
+        assertEquals(postDTO.getDescription(), postR.getDescription());
+        assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
+        verifyLocation(postDTO.getLocation(), postR);
 
-            assertEquals(postDTO.getName(), postR.getName());
-            assertEquals(postDTO.getSummary(), postR.getSummary());
-            assertEquals(postDTO.getDescription(), postR.getDescription());
-            assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
-            verifyLocation(postDTO.getLocation(), postR);
+        assertEquals(Optional.ofNullable(postDTO.getPostCategories()).orElse(new ArrayList<>()), postR.getPostCategories());
+        assertEquals(Optional.ofNullable(postDTO.getMemberCategories()).orElse(new ArrayList<>()), postR.getMemberCategories());
+        assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
+        assertEquals(postDTO.getExistingRelationExplanation(), postR.getExistingRelationExplanation());
+        assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
 
-            assertEquals(Optional.ofNullable(postDTO.getPostCategories()).orElse(new ArrayList<>()), postR.getPostCategories());
-            assertEquals(Optional.ofNullable(postDTO.getMemberCategories()).orElse(new ArrayList<>()), postR.getMemberCategories());
-            assertEquals(postDTO.getExistingRelation(), postR.getExistingRelation());
-            assertEquals(postDTO.getExistingRelationExplanation(), postR.getExistingRelationExplanation());
-            assertEquals(postDTO.getApplyWebsite(), postR.getApplyWebsite());
+        DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
+        verifyDocument(applyDocumentDTO, postR.getApplyDocument());
 
-            DocumentDTO applyDocumentDTO = postDTO.getApplyDocument();
-            verifyDocument(applyDocumentDTO, postR.getApplyDocument());
+        assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
+        assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
+        assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
 
-            assertEquals(postDTO.getApplyEmail(), postR.getApplyEmail());
-            assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
-            assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
+        Post post = postService.getPost(postR.getId());
 
-            Post post = postService.getPost(postR.getId());
+        Board board = boardService.getBoard(postR.getBoard().getId());
+        Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
+        University university = universityService.getUniversity(postR.getBoard().getDepartment().getUniversity().getId());
 
-            Board board = boardService.getBoard(postR.getBoard().getId());
-            Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
-            University university = universityService.getUniversity(postR.getBoard().getDepartment().getUniversity().getId());
-            assertThat(post.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(university, department, board, post));
-            return postR;
-        });
+        List<ResourceRelation> parents = resourceRelationRepository.findByResource2(post);
+        assertThat(parents.stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
+            Matchers.containsInAnyOrder(university, department, board, post));
+        return postR;
     }
 
     private PostRepresentation verifyPatchPost(User user, Long postId, PostPatchDTO postDTO, PostOperation operation, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        Post post = transactionTemplate.execute(status -> postService.getPost(postId));
-        PostRepresentation postR = transactionTemplate.execute(status -> operation.execute());
+        Post post = postService.getPost(postId);
+        PostRepresentation postR = operation.execute();
 
-        return transactionTemplate.execute(status -> {
-            Optional<String> nameOptional = postDTO.getName();
-            assertEquals(nameOptional == null ? post.getName() : nameOptional.orElse(null), postR.getName());
+        Optional<String> nameOptional = postDTO.getName();
+        assertEquals(nameOptional == null ? post.getName() : nameOptional.orElse(null), postR.getName());
 
-            Optional<String> summaryOptional = postDTO.getSummary();
-            assertEquals(summaryOptional == null ? post.getSummary() : summaryOptional.orElse(null), postR.getSummary());
+        Optional<String> summaryOptional = postDTO.getSummary();
+        assertEquals(summaryOptional == null ? post.getSummary() : summaryOptional.orElse(null), postR.getSummary());
 
-            Optional<String> descriptionOptional = postDTO.getDescription();
-            assertEquals(descriptionOptional == null ? post.getDescription() : descriptionOptional.orElse(null), postR.getDescription());
+        Optional<String> descriptionOptional = postDTO.getDescription();
+        assertEquals(descriptionOptional == null ? post.getDescription() : descriptionOptional.orElse(null), postR.getDescription());
 
-            Optional<String> organizationNameOptional = postDTO.getOrganizationName();
-            assertEquals(organizationNameOptional == null ? post.getOrganizationName() : organizationNameOptional.orElse(null), postR.getOrganizationName());
+        Optional<String> organizationNameOptional = postDTO.getOrganizationName();
+        assertEquals(organizationNameOptional == null ? post.getOrganizationName() : organizationNameOptional.orElse(null), postR.getOrganizationName());
 
-            Optional<LocationDTO> locationOptional = postDTO.getLocation();
-            verifyLocation(locationOptional == null ? post.getLocation() : locationOptional.orElse(null), postR);
+        Optional<LocationDTO> locationOptional = postDTO.getLocation();
+        verifyLocation(locationOptional == null ? post.getLocation() : locationOptional.orElse(null), postR);
 
-            Optional<List<String>> postCategoriesOptional = postDTO.getPostCategories();
-            assertEquals(postCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.POST) : postCategoriesOptional.orElse(null), postR.getPostCategories());
+        Optional<List<String>> postCategoriesOptional = postDTO.getPostCategories();
+        assertEquals(postCategoriesOptional == null ? resourceService.getCategories(post, CategoryType.POST) : postCategoriesOptional.orElse(null), postR.getPostCategories());
 
-            Optional<List<MemberCategory>> memberCategoriesOptional = postDTO.getMemberCategories();
-            assertEquals(memberCategoriesOptional == null ? MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)) :
-                memberCategoriesOptional.orElse(null), postR.getMemberCategories());
+        Optional<List<MemberCategory>> memberCategoriesOptional = postDTO.getMemberCategories();
+        assertEquals(memberCategoriesOptional == null ? MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)) :
+            memberCategoriesOptional.orElse(null), postR.getMemberCategories());
 
-            Optional<ExistingRelation> existingRelationOptional = postDTO.getExistingRelation();
-            assertEquals(existingRelationOptional == null ? post.getExistingRelation() : existingRelationOptional.orElse(null), postR.getExistingRelation());
+        Optional<ExistingRelation> existingRelationOptional = postDTO.getExistingRelation();
+        assertEquals(existingRelationOptional == null ? post.getExistingRelation() : existingRelationOptional.orElse(null), postR.getExistingRelation());
 
-            Optional<LinkedHashMap<String, Object>> existingRelationExplanationOptional = postDTO.getExistingRelationExplanation();
-            assertEquals(existingRelationExplanationOptional == null ? postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()) :
-                existingRelationExplanationOptional.orElse(null), postR.getExistingRelationExplanation());
+        Optional<LinkedHashMap<String, Object>> existingRelationExplanationOptional = postDTO.getExistingRelationExplanation();
+        assertEquals(existingRelationExplanationOptional == null ? postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()) :
+            existingRelationExplanationOptional.orElse(null), postR.getExistingRelationExplanation());
 
-            Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
-            Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
-            Optional<String> applyEmailOptional = postDTO.getApplyEmail();
-            boolean applyNotPatched = applyWebsiteOptional == null && applyDocumentOptional == null && applyEmailOptional == null;
+        Optional<String> applyWebsiteOptional = postDTO.getApplyWebsite();
+        Optional<DocumentDTO> applyDocumentOptional = postDTO.getApplyDocument();
+        Optional<String> applyEmailOptional = postDTO.getApplyEmail();
+        boolean applyNotPatched = applyWebsiteOptional == null && applyDocumentOptional == null && applyEmailOptional == null;
 
-            assertEquals(applyNotPatched ? post.getApplyWebsite() :
-                applyWebsiteOptional == null ? null : applyWebsiteOptional.orElse(null), postR.getApplyWebsite());
-            verifyDocument(applyNotPatched ? post.getApplyDocument() :
-                applyDocumentOptional == null ? null : applyDocumentOptional.orElse(null), postR.getApplyDocument());
-            assertEquals(applyNotPatched ? post.getApplyEmail() :
-                applyEmailOptional == null ? null : applyEmailOptional.orElse(null), postR.getApplyEmail());
+        assertEquals(applyNotPatched ? post.getApplyWebsite() :
+            applyWebsiteOptional == null ? null : applyWebsiteOptional.orElse(null), postR.getApplyWebsite());
+        verifyDocument(applyNotPatched ? post.getApplyDocument() :
+            applyDocumentOptional == null ? null : applyDocumentOptional.orElse(null), postR.getApplyDocument());
+        assertEquals(applyNotPatched ? post.getApplyEmail() :
+            applyEmailOptional == null ? null : applyEmailOptional.orElse(null), postR.getApplyEmail());
 
-            Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
-            assertEquals(liveTimestampOptional == null ? post.getLiveTimestamp() : liveTimestampOptional.orElse(null), postR.getLiveTimestamp());
+        Optional<LocalDateTime> liveTimestampOptional = postDTO.getLiveTimestamp();
+        assertEquals(liveTimestampOptional == null ? post.getLiveTimestamp() : liveTimestampOptional.orElse(null), postR.getLiveTimestamp());
 
-            Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
-            assertEquals(deadTimestampOptional == null ? post.getDeadTimestamp() : deadTimestampOptional.orElse(null), postR.getDeadTimestamp());
+        Optional<LocalDateTime> deadTimestampOptional = postDTO.getDeadTimestamp();
+        assertEquals(deadTimestampOptional == null ? post.getDeadTimestamp() : deadTimestampOptional.orElse(null), postR.getDeadTimestamp());
 
-            Assert.assertEquals(expectedState, postR.getState());
-            return postR;
-        });
+        Assert.assertEquals(expectedState, postR.getState());
+        return postR;
     }
 
-    private void verifyPublishAndRetirePost(Long postId, State expectedState) {
-        PostRepresentation postR;
-
-        // Check that the scheduler does not create duplicate operations
+    private void verifyPublishAndRetirePost(Long postId, State expectedState) {// Check that the scheduler does not create duplicate operations
         for (int i = 0; i < 2; i++) {
-            transactionTemplate.execute(status -> {
-                postService.publishAndRetirePosts(LocalDateTime.now());
-                return null;
-            });
+            postService.publishAndRetirePosts(LocalDateTime.now());
         }
 
-        postR = transactionTemplate.execute(status -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")));
+        PostRepresentation postR = postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
         Assert.assertEquals(expectedState, postR.getState());
     }
 
@@ -1763,33 +1669,27 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
         PostRepresentation postR = verifyPostPost(boardId, postDTO);
 
-        transactionTemplate.execute(status -> {
-            Post post = postService.getPost(postR.getId());
-            post.setState(state);
-            post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
-            return post;
-        });
+        Post post = postService.getPost(postR.getId());
+        post.setState(state);
+        post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
 
         userStatePosts.put(state, postDTO.getName());
     }
 
     private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
-        transactionTemplate.execute(status -> {
-            Post post = postService.getByName(postName).get(0);
-            post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
-            return null;
-        });
+        Post post = postService.getByName(postName).get(0);
+        post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
     }
 
     private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
         TestHelper.verifyResources(
-            transactionTemplate.execute(status -> postApi.getPosts(null, null, null, null, null)),
+            postApi.getPosts(null, null, null, null, null),
             Collections.emptyList(),
             null);
 
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(
-            transactionTemplate.execute(status -> postApi.getPosts(null, true, null, null, null)));
+            postApi.getPosts(null, true, null, null, null));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(statePosts.get(state)),
@@ -1799,13 +1699,13 @@ public class PostApiIT extends AbstractIT {
 
         for (Long boardId : postNames.keySet()) {
             TestHelper.verifyResources(
-                transactionTemplate.execute(status -> postApi.getPosts(boardId, null, null, null, null)),
+                postApi.getPosts(boardId, null, null, null, null),
                 Collections.emptyList(),
                 null);
 
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
-                transactionTemplate.execute(status -> postApi.getPosts(boardId, true, null, null, null)));
+                postApi.getPosts(boardId, true, null, null, null));
             boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
                     Lists.newArrayList(boardStatePosts.get(state)),
@@ -1819,7 +1719,7 @@ public class PostApiIT extends AbstractIT {
                                           LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames, PostAdminContext adminContext) {
         LinkedHashMultimap<State, String> statePostNames = getPostNamesByState(postNames);
         LinkedHashMultimap<State, PostRepresentation> statePosts = getPostsByState(
-            transactionTemplate.execute(status -> postApi.getPosts(null, null, null, null, null)));
+            postApi.getPosts(null, null, null, null, null));
         statePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
                 Lists.newArrayList(statePosts.get(state)),
@@ -1829,7 +1729,7 @@ public class PostApiIT extends AbstractIT {
 
         LinkedHashMultimap<State, String> publicStatePostNames = getPostNamesByState(publicPostNames);
         LinkedHashMultimap<State, PostRepresentation> mergedStatePosts = getPostsByState(
-            transactionTemplate.execute(status -> postApi.getPosts(null, true, null, null, null)));
+            postApi.getPosts(null, true, null, null, null));
         LinkedHashMultimap<State, String> mergedStatePostNames = mergePostNamesPreservingOrder(statePostNames, publicStatePostNames);
         mergedStatePostNames.keySet().forEach(state ->
             TestHelper.verifyResources(
@@ -1842,7 +1742,7 @@ public class PostApiIT extends AbstractIT {
         for (Long boardId : postNames.keySet()) {
             LinkedHashMultimap<State, String> boardStatePostNames = postNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> boardStatePosts = getPostsByState(
-                transactionTemplate.execute(status -> postApi.getPosts(boardId, null, null, null, null)));
+                postApi.getPosts(boardId, null, null, null, null));
             boardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
                     Lists.newArrayList(boardStatePosts.get(state)),
@@ -1852,7 +1752,7 @@ public class PostApiIT extends AbstractIT {
 
             LinkedHashMultimap<State, String> publicBoardStatePostNames = publicPostNames.get(boardId);
             LinkedHashMultimap<State, PostRepresentation> mergedBoardStatePosts = getPostsByState(
-                transactionTemplate.execute(status -> postApi.getPosts(boardId, null, null, null, null)));
+                postApi.getPosts(boardId, null, null, null, null));
             LinkedHashMultimap<State, String> mergedBoardStatePostNames = mergePostNamesPreservingOrder(boardStatePostNames, publicBoardStatePostNames);
             mergedBoardStatePostNames.keySet().forEach(state ->
                 TestHelper.verifyResources(
@@ -1893,12 +1793,12 @@ public class PostApiIT extends AbstractIT {
     }
 
     private void verifyViewReferralAndResponseCounts(Long postId, Long viewCount, Long referralCount, Long responseCount) {
-        Post post = transactionTemplate.execute(status -> postRepository.findOne(postId));
+        Post post = postRepository.findOne(postId);
         TestHelper.verifyNullableCount(viewCount, post.getViewCount());
         TestHelper.verifyNullableCount(referralCount, post.getReferralCount());
         TestHelper.verifyNullableCount(responseCount, post.getResponseCount());
 
-        List<PostRepresentation> postRs = transactionTemplate.execute(status -> postApi.getPosts(null, true, null, null, null));
+        List<PostRepresentation> postRs = postApi.getPosts(null, true, null, null, null);
         TestHelper.verifyNullableCount(viewCount, postRs.get(0).getViewCount());
         TestHelper.verifyNullableCount(referralCount, postRs.get(0).getReferralCount());
         TestHelper.verifyNullableCount(responseCount, postRs.get(0).getResponseCount());
@@ -1909,15 +1809,11 @@ public class PostApiIT extends AbstractIT {
     }
 
     private void verifyPostReferral(String referral, TestHelper.MockHttpServletResponse response, String expectedLocation) {
-        transactionTemplate.execute(status -> {
-            try {
-                postApi.getPostReferral(referral, response);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        });
+        try {
+            postApi.getPostReferral(referral, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         Assert.assertEquals(expectedLocation, response.getLocation());
     }

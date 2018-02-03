@@ -59,46 +59,41 @@ public class UserApiIT extends AbstractIT {
         User user2 = testUserService.authenticate();
 
         testUserService.setAuthentication(user1.getId());
-        transactionTemplate.execute(status ->
-            ExceptionUtils.verifyException(
-                BoardException.class,
-                () -> userApi.updateUser(
-                    new UserPatchDTO().setEmail(Optional.of(user2.getEmail()))),
-                ExceptionCode.DUPLICATE_USER,
-                status));
+        ExceptionUtils.verifyException(
+            BoardException.class,
+            () -> userApi.updateUser(
+                new UserPatchDTO().setEmail(Optional.of(user2.getEmail()))),
+            ExceptionCode.DUPLICATE_USER);
     }
 
     @Test
     public void shouldCreateAndUpdateNotificationSuppressions() {
         User adminUser = testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl")
-            .getId());
-        Long department1id = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1"))).getId();
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(department1id, new DepartmentPatchDTO().setMemberCategories(Optional
-            .empty())));
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long department1id = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1")).getId();
+        departmentApi.patchDepartment(department1id, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
 
-        Long board11id = transactionTemplate.execute(status ->
-            boardApi.postBoard(department1id, new BoardDTO().setName("board11"))).getId();
+        Long board11id =
+            boardApi.postBoard(department1id, new BoardDTO().setName("board11")).getId();
 
-        Long board12id = transactionTemplate.execute(status ->
-            boardApi.postBoard(department1id, new BoardDTO().setName("board12"))).getId();
+        Long board12id =
+            boardApi.postBoard(department1id, new BoardDTO().setName("board12")).getId();
 
-        transactionTemplate.execute(status ->
-            boardApi.postBoard(department1id, new BoardDTO().setName("board13")));
 
-        Long department2id = transactionTemplate.execute(status ->
+        boardApi.postBoard(department1id, new BoardDTO().setName("board13"));
+
+        Long department2id =
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2")
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))).getId();
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
 
-        Long board21id = transactionTemplate.execute(status ->
-            boardApi.postBoard(department2id, new BoardDTO().setName("board21"))).getId();
+        Long board21id =
+            boardApi.postBoard(department2id, new BoardDTO().setName("board21")).getId();
 
-        Long board22id = transactionTemplate.execute(status ->
-            boardApi.postBoard(department2id, new BoardDTO().setName("board22"))).getId();
+        Long board22id =
+            boardApi.postBoard(department2id, new BoardDTO().setName("board22")).getId();
 
-        transactionTemplate.execute(status ->
-            boardApi.postBoard(department2id, new BoardDTO().setName("board23")));
+
+        boardApi.postBoard(department2id, new BoardDTO().setName("board23"));
 
         User memberUser1 = testUserService.authenticate();
         User memberUser2 = testUserService.authenticate();
@@ -108,31 +103,31 @@ public class UserApiIT extends AbstractIT {
         String memberUser2Email = memberUser2.getEmail();
         testUserService.setAuthentication(adminUser.getId());
         for (String memberUserEmail : new String[]{memberUser1Email, memberUser2Email}) {
-            transactionTemplate.execute(status ->
+
                 resourceApi.createResourceUser(Scope.BOARD, board11id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR)));
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR));
 
-            transactionTemplate.execute(status ->
+
                 resourceApi.createResourceUser(Scope.BOARD, board12id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR)));
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
 
-            transactionTemplate.execute(status ->
+
                 resourceApi.createResourceUser(Scope.DEPARTMENT, department1id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER)));
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER));
 
-            transactionTemplate.execute(status ->
+
                 resourceApi.createResourceUser(Scope.BOARD, board21id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR)));
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR));
 
-            transactionTemplate.execute(status ->
+
                 resourceApi.createResourceUser(Scope.BOARD, board22id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR)));
+                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
         }
 
-        transactionTemplate.execute(status ->
+
             resourceApi.createResourceUser(Scope.DEPARTMENT, department2id, new UserRoleDTO().setUser(
                 new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)));
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
 
         Long adminUserId = adminUser.getId();
         Long memberUser1Id = memberUser1.getId();
@@ -142,23 +137,23 @@ public class UserApiIT extends AbstractIT {
         testUserService.setAuthentication(adminUserId);
         String[] expectedBoardNames = new String[]{"board11", "board12", "board13", "board21", "board22", "board23"};
         List<UserNotificationSuppressionRepresentation> adminUserSuppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(6, adminUserSuppressions.size());
         adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.setAuthentication(memberUser1Id);
-        transactionTemplate.execute(status -> userApi.postSuppressions());
+        userApi.postSuppressions();
         List<UserNotificationSuppressionRepresentation> memberUser1Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(6, memberUser1Suppressions.size());
         memberUser1Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
-        transactionTemplate.execute(status -> userApi.postSuppression(board11id, memberUser2.getUuid()));
+        userApi.postSuppression(board11id, memberUser2.getUuid());
         testUserService.setAuthentication(memberUser2Id);
-        transactionTemplate.execute(status -> userApi.postSuppression(board12id, null));
+        userApi.postSuppression(board12id, null);
         List<UserNotificationSuppressionRepresentation> memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 2)
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
@@ -166,24 +161,21 @@ public class UserApiIT extends AbstractIT {
             .forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
-        transactionTemplate.execute(status -> ExceptionUtils.verifyException(
-            BoardForbiddenException.class, () -> userApi.postSuppression(board11id, memberUser3.getUuid()), ExceptionCode.FORBIDDEN_RESOURCE, status));
+        ExceptionUtils.verifyException(
+            BoardForbiddenException.class, () -> userApi.postSuppression(board11id, memberUser3.getUuid()), ExceptionCode.FORBIDDEN_RESOURCE);
         testUserService.setAuthentication(memberUser3Id);
-        transactionTemplate.execute(status -> ExceptionUtils.verifyException(
-            BoardForbiddenException.class, () -> userApi.postSuppression(board11id, null), ExceptionCode.FORBIDDEN_RESOURCE, status));
-        transactionTemplate.execute(status -> userApi.postSuppressions());
+        ExceptionUtils.verifyException(
+            BoardForbiddenException.class, () -> userApi.postSuppression(board11id, null), ExceptionCode.FORBIDDEN_RESOURCE);
+        userApi.postSuppressions();
         List<UserNotificationSuppressionRepresentation> memberUser3Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(0, memberUser3Suppressions.size());
 
         testUserService.setAuthentication(memberUser2Id);
-        transactionTemplate.execute(status -> {
-            userApi.deleteSuppression(board12id);
-            return null;
-        });
+        userApi.deleteSuppression(board12id);
 
         memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 1)
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
@@ -191,17 +183,13 @@ public class UserApiIT extends AbstractIT {
             .forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.postSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.postSuppressions(), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
-
-        transactionTemplate.execute(status -> {
-            userApi.deleteSuppressions();
-            return null;
-        });
+        userApi.deleteSuppressions();
 
         memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(transactionTemplate.execute(status -> userApi.getSuppressions()), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(5, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
     }

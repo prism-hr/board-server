@@ -6,10 +6,12 @@ import hr.prism.board.domain.User;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Transactional
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue", "SpringDataRepositoryMethodReturnTypeInspection", "SqlResolve"})
 public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTask, Long> {
 
@@ -39,8 +41,8 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
             "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3) " +
             "order by resourceTask.resource, resourceTask.task")
     List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
-        @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
-        @Param("baseline3") LocalDateTime baseline3);
+                                                 @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
+                                                 @Param("baseline3") LocalDateTime baseline3);
 
     @Modifying
     @Query(value =

@@ -43,7 +43,10 @@ import java.util.stream.Collectors;
 public class AuthenticationApiIT extends AbstractIT {
 
     @Value("${environment}")
-    String environment;
+    private String environment;
+
+    @Value("${password.reset.timeout.seconds}")
+    private Long passwordResetTimeoutSeconds;
 
     @Inject
     private AuthenticationService authenticationService;
@@ -238,8 +241,10 @@ public class AuthenticationApiIT extends AbstractIT {
         testNotificationService.stop();
 
         // Simulate password reset timeout expiry
-        testUserService.expirePasswordResetTimestamp(userId);
-        
+        User updatedUser = userRepository.findOne(userId);
+        updatedUser.setPasswordResetTimestamp(updatedUser.getPasswordResetTimestamp().minusSeconds(passwordResetTimeoutSeconds + 1));
+        userRepository.save(updatedUser);
+
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/api/user/password")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)

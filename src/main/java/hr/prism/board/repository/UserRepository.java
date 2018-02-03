@@ -1,21 +1,17 @@
 package hr.prism.board.repository;
 
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.enums.*;
+import hr.prism.board.value.UserNotification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.ResourceEvent;
-import hr.prism.board.enums.Role;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
-import hr.prism.board.value.UserNotification;
-
+@Transactional
 @SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends BoardEntityRepository<User, Long> {
 

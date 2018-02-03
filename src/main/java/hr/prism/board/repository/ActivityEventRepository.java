@@ -5,11 +5,13 @@ import hr.prism.board.enums.Role;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+@Transactional
 @SuppressWarnings({"JpaQlInspection", "SqlResolve"})
 public interface ActivityEventRepository extends BoardEntityRepository<ActivityEvent, Long> {
 
@@ -22,7 +24,7 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "and activityEvent.user = :user " +
             "and activityEvent.event = :event")
     List<ActivityEvent> findByActivitiesAndUserAndEvent(@Param("activities") Collection<Activity> activities, @Param("user") User user,
-        @Param("event") hr.prism.board.enums.ActivityEvent event);
+                                                        @Param("event") hr.prism.board.enums.ActivityEvent event);
 
     @Modifying
     @Query(value =
@@ -97,6 +99,6 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "AND activity.activity IN (:activities)",
         nativeQuery = true)
     void insertByResourceIdActivitiesUserIdAndEvent(@Param("resourceId") Long resourceId,
-        @Param("activities") List<String> activities, @Param("userId") Long userId, @Param("event") String event, @Param("baseline") LocalDateTime baseline);
+                                                    @Param("activities") List<String> activities, @Param("userId") Long userId, @Param("event") String event, @Param("baseline") LocalDateTime baseline);
 
 }

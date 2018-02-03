@@ -6,10 +6,12 @@ import hr.prism.board.domain.User;
 import hr.prism.board.value.ResourceEventSummary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
 
+@Transactional
 @SuppressWarnings({"JpaQlInspection", "SameParameterValue"})
 public interface ResourceEventRepository extends BoardEntityRepository<ResourceEvent, Long> {
 

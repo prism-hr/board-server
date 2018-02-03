@@ -6,9 +6,11 @@ import hr.prism.board.enums.Scope;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Transactional
 @SuppressWarnings("JpaQlInspection")
 public interface ActivityRoleRepository extends BoardEntityRepository<ActivityRole, Long> {
 

@@ -58,11 +58,11 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldCreateAndListBoards() {
         Map<String, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
         User user11 = testUserService.authenticate();
-        Long departmentId1 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+        Long departmentId1 =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
 
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.setName("board11").setDocumentLogo(new DocumentDTO().setCloudinaryId("board1logo").setCloudinaryUrl("board1logo").setFileName("board1logo"));
@@ -82,8 +82,8 @@ public class BoardApiIT extends AbstractIT {
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         User user21 = testUserService.authenticate();
-        Long departmentId2 = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary"))).getId();
+        Long departmentId2 =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary")).getId();
 
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.setName("board21");
@@ -143,121 +143,100 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldNotCreateDuplicateBoard() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, boardDTO));
-        transactionTemplate.execute(status -> {
-            ExceptionUtils.verifyDuplicateException(() -> boardApi.postBoard(departmentId, boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId(), status);
-            return null;
-        });
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
+        ExceptionUtils.verifyDuplicateException(() -> boardApi.postBoard(departmentId, boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId());
     }
 
     @Test
     public void shouldNotCreateDuplicateBoardHandle() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
         BoardDTO boardDTO = new BoardDTO().setName("new board with long name");
         verifyPostBoard(departmentId, boardDTO, "new-board-with-long-name");
+
         Long boardId = verifyPostBoard(departmentId, boardDTO.setName("new board with long name too"), "new-board-with-long-name-2").getId();
-
-        transactionTemplate.execute(status -> {
-            BoardRepresentation boardR = boardApi.patchBoard(boardId,
-                new BoardPatchDTO()
-                    .setHandle(Optional.of("new-board-with-longer-name")));
-            Assert.assertEquals("new-board-with-longer-name", boardR.getHandle());
-            return null;
-        });
-
+        BoardRepresentation boardR = boardApi.patchBoard(boardId,
+            new BoardPatchDTO()
+                .setHandle(Optional.of("new-board-with-longer-name")));
+        Assert.assertEquals("new-board-with-longer-name", boardR.getHandle());
         verifyPostBoard(departmentId, boardDTO.setName("new board with long name also"), "new-board-with-long-name-2");
     }
 
     @Test
     public void shouldNotCreateDuplicateBoardByUpdating() {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
-        transactionTemplate.execute(status -> {
-            BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
-            boardPatchDTO.setName(Optional.of(boardRs.getValue().getName()));
-            ExceptionUtils.verifyDuplicateException(() ->
-                boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId(), status);
-            return null;
-        });
+        BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
+        boardPatchDTO.setName(Optional.of(boardRs.getValue().getName()));
+        ExceptionUtils.verifyDuplicateException(() ->
+            boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId());
     }
 
     @Test
     public void shouldNotCreateDuplicateBoardHandleByUpdating() {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
-        transactionTemplate.execute(status -> {
-            BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
-            boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-            ExceptionUtils.verifyException(BoardDuplicateException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE,
-                status);
-            return null;
-        });
+        BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
+        boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
+        ExceptionUtils.verifyException(BoardDuplicateException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE);
     }
 
     @Test
     public void shouldUpdateBoardHandleWhenUpdatingDepartmentHandle() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
         verifyPostBoard(departmentId, new BoardDTO().setName("board 1"), "board-1");
         verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
 
-        transactionTemplate.execute(status -> {
-            List<BoardRepresentation> boardRs = boardApi.getBoards(departmentId, true, null, null, null);
-            Assert.assertEquals(4, boardRs.size());
+        List<BoardRepresentation> boardRs = boardApi.getBoards(departmentId, true, null, null, null);
+        Assert.assertEquals(4, boardRs.size());
 
-            List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
-            Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2", "Career Opportunities", "Research Opportunities"));
+        List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2", "Career Opportunities", "Research Opportunities"));
 
-            departmentApi.patchDepartment(departmentId,
-                new DepartmentPatchDTO()
-                    .setHandle(Optional.of("new-department-updated")));
-            return null;
-        });
+        departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO()
+                .setHandle(Optional.of("new-department-updated")));
 
-        transactionTemplate.execute(status -> {
-            Department department = departmentService.getDepartment(departmentId);
-            Assert.assertEquals("ucl/new-department-updated", department.getHandle());
+        Department department = departmentService.getDepartment(departmentId);
+        Assert.assertEquals("ucl/new-department-updated", department.getHandle());
 
-            int index = 1;
-            List<BoardRepresentation> boardRs = boardApi.getBoards(department.getId(), true, null, null, null);
-            Assert.assertEquals(4, boardRs.size());
-            for (BoardRepresentation boardR : boardRs) {
-                String boardName = boardR.getName();
-                switch (boardName) {
-                    case "Career Opportunities":
-                        Assert.assertEquals("new-department-updated/career-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
-                        break;
-                    case "Research Opportunities":
-                        Assert.assertEquals("new-department-updated/research-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
-                        break;
-                    default:
-                        Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
-                        index++;
-                        break;
-                }
+        int index = 1;
+        boardRs = boardApi.getBoards(department.getId(), true, null, null, null);
+        Assert.assertEquals(4, boardRs.size());
+        for (BoardRepresentation boardR : boardRs) {
+            String boardName = boardR.getName();
+            switch (boardName) {
+                case "Career Opportunities":
+                    Assert.assertEquals("new-department-updated/career-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                    break;
+                case "Research Opportunities":
+                    Assert.assertEquals("new-department-updated/research-opportunities", boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                    break;
+                default:
+                    Assert.assertEquals("new-department-updated/board-" + index, boardR.getDepartment().getHandle() + "/" + boardR.getHandle());
+                    index++;
+                    break;
             }
-
-            return null;
-        });
+        }
     }
 
     @Test
     public void shouldSupportBoardLifeCycleAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
 
         // Create a board in the draft state
@@ -287,18 +266,11 @@ public class BoardApiIT extends AbstractIT {
         Resource board = resourceService.findOne(boardId);
         Long activityId = activityService.findByResourceAndActivity(board, Activity.NEW_BOARD_PARENT_ACTIVITY).getId();
         testUserService.setAuthentication(departmentUserId);
-        transactionTemplate.execute(status -> {
-            userApi.dismissActivity(activityId);
-            return null;
-        });
+        userApi.dismissActivity(activityId);
 
         Resource department = resourceService.findOne(departmentId);
-        String departmentAdminRoleUuid = transactionTemplate
-            .execute(status -> userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR))
-            .getUuid();
-        String boardAdminRoleUuid = transactionTemplate
-            .execute(status -> userRoleService.findByResourceAndUserAndRole(board, boardUser, Role.ADMINISTRATOR))
-            .getUuid();
+        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
+        String boardAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(board, boardUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_BOARD_PARENT_NOTIFICATION, departmentUser,
@@ -329,7 +301,7 @@ public class BoardApiIT extends AbstractIT {
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.DRAFT, operations);
 
         // Test that we do not audit viewing
-        transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+        boardApi.getBoard(boardId);
 
         // Check that department user can reject the board
         testActivityService.record();
@@ -424,8 +396,8 @@ public class BoardApiIT extends AbstractIT {
 
         // Create post
         User postUser = testUserService.authenticate();
-        transactionTemplate.execute(status -> postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+        postApi.postPost(boardId,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
         unprivilegedUsers.add(postUser);
 
         // Check that we can make changes and leave nullable values null
@@ -469,7 +441,7 @@ public class BoardApiIT extends AbstractIT {
             State.ACCEPTED);
 
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
-        List<ResourceOperationRepresentation> resourceOperationRs = transactionTemplate.execute(status -> boardApi.getBoardOperations(boardId));
+        List<ResourceOperationRepresentation> resourceOperationRs = boardApi.getBoardOperations(boardId);
         Assert.assertEquals(10, resourceOperationRs.size());
 
         // Operations are returned most recent first - reverse the order to make it easier to test
@@ -514,10 +486,10 @@ public class BoardApiIT extends AbstractIT {
     public void shouldPostAndReplaceLogo() {
         // Create department and board
         User user = testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         DocumentDTO initialLogo = new DocumentDTO().setCloudinaryId("postingLogo").setCloudinaryUrl("postingLogo").setFileName("postingLogo");
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary").setDocumentLogo(initialLogo))).getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary").setDocumentLogo(initialLogo)).getId();
 
         BoardDTO boardDTO = TestHelper.smallSampleBoard();
         boardDTO.setDocumentLogo(initialLogo);
@@ -538,58 +510,48 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldCountPostsAndAuthors() {
         Long boardUserId = testUserService.authenticate().getId();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard())).getId();
-        transactionTemplate.execute(status -> boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("other")));
-        transactionTemplate.execute(status -> departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty())));
+        Long boardId = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId();
+        boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("other"));
+        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
 
         testUserService.authenticate();
-        Long post1id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+        Long post1id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
 
         Long postUserId = testUserService.authenticate().getId();
-        Long post2id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+        Long post2id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
 
         testUserService.authenticate();
-        Long post3id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost())).getId();
+        Long post3id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
         verifyPostAndAuthorCount(boardId, 0L, 0L);
 
         testUserService.setAuthentication(boardUserId);
-        transactionTemplate.execute(status -> postApi.executeAction(post1id, "accept", new PostPatchDTO()));
-        transactionTemplate.execute(status -> postApi.executeAction(post2id, "accept", new PostPatchDTO()));
-        transactionTemplate.execute(status -> postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment")));
+        postApi.executeAction(post1id, "accept", new PostPatchDTO());
+        postApi.executeAction(post2id, "accept", new PostPatchDTO());
+        postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment"));
 
         postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostAndAuthorCount(boardId, 2L, 2L);
 
-        transactionTemplate.execute(status -> postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment")));
+        postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment"));
         verifyPostAndAuthorCount(boardId, 1L, 2L);
-
-        transactionTemplate.execute(status -> {
-            resourceApi.deleteResourceUser(Scope.BOARD, boardId, postUserId);
-            return null;
-        });
+        resourceApi.deleteResourceUser(Scope.BOARD, boardId, postUserId);
 
         verifyPostAndAuthorCount(boardId, 1L, 1L);
 
-        transactionTemplate.execute(status -> postApi.patchPost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1)))));
-        transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts(LocalDateTime.now());
-            return null;
-        });
+        postApi.patchPost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1))));
+        postService.publishAndRetirePosts(LocalDateTime.now());
 
         verifyPostAndAuthorCount(boardId, 0L, 1L);
 
-        Long post4id = transactionTemplate.execute(status -> postApi.postPost(boardId, TestHelper.smallSamplePost().setLiveTimestamp(LocalDateTime.now().plusMinutes(1)))).getId();
+        Long post4id = postApi.postPost(boardId, TestHelper.smallSamplePost().setLiveTimestamp(LocalDateTime.now().plusMinutes(1))).getId();
         verifyPostAndAuthorCount(boardId, 0L, 1L);
 
-        transactionTemplate.execute(status -> postApi.patchPost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty())));
-        transactionTemplate.execute(status -> {
-            postService.publishAndRetirePosts(LocalDateTime.now());
-            return null;
-        });
+        postApi.patchPost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty()));
+        postService.publishAndRetirePosts(LocalDateTime.now());
 
         verifyPostAndAuthorCount(boardId, 1L, 1L);
     }
@@ -597,97 +559,84 @@ public class BoardApiIT extends AbstractIT {
     @Test
     public void shouldArchiveBoards() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, new BoardDTO().setName("board1")));
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, new BoardDTO().setName("board1"));
         Long boardId1 = boardR.getId();
 
         testUserService.authenticate();
-        Long boardId2 = transactionTemplate.execute(status -> boardApi.postBoard(departmentId, new BoardDTO().setName("board2"))).getId();
+        Long boardId2 = boardApi.postBoard(departmentId, new BoardDTO().setName("board2")).getId();
 
-        transactionTemplate.execute(status -> {
-            Board board2 = (Board) resourceRepository.findOne(boardId2);
-            resourceRepository.updateUpdatedTimestampById(boardId2,
-                board2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
-            return null;
-        });
+        Board board2 = (Board) resourceRepository.findOne(boardId2);
+        resourceRepository.updateUpdatedTimestampById(boardId2,
+            board2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
+        resourceService.archiveResources();
 
-        transactionTemplate.execute(status -> {
-            resourceService.archiveResources();
-            return null;
-        });
-
-        Assert.assertEquals(State.ACCEPTED, transactionTemplate.execute(status -> resourceRepository.findOne(boardId1)).getState());
-        Assert.assertEquals(State.ARCHIVED, transactionTemplate.execute(status -> resourceRepository.findOne(boardId2)).getState());
+        Assert.assertEquals(State.ACCEPTED, resourceRepository.findOne(boardId1).getState());
+        Assert.assertEquals(State.ARCHIVED, resourceRepository.findOne(boardId2).getState());
     }
 
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         testUserService.authenticate();
-        Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long departmentId = transactionTemplate.execute(status ->
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary"))).getId();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId =
+            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         BoardRepresentation boardR1 = verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
         BoardRepresentation boardR2 = verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
         return Pair.of(boardR1, boardR2);
     }
 
     private BoardRepresentation verifyPostBoard(Long departmentId, BoardDTO boardDTO, String expectedHandle) {
-        return transactionTemplate.execute(status -> {
-            BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
+        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
 
-            Assert.assertEquals(boardDTO.getName(), boardR.getName());
-            Assert.assertEquals(expectedHandle, boardR.getHandle());
-            Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
-            verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
-            Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
+        Assert.assertEquals(boardDTO.getName(), boardR.getName());
+        Assert.assertEquals(expectedHandle, boardR.getHandle());
+        Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
+        verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
+        Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
 
-            Board board = boardService.getBoard(boardR.getId());
-            DepartmentRepresentation departmentR = boardR.getDepartment();
-            Department department = departmentService.getDepartment(departmentR.getId());
-            University university = universityService.getUniversity(departmentR.getUniversity().getId());
-            Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
+        Board board = boardService.getBoard(boardR.getId());
+        DepartmentRepresentation departmentR = boardR.getDepartment();
+        Department department = departmentService.getDepartment(departmentR.getId());
+        University university = universityService.getUniversity(departmentR.getUniversity().getId());
+        Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
 
-            Assert.assertThat(board.getParents().stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
-                Matchers.containsInAnyOrder(board, department, university));
-            return boardR;
-        });
+        List<ResourceRelation> parents = resourceRelationRepository.findByResource2(board);
+        Assert.assertThat(parents.stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
+            Matchers.containsInAnyOrder(board, department, university));
+        return boardR;
     }
 
     private void verifyExecuteBoard(Long boardId, Long departmentUserId, String action, String comment, State expectedState) {
-        BoardRepresentation boardR;
         testUserService.setAuthentication(departmentUserId);
-        boardR = transactionTemplate.execute(status ->
-            boardApi.executeAction(boardId, action, new BoardPatchDTO().setComment(comment)));
+        BoardRepresentation boardR = boardApi.executeAction(boardId, action, new BoardPatchDTO().setComment(comment));
         Assert.assertEquals(expectedState, boardR.getState());
     }
 
     private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        Board board = transactionTemplate.execute(status -> boardService.getBoard(boardId));
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.patchBoard(boardId, boardDTO));
+        Board board = boardService.getBoard(boardId);
+        BoardRepresentation boardR = boardApi.patchBoard(boardId, boardDTO);
 
-        transactionTemplate.execute(status -> {
-            Optional<String> nameOptional = boardDTO.getName();
-            Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
+        Optional<String> nameOptional = boardDTO.getName();
+        Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
 
-            Optional<DocumentDTO> documentLogoOptional = boardDTO.getDocumentLogo();
-            verifyDocument(documentLogoOptional == null ? board.getDocumentLogo() : boardDTO.getDocumentLogo().orElse(null), boardR.getDocumentLogo());
+        Optional<DocumentDTO> documentLogoOptional = boardDTO.getDocumentLogo();
+        verifyDocument(documentLogoOptional == null ? board.getDocumentLogo() : boardDTO.getDocumentLogo().orElse(null), boardR.getDocumentLogo());
 
-            Optional<String> summaryOptional = boardDTO.getSummary();
-            Assert.assertEquals(summaryOptional == null ? board.getSummary() : summaryOptional.orElse(null), boardR.getSummary());
+        Optional<String> summaryOptional = boardDTO.getSummary();
+        Assert.assertEquals(summaryOptional == null ? board.getSummary() : summaryOptional.orElse(null), boardR.getSummary());
 
-            Optional<String> handleOptional = boardDTO.getHandle();
-            Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[2] : handleOptional.orElse(null), boardR.getHandle());
+        Optional<String> handleOptional = boardDTO.getHandle();
+        Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[2] : handleOptional.orElse(null), boardR.getHandle());
 
-            Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
-            Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),
-                boardR.getPostCategories());
+        Optional<List<String>> postCategoriesOptional = boardDTO.getPostCategories();
+        Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),
+            boardR.getPostCategories());
 
-            Assert.assertEquals(expectedState, boardR.getState());
-            return boardR;
-        });
+        Assert.assertEquals(expectedState, boardR.getState());
     }
 
     private void verifyBoardActions(User departmentAdmin, User boardAdmin, Collection<User> unprivilegedUsers, Long boardId, State state, Map<Action, Runnable> operations) {
@@ -710,37 +659,33 @@ public class BoardApiIT extends AbstractIT {
         List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status ->
-                boardApi.getBoards(null, null, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                    .collect(Collectors.toList())),
+            boardApi.getBoards(null, null, null, null, null)
+                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .collect(Collectors.toList()),
             Collections.emptyList(),
             null);
 
         TestHelper.ExpectedActions expectedActions = new TestHelper.ExpectedActions()
             .add(publicActions);
         TestHelper.verifyResources(
-            transactionTemplate.execute(status ->
-                boardApi.getBoards(null, true, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                    .collect(Collectors.toList())),
+            boardApi.getBoards(null, true, null, null, null)
+                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .collect(Collectors.toList()),
             boardNames,
             expectedActions);
 
         for (Long departmentId : boardNamesByDepartment.keySet()) {
             TestHelper.verifyResources(
-                transactionTemplate.execute(status ->
-                    boardApi.getBoards(departmentId, null, null, null, null)
-                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                        .collect(Collectors.toList())),
+                boardApi.getBoards(departmentId, null, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList()),
                 Collections.emptyList(),
                 null);
 
             TestHelper.verifyResources(
-                transactionTemplate.execute(status ->
-                    boardApi.getBoards(departmentId, true, null, null, null)
-                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                        .collect(Collectors.toList())),
+                boardApi.getBoards(departmentId, true, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList()),
                 Lists.newArrayList(boardNamesByDepartment.get(departmentId)),
                 expectedActions);
         }
@@ -751,19 +696,17 @@ public class BoardApiIT extends AbstractIT {
         List<Action> publicActionList = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status ->
-                boardApi.getBoards(null, null, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                    .collect(Collectors.toList())),
+            boardApi.getBoards(null, null, null, null, null)
+                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .collect(Collectors.toList()),
             adminBoardNames,
             new TestHelper.ExpectedActions()
                 .addAll(adminBoardNames, adminActionList));
 
         TestHelper.verifyResources(
-            transactionTemplate.execute(status ->
-                boardApi.getBoards(null, true, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                    .collect(Collectors.toList())),
+            boardApi.getBoards(null, true, null, null, null)
+                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .collect(Collectors.toList()),
             boardNames,
             new TestHelper.ExpectedActions()
                 .add(publicActionList)
@@ -773,19 +716,17 @@ public class BoardApiIT extends AbstractIT {
             List<String> departmentBoardNames = Lists.newArrayList(boardNamesByDepartment.get(departmentId));
             @SuppressWarnings("unchecked") List<String> adminDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, adminBoardNames);
             TestHelper.verifyResources(
-                transactionTemplate.execute(status ->
-                    boardApi.getBoards(departmentId, null, null, null, null)
-                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                        .collect(Collectors.toList())),
+                boardApi.getBoards(departmentId, null, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList()),
                 adminDepartmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .addAll(adminDepartmentBoardNames, adminActionList));
 
             TestHelper.verifyResources(
-                transactionTemplate.execute(status ->
-                    boardApi.getBoards(departmentId, true, null, null, null)
-                        .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
-                        .collect(Collectors.toList())),
+                boardApi.getBoards(departmentId, true, null, null, null)
+                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .collect(Collectors.toList()),
                 departmentBoardNames,
                 new TestHelper.ExpectedActions()
                     .add(publicActionList)
@@ -794,11 +735,11 @@ public class BoardApiIT extends AbstractIT {
     }
 
     private void verifyPostAndAuthorCount(Long boardId, Long postCount, Long authorCount) {
-        BoardRepresentation boardR = transactionTemplate.execute(status -> boardApi.getBoard(boardId));
+        BoardRepresentation boardR = boardApi.getBoard(boardId);
         TestHelper.verifyNullableCount(postCount, boardR.getPostCount());
         TestHelper.verifyNullableCount(authorCount, boardR.getAuthorCount());
 
-        List<BoardRepresentation> boardRs = transactionTemplate.execute(status -> boardApi.getBoards(null, true, null, null, null));
+        List<BoardRepresentation> boardRs = boardApi.getBoards(null, true, null, null, null);
         TestHelper.verifyNullableCount(postCount, boardRs.get(0).getPostCount());
         TestHelper.verifyNullableCount(authorCount, boardRs.get(0).getAuthorCount());
 

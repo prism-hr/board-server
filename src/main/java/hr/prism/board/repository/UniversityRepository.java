@@ -3,9 +3,11 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.University;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Transactional
 @SuppressWarnings("JpaQlInspection")
 public interface UniversityRepository extends BoardEntityRepository<University, Long> {
 

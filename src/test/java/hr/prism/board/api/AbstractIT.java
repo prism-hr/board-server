@@ -16,6 +16,7 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
 import hr.prism.board.repository.ResourceEventRepository;
+import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.representation.ActionRepresentation;
@@ -47,7 +48,7 @@ public abstract class AbstractIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
 
-    TransactionTemplate transactionTemplate;
+    private TransactionTemplate transactionTemplate;
 
     @Value("${resource.archive.duration.seconds}")
     Long resourceArchiveDurationSeconds;
@@ -72,6 +73,9 @@ public abstract class AbstractIT {
 
     @Inject
     ResourceRepository resourceRepository;
+
+    @Inject
+    ResourceRelationRepository resourceRelationRepository;
 
     @Inject
     UserRepository userRepository;

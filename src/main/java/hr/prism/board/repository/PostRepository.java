@@ -7,11 +7,13 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+@Transactional
 @SuppressWarnings("JpaQlInspection")
 public interface PostRepository extends BoardEntityRepository<Post, Long> {
 
