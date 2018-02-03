@@ -82,15 +82,7 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     public void shouldCreateDepartment() {
         testUserService.authenticate();
-        University university = universityService.getOrCreateUniversity("University College London", "ucl");
-        Long universityId = university.getId();
-
-        Document documentLogo = new Document();
-        documentLogo.setCloudinaryId("c");
-        documentLogo.setCloudinaryUrl("u");
-        documentLogo.setFileName("f");
-
-        university.setDocumentLogo(documentRepository.save(documentLogo));
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
         DepartmentDTO department =
             new DepartmentDTO()

@@ -5,20 +5,14 @@ import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.PostDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.exception.ExceptionUtils;
-import hr.prism.board.repository.ResourceEventRepository;
-import hr.prism.board.repository.ResourceRelationRepository;
-import hr.prism.board.repository.ResourceRepository;
-import hr.prism.board.repository.UserRepository;
+import hr.prism.board.repository.*;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.*;
@@ -50,6 +44,9 @@ public abstract class AbstractIT {
 
     private TransactionTemplate transactionTemplate;
 
+    @Value("${server.url}")
+    String serverUrl;
+
     @Value("${resource.archive.duration.seconds}")
     Long resourceArchiveDurationSeconds;
 
@@ -70,18 +67,6 @@ public abstract class AbstractIT {
 
     @Inject
     AuthenticationApi authenticationApi;
-
-    @Inject
-    ResourceRepository resourceRepository;
-
-    @Inject
-    ResourceRelationRepository resourceRelationRepository;
-
-    @Inject
-    UserRepository userRepository;
-
-    @Inject
-    ResourceEventRepository resourceEventRepository;
 
     @Inject
     ActivityService activityService;
@@ -120,13 +105,25 @@ public abstract class AbstractIT {
     ResourceEventService resourceEventService;
 
     @Inject
+    ResourceRepository resourceRepository;
+
+    @Inject
+    ResourceRelationRepository resourceRelationRepository;
+
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    ResourceEventRepository resourceEventRepository;
+
+    @Inject
+    UniversityRepository universityRepository;
+
+    @Inject
     MockMvc mockMvc;
 
     @Inject
     ObjectMapper objectMapper;
-
-    @Value("${server.url}")
-    String serverUrl;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -155,7 +152,8 @@ public abstract class AbstractIT {
             Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
             restoreForeignKeyChecks.executeUpdate();
 
-            universityService.getOrCreateUniversity("University College London", "ucl");
+            universityService.getOrCreateUniversity("University College London", "ucl",
+                new DocumentDTO().setCloudinaryId("u").setCloudinaryUrl("u").setFileName("f"));
             return null;
         });
     }
