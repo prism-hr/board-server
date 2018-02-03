@@ -153,7 +153,7 @@ public abstract class AbstractIT {
             restoreForeignKeyChecks.executeUpdate();
 
             universityService.getOrCreateUniversity("University College London", "ucl",
-                new DocumentDTO().setCloudinaryId("u").setCloudinaryUrl("u").setFileName("f"));
+                new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"));
             return null;
         });
     }
