@@ -18,13 +18,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -71,12 +68,8 @@ public class ResourceTaskService {
     @Inject
     private NotificationEventService notificationEventService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public ResourceTask findOne(Long id) {
         return resourceTaskRepository.findOne(id);
@@ -154,14 +147,13 @@ public class ResourceTaskService {
     private void insertResourceTasks(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
         String insert = INSERT_RESOURCE_TASK + tasks.stream()
             .map(task -> "(:resourceId, '" + task.name() + "', :creatorId, :baseline, :baseline)").collect(Collectors.joining(SEPARATOR));
-        new TransactionTemplate(platformTransactionManager).execute(status -> {
-            Query query = entityManager.createNativeQuery(insert);
-            query.setParameter("resourceId", resourceId);
-            query.setParameter("creatorId", userId);
-            query.setParameter("baseline", LocalDateTime.now());
-            return query.executeUpdate();
-        });
 
+        Query query = entityManager.createNativeQuery(insert);
+        query.setParameter("resourceId", resourceId);
+        query.setParameter("creatorId", userId);
+        query.setParameter("baseline", LocalDateTime.now());
+
+        query.executeUpdate();
         entityManager.flush();
     }
 

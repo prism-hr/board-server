@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -72,7 +71,7 @@ public class AuthenticationService {
     @Inject
     private NotificationEventService notificationEventService;
 
-    @PersistenceContext
+    @Inject
     private EntityManager entityManager;
 
     @Inject

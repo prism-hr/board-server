@@ -24,16 +24,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
@@ -122,12 +118,8 @@ public class ResourceService {
     @Inject
     private ObjectMapper objectMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
@@ -217,13 +209,6 @@ public class ResourceService {
 
     public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
         return resourceRepository.findSummaryByUserAndRole(user, role);
-    }
-
-    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
-    public void archiveResourcesScheduled() {
-        if (BooleanUtils.isTrue(schedulerOn)) {
-            archiveResources();
-        }
     }
 
     public void archiveResources() {
@@ -401,27 +386,21 @@ public class ResourceService {
 
         // Get the mappings
         entityManager.flush();
-        TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        List<Object[]> rows = transactionTemplate.execute(status -> {
-            List<Object[]> publicResults = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
-            List<Object[]> secureResults = getResources(RESOURCE_COLUMN_LIST + " " + SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
-            if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
-                // Return public and secure results
-                secureResults.addAll(publicResults);
-                return secureResults;
-            }
+        List<Object[]> publicResults = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
+        List<Object[]> secureResults = getResources(RESOURCE_COLUMN_LIST + " " + SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
 
-            List<Object[]> securePublicResults = new ArrayList<>();
-            HashMultimap<Object, Object[]> publicResultsIndex = HashMultimap.create();
-            publicResults.forEach(result -> publicResultsIndex.put(result[0], result));
-            for (Object[] secureResult : secureResults) {
-                securePublicResults.addAll(publicResultsIndex.get(secureResult[0]));
-            }
-
+        List<Object[]> rows = new ArrayList<>(secureResults);
+        if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
+            // Return public and secure results
+            rows.addAll(publicResults);
+        } else {
             // Return secure results with public actions
-            secureResults.addAll(securePublicResults);
-            return secureResults;
-        });
+            HashMultimap<Object, Object[]> publicResultsById = HashMultimap.create();
+            publicResults.forEach(result -> publicResultsById.put(result[0], result));
+            for (Object[] secureResult : secureResults) {
+                rows.addAll(publicResultsById.get(secureResult[0]));
+            }
+        }
 
         // Remove duplicate mappings
         Map<ResourceActionKey, ActionRepresentation> rowIndex = new HashMap<>();
@@ -490,24 +469,22 @@ public class ResourceService {
         }
 
         // Get the resource data
-        List<Resource> resources = transactionTemplate.execute(status -> {
-            String statement =
-                "select distinct resource " +
-                    "from " + resourceClass.getSimpleName() + " resource " +
-                    "left join resource.searches search on search.search = :search " +
-                    "where resource.id in (:resourceIds) ";
-            if (searchTermApplied) {
-                statement += "and search.id is not null ";
-            }
+        String statement =
+            "select distinct resource " +
+                "from " + resourceClass.getSimpleName() + " resource " +
+                "left join resource.searches search on search.search = :search " +
+                "where resource.id in (:resourceIds) ";
+        if (searchTermApplied) {
+            statement += "and search.id is not null ";
+        }
 
-            statement += Joiner.on(", ").skipNulls().join("order by search.id", filter.getOrderStatement());
+        statement += Joiner.on(", ").skipNulls().join("order by search.id", filter.getOrderStatement());
 
-            return (List<Resource>) entityManager.createQuery(statement, resourceClass)
-                .setParameter("search", search)
-                .setParameter("resourceIds", resourceIds)
-                .setHint("javax.persistence.loadgraph", entityGraph)
-                .getResultList();
-        });
+        List<Resource> resources = (List<Resource>) entityManager.createQuery(statement, resourceClass)
+            .setParameter("search", search)
+            .setParameter("resourceIds", resourceIds)
+            .setHint("javax.persistence.loadgraph", entityGraph)
+            .getResultList();
 
         if (searchTermApplied) {
             resourceSearchRepository.deleteBySearch(search);

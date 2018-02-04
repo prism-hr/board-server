@@ -10,13 +10,10 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,18 +41,14 @@ public class DefinitionService {
     @Value("${cloudinary.folder}")
     private String cloudinaryFolder;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     @PostConstruct
     public TreeMap<String, Object> getDefinitions() {
         try {
             // Check that the database connection is running
-            new TransactionTemplate(platformTransactionManager).execute(status -> entityManager.createNativeQuery(TEST_QUERY).getResultList());
+            entityManager.createNativeQuery(TEST_QUERY).getResultList();
             if (this.definitions == null) {
                 synchronized (this) {
                     if (this.definitions == null) {

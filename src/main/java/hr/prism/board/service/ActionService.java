@@ -23,13 +23,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,12 +52,8 @@ public class ActionService {
     @Inject
     private ObjectMapper objectMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -125,32 +118,29 @@ public class ActionService {
 
     @SuppressWarnings("JpaQlInspection")
     public void executeAnonymously(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
-        new TransactionTemplate(platformTransactionManager).execute(status -> {
-            entityManager.createQuery(
-                "update Resource resource " +
-                    "set resource.previousState = resource.state, " +
-                    "resource.state = :newState, " +
-                    "resource.stateChangeTimestamp = :baseline, " +
-                    "resource.updatedTimestamp = :baseline " +
-                    "where resource.id in (:resourceIds)")
-                .setParameter("newState", newState)
-                .setParameter("baseline", baseline)
-                .setParameter("resourceIds", resourceIds)
-                .executeUpdate();
+        entityManager.createQuery(
+            "update Resource resource " +
+                "set resource.previousState = resource.state, " +
+                "resource.state = :newState, " +
+                "resource.stateChangeTimestamp = :baseline, " +
+                "resource.updatedTimestamp = :baseline " +
+                "where resource.id in (:resourceIds)")
+            .setParameter("newState", newState)
+            .setParameter("baseline", baseline)
+            .setParameter("resourceIds", resourceIds)
+            .executeUpdate();
 
-            //noinspection SqlResolve
-            entityManager.createNativeQuery(
-                "INSERT INTO resource_operation (resource_id, action, creator_id, created_timestamp, updated_timestamp) " +
-                    "SELECT resource.id, :action, resource.creator_id, :baseline, :baseline " +
-                    "FROM resource " +
-                    "WHERE resource.id IN (:postIds) " +
-                    "ORDER BY resource.id")
-                .setParameter("action", action.name())
-                .setParameter("baseline", baseline)
-                .setParameter("postIds", resourceIds)
-                .executeUpdate();
-            return null;
-        });
+        //noinspection SqlResolve
+        entityManager.createNativeQuery(
+            "INSERT INTO resource_operation (resource_id, action, creator_id, created_timestamp, updated_timestamp) " +
+                "SELECT resource.id, :action, resource.creator_id, :baseline, :baseline " +
+                "FROM resource " +
+                "WHERE resource.id IN (:postIds) " +
+                "ORDER BY resource.id")
+            .setParameter("action", action.name())
+            .setParameter("baseline", baseline)
+            .setParameter("postIds", resourceIds)
+            .executeUpdate();
     }
 
     public boolean canExecuteAction(Resource resource, Action action) {

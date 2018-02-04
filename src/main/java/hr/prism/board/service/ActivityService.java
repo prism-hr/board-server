@@ -20,13 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -94,11 +91,8 @@ public class ActivityService {
     @Inject
     private ObjectMapper objectMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public Activity findByResourceAndActivity(Resource resource, hr.prism.board.enums.Activity activity) {
         return activityRepository.findByResourceAndActivity(resource, activity);
@@ -118,14 +112,13 @@ public class ActivityService {
     }
 
     public List<ActivityRepresentation> getActivities(Long userId) {
-        List<Activity> activities = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createQuery(USER_ACTIVITY, Activity.class)
-                .setParameter("userId", userId)
-                .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
-                .setParameter("categoryType", CategoryType.MEMBER)
-                .setParameter("activityEvent", hr.prism.board.enums.ActivityEvent.DISMISSAL)
-                .setMaxResults(25)
-                .getResultList());
+        List<Activity> activities = entityManager.createQuery(USER_ACTIVITY, Activity.class)
+            .setParameter("userId", userId)
+            .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
+            .setParameter("categoryType", CategoryType.MEMBER)
+            .setParameter("activityEvent", hr.prism.board.enums.ActivityEvent.DISMISSAL)
+            .setMaxResults(25)
+            .getResultList();
 
         if (activities.isEmpty()) {
             return Collections.emptyList();

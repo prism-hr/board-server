@@ -30,6 +30,9 @@ public class ScheduledService {
     @Inject
     private DepartmentService departmentService;
 
+    @Inject
+    private ResourceService resourceService;
+
     @Scheduled(initialDelay = 60000, fixedDelay = 10000)
     public void processActivities() throws IOException {
         if (BooleanUtils.isTrue(schedulerOn)) {
@@ -38,7 +41,7 @@ public class ScheduledService {
     }
 
     @Scheduled(initialDelay = 60000, fixedDelay = 10000)
-    public void processPostsTasksAndSubscriptions() {
+    public void processResources() {
         if (BooleanUtils.isTrue(schedulerOn)) {
             // Publish / retire posts
             LocalDateTime baseline = getBaseline();
@@ -52,6 +55,9 @@ public class ScheduledService {
 
             // Update department tasks
             updateDepartmentTasks(baseline);
+
+            // Archive expired resources
+            resourceService.archiveResources();
         }
     }
 

@@ -25,13 +25,10 @@ import hr.prism.board.workflow.Notification;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -113,12 +110,8 @@ public class PostService {
     @Inject
     private ObjectMapper objectMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public Post getPost(Long id) {
         return getPost(id, null, false);
@@ -299,24 +292,22 @@ public class PostService {
             entityManager.flush();
         }
 
-        List<ResourceEvent> resourceEvents = new TransactionTemplate(platformTransactionManager).execute(status -> {
-            String statement =
-                "select distinct resourceEvent " +
-                    "from ResourceEvent resourceEvent " +
-                    "left join resourceEvent.searches search on search.search = :search " +
-                    "where resourceEvent.resource.id = :postId " +
-                    "and resourceEvent.user.id in (:userIds) ";
-            if (searchTermApplied) {
-                statement += "and search.id is not null ";
-            }
+        String statement =
+            "select distinct resourceEvent " +
+                "from ResourceEvent resourceEvent " +
+                "left join resourceEvent.searches search on search.search = :search " +
+                "where resourceEvent.resource.id = :postId " +
+                "and resourceEvent.user.id in (:userIds) ";
+        if (searchTermApplied) {
+            statement += "and search.id is not null ";
+        }
 
-            statement += "order by search.id, resourceEvent.id desc";
-            return entityManager.createQuery(statement, ResourceEvent.class)
-                .setParameter("search", search)
-                .setParameter("postId", postId)
-                .setParameter("userIds", userIds)
-                .getResultList();
-        });
+        statement += "order by search.id, resourceEvent.id desc";
+        List<ResourceEvent> resourceEvents = entityManager.createQuery(statement, ResourceEvent.class)
+            .setParameter("search", search)
+            .setParameter("postId", postId)
+            .setParameter("userIds", userIds)
+            .getResultList();
 
         if (searchTermApplied) {
             resourceEventService.deleteSearchResults(search);
@@ -426,12 +417,11 @@ public class PostService {
     }
 
     public List<String> findOrganizationsBySimilarName(String searchTerm) {
-        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createNativeQuery(SIMILAR_ORGANIZATION)
-                .setParameter("searchTermHard", searchTerm + "%")
-                .setParameter("searchTermSoft", searchTerm)
-                .setParameter("scope", Scope.POST.name())
-                .getResultList());
+        List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_ORGANIZATION)
+            .setParameter("searchTermHard", searchTerm + "%")
+            .setParameter("searchTermSoft", searchTerm)
+            .setParameter("scope", Scope.POST.name())
+            .getResultList();
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 

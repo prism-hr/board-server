@@ -28,13 +28,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -162,12 +159,8 @@ public class DepartmentService {
     @Inject
     private NotificationEventService notificationEventService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public Department getDepartment(Long id) {
         User user = userService.getCurrentUser();
@@ -268,14 +261,13 @@ public class DepartmentService {
     }
 
     public List<DepartmentRepresentation> findBySimilarName(Long universityId, String searchTerm) {
-        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
-                .setParameter("searchTermHard", searchTerm + "%")
-                .setParameter("searchTermSoft", searchTerm)
-                .setParameter("universityId", universityId)
-                .setParameter("scope", Scope.DEPARTMENT.name())
-                .setParameter("state", State.ACCEPTED.name())
-                .getResultList());
+        List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
+            .setParameter("searchTermHard", searchTerm + "%")
+            .setParameter("searchTermSoft", searchTerm)
+            .setParameter("universityId", universityId)
+            .setParameter("scope", Scope.DEPARTMENT.name())
+            .setParameter("state", State.ACCEPTED.name())
+            .getResultList();
 
         List<DepartmentRepresentation> departmentRepresentations = new ArrayList<>();
         for (Object[] row : rows) {
@@ -295,12 +287,11 @@ public class DepartmentService {
     }
 
     public List<String> findProgramsBySimilarName(Long departmentId, String searchTerm) {
-        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createNativeQuery(SIMILAR_DEPARTMENT_PROGRAM)
-                .setParameter("searchTermHard", searchTerm + "%")
-                .setParameter("searchTermSoft", searchTerm)
-                .setParameter("departmentId", departmentId)
-                .getResultList());
+        List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_DEPARTMENT_PROGRAM)
+            .setParameter("searchTermHard", searchTerm + "%")
+            .setParameter("searchTermSoft", searchTerm)
+            .setParameter("departmentId", departmentId)
+            .getResultList();
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 

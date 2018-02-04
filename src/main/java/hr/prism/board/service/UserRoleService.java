@@ -15,13 +15,10 @@ import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,12 +52,8 @@ public class UserRoleService {
     @Inject
     private UserRoleMapper userRoleMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public UserRole fineOne(Long userRoleId) {
         return userRoleRepository.findOne(userRoleId);
@@ -191,20 +184,19 @@ public class UserRoleService {
 
     private UserRoleRepresentation getUserRole(Resource resource, User user, Role role) {
         entityManager.flush();
-        List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createQuery(
-                "select distinct userRole " +
-                    "from UserRole userRole " +
-                    "where userRole.resource = :resource " +
-                    "and userRole.user = :user " +
-                    "and userRole.role = :role " +
-                    "and userRole.state in (:states) ", UserRole.class)
-                .setParameter("resource", resource)
-                .setParameter("user", user)
-                .setParameter("role", role)
-                .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
-                .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
-                .getResultList());
+        List<UserRole> userRoles = entityManager.createQuery(
+            "select distinct userRole " +
+                "from UserRole userRole " +
+                "where userRole.resource = :resource " +
+                "and userRole.user = :user " +
+                "and userRole.role = :role " +
+                "and userRole.state in (:states) ", UserRole.class)
+            .setParameter("resource", resource)
+            .setParameter("user", user)
+            .setParameter("role", role)
+            .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
+            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
+            .getResultList();
         if (userRoles.isEmpty()) {
             return null;
         }
@@ -226,30 +218,28 @@ public class UserRoleService {
             entityManager.flush();
         }
 
-        List<UserRole> userRoles = new TransactionTemplate(platformTransactionManager).execute(status -> {
-            String statement =
-                "select distinct userRole " +
-                    "from UserRole userRole " +
-                    "inner join userRole.user user " +
-                    "left join user.searches search on search.search = :search " +
-                    "where userRole.resource = :resource " +
-                    "and user.id in (:userIds) " +
-                    "and userRole.role in(:roles) " +
-                    "and userRole.state = :state ";
-            if (searchTermApplied) {
-                statement += "and search.id is not null ";
-            }
+        String statement =
+            "select distinct userRole " +
+                "from UserRole userRole " +
+                "inner join userRole.user user " +
+                "left join user.searches search on search.search = :search " +
+                "where userRole.resource = :resource " +
+                "and user.id in (:userIds) " +
+                "and userRole.role in(:roles) " +
+                "and userRole.state = :state ";
+        if (searchTermApplied) {
+            statement += "and search.id is not null ";
+        }
 
-            statement += "order by search.id, user.id desc";
-            return entityManager.createQuery(statement, UserRole.class)
-                .setParameter("search", search)
-                .setParameter("resource", resource)
-                .setParameter("userIds", userIds)
-                .setParameter("roles", roles)
-                .setParameter("state", state)
-                .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
-                .getResultList();
-        });
+        statement += "order by search.id, user.id desc";
+        List<UserRole> userRoles = entityManager.createQuery(statement, UserRole.class)
+            .setParameter("search", search)
+            .setParameter("resource", resource)
+            .setParameter("userIds", userIds)
+            .setParameter("roles", roles)
+            .setParameter("state", state)
+            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
+            .getResultList();
 
         if (searchTermApplied) {
             userService.deleteSearchResults(search);

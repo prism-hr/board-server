@@ -24,17 +24,13 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -87,14 +83,9 @@ public class UserService {
     @Inject
     private PostService postService;
 
-    @PersistenceContext
+    @Inject
     private EntityManager entityManager;
 
-    @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
-
-    @Lazy
     @Inject
     private Pusher pusher;
 
@@ -188,10 +179,9 @@ public class UserService {
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
 
-        List<Object[]> results = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
-                .setParameter("searchTerm", searchTerm + "%")
-                .getResultList());
+        List<Object[]> results = entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
+            .setParameter("searchTerm", searchTerm + "%")
+            .getResultList();
 
         List<UserRepresentation> userRepresentations = new ArrayList<>();
         for (Object[] result : results) {
@@ -219,22 +209,19 @@ public class UserService {
     public void deleteTestUsers() {
         List<Long> userIds = userRepository.findByTestUser(true);
         if (!userIds.isEmpty()) {
-            new TransactionTemplate(platformTransactionManager).execute(status -> {
-                Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
-                removeForeignKeyChecks.executeUpdate();
+            Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
+            removeForeignKeyChecks.executeUpdate();
 
-                @SuppressWarnings("unchecked")
-                List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
-                tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
-                    Query deleteUserData = entityManager.createNativeQuery("DELETE FROM " + tableName + " WHERE creator_id IN (:userIds)");
-                    deleteUserData.setParameter("userIds", userIds);
-                    deleteUserData.executeUpdate();
-                });
-
-                Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
-                restoreForeignKeyChecks.executeUpdate();
-                return null;
+            @SuppressWarnings("unchecked")
+            List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
+            tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
+                Query deleteUserData = entityManager.createNativeQuery("DELETE FROM " + tableName + " WHERE creator_id IN (:userIds)");
+                deleteUserData.setParameter("userIds", userIds);
+                deleteUserData.executeUpdate();
             });
+
+            Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
+            restoreForeignKeyChecks.executeUpdate();
         }
     }
 

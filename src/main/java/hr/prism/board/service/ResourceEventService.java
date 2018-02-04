@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,7 +56,7 @@ public class ResourceEventService {
     @Inject
     private NotificationEventService notificationEventService;
 
-    @PersistenceContext
+    @Inject
     private EntityManager entityManager;
 
     public ResourceEvent findOne(Long resourceEventId) {

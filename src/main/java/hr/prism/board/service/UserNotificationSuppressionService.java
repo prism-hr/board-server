@@ -16,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +42,7 @@ public class UserNotificationSuppressionService {
     @Inject
     private UserNotificationSuppressionMapper userNotificationSuppressionMapper;
 
-    @PersistenceContext
+    @Inject
     private EntityManager entityManager;
 
     public List<UserNotificationSuppressionRepresentation> getSuppressions() {

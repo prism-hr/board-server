@@ -7,13 +7,10 @@ import hr.prism.board.repository.UniversityRepository;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UniversityRepresentation;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,12 +38,8 @@ public class UniversityService {
     @Inject
     private ResourceService resourceService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    private PlatformTransactionManager platformTransactionManager;
+    private EntityManager entityManager;
 
     public University getUniversity(Long id) {
         return (University) resourceService.findOne(id);
@@ -72,13 +65,12 @@ public class UniversityService {
 
     @SuppressWarnings("unchecked")
     public List<UniversityRepresentation> findBySimilarName(String searchTerm) {
-        List<Object[]> rows = new TransactionTemplate(platformTransactionManager).execute(status ->
-            entityManager.createNativeQuery(SIMILAR_UNIVERSITY)
-                .setParameter("searchTermHard", searchTerm + "%")
-                .setParameter("searchTermSoft", searchTerm)
-                .setParameter("scope", Scope.UNIVERSITY.name())
-                .setParameter("state", State.ACCEPTED.name())
-                .getResultList());
+        List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_UNIVERSITY)
+            .setParameter("searchTermHard", searchTerm + "%")
+            .setParameter("searchTermSoft", searchTerm)
+            .setParameter("scope", Scope.UNIVERSITY.name())
+            .setParameter("state", State.ACCEPTED.name())
+            .getResultList();
 
         List<UniversityRepresentation> universityRepresentations = new ArrayList<>();
         for (Object[] row : rows) {

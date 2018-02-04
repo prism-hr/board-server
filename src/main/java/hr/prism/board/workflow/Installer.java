@@ -4,15 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.utils.ObjectMapperProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Activity.*;
@@ -21,8 +19,7 @@ import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.*;
 
-@Service
-@Transactional
+@Component
 @SuppressWarnings("unused")
 public class Installer {
 
@@ -306,16 +303,15 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
-    @PersistenceContext
+    @Inject
     private EntityManager entityManager;
 
     @Inject
-    @SuppressWarnings("SpringJavaAutowiringInspection")
     private PlatformTransactionManager platformTransactionManager;
 
     @PostConstruct
     public void install() {
-        new TransactionTemplate(platformTransactionManager).execute(transactionStatus -> {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
             LOGGER.info("Deleting old workflow definition");
             entityManager.createNativeQuery("TRUNCATE TABLE workflow").executeUpdate();
 

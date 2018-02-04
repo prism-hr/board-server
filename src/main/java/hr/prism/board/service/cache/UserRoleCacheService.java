@@ -1,6 +1,5 @@
 package hr.prism.board.service.cache;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserRoleDTO;
@@ -23,11 +22,12 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import hr.prism.board.workflow.Activity;
 
 @Service
 @Transactional
@@ -57,7 +57,7 @@ public class UserRoleCacheService {
     @Inject
     private NotificationEventService notificationEventService;
 
-    @PersistenceContext
+    @Inject
     private EntityManager entityManager;
 
     public UserRole findByUuid(String uuid) {
