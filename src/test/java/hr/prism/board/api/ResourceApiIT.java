@@ -199,6 +199,8 @@ public class ResourceApiIT extends AbstractIT {
                 } else {
                     postService.setIndexDataAndQuarter((Post) resource);
                 }
+
+                resourceRepository.update(resource);
             });
 
         Long userId = userCacheService.findByEmail("department@administrator.com").getId();

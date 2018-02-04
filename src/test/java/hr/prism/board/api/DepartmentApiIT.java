@@ -82,7 +82,17 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     public void shouldCreateDepartment() {
         testUserService.authenticate();
-        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        University university = universityService.getOrCreateUniversity("University College London", "ucl");
+        Long universityId = university.getId();
+
+        Document documentLogo = new Document();
+        documentLogo.setCloudinaryId("c");
+        documentLogo.setCloudinaryUrl("u");
+        documentLogo.setFileName("f");
+
+        documentRepository.save(documentLogo);
+        university.setDocumentLogo(documentLogo);
+        universityRepository.update(university);
 
         DepartmentDTO department =
             new DepartmentDTO()
@@ -114,7 +124,8 @@ public class DepartmentApiIT extends AbstractIT {
     @Test
     public void shouldCreateDepartmentOverridingDefaults() {
         testUserService.authenticate();
-        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        University university = universityService.getOrCreateUniversity("University College London", "ucl");
+        Long universityId = university.getId();
 
         DepartmentDTO department =
             new DepartmentDTO()
@@ -501,10 +512,10 @@ public class DepartmentApiIT extends AbstractIT {
             new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
             new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
 
-        Department department = (Department) resourceService.findOne(departmentId);
-        String departmentAdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
-        String departmentAdminRole2Uuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser2, Role.ADMINISTRATOR).getUuid();
-        String departmentAdminRole3Uuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser3, Role.ADMINISTRATOR).getUuid();
+        Department department0 = (Department) resourceService.findOne(departmentId);
+        String departmentAdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser, Role.ADMINISTRATOR).getUuid();
+        String departmentAdminRole2Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser2, Role.ADMINISTRATOR).getUuid();
+        String departmentAdminRole3Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser3, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
@@ -760,10 +771,11 @@ public class DepartmentApiIT extends AbstractIT {
 
         LocalDateTime baseline = scheduledService.getBaseline();
         LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
-        Department localDepartment = departmentService.getDepartment(departmentId);
-        localDepartment.setCreatedTimestamp(baseline1);
-        localDepartment.setLastMemberTimestamp(baseline1);
-        localDepartment.setLastTaskCreationTimestamp(baseline.minusYears(1));
+        Department department1 = departmentService.getDepartment(departmentId);
+        department1.setCreatedTimestamp(baseline1);
+        department1.setLastMemberTimestamp(baseline1);
+        department1.setLastTaskCreationTimestamp(baseline.minusYears(1));
+        resourceRepository.update(department1);
 
         scheduledService.updateDepartmentTasks(scheduledService.getBaseline());
         resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,

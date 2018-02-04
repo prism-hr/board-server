@@ -5,7 +5,10 @@ import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
@@ -145,15 +148,14 @@ public abstract class AbstractIT {
             @SuppressWarnings("unchecked")
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
             tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
-                Query truncateTable = entityManager.createNativeQuery("DELETE FROM " + tableName);
-                truncateTable.executeUpdate();
+                Query emptyTable = entityManager.createNativeQuery("DELETE FROM " + tableName);
+                emptyTable.executeUpdate();
             });
 
             Query restoreForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 1");
             restoreForeignKeyChecks.executeUpdate();
 
-            universityService.getOrCreateUniversity("University College London", "ucl",
-                new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"));
+            universityService.getOrCreateUniversity("University College London", "ucl");
             return null;
         });
     }

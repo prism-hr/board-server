@@ -38,7 +38,12 @@ public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Se
     @Transactional
     public <T extends ENTITY> T update(T entity) {
         entity.setUpdatedTimestamp(LocalDateTime.now());
-        return entity;
+        return super.save(entity);
+    }
+
+    @Transactional
+    public <T extends ENTITY> T updateSilently(T entity) {
+        return super.save(entity);
     }
 
 }

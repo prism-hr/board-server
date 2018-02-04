@@ -1,8 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Document;
 import hr.prism.board.domain.University;
-import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.UniversityRepository;
@@ -43,9 +41,6 @@ public class UniversityService {
     @Inject
     private ResourceService resourceService;
 
-    @Inject
-    private DocumentService documentService;
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -57,12 +52,8 @@ public class UniversityService {
         return (University) resourceService.findOne(id);
     }
 
-    public University getOrCreateUniversity(String name, String handle) {
-        return getOrCreateUniversity(name, handle, null);
-    }
-
     @SuppressWarnings("SameParameterValue")
-    public University getOrCreateUniversity(String name, String handle, DocumentDTO documentLogoDTO) {
+    public University getOrCreateUniversity(String name, String handle) {
         University university = universityRepository.findByNameOrHandle(name, handle);
         if (university == null) {
             university = new University();
@@ -73,12 +64,6 @@ public class UniversityService {
             resourceService.updateState(university, State.ACCEPTED);
             resourceService.createResourceRelation(university, university);
             resourceService.setIndexDataAndQuarter(university);
-
-            if (documentLogoDTO != null) {
-                Document documentLogo = documentService.getOrCreateDocument(documentLogoDTO);
-                university.setDocumentLogo(documentLogo);
-            }
-
             return university;
         }
 

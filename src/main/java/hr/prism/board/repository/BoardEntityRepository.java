@@ -16,4 +16,6 @@ public interface BoardEntityRepository<ENTITY extends BoardEntity, ID extends Se
 
     <T extends ENTITY> T update(T entity);
 
+    <T extends ENTITY> T updateSilently(T entity);
+
 }

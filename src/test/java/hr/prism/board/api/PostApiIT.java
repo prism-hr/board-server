@@ -772,6 +772,7 @@ public class PostApiIT extends AbstractIT {
         Post localPost0 = postService.getPost(postId);
         localPost0.setLiveTimestamp(liveTimestamp);
         localPost0.setDeadTimestamp(deadTimestamp);
+        resourceRepository.updateSilently(localPost0);
 
         // Should be notified
         testUserService.setAuthentication(departmentUserId);
@@ -993,6 +994,7 @@ public class PostApiIT extends AbstractIT {
 
         Post localPost1 = postService.getPost(postId);
         localPost1.setDeadTimestamp(liveTimestamp.minusSeconds(1));
+        resourceRepository.updateSilently(localPost1);
 
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
@@ -1030,6 +1032,7 @@ public class PostApiIT extends AbstractIT {
 
         Post localPost2 = postService.getPost(postId);
         localPost2.setDeadTimestamp(null);
+        resourceRepository.updateSilently(localPost2);
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
@@ -1493,7 +1496,10 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/post_response_filter_setup.sql")
     public void shouldListAndFilterPostResponses() {
-        resourceEventRepository.findAll().forEach(resourceEventService::setIndexData);
+        resourceEventRepository.findAll().forEach(resourceEvent -> {
+            resourceEventService.setIndexData(resourceEvent);
+            resourceEventRepository.update(resourceEvent);
+        });
 
         Long userId = userRepository.findByEmail("alastair@knowles.com").getId();
         Long postId = resourceRepository.findByHandle("cs/opportunities/4").getId();
@@ -1672,6 +1678,7 @@ public class PostApiIT extends AbstractIT {
         Post post = postService.getPost(postR.getId());
         post.setState(state);
         post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
+        resourceRepository.updateSilently(post);
 
         userStatePosts.put(state, postDTO.getName());
     }
@@ -1679,6 +1686,7 @@ public class PostApiIT extends AbstractIT {
     private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
         Post post = postService.getByName(postName).get(0);
         post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
+        resourceRepository.updateSilently(post);
     }
 
     private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
