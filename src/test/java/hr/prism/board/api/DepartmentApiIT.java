@@ -70,6 +70,12 @@ public class DepartmentApiIT extends AbstractIT {
     @Value("${department.pending.expiry.seconds}")
     private Long departmentPendingExpirySeconds;
 
+    @Value("${department.pending.notification.interval1.seconds}")
+    private Long departmentPendingNotificationInterval1Seconds;
+
+    @Value("${department.pending.notification.interval2.seconds}")
+    private Long departmentPendingNotificationInterval2Seconds;
+
     @Inject
     private DocumentRepository documentRepository;
 
@@ -831,7 +837,14 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.DRAFT, departmentR.getState());
         Long departmentId = departmentR.getId();
 
+        // Check notifications not fired for pending state
+        LocalDateTime baseline = LocalDateTime.now();
+        scheduledService.updateDepartmentSubscriptions(baseline);
+
         Department department = (Department) resourceRepository.findOne(departmentId);
+        Assert.assertEquals(State.DRAFT, department.getState());
+
+        // Simulate ending the pending stage
         resourceRepository.updateStateChangeTimestampById(departmentId,
             department.getStateChangeTimestamp().minusSeconds(departmentDraftExpirySeconds + 1));
         departmentService.updateSubscriptions(LocalDateTime.now());
@@ -852,11 +865,12 @@ public class DepartmentApiIT extends AbstractIT {
             .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
         String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 
-        LocalDateTime baseline = LocalDateTime.now();
+        // Update subscriptions - check notifications only fired once
         scheduledService.updateDepartmentSubscriptions(baseline);
         scheduledService.updateDepartmentSubscriptions(baseline);
 
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY));
+        userApi.dismissActivity(userApi.getActivities().iterator().next().getId());
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", recipient)
@@ -866,8 +880,53 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        Department updatedDepartment = (Department) resourceService.findOne(departmentId);
-        Assert.assertEquals(new Integer(1), updatedDepartment.getNotifiedCount());
+        department = (Department) resourceService.findOne(departmentId);
+        Assert.assertEquals(new Integer(1), department.getNotifiedCount());
+        LocalDateTime pendingCommencedTimestamp = department.getStateChangeTimestamp();
+
+        // Simulate end of first notification period
+        resourceRepository.updateStateChangeTimestampById(departmentId, pendingCommencedTimestamp.minusSeconds(departmentPendingNotificationInterval1Seconds + 1));
+        departmentService.updateSubscriptions(LocalDateTime.now());
+        department = (Department) resourceService.findOne(departmentId);
+
+        pendingExpiryDeadline = department.getStateChangeTimestamp()
+            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
+
+        // Update subscriptions - check notifications only fired once
+        scheduledService.updateDepartmentSubscriptions(baseline);
+        scheduledService.updateDepartmentSubscriptions(baseline);
+
+        verifyActivitiesEmpty(departmentUserId);
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder()
+                .put("recipient", recipient)
+                .put("pendingExpiryDeadline", pendingExpiryDeadline)
+                .put("department", "department")
+                .put("accountRedirect", accountRedirect)
+                .put("invitationUuid", departmentAdminRoleUuid)
+                .build()));
+
+        // Simulate end of second notification period
+        resourceRepository.updateStateChangeTimestampById(departmentId, pendingCommencedTimestamp.minusSeconds(departmentPendingNotificationInterval2Seconds + 1));
+        departmentService.updateSubscriptions(LocalDateTime.now());
+        department = (Department) resourceService.findOne(departmentId);
+
+        pendingExpiryDeadline = department.getStateChangeTimestamp()
+            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
+
+        // Update subscriptions - check notifications only fired once
+        scheduledService.updateDepartmentSubscriptions(baseline);
+        scheduledService.updateDepartmentSubscriptions(baseline);
+
+        verifyActivitiesEmpty(departmentUserId);
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder()
+                .put("recipient", recipient)
+                .put("pendingExpiryDeadline", pendingExpiryDeadline)
+                .put("department", "department")
+                .put("accountRedirect", accountRedirect)
+                .put("invitationUuid", departmentAdminRoleUuid)
+                .build()));
 
         testNotificationService.record();
         testActivityService.stop();

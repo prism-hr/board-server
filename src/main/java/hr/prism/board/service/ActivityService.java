@@ -104,14 +104,14 @@ public class ActivityService {
 
     public List<ActivityRepresentation> getActivities() {
         Long userId = userService.getCurrentUserSecured().getId();
-        synchronized (this) {
-            userIds.add(userId);
-        }
-
         return getActivities(userId);
     }
 
     public List<ActivityRepresentation> getActivities(Long userId) {
+        synchronized (this) {
+            userIds.add(userId);
+        }
+
         List<Activity> activities = entityManager.createQuery(USER_ACTIVITY, Activity.class)
             .setParameter("userId", userId)
             .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)

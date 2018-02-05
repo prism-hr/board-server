@@ -248,7 +248,6 @@ public abstract class AbstractIT {
     void verifyActivitiesEmpty(Long userId) {
         testUserService.setAuthentication(userId);
         Assert.assertTrue(activityService.getActivities(userId).isEmpty());
-        testActivityService.verify(userId);
     }
 
     @SafeVarargs
