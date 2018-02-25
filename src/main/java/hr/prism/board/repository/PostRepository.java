@@ -33,6 +33,7 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
             "inner join post.parent board " +
             "inner join board.parent department " +
             "where post.state in (:states) " +
+            "and board.state <> :rejectedState " +
             "and department.state <> :rejectedState " +
             "and (post.liveTimestamp <= :baseline " +
             "or post.liveTimestamp is null) " +

@@ -278,7 +278,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportDepartmentLifecycleAndPermissions() {
+    public void shouldSupportDepartmentActionsAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
@@ -826,12 +826,6 @@ public class DepartmentApiIT extends AbstractIT {
 
         testActivityService.stop();
         testNotificationService.stop();
-
-        Customer customer = departmentApi.addPaymentSource(departmentId, "source");
-        Assert.assertNotNull(customer);
-        departmentR = departmentApi.getDepartment(departmentId);
-        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
-        Assert.assertEquals("id", departmentR.getCustomerId());
     }
 
     @Test
@@ -843,14 +837,15 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Assert.assertEquals(State.DRAFT, departmentR.getState());
-        Long departmentId = departmentR.getId();
+        Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE);
 
         // Check notifications not fired for draft state
         LocalDateTime baseline = LocalDateTime.now();
         scheduledService.updateDepartmentSubscriptions(baseline);
 
+        Long departmentId = departmentR.getId();
         Department department = (Department) resourceRepository.findOne(departmentId);
-        Assert.assertEquals(State.DRAFT, department.getState());
 
         // Simulate ending the draft stage
         resourceRepository.updateStateChangeTimestampById(departmentId,
@@ -859,6 +854,8 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.PENDING, departmentR.getState());
+        Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE);
 
         testActivityService.record();
         testNotificationService.record();
@@ -938,6 +935,14 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.record();
         testActivityService.stop();
+
+        Customer customer = departmentApi.addPaymentSource(departmentId, "source");
+        Assert.assertNotNull(customer);
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+        Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE, Action.UNSUBSCRIBE);
+        Assert.assertEquals("id", departmentR.getCustomerId());
     }
 
     @Test
@@ -945,23 +950,35 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
+        // Verify department actions
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Assert.assertEquals(State.DRAFT, departmentR.getState());
+        Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE);
+
         Long departmentId = departmentR.getId();
-
         Department department = (Department) resourceRepository.findOne(departmentId);
-        Assert.assertEquals(State.DRAFT, department.getState());
 
-        // Create a post so we can check post actions in department rejected state
+        // Verify board actions
         List<BoardRepresentation> boardRs = boardApi.getBoards(departmentId, null, null, null, null);
+        boardRs.forEach(boardR -> {
+            Assert.assertEquals(State.ACCEPTED, boardR.getState());
+            Assertions.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+                .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.REJECT);
+        });
+
+        // Create post
         PostRepresentation postR = postApi.postPost(boardRs.get(0).getId(),
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+        Assert.assertEquals(State.PENDING, postR.getState());
+        Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsOnly(Action.VIEW, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
         Long postId = postR.getId();
 
-        // Verify post is accepted
+        // Verify post actions
         postService.publishAndRetirePosts(LocalDateTime.now());
         postR = postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
         Assert.assertEquals(State.ACCEPTED, postR.getState());
@@ -973,22 +990,64 @@ public class DepartmentApiIT extends AbstractIT {
             department.getStateChangeTimestamp().minusSeconds(departmentDraftExpirySeconds + 1));
         departmentService.updateSubscriptions(LocalDateTime.now());
 
+        // Verify department actions
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.PENDING, departmentR.getState());
+        Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE);
+
+        // Verify board actions
+        boardRs = boardApi.getBoards(departmentId, null, null, null, null);
+        boardRs.forEach(boardR -> {
+            Assert.assertEquals(State.ACCEPTED, boardR.getState());
+            Assertions.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+                .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.EXTEND, Action.REJECT);
+        });
+
+        // Verify post actions
+        postR = postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
+        Assert.assertEquals(State.ACCEPTED, postR.getState());
+        Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsOnly(Action.VIEW, Action.PURSUE, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
+
+        // Create post
+        PostRepresentation post2R = postApi.postPost(boardRs.get(0).getId(),
+            TestHelper.smallSamplePost()
+                .setName("post2")
+                .setPostCategories(Collections.singletonList("Employment"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+        Long post2Id = post2R.getId();
+        Assert.assertEquals(State.PENDING, post2R.getState());
 
         // Simulate ending the pending stage
         resourceRepository.updateStateChangeTimestampById(departmentId,
             department.getStateChangeTimestamp().minusSeconds(departmentPendingExpirySeconds + 1));
         departmentService.updateSubscriptions(LocalDateTime.now());
 
-        // Department rejected and new posts cannot be created
+        // Verify department actions
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.REJECTED, departmentR.getState());
         Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
             .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.SUBSCRIBE);
 
-        // Post accepted yet new applications cannot be created
+        // Verify board actions
+        boardRs = boardApi.getBoards(departmentId, null, null, null, null);
+        boardRs.forEach(boardR -> {
+            Assert.assertEquals(State.ACCEPTED, boardR.getState());
+            Assertions.assertThat(boardR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+                .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.REJECT);
+        });
+
+        // Verify post actions
+        postService.publishAndRetirePosts(LocalDateTime.now());
         postR = postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
+        Assert.assertEquals(State.ACCEPTED, postR.getState());
+        Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsOnly(Action.VIEW, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
+
+        // Verify post 2 actions
+        post2R = postApi.getPost(post2Id, TestHelper.mockHttpServletRequest("address"));
+        Assert.assertEquals(State.PENDING, post2R.getState());
         Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
             .containsOnly(Action.VIEW, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
     }
