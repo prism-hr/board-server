@@ -35,17 +35,6 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
                                                   @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
-        "select department.id " +
-            "from Department department " +
-            "where department.state = :suspendedState " +
-            "and (department.notifiedCount = :notifiedCount1 and department.stateChangeTimestamp < :baseline1) " +
-            "or (department.notifiedCount = :notifiedCount2 and department.stateChangeTimestamp < :baseline2)) " +
-            "order by department.id")
-    List<Long> findAllIdsForSuspendNotification(@Param("suspendedState") State suspendedState, @Param("notifiedCount1") Integer notifiedCount1,
-                                                @Param("notifiedCount2") Integer notifiedCount2, @Param("baseline1") LocalDateTime baseline1,
-                                                @Param("baseline2") LocalDateTime baseline2);
-
-    @Query(value =
         "select department.handle " +
             "from Department department " +
             "where department.handle like concat('%', :suggestedHandle) " +

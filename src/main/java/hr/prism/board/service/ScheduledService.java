@@ -70,8 +70,6 @@ public class ScheduledService {
         departmentService.updateSubscriptions(baseline);
         departmentService.findAllIdsForSubscribeNotification(baseline)
             .forEach(departmentId -> departmentService.sendSubscribeNotification(departmentId));
-        departmentService.findAllIdsForSuspendNotification(baseline)
-            .forEach(departmentId -> departmentService.sendSuspendNotification(departmentId));
     }
 
     public void updateDepartmentTasks(LocalDateTime baseline) {

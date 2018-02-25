@@ -90,12 +90,6 @@ public class DepartmentService {
     @Value("${department.pending.notification.interval2.seconds}")
     private Long departmentPendingNotificationInterval2Seconds;
 
-    @Value("${department.suspended.notification.interval1.seconds}")
-    private Long departmentSuspendedNotificationInterval1Seconds;
-
-    @Value("${department.suspended.notification.interval2.seconds}")
-    private Long departmentSuspendedNotificationInterval2Seconds;
-
     @Value("${department.draft.expiry.seconds}")
     private Long departmentDraftExpirySeconds;
 
@@ -468,16 +462,10 @@ public class DepartmentService {
         department.setNotifiedCount(notifiedCount == null ? 1 : notifiedCount + 1);
     }
 
-    public List<Long> findAllIdsForSuspendNotification(LocalDateTime baseline) {
-        LocalDateTime baseline1 = baseline.minusSeconds(departmentSuspendedNotificationInterval1Seconds);
-        LocalDateTime baseline2 = baseline.minusSeconds(departmentSuspendedNotificationInterval2Seconds);
-        return departmentRepository.findAllIdsForSuspendNotification(State.SUSPENDED, 1, 2, baseline1, baseline2);
-    }
-
     public void sendSuspendNotification(Long departmentId) {
         Department department = (Department) resourceService.findOne(departmentId);
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION);
+            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
 
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
         department.setNotifiedCount(department.getNotifiedCount() + 1);
@@ -600,9 +588,7 @@ public class DepartmentService {
 
             hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
                 .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
-
             notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
-            department.setNotifiedCount(1);
         }
     }
 
