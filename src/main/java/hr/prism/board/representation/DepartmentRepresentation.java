@@ -11,6 +11,8 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private DocumentRepresentation documentLogo;
 
+    private String customerId;
+
     private String handle;
 
     private Long boardCount;
@@ -36,6 +38,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setDocumentLogo(DocumentRepresentation documentLogo) {
         this.documentLogo = documentLogo;
+        return this;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public DepartmentRepresentation setCustomerId(String customerId) {
+        this.customerId = customerId;
         return this;
     }
 

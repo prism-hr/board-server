@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
+import com.stripe.model.Customer;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
@@ -824,6 +825,12 @@ public class DepartmentApiIT extends AbstractIT {
 
         testActivityService.stop();
         testNotificationService.stop();
+
+        Customer customer = departmentApi.addPaymentSource(departmentId, "source");
+        Assert.assertNotNull(customer);
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+        Assert.assertEquals("id", departmentR.getCustomerId());
     }
 
     @Test

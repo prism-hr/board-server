@@ -9,6 +9,7 @@ import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
+import hr.prism.board.service.TestPaymentService;
 import hr.prism.board.service.TestScheduledService;
 import hr.prism.board.service.event.*;
 import org.mockito.Mockito;
@@ -115,6 +116,12 @@ public class TestConfiguration {
     @Primary
     public TestScheduledService scheduledService() {
         return new TestScheduledService();
+    }
+
+    @Bean
+    @Primary
+    public TestPaymentService testPaymentService() {
+        return new TestPaymentService();
     }
 
 }

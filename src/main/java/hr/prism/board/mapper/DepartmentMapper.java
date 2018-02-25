@@ -41,6 +41,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         return resourceMapper.apply(department, DepartmentRepresentation.class)
             .setUniversity(universityMapper.apply(university))
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
+            .setCustomerId(department.getCustomerId())
             .setHandle(resourceMapper.getHandle(department, university))
             .setBoardCount(department.getBoardCount())
             .setMemberCount(department.getMemberCount())
