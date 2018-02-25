@@ -73,15 +73,9 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(SUSPENDED).transitioningTo(REJECTED)
 
             // Department rejected state
-            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(REJECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(REJECTED)
-
-            // Board archived state
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(ARCHIVED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ARCHIVED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ARCHIVED).transitioningTo(ACCEPTED);
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED);
 
     private static final Workflow BOARD_WORKFLOW =
         new Workflow(ObjectMapperProvider.getObjectMapper())
@@ -187,7 +181,7 @@ public class Installer {
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
 
             // Post accepted state
-            .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)

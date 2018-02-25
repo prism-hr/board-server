@@ -47,7 +47,7 @@ public class ResourceService {
     private static final int MAX_HANDLE_LENGTH = 25;
 
     private static final String RESOURCE_COLUMN_LIST =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.activity, workflow.notification";
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.resource4_state, workflow.activity, workflow.notification";
 
     private static final String PUBLIC_RESOURCE_ACTION =
         RESOURCE_COLUMN_LIST + " " +
@@ -59,8 +59,7 @@ public class ResourceService {
             "ON resource.id = owner_relation.resource2_id " +
             "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
-            "ON owner_relation.resource1_id = owner.id " +
-            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state <> owner.state)";
+            "ON owner_relation.resource1_id = owner.id";
 
     private static final String SECURE_RESOURCE_ACTION =
         "FROM resource " +
@@ -72,7 +71,6 @@ public class ResourceService {
             "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
-            "AND (workflow.resource4_state IS NULL OR workflow.resource4_state <> owner.state) " +
             "INNER JOIN resource_relation " +
             "ON resource.id = resource_relation.resource2_id " +
             "INNER JOIN resource as parent " +
@@ -420,26 +418,35 @@ public class ResourceService {
                 rowState = State.valueOf(column4.toString());
             }
 
-            String rowActivity = null;
+            State suppressedInOwnerState = null;
             Object column5 = row[4];
             if (column5 != null) {
-                rowActivity = column5.toString();
+                suppressedInOwnerState = State.valueOf(column5.toString());
+            }
+
+            String rowActivity = null;
+            Object column6 = row[5];
+            if (column6 != null) {
+                rowActivity = column6.toString();
             }
 
             String rowNotification = null;
-            Object column6 = row[5];
-            if (column6 != null) {
-                rowNotification = column6.toString();
+            Object column7 = row[6];
+            if (column7 != null) {
+                rowNotification = column7.toString();
             }
 
             // Find the mapping that provides the most direct state transition, varies by role
             ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
             ActionRepresentation rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
+
+
                 rowIndex.put(rowKey,
                     new ActionRepresentation().setAction(rowAction)
                         .setScope(rowScope)
                         .setState(rowState)
+                        .setSuppressedInOwnerState(suppressedInOwnerState)
                         .setActivity(rowActivity)
                         .setNotification(rowNotification));
             }
@@ -492,7 +499,26 @@ public class ResourceService {
 
         // Merge the output
         for (Resource resource : resources) {
+            // Find the states of the parents
+            List<State> parentStates = Collections.emptyList();
+            if (resource instanceof Post) {
+                Resource board = resource.getParent();
+                parentStates = Arrays.asList(board.getState(), board.getParent().getState());
+            } else if (resource instanceof Board) {
+                parentStates = Collections.singletonList(resource.getParent().getState());
+            }
+
+            // Remove any actions that should be suppressed due to parent state
             List<ActionRepresentation> actionRepresentations = Lists.newArrayList(resourceActionIndex.get(resource.getId()));
+            Iterator<ActionRepresentation> actionRepresentationIterator = actionRepresentations.iterator();
+            while (actionRepresentationIterator.hasNext()) {
+                ActionRepresentation actionRepresentation = actionRepresentationIterator.next();
+                State suppressedInOwnerState = actionRepresentation.getSuppressedInOwnerState();
+                if (parentStates.contains(suppressedInOwnerState)) {
+                    actionRepresentationIterator.remove();
+                }
+            }
+
             actionRepresentations.sort(Comparator.naturalOrder());
             resource.setActions(actionRepresentations);
         }

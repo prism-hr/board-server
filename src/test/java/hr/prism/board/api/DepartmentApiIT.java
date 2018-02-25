@@ -23,6 +23,7 @@ import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
 import hr.prism.board.utils.BoardUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.assertj.core.api.Assertions;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -844,14 +845,14 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.DRAFT, departmentR.getState());
         Long departmentId = departmentR.getId();
 
-        // Check notifications not fired for pending state
+        // Check notifications not fired for draft state
         LocalDateTime baseline = LocalDateTime.now();
         scheduledService.updateDepartmentSubscriptions(baseline);
 
         Department department = (Department) resourceRepository.findOne(departmentId);
         Assert.assertEquals(State.DRAFT, department.getState());
 
-        // Simulate ending the pending stage
+        // Simulate ending the draft stage
         resourceRepository.updateStateChangeTimestampById(departmentId,
             department.getStateChangeTimestamp().minusSeconds(departmentDraftExpirySeconds + 1));
         departmentService.updateSubscriptions(LocalDateTime.now());
@@ -937,6 +938,59 @@ public class DepartmentApiIT extends AbstractIT {
 
         testNotificationService.record();
         testActivityService.stop();
+    }
+
+    @Test
+    public void shouldMoveDepartmentToRejectedStateWhenTrialPeriodEnds() {
+        testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
+        DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
+        Assert.assertEquals(State.DRAFT, departmentR.getState());
+        Long departmentId = departmentR.getId();
+
+        Department department = (Department) resourceRepository.findOne(departmentId);
+        Assert.assertEquals(State.DRAFT, department.getState());
+
+        // Create a post so we can check post actions in department rejected state
+        List<BoardRepresentation> boardRs = boardApi.getBoards(departmentId, null, null, null, null);
+        PostRepresentation postR = postApi.postPost(boardRs.get(0).getId(),
+            TestHelper.smallSamplePost()
+                .setPostCategories(Collections.singletonList("Employment"))
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+        Long postId = postR.getId();
+
+        // Verify post is accepted
+        postService.publishAndRetirePosts(LocalDateTime.now());
+        postR = postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
+        Assert.assertEquals(State.ACCEPTED, postR.getState());
+        Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsOnly(Action.VIEW, Action.PURSUE, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
+
+        // Simulate ending the draft stage
+        resourceRepository.updateStateChangeTimestampById(departmentId,
+            department.getStateChangeTimestamp().minusSeconds(departmentDraftExpirySeconds + 1));
+        departmentService.updateSubscriptions(LocalDateTime.now());
+
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.PENDING, departmentR.getState());
+
+        // Simulate ending the pending stage
+        resourceRepository.updateStateChangeTimestampById(departmentId,
+            department.getStateChangeTimestamp().minusSeconds(departmentPendingExpirySeconds + 1));
+        departmentService.updateSubscriptions(LocalDateTime.now());
+
+        // Department rejected and new posts cannot be created
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.REJECTED, departmentR.getState());
+        Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsExactlyInAnyOrder(Action.VIEW, Action.EDIT, Action.SUBSCRIBE);
+
+        // Post accepted yet new applications cannot be created
+        postR = postApi.getPost(postId, TestHelper.mockHttpServletRequest("address"));
+        Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
+            .containsOnly(Action.VIEW, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
     }
 
     @Test

@@ -6,7 +6,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import org.apache.commons.lang3.ObjectUtils;
 
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"activity", "notification"})
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"suppressedInOwnerState", "activity", "notification"})
 public class ActionRepresentation implements Comparable<ActionRepresentation> {
 
     private Action action;
@@ -14,6 +14,8 @@ public class ActionRepresentation implements Comparable<ActionRepresentation> {
     private Scope scope;
 
     private State state;
+
+    private State suppressedInOwnerState;
 
     private String activity;
 
@@ -43,6 +45,15 @@ public class ActionRepresentation implements Comparable<ActionRepresentation> {
 
     public ActionRepresentation setState(State state) {
         this.state = state;
+        return this;
+    }
+
+    public State getSuppressedInOwnerState() {
+        return suppressedInOwnerState;
+    }
+
+    public ActionRepresentation setSuppressedInOwnerState(State suppressedInOwnerState) {
+        this.suppressedInOwnerState = suppressedInOwnerState;
         return this;
     }
 
