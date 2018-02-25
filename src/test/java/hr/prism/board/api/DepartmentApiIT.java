@@ -1067,9 +1067,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
         departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
-        Department department = (Department) resourceRepository.findOne(departmentId);
-        Assert.assertEquals(new Integer(1), department.getNotifiedCount());
-
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.SUSPENDED, departmentR.getState());
 
