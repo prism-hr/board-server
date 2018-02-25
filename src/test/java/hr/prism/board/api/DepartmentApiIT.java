@@ -66,9 +66,6 @@ public class DepartmentApiIT extends AbstractIT {
     @Value("${department.draft.expiry.seconds}")
     private Long departmentDraftExpirySeconds;
 
-    @Value("${department.suspended.expiry.seconds}")
-    private Long departmentSuspendedExpirySeconds;
-
     @Value("${department.pending.expiry.seconds}")
     private Long departmentPendingExpirySeconds;
 

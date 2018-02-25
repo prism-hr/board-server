@@ -84,20 +84,18 @@ public class DepartmentService {
     private static final List<hr.prism.board.enums.ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(
         hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.CREATE_POST, hr.prism.board.enums.ResourceTask.DEPLOY_BADGE);
 
+    @Value("${department.draft.expiry.seconds}")
+    private Long departmentDraftExpirySeconds;
+
+    @Value("${department.pending.expiry.seconds}")
+    private Long departmentPendingExpirySeconds;
+
     @Value("${department.pending.notification.interval1.seconds}")
     private Long departmentPendingNotificationInterval1Seconds;
 
     @Value("${department.pending.notification.interval2.seconds}")
     private Long departmentPendingNotificationInterval2Seconds;
 
-    @Value("${department.draft.expiry.seconds}")
-    private Long departmentDraftExpirySeconds;
-
-    @Value("${department.suspended.expiry.seconds}")
-    private Long departmentSuspendedExpirySeconds;
-
-    @Value("${department.pending.expiry.seconds}")
-    private Long departmentPendingExpirySeconds;
 
     @Inject
     private DepartmentRepository departmentRepository;
@@ -430,9 +428,6 @@ public class DepartmentService {
     }
 
     public void updateSubscriptions(LocalDateTime baseline) {
-        LocalDateTime suspendedExpiryTimestamp = baseline.minusSeconds(departmentSuspendedExpirySeconds);
-        executeActions(State.SUSPENDED, suspendedExpiryTimestamp, Action.REJECT, State.REJECTED);
-
         LocalDateTime draftExpiryTimestamp = baseline.minusSeconds(departmentDraftExpirySeconds);
         executeActions(State.DRAFT, draftExpiryTimestamp, Action.CONVERT, State.PENDING);
 
