@@ -23,8 +23,6 @@ import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -45,8 +43,6 @@ import java.util.stream.Stream;
 @Transactional
 @SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class DepartmentService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentService.class);
 
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
@@ -586,25 +582,28 @@ public class DepartmentService {
         return department.getCustomer();
     }
 
-    public void processStripeWebhookEvent(String customerId, String eventType) {
-        LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
+    public void processStripeWebhookEvent(String customerId, Action action, State state) {
         Department department = departmentRepository.findByCustomerId(customerId);
         if (department == null) {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "No department with customer ID: " + customerId);
         }
 
         Long departmentId = department.getId();
-        actionService.executeAnonymously(Collections.singletonList(department.getId()), Action.SUSPEND, State.SUSPENDED, LocalDateTime.now());
+        actionService.executeAnonymously(Collections.singletonList(department.getId()), action, state, LocalDateTime.now());
+        entityManager.refresh(department);
+        if (action == Action.UNSUBSCRIBE) {
+            department.setCustomerId(null);
+        } else {
+            hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
+                .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
+            activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
 
-        hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
-        activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
+            hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
+                .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
-
-        notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
-        department.setNotifiedCount(1);
+            notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+            department.setNotifiedCount(1);
+        }
     }
 
     public PostResponseReadinessRepresentation makePostResponseReadiness(User user, Department department, boolean canPursue) {

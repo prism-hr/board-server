@@ -45,7 +45,7 @@ public abstract class AbstractIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
 
-    private TransactionTemplate transactionTemplate;
+    TransactionTemplate transactionTemplate;
 
     @Value("${server.url}")
     String serverUrl;
@@ -141,7 +141,7 @@ public abstract class AbstractIT {
 
     @After
     public void after() {
-        transactionTemplate.execute(transactionTemplate -> {
+        transactionTemplate.execute(status -> {
             Query removeForeignKeyChecks = entityManager.createNativeQuery("SET SESSION FOREIGN_KEY_CHECKS = 0");
             removeForeignKeyChecks.executeUpdate();
 

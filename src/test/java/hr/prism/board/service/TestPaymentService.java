@@ -14,4 +14,18 @@ public class TestPaymentService extends PaymentService {
         return customer;
     }
 
+    @Override
+    Customer appendSource(String customerId, String source) {
+        Customer customer = new Customer();
+        customer.setId("id");
+        return customer;
+    }
+
+    @Override
+    Customer setSourceAsDefault(String customerId, String source) {
+        Customer customer = new Customer();
+        customer.setId("id");
+        return customer;
+    }
+
 }

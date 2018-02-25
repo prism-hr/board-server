@@ -1,10 +1,12 @@
 package hr.prism.board.api;
 
 import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.Charge;
 import com.stripe.model.Customer;
 import com.stripe.model.Event;
+import com.stripe.model.Invoice;
 import com.stripe.net.Webhook;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.DepartmentService;
@@ -22,28 +24,36 @@ import javax.servlet.http.HttpServletRequest;
 @RestController
 public class WebhookApi {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebhookApi.class);
+
     @Value("${stripe.api.event.secret}")
     private String stripeApiEventSecret;
 
     @Inject
     private DepartmentService departmentService;
 
-    @RequestMapping(value = "/api/webhooks/stripe", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/api/webhooks/stripe", method = RequestMethod.POST, consumes = "application/json")
     public void postStripeEvent(HttpServletRequest request, @RequestBody String payload) throws SignatureVerificationException {
         String stripeHeader = request.getHeader("Stripe-Signature");
         Event event = Webhook.constructEvent(payload, stripeHeader, stripeApiEventSecret);
 
-        String customerId;
         String eventType = event.getType();
-        if ("charge.failed".equals(eventType)) {
-            customerId = ((Charge) event.getData().getObject()).getCustomer();
+        if ("invoice.payment_failed".equals(eventType)) {
+            String customerId = ((Invoice) event.getData().getObject()).getCustomer();
+            processStripeEvent(customerId, eventType, Action.SUSPEND, State.SUSPENDED);
         } else if ("customer.subscription.deleted".equals(eventType)) {
-            customerId = ((Customer) event.getData().getObject()).getId();
+            String customerId = ((Customer) event.getData().getObject()).getId();
+            processStripeEvent(customerId, eventType, Action.UNSUBSCRIBE, State.REJECTED);
         } else {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Event of type: " + eventType + " not expected");
         }
 
-        departmentService.processStripeWebhookEvent(customerId, eventType);
+
+    }
+
+    private void processStripeEvent(String customerId, String eventType, Action action, State state) {
+        LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
+        departmentService.processStripeWebhookEvent(customerId, action, state);
     }
 
 }

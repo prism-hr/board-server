@@ -1053,6 +1053,40 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
+    public void shouldSuspendDepartmentWhenPaymentFails() {
+        testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
+        DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
+        Assert.assertEquals(State.DRAFT, departmentR.getState());
+        Long departmentId = departmentR.getId();
+
+        departmentApi.addPaymentSource(departmentId, "source");
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+
+        departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
+        Department department = (Department) resourceRepository.findOne(departmentId);
+        Assert.assertEquals(new Integer(1), department.getNotifiedCount());
+
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.SUSPENDED, departmentR.getState());
+
+        departmentApi.addPaymentSource(departmentId, "source2");
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+
+        departmentApi.setPaymentSourceAsDefault(departmentId, "source2");
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+
+        departmentService.processStripeWebhookEvent("id", Action.UNSUBSCRIBE, State.REJECTED);
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.REJECTED, departmentR.getState());
+    }
+
+    @Test
     @Sql("classpath:data/department_autosuggest_setup.sql")
     public void shouldSuggestDepartments() {
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
