@@ -943,7 +943,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldMoveDepartmentToRejectedStateWhenTrialPeriodEnds() {
+    public void shouldRejectDepartmentWhenTrialPeriodEnds() {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
@@ -1051,7 +1051,8 @@ public class DepartmentApiIT extends AbstractIT {
 
     @Test
     public void shouldSuspendDepartmentWhenPaymentFails() {
-        testUserService.authenticate();
+        User departmentUser = testUserService.authenticate();
+        Long departmentUserId = departmentUser.getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
@@ -1062,6 +1063,19 @@ public class DepartmentApiIT extends AbstractIT {
         departmentApi.addPaymentSource(departmentId, "source");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+
+        testActivityService.record();
+        testNotificationService.record();
+        listenForActivities(departmentUserId);
+
+        String recipient = departmentUser.getGivenName();
+        department = (Department) resourceService.findOne(departmentId);
+        Assert.assertNull(department.getNotifiedCount());
+
+        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
+        String pendingExpiryDeadline = department.getStateChangeTimestamp()
+            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
+        String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 
         departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
         departmentR = departmentApi.getDepartment(departmentId);
