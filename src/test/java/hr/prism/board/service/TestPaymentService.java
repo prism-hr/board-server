@@ -28,4 +28,11 @@ public class TestPaymentService extends PaymentService {
         return customer;
     }
 
+    @Override
+    Customer cancelSubscription(String customerId) {
+        Customer customer = new Customer();
+        customer.setId("id");
+        return customer;
+    }
+
 }

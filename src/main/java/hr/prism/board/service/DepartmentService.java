@@ -443,8 +443,9 @@ public class DepartmentService {
 
     public void sendSubscribeNotification(Long departmentId) {
         Department department = (Department) resourceService.findOne(departmentId);
-        Integer notifiedCount = department.getNotifiedCount();
-        if (notifiedCount == null) {
+        hr.prism.board.domain.Activity subscribeActivity = activityService.findByResourceAndActivityAndRole(
+            department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, Scope.DEPARTMENT, Role.ADMINISTRATOR);
+        if (subscribeActivity == null) {
             hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
                 .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY);
             activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
@@ -452,18 +453,10 @@ public class DepartmentService {
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION);
-
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
+
+        Integer notifiedCount = department.getNotifiedCount();
         department.setNotifiedCount(notifiedCount == null ? 1 : notifiedCount + 1);
-    }
-
-    public void sendSuspendNotification(Long departmentId) {
-        Department department = (Department) resourceService.findOne(departmentId);
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
-
-        notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
-        department.setNotifiedCount(department.getNotifiedCount() + 1);
     }
 
     public Customer getPaymentSources(Long departmentId) {
@@ -541,6 +534,7 @@ public class DepartmentService {
             if (customerId != null) {
                 Customer customer = paymentService.cancelSubscription(customerId);
                 department.setCustomer(customer);
+                department.setCustomerId(null);
             }
 
             return department;
@@ -577,9 +571,13 @@ public class DepartmentService {
         if (action == Action.UNSUBSCRIBE) {
             department.setCustomerId(null);
         } else {
-            hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-                .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
-            activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
+            hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
+                department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, Scope.DEPARTMENT, Role.ADMINISTRATOR);
+            if (suspendActivity == null) {
+                hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
+                    .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
+                activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
+            }
 
             hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
                 .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);

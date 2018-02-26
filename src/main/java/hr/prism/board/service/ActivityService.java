@@ -98,6 +98,10 @@ public class ActivityService {
         return activityRepository.findByResourceAndActivity(resource, activity);
     }
 
+    public Activity findByResourceAndActivityAndRole(Resource resource, hr.prism.board.enums.Activity activity, Scope scope, Role role) {
+        return activityRepository.findByResourceAndActivityAndRole(resource, activity, scope, role);
+    }
+
     public Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         return activityRepository.findByUserRoleAndActivity(userRole, activity);
     }

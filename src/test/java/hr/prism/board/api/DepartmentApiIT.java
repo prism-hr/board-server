@@ -1069,17 +1069,40 @@ public class DepartmentApiIT extends AbstractIT {
         listenForActivities(departmentUserId);
 
         String recipient = departmentUser.getGivenName();
-        department = (Department) resourceService.findOne(departmentId);
-        Assert.assertNull(department.getNotifiedCount());
-
+        Department department = (Department) resourceService.findOne(departmentId);
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
-        String pendingExpiryDeadline = department.getStateChangeTimestamp()
-            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
         String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 
         departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.SUSPENDED, departmentR.getState());
+
+        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUSPEND_DEPARTMENT_ACTIVITY));
+        userApi.dismissActivity(userApi.getActivities().iterator().next().getId());
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_DEPARTMENT_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder()
+                .put("recipient", recipient)
+                .put("department", "department")
+                .put("accountRedirect", accountRedirect)
+                .put("invitationUuid", departmentAdminRoleUuid)
+                .build()));
+
+        departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.SUSPENDED, departmentR.getState());
+
+        // Second failed payment event should not result in another activity
+        Assertions.assertThat(userApi.getActivities()).isEmpty();
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_DEPARTMENT_NOTIFICATION, departmentUser,
+            ImmutableMap.<String, String>builder()
+                .put("recipient", recipient)
+                .put("department", "department")
+                .put("accountRedirect", accountRedirect)
+                .put("invitationUuid", departmentAdminRoleUuid)
+                .build()));
+
+        testActivityService.stop();
+        testNotificationService.stop();
 
         departmentApi.addPaymentSource(departmentId, "source2");
         departmentR = departmentApi.getDepartment(departmentId);
@@ -1092,6 +1115,27 @@ public class DepartmentApiIT extends AbstractIT {
         departmentService.processStripeWebhookEvent("id", Action.UNSUBSCRIBE, State.REJECTED);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.REJECTED, departmentR.getState());
+        Assert.assertNull(departmentR.getCustomerId());
+    }
+
+    @Test
+    public void shouldResetCustomerIdWhenUnsubscribing() {
+        testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+
+        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
+        DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
+        Assert.assertEquals(State.DRAFT, departmentR.getState());
+        Long departmentId = departmentR.getId();
+
+        departmentApi.addPaymentSource(departmentId, "source");
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
+
+        departmentApi.cancelSubscription(departmentId);
+        departmentR = departmentApi.getDepartment(departmentId);
+        Assert.assertEquals(State.REJECTED, departmentR.getState());
+        Assert.assertNull(departmentR.getCustomerId());
     }
 
     @Test

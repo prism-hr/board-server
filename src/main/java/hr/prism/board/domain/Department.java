@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
         @NamedAttributeNode(value = "categories"),
         @NamedAttributeNode(value = "tasks", subgraph = "tasks")},
     subgraphs = {
-            @NamedSubgraph(
-                name = "university",
+        @NamedSubgraph(
+            name = "university",
             attributeNodes = {
                 @NamedAttributeNode(value = "documentLogo")}),
         @NamedSubgraph(

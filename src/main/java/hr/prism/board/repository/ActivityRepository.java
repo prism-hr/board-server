@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,6 +32,18 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "and activity.activity = :activity " +
             "and activity.userRole is null")
     Activity findByResourceAndActivity(@Param("resource") Resource resource, @Param("activity") hr.prism.board.enums.Activity activity);
+
+    @Query(value =
+        "select activity " +
+            "from Activity activity " +
+            "inner join activity.activityRoles activityRole " +
+            "where activity.resource = :resource " +
+            "and activity.activity = :activity " +
+            "and activity.userRole is null " +
+            "and activityRole.scope = :scope " +
+            "and activityRole.role = :role")
+    Activity findByResourceAndActivityAndRole(@Param("resource") Resource resource, @Param("activity") hr.prism.board.enums.Activity activity,
+                                              @Param("scope") Scope scope, @Param("role") Role role);
 
     Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity);
 
