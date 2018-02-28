@@ -213,9 +213,9 @@ public class PostService {
                 updatePost(post, postDTO);
             } else {
                 if (action == Action.ACCEPT) {
-                    Resource board = post.getParent();
-                    userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, board, Role.AUTHOR)
-                        .forEach(author -> userRoleCacheService.createUserRole(author, board, author, new UserRoleDTO(Role.AUTHOR), false));
+                    Resource department = post.getParent().getParent();
+                    userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, department, Role.AUTHOR)
+                        .forEach(author -> userRoleCacheService.createUserRole(author, department, author, new UserRoleDTO(Role.AUTHOR), false));
                 }
 
                 if (BoardUtils.hasUpdates(postDTO)) {
