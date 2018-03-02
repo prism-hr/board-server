@@ -1,11 +1,11 @@
 package hr.prism.board.api;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-import com.stripe.model.Customer;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
@@ -826,7 +826,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportDepartmentSubscriptions() {
+    public void shouldSupportDepartmentSubscriptions() throws Exception {
         User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentUserId = departmentUser.getId();
@@ -933,7 +933,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
         testActivityService.stop();
 
-        Customer customer = departmentApi.addPaymentSource(departmentId, "source");
+        JsonNode customer = departmentApi.addPaymentSource(departmentId, "source");
         Assert.assertNotNull(customer);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
@@ -1050,7 +1050,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSuspendDepartmentWhenPaymentFails() {
+    public void shouldSuspendDepartmentWhenPaymentFails() throws Exception {
         User departmentUser = testUserService.authenticate();
         Long departmentUserId = departmentUser.getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
@@ -1119,7 +1119,7 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldResetCustomerIdWhenUnsubscribing() {
+    public void shouldResetCustomerIdWhenUnsubscribing() throws Exception {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 

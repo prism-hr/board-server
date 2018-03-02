@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -96,7 +97,14 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     }
 
     @Override
+    protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        LOGGER.error(getCurrentUsername() +  ": 500 - " + ((ServletWebRequest) request).getRequest().getServletPath(), ex);
+        return super.handleExceptionInternal(ex, ex.getMessage(), headers, status, request);
+    }
+
+    @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        LOGGER.error(getCurrentUsername() +  ": 400 - " + ((ServletWebRequest) request).getRequest().getServletPath(), ex);
         return super.handleExceptionInternal(ex, ex.getMessage(), headers, status, request);
     }
 
