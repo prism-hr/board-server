@@ -2,6 +2,7 @@ package hr.prism.board.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stripe.model.Customer;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
@@ -124,7 +125,8 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = RequestMethod.GET, produces = "application/json")
     public JsonNode getPaymentSources(@PathVariable Long departmentId) throws IOException {
-        return objectMapper.readTree(departmentService.getPaymentSources(departmentId).toJson());
+        Customer customer = departmentService.getPaymentSources(departmentId);
+        return customer != null ? objectMapper.readTree(customer.toJson()) : null;
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.POST)
