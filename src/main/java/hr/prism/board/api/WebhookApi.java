@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.google.common.base.Charsets;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Customer;
 import com.stripe.model.Event;
@@ -10,16 +11,17 @@ import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.DepartmentService;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @RestController
 public class WebhookApi {
@@ -33,8 +35,9 @@ public class WebhookApi {
     private DepartmentService departmentService;
 
     @RequestMapping(value = "/api/webhooks/stripe", method = RequestMethod.POST, consumes = "application/json")
-    public void postStripeEvent(HttpServletRequest request, @RequestBody String payload) throws SignatureVerificationException {
+    public void postStripeEvent(HttpServletRequest request) throws SignatureVerificationException, IOException {
         String stripeHeader = request.getHeader("Stripe-Signature");
+        String payload = IOUtils.toString(request.getInputStream(), Charsets.UTF_8);
         Event event = Webhook.constructEvent(payload, stripeHeader, stripeApiEventSecret);
 
         String eventType = event.getType();

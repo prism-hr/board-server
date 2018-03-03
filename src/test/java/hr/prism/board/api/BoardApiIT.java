@@ -67,19 +67,7 @@ public class BoardApiIT extends AbstractIT {
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.setName("board11").setDocumentLogo(new DocumentDTO().setCloudinaryId("board1logo").setCloudinaryUrl("board1logo").setFileName("board1logo"));
         BoardRepresentation boardR11 = verifyPostBoard(departmentId1, boardDTO11, "board11");
-        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
-            TestHelper.samplePost()));
-
-        User user12 = testUserService.authenticate();
-        BoardDTO boardDTO12 = TestHelper.smallSampleBoard();
-        boardDTO12.setName("board12").setDocumentLogo(new DocumentDTO().setCloudinaryId("board2logo").setCloudinaryUrl("board2logo").setFileName("board2logo"));
-        BoardRepresentation boardR12 = verifyPostBoard(departmentId1, boardDTO12, "board12");
-        testUserService.setAuthentication(user11.getId());
-        boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
-        testUserService.setAuthentication(user12.getId());
-        unprivilegedUsers.put("board12", makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
-            TestHelper.smallSamplePost()
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+        unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getId(), 110, TestHelper.samplePost()));
 
         User user21 = testUserService.authenticate();
         Long departmentId2 =
@@ -88,27 +76,14 @@ public class BoardApiIT extends AbstractIT {
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.setName("board21");
         BoardRepresentation boardR21 = verifyPostBoard(departmentId2, boardDTO21, "board21");
-        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
+        unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getId(), 210,
             TestHelper.smallSamplePost()
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
-        User user22 = testUserService.authenticate();
-        BoardDTO boardDTO22 = TestHelper.sampleBoard();
-        boardDTO22.setName("board22");
-        BoardRepresentation boardR22 = verifyPostBoard(departmentId2, boardDTO22, "board22");
-        testUserService.setAuthentication(user21.getId());
-        boardApi.executeAction(boardR22.getId(), "accept", new BoardPatchDTO());
-        testUserService.setAuthentication(user22.getId());
-        unprivilegedUsers.put("board22", makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
-            TestHelper.smallSamplePost()
-                .setPostCategories(Collections.singletonList("p1"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
-
-        List<String> boardNames = Arrays.asList(
-            "board11", "board110", "board1100", "board12", "board120", "board1200", "board21", "board210", "board2100", "board22", "board220", "board2200");
+        List<String> boardNames = Arrays.asList("board11", "board110", "board21", "board210");
         LinkedHashMultimap<Long, String> departmentBoardNames = LinkedHashMultimap.create();
-        departmentBoardNames.putAll(boardR11.getDepartment().getId(), Arrays.asList("board11", "board1100", "board12", "board1200"));
-        departmentBoardNames.putAll(boardR21.getDepartment().getId(), Arrays.asList("board21", "board2100", "board22", "board2200"));
+        departmentBoardNames.putAll(boardR11.getDepartment().getId(), Collections.singletonList("board11"));
+        departmentBoardNames.putAll(boardR21.getDepartment().getId(), Collections.singletonList("board21"));
 
         testUserService.unauthenticate();
         verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
@@ -120,7 +95,7 @@ public class BoardApiIT extends AbstractIT {
                 if (scope == Scope.DEPARTMENT) {
                     verifyPrivilegedBoardUser(boardNames, Collections.singletonList(boardName + "0"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
                 } else if (scope == Scope.BOARD) {
-                    verifyPrivilegedBoardUser(boardNames, Collections.singletonList(boardName + "00"), departmentBoardNames, BOARD_ADMIN_ACTIONS.get(State.ACCEPTED));
+                    Assert.fail();
                 } else {
                     verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
                 }
@@ -128,16 +103,10 @@ public class BoardApiIT extends AbstractIT {
         }
 
         testUserService.setAuthentication(user11.getId());
-        verifyPrivilegedBoardUser(boardNames, Arrays.asList("board11", "board1100", "board12", "board1200"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
-
-        testUserService.setAuthentication(user12.getId());
-        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board12"), departmentBoardNames, BOARD_ADMIN_ACTIONS.get(State.ACCEPTED));
+        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board11"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
 
         testUserService.setAuthentication(user21.getId());
-        verifyPrivilegedBoardUser(boardNames, Arrays.asList("board21", "board2100", "board22", "board2200"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
-
-        testUserService.setAuthentication(user22.getId());
-        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board22"), departmentBoardNames, BOARD_ADMIN_ACTIONS.get(State.ACCEPTED));
+        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board21"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
     }
 
     @Test
@@ -289,11 +258,10 @@ public class BoardApiIT extends AbstractIT {
                     .build()));
 
         // Create unprivileged users
-        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, 2, 2).values());
+        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(2).values());
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.EDIT, () -> boardApi.patchBoard(boardId, new BoardPatchDTO()))
-            .put(Action.ACCEPT, () -> boardApi.executeAction(boardId, "accept", new BoardPatchDTO()))
             .put(Action.REJECT, () -> boardApi.executeAction(boardId, "reject", new BoardPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> boardApi.executeAction(boardId, "restore", new BoardPatchDTO()))
             .build();

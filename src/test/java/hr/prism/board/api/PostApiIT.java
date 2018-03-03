@@ -111,23 +111,10 @@ public class PostApiIT extends AbstractIT {
 
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
-        unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getDepartment().getId(), boardR11.getId(), 110, 1100,
+        unprivilegedUsers.put(board11Id, makeUnprivilegedUsers(boardR11.getId(), 110,
             TestHelper.samplePost()
                 .setName(board11PostName)));
         unprivilegedUserPosts.put(board11Id, board11PostName);
-
-        User user12 = testUserService.authenticate();
-        BoardDTO boardDTO12 = TestHelper.smallSampleBoard().setName("board12");
-        BoardRepresentation boardR12 = boardApi.postBoard(departmentId1, boardDTO12);
-        testUserService.setAuthentication(user11.getId());
-        boardApi.executeAction(boardR12.getId(), "accept", new BoardPatchDTO());
-        testUserService.setAuthentication(user12.getId());
-
-        Long board12Id = boardR12.getId();
-        String board12PostName = boardR12.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
-        unprivilegedUsers.put(board12Id, makeUnprivilegedUsers(boardR12.getDepartment().getId(), boardR12.getId(), 120, 1200,
-            TestHelper.smallSamplePost().setName(board12PostName).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
-        unprivilegedUserPosts.put(board12Id, board12PostName);
 
         User user21 = testUserService.authenticate();
         Long departmentId2 =
@@ -138,30 +125,12 @@ public class PostApiIT extends AbstractIT {
 
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
-        unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getDepartment().getId(), boardR21.getId(), 210, 2100,
+        unprivilegedUsers.put(board21Id, makeUnprivilegedUsers(boardR21.getId(), 210,
             TestHelper.smallSamplePost().setName(board21PostName).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
         unprivilegedUserPosts.put(board21Id, board21PostName);
 
-        User user22 = testUserService.authenticate();
-        BoardDTO boardDTO22 = TestHelper.sampleBoard();
-        boardDTO22.setName("board22");
-        BoardRepresentation boardR22 = boardApi.postBoard(departmentId2, boardDTO22);
-
-        Long board22Id = boardR22.getId();
-        testUserService.setAuthentication(user21.getId());
-        boardApi.executeAction(board22Id, "accept", new BoardPatchDTO());
-
-        testUserService.setAuthentication(user22.getId());
-        String board22PostName = boardR22.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
-        unprivilegedUsers.put(board22Id, makeUnprivilegedUsers(boardR22.getDepartment().getId(), boardR22.getId(), 220, 2200,
-            TestHelper.smallSamplePost().setName(board22PostName)
-                .setPostCategories(Collections.singletonList("p1")).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
-        unprivilegedUserPosts.put(board22Id, board22PostName);
-
         LinkedHashMultimap<State, String> boardPostNames11 = LinkedHashMultimap.create();
-        LinkedHashMultimap<State, String> boardPostNames12 = LinkedHashMultimap.create();
         LinkedHashMultimap<State, String> boardPostNames21 = LinkedHashMultimap.create();
-        LinkedHashMultimap<State, String> boardPostNames22 = LinkedHashMultimap.create();
 
         int postCount = 1;
         LocalDateTime baseline = LocalDateTime.now();
@@ -185,23 +154,6 @@ public class PostApiIT extends AbstractIT {
             }
 
             if (state == State.DRAFT) {
-                reschedulePost(board12PostName, baseline, postCount);
-                boardPostNames12.put(state, board12PostName);
-                postCount++;
-            }
-
-            for (int i = 1; i < 3; i++) {
-                String name = boardR12.getName() + " " + state.name().toLowerCase() + " " + i;
-                verifyPostPostAndSetState(postUser1, board12Id,
-                    TestHelper.smallSamplePost()
-                        .setName(name)
-                        .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)),
-                    state, posts, baseline, postCount);
-                boardPostNames12.put(state, name);
-                postCount++;
-            }
-
-            if (state == State.DRAFT) {
                 reschedulePost(board21PostName, baseline, postCount);
                 boardPostNames21.put(state, board21PostName);
                 postCount++;
@@ -216,47 +168,21 @@ public class PostApiIT extends AbstractIT {
                 boardPostNames21.put(state, name);
                 postCount++;
             }
-
-            if (state == State.DRAFT) {
-                reschedulePost(board22PostName, baseline, postCount);
-                boardPostNames22.put(state, board22PostName);
-                postCount++;
-            }
-
-            for (int i = 1; i < 3; i++) {
-                String name = boardR22.getName() + " " + state.name().toLowerCase() + " " + i;
-                verifyPostPostAndSetState(postUser2, board22Id,
-                    TestHelper.smallSamplePost()
-                        .setName(name).setPostCategories(Collections.singletonList("p1")).setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)),
-                    state, posts, baseline, postCount);
-                boardPostNames22.put(state, name);
-                postCount++;
-            }
         }
 
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> boardPostNames = new LinkedHashMap<>();
         boardPostNames.put(board11Id, boardPostNames11);
-        boardPostNames.put(board12Id, boardPostNames12);
         boardPostNames.put(board21Id, boardPostNames21);
-        boardPostNames.put(board22Id, boardPostNames22);
 
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> publicPostNames = new LinkedHashMap<>();
         LinkedHashMultimap<State, String> publicPostNames11 = LinkedHashMultimap.create();
         publicPostNames11.putAll(State.ACCEPTED, Arrays.asList("board11 accepted 1", "board11 accepted 2"));
         publicPostNames.put(board11Id, publicPostNames11);
 
-        LinkedHashMultimap<State, String> publicPostNames12 = LinkedHashMultimap.create();
-        publicPostNames12.putAll(State.ACCEPTED, Arrays.asList("board12 accepted 1", "board12 accepted 2"));
-        publicPostNames.put(board12Id, publicPostNames12);
-
         LinkedHashMultimap<State, String> publicPostNames21 = LinkedHashMultimap.create();
         publicPostNames21.putAll(State.ACCEPTED, Arrays.asList("board21 accepted 1", "board21 accepted 2"));
         publicPostNames.put(board21Id, publicPostNames21);
-
-        LinkedHashMultimap<State, String> publicPostNames22 = LinkedHashMultimap.create();
-        publicPostNames22.putAll(State.ACCEPTED, Arrays.asList("board22 accepted 1", "board22 accepted 2"));
-        publicPostNames.put(board22Id, publicPostNames22);
 
         testUserService.unauthenticate();
         verifyUnprivilegedPostUser(publicPostNames);
@@ -280,24 +206,12 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(user11.getId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user11BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board11Id, boardPostNames11);
-        user11BoardPostNames.put(board12Id, boardPostNames12);
         verifyPrivilegedPostUser(publicPostNames, user11BoardPostNames, PostAdminContext.ADMIN);
-
-        testUserService.setAuthentication(user12.getId());
-        LinkedHashMap<Long, LinkedHashMultimap<State, String>> user12BoardPostNames = new LinkedHashMap<>();
-        user12BoardPostNames.put(board12Id, boardPostNames12);
-        verifyPrivilegedPostUser(publicPostNames, user12BoardPostNames, PostAdminContext.ADMIN);
 
         testUserService.setAuthentication(user21.getId());
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user21BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board21Id, boardPostNames21);
-        user11BoardPostNames.put(board22Id, boardPostNames22);
         verifyPrivilegedPostUser(publicPostNames, user21BoardPostNames, PostAdminContext.ADMIN);
-
-        testUserService.setAuthentication(user22.getId());
-        LinkedHashMap<Long, LinkedHashMultimap<State, String>> user22BoardPostNames = new LinkedHashMap<>();
-        user12BoardPostNames.put(board22Id, boardPostNames22);
-        verifyPrivilegedPostUser(publicPostNames, user22BoardPostNames, PostAdminContext.ADMIN);
 
         for (User postUser : posts.keySet()) {
             testUserService.setAuthentication(postUser.getId());
@@ -547,7 +461,7 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.stop();
 
         // Create unprivileged users
-        Collection<User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, boardId, 2, 2, TestHelper.samplePost()).values();
+        Collection<User> unprivilegedUsers = makeUnprivilegedUsers(boardId, 2, TestHelper.samplePost()).values();
 
         testActivityService.record();
         testNotificationService.record();

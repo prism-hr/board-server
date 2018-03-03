@@ -4,13 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.definition.DocumentDefinition;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -160,7 +157,7 @@ public abstract class AbstractIT {
         });
     }
 
-    LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, int departmentSuffix, int boardSuffix) {
+    LinkedHashMap<Scope, User> makeUnprivilegedUsers(int departmentSuffix) {
         LinkedHashMap<Scope, User> unprivilegedUsers = new LinkedHashMap<>();
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
 
@@ -176,31 +173,11 @@ public abstract class AbstractIT {
             new BoardDTO()
                 .setName("board" + departmentSuffix)).getId());
 
-        unprivilegedUsers.put(Scope.BOARD, testUserService.authenticate());
-        Long boardId = transactionTemplate.execute(status -> boardApi.postBoard(
-            departmentId,
-            new BoardDTO()
-                .setName("board" + boardSuffix)).getId());
-
-        User departmentAdmin = transactionTemplate.execute(status -> {
-            Resource department = resourceService.findOne(departmentId);
-            Set<UserRole> userRoles = department.getUserRoles();
-            for (UserRole userRole : userRoles) {
-                if (userRole.getRole() == Role.ADMINISTRATOR) {
-                    return userRole.getUser();
-                }
-            }
-
-            return null;
-        });
-
-        testUserService.setAuthentication(departmentAdmin.getId());
-        transactionTemplate.execute(status -> boardApi.executeAction(boardId, "accept", new BoardPatchDTO()));
         return unprivilegedUsers;
     }
 
-    LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long departmentId, Long boardId, int departmentSuffix, int boardSuffix, PostDTO samplePost) {
-        LinkedHashMap<Scope, User> unprivilegedUsers = makeUnprivilegedUsers(departmentId, departmentSuffix, boardSuffix);
+    LinkedHashMap<Scope, User> makeUnprivilegedUsers(Long boardId, int departmentSuffix, PostDTO samplePost) {
+        LinkedHashMap<Scope, User> unprivilegedUsers = makeUnprivilegedUsers(departmentSuffix);
         unprivilegedUsers.put(Scope.POST, testUserService.authenticate());
         transactionTemplate.execute(status -> postApi.postPost(boardId, samplePost));
         return unprivilegedUsers;

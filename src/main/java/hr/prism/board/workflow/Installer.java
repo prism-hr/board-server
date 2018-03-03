@@ -59,18 +59,7 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(REJECTED)
-
-            // Department suspended state
-            .permitThatAnybody().can(VIEW, DEPARTMENT).inState(SUSPENDED)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(DRAFT)
-            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
-            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(SUSPENDED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(SUSPENDED).creating(BOARD).inState(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(SUSPENDED).transitioningTo(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(SUSPENDED).transitioningTo(REJECTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)
 
             // Department rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(REJECTED)

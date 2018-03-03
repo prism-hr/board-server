@@ -175,7 +175,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId1 = departmentR1.getId();
         Long boardId1 = boardApi.getBoards(departmentId1, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department1", makeUnprivilegedUsers(departmentId1, boardId1, 10, 2,
+        unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardId1, 10,
             TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
         testUserService.setAuthentication(user1.getId());
@@ -184,7 +184,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId2 = departmentR2.getId();
         Long boardId2 = boardApi.getBoards(departmentId2, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department2", makeUnprivilegedUsers(departmentId2, boardId2, 20, 2,
+        unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardId2, 20,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
@@ -195,7 +195,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId3 = departmentR3.getId();
         Long boardId3 = boardApi.getBoards(departmentId3, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department3", makeUnprivilegedUsers(departmentId3, boardId3, 30, 2,
+        unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardId3, 30,
             TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
         testUserService.setAuthentication(user2.getId());
@@ -204,7 +204,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId4 = departmentR4.getId();
         Long boardId4 = boardApi.getBoards(departmentId4, null, null, null, null).get(0).getId();
-        unprivilegedUsers.put("department4", makeUnprivilegedUsers(departmentId4, boardId4, 40, 2,
+        unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardId4, 40,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
@@ -308,7 +308,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setMemberCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
 
         // Create unprivileged users
-        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(departmentId, boardId, 2, 2,
+        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(boardId, 2,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))
@@ -1447,21 +1447,11 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId = departmentApi.postDepartment(universityId, departmentDTO).getId();
         departmentApi.postDepartment(universityId, new DepartmentDTO().setName("other department").setSummary("department summary"));
-
-        testUserService.authenticate();
-        Long board1Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board1")).getId();
-        Long board2Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board2")).getId();
         verifyBoardAndMemberCount(departmentId, 2L, 0L);
 
-        testUserService.setAuthentication(departmentUserId);
-        boardApi.executeAction(board1Id, "accept", new BoardPatchDTO());
-        verifyBoardAndMemberCount(departmentId, 3L, 0L);
-
-        boardApi.executeAction(board2Id, "accept", new BoardPatchDTO());
+        Long board1Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board1")).getId();
+        Long board2Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board2")).getId();
         verifyBoardAndMemberCount(departmentId, 4L, 0L);
-
-        boardApi.executeAction(board2Id, "reject", new BoardPatchDTO().setComment("comment"));
-        verifyBoardAndMemberCount(departmentId, 3L, 0L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO()

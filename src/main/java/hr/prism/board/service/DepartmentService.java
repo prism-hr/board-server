@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import com.stripe.model.Customer;
+import com.stripe.model.CustomerSubscriptionCollection;
 import com.stripe.model.ExternalAccountCollection;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.Department;
@@ -477,9 +478,18 @@ public class DepartmentService {
             String customerId = department.getCustomerId();
             if (customerId == null) {
                 customer = paymentService.createCustomer(source);
-                department.setCustomerId(customer.getId());
+                customerId = customer.getId();
+                department.setCustomerId(customerId);
+                paymentService.createSubscription(customerId);
             } else {
-                customer = paymentService.appendSource(customerId, source);
+                customer = paymentService.getCustomer(customerId);
+                // Not clear how subscription data is initialized, so code defensively for null pointer risk
+                CustomerSubscriptionCollection subscriptions = customer.getSubscriptions();
+                if (subscriptions == null || CollectionUtils.isEmpty(customer.getSubscriptions().getData())) {
+                    customer = paymentService.createSubscription(customerId);
+                } else {
+                    customer = paymentService.appendSource(customerId, source);
+                }
             }
 
             department.setCustomer(customer);
@@ -534,7 +544,6 @@ public class DepartmentService {
             if (customerId != null) {
                 Customer customer = paymentService.cancelSubscription(customerId);
                 department.setCustomer(customer);
-                department.setCustomerId(null);
             }
 
             return department;
@@ -566,11 +575,9 @@ public class DepartmentService {
         }
 
         Long departmentId = department.getId();
-        actionService.executeAnonymously(Collections.singletonList(department.getId()), action, state, LocalDateTime.now());
+        actionService.executeAnonymously(Collections.singletonList(departmentId), action, state, LocalDateTime.now());
         entityManager.refresh(department);
-        if (action == Action.UNSUBSCRIBE) {
-            department.setCustomerId(null);
-        } else {
+        if (action != Action.UNSUBSCRIBE) {
             hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
                 department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, Scope.DEPARTMENT, Role.ADMINISTRATOR);
             if (suspendActivity == null) {

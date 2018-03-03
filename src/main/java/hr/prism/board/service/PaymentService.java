@@ -29,9 +29,14 @@ public class PaymentService {
     }
 
     Customer createCustomer(String source) {
+        return performStripeOperation(() ->
+                Customer.create(ImmutableMap.of("source", source)),
+            ExceptionCode.PAYMENT_INTEGRATION_ERROR,
+            "Could not create customer with source: " + source);
+    }
+
+    Customer createSubscription(String customerId) {
         return performStripeOperation(() -> {
-                Customer customer = Customer.create(ImmutableMap.of("source", source));
-                String customerId = customer.getId();
                 Subscription.create(
                     ImmutableMap.of(
                         "customer", customerId,
@@ -41,7 +46,7 @@ public class PaymentService {
                 return Customer.retrieve(customerId);
             },
             ExceptionCode.PAYMENT_INTEGRATION_ERROR,
-            "Could not create customer with source: " + source);
+            "Could not create subscription for customer with ID: " + customerId);
     }
 
     Customer appendSource(String customerId, String source) {
