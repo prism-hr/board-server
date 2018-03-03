@@ -17,6 +17,8 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private Long boardCount;
 
+    private Long authorCount;
+
     private Long memberCount;
 
     private List<MemberCategory> memberCategories;
@@ -65,6 +67,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setBoardCount(Long boardCount) {
         this.boardCount = boardCount;
+        return this;
+    }
+
+    public Long getAuthorCount() {
+        return authorCount;
+    }
+
+    public DepartmentRepresentation setAuthorCount(Long authorCount) {
+        this.authorCount = authorCount;
         return this;
     }
 

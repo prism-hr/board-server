@@ -1440,30 +1440,30 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldCountBoardsAndMembers() {
+    public void shouldCountBoardsAuthorsAndMembers() {
         Long departmentUserId = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
 
         Long departmentId = departmentApi.postDepartment(universityId, departmentDTO).getId();
         departmentApi.postDepartment(universityId, new DepartmentDTO().setName("other department").setSummary("department summary"));
-        verifyBoardAndMemberCount(departmentId, 2L, 0L);
+        verifyBoardAuthorAndMemberCount(departmentId, 2L, 0L, 0L);
 
         Long board1Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board1")).getId();
         Long board2Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board2")).getId();
-        verifyBoardAndMemberCount(departmentId, 4L, 0L);
+        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 0L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
                 .setRole(Role.MEMBER));
-        verifyBoardAndMemberCount(departmentId, 3L, 1L);
+        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 1L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
                 .setRole(Role.MEMBER));
-        verifyBoardAndMemberCount(departmentId, 3L, 2L);
+        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 2L);
 
         Long memberUser1Id = testUserService.authenticate().getId();
         departmentApi.postMembershipRequest(departmentId,
@@ -1486,15 +1486,31 @@ public class DepartmentApiIT extends AbstractIT {
                     .setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
 
-        verifyBoardAndMemberCount(departmentId, 3L, 4L);
+        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 4L);
 
         testUserService.setAuthentication(departmentUserId);
         departmentApi.putMembershipRequest(departmentId, memberUser1Id, "accepted");
 
-        verifyBoardAndMemberCount(departmentId, 3L, 4L);
+        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 4L);
         departmentApi.putMembershipRequest(departmentId, memberUser2Id, "rejected");
 
-        verifyBoardAndMemberCount(departmentId, 3L, 3L);
+        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 3L);
+
+        testUserService.setAuthentication(departmentUserId);
+        boardApi.executeAction(board1Id, "reject", new BoardPatchDTO());
+        boardApi.executeAction(board2Id, "reject", new BoardPatchDTO());
+        verifyBoardAuthorAndMemberCount(departmentId, 2L, 0L, 3L);
+
+        boardApi.executeAction(board1Id, "restore", new BoardPatchDTO());
+        verifyBoardAuthorAndMemberCount(departmentId, 3L, 0L, 3L);
+
+        testUserService.authenticate();
+        Long postId = postApi.postPost(board1Id,
+            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
+
+        testUserService.setAuthentication(departmentUserId);
+        postApi.executeAction(postId, "accept", new PostPatchDTO());
+        verifyBoardAuthorAndMemberCount(departmentId, 3L, 1L, 3L);
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
@@ -1594,13 +1610,15 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentIdString, documentLogoR.getFileName());
     }
 
-    private void verifyBoardAndMemberCount(Long departmentId, Long boardCount, Long memberCount) {
+    private void verifyBoardAuthorAndMemberCount(Long departmentId, Long boardCount, Long authorCount, Long memberCount) {
         DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
         TestHelper.verifyNullableCount(boardCount, departmentR.getBoardCount());
+        TestHelper.verifyNullableCount(authorCount, departmentR.getAuthorCount());
         TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
 
         List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments(true, null);
         TestHelper.verifyNullableCount(boardCount, departmentRs.get(0).getBoardCount());
+        TestHelper.verifyNullableCount(authorCount, departmentRs.get(0).getAuthorCount());
         TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
 
         TestHelper.verifyNullableCount(2L, departmentRs.get(1).getBoardCount());

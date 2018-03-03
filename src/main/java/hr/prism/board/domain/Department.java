@@ -36,6 +36,9 @@ public class Department extends Resource {
     @Column(name = "board_count")
     private Long boardCount;
 
+    @Column(name = "author_count")
+    private Long authorCount;
+
     @Column(name = "member_count")
     private Long memberCount;
 
@@ -65,6 +68,14 @@ public class Department extends Resource {
 
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
+    }
+
+    public Long getAuthorCount() {
+        return authorCount;
+    }
+
+    public void setAuthorCount(Long authorCount) {
+        this.authorCount = authorCount;
     }
 
     public Long getBoardCount() {

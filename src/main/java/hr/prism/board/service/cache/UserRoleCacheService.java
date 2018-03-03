@@ -1,7 +1,10 @@
 package hr.prism.board.service.cache;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -26,8 +29,6 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import hr.prism.board.workflow.Activity;
 
 @Service
 @Transactional
@@ -158,9 +159,9 @@ public class UserRoleCacheService {
         entityManager.flush();
         LocalDate baseline = LocalDate.now();
         if (resource instanceof Department) {
-            ((Department) resource).setMemberCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
-        } else if (resource instanceof Board) {
-            ((Board) resource).setAuthorCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
+            Department department = (Department) resource;
+            department.setAuthorCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
+            department.setMemberCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
         }
     }
 

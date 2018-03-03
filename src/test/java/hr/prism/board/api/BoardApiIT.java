@@ -449,7 +449,7 @@ public class BoardApiIT extends AbstractIT {
 
         testUserService.authenticate();
         Long post3id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
-        verifyPostAndAuthorCount(boardId, 0L, 0L);
+        verifyPostCount(boardId, 0L);
 
         testUserService.setAuthentication(boardUserId);
         postApi.executeAction(post1id, "accept", new PostPatchDTO());
@@ -457,26 +457,26 @@ public class BoardApiIT extends AbstractIT {
         postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment"));
 
         postService.publishAndRetirePosts(LocalDateTime.now());
-        verifyPostAndAuthorCount(boardId, 2L, 2L);
+        verifyPostCount(boardId, 2L);
 
         postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment"));
-        verifyPostAndAuthorCount(boardId, 1L, 2L);
+        verifyPostCount(boardId, 1L);
         resourceApi.deleteResourceUser(Scope.BOARD, boardId, postUserId);
 
-        verifyPostAndAuthorCount(boardId, 1L, 1L);
+        verifyPostCount(boardId, 1L);
 
         postApi.patchPost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1))));
         postService.publishAndRetirePosts(LocalDateTime.now());
 
-        verifyPostAndAuthorCount(boardId, 0L, 1L);
+        verifyPostCount(boardId, 0L);
 
         Long post4id = postApi.postPost(boardId, TestHelper.smallSamplePost().setLiveTimestamp(LocalDateTime.now().plusMinutes(1))).getId();
-        verifyPostAndAuthorCount(boardId, 0L, 1L);
+        verifyPostCount(boardId, 0L);
 
         postApi.patchPost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty()));
         postService.publishAndRetirePosts(LocalDateTime.now());
 
-        verifyPostAndAuthorCount(boardId, 1L, 1L);
+        verifyPostCount(boardId, 1L);
     }
 
     @Test
@@ -657,14 +657,12 @@ public class BoardApiIT extends AbstractIT {
         }
     }
 
-    private void verifyPostAndAuthorCount(Long boardId, Long postCount, Long authorCount) {
+    private void verifyPostCount(Long boardId, Long postCount) {
         BoardRepresentation boardR = boardApi.getBoard(boardId);
         TestHelper.verifyNullableCount(postCount, boardR.getPostCount());
-        TestHelper.verifyNullableCount(authorCount, boardR.getAuthorCount());
 
         List<BoardRepresentation> boardRs = boardApi.getBoards(null, true, null, null, null);
         TestHelper.verifyNullableCount(postCount, boardRs.get(0).getPostCount());
-        TestHelper.verifyNullableCount(authorCount, boardRs.get(0).getAuthorCount());
 
         TestHelper.verifyNullableCount(0L, boardRs.get(1).getPostCount());
         TestHelper.verifyNullableCount(0L, boardRs.get(1).getAuthorCount());

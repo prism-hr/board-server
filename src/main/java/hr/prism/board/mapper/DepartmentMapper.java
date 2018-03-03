@@ -44,6 +44,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setCustomerId(department.getCustomerId())
             .setHandle(resourceMapper.getHandle(department, university))
             .setBoardCount(department.getBoardCount())
+            .setAuthorCount(department.getAuthorCount())
             .setMemberCount(department.getMemberCount())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))
             .setTasks(department.getTasks().stream().map(this::applyTask).collect(Collectors.toList()));
