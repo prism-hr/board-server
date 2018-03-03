@@ -20,6 +20,7 @@ import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.assertj.core.api.Assertions;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,14 +36,12 @@ import java.util.stream.Collectors;
 public class BoardApiIT extends AbstractIT {
 
     private static LinkedHashMultimap<State, Action> DEPARTMENT_ADMIN_ACTIONS = LinkedHashMultimap.create();
-
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
 
     static {
         DEPARTMENT_ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT));
         DEPARTMENT_ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.EXTEND, Action.REJECT));
         DEPARTMENT_ADMIN_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.RESTORE));
-
         PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
 
@@ -208,44 +207,33 @@ public class BoardApiIT extends AbstractIT {
 
         testActivityService.stop();
         testNotificationService.stop();
-
-        String departmentName = "department";
         Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
-        String resourceRedirect = serverUrl + "/redirect?resource=" + boardId;
 
         // Create unprivileged users
         List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(2).values());
-
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.EDIT, () -> boardApi.patchBoard(boardId, new BoardPatchDTO()))
             .put(Action.REJECT, () -> boardApi.executeAction(boardId, "reject", new BoardPatchDTO().setComment("comment")))
             .put(Action.RESTORE, () -> boardApi.executeAction(boardId, "restore", new BoardPatchDTO()))
             .build();
 
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.DRAFT, operations);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
 
         // Test that we do not audit viewing
         boardApi.getBoard(boardId);
 
         // Check that department user can reject the board
-        testActivityService.record();
-        testNotificationService.record();
-
-        listenForActivities(departmentUserId);
         testUserService.setAuthentication(departmentUserId);
 
         // Check that the department user can reject the board
         verifyExecuteBoard(boardId, departmentUserId, "reject", "rejecting", State.REJECTED);
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.REJECTED, operations);
-        testActivityService.verify(departmentUserId);
+        Assertions.assertThat(userApi.getActivities()).isEmpty();
 
         // Check that the department user can restore the board to accepted
         verifyExecuteBoard(boardId, departmentUserId, "restore", "restoring", State.ACCEPTED);
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
-        testActivityService.verify(departmentUserId);
-
-        testActivityService.stop();
-        testNotificationService.stop();
+        Assertions.assertThat(userApi.getActivities()).isEmpty();
 
         // Create post
         User postUser = testUserService.authenticate();
@@ -295,7 +283,7 @@ public class BoardApiIT extends AbstractIT {
 
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
         List<ResourceOperationRepresentation> resourceOperationRs = boardApi.getBoardOperations(boardId);
-        Assert.assertEquals(10, resourceOperationRs.size());
+        Assert.assertEquals(7, resourceOperationRs.size());
 
         // Operations are returned most recent first - reverse the order to make it easier to test
         resourceOperationRs = Lists.reverse(resourceOperationRs);
@@ -305,8 +293,8 @@ public class BoardApiIT extends AbstractIT {
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
-                .put("name", "board 1", "board 2")
-                .put("handle", "board-1", "board-2")
+                .put("name", "board", "board 2")
+                .put("handle", "board", "board-2")
                 .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,

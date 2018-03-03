@@ -48,11 +48,8 @@ import static org.junit.Assert.*;
 public class PostApiIT extends AbstractIT {
 
     private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
-
     private static LinkedHashMultimap<State, Action> AUTHOR_ACTIONS = LinkedHashMultimap.create();
-
     private static LinkedHashMultimap<State, Action> MEMBER_ACTIONS = LinkedHashMultimap.create();
-
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
 
     static {
@@ -63,7 +60,6 @@ public class PostApiIT extends AbstractIT {
         ADMIN_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.REJECT, Action.SUSPEND));
         ADMIN_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.SUSPEND, Action.RESTORE));
         ADMIN_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT));
-
         AUTHOR_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.SUSPENDED, Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW, Action.CORRECT));
         AUTHOR_ACTIONS.putAll(State.PENDING, Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW));
@@ -71,9 +67,7 @@ public class PostApiIT extends AbstractIT {
         AUTHOR_ACTIONS.putAll(State.EXPIRED, Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.WITHDRAW));
         AUTHOR_ACTIONS.putAll(State.WITHDRAWN, Arrays.asList(Action.VIEW, Action.EDIT, Action.RESTORE));
-
         MEMBER_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.PURSUE));
-
         PUBLIC_ACTIONS.put(State.ACCEPTED, Action.VIEW);
     }
 

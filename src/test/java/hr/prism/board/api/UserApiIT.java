@@ -70,29 +70,15 @@ public class UserApiIT extends AbstractIT {
     public void shouldCreateAndUpdateNotificationSuppressions() {
         User adminUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+
         Long department1id = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1")).getId();
         departmentApi.patchDepartment(department1id, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
-
-        Long board11id =
-            boardApi.postBoard(department1id, new BoardDTO().setName("board11")).getId();
-
-        Long board12id =
-            boardApi.postBoard(department1id, new BoardDTO().setName("board12")).getId();
-
-
+        Long board11id = boardApi.postBoard(department1id, new BoardDTO().setName("board11")).getId();
+        Long board12id = boardApi.postBoard(department1id, new BoardDTO().setName("board12")).getId();
         boardApi.postBoard(department1id, new BoardDTO().setName("board13"));
 
-        Long department2id =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2")
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
-
-        Long board21id =
-            boardApi.postBoard(department2id, new BoardDTO().setName("board21")).getId();
-
-        Long board22id =
-            boardApi.postBoard(department2id, new BoardDTO().setName("board22")).getId();
-
-
+        Long department2id = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2")
+            .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
         boardApi.postBoard(department2id, new BoardDTO().setName("board23"));
 
         User memberUser1 = testUserService.authenticate();
@@ -103,31 +89,16 @@ public class UserApiIT extends AbstractIT {
         String memberUser2Email = memberUser2.getEmail();
         testUserService.setAuthentication(adminUser.getId());
         for (String memberUserEmail : new String[]{memberUser1Email, memberUser2Email}) {
-
-                resourceApi.createResourceUser(Scope.BOARD, board11id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR));
-
-
-                resourceApi.createResourceUser(Scope.BOARD, board12id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
-
-
-                resourceApi.createResourceUser(Scope.DEPARTMENT, department1id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER));
-
-
-                resourceApi.createResourceUser(Scope.BOARD, board21id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.ADMINISTRATOR));
-
-
-                resourceApi.createResourceUser(Scope.BOARD, board22id, new UserRoleDTO().setUser(
-                    new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
-        }
-
+            resourceApi.createResourceUser(Scope.DEPARTMENT, department1id, new UserRoleDTO().setUser(
+                new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER));
 
             resourceApi.createResourceUser(Scope.DEPARTMENT, department2id, new UserRoleDTO().setUser(
-                new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
+                new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
+        }
+
+        resourceApi.createResourceUser(Scope.DEPARTMENT, department2id, new UserRoleDTO().setUser(
+            new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
+            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
 
         Long adminUserId = adminUser.getId();
         Long memberUser1Id = memberUser1.getId();
@@ -135,17 +106,17 @@ public class UserApiIT extends AbstractIT {
         Long memberUser3Id = memberUser3.getId();
 
         testUserService.setAuthentication(adminUserId);
-        String[] expectedBoardNames = new String[]{"board11", "board12", "board13", "board21", "board22", "board23"};
+        String[] expectedBoardNames = new String[]{"board11", "board12", "board13", "board23"};
         List<UserNotificationSuppressionRepresentation> adminUserSuppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
-        Assert.assertEquals(6, adminUserSuppressions.size());
+        Assert.assertEquals(4, adminUserSuppressions.size());
         adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.setAuthentication(memberUser1Id);
         userApi.postSuppressions();
         List<UserNotificationSuppressionRepresentation> memberUser1Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
-        Assert.assertEquals(6, memberUser1Suppressions.size());
+        Assert.assertEquals(4, memberUser1Suppressions.size());
         memberUser1Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
@@ -154,10 +125,10 @@ public class UserApiIT extends AbstractIT {
         userApi.postSuppression(board12id, null);
         List<UserNotificationSuppressionRepresentation> memberUser2Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
-        Assert.assertEquals(5, memberUser2Suppressions.size());
+        Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 2)
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
-        memberUser2Suppressions.subList(2, 5)
+        memberUser2Suppressions.subList(2, 4)
             .forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
@@ -176,21 +147,22 @@ public class UserApiIT extends AbstractIT {
 
         memberUser2Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
-        Assert.assertEquals(5, memberUser2Suppressions.size());
+        Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 1)
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
-        memberUser2Suppressions.subList(1, 5)
+        memberUser2Suppressions.subList(1, 4)
             .forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
+        st.
 
         memberUser2Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.postSuppressions(), expectedBoardNames);
-        Assert.assertEquals(5, memberUser2Suppressions.size());
+        Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
         userApi.deleteSuppressions();
 
         memberUser2Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
-        Assert.assertEquals(5, memberUser2Suppressions.size());
+        Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
     }
 

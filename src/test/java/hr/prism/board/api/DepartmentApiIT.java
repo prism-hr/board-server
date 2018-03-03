@@ -44,14 +44,13 @@ import java.util.stream.Stream;
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
-    private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
 
+    private static LinkedHashMultimap<State, Action> ADMIN_ACTIONS = LinkedHashMultimap.create();
     private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
 
     static {
         ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.EXTEND, Action.SUBSCRIBE));
-
-        PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
+        PUBLIC_ACTIONS.putAll(State.ACCEPTED, Collections.singletonList(Action.VIEW));
     }
 
     @Value("${resource.task.notification.interval1.seconds}")

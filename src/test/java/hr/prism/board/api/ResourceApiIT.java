@@ -38,11 +38,7 @@ public class ResourceApiIT extends AbstractIT {
         User currentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        BoardDTO boardDTO = TestHelper.sampleBoard();
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
-
-        addAndRemoveUserRoles(currentUser, Scope.BOARD, boardR.getId());
-        addAndRemoveUserRoles(currentUser, Scope.DEPARTMENT, boardR.getDepartment().getId());
+        addAndRemoveUserRoles(currentUser, Scope.DEPARTMENT, departmentId);
     }
 
     @Test
