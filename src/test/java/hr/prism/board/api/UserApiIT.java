@@ -152,7 +152,6 @@ public class UserApiIT extends AbstractIT {
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
         memberUser2Suppressions.subList(1, 4)
             .forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
-        st.
 
         memberUser2Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userApi.postSuppressions(), expectedBoardNames);
