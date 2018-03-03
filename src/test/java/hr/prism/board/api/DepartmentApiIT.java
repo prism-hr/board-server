@@ -1075,7 +1075,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentService.processStripeWebhookEvent("id", Action.SUSPEND);
         departmentR = departmentApi.getDepartment(departmentId);
-        Assert.assertEquals(State.SUSPENDED, departmentR.getState());
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUSPEND_DEPARTMENT_ACTIVITY));
         userApi.dismissActivity(userApi.getActivities().iterator().next().getId());
@@ -1089,7 +1089,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentService.processStripeWebhookEvent("id", Action.SUSPEND);
         departmentR = departmentApi.getDepartment(departmentId);
-        Assert.assertEquals(State.SUSPENDED, departmentR.getState());
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
         // Second failed payment event should not result in another activity
         Assertions.assertThat(userApi.getActivities()).isEmpty();
@@ -1115,11 +1115,10 @@ public class DepartmentApiIT extends AbstractIT {
         departmentService.processStripeWebhookEvent("id", Action.UNSUBSCRIBE);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.REJECTED, departmentR.getState());
-        Assert.assertNull(departmentR.getCustomerId());
     }
 
     @Test
-    public void shouldResetCustomerIdWhenUnsubscribing() {
+    public void shouldLeaveDepartmentInSameStateWhenManuallyUnsubscribing() {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
@@ -1134,8 +1133,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentApi.cancelSubscription(departmentId);
         departmentR = departmentApi.getDepartment(departmentId);
-        Assert.assertEquals(State.REJECTED, departmentR.getState());
-        Assert.assertNull(departmentR.getCustomerId());
+        Assert.assertEquals(State.ACCEPTED, departmentR.getState());
     }
 
     @Test

@@ -479,28 +479,6 @@ public class BoardApiIT extends AbstractIT {
         verifyPostCount(boardId, 1L);
     }
 
-    @Test
-    public void shouldArchiveBoards() {
-        testUserService.authenticate();
-        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
-        Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, new BoardDTO().setName("board1"));
-        Long boardId1 = boardR.getId();
-
-        testUserService.authenticate();
-        Long boardId2 = boardApi.postBoard(departmentId, new BoardDTO().setName("board2")).getId();
-
-        Board board2 = (Board) resourceRepository.findOne(boardId2);
-        resourceRepository.updateUpdatedTimestampById(boardId2,
-            board2.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
-        resourceService.archiveResources();
-
-        Assert.assertEquals(State.ACCEPTED, resourceRepository.findOne(boardId1).getState());
-        Assert.assertEquals(State.ARCHIVED, resourceRepository.findOne(boardId2).getState());
-    }
-
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
