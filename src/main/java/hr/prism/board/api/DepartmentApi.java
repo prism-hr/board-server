@@ -1,5 +1,7 @@
 package hr.prism.board.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.model.Customer;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.dto.DepartmentDTO;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +48,9 @@ public class DepartmentApi {
 
     @Inject
     private UserMapper userMapper;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @RequestMapping(value = "/api/universities/{universityId}/departments", method = RequestMethod.POST)
     public DepartmentRepresentation postDepartment(@PathVariable Long universityId, @RequestBody @Valid DepartmentDTO departmentDTO) {
@@ -117,34 +123,35 @@ public class DepartmentApi {
         return departmentMapper.apply(departmentService.putTask(departmentId, taskId));
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = RequestMethod.GET)
-    public Customer getPaymentSources(@PathVariable Long departmentId) {
-        return departmentService.getPaymentSources(departmentId);
+    @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = RequestMethod.GET, produces = "application/json")
+    public JsonNode getPaymentSources(@PathVariable Long departmentId) throws IOException {
+        Customer customer = departmentService.getPaymentSources(departmentId);
+        return customer != null ? objectMapper.readTree(customer.toJson()) : null;
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.POST)
-    public Customer addPaymentSource(@PathVariable Long departmentId, @PathVariable String source) {
-        return departmentService.addPaymentSource(departmentId, source);
+    public JsonNode addPaymentSource(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
+        return objectMapper.readTree(departmentService.addPaymentSource(departmentId, source).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}/setDefault", method = RequestMethod.POST)
-    public Customer setPaymentSourceAsDefault(@PathVariable Long departmentId, @PathVariable String source) {
-        return departmentService.setPaymentSourceAsDefault(departmentId, source);
+    public JsonNode setPaymentSourceAsDefault(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
+        return objectMapper.readTree(departmentService.setPaymentSourceAsDefault(departmentId, source).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.DELETE)
-    public Customer deletePaymentSource(@PathVariable Long departmentId, @PathVariable String source) {
-        return departmentService.deletePaymentSource(departmentId, source);
+    public JsonNode deletePaymentSource(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
+        return objectMapper.readTree(departmentService.deletePaymentSource(departmentId, source).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.DELETE)
-    public Customer cancelSubscription(@PathVariable Long departmentId) {
-        return departmentService.cancelSubscription(departmentId);
+    public JsonNode cancelSubscription(@PathVariable Long departmentId) throws IOException {
+        return objectMapper.readTree(departmentService.cancelSubscription(departmentId).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.PUT)
-    public Customer reactivateSubscription(@PathVariable Long departmentId) {
-        return departmentService.reactivateSubscription(departmentId);
+    public JsonNode reactivateSubscription(@PathVariable Long departmentId) throws IOException {
+        return objectMapper.readTree(departmentService.reactivateSubscription(departmentId).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/invoices", method = RequestMethod.GET)
