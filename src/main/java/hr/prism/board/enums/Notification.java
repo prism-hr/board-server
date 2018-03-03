@@ -4,14 +4,10 @@ import hr.prism.board.notification.recipient.*;
 
 public enum Notification {
 
-    ACCEPT_BOARD_NOTIFICATION(AuthorizedRecipientList.class),
     ACCEPT_POST_NOTIFICATION(AuthorizedRecipientList.class),
     CORRECT_POST_NOTIFICATION(AuthorizedRecipientList.class),
-    JOIN_BOARD_NOTIFICATION(DefinedRecipientList.class),
     JOIN_DEPARTMENT_NOTIFICATION(DefinedRecipientList.class),
     JOIN_DEPARTMENT_REQUEST_NOTIFICATION(AuthorizedRecipientList.class),
-    NEW_BOARD_NOTIFICATION(AuthorizedRecipientList.class),
-    NEW_BOARD_PARENT_NOTIFICATION(AuthorizedRecipientList.class),
     NEW_POST_NOTIFICATION(AuthorizedRecipientList.class),
     NEW_POST_PARENT_NOTIFICATION(AuthorizedRecipientList.class),
     PUBLISH_POST_NOTIFICATION(AuthorizedRecipientList.class),

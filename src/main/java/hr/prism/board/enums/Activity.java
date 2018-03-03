@@ -2,13 +2,10 @@ package hr.prism.board.enums;
 
 public enum Activity {
 
-    ACCEPT_BOARD_ACTIVITY(false),
     ACCEPT_POST_ACTIVITY(false),
     CORRECT_POST_ACTIVITY(false),
-    JOIN_BOARD_ACTIVITY(false),
     JOIN_DEPARTMENT_ACTIVITY(false),
     JOIN_DEPARTMENT_REQUEST_ACTIVITY(false),
-    NEW_BOARD_PARENT_ACTIVITY(false),
     NEW_POST_PARENT_ACTIVITY(false),
     PUBLISH_POST_ACTIVITY(false),
     PUBLISH_POST_MEMBER_ACTIVITY(true),

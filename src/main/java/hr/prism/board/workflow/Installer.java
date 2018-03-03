@@ -32,30 +32,18 @@ public class Installer {
         new Workflow(ObjectMapperProvider.getObjectMapper())
             // Department draft state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(DRAFT)
-            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
-            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(DRAFT).transitioningTo(ACCEPTED)
 
             // Department pending state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(PENDING)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD).inState(DRAFT)
-            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
-            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(PENDING)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(PENDING).transitioningTo(ACCEPTED)
 
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(DRAFT)
-            .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_ACTIVITY)
-            .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_BOARD_PARENT_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(NEW_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)

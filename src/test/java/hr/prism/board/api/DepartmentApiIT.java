@@ -285,21 +285,6 @@ public class DepartmentApiIT extends AbstractIT {
         Long departmentId = departmentR.getId();
         Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
 
-        User boardUser = testUserService.authenticate();
-        Long boardUserId = boardUser.getId();
-
-        testActivityService.record();
-        listenForActivities(boardUserId);
-
-        testUserService.setAuthentication(departmentUser.getId());
-        resourceApi.createResourceUser(Scope.BOARD, boardId,
-            new UserRoleDTO()
-                .setUser(new UserDTO().setId(boardUserId))
-                .setRole(Role.ADMINISTRATOR));
-
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.JOIN_BOARD_ACTIVITY));
-        testActivityService.stop();
-
         // Create post
         User postUser = testUserService.authenticate();
         postApi.postPost(boardId,
@@ -308,13 +293,13 @@ public class DepartmentApiIT extends AbstractIT {
                 .setMemberCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
 
         // Create unprivileged users
-        List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(boardId, 2,
-            TestHelper.smallSamplePost()
-                .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))
-            .values());
+        List<User> unprivilegedUsers = Lists.newArrayList(
+            makeUnprivilegedUsers(boardId, 2,
+                TestHelper.smallSamplePost()
+                    .setPostCategories(Collections.singletonList("Employment"))
+                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))
+                .values());
 
-        unprivilegedUsers.add(boardUser);
         unprivilegedUsers.add(postUser);
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
