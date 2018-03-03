@@ -79,8 +79,6 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(ACCEPTED).transitioningTo(REJECTED)
-            .prompting(BOARD, ADMINISTRATOR).with(REJECT_BOARD_ACTIVITY)
-            .notifying(BOARD, ADMINISTRATOR).with(REJECT_BOARD_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
@@ -95,9 +93,7 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(REJECTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(PREVIOUS)
-            .prompting(BOARD, ADMINISTRATOR).with(RESTORE_BOARD_ACTIVITY)
-            .notifying(BOARD, ADMINISTRATOR).with(RESTORE_BOARD_NOTIFICATION);
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(ACCEPTED);
 
     private static final Workflow POST_WORKFLOW =
         new Workflow(ObjectMapperProvider.getObjectMapper())

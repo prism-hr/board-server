@@ -69,4 +69,9 @@ public class BoardApi {
         return boardMapper.apply(boardService.executeAction(boardId, Action.EDIT, boardDTO));
     }
 
+    @RequestMapping(value = "/api/boards/{boardId}/actions/{action:reject|restore}", method = RequestMethod.POST)
+    public BoardRepresentation executeAction(@PathVariable Long boardId, @PathVariable String action, @RequestBody @Valid BoardPatchDTO boardDTO) {
+        return boardMapper.apply(boardService.executeAction(boardId, Action.valueOf(action.toUpperCase()), boardDTO));
+    }
+
 }

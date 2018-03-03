@@ -568,16 +568,28 @@ public class DepartmentService {
         return department.getCustomer();
     }
 
-    public void processStripeWebhookEvent(String customerId, Action action, State state) {
+    public void processStripeWebhookEvent(String customerId, Action action) {
         Department department = departmentRepository.findByCustomerId(customerId);
         if (department == null) {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "No department with customer ID: " + customerId);
         }
 
+        State state;
+        switch (action) {
+            case SUSPEND:
+                state = department.getState();
+                break;
+            case UNSUBSCRIBE:
+                state = State.REJECTED;
+                break;
+            default:
+                throw new BoardException(ExceptionCode.PROBLEM, "Unexpected action");
+        }
+
         Long departmentId = department.getId();
         actionService.executeAnonymously(Collections.singletonList(departmentId), action, state, LocalDateTime.now());
         entityManager.refresh(department);
-        if (action != Action.UNSUBSCRIBE) {
+        if (action == Action.SUSPEND) {
             hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
                 department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, Scope.DEPARTMENT, Role.ADMINISTRATOR);
             if (suspendActivity == null) {

@@ -207,16 +207,16 @@ public class ResourceApiIT extends AbstractIT {
         testUserService.setAuthentication(userId);
 
         List<BoardRepresentation> boardRs = boardApi.getBoards(null, false, null, null, null);
-        Assert.assertEquals(3, boardRs.size());
+        Assert.assertEquals(2, boardRs.size());
 
         List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
-        verifyContains(boardNames, "Games", "Opportunities", "Housing");
+        verifyContains(boardNames, "Opportunities", "Housing");
 
         boardRs = boardApi.getBoards(null, false, null, null, "student");
-        Assert.assertEquals(3, boardRs.size());
+        Assert.assertEquals(2, boardRs.size());
 
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
-        verifyContains(boardNames, "Games", "Opportunities", "Housing");
+        verifyContains(boardNames, "Opportunities", "Housing");
 
         boardRs = boardApi.getBoards(null, false, null, null, "promote work experience");
         Assert.assertEquals(1, boardRs.size());
@@ -224,7 +224,7 @@ public class ResourceApiIT extends AbstractIT {
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
 
-        userId = userCacheService.findByEmail("board@author.com").getId();
+        userId = userCacheService.findByEmail("department@author.com").getId();
         testUserService.setAuthentication(userId);
 
         boardRs = boardApi.getBoards(null, false, null, null, null);
@@ -299,7 +299,7 @@ public class ResourceApiIT extends AbstractIT {
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Technical Analyst");
 
-        userId = userCacheService.findByEmail("board@administrator.com").getId();
+        userId = userCacheService.findByEmail("department@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(boardId, false, null, null, null);

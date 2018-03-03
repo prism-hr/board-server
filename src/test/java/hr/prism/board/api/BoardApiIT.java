@@ -281,35 +281,12 @@ public class BoardApiIT extends AbstractIT {
 
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
-
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.REJECT_BOARD_ACTIVITY));
         testActivityService.verify(departmentUserId);
-
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
-            ImmutableMap.<String, String>builder()
-                .put("recipient", boardUserGivenName)
-                .put("department", departmentName)
-                .put("board", "board 1")
-                .put("comment", "we cannot accept this")
-                .put("homeRedirect", homeRedirect)
-                .put("invitationUuid", boardAdminRoleUuid)
-                .build()));
 
         // Check that the department user can restore the board to draft
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made a mistake", State.DRAFT);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.DRAFT, operations);
-
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.RESTORE_BOARD_ACTIVITY));
         testActivityService.verify(departmentUserId);
-
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
-            ImmutableMap.<String, String>builder()
-                .put("recipient", boardUserGivenName)
-                .put("department", departmentName)
-                .put("board", "board 1")
-                .put("resourceRedirect", resourceRedirect)
-                .put("invitationUuid", boardAdminRoleUuid)
-                .build()));
 
         // Check that the department user can accept the board
         verifyExecuteBoard(boardId, departmentUserId, "accept", null, State.ACCEPTED);
@@ -330,37 +307,15 @@ public class BoardApiIT extends AbstractIT {
         // Check that the department user can reject the board
         verifyExecuteBoard(boardId, departmentUserId, "reject", "we really cannot accept this", State.REJECTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.REJECTED, operations);
-
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.REJECT_BOARD_ACTIVITY));
         testActivityService.verify(departmentUserId);
-
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_BOARD_NOTIFICATION, boardUser,
-            ImmutableMap.<String, String>builder()
-                .put("recipient", boardUserGivenName)
-                .put("department", departmentName)
-                .put("board", "board 1")
-                .put("comment", "we really cannot accept this")
-                .put("homeRedirect", homeRedirect)
-                .put("invitationUuid", boardAdminRoleUuid)
-                .build()));
 
         // Check that the department user can restore the board to accepted
         verifyExecuteBoard(boardId, departmentUserId, "restore", "we made another mistake", State.ACCEPTED);
         verifyBoardActions(departmentUser, boardUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
-        testActivityService.stop();
-        testNotificationService.stop();
-
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(boardId, Activity.RESTORE_BOARD_ACTIVITY));
         testActivityService.verify(departmentUserId);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RESTORE_BOARD_NOTIFICATION, boardUser,
-            ImmutableMap.<String, String>builder()
-                .put("recipient", boardUserGivenName)
-                .put("department", departmentName)
-                .put("board", "board 1")
-                .put("resourceRedirect", resourceRedirect)
-                .put("invitationUuid", boardAdminRoleUuid)
-                .build()));
+        testActivityService.stop();
+        testNotificationService.stop();
 
         // Create post
         User postUser = testUserService.authenticate();

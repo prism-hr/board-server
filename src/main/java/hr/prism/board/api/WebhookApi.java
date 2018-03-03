@@ -7,7 +7,6 @@ import com.stripe.model.Event;
 import com.stripe.model.Invoice;
 import com.stripe.net.Webhook;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.DepartmentService;
@@ -43,10 +42,10 @@ public class WebhookApi {
         String eventType = event.getType();
         if ("invoice.payment_failed".equals(eventType)) {
             String customerId = ((Invoice) event.getData().getObject()).getCustomer();
-            processStripeEvent(customerId, eventType, Action.SUSPEND, State.SUSPENDED);
+            processStripeEvent(customerId, eventType, Action.SUSPEND);
         } else if ("customer.subscription.deleted".equals(eventType)) {
             String customerId = ((Customer) event.getData().getObject()).getId();
-            processStripeEvent(customerId, eventType, Action.UNSUBSCRIBE, State.REJECTED);
+            processStripeEvent(customerId, eventType, Action.UNSUBSCRIBE);
         } else {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Event of type: " + eventType + " not expected");
         }
@@ -54,9 +53,9 @@ public class WebhookApi {
 
     }
 
-    private void processStripeEvent(String customerId, String eventType, Action action, State state) {
+    private void processStripeEvent(String customerId, String eventType, Action action) {
         LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
-        departmentService.processStripeWebhookEvent(customerId, action, state);
+        departmentService.processStripeWebhookEvent(customerId, action);
     }
 
 }

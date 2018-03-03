@@ -1,14 +1,12 @@
 INSERT INTO user (uuid, given_name, surname, email, email_display, password, created_timestamp)
 VALUES (UUID(), 'department', 'administrator', 'department@administrator.com', 'd........t@administrator.com', SHA2('password', 256), NOW()),
+  (UUID(), 'department', 'author', 'department@author.com', 'd...t@author.com', SHA2('password', 256), NOW()),
   (UUID(), 'department', 'member', 'department@member.com', 'd........t@member.com', SHA2('password', 256), NOW()),
-  (UUID(), 'board', 'administrator', 'board@administrator.com', 'b...d@administrator.com', SHA2('password', 256), NOW()),
-  (UUID(), 'board', 'author', 'board@author.com', 'b...d@author.com', SHA2('password', 256), NOW()),
   (UUID(), 'post', 'administrator', 'post@administrator.com', 'p..t@administrator.com', SHA2('password', 256), NOW());
 
 INSERT INTO resource (scope, state, name, handle, summary, description, organization_name, apply_website, created_timestamp, updated_timestamp)
 VALUES ('UNIVERSITY', 'ACCEPTED', 'University of Edinburgh', 'ed', NULL, NULL, NULL, NULL, NOW(), NULL),
   ('DEPARTMENT', 'ACCEPTED', 'Computer Science', 'ed/cs', 'We specialize in machine learning, database theory and big data', NULL, NULL, NULL, NOW(), NULL),
-  ('BOARD', 'DRAFT', 'Games', 'ed/cs/games', 'Games for students to play', NULL, NULL, NULL, NOW(), NULL),
   ('BOARD', 'ACCEPTED', 'Opportunities', 'ed/cs/opportunities', 'Promote work and work experience opportunities to students', NULL, NULL, NULL, NOW(), NULL),
   ('BOARD', 'REJECTED', 'Housing', 'ed/cs/housing', 'Meet students to share houses with', NULL, NULL, NULL, NOW(), NULL),
   ('POST', 'DRAFT', 'Support Engineer', 'ed/cs/opportunities/1', 'Help people to use their computers', 'This will be soul destroying', NULL, NULL, NOW(), NULL),
@@ -40,8 +38,21 @@ INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestam
     NOW()
   FROM resource
     INNER JOIN user
-  WHERE resource.scope IN ('DEPARTMENT', 'BOARD')
+  WHERE resource.scope = 'DEPARTMENT'
         AND user.email = 'department@administrator.com';
+
+INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
+  SELECT
+    UUID(),
+    resource.id,
+    user.id,
+    'AUTHOR',
+    'ACCEPTED',
+    NOW()
+  FROM resource
+    INNER JOIN user
+  WHERE resource.scope = 'DEPARTMENT'
+        AND user.email = 'department@author.com';
 
 INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT
@@ -66,36 +77,9 @@ INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestam
     NOW()
   FROM resource
     INNER JOIN user
-  WHERE resource.scope = 'BOARD'
-        AND resource.state = 'ACCEPTED'
-        AND user.email = 'board@administrator.com';
-
-INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
-  SELECT
-    UUID(),
-    resource.id,
-    user.id,
-    'AUTHOR',
-    'ACCEPTED',
-    NOW()
-  FROM resource
-    INNER JOIN user
-  WHERE resource.scope = 'BOARD'
-        AND user.email = 'board@author.com';
-
-INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
-  SELECT
-    UUID(),
-    resource.id,
-    user.id,
-    'ADMINISTRATOR',
-    'ACCEPTED',
-    NOW()
-  FROM resource
-    INNER JOIN user
   WHERE resource.scope = 'POST'
         AND resource.name IN ('Database Engineer', 'Java Web Developer')
-        AND user.email = 'board@author.com';
+        AND user.email = 'department@author.com';
 
 INSERT INTO user_role (uuid, resource_id, user_id, role, state, created_timestamp)
   SELECT

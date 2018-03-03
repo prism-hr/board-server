@@ -1073,7 +1073,7 @@ public class DepartmentApiIT extends AbstractIT {
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
         String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 
-        departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
+        departmentService.processStripeWebhookEvent("id", Action.SUSPEND);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.SUSPENDED, departmentR.getState());
 
@@ -1087,7 +1087,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        departmentService.processStripeWebhookEvent("id", Action.SUSPEND, State.SUSPENDED);
+        departmentService.processStripeWebhookEvent("id", Action.SUSPEND);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.SUSPENDED, departmentR.getState());
 
@@ -1112,7 +1112,7 @@ public class DepartmentApiIT extends AbstractIT {
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
-        departmentService.processStripeWebhookEvent("id", Action.UNSUBSCRIBE, State.REJECTED);
+        departmentService.processStripeWebhookEvent("id", Action.UNSUBSCRIBE);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.REJECTED, departmentR.getState());
         Assert.assertNull(departmentR.getCustomerId());
