@@ -134,6 +134,11 @@ public class DepartmentApi {
         return objectMapper.readTree(departmentService.addPaymentSource(departmentId, source).toJson());
     }
 
+    @RequestMapping(value = "/api/departments/{departmentId}/subscriptions", method = RequestMethod.POST)
+    public JsonNode createSubscription(@PathVariable Long departmentId) throws IOException {
+        return objectMapper.readTree(departmentService.createSubscription(departmentId).toJson());
+    }
+
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}/setDefault", method = RequestMethod.POST)
     public JsonNode setPaymentSourceAsDefault(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
         return objectMapper.readTree(departmentService.setPaymentSourceAsDefault(departmentId, source).toJson());

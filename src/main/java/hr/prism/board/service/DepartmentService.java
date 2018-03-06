@@ -499,6 +499,28 @@ public class DepartmentService {
         return department.getCustomer();
     }
 
+    public Customer createSubscription(Long departmentId) {
+        User user = userService.getCurrentUserSecured();
+        Department department = getDepartment(departmentId);
+        actionService.executeAction(user, department, Action.SUBSCRIBE, () -> {
+            String customerId = department.getCustomerId();
+            if (customerId == null) {
+                throw new BoardException(ExceptionCode.SUBSCRIPTION_ERROR, "Department ID: " + departmentId + " has no customer ID");
+            }
+
+            Customer customer = paymentService.getCustomer(customerId);
+            CustomerSubscriptionCollection subscriptions = customer.getSubscriptions();
+            if (subscriptions == null) {
+                customer = paymentService.createSubscription(customerId);
+                department.setCustomer(customer);
+            }
+
+            throw new BoardException(ExceptionCode.SUBSCRIPTION_ERROR, "Department ID: " + departmentId + " already has a subscription");
+        });
+
+        return department.getCustomer();
+    }
+
     public Customer setPaymentSourceAsDefault(Long departmentId, String defaultSource) {
         User user = userService.getCurrentUserSecured();
         Department department = getDepartment(departmentId);
