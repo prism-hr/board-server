@@ -1115,7 +1115,7 @@ public class DepartmentApiIT extends AbstractIT {
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
-        departmentApi.cancelSubscription(departmentId);
+        departmentApi.updateSubscription(departmentId, ImmutableMap.of("action", "cancel"));
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
     }

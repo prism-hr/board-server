@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -134,11 +135,6 @@ public class DepartmentApi {
         return objectMapper.readTree(departmentService.addPaymentSource(departmentId, source).toJson());
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/subscriptions", method = RequestMethod.POST)
-    public JsonNode createSubscription(@PathVariable Long departmentId) throws IOException {
-        return objectMapper.readTree(departmentService.createSubscription(departmentId).toJson());
-    }
-
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}/setDefault", method = RequestMethod.POST)
     public JsonNode setPaymentSourceAsDefault(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
         return objectMapper.readTree(departmentService.setPaymentSourceAsDefault(departmentId, source).toJson());
@@ -149,14 +145,17 @@ public class DepartmentApi {
         return objectMapper.readTree(departmentService.deletePaymentSource(departmentId, source).toJson());
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.DELETE)
-    public JsonNode cancelSubscription(@PathVariable Long departmentId) throws IOException {
-        return objectMapper.readTree(departmentService.cancelSubscription(departmentId).toJson());
-    }
-
-    @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.PUT)
-    public JsonNode reactivateSubscription(@PathVariable Long departmentId) throws IOException {
-        return objectMapper.readTree(departmentService.reactivateSubscription(departmentId).toJson());
+    @RequestMapping(value = "/api/departments/{departmentId}/subscription", method = RequestMethod.POST)
+    public JsonNode updateSubscription(@PathVariable Long departmentId, @RequestBody Map<String, String> post) throws IOException {
+        String action = post.get("action");
+        if ("cancel".equals(action)) {
+            return objectMapper.readTree(departmentService.cancelSubscription(departmentId).toJson());
+        } else if ("reactivate".equals(action)) {
+            return objectMapper.readTree(departmentService.reactivateSubscription(departmentId).toJson());
+        } else if ("create".equals(action)) {
+            return objectMapper.readTree(departmentService.createSubscription(departmentId).toJson());
+        }
+        throw new Error("Unknown action: " + action);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/invoices", method = RequestMethod.GET)

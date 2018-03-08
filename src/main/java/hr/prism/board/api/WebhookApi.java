@@ -5,6 +5,7 @@ import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Customer;
 import com.stripe.model.Event;
 import com.stripe.model.Invoice;
+import com.stripe.model.Subscription;
 import com.stripe.net.Webhook;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.BoardException;
@@ -46,6 +47,9 @@ public class WebhookApi {
         } else if ("customer.subscription.deleted".equals(eventType)) {
             String customerId = ((Customer) event.getData().getObject()).getId();
             processStripeEvent(customerId, eventType, Action.UNSUBSCRIBE);
+        } else if ("customer.subscription.updated".equals(eventType)) {
+            Object subscriptionId = ((Subscription)event.getData().getObject()).getId();
+            LOGGER.info("Subscription " + subscriptionId + " updated");
         } else {
             throw new BoardException(ExceptionCode.PAYMENT_INTEGRATION_ERROR, "Event of type: " + eventType + " not expected");
         }

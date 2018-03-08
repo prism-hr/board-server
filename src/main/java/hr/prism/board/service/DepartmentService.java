@@ -510,9 +510,10 @@ public class DepartmentService {
 
             Customer customer = paymentService.getCustomer(customerId);
             CustomerSubscriptionCollection subscriptions = customer.getSubscriptions();
-            if (subscriptions == null) {
+            if (subscriptions.getTotalCount() == 0) {
                 customer = paymentService.createSubscription(customerId);
                 department.setCustomer(customer);
+                return department;
             }
 
             throw new BoardException(ExceptionCode.SUBSCRIPTION_ERROR, "Department ID: " + departmentId + " already has a subscription");
