@@ -104,11 +104,7 @@ public class PaymentService {
                 subscriptions.getData().forEach(subscription -> {
                     String subscriptionId = subscription.getId();
                     performStripeOperation(() ->
-                            Subscription.retrieve(subscriptionId).update(ImmutableMap.of(
-                                "items", ImmutableMap.of(
-                                    "0", ImmutableMap.of(
-                                        "id", subscription.getSubscriptionItems().getData().get(0).getId(),
-                                        "plan", "department")))),
+                            Subscription.retrieve(subscriptionId).update(ImmutableMap.of("cancel_at_period_end", false)),
                         ExceptionCode.PAYMENT_INTEGRATION_ERROR,
                         "Could not reactivate subscription: " + subscriptionId + " for customer: " + customerId);
                 });
