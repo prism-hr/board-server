@@ -74,22 +74,6 @@ public class PostApiIT extends AbstractIT {
     @Inject
     private PostRepository postRepository;
 
-    private static List<BoardAttachments> makeTestAttachments(String name) throws IOException {
-        URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
-        URLConnection connection = url.openConnection();
-        try (InputStream inputStream = connection.getInputStream()) {
-            BoardAttachments attachments = new BoardAttachments();
-            attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
-            attachments.setType(connection.getContentType());
-            attachments.setFilename(name);
-            attachments.setDisposition("attachment");
-            attachments.setContentId("Application");
-            return Collections.singletonList(attachments);
-        } catch (IOException e) {
-            throw new Error(e);
-        }
-    }
-
     @Test
     public void shouldCreateAndListPosts() {
         Map<Long, Map<Scope, User>> unprivilegedUsers = new HashMap<>();
@@ -1732,6 +1716,22 @@ public class PostApiIT extends AbstractIT {
         }
 
         Assert.assertEquals(expectedLocation, response.getLocation());
+    }
+
+    private static List<BoardAttachments> makeTestAttachments(String name) throws IOException {
+        URL url = new URL("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
+        URLConnection connection = url.openConnection();
+        try (InputStream inputStream = connection.getInputStream()) {
+            BoardAttachments attachments = new BoardAttachments();
+            attachments.setContent(Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream)));
+            attachments.setType(connection.getContentType());
+            attachments.setFilename(name);
+            attachments.setDisposition("attachment");
+            attachments.setContentId("Application");
+            return Collections.singletonList(attachments);
+        } catch (IOException e) {
+            throw new Error(e);
+        }
     }
 
     private enum PostAdminContext {
