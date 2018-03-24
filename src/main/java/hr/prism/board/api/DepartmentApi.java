@@ -151,7 +151,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/reactivateSubscription", method = RequestMethod.POST)
     public JsonNode reactivateSubscription(@PathVariable Long departmentId) throws IOException {
-        return objectMapper.readTree(departmentService.cancelSubscription(departmentId).toJson());
+        return objectMapper.readTree(departmentService.reactivateSubscription(departmentId).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/invoices", method = RequestMethod.GET)
