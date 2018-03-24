@@ -130,8 +130,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.POST)
-    public JsonNode addPaymentSource(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
-        return objectMapper.readTree(departmentService.addPaymentSource(departmentId, source).toJson());
+    public JsonNode addPaymentSourceAndSubscription(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
+        return objectMapper.readTree(departmentService.addPaymentSourceAndSubscription(departmentId, source).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}/setDefault", method = RequestMethod.POST)
@@ -142,11 +142,6 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = RequestMethod.DELETE)
     public JsonNode deletePaymentSource(@PathVariable Long departmentId, @PathVariable String source) throws IOException {
         return objectMapper.readTree(departmentService.deletePaymentSource(departmentId, source).toJson());
-    }
-
-    @RequestMapping(value = "/api/departments/{departmentId}/createSubscription", method = RequestMethod.POST)
-    public JsonNode createSubscription(@PathVariable Long departmentId) throws IOException {
-        return objectMapper.readTree(departmentService.createSubscription(departmentId).toJson());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/cancelSubscription", method = RequestMethod.POST)

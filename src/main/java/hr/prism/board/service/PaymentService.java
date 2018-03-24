@@ -13,12 +13,12 @@ import javax.annotation.PostConstruct;
 @Service
 public class PaymentService {
 
-    @Value("${stripe.api.key}")
-    private String stripeApiKey;
+    @Value("${stripe.api.secret}")
+    private String stripeApiSecret;
 
     @PostConstruct
     public void postConstruct() {
-        Stripe.apiKey = stripeApiKey;
+        Stripe.apiKey = stripeApiSecret;
     }
 
     Customer getCustomer(String customerId) {
@@ -86,7 +86,8 @@ public class PaymentService {
                 subscriptions.getData().forEach(subscription -> {
                     String subscriptionId = subscription.getId();
                     performStripeOperation(() ->
-                            Subscription.retrieve(subscriptionId).cancel(ImmutableMap.of("at_period_end", true)),
+                            Subscription.retrieve(subscriptionId).cancel(
+                                ImmutableMap.of("at_period_end", true)),
                         ExceptionCode.PAYMENT_INTEGRATION_ERROR,
                         "Could not cancel subscription: " + subscriptionId + " for customer: " + customerId);
                 });
@@ -104,7 +105,13 @@ public class PaymentService {
                 subscriptions.getData().forEach(subscription -> {
                     String subscriptionId = subscription.getId();
                     performStripeOperation(() ->
-                            Subscription.retrieve(subscriptionId).update(ImmutableMap.of("cancel_at_period_end", false)),
+                            Subscription.retrieve(subscriptionId).update(
+                                ImmutableMap.of(
+                                    "items", ImmutableMap.of(
+                                        "0", ImmutableMap.of(
+                                            "id", subscription.getSubscriptionItems().getData().get(0).getId(),
+                                            "plan", "department")),
+                                    "cancel_at_period_end", false)),
                         ExceptionCode.PAYMENT_INTEGRATION_ERROR,
                         "Could not reactivate subscription: " + subscriptionId + " for customer: " + customerId);
                 });

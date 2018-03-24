@@ -917,7 +917,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
         testActivityService.stop();
 
-        JsonNode customer = departmentApi.addPaymentSource(departmentId, "source");
+        JsonNode customer = departmentApi.addPaymentSourceAndSubscription(departmentId, "source");
         Assert.assertNotNull(customer);
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
@@ -1044,7 +1044,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.DRAFT, departmentR.getState());
         Long departmentId = departmentR.getId();
 
-        departmentApi.addPaymentSource(departmentId, "source");
+        departmentApi.addPaymentSourceAndSubscription(departmentId, "source");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
@@ -1088,7 +1088,7 @@ public class DepartmentApiIT extends AbstractIT {
         testActivityService.stop();
         testNotificationService.stop();
 
-        departmentApi.addPaymentSource(departmentId, "source2");
+        departmentApi.addPaymentSourceAndSubscription(departmentId, "source2");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
@@ -1111,7 +1111,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.DRAFT, departmentR.getState());
         Long departmentId = departmentR.getId();
 
-        departmentApi.addPaymentSource(departmentId, "source");
+        departmentApi.addPaymentSourceAndSubscription(departmentId, "source");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 

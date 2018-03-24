@@ -470,7 +470,7 @@ public class DepartmentService {
         return customerId == null ? null : paymentService.getInvoices(customerId);
     }
 
-    public Customer addPaymentSource(Long departmentId, String source) {
+    public Customer addPaymentSourceAndSubscription(Long departmentId, String source) {
         User user = userService.getCurrentUserSecured();
         Department department = getDepartment(departmentId);
         actionService.executeAction(user, department, Action.SUBSCRIBE, () -> {
@@ -494,29 +494,6 @@ public class DepartmentService {
 
             department.setCustomer(customer);
             return department;
-        });
-
-        return department.getCustomer();
-    }
-
-    public Customer createSubscription(Long departmentId) {
-        User user = userService.getCurrentUserSecured();
-        Department department = getDepartment(departmentId);
-        actionService.executeAction(user, department, Action.SUBSCRIBE, () -> {
-            String customerId = department.getCustomerId();
-            if (customerId == null) {
-                throw new BoardException(ExceptionCode.SUBSCRIPTION_ERROR, "Department ID: " + departmentId + " has no customer ID");
-            }
-
-            Customer customer = paymentService.getCustomer(customerId);
-            CustomerSubscriptionCollection subscriptions = customer.getSubscriptions();
-            if (subscriptions.getTotalCount() == 0) {
-                customer = paymentService.createSubscription(customerId);
-                department.setCustomer(customer);
-                return department;
-            }
-
-            throw new BoardException(ExceptionCode.SUBSCRIPTION_ERROR, "Department ID: " + departmentId + " already has a subscription");
         });
 
         return department.getCustomer();
