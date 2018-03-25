@@ -41,11 +41,11 @@ public class Post extends Resource {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "internal")
-    private Boolean internal;
-
     @Column(name = "organization_name", nullable = false)
     private String organizationName;
+
+    @Column(name = "organization_logo")
+    private String organizationLogo;
 
     @Column(name = "existing_relation")
     @Enumerated(EnumType.STRING)
@@ -112,20 +112,20 @@ public class Post extends Resource {
         this.description = description;
     }
 
-    public Boolean getInternal() {
-        return internal;
-    }
-
-    public void setInternal(Boolean internal) {
-        this.internal = internal;
-    }
-
     public String getOrganizationName() {
         return organizationName;
     }
 
     public void setOrganizationName(String organizationName) {
         this.organizationName = organizationName;
+    }
+
+    public String getOrganizationLogo() {
+        return organizationLogo;
+    }
+
+    public void setOrganizationLogo(String organizationLogo) {
+        this.organizationLogo = organizationLogo;
     }
 
     public ExistingRelation getExistingRelation() {

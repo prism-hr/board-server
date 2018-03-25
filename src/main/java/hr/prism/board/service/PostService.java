@@ -30,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -164,17 +166,22 @@ public class PostService {
             post.setSummary(postDTO.getSummary());
             post.setDescription(postDTO.getDescription());
 
-            Boolean internal = postDTO.getInternal();
-            post.setInternal(internal);
-
             post.setOrganizationName(postDTO.getOrganizationName());
+            post.setOrganizationLogo(postDTO.getOrganizationLogo());
             post.setExistingRelation(postDTO.getExistingRelation());
             post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
-            post.setApplyWebsite(postDTO.getApplyWebsite());
+
+            String applyWebsite = postDTO.getApplyWebsite();
+            if (applyWebsite != null) {
+                verifyApplyWebsiteAccessible(applyWebsite);
+                post.setApplyWebsite(applyWebsite);
+            }
+
             post.setApplyEmail(postDTO.getApplyEmail());
 
-            if (postDTO.getApplyDocument() != null) {
-                post.setApplyDocument(documentService.getOrCreateDocument(postDTO.getApplyDocument()));
+            DocumentDTO applyDocument = postDTO.getApplyDocument();
+            if (applyDocument != null) {
+                post.setApplyDocument(documentService.getOrCreateDocument(applyDocument));
             }
 
             validatePostApply(post);
@@ -243,11 +250,6 @@ public class PostService {
         if (post.getState() != State.ACCEPTED || redirect == null) {
             // We may no longer be redirecting - throw an exception so client can refresh
             throw new BoardException(ExceptionCode.INVALID_REFERRAL, "Post no longer accepting referrals");
-        }
-
-        // TODO: replace with check that page can be opened on save
-        if (!redirect.startsWith("http://") && !redirect.startsWith("https://")) {
-            redirect = "http://" + redirect;
         }
 
         return redirect;
@@ -444,12 +446,13 @@ public class PostService {
         resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
         resourcePatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
         resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
-        resourcePatchService.patchProperty(post, "internal", post::getInternal, post::setInternal, postDTO.getInternal());
         resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
+        resourcePatchService.patchProperty(post, "organizationLogo", post::getOrganizationLogo, post::setOrganizationLogo, postDTO.getOrganizationLogo());
         resourcePatchService.patchLocation(post, postDTO.getLocation());
 
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (BoardUtils.isPresent(applyWebsite)) {
+            verifyApplyWebsiteAccessible(applyWebsite.get());
             patchPostApply(post, applyWebsite, Optional.empty(), Optional.empty());
         }
 
@@ -650,6 +653,23 @@ public class PostService {
         }
 
         resourceEventHistory.add(resourceEvent);
+    }
+
+    private void verifyApplyWebsiteAccessible(String applyWebsite) {
+        try {
+            URL url = new URL(applyWebsite);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setInstanceFollowRedirects(true);
+            connection.connect();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode < 200 || responseCode >= 400) {
+                throw new BoardException(ExceptionCode.INACCESSIBLE_POST_APPLY, "Cannot access apply website");
+            }
+        } catch (IOException e) {
+            throw new BoardException(ExceptionCode.INACCESSIBLE_POST_APPLY, "Cannot access apply website");
+        }
     }
 
 }

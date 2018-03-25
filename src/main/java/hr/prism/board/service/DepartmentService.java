@@ -176,7 +176,7 @@ public class DepartmentService {
         List<Department> departments = new ArrayList<>();
         resources.forEach(resource -> {
             Department department = (Department) resource;
-            setTaskCompletion(user, department);
+            setTaskCompletionsForUser(user, department);
             departments.add(department);
         });
 
@@ -652,7 +652,7 @@ public class DepartmentService {
 
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
-            setTaskCompletion(user, department);
+            setTaskCompletionsForUser(user, department);
             return department;
         });
     }
@@ -664,7 +664,7 @@ public class DepartmentService {
         return department.getCustomerId();
     }
 
-    private void setTaskCompletion(User user, Department department) {
+    private void setTaskCompletionsForUser(User user, Department department) {
         if (user != null) {
             department.getTasks().stream()
                 .filter(task -> task.getCompletions().stream().anyMatch(completion -> user.equals(completion.getUser())))

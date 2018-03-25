@@ -11,9 +11,9 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private String description;
 
-    private Boolean internal;
-
     private String organizationName;
+
+    private String organizationLogo;
 
     private LocationRepresentation location;
 
@@ -64,21 +64,21 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public Boolean getInternal() {
-        return internal;
-    }
-
-    public PostRepresentation setInternal(Boolean internal) {
-        this.internal = internal;
-        return this;
-    }
-
     public String getOrganizationName() {
         return organizationName;
     }
 
     public PostRepresentation setOrganizationName(String organizationName) {
         this.organizationName = organizationName;
+        return this;
+    }
+
+    public String getOrganizationLogo() {
+        return organizationLogo;
+    }
+
+    public PostRepresentation setOrganizationLogo(String organizationLogo) {
+        this.organizationLogo = organizationLogo;
         return this;
     }
 

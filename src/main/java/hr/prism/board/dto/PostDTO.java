@@ -14,10 +14,10 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     private String description;
 
-    private Boolean internal;
-
     @Size(min = 3, max = 255)
     private String organizationName;
+
+    private String organizationLogo;
 
     @Valid
     private LocationDTO location;
@@ -51,21 +51,21 @@ public class PostDTO extends ResourceDTO<PostDTO> {
         return this;
     }
 
-    public Boolean getInternal() {
-        return internal;
-    }
-
-    public PostDTO setInternal(Boolean internal) {
-        this.internal = internal;
-        return this;
-    }
-
     public String getOrganizationName() {
         return organizationName;
     }
 
     public PostDTO setOrganizationName(String organizationName) {
         this.organizationName = organizationName;
+        return this;
+    }
+
+    public String getOrganizationLogo() {
+        return organizationLogo;
+    }
+
+    public PostDTO setOrganizationLogo(String organizationLogo) {
+        this.organizationLogo = organizationLogo;
         return this;
     }
 

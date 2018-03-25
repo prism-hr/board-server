@@ -21,6 +21,8 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
     @Size(min = 3, max = 255)
     private Optional<String> organizationName;
 
+    private Optional<String> organizationLogo;
+
     @Valid
     private Optional<LocationDTO> location;
 
@@ -68,6 +70,15 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     public PostPatchDTO setOrganizationName(Optional<String> organizationName) {
         this.organizationName = organizationName;
+        return this;
+    }
+
+    public Optional<String> getOrganizationLogo() {
+        return organizationLogo;
+    }
+
+    public PostPatchDTO setOrganizationLogo(Optional<String> organizationLogo) {
+        this.organizationLogo = organizationLogo;
         return this;
     }
 
