@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
@@ -16,7 +17,6 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.util.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -35,8 +35,9 @@ import java.util.stream.Collectors;
 @RunWith(SpringRunner.class)
 public class BoardApiIT extends AbstractIT {
 
-    private static LinkedHashMultimap<State, Action> DEPARTMENT_ADMIN_ACTIONS = LinkedHashMultimap.create();
-    private static LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
+    private static final List<String> DEFAULT_BOARD_NAMES = ImmutableList.of("Career Opportunities", "Research Opportunities");
+    private static final LinkedHashMultimap<State, Action> DEPARTMENT_ADMIN_ACTIONS = LinkedHashMultimap.create();
+    private static final LinkedHashMultimap<State, Action> PUBLIC_ACTIONS = LinkedHashMultimap.create();
 
     static {
         DEPARTMENT_ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT));
@@ -55,7 +56,7 @@ public class BoardApiIT extends AbstractIT {
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
 
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
-        boardDTO11.setName("board11").setDocumentLogo(new DocumentDTO().setCloudinaryId("board1logo").setCloudinaryUrl("board1logo").setFileName("board1logo"));
+        boardDTO11.setName("board11");
         BoardRepresentation boardR11 = verifyPostBoard(departmentId1, boardDTO11, "board11");
         unprivilegedUsers.put("board11", makeUnprivilegedUsers(boardR11.getId(), 110, TestHelper.samplePost()));
 
@@ -245,8 +246,7 @@ public class BoardApiIT extends AbstractIT {
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 2"))
-                .setHandle(Optional.of("board-2"))
-                .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("logo 1").setCloudinaryUrl("logo 1").setFileName("logo 1"))),
+                .setHandle(Optional.of("board-2")),
             State.ACCEPTED);
 
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
@@ -255,9 +255,7 @@ public class BoardApiIT extends AbstractIT {
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 3"))
-                .setSummary(Optional.of("summary"))
                 .setHandle(Optional.of("board-3"))
-                .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("logo 2").setCloudinaryUrl("logo 2").setFileName("logo 2")))
                 .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))),
             State.ACCEPTED);
 
@@ -267,7 +265,6 @@ public class BoardApiIT extends AbstractIT {
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 4"))
-                .setSummary(Optional.of("summary 2"))
                 .setHandle(Optional.of("board-4"))
                 .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))),
             State.ACCEPTED);
@@ -277,7 +274,6 @@ public class BoardApiIT extends AbstractIT {
         // Check that we can clear nullable values
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
-                .setSummary(Optional.empty())
                 .setPostCategories(Optional.empty()),
             State.ACCEPTED);
 
@@ -294,59 +290,27 @@ public class BoardApiIT extends AbstractIT {
         TestHelper.verifyResourceOperation(resourceOperationRs.get(3), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
                 .put("name", "board", "board 2")
-                .put("handle", "board", "board-2")
-                .put("documentLogo", null, ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1")));
+                .put("handle", "board", "board-2"));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(4), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
                 .put("name", "board 2", "board 3")
                 .put("handle", "board-2", "board-3")
-                .put("documentLogo",
-                    ObjectUtils.orderedMap("cloudinaryId", "logo 1", "cloudinaryUrl", "logo 1", "fileName", "logo 1"),
-                    ObjectUtils.orderedMap("cloudinaryId", "logo 2", "cloudinaryUrl", "logo 2", "fileName", "logo 2"))
-                .put("summary", null, "summary")
                 .put("postCategories", new ArrayList<>(), Arrays.asList("m1", "m2")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(5), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
                 .put("name", "board 3", "board 4")
                 .put("handle", "board-3", "board-4")
-                .put("summary", "summary", "summary 2")
                 .put("postCategories", Arrays.asList("m1", "m2"), Arrays.asList("m2", "m1")));
 
         TestHelper.verifyResourceOperation(resourceOperationRs.get(6), Action.EDIT, departmentUser,
             new ChangeListRepresentation()
-                .put("summary", "summary 2", null)
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
     }
 
     @Test
-    public void shouldPostAndReplaceLogo() {
-        // Create department and board
-        User user = testUserService.authenticate();
-        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
-        DocumentDTO initialLogo = new DocumentDTO().setCloudinaryId("postingLogo").setCloudinaryUrl("postingLogo").setFileName("postingLogo");
-        Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary").setDocumentLogo(initialLogo)).getId();
-
-        BoardDTO boardDTO = TestHelper.smallSampleBoard();
-        boardDTO.setDocumentLogo(initialLogo);
-        BoardRepresentation boardR = verifyPostBoard(departmentId, boardDTO, "board");
-        Long boardId = boardR.getId();
-
-        // Check that we can make further changes and set default / nullable values
-        DocumentDTO replacingLogo = new DocumentDTO().setCloudinaryId("replacingLogo").setCloudinaryUrl("replacingLogo").setFileName("replacingLogo");
-        verifyPatchBoard(user, boardId,
-            new BoardPatchDTO()
-                .setDocumentLogo(Optional.of(replacingLogo)),
-            State.ACCEPTED);
-
-        DepartmentRepresentation department = departmentApi.getDepartment(departmentId);
-        verifyDocument(initialLogo, department.getDocumentLogo());
-    }
-
-    @Test
-    public void shouldCountPostsAndAuthors() {
+    public void shouldCountPosts() {
         Long boardUserId = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
@@ -409,8 +373,6 @@ public class BoardApiIT extends AbstractIT {
 
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
         Assert.assertEquals(expectedHandle, boardR.getHandle());
-        Assert.assertEquals(boardDTO.getSummary(), boardR.getSummary());
-        verifyDocument(boardDTO.getDocumentLogo(), boardR.getDocumentLogo());
         Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
 
         Board board = boardService.getBoard(boardR.getId());
@@ -438,12 +400,6 @@ public class BoardApiIT extends AbstractIT {
 
         Optional<String> nameOptional = boardDTO.getName();
         Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());
-
-        Optional<DocumentDTO> documentLogoOptional = boardDTO.getDocumentLogo();
-        verifyDocument(documentLogoOptional == null ? board.getDocumentLogo() : boardDTO.getDocumentLogo().orElse(null), boardR.getDocumentLogo());
-
-        Optional<String> summaryOptional = boardDTO.getSummary();
-        Assert.assertEquals(summaryOptional == null ? board.getSummary() : summaryOptional.orElse(null), boardR.getSummary());
 
         Optional<String> handleOptional = boardDTO.getHandle();
         Assert.assertEquals(handleOptional == null ? board.getHandle().split("/")[2] : handleOptional.orElse(null), boardR.getHandle());
@@ -475,7 +431,7 @@ public class BoardApiIT extends AbstractIT {
 
         TestHelper.verifyResources(
             boardApi.getBoards(null, null, null, null, null)
-                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                 .collect(Collectors.toList()),
             Collections.emptyList(),
             null);
@@ -484,7 +440,7 @@ public class BoardApiIT extends AbstractIT {
             .add(publicActions);
         TestHelper.verifyResources(
             boardApi.getBoards(null, true, null, null, null)
-                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                 .collect(Collectors.toList()),
             boardNames,
             expectedActions);
@@ -492,14 +448,14 @@ public class BoardApiIT extends AbstractIT {
         for (Long departmentId : boardNamesByDepartment.keySet()) {
             TestHelper.verifyResources(
                 boardApi.getBoards(departmentId, null, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                     .collect(Collectors.toList()),
                 Collections.emptyList(),
                 null);
 
             TestHelper.verifyResources(
                 boardApi.getBoards(departmentId, true, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                     .collect(Collectors.toList()),
                 Lists.newArrayList(boardNamesByDepartment.get(departmentId)),
                 expectedActions);
@@ -512,7 +468,7 @@ public class BoardApiIT extends AbstractIT {
 
         TestHelper.verifyResources(
             boardApi.getBoards(null, null, null, null, null)
-                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                 .collect(Collectors.toList()),
             adminBoardNames,
             new TestHelper.ExpectedActions()
@@ -520,7 +476,7 @@ public class BoardApiIT extends AbstractIT {
 
         TestHelper.verifyResources(
             boardApi.getBoards(null, true, null, null, null)
-                .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                 .collect(Collectors.toList()),
             boardNames,
             new TestHelper.ExpectedActions()
@@ -532,7 +488,7 @@ public class BoardApiIT extends AbstractIT {
             @SuppressWarnings("unchecked") List<String> adminDepartmentBoardNames = ListUtils.intersection(departmentBoardNames, adminBoardNames);
             TestHelper.verifyResources(
                 boardApi.getBoards(departmentId, null, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                     .collect(Collectors.toList()),
                 adminDepartmentBoardNames,
                 new TestHelper.ExpectedActions()
@@ -540,7 +496,7 @@ public class BoardApiIT extends AbstractIT {
 
             TestHelper.verifyResources(
                 boardApi.getBoards(departmentId, true, null, null, null)
-                    .stream().filter(board -> board.getType().equals(BoardType.CUSTOM))
+                    .stream().filter(board -> !DEFAULT_BOARD_NAMES.contains(board.getName()))
                     .collect(Collectors.toList()),
                 departmentBoardNames,
                 new TestHelper.ExpectedActions()

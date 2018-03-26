@@ -10,7 +10,6 @@ public class ResourceMapper {
 
     public <T extends ResourceRepresentation<T>> T apply(Resource resource, Class<T> representationClass) {
         return applySmall(resource, representationClass)
-            .setSummary(resource.getSummary())
             .setState(resource.getState())
             .setCreatedTimestamp(resource.getCreatedTimestamp())
             .setUpdatedTimestamp(resource.getUpdatedTimestamp())

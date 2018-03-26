@@ -1620,14 +1620,12 @@ public class DepartmentApiIT extends AbstractIT {
         BoardRepresentation boardR1 = boardRs.get(0);
         Assert.assertEquals("Career Opportunities", boardR1.getName());
         Assert.assertEquals("career-opportunities", boardR1.getHandle());
-        Assert.assertEquals("Forum for partner organizations and staff to share career opportunities.", boardR1.getSummary());
         Assert.assertEquals(ImmutableList.of("Employment", "Internship", "Volunteering"), boardR1.getPostCategories());
         Assert.assertEquals(State.ACCEPTED, boardR1.getState());
 
         BoardRepresentation boardR2 = boardRs.get(1);
         Assert.assertEquals("Research Opportunities", boardR2.getName());
         Assert.assertEquals("research-opportunities", boardR2.getHandle());
-        Assert.assertEquals("Forum for partner organizations and staff to share research opportunities.", boardR2.getSummary());
         Assert.assertEquals(ImmutableList.of("MRes", "PhD", "Postdoc"), boardR2.getPostCategories());
         Assert.assertEquals(State.ACCEPTED, boardR2.getState());
     }

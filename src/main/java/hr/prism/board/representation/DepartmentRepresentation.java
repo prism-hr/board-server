@@ -7,6 +7,8 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class DepartmentRepresentation extends ResourceRepresentation<DepartmentRepresentation> {
 
+    private String summary;
+
     private UniversityRepresentation university;
 
     private DocumentRepresentation documentLogo;
@@ -14,6 +16,8 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
     private String customerId;
 
     private String handle;
+
+    private Long postCount;
 
     private Long boardCount;
 
@@ -24,6 +28,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
     private List<MemberCategory> memberCategories;
 
     private List<ResourceTaskRepresentation> tasks;
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public DepartmentRepresentation setSummary(String summary) {
+        this.summary = summary;
+        return this;
+    }
 
     public UniversityRepresentation getUniversity() {
         return university;
@@ -58,6 +71,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setHandle(String handle) {
         this.handle = handle;
+        return this;
+    }
+
+    public Long getPostCount() {
+        return postCount;
+    }
+
+    public DepartmentRepresentation setPostCount(Long postCount) {
+        this.postCount = postCount;
         return this;
     }
 

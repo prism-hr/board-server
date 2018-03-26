@@ -9,9 +9,6 @@ public class ResourcePatchDTO<T extends ResourcePatchDTO> {
     @Size(min = 3, max = 100)
     private Optional<String> name;
 
-    @Size(min = 3, max = 1000)
-    private Optional<String> summary;
-
     private String comment;
 
     public Optional<String> getName() {
@@ -20,15 +17,6 @@ public class ResourcePatchDTO<T extends ResourcePatchDTO> {
 
     public T setName(Optional<String> name) {
         this.name = name;
-        return (T) this;
-    }
-
-    public Optional<String> getSummary() {
-        return summary;
-    }
-
-    public T setSummary(Optional<String> summary) {
-        this.summary = summary;
         return (T) this;
     }
 

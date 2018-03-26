@@ -1,20 +1,5 @@
 package hr.prism.board.service.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.OauthProvider;
@@ -26,6 +11,19 @@ import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -135,9 +133,7 @@ public class UserCacheService {
     private void appendScopes(User user) {
         if (user != null) {
             List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, Role.ADMINISTRATOR)
-                .stream()
-                .map(ResourceSummary::getKey)
-                .collect(Collectors.toList());
+                .stream().map(ResourceSummary::getKey).collect(Collectors.toList());
             if (scopes.contains(Scope.DEPARTMENT)) {
                 user.setScopes(Arrays.asList(Scope.DEPARTMENT, Scope.BOARD, Scope.POST));
             } else if (scopes.contains(Scope.BOARD)) {

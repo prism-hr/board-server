@@ -23,9 +23,6 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
     @Inject
     private ResourceService resourceService;
 
-    @Inject
-    private DocumentMapper documentMapper;
-
     @Override
     public BoardRepresentation apply(Board board) {
         if (board == null) {
@@ -34,12 +31,9 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
         Department department = (Department) board.getParent();
         return resourceMapper.apply(board, BoardRepresentation.class)
-            .setType(board.getType())
-            .setDocumentLogo(documentMapper.apply(board.getDocumentLogo()))
-            .setHandle(resourceMapper.getHandle(board, department))
-            .setPostCategories(resourceService.getCategories(board, CategoryType.POST))
-            .setDepartment(departmentMapper.apply(department))
-            .setPostCount(board.getPostCount());
+            .setHandle(getHandle(board, department))
+            .setDepartment(departmentMapper.applySmall((Department) board.getParent()))
+            .setPostCategories(resourceService.getCategories(board, CategoryType.POST));
     }
 
     BoardRepresentation applySmall(Board board) {
@@ -49,9 +43,12 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
         Department department = (Department) board.getParent();
         return resourceMapper.applySmall(board, BoardRepresentation.class)
-            .setDocumentLogo(documentMapper.apply(board.getDocumentLogo()))
-            .setHandle(resourceMapper.getHandle(board, department))
-            .setDepartment(departmentMapper.applySmall(department));
+            .setHandle(getHandle(board, department))
+            .setDepartment(departmentMapper.applySmall((Department) board.getParent()));
+    }
+
+    private String getHandle(Board board, Department department) {
+        return board.getHandle().replaceFirst(department.getHandle() + "/", "");
     }
 
 }

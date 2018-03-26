@@ -22,16 +22,12 @@ import java.time.LocalDateTime;
         @NamedSubgraph(
             name = "board",
             attributeNodes = {
-                @NamedAttributeNode(value = "parent", subgraph = "department"),
-                @NamedAttributeNode(value = "documentLogo"),
-                @NamedAttributeNode(value = "categories")}),
+                @NamedAttributeNode(value = "parent", subgraph = "department")}),
         @NamedSubgraph(
             name = "department",
             attributeNodes = {
                 @NamedAttributeNode(value = "parent", subgraph = "university"),
-                @NamedAttributeNode(value = "documentLogo"),
-                @NamedAttributeNode(value = "categories"),
-                @NamedAttributeNode(value = "tasks")}),
+                @NamedAttributeNode(value = "documentLogo")}),
         @NamedSubgraph(
             name = "university",
             attributeNodes = {

@@ -15,8 +15,6 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
 
     private String name;
 
-    private String summary;
-
     private State state;
 
     private LocalDateTime createdTimestamp;
@@ -49,15 +47,6 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
 
     public T setName(String name) {
         this.name = name;
-        return (T) this;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public T setSummary(String summary) {
-        this.summary = summary;
         return (T) this;
     }
 

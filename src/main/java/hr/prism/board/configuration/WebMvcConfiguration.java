@@ -30,6 +30,7 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
         if (jacksonPretty) {
             objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         }
+
         return objectMapper;
     }
 

@@ -74,10 +74,6 @@ public class DepartmentService {
 
     private static final String RESEARCH_NAME = "Research Opportunities";
 
-    private static final String CAREER_SUMMARY = "Forum for partner organizations and staff to share career opportunities.";
-
-    private static final String RESEARCH_SUMMARY = "Forum for partner organizations and staff to share research opportunities.";
-
     private static final List<String> CAREER_CATEGORIES = ImmutableList.of("Employment", "Internship", "Volunteering");
 
     private static final List<String> RESEARCH_CATEGORIES = ImmutableList.of("MRes", "PhD", "Postdoc");
@@ -190,7 +186,6 @@ public class DepartmentService {
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
 
         Department department = new Department();
-        resourceService.updateState(department, State.DRAFT);
         department.setName(name);
         department.setSummary(departmentDTO.getSummary());
 
@@ -203,6 +198,7 @@ public class DepartmentService {
 
         department.setHandle(resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle));
         department = departmentRepository.save(department);
+        resourceService.updateState(department, State.DRAFT);
 
         List<String> memberCategoryStrings;
         List<MemberCategory> memberCategories = departmentDTO.getMemberCategories();
@@ -221,9 +217,9 @@ public class DepartmentService {
         // Create the initial boards
         Long departmentId = department.getId();
         boardService.createBoard(departmentId,
-            new BoardDTO().setType(BoardType.CAREER).setName(CAREER_NAME).setSummary(CAREER_SUMMARY).setPostCategories(CAREER_CATEGORIES));
+            new BoardDTO().setName(CAREER_NAME).setPostCategories(CAREER_CATEGORIES));
         boardService.createBoard(departmentId,
-            new BoardDTO().setType(BoardType.RESEARCH).setName(RESEARCH_NAME).setSummary(RESEARCH_SUMMARY).setPostCategories(RESEARCH_CATEGORIES));
+            new BoardDTO().setName(RESEARCH_NAME).setPostCategories(RESEARCH_CATEGORIES));
 
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());

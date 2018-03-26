@@ -11,6 +11,8 @@ import java.util.Optional;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class DepartmentPatchDTO extends ResourcePatchDTO<DepartmentPatchDTO> {
 
+    private Optional<String> summary;
+
     @Valid
     private Optional<DocumentDTO> documentLogo;
 
@@ -19,6 +21,15 @@ public class DepartmentPatchDTO extends ResourcePatchDTO<DepartmentPatchDTO> {
     private Optional<String> handle;
 
     private Optional<List<MemberCategory>> memberCategories;
+
+    public Optional<String> getSummary() {
+        return summary;
+    }
+
+    public DepartmentPatchDTO setSummary(Optional<String> summary) {
+        this.summary = summary;
+        return this;
+    }
 
     public Optional<DocumentDTO> getDocumentLogo() {
         return documentLogo;

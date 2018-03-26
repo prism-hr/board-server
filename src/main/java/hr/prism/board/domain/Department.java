@@ -36,6 +36,9 @@ public class Department extends Resource {
     @Column(name = "board_count")
     private Long boardCount;
 
+    @Column(name = "post_count")
+    private Long postCount;
+
     @Column(name = "author_count")
     private Long authorCount;
 
@@ -70,20 +73,28 @@ public class Department extends Resource {
         this.customerId = customerId;
     }
 
-    public Long getAuthorCount() {
-        return authorCount;
-    }
-
-    public void setAuthorCount(Long authorCount) {
-        this.authorCount = authorCount;
-    }
-
     public Long getBoardCount() {
         return boardCount;
     }
 
     public void setBoardCount(Long boardCount) {
         this.boardCount = boardCount;
+    }
+
+    public Long getPostCount() {
+        return postCount;
+    }
+
+    public void setPostCount(Long postCount) {
+        this.postCount = postCount;
+    }
+
+    public Long getAuthorCount() {
+        return authorCount;
+    }
+
+    public void setAuthorCount(Long authorCount) {
+        this.authorCount = authorCount;
     }
 
     public Long getMemberCount() {

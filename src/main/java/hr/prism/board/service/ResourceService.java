@@ -273,7 +273,7 @@ public class ResourceService {
         if (resource.equals(parent)) {
             resource.setIndexData(BoardUtils.makeSoundex(parts));
         } else {
-            resource.setIndexData(Joiner.on(" ").join(parent.getIndexData(), BoardUtils.makeSoundex(parts)));
+            resource.setIndexData(Joiner.on(" ").skipNulls().join(parent.getIndexData(), BoardUtils.makeSoundex(parts)));
         }
 
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
@@ -337,13 +337,9 @@ public class ResourceService {
         }
 
         entityManager.flush();
-        Resource parent = resource.getParent();
-        if (parent instanceof Department) {
-            ResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
-            ((Department) parent).setBoardCount(summary.getCount());
-        } else if (parent instanceof Board) {
-            ResourceSummary summary = resourceRepository.findSummaryByParentAndState(parent, State.ACCEPTED);
-            ((Board) parent).setPostCount(summary.getCount());
+        Department department = (Department) findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
+        if (department != null && !department.equals(resource)) {
+            updateChildResourceCount(department, resource);
         }
     }
 
@@ -669,6 +665,21 @@ public class ResourceService {
 
     private void deleteResourceCategories(Resource resource, CategoryType type) {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
+    }
+
+    private void updateChildResourceCount(Department department, Resource resource) {
+        Scope scope = resource.getScope();
+        ResourceSummary summary = resourceRepository.findSummaryByEnclosingResourceAndState(department, scope, State.ACCEPTED);
+        switch (scope) {
+            case BOARD:
+                department.setBoardCount(summary.getCount());
+                return;
+            case POST:
+                department.setPostCount(summary.getCount());
+                return;
+            default:
+                throw new IllegalStateException("Cannot post summary for scope: " + scope);
+        }
     }
 
     public interface SimilarHandleFinder {

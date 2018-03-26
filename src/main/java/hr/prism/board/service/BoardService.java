@@ -5,7 +5,6 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
@@ -78,17 +77,6 @@ public class BoardService {
 
             Board board = new Board();
             board.setName(name);
-            board.setSummary(boardDTO.getSummary());
-
-            BoardType type = boardDTO.getType();
-            board.setType(type == null ? BoardType.CUSTOM : type);
-
-            DocumentDTO documentLogoDTO = boardDTO.getDocumentLogo();
-            if (documentLogoDTO == null) {
-                board.setDocumentLogo(department.getDocumentLogo());
-            } else {
-                board.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
-            }
 
             board.setHandle(resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle));
             board = boardRepository.save(board);
@@ -128,8 +116,6 @@ public class BoardService {
         board.setChangeList(new ChangeListRepresentation());
         resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.DUPLICATE_BOARD);
         resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.DUPLICATE_BOARD_HANDLE);
-        resourcePatchService.patchDocument(board, "documentLogo", board::getDocumentLogo, board::setDocumentLogo, boardDTO.getDocumentLogo());
-        resourcePatchService.patchProperty(board, "summary", board::getSummary, board::setSummary, boardDTO.getSummary());
         resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
         resourceService.setIndexDataAndQuarter(board);
         boardRepository.update(board);

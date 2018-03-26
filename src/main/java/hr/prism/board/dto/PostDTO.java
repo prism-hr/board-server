@@ -12,6 +12,9 @@ import java.util.List;
 
 public class PostDTO extends ResourceDTO<PostDTO> {
 
+    @Size(min = 3, max = 1000)
+    private String summary;
+
     private String description;
 
     @Size(min = 3, max = 255)
@@ -41,6 +44,15 @@ public class PostDTO extends ResourceDTO<PostDTO> {
     private LocalDateTime liveTimestamp;
 
     private LocalDateTime deadTimestamp;
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public PostDTO setSummary(String summary) {
+        this.summary = summary;
+        return this;
+    }
 
     public String getDescription() {
         return description;

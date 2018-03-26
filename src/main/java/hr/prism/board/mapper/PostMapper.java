@@ -45,6 +45,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
 
         PostRepresentation representation =
             resourceMapper.apply(post, PostRepresentation.class)
+                .setSummary(post.getSummary())
                 .setDescription(post.getDescription())
                 .setOrganizationName(post.getOrganizationName())
                 .setOrganizationLogo(post.getOrganizationLogo())
@@ -63,7 +64,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             representation.setApplyEmail(post.getApplyEmailDisplay());
         }
 
-        return representation.setBoard(boardMapper.apply((Board) post.getParent()))
+        return representation.setBoard(boardMapper.applySmall((Board) post.getParent()))
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
             .setViewCount(post.getViewCount())

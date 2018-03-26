@@ -3,23 +3,25 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.MemberCategory;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 public class DepartmentDTO extends ResourceDTO<DepartmentDTO> {
 
-    private Long id;
+    @Size(min = 3, max = 1000)
+    private String summary;
 
     @Valid
     private DocumentDTO documentLogo;
 
     private List<MemberCategory> memberCategories;
 
-    public Long getId() {
-        return id;
+    public String getSummary() {
+        return summary;
     }
 
-    public DepartmentDTO setId(Long id) {
-        this.id = id;
+    public DepartmentDTO setSummary(String summary) {
+        this.summary = summary;
         return this;
     }
 

@@ -14,6 +14,8 @@ import java.util.Optional;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
+    private Optional<String> summary;
+
     private Optional<String> description;
 
     private Optional<Boolean> internal;
@@ -46,21 +48,21 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     private Optional<LocalDateTime> deadTimestamp;
 
+    public Optional<String> getSummary() {
+        return summary;
+    }
+
+    public PostPatchDTO setSummary(Optional<String> summary) {
+        this.summary = summary;
+        return this;
+    }
+
     public Optional<String> getDescription() {
         return description;
     }
 
     public PostPatchDTO setDescription(Optional<String> description) {
         this.description = description;
-        return this;
-    }
-
-    public Optional<Boolean> getInternal() {
-        return internal;
-    }
-
-    public PostPatchDTO setInternal(Optional<Boolean> internal) {
-        this.internal = internal;
         return this;
     }
 
