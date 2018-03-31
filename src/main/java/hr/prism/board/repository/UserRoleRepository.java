@@ -59,6 +59,14 @@ public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long
     UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
                                                  @Param("baseline") LocalDate baseline);
 
+    @Query(value =
+        "select new hr.prism.board.value.UserRoleSummary(userRole.role, count(userRole.id), max(userRole.createdTimestamp)) " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.role = :role " +
+            "and userRole.state in (:userRoleStates)")
+    UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates);
+
     Long deleteByResourceAndUser(Resource resource, User user);
 
     Long deleteByResourceAndUserAndRole(Resource resource, User user, Role role);

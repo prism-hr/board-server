@@ -669,16 +669,12 @@ public class ResourceService {
 
     private void updateStatistics(Department department, Resource resource) {
         Scope scope = resource.getScope();
-        ResourceSummary summary = resourceRepository.findSummaryByEnclosingResourceAndState(department, scope, State.ACCEPTED);
-        switch (scope) {
-            case BOARD:
-                department.setBoardCount(summary.getCount());
-                return;
-            case POST:
-                department.setPostCount(summary.getCount());
-                return;
-            default:
-                throw new IllegalStateException("Cannot post summary for scope: " + scope);
+        if (scope == Scope.POST) {
+            ResourceSummary summary = resourceRepository.findSummaryByEnclosingResourceAndState(department, scope, State.ACCEPTED);
+            ResourceSummary summaryAllTime = resourceRepository.findSummaryByEnclosingResource(department, scope);
+
+            department.setPostCount(summary.getCount());
+            department.setPostCountAllTime(summaryAllTime.getCount());
         }
     }
 

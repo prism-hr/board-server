@@ -44,10 +44,10 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setCustomerId(department.getCustomerId())
             .setHandle(resourceMapper.getHandle(department, university))
-            .setBoardCount(department.getBoardCount())
             .setPostCount(department.getPostCount())
-            .setAuthorCount(department.getAuthorCount())
+            .setPostCountAllTime(department.getPostCountAllTime())
             .setMemberCount(department.getMemberCount())
+            .setMemberCountAllTime(department.getMemberCountAllTime())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))
             .setTasks(department.getTasks().stream().map(this::applyTask).collect(Collectors.toList()));
     }

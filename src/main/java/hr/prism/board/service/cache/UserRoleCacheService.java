@@ -16,6 +16,7 @@ import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.UserRoleSummary;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
@@ -157,11 +158,13 @@ public class UserRoleCacheService {
 
     public void updateStatistics(Resource resource) {
         entityManager.flush();
-        LocalDate baseline = LocalDate.now();
         if (resource instanceof Department) {
             Department department = (Department) resource;
-            department.setAuthorCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.AUTHOR, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
-            department.setMemberCount(userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, baseline).getCount());
+            UserRoleSummary summary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
+            UserRoleSummary summaryAllTime = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES);
+
+            department.setMemberCount(summary.getCount());
+            department.setMemberCountAllTime(summaryAllTime.getCount());
         }
     }
 

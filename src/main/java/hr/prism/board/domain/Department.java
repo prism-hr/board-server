@@ -33,17 +33,17 @@ public class Department extends Resource {
     @Column(name = "customer_id", unique = true)
     private String customerId;
 
-    @Column(name = "board_count")
-    private Long boardCount;
-
     @Column(name = "post_count")
     private Long postCount;
 
-    @Column(name = "author_count")
-    private Long authorCount;
+    @Column(name = "post_count_all_time")
+    private Long postCountAllTime;
 
     @Column(name = "member_count")
     private Long memberCount;
+
+    @Column(name = "member_count_all_time")
+    private Long memberCountAllTime;
 
     @Column(name = "member_to_be_uploaded_count")
     private Long memberToBeUploadedCount;
@@ -73,14 +73,6 @@ public class Department extends Resource {
         this.customerId = customerId;
     }
 
-    public Long getBoardCount() {
-        return boardCount;
-    }
-
-    public void setBoardCount(Long boardCount) {
-        this.boardCount = boardCount;
-    }
-
     public Long getPostCount() {
         return postCount;
     }
@@ -89,12 +81,12 @@ public class Department extends Resource {
         this.postCount = postCount;
     }
 
-    public Long getAuthorCount() {
-        return authorCount;
+    public Long getPostCountAllTime() {
+        return postCountAllTime;
     }
 
-    public void setAuthorCount(Long authorCount) {
-        this.authorCount = authorCount;
+    public void setPostCountAllTime(Long postCountAllTime) {
+        this.postCountAllTime = postCountAllTime;
     }
 
     public Long getMemberCount() {
@@ -103,6 +95,14 @@ public class Department extends Resource {
 
     public void setMemberCount(Long memberCount) {
         this.memberCount = memberCount;
+    }
+
+    public Long getMemberCountAllTime() {
+        return memberCountAllTime;
+    }
+
+    public void setMemberCountAllTime(Long memberCountAllTime) {
+        this.memberCountAllTime = memberCountAllTime;
     }
 
     public Long getMemberToBeUploadedCount() {

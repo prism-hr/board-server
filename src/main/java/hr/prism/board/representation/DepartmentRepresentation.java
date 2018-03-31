@@ -19,11 +19,11 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private Long postCount;
 
-    private Long boardCount;
-
-    private Long authorCount;
+    private Long postCountAllTime;
 
     private Long memberCount;
+
+    private Long memberCountAllTime;
 
     private List<MemberCategory> memberCategories;
 
@@ -83,21 +83,12 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public Long getBoardCount() {
-        return boardCount;
+    public Long getPostCountAllTime() {
+        return postCountAllTime;
     }
 
-    public DepartmentRepresentation setBoardCount(Long boardCount) {
-        this.boardCount = boardCount;
-        return this;
-    }
-
-    public Long getAuthorCount() {
-        return authorCount;
-    }
-
-    public DepartmentRepresentation setAuthorCount(Long authorCount) {
-        this.authorCount = authorCount;
+    public DepartmentRepresentation setPostCountAllTime(Long postCountAllTime) {
+        this.postCountAllTime = postCountAllTime;
         return this;
     }
 
@@ -107,6 +98,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setMemberCount(Long memberCount) {
         this.memberCount = memberCount;
+        return this;
+    }
+
+    public Long getMemberCountAllTime() {
+        return memberCountAllTime;
+    }
+
+    public DepartmentRepresentation setMemberCountAllTime(Long memberCountAllTime) {
+        this.memberCountAllTime = memberCountAllTime;
         return this;
     }
 

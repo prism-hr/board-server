@@ -66,6 +66,14 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
 
     @Query(value =
         "select new hr.prism.board.value.ResourceSummary(resource.scope, count(resource.id), max(resource.createdTimestamp)) " +
+            "from Resource resource " +
+            "inner join resource.parents parent " +
+            "where parent.resource1 = :parent " +
+            "and resource.scope = :scope")
+    ResourceSummary findSummaryByEnclosingResource(@Param("parent") Resource parent, @Param("scope") Scope scope);
+
+    @Query(value =
+        "select new hr.prism.board.value.ResourceSummary(resource.scope, count(resource.id), max(resource.createdTimestamp)) " +
             "from UserRole userRole " +
             "inner join userRole.resource resource " +
             "where userRole.user = :user " +
