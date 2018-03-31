@@ -390,14 +390,6 @@ public class PostService {
         executeActions(postToRetireIds, Action.RETIRE, State.EXPIRED, baseline);
         List<Long> postToPublishIds = postRepository.findPostsToPublish(Arrays.asList(State.PENDING, State.EXPIRED), State.REJECTED, baseline);
         executeActions(postToPublishIds, Action.PUBLISH, State.ACCEPTED, baseline);
-
-        List<Long> postToModifyIds = new ArrayList<>();
-        postToModifyIds.addAll(postToRetireIds);
-        postToModifyIds.addAll(postToPublishIds);
-
-        if (!postToModifyIds.isEmpty()) {
-            departmentService.updatePostCounts(postToModifyIds);
-        }
     }
 
     public LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
@@ -429,8 +421,8 @@ public class PostService {
     }
 
     public void setIndexDataAndQuarter(Post post) {
-        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(), post.getLocation()
-            .getName());
+        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(),
+            post.getLocation().getName());
     }
 
     public Post findLatestPost(User user) {

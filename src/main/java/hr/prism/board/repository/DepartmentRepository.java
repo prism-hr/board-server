@@ -2,7 +2,6 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Department;
 import hr.prism.board.enums.State;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,25 +50,5 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
     List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state, @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
 
     Department findByCustomerId(String customerId);
-
-    @Modifying
-    @Query(value =
-        "UPDATE resource " +
-            "INNER JOIN (" +
-            "SELECT department.id AS department_id, " +
-            "COUNT(post.id) AS post_count " +
-            "FROM resource as department " +
-            "INNER JOIN resource_relation " +
-            "ON department.id = resource_relation.resource1_id " +
-            "INNER JOIN resource AS post " +
-            "ON resource_relation.resource2_id = post.id " +
-            "WHERE department.scope = :scope " +
-            "AND post.id IN(:postIds) " +
-            "AND post.state = :state " +
-            "GROUP BY department.id) AS post_count " +
-            "ON resource.id = post_count.department_id " +
-            "SET resource.post_count = post_count.post_count",
-        nativeQuery = true)
-    void updatePostCounts(@Param("scope") String scope, @Param("postIds") List<Long> postIds, @Param("state") String state);
 
 }

@@ -13,9 +13,9 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private DocumentRepresentation documentLogo;
 
-    private String customerId;
-
     private String handle;
+
+    private String customerId;
 
     private Long postCount;
 
@@ -56,21 +56,21 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public String getCustomerId() {
-        return customerId;
-    }
-
-    public DepartmentRepresentation setCustomerId(String customerId) {
-        this.customerId = customerId;
-        return this;
-    }
-
     public String getHandle() {
         return handle;
     }
 
     public DepartmentRepresentation setHandle(String handle) {
         this.handle = handle;
+        return this;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public DepartmentRepresentation setCustomerId(String customerId) {
+        this.customerId = customerId;
         return this;
     }
 

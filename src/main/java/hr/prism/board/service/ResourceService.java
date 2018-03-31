@@ -337,10 +337,6 @@ public class ResourceService {
         }
 
         entityManager.flush();
-        Department department = (Department) findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
-        if (department != null && !department.equals(resource)) {
-            updateStatistics(department, resource);
-        }
     }
 
     public List<Resource> getResources(User user, ResourceFilter filter) {
@@ -436,8 +432,6 @@ public class ResourceService {
             ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
             ActionRepresentation rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
-
-
                 rowIndex.put(rowKey,
                     new ActionRepresentation().setAction(rowAction)
                         .setScope(rowScope)
@@ -665,17 +659,6 @@ public class ResourceService {
 
     private void deleteResourceCategories(Resource resource, CategoryType type) {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
-    }
-
-    private void updateStatistics(Department department, Resource resource) {
-        Scope scope = resource.getScope();
-        if (scope == Scope.POST) {
-            ResourceSummary summary = resourceRepository.findSummaryByEnclosingResourceAndState(department, scope, State.ACCEPTED);
-            ResourceSummary summaryAllTime = resourceRepository.findSummaryByEnclosingResource(department, scope);
-
-            department.setPostCount(summary.getCount());
-            department.setPostCountAllTime(summaryAllTime.getCount());
-        }
     }
 
     public interface SimilarHandleFinder {

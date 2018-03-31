@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Transactional
@@ -20,6 +21,21 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
             "from ResourceTask resourceTask " +
             "where resourceTask.resource.id = :resourceId")
     List<ResourceTask> findByResourceId(@Param("resourceId") Long resourceId);
+
+    @Query(value =
+        "select resourceTask " +
+            "from ResourceTask resourceTask " +
+            "where resourceTask.resource.id in(:resourceIds) " +
+            "order by resourceTask.id")
+    List<ResourceTask> findByResource(@Param("resourceIds") Collection<Long> resourceIds);
+
+    @Query(value =
+        "select resourceTask " +
+            "from ResourceTask resourceTask " +
+            "inner join resourceTask.completions completion " +
+            "where resourceTask.resource.id in(:resourceIds) " +
+            "and completion.user = :user")
+    List<ResourceTask> findCompletionsByResource(@Param("resourceIds") Collection<Long> resourceIds, User user);
 
     @Query(value =
         "select resourceTask.task " +

@@ -177,7 +177,6 @@ public class UserRoleService {
             userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);
             userRole.setExpiryDate(userRoleDTO.getExpiryDate());
-            userRoleCacheService.updateStatistics(resource);
             return userRole;
         }
     }

@@ -5,6 +5,7 @@ import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @SuppressWarnings({"unused", "UnusedReturnValue"})
@@ -33,18 +34,6 @@ public class Department extends Resource {
     @Column(name = "customer_id", unique = true)
     private String customerId;
 
-    @Column(name = "post_count")
-    private Long postCount;
-
-    @Column(name = "post_count_all_time")
-    private Long postCountAllTime;
-
-    @Column(name = "member_count")
-    private Long memberCount;
-
-    @Column(name = "member_count_all_time")
-    private Long memberCountAllTime;
-
     @Column(name = "member_to_be_uploaded_count")
     private Long memberToBeUploadedCount;
 
@@ -56,6 +45,27 @@ public class Department extends Resource {
 
     @Transient
     private Customer customer;
+
+    @Transient
+    private Long postCount;
+
+    @Transient
+    private Long postCountAllTime;
+
+    @Transient
+    private LocalDateTime mostRecentPost;
+
+    @Transient
+    private Long memberCount;
+
+    @Transient
+    private Long memberCountAllTime;
+
+    @Transient
+    private LocalDateTime mostRecentMember;
+
+    @Transient
+    private List<ResourceTask> userTasks;
 
     public Integer getNotifiedCount() {
         return notifiedCount;
@@ -89,6 +99,14 @@ public class Department extends Resource {
         this.postCountAllTime = postCountAllTime;
     }
 
+    public LocalDateTime getMostRecentPost() {
+        return mostRecentPost;
+    }
+
+    public void setMostRecentPost(LocalDateTime mostRecentPost) {
+        this.mostRecentPost = mostRecentPost;
+    }
+
     public Long getMemberCount() {
         return memberCount;
     }
@@ -103,6 +121,22 @@ public class Department extends Resource {
 
     public void setMemberCountAllTime(Long memberCountAllTime) {
         this.memberCountAllTime = memberCountAllTime;
+    }
+
+    public LocalDateTime getMostRecentMember() {
+        return mostRecentMember;
+    }
+
+    public void setMostRecentMember(LocalDateTime mostRecentMember) {
+        this.mostRecentMember = mostRecentMember;
+    }
+
+    public List<ResourceTask> getUserTasks() {
+        return userTasks;
+    }
+
+    public void setUserTasks(List<ResourceTask> userTasks) {
+        this.userTasks = userTasks;
     }
 
     public Long getMemberToBeUploadedCount() {

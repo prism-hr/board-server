@@ -5,7 +5,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
-import hr.prism.board.value.UserRoleSummary;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,24 +47,6 @@ public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long
             "and userRole.user = :user " +
             "and userRole.role in (:roles)")
     List<UserRole> findByResourceAndUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") List<Role> roles);
-
-    @Query(value =
-        "select new hr.prism.board.value.UserRoleSummary(userRole.role, count(userRole.id), max(userRole.createdTimestamp)) " +
-            "from UserRole userRole " +
-            "where userRole.resource = :resource " +
-            "and userRole.role = :role " +
-            "and userRole.state in (:userRoleStates) " +
-            "and " + ACTIVE_USER_ROLE_CONSTRAINT)
-    UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
-                                                 @Param("baseline") LocalDate baseline);
-
-    @Query(value =
-        "select new hr.prism.board.value.UserRoleSummary(userRole.role, count(userRole.id), max(userRole.createdTimestamp)) " +
-            "from UserRole userRole " +
-            "where userRole.resource = :resource " +
-            "and userRole.role = :role " +
-            "and userRole.state in (:userRoleStates)")
-    UserRoleSummary findSummaryByResourceAndRole(@Param("resource") Resource resource, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates);
 
     Long deleteByResourceAndUser(Resource resource, User user);
 

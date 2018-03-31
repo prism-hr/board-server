@@ -25,6 +25,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,6 +74,19 @@ public class ResourceTaskService {
 
     public ResourceTask findOne(Long id) {
         return resourceTaskRepository.findOne(id);
+    }
+
+    public ArrayListMultimap<Long, ResourceTask> findByResource(Collection<Long> resourceIds, User user) {
+        List<ResourceTask> tasks = resourceTaskRepository.findByResource(resourceIds);
+        List<ResourceTask> completedTasks = resourceTaskRepository.findCompletionsByResource(resourceIds, user);
+
+        ArrayListMultimap<Long, ResourceTask> response = ArrayListMultimap.create();
+        tasks.forEach(task -> {
+            task.setCompletedForUser(completedTasks.contains(task));
+            response.put(task.getResource().getId(), task);
+        });
+
+        return response;
     }
 
     public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource, User user) {

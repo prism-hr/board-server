@@ -1,7 +1,6 @@
 package hr.prism.board.service.cache;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
@@ -16,7 +15,6 @@ import hr.prism.board.service.ResourceTaskService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
-import hr.prism.board.value.UserRoleSummary;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
@@ -87,9 +85,7 @@ public class UserRoleCacheService {
         UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource)
             .setUser(user).setEmail(BoardUtils.emptyToNull(userRoleDTO.getEmail())).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
         userRole.setCreatorId(resource.getCreatorId());
-
         updateUserRoleDemographicData(userRole, userRoleDTO);
-        updateStatistics(resource);
 
         if (notify) {
             String scopeName = scope.name();
@@ -111,7 +107,6 @@ public class UserRoleCacheService {
     public void deleteResourceUser(Resource resource, User user) {
         deleteUserRoles(resource, user);
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER);
-        updateStatistics(resource);
     }
 
     @CacheEvict(key = "#user.id", value = "users")
@@ -154,18 +149,6 @@ public class UserRoleCacheService {
         }
 
         userRoleRepository.updateByUser(newUser, oldUser);
-    }
-
-    public void updateStatistics(Resource resource) {
-        entityManager.flush();
-        if (resource instanceof Department) {
-            Department department = (Department) resource;
-            UserRoleSummary summary = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES, LocalDate.now());
-            UserRoleSummary summaryAllTime = userRoleRepository.findSummaryByResourceAndRole(resource, Role.MEMBER, State.ACTIVE_USER_ROLE_STATES);
-
-            department.setMemberCount(summary.getCount());
-            department.setMemberCountAllTime(summaryAllTime.getCount());
-        }
     }
 
     public void updateUserRoleDemographicData(UserRole userRole, UserRoleDTO userRoleDTO) {

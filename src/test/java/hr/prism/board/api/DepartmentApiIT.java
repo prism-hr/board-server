@@ -1599,20 +1599,14 @@ public class DepartmentApiIT extends AbstractIT {
 
     private void verifyStatistics(Long departmentId, Long boardCount, Long postCount, Long authorCount, Long memberCount) {
         DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
-        TestHelper.verifyNullableCount(boardCount, departmentR.getBoardCount());
         TestHelper.verifyNullableCount(postCount, departmentR.getPostCount());
-        TestHelper.verifyNullableCount(authorCount, departmentR.getAuthorCount());
         TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
 
         List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments(true, null);
-        TestHelper.verifyNullableCount(boardCount, departmentRs.get(0).getBoardCount());
         TestHelper.verifyNullableCount(postCount, departmentRs.get(0).getPostCount());
-        TestHelper.verifyNullableCount(authorCount, departmentRs.get(0).getAuthorCount());
         TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
 
-        TestHelper.verifyNullableCount(2L, departmentRs.get(1).getBoardCount());
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getPostCount());
-        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getAuthorCount());
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
     }
 

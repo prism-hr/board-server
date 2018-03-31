@@ -121,9 +121,7 @@ public class ActivityEventService {
             activityService.deleteActivities(userRole);
         }
 
-        Resource resource = userRole.getResource();
-        userRoleCacheService.updateStatistics(resource);
-        return resource;
+        return userRole.getResource();
     }
 
     private Resource processResource(ActivityEvent activityEvent, Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
