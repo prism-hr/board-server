@@ -646,6 +646,11 @@ public class DepartmentService {
         return responseReadiness;
     }
 
+    public void updatePostCounts(List<Long> postIds) {
+        entityManager.flush();
+        departmentRepository.updatePostCounts(Scope.DEPARTMENT.name(), postIds, State.ACCEPTED.name());
+    }
+
     private Department verifyCanViewAndRemoveSuppressedTasks(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
             setTaskCompletionsForUser(user, department);

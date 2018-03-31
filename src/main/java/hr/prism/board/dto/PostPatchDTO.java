@@ -18,8 +18,6 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
 
     private Optional<String> description;
 
-    private Optional<Boolean> internal;
-
     @Size(min = 3, max = 255)
     private Optional<String> organizationName;
 

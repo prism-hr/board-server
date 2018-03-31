@@ -1,7 +1,6 @@
 package hr.prism.board.enums;
 
 import hr.prism.board.domain.*;
-import hr.prism.board.interceptor.BoardStateChangeInterceptor;
 import hr.prism.board.interceptor.PostStateChangeInterceptor;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 
@@ -9,7 +8,7 @@ public enum Scope {
 
     UNIVERSITY(Value.UNIVERSITY, University.class),
     DEPARTMENT(Value.DEPARTMENT, Department.class),
-    BOARD(Value.BOARD, Board.class, BoardStateChangeInterceptor.class),
+    BOARD(Value.BOARD, Board.class),
     POST(Value.POST, Post.class, PostStateChangeInterceptor.class);
 
     public String value;

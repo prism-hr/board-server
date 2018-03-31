@@ -107,10 +107,6 @@ public class BoardService {
         });
     }
 
-    public void updateBoardPostCounts(List<Long> postIds, String state) {
-        boardRepository.updateBoardPostCounts(postIds, state);
-    }
-
     @SuppressWarnings("unchecked")
     private void updateBoard(Board board, BoardPatchDTO boardDTO) {
         board.setChangeList(new ChangeListRepresentation());

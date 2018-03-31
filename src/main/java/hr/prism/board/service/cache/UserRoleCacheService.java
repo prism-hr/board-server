@@ -88,7 +88,7 @@ public class UserRoleCacheService {
         userRole.setCreatorId(resource.getCreatorId());
 
         updateUserRoleDemographicData(userRole, userRoleDTO);
-        updateUserRolesSummary(resource);
+        updateStatistics(resource);
 
         if (notify) {
             String scopeName = scope.name();
@@ -110,7 +110,7 @@ public class UserRoleCacheService {
     public void deleteResourceUser(Resource resource, User user) {
         deleteUserRoles(resource, user);
         checkSafety(resource, ExceptionCode.IRREMOVABLE_USER);
-        updateUserRolesSummary(resource);
+        updateStatistics(resource);
     }
 
     @CacheEvict(key = "#user.id", value = "users")
@@ -155,7 +155,7 @@ public class UserRoleCacheService {
         userRoleRepository.updateByUser(newUser, oldUser);
     }
 
-    public void updateUserRolesSummary(Resource resource) {
+    public void updateStatistics(Resource resource) {
         entityManager.flush();
         LocalDate baseline = LocalDate.now();
         if (resource instanceof Department) {

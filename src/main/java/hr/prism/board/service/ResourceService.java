@@ -339,7 +339,7 @@ public class ResourceService {
         entityManager.flush();
         Department department = (Department) findByResourceAndEnclosingScope(resource, Scope.DEPARTMENT);
         if (department != null && !department.equals(resource)) {
-            updateChildResourceCount(department, resource);
+            updateStatistics(department, resource);
         }
     }
 
@@ -667,7 +667,7 @@ public class ResourceService {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
     }
 
-    private void updateChildResourceCount(Department department, Resource resource) {
+    private void updateStatistics(Department department, Resource resource) {
         Scope scope = resource.getScope();
         ResourceSummary summary = resourceRepository.findSummaryByEnclosingResourceAndState(department, scope, State.ACCEPTED);
         switch (scope) {

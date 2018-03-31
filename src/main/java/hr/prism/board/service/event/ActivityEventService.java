@@ -122,7 +122,7 @@ public class ActivityEventService {
         }
 
         Resource resource = userRole.getResource();
-        userRoleCacheService.updateUserRolesSummary(resource);
+        userRoleCacheService.updateStatistics(resource);
         return resource;
     }
 

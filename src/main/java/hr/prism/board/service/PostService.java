@@ -394,8 +394,9 @@ public class PostService {
         List<Long> postToModifyIds = new ArrayList<>();
         postToModifyIds.addAll(postToRetireIds);
         postToModifyIds.addAll(postToPublishIds);
+
         if (!postToModifyIds.isEmpty()) {
-            boardService.updateBoardPostCounts(postToModifyIds, State.ACCEPTED.name());
+            departmentService.updatePostCounts(postToModifyIds);
         }
     }
 

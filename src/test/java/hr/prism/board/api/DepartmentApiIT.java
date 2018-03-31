@@ -1422,30 +1422,30 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldCountBoardsAuthorsAndMembers() {
+    public void shouldCompileStatistics() {
         Long departmentUserId = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
 
         Long departmentId = departmentApi.postDepartment(universityId, departmentDTO).getId();
         departmentApi.postDepartment(universityId, new DepartmentDTO().setName("other department").setSummary("department summary"));
-        verifyBoardAuthorAndMemberCount(departmentId, 2L, 0L, 0L);
+        verifyStatistics(departmentId, 2L, 0L, 0L, 0L);
 
         Long board1Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board1")).getId();
         Long board2Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board2")).getId();
-        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 0L);
+        verifyStatistics(departmentId, 4L, 0L, 0L, 0L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
                 .setRole(Role.MEMBER));
-        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 1L);
+        verifyStatistics(departmentId, 4L, 0L, 0L, 1L);
 
         resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
                 .setRole(Role.MEMBER));
-        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 2L);
+        verifyStatistics(departmentId, 4L, 0L, 0L, 2L);
 
         Long memberUser1Id = testUserService.authenticate().getId();
         departmentApi.postMembershipRequest(departmentId,
@@ -1468,31 +1468,36 @@ public class DepartmentApiIT extends AbstractIT {
                     .setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
 
-        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 4L);
+        verifyStatistics(departmentId, 4L, 0L, 0L, 4L);
 
         testUserService.setAuthentication(departmentUserId);
         departmentApi.putMembershipRequest(departmentId, memberUser1Id, "accepted");
 
-        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 4L);
+        verifyStatistics(departmentId, 4L, 0L, 0L, 4L);
         departmentApi.putMembershipRequest(departmentId, memberUser2Id, "rejected");
 
-        verifyBoardAuthorAndMemberCount(departmentId, 4L, 0L, 3L);
+        verifyStatistics(departmentId, 4L, 0L, 0L, 3L);
 
         testUserService.setAuthentication(departmentUserId);
         boardApi.executeAction(board1Id, "reject", new BoardPatchDTO());
         boardApi.executeAction(board2Id, "reject", new BoardPatchDTO());
-        verifyBoardAuthorAndMemberCount(departmentId, 2L, 0L, 3L);
+        verifyStatistics(departmentId, 2L, 0L, 0L, 3L);
 
         boardApi.executeAction(board1Id, "restore", new BoardPatchDTO());
-        verifyBoardAuthorAndMemberCount(departmentId, 3L, 0L, 3L);
+        verifyStatistics(departmentId, 3L, 0L, 0L, 3L);
 
         testUserService.authenticate();
         Long postId = postApi.postPost(board1Id,
             TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
+        verifyStatistics(departmentId, 3L, 0L, 0L, 3L);
 
         testUserService.setAuthentication(departmentUserId);
         postApi.executeAction(postId, "accept", new PostPatchDTO());
-        verifyBoardAuthorAndMemberCount(departmentId, 3L, 1L, 3L);
+        postService.publishAndRetirePosts(LocalDateTime.now());
+        verifyStatistics(departmentId, 3L, 1L, 1L, 3L);
+
+        postApi.executeAction(postId, "reject", new PostPatchDTO().setComment("Not acceptable"));
+        verifyStatistics(departmentId, 3L, 0L, 1L, 3L);
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
@@ -1592,18 +1597,22 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentIdString, documentLogoR.getFileName());
     }
 
-    private void verifyBoardAuthorAndMemberCount(Long departmentId, Long boardCount, Long authorCount, Long memberCount) {
+    private void verifyStatistics(Long departmentId, Long boardCount, Long postCount, Long authorCount, Long memberCount) {
         DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
         TestHelper.verifyNullableCount(boardCount, departmentR.getBoardCount());
+        TestHelper.verifyNullableCount(postCount, departmentR.getPostCount());
         TestHelper.verifyNullableCount(authorCount, departmentR.getAuthorCount());
         TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
 
         List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments(true, null);
         TestHelper.verifyNullableCount(boardCount, departmentRs.get(0).getBoardCount());
+        TestHelper.verifyNullableCount(postCount, departmentRs.get(0).getPostCount());
         TestHelper.verifyNullableCount(authorCount, departmentRs.get(0).getAuthorCount());
         TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
 
         TestHelper.verifyNullableCount(2L, departmentRs.get(1).getBoardCount());
+        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getPostCount());
+        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getAuthorCount());
         TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
     }
 

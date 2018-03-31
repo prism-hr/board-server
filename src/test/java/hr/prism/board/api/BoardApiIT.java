@@ -8,7 +8,10 @@ import com.google.common.collect.Lists;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.BoardPatchDTO;
+import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.ExceptionCode;
@@ -27,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -309,55 +311,6 @@ public class BoardApiIT extends AbstractIT {
                 .put("postCategories", Arrays.asList("m2", "m1"), null));
     }
 
-    @Test
-    public void shouldCountPosts() {
-        Long boardUserId = testUserService.authenticate().getId();
-        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
-        Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId();
-        boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("other"));
-        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
-
-        testUserService.authenticate();
-        Long post1id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
-
-        Long postUserId = testUserService.authenticate().getId();
-        Long post2id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
-
-        testUserService.authenticate();
-        Long post3id = postApi.postPost(boardId, TestHelper.smallSamplePost()).getId();
-        verifyPostCount(boardId, 0L);
-
-        testUserService.setAuthentication(boardUserId);
-        postApi.executeAction(post1id, "accept", new PostPatchDTO());
-        postApi.executeAction(post2id, "accept", new PostPatchDTO());
-        postApi.executeAction(post3id, "reject", new PostPatchDTO().setComment("comment"));
-
-        postService.publishAndRetirePosts(LocalDateTime.now());
-        verifyPostCount(boardId, 2L);
-
-        postApi.executeAction(post2id, "reject", new PostPatchDTO().setComment("comment"));
-        verifyPostCount(boardId, 1L);
-        resourceApi.deleteResourceUser(Scope.BOARD, boardId, postUserId);
-
-        verifyPostCount(boardId, 1L);
-
-        postApi.patchPost(post1id, new PostPatchDTO().setDeadTimestamp(Optional.of(LocalDateTime.now().minusSeconds(1))));
-        postService.publishAndRetirePosts(LocalDateTime.now());
-
-        verifyPostCount(boardId, 0L);
-
-        Long post4id = postApi.postPost(boardId, TestHelper.smallSamplePost().setLiveTimestamp(LocalDateTime.now().plusMinutes(1))).getId();
-        verifyPostCount(boardId, 0L);
-
-        postApi.patchPost(post4id, new PostPatchDTO().setLiveTimestamp(Optional.empty()));
-        postService.publishAndRetirePosts(LocalDateTime.now());
-
-        verifyPostCount(boardId, 1L);
-    }
-
     private Pair<BoardRepresentation, BoardRepresentation> verifyPostTwoBoards() {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
@@ -503,17 +456,6 @@ public class BoardApiIT extends AbstractIT {
                     .add(publicActionList)
                     .addAll(adminDepartmentBoardNames, adminActionList));
         }
-    }
-
-    private void verifyPostCount(Long boardId, Long postCount) {
-        BoardRepresentation boardR = boardApi.getBoard(boardId);
-        TestHelper.verifyNullableCount(postCount, boardR.getPostCount());
-
-        List<BoardRepresentation> boardRs = boardApi.getBoards(null, true, null, null, null);
-        TestHelper.verifyNullableCount(postCount, boardRs.get(0).getPostCount());
-
-        TestHelper.verifyNullableCount(0L, boardRs.get(1).getPostCount());
-        TestHelper.verifyNullableCount(0L, boardRs.get(1).getAuthorCount());
     }
 
 }
