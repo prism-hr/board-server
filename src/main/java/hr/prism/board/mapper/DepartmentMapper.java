@@ -49,7 +49,8 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setMemberCount(department.getMemberCount())
             .setMemberCountAllTime(department.getMemberCountAllTime())
             .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))
-            .setTasks(department.getTasks().stream().map(this::applyTask).collect(Collectors.toList()));
+            .setTasks(department.getTasks().stream().map(this::applyTask).collect(Collectors.toList()))
+            .setOrganizations(department.getOrganizations());
     }
 
     DepartmentRepresentation applySmall(Department department) {

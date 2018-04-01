@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import com.stripe.model.Customer;
+import com.stripe.model.InvoiceCollection;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.OrganizationSummaryRepresentation;
 
@@ -69,7 +70,10 @@ public class Department extends Resource {
     private List<ResourceTask> userTasks;
 
     @Transient
-    List<OrganizationSummaryRepresentation> organizations;
+    private List<OrganizationSummaryRepresentation> organizations;
+
+    @Transient
+    private InvoiceCollection invoices;
 
     public Integer getNotifiedCount() {
         return notifiedCount;
@@ -173,6 +177,14 @@ public class Department extends Resource {
 
     public void setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
         this.organizations = organizations;
+    }
+
+    public InvoiceCollection getInvoices() {
+        return invoices;
+    }
+
+    public void setInvoices(InvoiceCollection invoices) {
+        this.invoices = invoices;
     }
 
     public Customer getCustomer() {

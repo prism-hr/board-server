@@ -29,6 +29,8 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private List<ResourceTaskRepresentation> tasks;
 
+    private List<OrganizationSummaryRepresentation> organizations;
+
     public String getSummary() {
         return summary;
     }
@@ -125,6 +127,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     public DepartmentRepresentation setTasks(List<ResourceTaskRepresentation> tasks) {
         this.tasks = tasks;
+        return this;
+    }
+
+    public List<OrganizationSummaryRepresentation> getOrganizations() {
+        return organizations;
+    }
+
+    public DepartmentRepresentation setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
+        this.organizations = organizations;
         return this;
     }
 

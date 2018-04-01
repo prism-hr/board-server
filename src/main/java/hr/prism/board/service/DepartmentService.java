@@ -152,13 +152,13 @@ public class DepartmentService {
     public Department getDepartment(Long id) {
         User user = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
-        return verifyCanViewAndDecorate(user, department);
+        return checkPermissionsAndDecorate(user, department);
     }
 
     public Department getDepartment(String handle) {
         User user = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, handle);
-        return verifyCanViewAndDecorate(user, department);
+        return checkPermissionsAndDecorate(user, department);
     }
 
     public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
@@ -660,16 +660,20 @@ public class DepartmentService {
         return responseReadiness;
     }
 
-    private Department verifyCanViewAndDecorate(User user, Department department) {
-        return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
+    private Department checkPermissionsAndDecorate(User user, Department department) {
+        if (actionService.canExecuteAction(department, Action.EDIT)) {
             Long departmentId = department.getId();
             Statistics postStatistics = postService.getPostStatistics(Collections.singletonList(departmentId)).get(departmentId);
             Statistics memberStatistics = userRoleService.getMemberStatistics(Collections.singletonList(departmentId)).get(departmentId);
             List<hr.prism.board.domain.ResourceTask> userTasks = resourceTaskService.getTasks(Collections.singletonList(departmentId), user).get(departmentId);
             List<OrganizationSummaryRepresentation> organizations = postService.findOrganizationSummaries(departmentId);
-            decorateDepartment(department, postStatistics, memberStatistics, userTasks, organizations);
-            return department;
-        });
+
+            String customerId = department.getCustomerId();
+            InvoiceCollection invoices = customerId == null ? null : paymentService.getInvoices(customerId);
+            decorateDepartment(department, postStatistics, memberStatistics, userTasks, organizations, invoices);
+        }
+
+        return (Department) actionService.executeAction(user, department, Action.VIEW, () -> department);
     }
 
     private String getCustomerIdSecured(Long departmentId) {
@@ -688,11 +692,12 @@ public class DepartmentService {
 
     private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
                                     List<hr.prism.board.domain.ResourceTask> userTasks) {
-        decorateDepartment(department, postStatistics, memberStatistics, userTasks, null);
+        decorateDepartment(department, postStatistics, memberStatistics, userTasks, null, null);
     }
 
     private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
-                                    List<hr.prism.board.domain.ResourceTask> userTasks, List<OrganizationSummaryRepresentation> contributors) {
+                                    List<hr.prism.board.domain.ResourceTask> userTasks, List<OrganizationSummaryRepresentation> organizations,
+                                    InvoiceCollection invoices) {
         department.setPostCount(postStatistics.getCount());
         department.setPostCountAllTime(postStatistics.getCountAllTime());
         department.setMostRecentPost(postStatistics.getMostRecent());
@@ -702,7 +707,8 @@ public class DepartmentService {
         department.setMostRecentMember(memberStatistics.getMostRecent());
 
         department.setUserTasks(userTasks);
-        department.setOrganizations(contributors);
+        department.setOrganizations(organizations);
+        department.setInvoices(invoices);
     }
 
 }
