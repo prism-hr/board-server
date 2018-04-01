@@ -15,26 +15,26 @@ import java.util.List;
 @Component
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ResourceTaskProperty implements NotificationProperty {
-    
+
     private static final String CREATE_MEMBER = "Ready to get started - visit the user management area to build your student list.";
-    
+
     private static final String UPDATE_MEMBER = "New students arriving - visit the user management area to update your student list.";
-    
+
     private static final String CREATE_POST = "Got something to share - create some posts and start sending notifications.";
-    
+
     private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your page on other websites.";
-    
+
     @Inject
     private ResourceTaskService resourceTaskService;
-    
+
     public String getValue(NotificationService.NotificationRequest notificationRequest) {
         User user = notificationRequest.getRecipient();
         Resource resource = notificationRequest.getResource();
-        List<ResourceTask> tasks = resourceTaskService.findByResource(resource, user);
+        List<ResourceTask> tasks = resourceTaskService.getTasks(resource, user);
         if (tasks.isEmpty()) {
             throw new BoardNotificationException(ExceptionCode.EMPTY_RESOURCE_TASKS, "No tasks for resource " + resource.toString());
         }
-        
+
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("<ul>");
         for (ResourceTask task : tasks) {
@@ -53,12 +53,12 @@ public class ResourceTaskProperty implements NotificationProperty {
                     stringBuilder.append(DEPLOY_BADGE);
                     break;
             }
-            
+
             stringBuilder.append("</li>");
         }
-        
+
         stringBuilder.append("</ul>");
         return stringBuilder.toString();
     }
-    
+
 }

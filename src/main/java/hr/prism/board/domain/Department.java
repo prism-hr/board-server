@@ -2,6 +2,7 @@ package hr.prism.board.domain;
 
 import com.stripe.model.Customer;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.representation.OrganizationSummaryRepresentation;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -67,6 +68,9 @@ public class Department extends Resource {
     @Transient
     private List<ResourceTask> userTasks;
 
+    @Transient
+    List<OrganizationSummaryRepresentation> organizations;
+
     public Integer getNotifiedCount() {
         return notifiedCount;
     }
@@ -81,6 +85,30 @@ public class Department extends Resource {
 
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
+    }
+
+    public Long getMemberToBeUploadedCount() {
+        return memberToBeUploadedCount;
+    }
+
+    public void setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
+        this.memberToBeUploadedCount = memberToBeUploadedCount;
+    }
+
+    public LocalDateTime getLastMemberTimestamp() {
+        return lastMemberTimestamp;
+    }
+
+    public void setLastMemberTimestamp(LocalDateTime lastMemberTimestamp) {
+        this.lastMemberTimestamp = lastMemberTimestamp;
+    }
+
+    public LocalDateTime getLastTaskCreationTimestamp() {
+        return lastTaskCreationTimestamp;
+    }
+
+    public void setLastTaskCreationTimestamp(LocalDateTime lastTaskCreationTimestamp) {
+        this.lastTaskCreationTimestamp = lastTaskCreationTimestamp;
     }
 
     public Long getPostCount() {
@@ -139,29 +167,12 @@ public class Department extends Resource {
         this.userTasks = userTasks;
     }
 
-    public Long getMemberToBeUploadedCount() {
-        return memberToBeUploadedCount;
+    public List<OrganizationSummaryRepresentation> getOrganizations() {
+        return organizations;
     }
 
-    public void setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
-        this.memberToBeUploadedCount = memberToBeUploadedCount;
-    }
-
-    public LocalDateTime getLastMemberTimestamp() {
-        return lastMemberTimestamp;
-    }
-
-    public void setLastMemberTimestamp(LocalDateTime lastMemberTimestamp) {
-        this.lastMemberTimestamp = lastMemberTimestamp;
-    }
-
-    public LocalDateTime getLastTaskCreationTimestamp() {
-        return lastTaskCreationTimestamp;
-    }
-
-    public Department setLastTaskCreationTimestamp(LocalDateTime lastTaskCreationTimestamp) {
-        this.lastTaskCreationTimestamp = lastTaskCreationTimestamp;
-        return this;
+    public void setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
+        this.organizations = organizations;
     }
 
     public Customer getCustomer() {

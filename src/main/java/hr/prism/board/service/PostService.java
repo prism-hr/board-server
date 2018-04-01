@@ -15,11 +15,13 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.representation.OrganizationSummaryRepresentation;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.Statistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +42,7 @@ import java.util.stream.Stream;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "LambdaBodyCanBeCodeBlock", "unchecked", "WeakerAccess"})
+@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class PostService {
 
     private static final String SIMILAR_ORGANIZATION =
@@ -53,6 +55,21 @@ public class PostService {
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
             "LIMIT 10";
+
+    private static final String POST_STATISTICS =
+        "SELECT department.id AS department_id, " +
+            "SUM(IF(post.state = 'ACCEPTED', 1, 0)) AS count_live, " +
+            "COUNT(post.id) AS count_all_time, " +
+            "MAX(IF(post.state = 'ACCEPTED', post.created_timestamp, NULL)) " +
+            "FROM resource AS department " +
+            "INNER JOIN resource_relation " +
+            "ON department.id = resource_relation.resource1_id " +
+            "INNER JOIN resource AS post " +
+            "ON resource_relation.resource2_id = post.id " +
+            "AND post.state = 'ACCEPTED' " +
+            "WHERE department.id IN (:departmentIds) " +
+            "AND post.scope = 'POST' " +
+            "GROUP BY department.id";
 
     private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST);
 
@@ -431,6 +448,19 @@ public class PostService {
 
     public List<Post> getPosts(Long boardId) {
         return getPosts(boardId, true, null, null, null);
+    }
+
+    public Map<Long, Statistics> getPostStatistics(Collection<Long> departmentIds) {
+        List<Object[]> rows = entityManager.createNativeQuery(POST_STATISTICS)
+            .setParameter("departmentIds", departmentIds)
+            .getResultList();
+
+        return rows.stream().collect(Collectors.toMap(
+            row -> (Long) row[0], row -> new Statistics((Long) row[1], (Long) row[2], (LocalDateTime) row[3])));
+    }
+
+    public List<OrganizationSummaryRepresentation> findOrganizationSummaries(Long departmentId) {
+        return postRepository.findOrganizationSummaries(departmentId);
     }
 
     @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})

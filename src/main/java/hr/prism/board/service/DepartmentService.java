@@ -23,6 +23,7 @@ import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.Statistics;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,30 +66,6 @@ public class DepartmentService {
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
             "ORDER BY similarityHard DESC, similaritySoft DESC, user_role.member_program " +
             "LIMIT 10";
-
-    private static final String DEPARTMENT_POST_STATISTICS =
-        "SELECT department.id AS department_id, " +
-            "SUM(IF(post.state = 'ACCEPTED', 1, 0)) AS count_live, " +
-            "COUNT(post.id) AS count_all_time, " +
-            "MAX(COALESCE(IF(post.state = 'ACCEPTED', department.created_timestamp, NULL))) " +
-            "FROM resource AS department " +
-            "INNER JOIN resource_relation " +
-            "ON department.id = resource_relation.resource1_id " +
-            "INNER JOIN resource AS post " +
-            "ON resource_relation.resource2_id = post.id " +
-            "AND post.state = 'ACCEPTED' " +
-            "WHERE department.id IN (:departmentIds) " +
-            "AND post.scope = 'POST' " +
-            "GROUP BY department.id";
-
-    private static final String DEPARTMENT_MEMBER_STATISTICS =
-        "SELECT user_role.department_id AS department_id, " +
-            "SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)) AS count_live, " +
-            "COUNT(user_role.id) AS count_all_time, " +
-            "MAX(COALESCE(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL))) " +
-            "FROM user_role " +
-            "WHERE user_role.department_id IN (:departmentIds) " +
-            "GROUP BY user_role.department_id";
 
     private static final List<String> MEMBER_CATEGORY_STRINGS = Stream.of(MemberCategory.values()).map(MemberCategory::name).collect(Collectors.toList());
 
@@ -153,6 +130,9 @@ public class DepartmentService {
     private BoardService boardService;
 
     @Inject
+    private PostService postService;
+
+    @Inject
     private ResourceTaskService resourceTaskService;
 
     @Inject
@@ -194,9 +174,9 @@ public class DepartmentService {
         List<Department> departments = new ArrayList<>();
         List<Long> departmentIds = resources.stream().map(Resource::getId).collect(Collectors.toList());
 
-        Map<Long, Statistics> postStatisticsIndex = getPostStatistics(departmentIds);
-        Map<Long, Statistics> memberStatisticsIndex = getMemberStatistics(departmentIds);
-        ArrayListMultimap<Long, hr.prism.board.domain.ResourceTask> userTaskIndex = resourceTaskService.findByResource(departmentIds, user);
+        Map<Long, Statistics> postStatisticsIndex = postService.getPostStatistics(departmentIds);
+        Map<Long, Statistics> memberStatisticsIndex = userRoleService.getMemberStatistics(departmentIds);
+        ArrayListMultimap<Long, hr.prism.board.domain.ResourceTask> userTaskIndex = resourceTaskService.getTasks(departmentIds, user);
 
         resources.forEach(resource -> {
             Department department = (Department) resource;
@@ -683,10 +663,11 @@ public class DepartmentService {
     private Department verifyCanViewAndDecorate(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> {
             Long departmentId = department.getId();
-            Statistics postStatistics = getPostStatistics(Collections.singletonList(departmentId)).get(departmentId);
-            Statistics memberStatistics = getMemberStatistics(Collections.singletonList(departmentId)).get(departmentId);
-            List<hr.prism.board.domain.ResourceTask> userTasks = resourceTaskService.findByResource(Collections.singletonList(departmentId), user).get(departmentId);
-            decorateDepartment(department, postStatistics, memberStatistics, userTasks);
+            Statistics postStatistics = postService.getPostStatistics(Collections.singletonList(departmentId)).get(departmentId);
+            Statistics memberStatistics = userRoleService.getMemberStatistics(Collections.singletonList(departmentId)).get(departmentId);
+            List<hr.prism.board.domain.ResourceTask> userTasks = resourceTaskService.getTasks(Collections.singletonList(departmentId), user).get(departmentId);
+            List<OrganizationSummaryRepresentation> organizations = postService.findOrganizationSummaries(departmentId);
+            decorateDepartment(department, postStatistics, memberStatistics, userTasks, organizations);
             return department;
         });
     }
@@ -705,51 +686,23 @@ public class DepartmentService {
         }
     }
 
-    private Map<Long, Statistics> getPostStatistics(Collection<Long> departmentIds) {
-        List<Object[]> rows = entityManager.createNativeQuery(DEPARTMENT_POST_STATISTICS)
-            .setParameter("departmentIds", departmentIds)
-            .getResultList();
-
-        return rows.stream().collect(Collectors.toMap(
-            row -> (Long) row[0], row -> new Statistics((Long) row[1], (Long) row[2], (LocalDateTime) row[3])));
+    private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
+                                    List<hr.prism.board.domain.ResourceTask> userTasks) {
+        decorateDepartment(department, postStatistics, memberStatistics, userTasks, null);
     }
 
-    private Map<Long, Statistics> getMemberStatistics(Collection<Long> departmentIds) {
-        List<Object[]> rows = entityManager.createNativeQuery(DEPARTMENT_MEMBER_STATISTICS)
-            .setParameter("departmentIds", departmentIds)
-            .getResultList();
+    private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
+                                    List<hr.prism.board.domain.ResourceTask> userTasks, List<OrganizationSummaryRepresentation> contributors) {
+        department.setPostCount(postStatistics.getCount());
+        department.setPostCountAllTime(postStatistics.getCountAllTime());
+        department.setMostRecentPost(postStatistics.getMostRecent());
 
-        return rows.stream().collect(Collectors.toMap(
-            row -> (Long) row[0], row -> new Statistics((Long) row[1], (Long) row[2], (LocalDateTime) row[3])));
-    }
-
-    public void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
-                                   List<hr.prism.board.domain.ResourceTask> userTasks) {
-        department.setPostCount(postStatistics.count);
-        department.setPostCountAllTime(postStatistics.countAllTime);
-        department.setMostRecentPost(postStatistics.mostRecent);
-
-        department.setMemberCount(memberStatistics.count);
-        department.setMemberCountAllTime(memberStatistics.countAllTime);
-        department.setMostRecentMember(memberStatistics.mostRecent);
+        department.setMemberCount(memberStatistics.getCount());
+        department.setMemberCountAllTime(memberStatistics.getCountAllTime());
+        department.setMostRecentMember(memberStatistics.getMostRecent());
 
         department.setUserTasks(userTasks);
-    }
-
-    private class Statistics {
-
-        private Long count;
-
-        private Long countAllTime;
-
-        private LocalDateTime mostRecent;
-
-        public Statistics(Long count, Long countAllTime, LocalDateTime mostRecent) {
-            this.count = count;
-            this.countAllTime = countAllTime;
-            this.mostRecent = mostRecent;
-        }
-
+        department.setOrganizations(contributors);
     }
 
 }

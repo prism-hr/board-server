@@ -76,7 +76,7 @@ public class ResourceTaskService {
         return resourceTaskRepository.findOne(id);
     }
 
-    public ArrayListMultimap<Long, ResourceTask> findByResource(Collection<Long> resourceIds, User user) {
+    public ArrayListMultimap<Long, ResourceTask> getTasks(Collection<Long> resourceIds, User user) {
         List<ResourceTask> tasks = resourceTaskRepository.findByResource(resourceIds);
         List<ResourceTask> completedTasks = resourceTaskRepository.findCompletionsByResource(resourceIds, user);
 
@@ -89,7 +89,7 @@ public class ResourceTaskService {
         return response;
     }
 
-    public List<hr.prism.board.enums.ResourceTask> findByResource(Resource resource, User user) {
+    public List<hr.prism.board.enums.ResourceTask> getTasks(Resource resource, User user) {
         return resourceTaskRepository.findByResource(resource, user);
     }
 
