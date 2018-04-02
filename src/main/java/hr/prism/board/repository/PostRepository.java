@@ -55,7 +55,7 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
 
     @Query(value =
         "select post.organizationName, post.organizationLogo, count(post.id), " +
-            "max(post.createdTimestamp) mostRecentPost, sum(post.viewCount), sum(post.referralCount), sum(post.responseCount) " +
+            "max(post.createdTimestamp) as mostRecentPost, sum(post.viewCount), sum(post.referralCount), sum(post.responseCount) " +
             "from Post post " +
             "inner join post.parent board " +
             "where board.parent.id = :departmentId " +

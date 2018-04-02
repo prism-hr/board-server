@@ -23,4 +23,8 @@ import javax.persistence.*;
                 @NamedAttributeNode(value = "documentLogo")})})
 public class Board extends Resource {
 
+    @Override
+    public void setDocumentLogo(Document documentLogo) {
+    }
+
 }

@@ -12,7 +12,6 @@ import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
-import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.*;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
@@ -119,9 +118,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("f", documentR.getFileName());
 
         verifyNewDepartmentBoards(departmentId);
-        Assert.assertEquals(
-            ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE),
-            departmentR.getTasks().stream().map(ResourceTaskRepresentation::getTask).collect(Collectors.toList()));
         ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
     }
 
@@ -158,9 +154,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("g", documentR.getFileName());
 
         verifyNewDepartmentBoards(departmentId);
-        Assert.assertEquals(
-            ImmutableList.of(ResourceTask.CREATE_MEMBER, ResourceTask.CREATE_POST, ResourceTask.DEPLOY_BADGE),
-            departmentR.getTasks().stream().map(ResourceTaskRepresentation::getTask).collect(Collectors.toList()));
     }
 
     @Test

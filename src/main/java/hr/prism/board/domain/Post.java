@@ -100,6 +100,10 @@ public class Post extends Resource {
     @Transient
     private ResourceEvent response;
 
+    @Override
+    public void setDocumentLogo(Document documentLogo) {
+    }
+
     public String getDescription() {
         return description;
     }

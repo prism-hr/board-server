@@ -22,10 +22,6 @@ import java.time.LocalDateTime;
                 @NamedAttributeNode(value = "documentLogo")})})
 public class Department extends Resource {
 
-    @OneToOne
-    @JoinColumn(name = "document_logo_id")
-    private Document documentLogo;
-
     @Column(name = "notified_count")
     private Integer notifiedCount;
 
@@ -43,14 +39,6 @@ public class Department extends Resource {
 
     @Transient
     private Customer customer;
-
-    public Document getDocumentLogo() {
-        return documentLogo;
-    }
-
-    public void setDocumentLogo(Document documentLogo) {
-        this.documentLogo = documentLogo;
-    }
 
     public Integer getNotifiedCount() {
         return notifiedCount;
