@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Date;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
@@ -46,7 +47,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
                 Long userId = Long.parseLong(claims.getSubject());
                 SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
-                LocalDateTime expiration = LocalDateTime.ofInstant(claims.getExpiration().toInstant(), ZoneId.systemDefault());
+                Date expirationDate = claims.getExpiration();
+                LocalDateTime expiration = LocalDateTime.ofInstant(expirationDate.toInstant(), ZoneId.systemDefault());
                 if (expiration.minusSeconds(sessionRefreshBeforeExpirationSeconds).isBefore(LocalDateTime.now())) {
                     response.setHeader("Authorization", "Bearer " + authenticationService.makeAccessToken(userId, true));
                 }
