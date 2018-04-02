@@ -24,7 +24,6 @@ import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.Statistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,9 +72,6 @@ public class PostService {
 
     private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST);
 
-    @Value("${scheduler.on}")
-    private Boolean schedulerOn;
-
     @Inject
     private PostRepository postRepository;
 
@@ -105,9 +101,6 @@ public class PostService {
 
     @Inject
     private ResourceEventService resourceEventService;
-
-    @Inject
-    private BoardService boardService;
 
     @Inject
     private ActivityService activityService;

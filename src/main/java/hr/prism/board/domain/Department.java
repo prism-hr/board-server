@@ -17,18 +17,17 @@ import java.util.List;
     attributeNodes = {
         @NamedAttributeNode(value = "parent", subgraph = "university"),
         @NamedAttributeNode(value = "documentLogo"),
-        @NamedAttributeNode(value = "categories"),
-        @NamedAttributeNode(value = "tasks", subgraph = "tasks")},
+        @NamedAttributeNode(value = "categories")},
     subgraphs = {
         @NamedSubgraph(
             name = "university",
             attributeNodes = {
-                @NamedAttributeNode(value = "documentLogo")}),
-        @NamedSubgraph(
-            name = "tasks",
-            attributeNodes = {
-                @NamedAttributeNode(value = "completions")})})
+                @NamedAttributeNode(value = "documentLogo")})})
 public class Department extends Resource {
+
+    @OneToOne
+    @JoinColumn(name = "document_logo_id")
+    private Document documentLogo;
 
     @Column(name = "notified_count")
     private Integer notifiedCount;
@@ -74,6 +73,14 @@ public class Department extends Resource {
 
     @Transient
     private InvoiceCollection invoices;
+
+    public Document getDocumentLogo() {
+        return documentLogo;
+    }
+
+    public void setDocumentLogo(Document documentLogo) {
+        this.documentLogo = documentLogo;
+    }
 
     public Integer getNotifiedCount() {
         return notifiedCount;

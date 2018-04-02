@@ -5,7 +5,10 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
@@ -37,13 +40,7 @@ public class BoardService {
     private ResourcePatchService resourcePatchService;
 
     @Inject
-    private UserRoleService userRoleService;
-
-    @Inject
     private UserService userService;
-
-    @Inject
-    private DocumentService documentService;
 
     @Value("${app.url}")
     private String appUrl;
@@ -84,7 +81,6 @@ public class BoardService {
             resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
             resourceService.setIndexDataAndQuarter(board);
-            userRoleService.createOrUpdateUserRole(board, user, Role.ADMINISTRATOR);
             return board;
         });
     }

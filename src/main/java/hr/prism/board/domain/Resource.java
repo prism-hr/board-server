@@ -47,10 +47,6 @@ public class Resource extends BoardEntity {
     @Column(name = "summary")
     private String summary;
 
-    @OneToOne
-    @JoinColumn(name = "document_logo_id")
-    private Document documentLogo;
-
     @ManyToOne
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
@@ -149,14 +145,6 @@ public class Resource extends BoardEntity {
 
     public void setSummary(String summary) {
         this.summary = summary;
-    }
-
-    public Document getDocumentLogo() {
-        return documentLogo;
-    }
-
-    public void setDocumentLogo(Document documentLogo) {
-        this.documentLogo = documentLogo;
     }
 
     public Location getLocation() {

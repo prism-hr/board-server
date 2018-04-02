@@ -23,6 +23,7 @@ public class UniversityMapper implements Function<University, UniversityRepresen
         return new UniversityRepresentation()
             .setId(university.getId())
             .setName(university.getName())
+            .setHomepage(university.getHomepage())
             .setDocumentLogo(documentMapper.apply(university.getDocumentLogo()))
             .setHandle(university.getHandle());
     }

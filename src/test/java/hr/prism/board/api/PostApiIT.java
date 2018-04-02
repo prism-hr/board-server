@@ -204,6 +204,7 @@ public class PostApiIT extends AbstractIT {
         Long departmentId =
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+
         PostDTO postDTO =
             new PostDTO()
                 .setName("post")
@@ -225,6 +226,7 @@ public class PostApiIT extends AbstractIT {
         Long departmentId =
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+
         PostDTO postDTO =
             new PostDTO()
                 .setName("post")
@@ -249,6 +251,7 @@ public class PostApiIT extends AbstractIT {
             departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
         testUserService.authenticate();
+
         PostDTO postDTO = new PostDTO()
             .setName("post")
             .setSummary("summary")

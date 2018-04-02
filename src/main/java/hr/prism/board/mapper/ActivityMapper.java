@@ -27,17 +27,17 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
         Scope scope = resource.getScope();
         switch (scope) {
             case DEPARTMENT:
-                representation.setImage(getResourceImage(resource));
+                representation.setImage(getDocumentLogo((Department) resource));
                 representation.setDepartment(resource.getName());
                 break;
             case BOARD:
-                representation.setImage(getResourceImage(resource));
+                representation.setImage(getDocumentLogo((Department) resource.getParent()));
                 representation.setDepartment(resource.getParent().getName());
                 representation.setBoard(resource.getName());
                 break;
             case POST:
                 Resource parent = resource.getParent();
-                representation.setImage(getResourceImage(parent));
+                representation.setImage(getDocumentLogo((Department) parent.getParent()));
                 representation.setDepartment(parent.getParent().getName());
                 representation.setBoard(parent.getName());
                 representation.setPost(resource.getName());
@@ -71,8 +71,8 @@ public class ActivityMapper implements Function<Activity, ActivityRepresentation
         return representation.setViewed(activity.isViewed()).setCreated(activity.getCreatedTimestamp());
     }
 
-    private String getResourceImage(Resource resource) {
-        Document documentLogo = resource.getDocumentLogo();
+    private String getDocumentLogo(Department department) {
+        Document documentLogo = department.getDocumentLogo();
         return getDocumentCloudinaryId(documentLogo);
     }
 

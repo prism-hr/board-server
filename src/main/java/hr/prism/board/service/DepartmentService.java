@@ -6,12 +6,11 @@ import com.stripe.model.Customer;
 import com.stripe.model.CustomerSubscriptionCollection;
 import com.stripe.model.ExternalAccountCollection;
 import com.stripe.model.InvoiceCollection;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
+import hr.prism.board.enums.Activity;
+import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardExceptionFactory;
 import hr.prism.board.exception.BoardForbiddenException;
@@ -91,7 +90,6 @@ public class DepartmentService {
 
     @Value("${department.pending.notification.interval2.seconds}")
     private Long departmentPendingNotificationInterval2Seconds;
-
 
     @Inject
     private DepartmentRepository departmentRepository;
@@ -195,7 +193,7 @@ public class DepartmentService {
 
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
         User user = userService.getCurrentUserSecured();
-        Resource university = universityService.getUniversity(universityId);
+        University university = universityService.getUniversity(universityId);
         resourceService.validateUniqueName(Scope.DEPARTMENT, null, university, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
         String name = StringUtils.normalizeSpace(departmentDTO.getName());
 

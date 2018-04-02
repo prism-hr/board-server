@@ -3,7 +3,6 @@ package hr.prism.board.api;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
-import hr.prism.board.service.BoardService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +22,6 @@ public class IndexApi {
 
     @Inject
     private DepartmentService departmentService;
-
-    @Inject
-    private BoardService boardService;
 
     @Inject
     private PostService postService;
@@ -52,23 +48,6 @@ public class IndexApi {
         return "index";
     }
 
-    @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}", method = RequestMethod.GET)
-    public String getBoard(@PathVariable String universityHandle, @PathVariable String departmentHandle,
-                           @PathVariable String boardHandle, Model model) {
-        fillGenericModel(model);
-        Board board = boardService.getBoard(universityHandle + "/" + departmentHandle + "/" + boardHandle);
-        if (board != null) {
-            model.addAttribute("title", board.getName());
-            model.addAttribute("description", board.getSummary());
-            model.addAttribute("url", appUrl + "/" + board.getHandle());
-            if (board.getDocumentLogo() != null) {
-                model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
-            }
-        }
-
-        return "index";
-    }
-
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}/{postId}", method = RequestMethod.GET)
     public String getPost(@PathVariable Long postId, Model model) {
         fillGenericModel(model);
@@ -78,8 +57,10 @@ public class IndexApi {
             model.addAttribute("title", post.getName());
             model.addAttribute("description", post.getSummary());
             model.addAttribute("url", appUrl + "/" + board.getHandle() + "/" + post.getId());
-            if (board.getDocumentLogo() != null) {
-                model.addAttribute("image", board.getDocumentLogo().getCloudinaryUrl());
+
+            Department department = (Department) board.getParent();
+            if (department.getDocumentLogo() != null) {
+                model.addAttribute("image", department.getDocumentLogo().getCloudinaryUrl());
             }
         }
 
