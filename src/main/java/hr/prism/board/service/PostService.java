@@ -15,13 +15,11 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.OrganizationSummaryRepresentation;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
-import hr.prism.board.value.Statistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.context.annotation.Lazy;
@@ -56,19 +54,17 @@ public class PostService {
             "LIMIT 10";
 
     private static final String POST_STATISTICS =
-        "SELECT department.id AS department_id, " +
-            "SUM(IF(post.state = 'ACCEPTED', 1, 0)) AS count_live, " +
-            "COUNT(post.id) AS count_all_time, " +
-            "MAX(IF(post.state = 'ACCEPTED', post.created_timestamp, NULL)) " +
-            "FROM resource AS department " +
-            "INNER JOIN resource_relation " +
-            "ON department.id = resource_relation.resource1_id " +
-            "INNER JOIN resource AS post " +
-            "ON resource_relation.resource2_id = post.id " +
-            "AND post.state = 'ACCEPTED' " +
-            "WHERE department.id IN (:departmentIds) " +
-            "AND post.scope = 'POST' " +
-            "GROUP BY department.id";
+        "SELECT SUM(IF(post.state = 'ACCEPTED', 1, 0)), COUNT(post.id), MAX(IF(post.state = 'ACCEPTED', post.created_timestamp, NULL)), " +
+            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), " +
+            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.view_count, 0)), " +
+            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.referral_count, 0)), " +
+            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.response_count, 0)), " +
+            "SUM(post.view_count), SUM(post.referral_count), SUM(post.response_count), " +
+            "MAX(post.last_view_timestamp), MAX(post.last_referral_timestamp), MAX(post.last_response_timestamp) " +
+            "FROM resource AS post " +
+            "INNER JOIN resource AS board " +
+            "ON post.parent_id = board.id " +
+            "WHERE board.parent_id = :departmentId";
 
     private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST);
 
@@ -443,17 +439,14 @@ public class PostService {
         return getPosts(boardId, true, null, null, null);
     }
 
-    public Map<Long, Statistics> getPostStatistics(Collection<Long> departmentIds) {
-        List<Object[]> rows = entityManager.createNativeQuery(POST_STATISTICS)
-            .setParameter("departmentIds", departmentIds)
-            .getResultList();
-
-        return rows.stream().collect(Collectors.toMap(
-            row -> (Long) row[0], row -> new Statistics((Long) row[1], (Long) row[2], (LocalDateTime) row[3])));
+    public Object[] getPostStatistics(Long departmentId) {
+        return (Object[]) entityManager.createNativeQuery(POST_STATISTICS)
+            .setParameter("departmentId", departmentId)
+            .getSingleResult();
     }
 
-    public List<OrganizationSummaryRepresentation> findOrganizationSummaries(Long departmentId) {
-        return postRepository.findOrganizationSummaries(departmentId);
+    public List<Object[]> getOrganizations(Long departmentId) {
+        return postRepository.findOrganizations(departmentId);
     }
 
     @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})

@@ -5,7 +5,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.representation.OrganizationSummaryRepresentation;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,13 +54,13 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
     Post findLatestPost(@Param("user") User user, @Param("role") Role role, @Param("scope") Scope scope);
 
     @Query(value =
-        "select new hr.prism.board.representation.OrganizationSummaryRepresentation(post.organizationName, post.organizationLogo, " +
-            "count(post.id), max(post.createdTimestamp) mostRecent, sum(post.viewCount), sum(post.referralCount), sum(post.responseCount))" +
+        "select post.organizationName, post.organizationLogo, count(post.id), " +
+            "max(post.createdTimestamp) mostRecentPost, sum(post.viewCount), sum(post.referralCount), sum(post.responseCount) " +
             "from Post post " +
             "inner join post.parent board " +
             "where board.parent.id = :departmentId " +
             "group by post.organizationName " +
-            "order by mostRecent desc")
-    List<OrganizationSummaryRepresentation> findOrganizationSummaries(@Param("departmentId") Long departmentId);
+            "order by mostRecentPost desc")
+    List<Object[]> findOrganizations(@Param("departmentId") Long departmentId);
 
 }

@@ -1,8 +1,6 @@
 package hr.prism.board.domain;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @SuppressWarnings("unused")
@@ -22,12 +20,6 @@ public class ResourceTask extends BoardEntity {
 
     @Column(name = "notified_count")
     private Integer notifiedCount;
-
-    @OneToMany(mappedBy = "resourceTask")
-    private Set<ResourceTaskCompletion> completions = new HashSet<>();
-    
-    @Transient
-    private Boolean completedForUser;
 
     public Resource getResource() {
         return resource;
@@ -65,17 +57,4 @@ public class ResourceTask extends BoardEntity {
         return this;
     }
 
-    public Set<ResourceTaskCompletion> getCompletions() {
-        return completions;
-    }
-    
-    public Boolean getCompletedForUser() {
-        return completedForUser;
-    }
-    
-    public ResourceTask setCompletedForUser(Boolean completedForUser) {
-        this.completedForUser = completedForUser;
-        return this;
-    }
-    
 }

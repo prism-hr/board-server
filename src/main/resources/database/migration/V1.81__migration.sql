@@ -2,7 +2,7 @@ UPDATE resource
   INNER JOIN (
                SELECT
                  resource.parent_id AS id,
-                 count(resource.id) AS board_count
+                 postCount(resource.id) AS board_count
                FROM resource
                WHERE resource.scope = 'BOARD'
                GROUP BY resource.parent_id) AS board_count

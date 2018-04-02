@@ -13,10 +13,7 @@ import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
@@ -72,6 +69,11 @@ public class DepartmentApi {
         return departmentMapper.apply(departmentService.getDepartment(departmentId));
     }
 
+    @RequestMapping(value = "/api/departments/{departmentId}/dashboard", method = RequestMethod.GET)
+    public DepartmentDashboardRepresentation getDepartmentDashboard(@PathVariable Long departmentId) {
+        return departmentMapper.apply(departmentService.getDepartmentDashboard(departmentId));
+    }
+
     @RequestMapping(value = "/api/departments", method = RequestMethod.GET, params = "handle")
     public DepartmentRepresentation getDepartmentByHandle(@RequestParam String handle) {
         return departmentMapper.apply(departmentService.getDepartment(handle));
@@ -116,11 +118,6 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/departments/{departmentId}/programs", method = RequestMethod.GET)
     public List<String> getDepartmentPrograms(@PathVariable Long departmentId, @RequestParam String searchTerm) {
         return departmentService.findProgramsBySimilarName(departmentId, searchTerm);
-    }
-
-    @RequestMapping(value = "/api/departments/{departmentId}/tasks/{taskId}", method = RequestMethod.PUT)
-    public DepartmentRepresentation putTask(@PathVariable Long departmentId, @PathVariable Long taskId) {
-        return departmentMapper.apply(departmentService.putTask(departmentId, taskId));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = RequestMethod.GET, produces = "application/json")

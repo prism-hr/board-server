@@ -2,14 +2,12 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.domain.User;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 @Transactional
@@ -19,35 +17,17 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
     @Query(value =
         "select resourceTask " +
             "from ResourceTask resourceTask " +
-            "where resourceTask.resource.id = :resourceId")
-    List<ResourceTask> findByResourceId(@Param("resourceId") Long resourceId);
-
-    @Query(value =
-        "select resourceTask " +
-            "from ResourceTask resourceTask " +
-            "where resourceTask.resource.id in(:resourceIds) " +
+            "where resourceTask.resource.id = :resourceId " +
             "order by resourceTask.id")
-    List<ResourceTask> findByResource(@Param("resourceIds") Collection<Long> resourceIds);
-
-    @Query(value =
-        "select resourceTask " +
-            "from ResourceTask resourceTask " +
-            "inner join resourceTask.completions completion " +
-            "where resourceTask.resource.id in(:resourceIds) " +
-            "and completion.user = :user")
-    List<ResourceTask> findCompletionsByResource(@Param("resourceIds") Collection<Long> resourceIds, User user);
+    List<ResourceTask> findByResourceId(@Param("resourceId") Long resourceId);
 
     @Query(value =
         "select resourceTask.task " +
             "from ResourceTask resourceTask " +
             "where resourceTask.resource = :resource " +
-            "and resourceTask.id not in (" +
-            "select resourceTask.id " +
-            "from ResourceTask resourceTask " +
-            "inner join resourceTask.completions completion " +
-            "where resourceTask.resource = :resource " +
-            "and completion.user = :user)")
-    List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource, @Param("user") User user);
+            "and resourceTask.completed is null " +
+            "order by resourceTask.id")
+    List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource);
 
     @Query(value =
         "select resourceTask " +
@@ -96,17 +76,5 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
             "where resourceTask.resource = :resource " +
             "and resourceTask.completed is null")
     List<Long> findByResourceAndNotCompleted(@Param("resource") Resource resource);
-
-    @Query(value =
-        "select resourceTask.id " +
-            "from ResourceTask resourceTask " +
-            "where resourceTask.resource = :resource " +
-            "and resourceTask.id not in (" +
-            "select resourceTask.id " +
-            "from ResourceTask resourceTask " +
-            "inner join resourceTask.completions completion " +
-            "where resourceTask.resource = :resource " +
-            "and completion.user = :user)")
-    List<Long> findByResourceAndNotCompleted(@Param("resource") Resource resource, @Param("user") User user);
 
 }

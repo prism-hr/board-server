@@ -1,15 +1,11 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceTask;
-import hr.prism.board.domain.ResourceTaskCompletion;
-import hr.prism.board.domain.User;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
-import hr.prism.board.repository.ResourceTaskCompletionRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -25,7 +21,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,9 +51,6 @@ public class ResourceTaskService {
     private ResourceTaskRepository resourceTaskRepository;
 
     @Inject
-    private ResourceTaskCompletionRepository resourceTaskCompletionRepository;
-
-    @Inject
     private ActivityService activityService;
 
     @Lazy
@@ -76,21 +68,8 @@ public class ResourceTaskService {
         return resourceTaskRepository.findOne(id);
     }
 
-    public ArrayListMultimap<Long, ResourceTask> getTasks(Collection<Long> resourceIds, User user) {
-        List<ResourceTask> tasks = resourceTaskRepository.findByResource(resourceIds);
-        List<ResourceTask> completedTasks = resourceTaskRepository.findCompletionsByResource(resourceIds, user);
-
-        ArrayListMultimap<Long, ResourceTask> response = ArrayListMultimap.create();
-        tasks.forEach(task -> {
-            task.setCompletedForUser(completedTasks.contains(task));
-            response.put(task.getResource().getId(), task);
-        });
-
-        return response;
-    }
-
-    public List<hr.prism.board.enums.ResourceTask> getTasks(Resource resource, User user) {
-        return resourceTaskRepository.findByResource(resource, user);
+    public List<hr.prism.board.enums.ResourceTask> getTasks(Resource resource) {
+        return resourceTaskRepository.findByResource(resource);
     }
 
     public void createForNewResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
@@ -98,7 +77,6 @@ public class ResourceTaskService {
     }
 
     public void createForExistingResource(Long resourceId, Long userId, List<hr.prism.board.enums.ResourceTask> tasks) {
-        resourceTaskCompletionRepository.deleteByResourceId(resourceId);
         resourceTaskRepository.deleteByResourceId(resourceId);
         insertResourceTasks(resourceId, userId, tasks);
     }
@@ -110,22 +88,6 @@ public class ResourceTaskService {
         if (resourceTaskRepository.findByResourceAndNotCompleted(resource).isEmpty()) {
             activityService.deleteActivities(resource, Arrays.asList(hr.prism.board.enums.Activity.CREATE_TASK_ACTIVITY, hr.prism.board.enums.Activity.UPDATE_TASK_ACTIVITY));
             activityService.sendActivities(resource);
-        }
-    }
-
-    public void createCompletion(User user, Long taskId) {
-        ResourceTask resourceTask = resourceTaskRepository.findOne(taskId);
-        ResourceTaskCompletion completion = resourceTaskCompletionRepository.findByResourceTaskAndUser(resourceTask, user);
-        if (completion == null) {
-            resourceTaskCompletionRepository.save(new ResourceTaskCompletion().setResourceTask(resourceTask).setUser(user));
-            entityManager.flush();
-
-            if (resourceTaskRepository.findByResourceAndNotCompleted(resourceTask.getResource(), user).isEmpty()) {
-                Long userId = user.getId();
-                activityService.dismissActivities(resourceTask.getResource().getId(),
-                    ImmutableList.of(hr.prism.board.enums.Activity.CREATE_TASK_ACTIVITY, hr.prism.board.enums.Activity.UPDATE_TASK_ACTIVITY), userId);
-                activityService.sendActivities(userId);
-            }
         }
     }
 

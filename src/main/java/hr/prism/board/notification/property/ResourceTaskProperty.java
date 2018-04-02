@@ -1,11 +1,10 @@
 package hr.prism.board.notification.property;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
 import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.BoardNotificationException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.service.NotificationService;
+import hr.prism.board.service.NotificationService.NotificationRequest;
 import hr.prism.board.service.ResourceTaskService;
 import org.springframework.stereotype.Component;
 
@@ -22,15 +21,14 @@ public class ResourceTaskProperty implements NotificationProperty {
 
     private static final String CREATE_POST = "Got something to share - create some posts and start sending notifications.";
 
-    private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your page on other websites.";
+    private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your board to your website.";
 
     @Inject
     private ResourceTaskService resourceTaskService;
 
-    public String getValue(NotificationService.NotificationRequest notificationRequest) {
-        User user = notificationRequest.getRecipient();
+    public String getValue(NotificationRequest notificationRequest) {
         Resource resource = notificationRequest.getResource();
-        List<ResourceTask> tasks = resourceTaskService.getTasks(resource, user);
+        List<ResourceTask> tasks = resourceTaskService.getTasks(resource);
         if (tasks.isEmpty()) {
             throw new BoardNotificationException(ExceptionCode.EMPTY_RESOURCE_TASKS, "No tasks for resource " + resource.toString());
         }

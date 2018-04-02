@@ -14,14 +14,12 @@ import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.value.Statistics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,12 +30,10 @@ public class UserRoleService {
 
     private static final String MEMBER_STATISTICS =
         "SELECT user_role.department_id AS department_id, " +
-            "SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)) AS count_live, " +
-            "COUNT(user_role.id) AS count_all_time, " +
+            "SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), COUNT(user_role.id), " +
             "MAX(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL)) " +
             "FROM user_role " +
-            "WHERE user_role.department_id IN (:departmentIds) " +
-            "GROUP BY user_role.department_id";
+            "WHERE user_role.department_id = :departmentId";
 
     @Inject
     private UserRoleRepository userRoleRepository;
@@ -176,13 +172,10 @@ public class UserRoleService {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Long, Statistics> getMemberStatistics(Collection<Long> departmentIds) {
-        List<Object[]> rows = entityManager.createNativeQuery(MEMBER_STATISTICS)
-            .setParameter("departmentIds", departmentIds)
-            .getResultList();
-
-        return rows.stream().collect(Collectors.toMap(
-            row -> (Long) row[0], row -> new Statistics((Long) row[1], (Long) row[2], (LocalDateTime) row[3])));
+    public Object[] getMemberStatistics(Long departmentId) {
+        return (Object[]) entityManager.createNativeQuery(MEMBER_STATISTICS)
+            .setParameter("departmentIds", departmentId)
+            .getSingleResult();
     }
 
     private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {

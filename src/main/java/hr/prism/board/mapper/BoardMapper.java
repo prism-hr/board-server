@@ -31,7 +31,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
         Department department = (Department) board.getParent();
         return resourceMapper.apply(board, BoardRepresentation.class)
-            .setHandle(getHandle(board, department))
+            .setHandle(resourceMapper.getHandle(board, department))
             .setDepartment(departmentMapper.applySmall((Department) board.getParent()))
             .setPostCategories(resourceService.getCategories(board, CategoryType.POST));
     }
@@ -43,12 +43,8 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
         Department department = (Department) board.getParent();
         return resourceMapper.applySmall(board, BoardRepresentation.class)
-            .setHandle(getHandle(board, department))
+            .setHandle(resourceMapper.getHandle(board, department))
             .setDepartment(departmentMapper.applySmall((Department) board.getParent()));
-    }
-
-    private String getHandle(Board board, Department department) {
-        return board.getHandle().replaceFirst(department.getHandle() + "/", "");
     }
 
 }

@@ -1,10 +1,8 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.stripe.model.*;
 import hr.prism.board.domain.*;
-import hr.prism.board.domain.Department.DepartmentDashboard;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
@@ -20,7 +18,6 @@ import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.ResourceFilter;
-import hr.prism.board.value.Statistics;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -152,13 +149,35 @@ public class DepartmentService {
     public Department getDepartment(Long id) {
         User user = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
-        return checkPermissionsAndDecorate(user, department);
+        return verifyCanView(user, department);
     }
 
     public Department getDepartment(String handle) {
         User user = userService.getCurrentUser();
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, handle);
-        return checkPermissionsAndDecorate(user, department);
+        return verifyCanView(user, department);
+    }
+
+    public DepartmentDashboard getDepartmentDashboard(Long id) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
+        actionService.executeAction(user, department, Action.EDIT, () -> department);
+
+        Set<hr.prism.board.domain.ResourceTask> tasks = department.getTasks();
+        List<Board> boards = boardService.getBoards(id, true, State.ACCEPTED, null, null);
+        Object[] memberStatistics = userRoleService.getMemberStatistics(id);
+        List<Object[]> organizations = postService.getOrganizations(id);
+        Object[] postStatistics = postService.getPostStatistics(id);
+
+        List<Invoice> invoices = null;
+        try {
+            invoices = getInvoices(id);
+        } catch (Throwable t) {
+            LOGGER.warn("Cannot get invoices for department ID: " + id, t);
+        }
+
+        return new DepartmentDashboard().setDepartment(department).setTasks(tasks).setBoards(boards)
+            .setMemberStatistics(memberStatistics).setOrganizations(organizations).setPostStatistics(postStatistics).setInvoices(invoices);
     }
 
     public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
@@ -171,26 +190,9 @@ public class DepartmentService {
                     .setIncludePublicResources(includePublicDepartments)
                     .setOrderStatement("resource.name"));
 
-        List<Department> departments = new ArrayList<>();
-        List<Long> departmentIds = resources.stream().map(Resource::getId).collect(Collectors.toList());
-
-        Map<Long, Statistics> postStatisticsIndex = postService.getPostStatistics(departmentIds);
-        Map<Long, Statistics> memberStatisticsIndex = userRoleService.getMemberStatistics(departmentIds);
-        ArrayListMultimap<Long, hr.prism.board.domain.ResourceTask> userTaskIndex = resourceTaskService.getTasks(departmentIds, user);
-
-        resources.forEach(resource -> {
-            Department department = (Department) resource;
-            Long departmentId = department.getId();
-
-            Statistics postStatistics = postStatisticsIndex.get(departmentId);
-            Statistics memberStatistics = memberStatisticsIndex.get(departmentId);
-            List<hr.prism.board.domain.ResourceTask> userTasks = userTaskIndex.get(departmentId);
-            decorateDepartment(department, postStatistics, memberStatistics, userTasks);
-
-            departments.add(department);
-        });
-
-        return departments;
+        return resources.stream()
+            .map(resource -> (Department) resource)
+            .collect(Collectors.toList());
     }
 
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
@@ -292,16 +294,6 @@ public class DepartmentService {
             .setParameter("departmentId", departmentId)
             .getResultList();
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
-    }
-
-    public Department putTask(Long departmentId, Long taskId) {
-        User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        return (Department) actionService.executeAction(user, department, Action.EDIT, () -> {
-            resourceTaskService.createCompletion(user, taskId);
-            entityManager.flush();
-            return resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        });
     }
 
     public Department postMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
@@ -630,6 +622,10 @@ public class DepartmentService {
             responseReadiness.setRequireUserDemographicData(true);
         }
 
+        if (department.getMemberCategories().isEmpty()) {
+            return responseReadiness;
+        }
+
         if (!department.getMemberCategories().isEmpty()) {
             // Member category required - user role data expected
             UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
@@ -645,16 +641,7 @@ public class DepartmentService {
                     responseReadiness.setRequireUserRoleDemographicData(true)
                         .setUserRole(new UserRoleRepresentation().setMemberCategory(memberCategory).setMemberProgram(memberProgram).setMemberYear(memberYear));
                 } else {
-                    LocalDate academicYearStart;
-                    LocalDate baseline = LocalDate.now();
-                    if (baseline.getMonthValue() > 9) {
-                        // Academic year started this year
-                        academicYearStart = LocalDate.of(baseline.getYear(), 10, 1);
-                    } else {
-                        // Academic year started last year
-                        academicYearStart = LocalDate.of(baseline.getYear() - 1, 10, 1);
-                    }
-
+                    LocalDate academicYearStart = getAcademicYearStart();
                     if (academicYearStart.isAfter(userRole.getMemberDate())) {
                         // User role data out of date
                         responseReadiness.setRequireUserRoleDemographicData(true)
@@ -669,28 +656,7 @@ public class DepartmentService {
         return responseReadiness;
     }
 
-    private Department checkPermissionsAndDecorate(User user, Department department) {
-        if (actionService.canExecuteAction(department, Action.EDIT)) {
-            Long departmentId = department.getId();
-            Statistics postStatistics = postService.getPostStatistics(Collections.singletonList(departmentId)).get(departmentId);
-            Statistics memberStatistics = userRoleService.getMemberStatistics(Collections.singletonList(departmentId)).get(departmentId);
-            List<hr.prism.board.domain.ResourceTask> tasks = resourceTaskService.getTasks(Collections.singletonList(departmentId), user).get(departmentId);
-            List<Board> boards = boardService.getBoards(departmentId, true, State.ACCEPTED, null, null);
-            List<OrganizationSummaryRepresentation> organizations = postService.findOrganizationSummaries(departmentId);
-
-            InvoiceCollection invoices = null;
-            String customerId = department.getCustomerId();
-            if (customerId != null) {
-                try {
-                    invoices = paymentService.getInvoices(customerId);
-                } catch (Throwable t) {
-                    LOGGER.warn("Could not get invoices for customer: " + customerId, t);
-                }
-            }
-
-            decorateDepartment(department, postStatistics, memberStatistics, tasks, boards, organizations, invoices);
-        }
-
+    private Department verifyCanView(User user, Department department) {
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> department);
     }
 
@@ -708,29 +674,15 @@ public class DepartmentService {
         }
     }
 
-    private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
-                                    List<hr.prism.board.domain.ResourceTask> tasks) {
-        decorateDepartment(department, postStatistics, memberStatistics, tasks, null, null, null);
-    }
+    private LocalDate getAcademicYearStart() {
+        LocalDate baseline = LocalDate.now();
+        if (baseline.getMonthValue() > 9) {
+            // Academic year started this year
+            return LocalDate.of(baseline.getYear(), 10, 1);
+        }
 
-    private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
-                                    List<hr.prism.board.domain.ResourceTask> tasks, List<Board> boards, List<OrganizationSummaryRepresentation> organizations,
-                                    InvoiceCollection invoices) {
-        DepartmentDashboard dashboard = new DepartmentDashboard();
-        department.setDashboard(dashboard);
-
-        dashboard.setPostCount(postStatistics.getCount());
-        dashboard.setPostCountAllTime(postStatistics.getCountAllTime());
-        dashboard.setMostRecentPost(postStatistics.getMostRecent());
-
-        dashboard.setMemberCount(memberStatistics.getCount());
-        dashboard.setMemberCountAllTime(memberStatistics.getCountAllTime());
-        dashboard.setMostRecentMember(memberStatistics.getMostRecent());
-
-        dashboard.setTasks(tasks);
-        dashboard.setBoards(boards);
-        dashboard.setOrganizations(organizations);
-        dashboard.setInvoices(invoices);
+        // Academic year started last year
+        return LocalDate.of(baseline.getYear() - 1, 10, 1);
     }
 
 }

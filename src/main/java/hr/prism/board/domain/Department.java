@@ -1,13 +1,10 @@
 package hr.prism.board.domain;
 
 import com.stripe.model.Customer;
-import com.stripe.model.InvoiceCollection;
 import hr.prism.board.enums.Scope;
-import hr.prism.board.representation.OrganizationSummaryRepresentation;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @SuppressWarnings({"unused", "UnusedReturnValue"})
@@ -46,9 +43,6 @@ public class Department extends Resource {
 
     @Transient
     private Customer customer;
-
-    @Transient
-    private DepartmentDashboard dashboard;
 
     public Document getDocumentLogo() {
         return documentLogo;
@@ -106,14 +100,6 @@ public class Department extends Resource {
         this.customer = customer;
     }
 
-    public DepartmentDashboard getDashboard() {
-        return dashboard;
-    }
-
-    public void setDashboard(DepartmentDashboard dashboard) {
-        this.dashboard = dashboard;
-    }
-
     public void increaseMemberTobeUploadedCount(Long memberCountPending) {
         if (this.memberToBeUploadedCount == null) {
             this.memberToBeUploadedCount = memberCountPending;
@@ -131,110 +117,6 @@ public class Department extends Resource {
                 this.memberToBeUploadedCount = this.memberToBeUploadedCount - 1L;
             }
         }
-    }
-
-    public static class DepartmentDashboard {
-
-        private Long postCount;
-
-        private Long postCountAllTime;
-
-        private LocalDateTime mostRecentPost;
-
-        private Long memberCount;
-
-        private Long memberCountAllTime;
-
-        private LocalDateTime mostRecentMember;
-
-        private List<ResourceTask> tasks;
-
-        private List<Board> boards;
-
-        private List<OrganizationSummaryRepresentation> organizations;
-
-        private InvoiceCollection invoices;
-
-        public Long getPostCount() {
-            return postCount;
-        }
-
-        public void setPostCount(Long postCount) {
-            this.postCount = postCount;
-        }
-
-        public Long getPostCountAllTime() {
-            return postCountAllTime;
-        }
-
-        public void setPostCountAllTime(Long postCountAllTime) {
-            this.postCountAllTime = postCountAllTime;
-        }
-
-        public LocalDateTime getMostRecentPost() {
-            return mostRecentPost;
-        }
-
-        public void setMostRecentPost(LocalDateTime mostRecentPost) {
-            this.mostRecentPost = mostRecentPost;
-        }
-
-        public Long getMemberCount() {
-            return memberCount;
-        }
-
-        public void setMemberCount(Long memberCount) {
-            this.memberCount = memberCount;
-        }
-
-        public Long getMemberCountAllTime() {
-            return memberCountAllTime;
-        }
-
-        public void setMemberCountAllTime(Long memberCountAllTime) {
-            this.memberCountAllTime = memberCountAllTime;
-        }
-
-        public LocalDateTime getMostRecentMember() {
-            return mostRecentMember;
-        }
-
-        public void setMostRecentMember(LocalDateTime mostRecentMember) {
-            this.mostRecentMember = mostRecentMember;
-        }
-
-        public List<ResourceTask> getTasks() {
-            return tasks;
-        }
-
-        public void setTasks(List<ResourceTask> tasks) {
-            this.tasks = tasks;
-        }
-
-        public List<Board> getBoards() {
-            return boards;
-        }
-
-        public void setBoards(List<Board> boards) {
-            this.boards = boards;
-        }
-
-        public List<OrganizationSummaryRepresentation> getOrganizations() {
-            return organizations;
-        }
-
-        public void setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
-            this.organizations = organizations;
-        }
-
-        public InvoiceCollection getInvoices() {
-            return invoices;
-        }
-
-        public void setInvoices(InvoiceCollection invoices) {
-            this.invoices = invoices;
-        }
-
     }
 
 }

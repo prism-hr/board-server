@@ -37,7 +37,7 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private List<BoardRepresentation> boards;
 
-    private List<OrganizationSummaryRepresentation> organizations;
+    private List<DepartmentDashboardRepresentation.OrganizationRepresentation> organizations;
 
     private InvoiceCollection invoices;
 
@@ -167,11 +167,11 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public List<OrganizationSummaryRepresentation> getOrganizations() {
+    public List<DepartmentDashboardRepresentation.OrganizationRepresentation> getOrganizations() {
         return organizations;
     }
 
-    public DepartmentRepresentation setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
+    public DepartmentRepresentation setOrganizations(List<DepartmentDashboardRepresentation.OrganizationRepresentation> organizations) {
         this.organizations = organizations;
         return this;
     }

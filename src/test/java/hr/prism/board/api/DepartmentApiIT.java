@@ -533,7 +533,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertFalse(departmentR2.getTasks().get(0).getCompleted());
         Assert.assertFalse(departmentR2.getTasks().get(1).getCompleted());
         Assert.assertFalse(departmentR2.getTasks().get(2).getCompleted());
-        departmentApi.putTask(departmentId, departmentR2.getTasks().get(0).getId());
 
         testUserService.setAuthentication(departmentUser2Id);
         DepartmentRepresentation departmentR3 = departmentApi.getDepartment(departmentId);
@@ -581,8 +580,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertTrue(departmentR5.getTasks().get(0).getCompleted());
         Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
         Assert.assertFalse(departmentR5.getTasks().get(2).getCompleted());
-        departmentApi.putTask(departmentId, departmentR5.getTasks().get(1).getId());
-        departmentApi.putTask(departmentId, departmentR5.getTasks().get(2).getId());
 
         testUserService.setAuthentication(departmentUser2Id);
         DepartmentRepresentation departmentR6 = departmentApi.getDepartment(departmentId);
