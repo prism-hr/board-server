@@ -1,7 +1,9 @@
 package hr.prism.board.representation;
 
+import com.stripe.model.InvoiceCollection;
 import hr.prism.board.enums.MemberCategory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -15,21 +17,29 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
 
     private String handle;
 
+    private List<MemberCategory> memberCategories;
+
     private String customerId;
 
     private Long postCount;
 
     private Long postCountAllTime;
 
+    private LocalDateTime mostRecentPost;
+
     private Long memberCount;
 
     private Long memberCountAllTime;
 
-    private List<MemberCategory> memberCategories;
+    private LocalDateTime mostRecentMember;
 
     private List<ResourceTaskRepresentation> tasks;
 
+    private List<BoardRepresentation> boards;
+
     private List<OrganizationSummaryRepresentation> organizations;
+
+    private InvoiceCollection invoices;
 
     public String getSummary() {
         return summary;
@@ -67,6 +77,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
+    public List<MemberCategory> getMemberCategories() {
+        return memberCategories;
+    }
+
+    public DepartmentRepresentation setMemberCategories(List<MemberCategory> memberCategories) {
+        this.memberCategories = memberCategories;
+        return this;
+    }
+
     public String getCustomerId() {
         return customerId;
     }
@@ -94,6 +113,15 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
+    public LocalDateTime getMostRecentPost() {
+        return mostRecentPost;
+    }
+
+    public DepartmentRepresentation setMostRecentPost(LocalDateTime mostRecentPost) {
+        this.mostRecentPost = mostRecentPost;
+        return this;
+    }
+
     public Long getMemberCount() {
         return memberCount;
     }
@@ -112,12 +140,12 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
-    public List<MemberCategory> getMemberCategories() {
-        return memberCategories;
+    public LocalDateTime getMostRecentMember() {
+        return mostRecentMember;
     }
 
-    public DepartmentRepresentation setMemberCategories(List<MemberCategory> memberCategories) {
-        this.memberCategories = memberCategories;
+    public DepartmentRepresentation setMostRecentMember(LocalDateTime mostRecentMember) {
+        this.mostRecentMember = mostRecentMember;
         return this;
     }
 
@@ -130,12 +158,30 @@ public class DepartmentRepresentation extends ResourceRepresentation<DepartmentR
         return this;
     }
 
+    public List<BoardRepresentation> getBoards() {
+        return boards;
+    }
+
+    public DepartmentRepresentation setBoards(List<BoardRepresentation> boards) {
+        this.boards = boards;
+        return this;
+    }
+
     public List<OrganizationSummaryRepresentation> getOrganizations() {
         return organizations;
     }
 
     public DepartmentRepresentation setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
         this.organizations = organizations;
+        return this;
+    }
+
+    public InvoiceCollection getInvoices() {
+        return invoices;
+    }
+
+    public DepartmentRepresentation setInvoices(InvoiceCollection invoices) {
+        this.invoices = invoices;
         return this;
     }
 

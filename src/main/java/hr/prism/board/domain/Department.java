@@ -48,31 +48,7 @@ public class Department extends Resource {
     private Customer customer;
 
     @Transient
-    private Long postCount;
-
-    @Transient
-    private Long postCountAllTime;
-
-    @Transient
-    private LocalDateTime mostRecentPost;
-
-    @Transient
-    private Long memberCount;
-
-    @Transient
-    private Long memberCountAllTime;
-
-    @Transient
-    private LocalDateTime mostRecentMember;
-
-    @Transient
-    private List<ResourceTask> userTasks;
-
-    @Transient
-    private List<OrganizationSummaryRepresentation> organizations;
-
-    @Transient
-    private InvoiceCollection invoices;
+    private DepartmentDashboard dashboard;
 
     public Document getDocumentLogo() {
         return documentLogo;
@@ -122,84 +98,20 @@ public class Department extends Resource {
         this.lastTaskCreationTimestamp = lastTaskCreationTimestamp;
     }
 
-    public Long getPostCount() {
-        return postCount;
-    }
-
-    public void setPostCount(Long postCount) {
-        this.postCount = postCount;
-    }
-
-    public Long getPostCountAllTime() {
-        return postCountAllTime;
-    }
-
-    public void setPostCountAllTime(Long postCountAllTime) {
-        this.postCountAllTime = postCountAllTime;
-    }
-
-    public LocalDateTime getMostRecentPost() {
-        return mostRecentPost;
-    }
-
-    public void setMostRecentPost(LocalDateTime mostRecentPost) {
-        this.mostRecentPost = mostRecentPost;
-    }
-
-    public Long getMemberCount() {
-        return memberCount;
-    }
-
-    public void setMemberCount(Long memberCount) {
-        this.memberCount = memberCount;
-    }
-
-    public Long getMemberCountAllTime() {
-        return memberCountAllTime;
-    }
-
-    public void setMemberCountAllTime(Long memberCountAllTime) {
-        this.memberCountAllTime = memberCountAllTime;
-    }
-
-    public LocalDateTime getMostRecentMember() {
-        return mostRecentMember;
-    }
-
-    public void setMostRecentMember(LocalDateTime mostRecentMember) {
-        this.mostRecentMember = mostRecentMember;
-    }
-
-    public List<ResourceTask> getUserTasks() {
-        return userTasks;
-    }
-
-    public void setUserTasks(List<ResourceTask> userTasks) {
-        this.userTasks = userTasks;
-    }
-
-    public List<OrganizationSummaryRepresentation> getOrganizations() {
-        return organizations;
-    }
-
-    public void setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
-        this.organizations = organizations;
-    }
-
-    public InvoiceCollection getInvoices() {
-        return invoices;
-    }
-
-    public void setInvoices(InvoiceCollection invoices) {
-        this.invoices = invoices;
-    }
-
     public Customer getCustomer() {
         return customer;
     }
 
     public void setCustomer(Customer customer) {
         this.customer = customer;
+    }
+
+    public DepartmentDashboard getDashboard() {
+        return dashboard;
+    }
+
+    public void setDashboard(DepartmentDashboard dashboard) {
+        this.dashboard = dashboard;
     }
 
     public void increaseMemberTobeUploadedCount(Long memberCountPending) {
@@ -219,6 +131,110 @@ public class Department extends Resource {
                 this.memberToBeUploadedCount = this.memberToBeUploadedCount - 1L;
             }
         }
+    }
+
+    public static class DepartmentDashboard {
+
+        private Long postCount;
+
+        private Long postCountAllTime;
+
+        private LocalDateTime mostRecentPost;
+
+        private Long memberCount;
+
+        private Long memberCountAllTime;
+
+        private LocalDateTime mostRecentMember;
+
+        private List<ResourceTask> tasks;
+
+        private List<Board> boards;
+
+        private List<OrganizationSummaryRepresentation> organizations;
+
+        private InvoiceCollection invoices;
+
+        public Long getPostCount() {
+            return postCount;
+        }
+
+        public void setPostCount(Long postCount) {
+            this.postCount = postCount;
+        }
+
+        public Long getPostCountAllTime() {
+            return postCountAllTime;
+        }
+
+        public void setPostCountAllTime(Long postCountAllTime) {
+            this.postCountAllTime = postCountAllTime;
+        }
+
+        public LocalDateTime getMostRecentPost() {
+            return mostRecentPost;
+        }
+
+        public void setMostRecentPost(LocalDateTime mostRecentPost) {
+            this.mostRecentPost = mostRecentPost;
+        }
+
+        public Long getMemberCount() {
+            return memberCount;
+        }
+
+        public void setMemberCount(Long memberCount) {
+            this.memberCount = memberCount;
+        }
+
+        public Long getMemberCountAllTime() {
+            return memberCountAllTime;
+        }
+
+        public void setMemberCountAllTime(Long memberCountAllTime) {
+            this.memberCountAllTime = memberCountAllTime;
+        }
+
+        public LocalDateTime getMostRecentMember() {
+            return mostRecentMember;
+        }
+
+        public void setMostRecentMember(LocalDateTime mostRecentMember) {
+            this.mostRecentMember = mostRecentMember;
+        }
+
+        public List<ResourceTask> getTasks() {
+            return tasks;
+        }
+
+        public void setTasks(List<ResourceTask> tasks) {
+            this.tasks = tasks;
+        }
+
+        public List<Board> getBoards() {
+            return boards;
+        }
+
+        public void setBoards(List<Board> boards) {
+            this.boards = boards;
+        }
+
+        public List<OrganizationSummaryRepresentation> getOrganizations() {
+            return organizations;
+        }
+
+        public void setOrganizations(List<OrganizationSummaryRepresentation> organizations) {
+            this.organizations = organizations;
+        }
+
+        public InvoiceCollection getInvoices() {
+            return invoices;
+        }
+
+        public void setInvoices(InvoiceCollection invoices) {
+            this.invoices = invoices;
+        }
+
     }
 
 }

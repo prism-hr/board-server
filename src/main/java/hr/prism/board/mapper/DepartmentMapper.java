@@ -1,6 +1,7 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Department.DepartmentDashboard;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.University;
 import hr.prism.board.enums.CategoryType;
@@ -29,6 +30,9 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
     private UniversityMapper universityMapper;
 
     @Inject
+    private BoardMapper boardMapper;
+
+    @Inject
     private ResourceService resourceService;
 
     @Override
@@ -38,19 +42,15 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         }
 
         University university = (University) department.getParent();
-        return resourceMapper.apply(department, DepartmentRepresentation.class)
-            .setSummary(department.getSummary())
-            .setUniversity(universityMapper.apply(university))
-            .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
-            .setHandle(resourceMapper.getHandle(department, university))
-            .setCustomerId(department.getCustomerId())
-            .setPostCount(department.getPostCount())
-            .setPostCountAllTime(department.getPostCountAllTime())
-            .setMemberCount(department.getMemberCount())
-            .setMemberCountAllTime(department.getMemberCountAllTime())
-            .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)))
-            .setTasks(department.getTasks().stream().map(this::applyTask).collect(Collectors.toList()))
-            .setOrganizations(department.getOrganizations());
+        return applyDashboard(
+            department,
+            resourceMapper.apply(department, DepartmentRepresentation.class)
+                .setSummary(department.getSummary())
+                .setUniversity(universityMapper.apply(university))
+                .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
+                .setHandle(resourceMapper.getHandle(department, university))
+                .setCustomerId(department.getCustomerId())
+                .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER))));
     }
 
     DepartmentRepresentation applySmall(Department department) {
@@ -63,6 +63,28 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setUniversity(universityMapper.apply(university))
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(resourceMapper.getHandle(department, university));
+    }
+
+    private DepartmentRepresentation applyDashboard(Department department, DepartmentRepresentation representation) {
+        DepartmentDashboard dashboard = department.getDashboard();
+        if (dashboard == null) {
+            return representation;
+        }
+
+        representation.setPostCount(dashboard.getPostCount());
+        representation.setPostCountAllTime(dashboard.getPostCountAllTime());
+        representation.setMostRecentPost(dashboard.getMostRecentPost());
+
+        representation.setMemberCount(dashboard.getMemberCount());
+        representation.setMemberCountAllTime(dashboard.getMemberCountAllTime());
+        representation.setMostRecentMember(dashboard.getMostRecentMember());
+
+        representation.setTasks(dashboard.getTasks().stream().map(this::applyTask).collect(Collectors.toList()));
+        representation.setBoards(dashboard.getBoards().stream().map(boardMapper).collect(Collectors.toList()));
+        representation.setOrganizations(dashboard.getOrganizations());
+        representation.setInvoices(dashboard.getInvoices());
+
+        return representation;
     }
 
     private ResourceTaskRepresentation applyTask(ResourceTask task) {

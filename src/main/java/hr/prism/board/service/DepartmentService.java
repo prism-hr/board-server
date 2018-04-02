@@ -2,11 +2,9 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
-import com.stripe.model.Customer;
-import com.stripe.model.CustomerSubscriptionCollection;
-import com.stripe.model.ExternalAccountCollection;
-import com.stripe.model.InvoiceCollection;
+import com.stripe.model.*;
 import hr.prism.board.domain.*;
+import hr.prism.board.domain.Department.DepartmentDashboard;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
@@ -25,6 +23,8 @@ import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.Statistics;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -42,6 +42,8 @@ import java.util.stream.Stream;
 @Transactional
 @SuppressWarnings({"SqlResolve", "SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class DepartmentService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentService.class);
 
     private static final String SIMILAR_DEPARTMENT =
         "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
@@ -473,9 +475,18 @@ public class DepartmentService {
         return customerId == null ? null : paymentService.getCustomer(customerId);
     }
 
-    public InvoiceCollection getInvoices(Long departmentId) {
+    public List<Invoice> getInvoices(Long departmentId) {
         String customerId = getCustomerIdSecured(departmentId);
-        return customerId == null ? null : paymentService.getInvoices(customerId);
+        if (customerId == null) {
+            return null;
+        }
+
+        InvoiceCollection invoiceCollection = paymentService.getInvoices(customerId);
+        if (invoiceCollection == null) {
+            return null;
+        }
+
+        return invoiceCollection.getData();
     }
 
     public Customer addPaymentSourceAndSubscription(Long departmentId, String source) {
@@ -663,12 +674,21 @@ public class DepartmentService {
             Long departmentId = department.getId();
             Statistics postStatistics = postService.getPostStatistics(Collections.singletonList(departmentId)).get(departmentId);
             Statistics memberStatistics = userRoleService.getMemberStatistics(Collections.singletonList(departmentId)).get(departmentId);
-            List<hr.prism.board.domain.ResourceTask> userTasks = resourceTaskService.getTasks(Collections.singletonList(departmentId), user).get(departmentId);
+            List<hr.prism.board.domain.ResourceTask> tasks = resourceTaskService.getTasks(Collections.singletonList(departmentId), user).get(departmentId);
+            List<Board> boards = boardService.getBoards(departmentId, true, State.ACCEPTED, null, null);
             List<OrganizationSummaryRepresentation> organizations = postService.findOrganizationSummaries(departmentId);
 
+            InvoiceCollection invoices = null;
             String customerId = department.getCustomerId();
-            InvoiceCollection invoices = customerId == null ? null : paymentService.getInvoices(customerId);
-            decorateDepartment(department, postStatistics, memberStatistics, userTasks, organizations, invoices);
+            if (customerId != null) {
+                try {
+                    invoices = paymentService.getInvoices(customerId);
+                } catch (Throwable t) {
+                    LOGGER.warn("Could not get invoices for customer: " + customerId, t);
+                }
+            }
+
+            decorateDepartment(department, postStatistics, memberStatistics, tasks, boards, organizations, invoices);
         }
 
         return (Department) actionService.executeAction(user, department, Action.VIEW, () -> department);
@@ -689,24 +709,28 @@ public class DepartmentService {
     }
 
     private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
-                                    List<hr.prism.board.domain.ResourceTask> userTasks) {
-        decorateDepartment(department, postStatistics, memberStatistics, userTasks, null, null);
+                                    List<hr.prism.board.domain.ResourceTask> tasks) {
+        decorateDepartment(department, postStatistics, memberStatistics, tasks, null, null, null);
     }
 
     private void decorateDepartment(Department department, Statistics postStatistics, Statistics memberStatistics,
-                                    List<hr.prism.board.domain.ResourceTask> userTasks, List<OrganizationSummaryRepresentation> organizations,
+                                    List<hr.prism.board.domain.ResourceTask> tasks, List<Board> boards, List<OrganizationSummaryRepresentation> organizations,
                                     InvoiceCollection invoices) {
-        department.setPostCount(postStatistics.getCount());
-        department.setPostCountAllTime(postStatistics.getCountAllTime());
-        department.setMostRecentPost(postStatistics.getMostRecent());
+        DepartmentDashboard dashboard = new DepartmentDashboard();
+        department.setDashboard(dashboard);
 
-        department.setMemberCount(memberStatistics.getCount());
-        department.setMemberCountAllTime(memberStatistics.getCountAllTime());
-        department.setMostRecentMember(memberStatistics.getMostRecent());
+        dashboard.setPostCount(postStatistics.getCount());
+        dashboard.setPostCountAllTime(postStatistics.getCountAllTime());
+        dashboard.setMostRecentPost(postStatistics.getMostRecent());
 
-        department.setUserTasks(userTasks);
-        department.setOrganizations(organizations);
-        department.setInvoices(invoices);
+        dashboard.setMemberCount(memberStatistics.getCount());
+        dashboard.setMemberCountAllTime(memberStatistics.getCountAllTime());
+        dashboard.setMostRecentMember(memberStatistics.getMostRecent());
+
+        dashboard.setTasks(tasks);
+        dashboard.setBoards(boards);
+        dashboard.setOrganizations(organizations);
+        dashboard.setInvoices(invoices);
     }
 
 }
