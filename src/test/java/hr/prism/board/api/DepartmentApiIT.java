@@ -118,8 +118,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("f", documentR.getFileName());
 
         verifyNewDepartmentBoards(departmentId);
-        DepartmentDashboardRepresentation dashboard = departmentApi.getDepartmentDashboard(departmentId);
-
         ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
     }
 
@@ -427,60 +425,14 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
 
-        User departmentUser2 = testUserService.authenticate();
-        Long departmentUser2Id = departmentUser2.getId();
-
-        User departmentUser3 = testUserService.authenticate();
-        Long departmentUser3Id = departmentUser3.getId();
-
         testActivityService.record();
         testNotificationService.record();
         listenForActivities(departmentUserId);
-        listenForActivities(departmentUser2Id);
-        listenForActivities(departmentUser3Id);
-
-        testUserService.setAuthentication(departmentUserId);
-        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO()
-                .setUser(new UserDTO().setId(departmentUser2Id))
-                .setRole(Role.ADMINISTRATOR));
-
-        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
-            new UserRoleDTO()
-                .setUser(new UserDTO().setId(departmentUser3Id))
-                .setRole(Role.ADMINISTRATOR));
-
-        UserRole departmentUserRole2 =
-            userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
-        UserRole departmentUserRole3 =
-            userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser3, Role.ADMINISTRATOR);
-
-        String recipient2 = departmentUser2.getGivenName();
-        String recipient3 = departmentUser3.getGivenName();
-        testActivityService.verify(departmentUser2Id, new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY));
-        testActivityService.verify(departmentUser3Id, new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY));
-        testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
-                ImmutableMap.<String, String>builder().put("recipient", recipient2)
-                    .put("department", "department")
-                    .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
-                    .put("invitationUuid", departmentUserRole2.getUuid())
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser3Id),
-                ImmutableMap.<String, String>builder().put("recipient", recipient3)
-                    .put("department", "department")
-                    .put("resourceRedirect", serverUrl + "/redirect?resource=" + departmentId)
-                    .put("invitationUuid", departmentUserRole3.getUuid())
-                    .build()));
 
         LocalDateTime resourceTaskCreatedTimestamp =
             resourceTaskRepository.findByResourceId(departmentId).iterator().next().getCreatedTimestamp();
 
         String recipient = departmentUser.getGivenName();
-        String resourceTask =
-            "<ul><li>Ready to get started - visit the user management area to build your student list.</li>" +
-                "<li>Got something to share - create some posts and start sending notifications.</li>" +
-                "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>";
         String resourceTaskRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=tasks";
 
         resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
@@ -489,157 +441,26 @@ public class DepartmentApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
-        testActivityService.verify(departmentUser2Id,
-            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
-            new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
-        testActivityService.verify(departmentUser3Id,
-            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
-            new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
 
         Department department0 = (Department) resourceService.findOne(departmentId);
         String departmentAdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser, Role.ADMINISTRATOR).getUuid();
-        String departmentAdminRole2Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser2, Role.ADMINISTRATOR).getUuid();
-        String departmentAdminRole3Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser3, Role.ADMINISTRATOR).getUuid();
-
-        testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
-                ImmutableMap.<String, String>builder().put("recipient", recipient)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole1Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
-                ImmutableMap.<String, String>builder().put("recipient", recipient2)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole2Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
-                ImmutableMap.<String, String>builder().put("recipient", recipient3)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole3Uuid)
-                    .build()));
-
-        DepartmentRepresentation departmentR2 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR2.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR2.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR2.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR3 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR3.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR3.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR3.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR4 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR4.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR4.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR4.getTasks().get(2).getCompleted());
-
-        resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
-            resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval2Seconds + 1));
-        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder().put("recipient", recipient)
                     .put("department", "department")
                     .put("resourceTask",
-                        "<ul><li>Got something to share - create some posts and start sending notifications.</li>" +
-                            "<li>Time to tell the world - go to the badges section to learn about promoting your page on other websites.</li></ul>")
+                        "<ul><li>Ready to get started - visit the user management area to build your student list.</li>" +
+                            "<li>Got something to share - create some posts and start sending notifications.</li>" +
+                            "<li>Time to tell the world - go to the badges section to learn about promoting your board on your website.</li></ul>")
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole1Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
-                ImmutableMap.<String, String>builder().put("recipient", recipient2)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole2Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
-                ImmutableMap.<String, String>builder().put("recipient", recipient3)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole3Uuid)
                     .build()));
 
-        testUserService.setAuthentication(departmentUserId);
-        DepartmentRepresentation departmentR5 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR5.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR5.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR5.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR6 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR6.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR6.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR6.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR7 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR7.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR7.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR7.getTasks().get(2).getCompleted());
-
-        resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
-            resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval3Seconds + 1));
-
-        testActivityService.verify(departmentUserId);
-        List<ActivityRepresentation> activities2 = activityService.getActivities(departmentUser2Id);
-        Assert.assertEquals(
-            Arrays.asList(Activity.CREATE_TASK_ACTIVITY, Activity.JOIN_DEPARTMENT_ACTIVITY),
-            activities2.stream().map(ActivityRepresentation::getActivity).collect(Collectors.toList()));
-
-        List<ActivityRepresentation> activities3 = activityService.getActivities(departmentUser3Id);
-        Assert.assertEquals(
-            Arrays.asList(Activity.CREATE_TASK_ACTIVITY, Activity.JOIN_DEPARTMENT_ACTIVITY),
-            activities3.stream().map(ActivityRepresentation::getActivity).collect(Collectors.toList()));
-        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
-
-        testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser2,
-                ImmutableMap.<String, String>builder().put("recipient", recipient2)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole2Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser3,
-                ImmutableMap.<String, String>builder().put("recipient", recipient3)
-                    .put("department", "department")
-                    .put("resourceTask", resourceTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole3Uuid)
-                    .build()));
-
-        testUserService.setAuthentication(departmentUserId);
-        DepartmentRepresentation departmentR8 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR8.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR8.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR8.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR9 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR9.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR9.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR9.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR10 = departmentApi.getDepartment(departmentId);
-        Assert.assertFalse(departmentR10.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR10.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR10.getTasks().get(2).getCompleted());
-
-        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
-        testNotificationService.verify();
-        testUserService.setAuthentication(departmentUserId);
+        DepartmentDashboardRepresentation dashboard1 = departmentApi.getDepartmentDashboard(departmentId);
+        Assert.assertNull(dashboard1.getTasks().get(0).getCompleted());
+        Assert.assertNull(dashboard1.getTasks().get(1).getCompleted());
+        Assert.assertNull(dashboard1.getTasks().get(2).getCompleted());
 
         departmentApi.postMembers(departmentId,
             Collections.singletonList(
@@ -656,25 +477,26 @@ public class DepartmentApiIT extends AbstractIT {
                     .setMemberYear(1)
                     .setExpiryDate(LocalDate.now().plusYears(3))));
 
-        testUserService.setAuthentication(departmentUserId);
-        DepartmentRepresentation departmentR11 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR11.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR11.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR11.getTasks().get(2).getCompleted());
+        resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
+            resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval2Seconds + 1));
 
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR12 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR12.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR12.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR12.getTasks().get(2).getCompleted());
+        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+                ImmutableMap.<String, String>builder().put("recipient", recipient)
+                    .put("department", "department")
+                    .put("resourceTask",
+                        "<ul><li>Got something to share - create some posts and start sending notifications.</li>" +
+                            "<li>Time to tell the world - go to the badges section to learn about promoting your board on your website.</li></ul>")
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("invitationUuid", departmentAdminRole1Uuid)
+                    .build()));
 
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR13 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR13.getTasks().get(0).getCompleted());
-        Assert.assertFalse(departmentR13.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR13.getTasks().get(2).getCompleted());
+        DepartmentDashboardRepresentation dashboard2 = departmentApi.getDepartmentDashboard(departmentId);
+        Assert.assertTrue(dashboard2.getTasks().get(0).getCompleted());
+        Assert.assertNull(dashboard2.getTasks().get(1).getCompleted());
+        Assert.assertNull(dashboard2.getTasks().get(2).getCompleted());
 
-        testUserService.setAuthentication(departmentUserId);
         Long boardId = boardApi.getBoards(departmentId, true, null, null, null).get(0).getId();
         postApi.postPost(boardId,
             new PostDTO()
@@ -688,23 +510,27 @@ public class DepartmentApiIT extends AbstractIT {
                 .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
                 .setApplyWebsite("http://www.google.co.uk"));
 
-        testUserService.setAuthentication(departmentUserId);
-        DepartmentRepresentation departmentR14 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR14.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR14.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR14.getTasks().get(2).getCompleted());
+        resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
+            resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval3Seconds + 1));
 
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR15 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR15.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR15.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR15.getTasks().get(2).getCompleted());
+        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
+        testNotificationService.verify(
+            new TestNotificationService.NotificationInstance(Notification.CREATE_TASK_NOTIFICATION, departmentUser,
+                ImmutableMap.<String, String>builder().put("recipient", recipient)
+                    .put("department", "department")
+                    .put("resourceTask",
+                        "<ul><li>Time to tell the world - go to the badges section to learn about promoting your board on your website.</li></ul>")
+                    .put("resourceTaskRedirect", resourceTaskRedirect)
+                    .put("invitationUuid", departmentAdminRole1Uuid)
+                    .build()));
 
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR16 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR16.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR16.getTasks().get(1).getCompleted());
-        Assert.assertFalse(departmentR16.getTasks().get(2).getCompleted());
+        DepartmentDashboardRepresentation dashboard3 = departmentApi.getDepartmentDashboard(departmentId);
+        Assert.assertTrue(dashboard3.getTasks().get(0).getCompleted());
+        Assert.assertTrue(dashboard3.getTasks().get(1).getCompleted());
+        Assert.assertNull(dashboard3.getTasks().get(2).getCompleted());
+
+        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
+        testNotificationService.verify();
 
         WidgetOptionsDTO optionsDTO = new WidgetOptionsDTO();
         try {
@@ -713,42 +539,11 @@ public class DepartmentApiIT extends AbstractIT {
             throw new Error(e);
         }
 
-        testUserService.setAuthentication(departmentUserId);
-        DepartmentRepresentation departmentR17 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR17.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR17.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR17.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR18 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR18.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR18.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR18.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR19 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR19.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR19.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR19.getTasks().get(2).getCompleted());
-        scheduledService.updateDepartmentTasks(scheduledService.getBaseline());
-
-        testUserService.setAuthentication(departmentUserId);
-        DepartmentRepresentation departmentR20 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR20.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR20.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR20.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser2Id);
-        DepartmentRepresentation departmentR21 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR21.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR21.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR21.getTasks().get(2).getCompleted());
-
-        testUserService.setAuthentication(departmentUser3Id);
-        DepartmentRepresentation departmentR22 = departmentApi.getDepartment(departmentId);
-        Assert.assertTrue(departmentR22.getTasks().get(0).getCompleted());
-        Assert.assertTrue(departmentR22.getTasks().get(1).getCompleted());
-        Assert.assertTrue(departmentR22.getTasks().get(2).getCompleted());
+        testActivityService.verify(departmentUserId);
+        DepartmentDashboardRepresentation dashboard4 = departmentApi.getDepartmentDashboard(departmentId);
+        Assert.assertTrue(dashboard4.getTasks().get(0).getCompleted());
+        Assert.assertTrue(dashboard4.getTasks().get(1).getCompleted());
+        Assert.assertTrue(dashboard4.getTasks().get(2).getCompleted());
 
         LocalDateTime baseline = scheduledService.getBaseline();
         LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
@@ -765,12 +560,6 @@ public class DepartmentApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
-        testActivityService.verify(departmentUser2Id,
-            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
-            new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
-        testActivityService.verify(departmentUser3Id,
-            new TestActivityService.ActivityInstance(departmentId, Activity.JOIN_DEPARTMENT_ACTIVITY),
-            new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
 
         String resourceUpdateTask =
             "<ul><li>New students arriving - visit the user management area to update your student list.</li></ul>";
@@ -781,20 +570,6 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTask", resourceUpdateTask)
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole1Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser2,
-                ImmutableMap.<String, String>builder().put("recipient", recipient2)
-                    .put("department", "department")
-                    .put("resourceTask", resourceUpdateTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole2Uuid)
-                    .build()),
-            new TestNotificationService.NotificationInstance(Notification.UPDATE_TASK_NOTIFICATION, departmentUser3,
-                ImmutableMap.<String, String>builder().put("recipient", recipient3)
-                    .put("department", "department")
-                    .put("resourceTask", resourceUpdateTask)
-                    .put("resourceTaskRedirect", resourceTaskRedirect)
-                    .put("invitationUuid", departmentAdminRole3Uuid)
                     .build()));
 
         testActivityService.stop();
@@ -1414,33 +1189,89 @@ public class DepartmentApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldCompileStatistics() {
+    public void shouldSupportDepartmentDashboard() {
         Long departmentUserId = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
-        DepartmentDTO departmentDTO = new DepartmentDTO().setName("department").setSummary("department summary");
 
-        Long departmentId = departmentApi.postDepartment(universityId, departmentDTO).getId();
-        departmentApi.postDepartment(universityId, new DepartmentDTO().setName("other department").setSummary("department summary"));
-        verifyStatistics(departmentId, 2L, 0L, 0L, 0L);
+        Long departmentId1 = departmentApi.postDepartment(universityId,
+            new DepartmentDTO().setName("department 1").setSummary("department summary")).getId();
+        Long departmentId2 = departmentApi.postDepartment(universityId,
+            new DepartmentDTO().setName("department 2").setSummary("department summary")).getId();
 
-        Long board1Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board1")).getId();
-        Long board2Id = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard().setName("board2")).getId();
-        verifyStatistics(departmentId, 4L, 0L, 0L, 0L);
+        StatisticsRepresentation emptyMemberStatistics =
+            new StatisticsRepresentation<>()
+                .setCountLive(0L)
+                .setCountThisYear(0L)
+                .setCountAllTime(0L)
+                .setMostRecent(null);
 
-        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+        PostStatisticsRepresentation emptyPostStatistics =
+            new PostStatisticsRepresentation()
+                .setCountLive(0L)
+                .setCountThisYear(0L)
+                .setCountAllTime(0L)
+                .setMostRecent(null)
+                .setViewCountLive(0L)
+                .setViewCountThisYear(0L)
+                .setViewCountAllTime(0L)
+                .setMostRecentView(null)
+                .setReferralCountLive(0L)
+                .setReferralCountThisYear(0L)
+                .setReferralCountAllTime(0L)
+                .setMostRecentReferral(null)
+                .setResponseCountLive(0L)
+                .setResponseCountThisYear(0L)
+                .setResponseCountAllTime(0L)
+                .setMostRecentResponse(null);
+
+        DepartmentDashboardRepresentation department1Dashboard1 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(emptyMemberStatistics, department1Dashboard1.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department1Dashboard1.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard1 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard1.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard1.getPostStatistics());
+
+        UserRoleRepresentation member1 = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId1,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
                 .setRole(Role.MEMBER));
-        verifyStatistics(departmentId, 4L, 0L, 0L, 1L);
 
-        resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+        DepartmentDashboardRepresentation department1Dashboard2 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(1L)
+                .setCountThisYear(1L)
+                .setCountAllTime(1L)
+                .setMostRecent(member1.getCreatedTimestamp()),
+            department1Dashboard2.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department1Dashboard2.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard2 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard2.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard2.getPostStatistics());
+
+        UserRoleRepresentation member2 = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId1,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
                 .setRole(Role.MEMBER));
-        verifyStatistics(departmentId, 4L, 0L, 0L, 2L);
 
-        Long memberUser1Id = testUserService.authenticate().getId();
-        departmentApi.postMembershipRequest(departmentId,
+        DepartmentDashboardRepresentation department1Dashboard3 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(2L)
+                .setCountThisYear(2L)
+                .setCountAllTime(2L)
+                .setMostRecent(member2.getCreatedTimestamp()),
+            department1Dashboard3.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department1Dashboard3.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard3 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard3.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard3.getPostStatistics());
+
+        Long memberId3 = testUserService.authenticate().getId();
+        departmentApi.postMembershipRequest(departmentId1,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom")
                     .setDomicile("GBR")
@@ -1449,47 +1280,172 @@ public class DepartmentApiIT extends AbstractIT {
                     .setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
 
-        Long memberUser2Id = testUserService.authenticate().getId();
-        departmentApi.postMembershipRequest(departmentId, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.THIRTY_THIRTYNINE)
-            .setLocationNationality(
+        Long memberId4 = testUserService.authenticate().getId();
+        departmentApi.postMembershipRequest(departmentId1,
+            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom")
                     .setDomicile("GBR")
                     .setGoogleId("googleId")
                     .setLatitude(BigDecimal.ONE)
                     .setLongitude(BigDecimal.ONE)))
-            .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
-
-        verifyStatistics(departmentId, 4L, 0L, 0L, 4L);
+                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
 
         testUserService.setAuthentication(departmentUserId);
-        departmentApi.putMembershipRequest(departmentId, memberUser1Id, "accepted");
+        UserRolesRepresentation userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId1, null);
+        LocalDateTime member3CreatedTimestamp = userRoles.getMemberRequests().stream()
+            .filter(userRole -> userRole.getUser().getId().equals(memberId3))
+            .findFirst().get().getCreatedTimestamp();
 
-        verifyStatistics(departmentId, 4L, 0L, 0L, 4L);
-        departmentApi.putMembershipRequest(departmentId, memberUser2Id, "rejected");
+        LocalDateTime member4CreatedTimestamp = userRoles.getMemberRequests().stream()
+            .filter(userRole -> userRole.getUser().getId().equals(memberId4))
+            .findFirst().get().getCreatedTimestamp();
 
-        verifyStatistics(departmentId, 4L, 0L, 0L, 3L);
+        DepartmentDashboardRepresentation department1Dashboard4 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(4L)
+                .setCountThisYear(4L)
+                .setCountAllTime(4L)
+                .setMostRecent(member4CreatedTimestamp),
+            department1Dashboard4.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department1Dashboard4.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard4 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard4.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard4.getPostStatistics());
 
         testUserService.setAuthentication(departmentUserId);
-        boardApi.executeAction(board1Id, "reject", new BoardPatchDTO());
-        boardApi.executeAction(board2Id, "reject", new BoardPatchDTO());
-        verifyStatistics(departmentId, 2L, 0L, 0L, 3L);
+        departmentApi.putMembershipRequest(departmentId1, memberId3, "accepted");
 
-        boardApi.executeAction(board1Id, "restore", new BoardPatchDTO());
-        verifyStatistics(departmentId, 3L, 0L, 0L, 3L);
+        verifyStatistics(departmentId1, 4L, 0L, 0L, 4L);
+        departmentApi.putMembershipRequest(departmentId1, memberId4, "rejected");
+
+        DepartmentDashboardRepresentation department1Dashboard5 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(3L)
+                .setCountThisYear(3L)
+                .setCountAllTime(3L)
+                .setMostRecent(member3CreatedTimestamp),
+            department1Dashboard5.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department1Dashboard5.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard5 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard5.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard5.getPostStatistics());
 
         testUserService.authenticate();
-        Long postId = postApi.postPost(board1Id,
-            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
-        verifyStatistics(departmentId, 3L, 0L, 0L, 3L);
+        PostRepresentation post = postApi.postPost(department1Dashboard1.getBoards().get(0).getId(),
+            TestHelper.smallSamplePost()
+                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                .setPostCategories(Collections.singletonList("Employment")));
+        Long postId = post.getId();
+
+        testUserService.setAuthentication(departmentUserId);
+        DepartmentDashboardRepresentation department1Dashboard6 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(3L)
+                .setCountThisYear(3L)
+                .setCountAllTime(3L)
+                .setMostRecent(member3CreatedTimestamp),
+            department1Dashboard6.getMemberStatistics());
+
+        Assert.assertEquals(
+            new PostStatisticsRepresentation()
+                .setCountLive(0L)
+                .setCountThisYear(1L)
+                .setCountAllTime(1L)
+                .setMostRecent(post.getCreatedTimestamp())
+                .setViewCountLive(0L)
+                .setViewCountThisYear(0L)
+                .setViewCountAllTime(0L)
+                .setMostRecentView(null)
+                .setReferralCountLive(0L)
+                .setReferralCountThisYear(0L)
+                .setReferralCountAllTime(0L)
+                .setMostRecentReferral(null)
+                .setResponseCountLive(0L)
+                .setResponseCountThisYear(0L)
+                .setResponseCountAllTime(0L)
+                .setMostRecentResponse(null),
+            department1Dashboard6.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard6 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard6.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard6.getPostStatistics());
 
         testUserService.setAuthentication(departmentUserId);
         postApi.executeAction(postId, "accept", new PostPatchDTO());
         postService.publishAndRetirePosts(LocalDateTime.now());
-        verifyStatistics(departmentId, 3L, 1L, 1L, 3L);
+
+        DepartmentDashboardRepresentation department1Dashboard7 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(3L)
+                .setCountThisYear(3L)
+                .setCountAllTime(3L)
+                .setMostRecent(member3CreatedTimestamp),
+            department1Dashboard7.getMemberStatistics());
+
+        Assert.assertEquals(
+            new PostStatisticsRepresentation()
+                .setCountLive(1L)
+                .setCountThisYear(1L)
+                .setCountAllTime(1L)
+                .setMostRecent(post.getCreatedTimestamp())
+                .setViewCountLive(0L)
+                .setViewCountThisYear(0L)
+                .setViewCountAllTime(0L)
+                .setMostRecentView(null)
+                .setReferralCountLive(0L)
+                .setReferralCountThisYear(0L)
+                .setReferralCountAllTime(0L)
+                .setMostRecentReferral(null)
+                .setResponseCountLive(0L)
+                .setResponseCountThisYear(0L)
+                .setResponseCountAllTime(0L)
+                .setMostRecentResponse(null),
+            department1Dashboard7.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard7 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard7.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard7.getPostStatistics());
 
         postApi.executeAction(postId, "reject", new PostPatchDTO().setComment("Not acceptable"));
-        verifyStatistics(departmentId, 3L, 0L, 1L, 3L);
+
+        DepartmentDashboardRepresentation department1Dashboard8 = departmentApi.getDepartmentDashboard(departmentId1);
+        Assert.assertEquals(
+            new StatisticsRepresentation<>()
+                .setCountLive(3L)
+                .setCountThisYear(3L)
+                .setCountAllTime(3L)
+                .setMostRecent(member3CreatedTimestamp),
+            department1Dashboard8.getMemberStatistics());
+
+        Assert.assertEquals(
+            new PostStatisticsRepresentation()
+                .setCountLive(0L)
+                .setCountThisYear(1L)
+                .setCountAllTime(1L)
+                .setMostRecent(post.getCreatedTimestamp())
+                .setViewCountLive(0L)
+                .setViewCountThisYear(0L)
+                .setViewCountAllTime(0L)
+                .setMostRecentView(null)
+                .setReferralCountLive(0L)
+                .setReferralCountThisYear(0L)
+                .setReferralCountAllTime(0L)
+                .setMostRecentReferral(null)
+                .setResponseCountLive(0L)
+                .setResponseCountThisYear(0L)
+                .setResponseCountAllTime(0L)
+                .setMostRecentResponse(null),
+            department1Dashboard8.getPostStatistics());
+
+        DepartmentDashboardRepresentation department2Dashboard8 = departmentApi.getDepartmentDashboard(departmentId2);
+        Assert.assertEquals(emptyMemberStatistics, department2Dashboard8.getMemberStatistics());
+        Assert.assertEquals(emptyPostStatistics, department2Dashboard8.getPostStatistics());
     }
 
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
@@ -1591,15 +1547,15 @@ public class DepartmentApiIT extends AbstractIT {
 
     private void verifyStatistics(Long departmentId, Long boardCount, Long postCount, Long authorCount, Long memberCount) {
         DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
-        TestHelper.verifyNullableCount(postCount, departmentR.getPostCount());
-        TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
-
-        List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments(true, null);
-        TestHelper.verifyNullableCount(postCount, departmentRs.get(0).getPostCount());
-        TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
-
-        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getPostCount());
-        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
+//        TestHelper.verifyNullableCount(postCount, departmentR.getPostCount());
+//        TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
+//
+//        List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments(true, null);
+//        TestHelper.verifyNullableCount(postCount, departmentRs.get(0).getPostCount());
+//        TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
+//
+//        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getPostCount());
+//        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
     }
 
     private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, MemberCategory expectedMemberCategory, UserRoleRepresentation actual) {

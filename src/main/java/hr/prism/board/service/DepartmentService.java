@@ -17,7 +17,10 @@ import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.UserRoleEventService;
+import hr.prism.board.value.Organization;
+import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.Statistics;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -31,7 +34,10 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -163,11 +169,11 @@ public class DepartmentService {
         Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
 
-        Set<hr.prism.board.domain.ResourceTask> tasks = department.getTasks();
+        List<hr.prism.board.domain.ResourceTask> tasks = resourceTaskService.getTasks(id);
         List<Board> boards = boardService.getBoards(id, true, State.ACCEPTED, null, null);
-        Object[] memberStatistics = userRoleService.getMemberStatistics(id);
-        List<Object[]> organizations = postService.getOrganizations(id);
-        Object[] postStatistics = postService.getPostStatistics(id);
+        Statistics memberStatistics = userRoleService.getMemberStatistics(id);
+        List<Organization> organizations = postService.getOrganizations(id);
+        PostStatistics postStatistics = postService.getPostStatistics(id);
 
         List<Invoice> invoices = null;
         try {

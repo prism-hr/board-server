@@ -360,7 +360,7 @@ public class PostApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportPostLifecycleAndPermissions() {
+    public void shouldSupportPostActionsAndPermissions() {
         // Create departmentResource and board
         User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
@@ -1073,27 +1073,29 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/organization_autosuggest_setup.sql")
     public void shouldSuggestOrganizations() {
-        List<String> organizations = postApi.lookupOrganizations("Computer");
+        List<OrganizationRepresentation> organizations = postApi.lookupOrganizations("Computer");
         Assert.assertEquals(3, organizations.size());
 
-        Assert.assertEquals("Computer Science Department", organizations.get(0));
-        Assert.assertEquals("Department of Computer Science", organizations.get(1));
-        Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(2));
+        Assert.assertEquals("Computer Science Department", organizations.get(0).getName());
+        Assert.assertEquals("Department of Computer Science", organizations.get(1).getName());
+        Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(2).getName());
 
         organizations = postApi.lookupOrganizations("Computer Science Laboratory");
         Assert.assertEquals(3, organizations.size());
 
-        Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(0));
-        Assert.assertEquals("Computer Science Department", organizations.get(1));
-        Assert.assertEquals("Department of Computer Science", organizations.get(2));
+        Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(0).getName());
+        Assert.assertEquals("Computer Science Department", organizations.get(1).getName());
+        Assert.assertEquals("Department of Computer Science", organizations.get(2).getName());
 
         organizations = postApi.lookupOrganizations("School of Informatics");
         Assert.assertEquals(1, organizations.size());
 
-        Assert.assertEquals("School of Informatics", organizations.get(0));
+        Assert.assertEquals("School of Informatics", organizations.get(0).getName());
 
         organizations = postApi.lookupOrganizations("Physics");
         Assert.assertEquals(1, organizations.size());
+
+        Assert.assertEquals("Physics Department", organizations.get(0).getName());
 
         organizations = postApi.lookupOrganizations("Mathematics");
         Assert.assertEquals(0, organizations.size());

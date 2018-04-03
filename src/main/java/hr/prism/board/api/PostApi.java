@@ -7,9 +7,11 @@ import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.mapper.OrganizationMapper;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
+import hr.prism.board.representation.OrganizationRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
@@ -35,6 +37,9 @@ public class PostApi {
 
     @Inject
     private PostMapper postMapper;
+
+    @Inject
+    private OrganizationMapper organizationMapper;
 
     @Inject
     private ResourceService resourceService;
@@ -80,8 +85,8 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts/organizations", method = RequestMethod.GET)
-    public List<String> lookupOrganizations(@RequestParam String query) {
-        return postService.findOrganizationsBySimilarName(query);
+    public List<OrganizationRepresentation> lookupOrganizations(@RequestParam String query) {
+        return postService.findOrganizationsBySimilarName(query).stream().map(organizationMapper::applySmall).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/posts/referrals/{referral}", method = RequestMethod.GET)

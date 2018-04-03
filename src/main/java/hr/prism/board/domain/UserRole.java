@@ -3,9 +3,11 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
+import hr.prism.board.value.Statistics;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @NamedEntityGraph(
@@ -13,6 +15,27 @@ import java.time.LocalDate;
     attributeNodes = {
         @NamedAttributeNode(value = "resource"),
         @NamedAttributeNode(value = "user")})
+@NamedNativeQuery(
+    name = "memberStatistics",
+    query =
+        "SELECT COALESCE(SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), 0) as countLive, " +
+            "COALESCE(SUM(IF(user_role.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
+            "COUNT(user_role.id) as countAllTime, " +
+            "MAX(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL)) as mostRecent " +
+            "FROM user_role " +
+            "WHERE user_role.resource_id = :departmentId " +
+            "AND user_role.role = 'MEMBER' " +
+            "AND user_role.state IN ('PENDING', 'ACCEPTED')",
+    resultSetMapping = "memberStatistics")
+@SqlResultSetMapping(
+    name = "memberStatistics",
+    classes = @ConstructorResult(
+        targetClass = Statistics.class,
+        columns = {
+            @ColumnResult(name = "countLive", type = Long.class),
+            @ColumnResult(name = "countThisYear", type = Long.class),
+            @ColumnResult(name = "countAllTime", type = Long.class),
+            @ColumnResult(name = "mostRecent", type = LocalDateTime.class)}))
 @Table(name = "user_role", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_id", "role"}))
 public class UserRole extends BoardEntity {
 

@@ -68,6 +68,10 @@ public class ResourceTaskService {
         return resourceTaskRepository.findOne(id);
     }
 
+    public List<ResourceTask> getTasks(Long resourceId) {
+        return resourceTaskRepository.findByResourceId(resourceId);
+    }
+
     public List<hr.prism.board.enums.ResourceTask> getTasks(Resource resource) {
         return resourceTaskRepository.findByResource(resource);
     }

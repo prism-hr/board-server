@@ -1,23 +1,25 @@
 package hr.prism.board.domain;
 
 import com.stripe.model.Invoice;
+import hr.prism.board.value.Organization;
+import hr.prism.board.value.PostStatistics;
+import hr.prism.board.value.Statistics;
 
 import java.util.List;
-import java.util.Set;
 
 public class DepartmentDashboard {
 
     private Department department;
 
-    private Set<ResourceTask> tasks;
+    private List<ResourceTask> tasks;
 
     private List<Board> boards;
 
-    private Object[] memberStatistics;
+    private Statistics memberStatistics;
 
-    private List<Object[]> organizations;
+    private List<Organization> organizations;
 
-    private Object[] postStatistics;
+    private PostStatistics postStatistics;
 
     private List<Invoice> invoices;
 
@@ -30,11 +32,11 @@ public class DepartmentDashboard {
         return this;
     }
 
-    public Set<ResourceTask> getTasks() {
+    public List<ResourceTask> getTasks() {
         return tasks;
     }
 
-    public DepartmentDashboard setTasks(Set<ResourceTask> tasks) {
+    public DepartmentDashboard setTasks(List<ResourceTask> tasks) {
         this.tasks = tasks;
         return this;
     }
@@ -48,29 +50,29 @@ public class DepartmentDashboard {
         return this;
     }
 
-    public Object[] getMemberStatistics() {
+    public Statistics getMemberStatistics() {
         return memberStatistics;
     }
 
-    public DepartmentDashboard setMemberStatistics(Object[] memberStatistics) {
+    public DepartmentDashboard setMemberStatistics(Statistics memberStatistics) {
         this.memberStatistics = memberStatistics;
         return this;
     }
 
-    public List<Object[]> getOrganizations() {
+    public List<Organization> getOrganizations() {
         return organizations;
     }
 
-    public DepartmentDashboard setOrganizations(List<Object[]> organizations) {
+    public DepartmentDashboard setOrganizations(List<Organization> organizations) {
         this.organizations = organizations;
         return this;
     }
 
-    public Object[] getPostStatistics() {
+    public PostStatistics getPostStatistics() {
         return postStatistics;
     }
 
-    public DepartmentDashboard setPostStatistics(Object[] postStatistics) {
+    public DepartmentDashboard setPostStatistics(PostStatistics postStatistics) {
         this.postStatistics = postStatistics;
         return this;
     }

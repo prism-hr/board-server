@@ -193,7 +193,7 @@ public class BoardApiIT extends AbstractIT {
     }
 
     @Test
-    public void shouldSupportBoardLifeCycleAndPermissions() {
+    public void shouldSupportBoardActionsAndPermissions() {
         // Create department and board
         User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();

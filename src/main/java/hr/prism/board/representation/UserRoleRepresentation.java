@@ -5,6 +5,7 @@ import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class UserRoleRepresentation {
@@ -26,6 +27,10 @@ public class UserRoleRepresentation {
     private LocalDate expiryDate;
 
     private boolean viewed;
+
+    private LocalDateTime createdTimestamp;
+
+    private LocalDateTime updatedTimestamp;
 
     public UserRepresentation getUser() {
         return user;
@@ -105,6 +110,24 @@ public class UserRoleRepresentation {
 
     public UserRoleRepresentation setViewed(boolean viewed) {
         this.viewed = viewed;
+        return this;
+    }
+
+    public LocalDateTime getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public UserRoleRepresentation setCreatedTimestamp(LocalDateTime createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
+        return this;
+    }
+
+    public LocalDateTime getUpdatedTimestamp() {
+        return updatedTimestamp;
+    }
+
+    public UserRoleRepresentation setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
+        this.updatedTimestamp = updatedTimestamp;
         return this;
     }
 

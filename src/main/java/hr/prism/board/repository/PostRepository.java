@@ -5,6 +5,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.value.Organization;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,13 +55,14 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
     Post findLatestPost(@Param("user") User user, @Param("role") Role role, @Param("scope") Scope scope);
 
     @Query(value =
-        "select post.organizationName, post.organizationLogo, count(post.id), " +
-            "max(post.createdTimestamp) as mostRecentPost, sum(post.viewCount), sum(post.referralCount), sum(post.responseCount) " +
+        "select new hr.prism.board.value.Organization(post.organizationName, post.organizationLogo, count(post.id), " +
+            "max(post.createdTimestamp) as mostRecentPost, coalesce(sum(post.viewCount), 0), coalesce(sum(post.referralCount), 0), " +
+            "coalesce(sum(post.responseCount), 0)) " +
             "from Post post " +
             "inner join post.parent board " +
             "where board.parent.id = :departmentId " +
             "group by post.organizationName " +
             "order by mostRecentPost desc")
-    List<Object[]> findOrganizations(@Param("departmentId") Long departmentId);
+    List<Organization> findOrganizations(@Param("departmentId") Long departmentId);
 
 }

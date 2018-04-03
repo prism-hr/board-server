@@ -20,6 +20,8 @@ import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.Organization;
+import hr.prism.board.value.PostStatistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.context.annotation.Lazy;
@@ -41,30 +43,6 @@ import java.util.stream.Stream;
 @Transactional
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class PostService {
-
-    private static final String SIMILAR_ORGANIZATION =
-        "SELECT resource.organization_name, " +
-            "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "MATCH (resource.organization_name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
-            "FROM resource " +
-            "WHERE resource.scope = :scope " +
-            "GROUP BY resource.organization_name " +
-            "HAVING similarityHard = 1 OR similaritySoft > 0 " +
-            "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
-            "LIMIT 10";
-
-    private static final String POST_STATISTICS =
-        "SELECT SUM(IF(post.state = 'ACCEPTED', 1, 0)), COUNT(post.id), MAX(IF(post.state = 'ACCEPTED', post.created_timestamp, NULL)), " +
-            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), " +
-            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.view_count, 0)), " +
-            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.referral_count, 0)), " +
-            "SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.response_count, 0)), " +
-            "SUM(post.view_count), SUM(post.referral_count), SUM(post.response_count), " +
-            "MAX(post.last_view_timestamp), MAX(post.last_referral_timestamp), MAX(post.last_response_timestamp) " +
-            "FROM resource AS post " +
-            "INNER JOIN resource AS board " +
-            "ON post.parent_id = board.id " +
-            "WHERE board.parent_id = :departmentId";
 
     private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST);
 
@@ -417,13 +395,12 @@ public class PostService {
         return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
     }
 
-    public List<String> findOrganizationsBySimilarName(String searchTerm) {
-        List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_ORGANIZATION)
+    public List<Organization> findOrganizationsBySimilarName(String searchTerm) {
+        return (List<Organization>) entityManager.createNamedQuery("similarOrganizations")
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
             .setParameter("scope", Scope.POST.name())
             .getResultList();
-        return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
     public void setIndexDataAndQuarter(Post post) {
@@ -439,13 +416,13 @@ public class PostService {
         return getPosts(boardId, true, null, null, null);
     }
 
-    public Object[] getPostStatistics(Long departmentId) {
-        return (Object[]) entityManager.createNativeQuery(POST_STATISTICS)
+    public PostStatistics getPostStatistics(Long departmentId) {
+        return (PostStatistics) entityManager.createNamedQuery("postStatistics")
             .setParameter("departmentId", departmentId)
             .getSingleResult();
     }
 
-    public List<Object[]> getOrganizations(Long departmentId) {
+    public List<Organization> getOrganizations(Long departmentId) {
         return postRepository.findOrganizations(departmentId);
     }
 

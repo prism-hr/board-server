@@ -21,7 +21,7 @@ public class ResourceTaskProperty implements NotificationProperty {
 
     private static final String CREATE_POST = "Got something to share - create some posts and start sending notifications.";
 
-    private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your board to your website.";
+    private static final String DEPLOY_BADGE = "Time to tell the world - go to the badges section to learn about promoting your board on your website.";
 
     @Inject
     private ResourceTaskService resourceTaskService;

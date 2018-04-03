@@ -14,6 +14,7 @@ import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.service.cache.UserRoleCacheService;
+import hr.prism.board.value.Statistics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +28,6 @@ import java.util.stream.Collectors;
 @Transactional
 @SuppressWarnings({"JpaQlInspection", "SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class UserRoleService {
-
-    private static final String MEMBER_STATISTICS =
-        "SELECT SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), COUNT(user_role.id), " +
-            "MAX(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL)) " +
-            "FROM user_role " +
-            "WHERE user_role.resource_id = :departmentId " +
-            "AND user_role.role = 'MEMBER'";
 
     @Inject
     private UserRoleRepository userRoleRepository;
@@ -115,6 +109,7 @@ public class UserRoleService {
             return resource;
         });
 
+        entityManager.flush();
         return getUserRole(resource, user, userRoleDTO.getRole());
     }
 
@@ -172,8 +167,8 @@ public class UserRoleService {
     }
 
     @SuppressWarnings("unchecked")
-    public Object[] getMemberStatistics(Long departmentId) {
-        return (Object[]) entityManager.createNativeQuery(MEMBER_STATISTICS)
+    public Statistics getMemberStatistics(Long departmentId) {
+        return (Statistics) entityManager.createNamedQuery("memberStatistics")
             .setParameter("departmentId", departmentId)
             .getSingleResult();
     }

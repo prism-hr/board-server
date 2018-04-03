@@ -29,7 +29,9 @@ public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation
             .setMemberProgram(userRole.getMemberProgram())
             .setMemberYear(userRole.getMemberYear())
             .setExpiryDate(userRole.getExpiryDate())
-            .setViewed(userRole.isViewed());
+            .setViewed(userRole.isViewed())
+            .setCreatedTimestamp(userRole.getCreatedTimestamp())
+            .setUpdatedTimestamp(userRole.getUpdatedTimestamp());
     }
 
 }
