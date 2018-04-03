@@ -325,6 +325,10 @@
                                 <classPattern>hr.prism.board.dto.*</classPattern>
                                 <classPattern>hr.prism.board.representation.*</classPattern>
                             </classPatterns>
+                            <excludeClasses>
+                                <!-- Generate definitions for the stripe invoice class by hand -->
+                                <class>com.stripe.model.Invoice</class>
+                            </excludeClasses>
                             <declarePropertiesAsOptional>true</declarePropertiesAsOptional>
                             <outputFile>target/board.d.ts</outputFile>
                             <outputKind>global</outputKind>
