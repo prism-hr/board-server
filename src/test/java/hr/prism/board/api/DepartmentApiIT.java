@@ -118,6 +118,8 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("f", documentR.getFileName());
 
         verifyNewDepartmentBoards(departmentId);
+        DepartmentDashboardRepresentation dashboard = departmentApi.getDepartmentDashboard(departmentId);
+
         ExceptionUtils.verifyDuplicateException(() -> departmentApi.postDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
     }
 

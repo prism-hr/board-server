@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 public class UserRoleService {
 
     private static final String MEMBER_STATISTICS =
-        "SELECT user_role.department_id AS department_id, " +
-            "SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), COUNT(user_role.id), " +
+        "SELECT SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), COUNT(user_role.id), " +
             "MAX(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL)) " +
             "FROM user_role " +
-            "WHERE user_role.department_id = :departmentId";
+            "WHERE user_role.resource_id = :departmentId " +
+            "AND user_role.role = 'MEMBER'";
 
     @Inject
     private UserRoleRepository userRoleRepository;
@@ -174,7 +174,7 @@ public class UserRoleService {
     @SuppressWarnings("unchecked")
     public Object[] getMemberStatistics(Long departmentId) {
         return (Object[]) entityManager.createNativeQuery(MEMBER_STATISTICS)
-            .setParameter("departmentIds", departmentId)
+            .setParameter("departmentId", departmentId)
             .getSingleResult();
     }
 
