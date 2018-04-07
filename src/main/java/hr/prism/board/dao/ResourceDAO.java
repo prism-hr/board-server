@@ -113,10 +113,10 @@ public class ResourceDAO {
         prepareCustomFilters(filter, publicFilterStatements, publicFilterParameters, secureFilterStatements, secureFilterParameters);
 
         entityManager.flush();
-        List<Object[]> publicResults = getResources(PUBLIC_RESOURCE, publicFilterStatements, publicFilterParameters);
-        List<Object[]> secureResults = getResources(SECURE_RESOURCE, secureFilterStatements, secureFilterParameters);
+        List<Object[]> publicResources = getResources(PUBLIC_RESOURCE, publicFilterStatements, publicFilterParameters);
+        List<Object[]> secureResources = getResources(SECURE_RESOURCE, secureFilterStatements, secureFilterParameters);
 
-        Map<ResourceActionKey, ActionRepresentation> rowIndex = mergePublicAndSecureResults(filter, publicResults, secureResults);
+        Map<ResourceAction, ActionRepresentation> rowIndex = mergePublicAndSecureResources(filter, publicResources, secureResources);
         if (rowIndex.isEmpty()) {
             return Collections.emptyList();
         }
@@ -246,7 +246,7 @@ public class ResourceDAO {
         }
     }
 
-    private Map<ResourceActionKey, ActionRepresentation> mergePublicAndSecureResults(ResourceFilter filter, List<Object[]> publicResults, List<Object[]> secureResults) {
+    private Map<ResourceAction, ActionRepresentation> mergePublicAndSecureResources(ResourceFilter filter, List<Object[]> publicResults, List<Object[]> secureResults) {
         List<Object[]> rows = new ArrayList<>(secureResults);
         if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
             // Return public and secure results
@@ -261,7 +261,7 @@ public class ResourceDAO {
         }
 
         // Remove duplicate mappings
-        Map<ResourceActionKey, ActionRepresentation> rowIndex = new HashMap<>();
+        Map<ResourceAction, ActionRepresentation> rowIndex = new HashMap<>();
         for (Object[] row : rows) {
             Long rowId = Long.parseLong(row[0].toString());
             Action rowAction = Action.valueOf(row[1].toString());
@@ -297,7 +297,7 @@ public class ResourceDAO {
             }
 
             // Find the mapping that provides the most direct state transition, varies by role
-            ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
+            ResourceAction rowKey = new ResourceAction(rowId, rowAction, rowScope);
             ActionRepresentation rowValue = rowIndex.get(rowKey);
             if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
                 rowIndex.put(rowKey,
@@ -384,7 +384,7 @@ public class ResourceDAO {
         }
     }
 
-    private static class ResourceActionKey {
+    private static class ResourceAction {
 
         private Long id;
 
@@ -392,7 +392,7 @@ public class ResourceDAO {
 
         private Scope scope;
 
-        ResourceActionKey(Long id, Action action, Scope scope) {
+        ResourceAction(Long id, Action action, Scope scope) {
             this.id = id;
             this.action = action;
             this.scope = scope;
@@ -409,7 +409,7 @@ public class ResourceDAO {
                 return false;
             }
 
-            ResourceActionKey other = (ResourceActionKey) object;
+            ResourceAction other = (ResourceAction) object;
             return Objects.equals(id, other.id) && Objects.equals(action, other.action) && Objects.equals(scope, other.scope);
         }
 
