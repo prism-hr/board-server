@@ -3,23 +3,20 @@ package hr.prism.board.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Lists;
+import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.*;
-import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.repository.*;
-import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.repository.ResourceCategoryRepository;
+import hr.prism.board.repository.ResourceOperationRepository;
+import hr.prism.board.repository.ResourceRelationRepository;
+import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceSummary;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,63 +25,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import java.lang.reflect.Field;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked", "SpringAutowiredFieldsWarningInspection", "SqlResolve", "WeakerAccess", "UnusedReturnValue"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "SpringAutowiredFieldsWarningInspection", "unused"})
 public class ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
 
     private static final int MAX_HANDLE_LENGTH = 25;
-
-    private static final String RESOURCE_COLUMN_LIST =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.resource4_state, workflow.activity, workflow.notification";
-
-    private static final String PUBLIC_RESOURCE_ACTION =
-        RESOURCE_COLUMN_LIST + " " +
-            "FROM resource " +
-            "INNER join workflow " +
-            "ON resource.scope = workflow.resource2_scope " +
-            "AND resource.state = workflow.resource2_state " +
-            "INNER JOIN resource_relation AS owner_relation " +
-            "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
-            "INNER JOIN resource as owner " +
-            "ON owner_relation.resource1_id = owner.id";
-
-    private static final String SECURE_RESOURCE_ACTION =
-        "FROM resource " +
-            "INNER JOIN workflow " +
-            "ON resource.scope = workflow.resource2_scope " +
-            "AND resource.state = workflow.resource2_state " +
-            "INNER JOIN resource_relation AS owner_relation " +
-            "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
-            "INNER JOIN resource as owner " +
-            "ON owner_relation.resource1_id = owner.id " +
-            "INNER JOIN resource_relation " +
-            "ON resource.id = resource_relation.resource2_id " +
-            "INNER JOIN resource as parent " +
-            "ON resource_relation.resource1_id = parent.id " +
-            "AND workflow.resource1_scope = parent.scope " +
-            "INNER JOIN user_role " +
-            "ON parent.id = user_role.resource_id " +
-            "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline)";
-
-    private static final String SECURE_QUARTER =
-        "SELECT DISTINCT resource.quarter " +
-            SECURE_RESOURCE_ACTION + " " +
-            "WHERE resource.scope = :scope " +
-            "AND user_role.user_id = :userId";
 
     @Value("${scheduler.on}")
     private Boolean schedulerOn;
@@ -96,6 +51,9 @@ public class ResourceService {
     private ResourceRepository resourceRepository;
 
     @Inject
+    private ResourceDAO resourceDAO;
+
+    @Inject
     private ResourceRelationRepository resourceRelationRepository;
 
     @Inject
@@ -105,53 +63,50 @@ public class ResourceService {
     private ResourceOperationRepository resourceOperationRepository;
 
     @Inject
-    private ResourceSearchRepository resourceSearchRepository;
-
-    @Inject
     private ActionService actionService;
 
     @Inject
     private UserService userService;
 
     @Inject
-    private ObjectMapper objectMapper;
+    private EntityManager entityManager;
 
     @Inject
-    private EntityManager entityManager;
+    private ObjectMapper objectMapper;
 
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
     }
 
     public Resource getResource(User user, Scope scope, Long id) {
-        List<Resource> resources = getResources(user, new ResourceFilter().setScope(scope).setId(id).setIncludePublicResources(true));
+        List<Resource> resources = resourceDAO.getResources(user, new ResourceFilter().setScope(scope).setId(id).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
     }
 
     public Resource getResource(User user, Scope scope, String handle) {
-        List<Resource> resources = getResources(user, new ResourceFilter().setScope(scope).setHandle(handle).setIncludePublicResources(true));
+        List<Resource> resources = resourceDAO.getResources(user, new ResourceFilter().setScope(scope).setHandle(handle).setIncludePublicResources(true));
         return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
+    }
+
+    public List<Resource> getResources(User user, ResourceFilter filter) {
+        return resourceDAO.getResources(user, filter);
+    }
+
+    public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
+        User user = userService.getCurrentUserSecured();
+        Resource resource = getResource(user, scope, id);
+        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
+        return resourceDAO.getResourceOperations(resource);
+    }
+
+    public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
+        User user = userService.getCurrentUserSecured();
+        return resourceDAO.getResourceArchiveQuarters(user, scope, parentId);
     }
 
     public List<String> getCategories(Resource resource, CategoryType categoryType) {
         List<ResourceCategory> categories = resource.getCategories(categoryType);
         return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
-    }
-
-    @SuppressWarnings("JpaQlInspection")
-    public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
-        User user = userService.getCurrentUserSecured();
-        Resource resource = getResource(user, scope, id);
-        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
-
-        return new ArrayList<>(entityManager.createQuery(
-            "select resourceOperation " +
-                "from ResourceOperation resourceOperation " +
-                "where resourceOperation.resource.id = :resourceId " +
-                "order by resourceOperation.id desc", ResourceOperation.class)
-            .setParameter("resourceId", id)
-            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("resource.operation"))
-            .getResultList());
     }
 
     public void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
@@ -179,32 +134,6 @@ public class ResourceService {
         setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
     }
 
-    public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
-        String statement =
-            SECURE_QUARTER + " " +
-                "AND resource.state = :archiveState";
-
-        User user = userService.getCurrentUserSecured();
-        Map<String, Object> filterParameters = getSecureFilterParameters(user);
-        filterParameters.put("scope", scope.name());
-        filterParameters.put("archiveState", State.ARCHIVED.name());
-
-        if (parentId != null) {
-            statement =
-                statement + " " +
-                    "AND resource.parent_id = :parentId";
-            filterParameters.put("parentId", parentId);
-        }
-
-        statement =
-            statement + " " +
-                "order by resource.quarter desc";
-
-        Query query = entityManager.createNativeQuery(statement);
-        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return query.getResultList();
-    }
-
     public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
         return resourceRepository.findSummaryByUserAndRole(user, role);
     }
@@ -218,49 +147,12 @@ public class ResourceService {
         }
     }
 
-    @SuppressWarnings("JpaQlInspection")
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
-        String statement =
-            "select resource.id " +
-                "from Resource resource " +
-                "where resource.scope = :scope " +
-                "and resource.name = :name";
-
-        Map<String, Object> constraints = new HashMap<>();
-        if (id != null) {
-            statement += " and resource.id <> :id";
-            constraints.put("id", id);
-        }
-
-        if (parent != null && !Objects.equals(scope, parent.getScope())) {
-            statement += " and resource.parent = :parent";
-            constraints.put("parent", parent);
-        }
-
-        Query query = entityManager.createQuery(statement)
-            .setParameter("scope", scope)
-            .setParameter("name", name);
-        constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
-
-        List<Long> resourceIds = query.getResultList();
-        if (!resourceIds.isEmpty()) {
-            throw new BoardDuplicateException(exceptionCode, scope.name() + " with name " + name + " exists already", resourceIds.get(0));
-        }
+        resourceDAO.validateUniqueName(scope, id, parent, name, exceptionCode);
     }
 
-    @SuppressWarnings("JpaQlInspection")
     public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
-        Query query = entityManager.createQuery(
-            "select resource.id " +
-                "from Resource resource " +
-                "where resource.handle = :handle " +
-                "and resource.id <> :id")
-            .setParameter("handle", handle)
-            .setParameter("id", resource.getId());
-
-        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
-            throw new BoardDuplicateException(exceptionCode, "Specified handle would not be unique");
-        }
+        resourceDAO.validateUniqueHandle(resource, handle, exceptionCode);
     }
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
@@ -268,6 +160,7 @@ public class ResourceService {
             scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
     }
 
+    @SuppressWarnings("ConstantConditions")
     public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
@@ -339,184 +232,7 @@ public class ResourceService {
         entityManager.flush();
     }
 
-    public List<Resource> getResources(User user, ResourceFilter filter) {
-        List<String> publicFilterStatements = new ArrayList<>();
-        publicFilterStatements.add("workflow.role = :role ");
-
-        Map<String, Object> publicFilterParameters = new HashMap<>();
-        publicFilterParameters.put("role", Role.PUBLIC.name());
-        publicFilterParameters.put("departmentScope", Scope.DEPARTMENT.name());
-
-        List<String> secureFilterStatements = new ArrayList<>();
-        secureFilterStatements.add("user_role.user_id = :userId ");
-        Map<String, Object> secureFilterParameters = getSecureFilterParameters(user);
-
-        // Unwrap the filters
-        for (Field field : ResourceFilter.class.getDeclaredFields()) {
-            try {
-                field.setAccessible(true);
-                Object value = field.get(filter);
-                if (value != null) {
-                    ResourceFilter.ResourceFilterProperty resourceFilter = field.getAnnotation(ResourceFilter.ResourceFilterProperty.class);
-                    if (resourceFilter != null) {
-                        String statement = resourceFilter.statement();
-                        String parameter = resourceFilter.parameter();
-
-                        secureFilterStatements.add(statement);
-                        secureFilterParameters.put(parameter, value.toString());
-
-                        publicFilterStatements.add(statement);
-                        publicFilterParameters.put(parameter, value.toString());
-                    }
-                }
-            } catch (IllegalAccessException e) {
-                LOGGER.error("Cannot access filter property: " + field.getName(), e);
-            }
-        }
-
-        // Get the mappings
-        entityManager.flush();
-        List<Object[]> publicResults = getResources(PUBLIC_RESOURCE_ACTION, publicFilterStatements, publicFilterParameters);
-        List<Object[]> secureResults = getResources(RESOURCE_COLUMN_LIST + " " + SECURE_RESOURCE_ACTION, secureFilterStatements, secureFilterParameters);
-
-        List<Object[]> rows = new ArrayList<>(secureResults);
-        if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
-            // Return public and secure results
-            rows.addAll(publicResults);
-        } else {
-            // Return secure results with public actions
-            HashMultimap<Object, Object[]> publicResultsById = HashMultimap.create();
-            publicResults.forEach(result -> publicResultsById.put(result[0], result));
-            for (Object[] secureResult : secureResults) {
-                rows.addAll(publicResultsById.get(secureResult[0]));
-            }
-        }
-
-        // Remove duplicate mappings
-        Map<ResourceActionKey, ActionRepresentation> rowIndex = new HashMap<>();
-        for (Object[] row : rows) {
-            Long rowId = Long.parseLong(row[0].toString());
-            Action rowAction = Action.valueOf(row[1].toString());
-
-            Scope rowScope = null;
-            Object column3 = row[2];
-            if (column3 != null) {
-                rowScope = Scope.valueOf(column3.toString());
-            }
-
-            State rowState = null;
-            Object column4 = row[3];
-            if (column4 != null) {
-                rowState = State.valueOf(column4.toString());
-            }
-
-            State suppressedInOwnerState = null;
-            Object column5 = row[4];
-            if (column5 != null) {
-                suppressedInOwnerState = State.valueOf(column5.toString());
-            }
-
-            String rowActivity = null;
-            Object column6 = row[5];
-            if (column6 != null) {
-                rowActivity = column6.toString();
-            }
-
-            String rowNotification = null;
-            Object column7 = row[6];
-            if (column7 != null) {
-                rowNotification = column7.toString();
-            }
-
-            // Find the mapping that provides the most direct state transition, varies by role
-            ResourceActionKey rowKey = new ResourceActionKey(rowId, rowAction, rowScope);
-            ActionRepresentation rowValue = rowIndex.get(rowKey);
-            if (rowValue == null || ObjectUtils.compare(rowState, rowValue.getState()) > 0) {
-                rowIndex.put(rowKey,
-                    new ActionRepresentation().setAction(rowAction)
-                        .setScope(rowScope)
-                        .setState(rowState)
-                        .setSuppressedInOwnerState(suppressedInOwnerState)
-                        .setActivity(rowActivity)
-                        .setNotification(rowNotification));
-            }
-        }
-
-        if (rowIndex.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // Squash the mappings
-        LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex = LinkedHashMultimap.create();
-        rowIndex.keySet().forEach(key -> resourceActionIndex.put(key.id, rowIndex.get(key)));
-
-        Scope scope = filter.getScope();
-        Class<? extends Resource> resourceClass = scope.resourceClass;
-        EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
-
-        String search = UUID.randomUUID().toString();
-        String searchTerm = filter.getSearchTerm();
-        Collection<Long> resourceIds = resourceActionIndex.keySet();
-
-        boolean searchTermApplied = searchTerm != null;
-        if (searchTermApplied) {
-            // Apply the search query
-            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), resourceIds);
-            entityManager.flush();
-        }
-
-        // Get the resource data
-        String statement =
-            "select distinct resource " +
-                "from " + resourceClass.getSimpleName() + " resource " +
-                "left join resource.searches search on search.search = :search " +
-                "where resource.id in (:resourceIds) ";
-        if (searchTermApplied) {
-            statement += "and search.id is not null ";
-        }
-
-        statement += Joiner.on(", ").skipNulls().join("order by search.id", filter.getOrderStatement());
-
-        List<Resource> resources = (List<Resource>) entityManager.createQuery(statement, resourceClass)
-            .setParameter("search", search)
-            .setParameter("resourceIds", resourceIds)
-            .setHint("javax.persistence.loadgraph", entityGraph)
-            .getResultList();
-
-        if (searchTermApplied) {
-            resourceSearchRepository.deleteBySearch(search);
-        }
-
-        // Merge the output
-        for (Resource resource : resources) {
-            // Find the states of the parents
-            List<State> parentStates = Collections.emptyList();
-            if (resource instanceof Post) {
-                Resource board = resource.getParent();
-                parentStates = Arrays.asList(board.getState(), board.getParent().getState());
-            } else if (resource instanceof Board) {
-                parentStates = Collections.singletonList(resource.getParent().getState());
-            }
-
-            // Remove any actions that should be suppressed due to parent state
-            List<ActionRepresentation> actionRepresentations = Lists.newArrayList(resourceActionIndex.get(resource.getId()));
-            Iterator<ActionRepresentation> actionRepresentationIterator = actionRepresentations.iterator();
-            while (actionRepresentationIterator.hasNext()) {
-                ActionRepresentation actionRepresentation = actionRepresentationIterator.next();
-                State suppressedInOwnerState = actionRepresentation.getSuppressedInOwnerState();
-                if (parentStates.contains(suppressedInOwnerState)) {
-                    actionRepresentationIterator.remove();
-                }
-            }
-
-            actionRepresentations.sort(Comparator.naturalOrder());
-            resource.setActions(actionRepresentations);
-        }
-
-        return resources;
-    }
-
-    public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
+    public void createResourceOperation(Resource resource, Action action, User user) {
         ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
         if (action == Action.EDIT) {
             ChangeListRepresentation changeList = resource.getChangeList();
@@ -534,7 +250,6 @@ public class ResourceService {
         resourceOperation = resourceOperationRepository.save(resourceOperation);
         resource.getOperations().add(resourceOperation);
         resourceRepository.update(resource);
-        return resourceOperation;
     }
 
     public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
@@ -609,21 +324,6 @@ public class ResourceService {
         resource2.getParents().add(resourceRelation);
     }
 
-    private Map<String, Object> getSecureFilterParameters(User user) {
-        Map<String, Object> secureFilterParameters = new HashMap<>();
-        secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
-        secureFilterParameters.put("departmentScope", Scope.DEPARTMENT.name());
-        secureFilterParameters.put("userRoleStates", State.ACTIVE_USER_ROLE_STATE_STRINGS);
-        secureFilterParameters.put("baseline", LocalDate.now());
-        return secureFilterParameters;
-    }
-
-    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
-        Query query = entityManager.createNativeQuery(Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
-        filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-        return query.getResultList();
-    }
-
     private static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
         if (similarHandles.contains(suggestedHandle)) {
             int ordinal = 2;
@@ -663,37 +363,6 @@ public class ResourceService {
 
     public interface SimilarHandleFinder {
         List<String> find(String handle);
-    }
-
-    private static class ResourceActionKey {
-
-        private Long id;
-
-        private Action action;
-
-        private Scope scope;
-
-        ResourceActionKey(Long id, Action action, Scope scope) {
-            this.id = id;
-            this.action = action;
-            this.scope = scope;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, action, scope);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (object == null || getClass() != object.getClass()) {
-                return false;
-            }
-
-            ResourceActionKey other = (ResourceActionKey) object;
-            return Objects.equals(id, other.id) && Objects.equals(action, other.action) && Objects.equals(scope, other.scope);
-        }
-
     }
 
 }
