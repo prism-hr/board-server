@@ -2,14 +2,14 @@ package hr.prism.board.authentication;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
-import java.util.Collections;
+import static java.util.Collections.emptyList;
 
 public class AuthenticationToken extends AbstractAuthenticationToken {
 
     private Long userId;
 
     public AuthenticationToken(Long userId) {
-        super(Collections.emptyList());
+        super(emptyList());
         this.userId = userId;
     }
 

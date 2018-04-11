@@ -17,60 +17,71 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static hr.prism.board.enums.Action.EDIT;
+import static java.util.stream.Collectors.toList;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BoardApi {
 
-    @Inject
-    private BoardService boardService;
+    private final BoardService boardService;
+
+    private final BoardMapper boardMapper;
+
+    private final ResourceService resourceService;
+
+    private final ResourceOperationMapper resourceOperationMapper;
 
     @Inject
-    private BoardMapper boardMapper;
+    public BoardApi(BoardService boardService, BoardMapper boardMapper, ResourceService resourceService,
+                    ResourceOperationMapper resourceOperationMapper) {
+        this.boardService = boardService;
+        this.boardMapper = boardMapper;
+        this.resourceService = resourceService;
+        this.resourceOperationMapper = resourceOperationMapper;
+    }
 
-    @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private ResourceOperationMapper resourceOperationMapper;
-
-    @RequestMapping(value = "/api/departments/{departmentId}/boards", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/departments/{departmentId}/boards", method = POST)
     public BoardRepresentation postBoard(@PathVariable Long departmentId, @RequestBody @Valid BoardDTO boardDTO) {
         Board board = boardService.createBoard(departmentId, boardDTO);
         return boardMapper.apply(board);
     }
 
-    @RequestMapping(value = "/api/boards", method = RequestMethod.GET)
-    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Long parentId, @RequestParam(required = false) Boolean includePublic,
-                                               @RequestParam(required = false) State state, @RequestParam(required = false) String quarter,
+    @RequestMapping(value = "/api/boards", method = GET)
+    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Long parentId,
+                                               @RequestParam(required = false) Boolean includePublic,
+                                               @RequestParam(required = false) State state,
+                                               @RequestParam(required = false) String quarter,
                                                @RequestParam(required = false) String searchTerm) {
-        return boardService.getBoards(parentId, includePublic, state, quarter, searchTerm).stream().map(boardMapper).collect(Collectors.toList());
+        return boardService.getBoards(parentId, includePublic, state, quarter, searchTerm)
+            .stream().map(boardMapper).collect(toList());
     }
 
-    @RequestMapping(value = "/api/boards/{boardId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/boards/{boardId}", method = GET)
     public BoardRepresentation getBoard(@PathVariable Long boardId) {
         return boardMapper.apply(boardService.getBoard(boardId));
     }
 
-    @RequestMapping(value = "/api/boards", method = RequestMethod.GET, params = "handle")
+    @RequestMapping(value = "/api/boards", method = GET, params = "handle")
     public BoardRepresentation getBoardByHandle(@RequestParam String handle) {
         return boardMapper.apply(boardService.getBoard(handle));
     }
 
-    @RequestMapping(value = "/api/boards/{boardId}/operations", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/boards/{boardId}/operations", method = GET)
     public List<ResourceOperationRepresentation> getBoardOperations(@PathVariable Long boardId) {
-        return resourceService.getResourceOperations(Scope.BOARD, boardId).stream()
-            .map(resourceOperation -> resourceOperationMapper.apply(resourceOperation)).collect(Collectors.toList());
+        return resourceService.getResourceOperations(Scope.BOARD, boardId)
+            .stream().map(resourceOperationMapper).collect(toList());
     }
 
-    @RequestMapping(value = "/api/boards/{boardId}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/api/boards/{boardId}", method = PATCH)
     public BoardRepresentation patchBoard(@PathVariable Long boardId, @RequestBody @Valid BoardPatchDTO boardDTO) {
-        return boardMapper.apply(boardService.executeAction(boardId, Action.EDIT, boardDTO));
+        return boardMapper.apply(boardService.executeAction(boardId, EDIT, boardDTO));
     }
 
-    @RequestMapping(value = "/api/boards/{boardId}/actions/{action:reject|restore}", method = RequestMethod.POST)
-    public BoardRepresentation executeAction(@PathVariable Long boardId, @PathVariable String action, @RequestBody @Valid BoardPatchDTO boardDTO) {
+    @RequestMapping(value = "/api/boards/{boardId}/actions/{action:reject|restore}", method = POST)
+    public BoardRepresentation executeAction(@PathVariable Long boardId, @PathVariable String action,
+                                             @RequestBody @Valid BoardPatchDTO boardDTO) {
         return boardMapper.apply(boardService.executeAction(boardId, Action.valueOf(action.toUpperCase()), boardDTO));
     }
 

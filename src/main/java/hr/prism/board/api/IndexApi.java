@@ -10,30 +10,37 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.inject.Inject;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+
 @Controller
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class IndexApi {
 
-    private static final String SOCIAL_LOGO_URL = "http://res.cloudinary.com/board-prism-hr/image/upload/v1507475419/static/social.png";
+    private static final String SOCIAL_LOGO_URL =
+        "http://res.cloudinary.com/board-prism-hr/image/upload/v1507475419/static/social.png";
+
+    private final String appUrl;
+
+    private final String facebookClientId;
+
+    private final DepartmentService departmentService;
+
+    private final PostService postService;
 
     @Inject
-    private DepartmentService departmentService;
+    public IndexApi(@Value("${app.url}") String appUrl, @Value("${auth.facebook.clientId}") String facebookClientId,
+                    DepartmentService departmentService, PostService postService) {
+        this.appUrl = appUrl;
+        this.facebookClientId = facebookClientId;
+        this.departmentService = departmentService;
+        this.postService = postService;
+    }
 
-    @Inject
-    private PostService postService;
-
-    @Value("${app.url}")
-    private String appUrl;
-
-    @Value("${auth.facebook.clientId}")
-    private String facebookClientId;
-
-    @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = RequestMethod.GET)
-    public String getDepartment(@PathVariable String universityHandle, @PathVariable String departmentHandle, Model model) {
+    @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = GET)
+    public String getDepartment(@PathVariable String universityHandle, @PathVariable String departmentHandle,
+                                Model model) {
         fillGenericModel(model);
         Department department = departmentService.getDepartment(universityHandle + "/" + departmentHandle);
         if (department != null) {
@@ -48,7 +55,7 @@ public class IndexApi {
         return "index";
     }
 
-    @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}/{postId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}/{postId}", method = GET)
     public String getPost(@PathVariable Long postId, Model model) {
         fillGenericModel(model);
         Post post = postService.getPost(postId);
@@ -67,7 +74,7 @@ public class IndexApi {
         return "index";
     }
 
-    @RequestMapping(value = "/api/index", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/index", method = GET)
     public String getIndex(Model model) {
         fillGenericModel(model);
         return "index";

@@ -1,28 +1,22 @@
 package hr.prism.board.utils;
 
 import com.google.common.base.Joiner;
-
 import com.google.common.base.Strings;
+import hr.prism.board.dto.ResourcePatchDTO;
 import opennlp.tools.tokenize.SimpleTokenizer;
-
 import org.apache.commons.codec.language.Soundex;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
 
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.servlet.http.HttpServletRequest;
-
-import hr.prism.board.dto.ResourcePatchDTO;
+import static java.util.stream.Collectors.toList;
 
 public class BoardUtils {
 
@@ -48,7 +42,7 @@ public class BoardUtils {
         List<Field> fields = new ArrayList<>();
         Class<?> dtoClass = resourceDTO.getClass();
         while (ResourcePatchDTO.class.isAssignableFrom(dtoClass)) {
-            fields.addAll(Arrays.stream(dtoClass.getDeclaredFields()).collect(Collectors.toList()));
+            fields.addAll(Arrays.stream(dtoClass.getDeclaredFields()).collect(toList()));
             dtoClass = dtoClass.getSuperclass();
         }
 
@@ -106,7 +100,7 @@ public class BoardUtils {
     }
 
     public static String makeSoundex(String... strings) {
-        List<String> nullSafeStrings = Stream.of(strings).filter(Objects::nonNull).collect(Collectors.toList());
+        List<String> nullSafeStrings = Stream.of(strings).filter(Objects::nonNull).collect(toList());
         if (nullSafeStrings.isEmpty()) {
             return null;
         }

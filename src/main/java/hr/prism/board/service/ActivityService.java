@@ -27,6 +27,7 @@ import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
 public class ActivityService {
 
-    volatile Set<Long> userIds = new LinkedHashSet<>();
+    volatile Set<Long> userIds = ConcurrentHashMap.newKeySet();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
 
@@ -228,7 +229,7 @@ public class ActivityService {
         activityRepository.deleteByUserRoles(userRoles);
     }
 
-    public ImmutableList<Long> getUserIds() {
+    public synchronized ImmutableList<Long> getUserIds() {
         return ImmutableList.copyOf(userIds);
     }
 

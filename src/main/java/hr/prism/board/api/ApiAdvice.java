@@ -6,7 +6,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.exception.*;
 import hr.prism.board.service.UserService;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,46 +25,55 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static hr.prism.board.exception.ExceptionCode.PROBLEM;
+import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.http.HttpStatus.*;
+
 @RestControllerAdvice
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class ApiAdvice extends ResponseEntityExceptionHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApiAdvice.class);
+    private static final Logger LOGGER = getLogger(ApiAdvice.class);
+
+    private final UserService userService;
 
     @Inject
-    private UserService userService;
+    public ApiAdvice(UserService userService) {
+        this.userService = userService;
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> processException(Exception exception, WebRequest request) {
         Long id = null;
-        ExceptionCode exceptionCode = ExceptionCode.PROBLEM;
-        HttpStatus responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        ExceptionCode exceptionCode = PROBLEM;
+        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
 
         Class<? extends Exception> exceptionClass = exception.getClass();
         if (BoardException.class.isAssignableFrom(exceptionClass)) {
             exceptionCode = ((BoardException) exception).getExceptionCode();
             if (exceptionClass == BoardForbiddenException.class) {
-                responseStatus = exceptionCode == ExceptionCode.UNAUTHENTICATED_USER ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;
+                responseStatus = exceptionCode == UNAUTHENTICATED_USER ? UNAUTHORIZED : FORBIDDEN;
             } else if (exceptionClass == BoardDuplicateException.class) {
                 id = ((BoardDuplicateException) exception).getId();
-                responseStatus = HttpStatus.CONFLICT;
+                responseStatus = CONFLICT;
             } else if (exceptionClass == BoardNotModifiedException.class) {
-                responseStatus = HttpStatus.NOT_MODIFIED;
+                responseStatus = NOT_MODIFIED;
             } else if (exceptionClass == BoardNotFoundException.class) {
-                responseStatus = HttpStatus.NOT_FOUND;
+                responseStatus = NOT_FOUND;
             }
         }
 
         String userPrefix = getCurrentUsername();
-        if (responseStatus == HttpStatus.INTERNAL_SERVER_ERROR) {
+        if (responseStatus == INTERNAL_SERVER_ERROR) {
             LOGGER.error(userPrefix + ": " + responseStatus + " - " + exception.getMessage(), exception);
         } else {
             LOGGER.info(userPrefix + ": " + responseStatus + " - " + exception.getMessage());
         }
 
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
+        String uri = Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString());
         ImmutableMap.Builder<String, Object> responseBuilder = ImmutableMap.<String, Object>builder()
-            .put("uri", Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString()))
+            .put("uri", uri)
             .put("status", responseStatus.value())
             .put("error", responseStatus.getReasonPhrase())
             .put("exceptionCode", exceptionCode);
@@ -77,35 +85,45 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     }
 
     @Override
-    protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        return super.handleExceptionInternal(ex, body, headers, status, request);
+    protected ResponseEntity<Object> handleExceptionInternal(Exception exception, Object body, HttpHeaders headers,
+                                                             HttpStatus status, WebRequest request) {
+        return super.handleExceptionInternal(exception, body, headers, status, request);
     }
 
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        LOGGER.error(getCurrentUsername() +  ": 422 - " + ((ServletWebRequest) request).getRequest().getServletPath(), ex);
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
+                                                                  HttpHeaders headers, HttpStatus status,
+                                                                  WebRequest request) {
+        LOGGER.error(getCurrentUsername() + ": 422 - " +
+            ((ServletWebRequest) request).getRequest().getServletPath(), exception);
         List<String> errors = new ArrayList<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+        for (FieldError error : exception.getBindingResult().getFieldErrors()) {
             errors.add(error.getField() + ": " + error.getDefaultMessage());
         }
 
-        for (ObjectError error : ex.getBindingResult().getGlobalErrors()) {
+        for (ObjectError error : exception.getBindingResult().getGlobalErrors()) {
             errors.add(error.getObjectName() + ": " + error.getDefaultMessage());
         }
 
-        return handleExceptionInternal(ex, errors, headers, HttpStatus.UNPROCESSABLE_ENTITY, request);
+        return handleExceptionInternal(exception, errors, headers, UNPROCESSABLE_ENTITY, request);
     }
 
     @Override
-    protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        LOGGER.error(getCurrentUsername() +  ": 500 - " + ((ServletWebRequest) request).getRequest().getServletPath(), ex);
-        return super.handleExceptionInternal(ex, ex.getMessage(), headers, status, request);
+    protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException exception,
+                                                                  HttpHeaders headers, HttpStatus status,
+                                                                  WebRequest request) {
+        LOGGER.error(getCurrentUsername() + ": 500 - " +
+            ((ServletWebRequest) request).getRequest().getServletPath(), exception);
+        return super.handleExceptionInternal(exception, exception.getMessage(), headers, status, request);
     }
 
     @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        LOGGER.error(getCurrentUsername() +  ": 400 - " + ((ServletWebRequest) request).getRequest().getServletPath(), ex);
-        return super.handleExceptionInternal(ex, ex.getMessage(), headers, status, request);
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception,
+                                                                  HttpHeaders headers, HttpStatus status,
+                                                                  WebRequest request) {
+        LOGGER.error(getCurrentUsername() + ": 400 - " +
+            ((ServletWebRequest) request).getRequest().getServletPath(), exception);
+        return super.handleExceptionInternal(exception, exception.getMessage(), headers, status, request);
     }
 
     private String getCurrentUsername() {

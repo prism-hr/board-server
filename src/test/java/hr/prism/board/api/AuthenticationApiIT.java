@@ -447,7 +447,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR1.getReferral());
 
         testUserService.setAuthentication(userId1);
-        List<String> emails1 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId1, null)
+        List<String> emails1 = departmentApi.getUserRoles(departmentId1, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails1, BoardUtils.obfuscateEmail("member1@member1.com"),
             BoardUtils.obfuscateEmail("member4@member4.com"), BoardUtils.obfuscateEmail("member3@member3.com"));
@@ -587,7 +587,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR2.getReferral());
 
         testUserService.setAuthentication(userId2);
-        List<String> emails2 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId2, null)
+        List<String> emails2 = departmentApi.getUserRoles(departmentId2, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails2, BoardUtils.obfuscateEmail("member1@member1.com"), BoardUtils.obfuscateEmail("member4@member4.com"));
 
@@ -750,7 +750,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR3.getReferral());
 
         testUserService.setAuthentication(userId3);
-        List<String> emails3 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId3, null)
+        List<String> emails3 = departmentApi.getUserRoles(departmentId3, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails3, BoardUtils.obfuscateEmail("alastair@prism.hr"),
             BoardUtils.obfuscateEmail("jakub@prism.hr"), BoardUtils.obfuscateEmail("member1@member1.com"));
@@ -838,7 +838,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR4.getReferral());
 
         testUserService.setAuthentication(userId4);
-        List<String> emails4 = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId4, null)
+        List<String> emails4 = departmentApi.getUserRoles(departmentId4, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails4, BoardUtils.obfuscateEmail("alastair@prism.hr"));
     }

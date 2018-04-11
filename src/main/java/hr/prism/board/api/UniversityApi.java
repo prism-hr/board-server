@@ -11,13 +11,16 @@ import javax.inject.Inject;
 import java.util.List;
 
 @RestController
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UniversityApi {
 
-    @Inject
-    private UniversityService universityService;
+    private final UniversityService universityService;
 
-    @RequestMapping(value = "/api/universities", method = RequestMethod.GET, params = "query")
+    @Inject
+    public UniversityApi(UniversityService universityService) {
+        this.universityService = universityService;
+    }
+
+    @RequestMapping(value = "/api/universities", method = RequestMethod.GET)
     public List<UniversityRepresentation> lookupUniversities(@RequestParam String query) {
         return universityService.findBySimilarName(query);
     }

@@ -5,7 +5,6 @@ import hr.prism.board.service.ResourceService;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
@@ -15,22 +14,28 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+
 @RestController
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class RedirectApi {
 
+    private final String appUrl;
+
+    private final ResourceService resourceService;
+
     @Inject
-    private ResourceService resourceService;
+    public RedirectApi(@Value("${app.url}") String appUrl, ResourceService resourceService) {
+        this.appUrl = appUrl;
+        this.resourceService = resourceService;
+    }
 
-    @Value("${app.url}")
-    private String appUrl;
-
-    @RequestMapping(value = "/api/redirect", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/redirect", method = GET)
     public void redirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String contextPath = "home";
         String resource = request.getParameter("resource");
         if (resource != null) {
-            contextPath = Joiner.on("/").skipNulls().join(resourceService.findOne(Long.parseLong(resource)).getHandle(), request.getParameter("view"));
+            contextPath = Joiner.on("/").skipNulls().join(
+                resourceService.findOne(Long.parseLong(resource)).getHandle(), request.getParameter("view"));
         }
 
         List<String> parameters = Stream.of("uuid", "resetPasswordUuid", "unsubscribeUuid")

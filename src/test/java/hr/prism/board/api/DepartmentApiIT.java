@@ -40,6 +40,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hr.prism.board.TestHelper.mockHttpServletResponse;
+import static hr.prism.board.enums.MemberCategory.*;
+import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.exception.ExceptionCode.*;
+
 @TestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
@@ -136,7 +141,7 @@ public class DepartmentApiIT extends AbstractIT {
                         .setCloudinaryId("d")
                         .setCloudinaryUrl("v")
                         .setFileName("g"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT));
 
         DepartmentRepresentation departmentR = departmentApi.postDepartment(universityId, department);
         Long departmentId = departmentR.getId();
@@ -145,7 +150,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentName, departmentR.getName());
         Assert.assertEquals(departmentName, departmentR.getHandle());
         Assert.assertEquals("summary", departmentR.getSummary());
-        Assert.assertEquals(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT), departmentR.getMemberCategories());
+        Assert.assertEquals(Collections.singletonList(UNDERGRADUATE_STUDENT), departmentR.getMemberCategories());
         Assert.assertEquals(State.DRAFT, departmentR.getState());
 
         DocumentRepresentation documentR = departmentR.getDocumentLogo();
@@ -179,7 +184,7 @@ public class DepartmentApiIT extends AbstractIT {
         unprivilegedUsers.put("department2", makeUnprivilegedUsers(boardId2, 20,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT))));
 
         User user2 = testUserService.authenticate();
         DepartmentDTO departmentDTO3 = new DepartmentDTO().setName("department3").setSummary("department summary");
@@ -199,7 +204,7 @@ public class DepartmentApiIT extends AbstractIT {
         unprivilegedUsers.put("department4", makeUnprivilegedUsers(boardId4, 40,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT))));
 
         List<String> departmentNames = Arrays.asList(
             "department1", "department10", "department2", "department20", "department3", "department30", "department4", "department40");
@@ -282,14 +287,14 @@ public class DepartmentApiIT extends AbstractIT {
         postApi.postPost(boardId,
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.MASTER_STUDENT)));
+                .setMemberCategories(Collections.singletonList(MASTER_STUDENT)));
 
         // Create unprivileged users
         List<User> unprivilegedUsers = Lists.newArrayList(
             makeUnprivilegedUsers(boardId, 2,
                 TestHelper.smallSamplePost()
                     .setPostCategories(Collections.singletonList("Employment"))
-                    .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))
+                    .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT)))
                 .values());
 
         unprivilegedUsers.add(postUser);
@@ -319,7 +324,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setSummary(Optional.of("department 3 summary"))
                 .setHandle(Optional.of("department-3"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f")))
-                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))),
+                .setMemberCategories(Optional.of(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))),
             State.DRAFT);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
@@ -331,7 +336,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setSummary(Optional.of("department 4 summary"))
                 .setHandle(Optional.of("department-4"))
                 .setDocumentLogo(Optional.of(new DocumentDTO().setCloudinaryId("c2").setCloudinaryUrl("u2").setFileName("f2")))
-                .setMemberCategories(Optional.of(ImmutableList.of(MemberCategory.MASTER_STUDENT, MemberCategory.UNDERGRADUATE_STUDENT))),
+                .setMemberCategories(Optional.of(ImmutableList.of(MASTER_STUDENT, UNDERGRADUATE_STUDENT))),
             State.DRAFT);
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
@@ -348,7 +353,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
         testUserService.setAuthentication(departmentUser.getId());
         Long departmentUser2Id =
-            resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId,
+            departmentApi.createResourceUser(departmentId,
                 new UserRoleDTO()
                     .setUser(new UserDTO()
                         .setGivenName("admin1")
@@ -368,7 +373,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .build()));
 
         testUserService.setAuthentication(departmentUser.getId());
-        resourceApi.updateResourceUser(Scope.DEPARTMENT, departmentId, departmentUser2Id, new UserRoleDTO().setRole(Role.AUTHOR));
+        departmentApi.updateResourceUser(departmentId, departmentUser2Id, new UserRoleDTO().setRole(Role.AUTHOR));
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify();
@@ -472,7 +477,7 @@ public class DepartmentApiIT extends AbstractIT {
                             .setEmail("member@member.com"))
                     .setEmail("member@member.com")
                     .setRole(Role.MEMBER)
-                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setMemberCategory(UNDERGRADUATE_STUDENT)
                     .setMemberProgram("program")
                     .setMemberYear(1)
                     .setExpiryDate(LocalDate.now().plusYears(3))));
@@ -507,7 +512,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setLocation(new LocationDTO().setName("location").setDomicile("GB")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT))
                 .setApplyWebsite("http://www.google.co.uk"));
 
         resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
@@ -534,7 +539,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         WidgetOptionsDTO optionsDTO = new WidgetOptionsDTO();
         try {
-            resourceApi.getResourceBadge(Scope.DEPARTMENT, departmentId, objectMapper.writeValueAsString(optionsDTO), TestHelper.mockHttpServletResponse());
+            departmentApi.getResourceBadge(departmentId, objectMapper.writeValueAsString(optionsDTO), mockHttpServletResponse());
         } catch (IOException e) {
             throw new Error(e);
         }
@@ -720,7 +725,7 @@ public class DepartmentApiIT extends AbstractIT {
         PostRepresentation postR = postApi.postPost(boardRs.get(0).getId(),
             TestHelper.smallSamplePost()
                 .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT)));
         Assert.assertEquals(State.PENDING, postR.getState());
         Assertions.assertThat(postR.getActions().stream().map(ActionRepresentation::getAction).collect(Collectors.toList()))
             .containsOnly(Action.VIEW, Action.EDIT, Action.SUSPEND, Action.REJECT, Action.WITHDRAW);
@@ -763,7 +768,7 @@ public class DepartmentApiIT extends AbstractIT {
             TestHelper.smallSamplePost()
                 .setName("post2")
                 .setPostCategories(Collections.singletonList("Employment"))
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT)));
         Long post2Id = post2R.getId();
         Assert.assertEquals(State.PENDING, post2R.getState());
 
@@ -925,7 +930,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");
 
         DepartmentRepresentation departmentR = departmentApi.postDepartment(universityId, departmentDTO);
-        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null).getUsers();
+        List<UserRoleRepresentation> users = departmentApi.getUserRoles(departmentR.getId(), null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
@@ -935,11 +940,11 @@ public class DepartmentApiIT extends AbstractIT {
             userRoleDTOs1.add(
                 new UserRoleDTO()
                     .setUser(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"))
-                    .setRole(Role.MEMBER).setMemberCategory(MemberCategory.MASTER_STUDENT));
+                    .setRole(Role.MEMBER).setMemberCategory(MASTER_STUDENT));
         }
 
         departmentApi.postMembers(departmentR.getId(), userRoleDTOs1);
-        UserRolesRepresentation response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
+        UserRolesRepresentation response = departmentApi.getUserRoles(departmentR.getId(), null);
         Assert.assertEquals(1, response.getUsers().size());
         Assert.assertEquals(200, response.getMembers().size());
         Assert.assertNull(response.getMemberToBeUploadedCount());
@@ -949,11 +954,11 @@ public class DepartmentApiIT extends AbstractIT {
             userRoleDTOs2.add(
                 new UserRoleDTO()
                     .setUser(new UserDTO().setEmail("bulk" + i + "@mail.com").setGivenName("Bulk" + i).setSurname("User"))
-                    .setRole(Role.MEMBER).setMemberCategory(MemberCategory.MASTER_STUDENT));
+                    .setRole(Role.MEMBER).setMemberCategory(MASTER_STUDENT));
         }
 
         departmentApi.postMembers(departmentR.getId(), userRoleDTOs2);
-        response = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentR.getId(), null);
+        response = departmentApi.getUserRoles(departmentR.getId(), null);
         Assert.assertEquals(300, response.getMembers().size());
         Assert.assertNull(response.getMemberToBeUploadedCount());
 
@@ -973,21 +978,21 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");
 
         Long departmentId = departmentApi.postDepartment(universityId, departmentDTO).getId();
-        List<UserRoleRepresentation> users = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getUsers();
+        List<UserRoleRepresentation> users = departmentApi.getUserRoles(departmentId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         List<UserRoleDTO> userRoleDTOs = new ArrayList<>();
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
-            .setRole(Role.MEMBER).setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
+            .setRole(Role.MEMBER).setMemberCategory(UNDERGRADUATE_STUDENT));
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("jakub").setSurname("fibinger").setEmail("jakub@fibinger.com"))
-            .setRole(Role.MEMBER).setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
+            .setRole(Role.MEMBER).setMemberCategory(UNDERGRADUATE_STUDENT));
 
         departmentApi.postMembers(departmentId, userRoleDTOs);
-        List<UserRoleRepresentation> members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
+        List<UserRoleRepresentation> members = departmentApi.getUserRoles(departmentId, null).getMembers();
 
-        verifyMember("jakub@fibinger.com", null, MemberCategory.UNDERGRADUATE_STUDENT, members.get(0));
-        verifyMember("alastair@knowles.com", null, MemberCategory.UNDERGRADUATE_STUDENT, members.get(1));
+        verifyMember("jakub@fibinger.com", null, UNDERGRADUATE_STUDENT, members.get(0));
+        verifyMember("alastair@knowles.com", null, UNDERGRADUATE_STUDENT, members.get(1));
 
         Long memberId = userRepository.findByEmail("alastair@knowles.com").getId();
         testUserService.setAuthentication(memberId);
@@ -997,13 +1002,13 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.setAuthentication(user.getId());
         userRoleDTOs = new ArrayList<>();
         userRoleDTOs.add(new UserRoleDTO().setUser(new UserDTO().setGivenName("alastair").setSurname("knowles").setEmail("alastair@knowles.com"))
-            .setRole(Role.MEMBER).setExpiryDate(LocalDate.of(2018, 7, 1)).setMemberCategory(MemberCategory.MASTER_STUDENT));
+            .setRole(Role.MEMBER).setExpiryDate(LocalDate.of(2018, 7, 1)).setMemberCategory(MASTER_STUDENT));
 
         departmentApi.postMembers(departmentId, userRoleDTOs);
-        members = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId, null).getMembers();
+        members = departmentApi.getUserRoles(departmentId, null).getMembers();
 
-        verifyMember("jakub@fibinger.com", null, MemberCategory.UNDERGRADUATE_STUDENT, members.get(0));
-        verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), MemberCategory.MASTER_STUDENT, members.get(1));
+        verifyMember("jakub@fibinger.com", null, UNDERGRADUATE_STUDENT, members.get(0));
+        verifyMember("alastair@alastair.com", LocalDate.of(2018, 7, 1), MASTER_STUDENT, members.get(1));
     }
 
     @Test
@@ -1028,7 +1033,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setGoogleId("googleId")
                     .setLatitude(BigDecimal.ONE)
                     .setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberCategory(UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(3)
                 .setExpiryDate(LocalDate.now().plusYears(2)));
@@ -1069,7 +1074,7 @@ public class DepartmentApiIT extends AbstractIT {
         ExceptionUtils.verifyException(
             BoardException.class,
             () -> departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
+                new UserRoleDTO().setMemberCategory(UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
             ExceptionCode.DUPLICATE_PERMISSION);
     }
 
@@ -1096,7 +1101,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setGoogleId("googleId")
                     .setLatitude(BigDecimal.ONE)
                     .setLongitude(BigDecimal.ONE)))
-            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+            .setMemberCategory(UNDERGRADUATE_STUDENT)
             .setMemberProgram("program")
             .setMemberYear(2)
             .setExpiryDate(LocalDate.now().plusYears(2)));
@@ -1131,7 +1136,7 @@ public class DepartmentApiIT extends AbstractIT {
         ExceptionUtils.verifyException(
             BoardForbiddenException.class,
             () -> departmentApi.postMembershipRequest(departmentId,
-                new UserRoleDTO().setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
+                new UserRoleDTO().setMemberCategory(UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
             ExceptionCode.FORBIDDEN_PERMISSION);
     }
 
@@ -1157,7 +1162,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setGoogleId("googleId")
                     .setLatitude(BigDecimal.ONE)
                     .setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberCategory(UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(1)
                 .setExpiryDate(LocalDate.now().plusYears(2)));
@@ -1232,7 +1237,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyMemberStatistics, department2Dashboard1.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department2Dashboard1.getPostStatistics());
 
-        UserRoleRepresentation member1 = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId1,
+        UserRoleRepresentation member1 = departmentApi.createResourceUser(departmentId1,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
                 .setRole(Role.MEMBER));
@@ -1251,7 +1256,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyMemberStatistics, department2Dashboard2.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department2Dashboard2.getPostStatistics());
 
-        UserRoleRepresentation member2 = resourceApi.createResourceUser(Scope.DEPARTMENT, departmentId1,
+        UserRoleRepresentation member2 = departmentApi.createResourceUser(departmentId1,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
                 .setRole(Role.MEMBER));
@@ -1278,7 +1283,7 @@ public class DepartmentApiIT extends AbstractIT {
                     .setGoogleId("googleId")
                     .setLatitude(BigDecimal.ONE)
                     .setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
+                .setMemberCategory(UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
 
         Long memberId4 = testUserService.authenticate().getId();
         departmentApi.postMembershipRequest(departmentId1,
@@ -1288,10 +1293,10 @@ public class DepartmentApiIT extends AbstractIT {
                     .setGoogleId("googleId")
                     .setLatitude(BigDecimal.ONE)
                     .setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
+                .setMemberCategory(MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
 
         testUserService.setAuthentication(departmentUserId);
-        UserRolesRepresentation userRoles = resourceApi.getUserRoles(Scope.DEPARTMENT, departmentId1, null);
+        UserRolesRepresentation userRoles = departmentApi.getUserRoles(departmentId1, null);
         LocalDateTime member3CreatedTimestamp = userRoles.getMemberRequests().stream()
             .filter(userRole -> userRole.getUser().getId().equals(memberId3))
             .findFirst().get().getCreatedTimestamp();
@@ -1316,8 +1321,6 @@ public class DepartmentApiIT extends AbstractIT {
 
         testUserService.setAuthentication(departmentUserId);
         departmentApi.putMembershipRequest(departmentId1, memberId3, "accepted");
-
-        verifyStatistics(departmentId1, 4L, 0L, 0L, 4L);
         departmentApi.putMembershipRequest(departmentId1, memberId4, "rejected");
 
         DepartmentDashboardRepresentation department1Dashboard5 = departmentApi.getDepartmentDashboard(departmentId1);
@@ -1337,7 +1340,7 @@ public class DepartmentApiIT extends AbstractIT {
         testUserService.authenticate();
         PostRepresentation post = postApi.postPost(department1Dashboard1.getBoards().get(0).getId(),
             TestHelper.smallSamplePost()
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
+                .setMemberCategories(Collections.singletonList(UNDERGRADUATE_STUDENT))
                 .setPostCategories(Collections.singletonList("Employment")));
         Long postId = post.getId();
 
@@ -1448,6 +1451,395 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyPostStatistics, department2Dashboard8.getPostStatistics());
     }
 
+    @Test
+    public void shouldAddAndRemoveRoles() {
+        User user = testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+
+        List<UserRoleRepresentation> users = departmentApi.getUserRoles(departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+
+        // add ADMINISTRATOR role
+        UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
+        UserRoleRepresentation resourceManager = departmentApi.createResourceUser(departmentId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
+        users = departmentApi.getUserRoles(departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(BoardUtils.obfuscateEmail("board@mail.com"))).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+
+        // replace with MEMBER role
+        UserRoleRepresentation resourceUser = departmentApi.updateResourceUser(departmentId, resourceManager.getUser().getId(),
+            new UserRoleDTO().setUser(newUser).setRole(MEMBER).setMemberCategory(MASTER_STUDENT));
+        verifyContains(Collections.singletonList(resourceUser), new UserRoleRepresentation().setUser(
+            new UserRepresentation().setEmail(BoardUtils.obfuscateEmail("board@mail.com"))).setRole(MEMBER).setState(State.ACCEPTED));
+
+        // remove from resource
+        departmentApi.deleteResourceUser(departmentId, resourceManager.getUser().getId());
+        users = departmentApi.getUserRoles(departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+    }
+
+    @Test
+    public void shouldNotRemoveLastAdminRole() {
+        User creator = testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("last-admin-role").setSummary("last-admin-role summary")).getId();
+
+        // add another administrator
+        UserDTO newUserDTO = new UserDTO().setEmail("last-admin-role@mail.com").setGivenName("Sample").setSurname("User");
+        UserRoleRepresentation boardManager = departmentApi.createResourceUser(departmentId,
+            new UserRoleDTO().setUser(newUserDTO).setRole(Role.ADMINISTRATOR));
+
+        // remove current user as administrator
+        departmentApi.deleteResourceUser(departmentId, creator.getId());
+
+        // authenticate as another administrator
+        User newUser = userCacheService.findOneFresh(boardManager.getUser().getId());
+        testUserService.setAuthentication(newUser.getId());
+
+        // try to remove yourself as administrator
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.updateResourceUser(departmentId, boardManager.getUser().getId(),
+                new UserRoleDTO().setUser(newUserDTO).setRole(MEMBER).setMemberCategory(MASTER_STUDENT)),
+            ExceptionCode.IRREMOVABLE_USER_ROLE);
+
+        List<UserRoleRepresentation> users = departmentApi.getUserRoles(departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(BoardUtils.obfuscateEmail(newUserDTO.getEmail()))).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+    }
+
+    @Test
+    public void shouldNotRemoveLastAdminUser() {
+        User creator = testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("last-admin-user").setSummary("last-admin-user summary")).getId();
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.deleteResourceUser(departmentId, creator.getId()), ExceptionCode.IRREMOVABLE_USER);
+
+        List<UserRoleRepresentation> users = departmentApi.getUserRoles(departmentId, null).getUsers();
+        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
+            .setEmail(creator.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
+    }
+
+    @Test
+    public void shouldNotAddUserWithNotExistingMemberCategory() {
+        testUserService.authenticate();
+        Long universityId =
+            universityService.getOrCreateUniversity("University College London", "ucl").getId();
+
+        Long departmentId = departmentApi.postDepartment(universityId,
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("department summary")).getId();
+
+        UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
+
+        // try to add a user to a board
+        departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(
+                Optional.of(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))));
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.createResourceUser(departmentId,
+                new UserRoleDTO().setUser(newUser).setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
+            INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
+
+        // try to add a user to a department
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.createResourceUser(departmentId,
+                new UserRoleDTO().setUser(newUser).setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
+            INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
+    }
+
+    @Test
+    public void shouldNotAddUserRoleWithUnactivatedMemberCategory() {
+        User user = testUserService.authenticate();
+        Long userId = user.getId();
+
+        Long universityId =
+            universityService.getOrCreateUniversity("University College London", "ucl").getId();
+
+        Long departmentId = departmentApi.postDepartment(universityId,
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("department summary")).getId();
+
+        // try with a board
+        departmentApi.patchDepartment(departmentId,
+            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(UNDERGRADUATE_STUDENT, MASTER_STUDENT))));
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.updateResourceUser(departmentId, userId,
+                new UserRoleDTO().setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
+            INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
+
+        // try with a department
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> departmentApi.updateResourceUser(departmentId, userId,
+                new UserRoleDTO().setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
+            INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
+    }
+
+    @Test
+    @Sql("classpath:data/user_autosuggest_setup.sql")
+    public void shouldGetSimilarUsers() {
+        testUserService.authenticate();
+        Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
+        Long departmentId = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+
+        List<UserRepresentation> userRs = departmentApi.getSimilarUsers(departmentId, "alas");
+        Assert.assertEquals(3, userRs.size());
+        verifySuggestedUser("alastair", "fibinger", "alastair@fibinger.com", userRs.get(0));
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.com", userRs.get(1));
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.net", userRs.get(2));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "knowles");
+        Assert.assertEquals(3, userRs.size());
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.com", userRs.get(0));
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.net", userRs.get(1));
+        verifySuggestedUser("jakub", "knowles", "jakub@knowles.com", userRs.get(2));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "alastair fib");
+        Assert.assertEquals(1, userRs.size());
+        verifySuggestedUser("alastair", "fibinger", "alastair@fibinger.com", userRs.get(0));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "alastair knowles");
+        Assert.assertEquals(2, userRs.size());
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.com", userRs.get(0));
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.net", userRs.get(1));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "alastair@kno");
+        Assert.assertEquals(2, userRs.size());
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.com", userRs.get(0));
+        verifySuggestedUser("alastair", "knowles", "alastair@knowles.net", userRs.get(1));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "alastair@fib");
+        Assert.assertEquals(1, userRs.size());
+        verifySuggestedUser("alastair", "fibinger", "alastair@fibinger.com", userRs.get(0));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "min");
+        Assert.assertEquals(1, userRs.size());
+        verifySuggestedUser("juan", "mingo", "juan@mingo.com", userRs.get(0));
+
+        userRs = departmentApi.getSimilarUsers(departmentId, "xavier");
+        Assert.assertEquals(0, userRs.size());
+
+        testUserService.authenticate();
+        ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> departmentApi.getSimilarUsers(departmentId, "alastair"), FORBIDDEN_ACTION, null);
+
+        testUserService.unauthenticate();
+        ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> departmentApi.getSimilarUsers(departmentId, "alastair"), UNAUTHENTICATED_USER, null);
+    }
+
+    @Test
+    @Sql("classpath:data/resource_filter_setup.sql")
+    public void shouldListAndFilterResources() {
+        resourceRepository.findAll().stream().sorted((resource1, resource2) -> org.apache.commons.lang3.ObjectUtils.compare(resource1.getId(), resource2.getId()))
+            .forEach(resource -> {
+                if (Arrays.asList(Scope.UNIVERSITY, Scope.DEPARTMENT, Scope.BOARD).contains(resource.getScope())) {
+                    resourceService.setIndexDataAndQuarter(resource);
+                } else {
+                    postService.setIndexDataAndQuarter((Post) resource);
+                }
+
+                resourceRepository.update(resource);
+            });
+
+        Long userId = userCacheService.findByEmail("department@administrator.com").getId();
+        testUserService.setAuthentication(userId);
+
+        List<BoardRepresentation> boardRs = boardApi.getBoards(null, false, null, null, null);
+        Assert.assertEquals(2, boardRs.size());
+
+        List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities", "Housing");
+
+        boardRs = boardApi.getBoards(null, false, null, null, "student");
+        Assert.assertEquals(2, boardRs.size());
+
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities", "Housing");
+
+        boardRs = boardApi.getBoards(null, false, null, null, "promote work experience");
+        Assert.assertEquals(1, boardRs.size());
+
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities");
+
+        userId = userCacheService.findByEmail("department@author.com").getId();
+        testUserService.setAuthentication(userId);
+
+        boardRs = boardApi.getBoards(null, false, null, null, null);
+        Assert.assertEquals(1, boardRs.size());
+
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities");
+
+        boardRs = boardApi.getBoards(null, false, null, null, "student");
+        Assert.assertEquals(1, boardRs.size());
+
+        boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
+        verifyContains(boardNames, "Opportunities");
+
+        List<PostRepresentation> postRs = postApi.getPosts(null, false, null, null, null);
+        Assert.assertEquals(2, postRs.size());
+
+        List<String> postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer");
+
+        postRs = postApi.getPosts(null, false, null, null, "optimise");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer");
+
+        postRs = postApi.getPosts(null, false, State.REJECTED, null, null);
+        Assert.assertEquals(0, postRs.size());
+
+        userId = userCacheService.findByEmail("department@member.com").getId();
+        testUserService.setAuthentication(userId);
+
+        postRs = postApi.getPosts(null, false, null, null, null);
+        Assert.assertEquals(3, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
+
+        postRs = postApi.getPosts(null, false, null, null, "london");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer");
+
+        testUserService.unauthenticate();
+        Long boardId = boardService.getBoard("ed/cs/opportunities").getId();
+
+        postRs = postApi.getPosts(boardId, true, null, null, null);
+        Assert.assertEquals(3, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer", "Java Web Developer", "Technical Analyst");
+
+        postRs = postApi.getPosts(boardId, true, null, null, "london");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Database Engineer");
+
+        userId = userCacheService.findByEmail("post@administrator.com").getId();
+        testUserService.setAuthentication(userId);
+
+        postRs = postApi.getPosts(boardId, false, null, null, null);
+        Assert.assertEquals(7, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Support Engineer", "UX Designer", "Front-End Developer", "Technical Analyst", "Scrum Leader", "Product Manager", "Test Engineer");
+
+        postRs = postApi.getPosts(boardId, false, null, null, "madrid krakow");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Technical Analyst");
+
+        userId = userCacheService.findByEmail("department@administrator.com").getId();
+        testUserService.setAuthentication(userId);
+
+        postRs = postApi.getPosts(boardId, false, null, null, null);
+        Assert.assertEquals(9, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Support Engineer", "UX Designer", "Front-End Developer", "Database Engineer", "Java Web Developer", "Technical Analyst", "Scrum Leader",
+            "Product Manager", "Test Engineer");
+
+        postRs = postApi.getPosts(boardId, false, State.ACCEPTED, null, "service");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Java Web Developer");
+
+        postRs = postApi.getPosts(boardId, false, State.ACCEPTED, null, "madrid krakow");
+        Assert.assertEquals(2, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Java Web Developer", "Technical Analyst");
+
+        ExceptionUtils.verifyException(BoardException.class,
+            () -> postApi.getPosts(null, false, State.ARCHIVED, null, null), ExceptionCode.INVALID_RESOURCE_FILTER, null);
+
+        List<String> archiveQuarters = postApi.getPostArchiveQuarters(boardId);
+        verifyContains(archiveQuarters, "20164", "20171");
+
+        postRs = postApi.getPosts(null, false, State.ARCHIVED, "20164", null);
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Software Architect");
+
+        postRs = postApi.getPosts(boardId, false, State.ARCHIVED, "20171", "nuts");
+        Assert.assertEquals(1, postRs.size());
+
+        postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
+        verifyContains(postNames, "Business Analyst");
+
+        postRs = postApi.getPosts(boardId, false, State.ARCHIVED, "20171", "guru");
+        Assert.assertEquals(0, postRs.size());
+    }
+
+    @Test
+    @Sql("classpath:data/user_role_filter_setup.sql")
+    public void shouldListAndFilterUserRoles() {
+        for (User user : userRepository.findAll()) {
+            userCacheService.setIndexData(user);
+            userRepository.update(user);
+        }
+
+        Long userId = userCacheService.findByEmail("alastair@knowles.com").getId();
+        testUserService.setAuthentication(userId);
+
+        Long departmentId = resourceRepository.findByHandle("cs").getId();
+        UserRolesRepresentation userRoles = departmentApi.getUserRoles(departmentId, null);
+        Assert.assertEquals(2, userRoles.getUsers().size());
+        Assert.assertEquals(2, userRoles.getMembers().size());
+        Assert.assertEquals(2, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("alastair@knowles.com"), BoardUtils.obfuscateEmail("jakub@fibinger.com"));
+
+        userRoles = departmentApi.getUserRoles(departmentId, "alastair");
+        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("alastair@knowles.com"));
+
+        userRoles = departmentApi.getUserRoles(departmentId, "alister");
+        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("alastair@knowles.com"));
+
+        userRoles = departmentApi.getUserRoles(departmentId, "beatriz");
+        Assert.assertEquals(0, userRoles.getUsers().size());
+        Assert.assertEquals(1, userRoles.getMembers().size());
+        Assert.assertEquals(0, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("beatriz@rodriguez.com"));
+
+        userRoles = departmentApi.getUserRoles(departmentId, "felipe");
+        Assert.assertEquals(0, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getMembers().size());
+        Assert.assertEquals(1, userRoles.getMemberRequests().size());
+        verifyContains(userRoles.getMemberRequests().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+            BoardUtils.obfuscateEmail("felipe@ieder.com"));
+
+        testUserService.unauthenticate();
+        ExceptionUtils.verifyException(BoardForbiddenException.class,
+            () -> departmentApi.getUserRoles(departmentId, null), UNAUTHENTICATED_USER, null);
+    }
+
     private Pair<DepartmentRepresentation, DepartmentRepresentation> verifyPostTwoDepartments() {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
@@ -1545,19 +1937,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentIdString, documentLogoR.getFileName());
     }
 
-    private void verifyStatistics(Long departmentId, Long boardCount, Long postCount, Long authorCount, Long memberCount) {
-        DepartmentRepresentation departmentR = departmentApi.getDepartment(departmentId);
-//        TestHelper.verifyNullableCount(postCount, departmentR.getPostCount());
-//        TestHelper.verifyNullableCount(memberCount, departmentR.getMemberCount());
-//
-//        List<DepartmentRepresentation> departmentRs = departmentApi.getDepartments(true, null);
-//        TestHelper.verifyNullableCount(postCount, departmentRs.get(0).getPostCount());
-//        TestHelper.verifyNullableCount(memberCount, departmentRs.get(0).getMemberCount());
-//
-//        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getPostCount());
-//        TestHelper.verifyNullableCount(0L, departmentRs.get(1).getMemberCount());
-    }
-
     private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, MemberCategory expectedMemberCategory, UserRoleRepresentation actual) {
         Assert.assertEquals(BoardUtils.obfuscateEmail(expectedEmail), actual.getUser().getEmail());
         Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
@@ -1579,6 +1958,18 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals("research-opportunities", boardR2.getHandle());
         Assert.assertEquals(ImmutableList.of("MRes", "PhD", "Postdoc"), boardR2.getPostCategories());
         Assert.assertEquals(State.ACCEPTED, boardR2.getState());
+    }
+
+    private void verifySuggestedUser(String expectedGivenName, String expectedSurname, String expectedEmail, UserRepresentation userR) {
+        Assert.assertEquals(expectedGivenName, userR.getGivenName());
+        Assert.assertEquals(expectedSurname, userR.getSurname());
+        Assert.assertEquals(BoardUtils.obfuscateEmail(expectedEmail), userR.getEmail());
+
+        String userIdString = userR.getId().toString();
+        DocumentRepresentation documentImageR = userR.getDocumentImage();
+        Assert.assertEquals(userIdString, documentImageR.getCloudinaryId());
+        Assert.assertEquals(userIdString, documentImageR.getCloudinaryUrl());
+        Assert.assertEquals(userIdString, documentImageR.getFileName());
     }
 
 }

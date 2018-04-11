@@ -51,9 +51,6 @@ public abstract class AbstractIT {
     Long resourceArchiveDurationSeconds;
 
     @Inject
-    ResourceApi resourceApi;
-
-    @Inject
     DepartmentApi departmentApi;
 
     @Inject
