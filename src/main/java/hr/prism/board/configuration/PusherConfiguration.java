@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 @Configuration
-public class WebSocketConfiguration {
+public class PusherConfiguration {
 
     private final String pusherApp;
 
@@ -24,9 +24,9 @@ public class WebSocketConfiguration {
     private final String pusherCluster;
 
     @Inject
-    public WebSocketConfiguration(@Value("${pusher.app}") String pusherApp, @Value("${pusher.key}") String pusherKey,
-                                  @Value("${pusher.secret}") String pusherSecret,
-                                  @Value("${pusher.cluster}") String pusherCluster) {
+    public PusherConfiguration(@Value("${pusher.app}") String pusherApp, @Value("${pusher.key}") String pusherKey,
+                               @Value("${pusher.secret}") String pusherSecret,
+                               @Value("${pusher.cluster}") String pusherCluster) {
         this.pusherApp = pusherApp;
         this.pusherKey = pusherKey;
         this.pusherSecret = pusherSecret;
