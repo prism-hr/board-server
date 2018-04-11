@@ -4,33 +4,42 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 @Configuration
 public class DatabaseConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfiguration.class);
+    private static final Logger LOGGER = getLogger(DatabaseConfiguration.class);
 
-    @Value("${database.host}")
-    private String databaseHost;
+    private final String databaseHost;
 
-    @Value("${database.schema}")
-    private String databaseSchema;
+    private final String databaseSchema;
 
-    @Value("${clean.db.on.startup}")
-    private boolean cleanDbOnStartup;
+    private final boolean cleanDbOnStartup;
 
-    @Value("${database.migration.on}")
-    private boolean databaseMigrationOn;
+    private final boolean databaseMigrationOn;
+
+    @Inject
+    public DatabaseConfiguration(@Value("${database.host}") String databaseHost,
+                                 @Value("${database.schema}") String databaseSchema,
+                                 @Value("${clean.db.on.startup}") boolean cleanDbOnStartup,
+                                 @Value("${database.migration.on}") boolean databaseMigrationOn) {
+        this.databaseHost = databaseHost;
+        this.databaseSchema = databaseSchema;
+        this.cleanDbOnStartup = cleanDbOnStartup;
+        this.databaseMigrationOn = databaseMigrationOn;
+    }
 
     @Bean
     @Primary

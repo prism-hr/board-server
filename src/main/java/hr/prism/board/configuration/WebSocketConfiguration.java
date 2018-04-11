@@ -6,25 +6,32 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.inject.Inject;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 @Configuration
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class WebSocketConfiguration {
 
-    @Value("${pusher.app}")
-    private String pusherApp;
+    private final String pusherApp;
 
-    @Value("${pusher.key}")
-    private String pusherKey;
+    private final String pusherKey;
 
-    @Value("${pusher.secret}")
-    private String pusherSecret;
+    private final String pusherSecret;
 
-    @Value("${pusher.cluster}")
-    private String pusherCluster;
+    private final String pusherCluster;
+
+    @Inject
+    public WebSocketConfiguration(@Value("${pusher.app}") String pusherApp, @Value("${pusher.key}") String pusherKey,
+                                  @Value("${pusher.secret}") String pusherSecret,
+                                  @Value("${pusher.cluster}") String pusherCluster) {
+        this.pusherApp = pusherApp;
+        this.pusherKey = pusherKey;
+        this.pusherSecret = pusherSecret;
+        this.pusherCluster = pusherCluster;
+    }
 
     @Bean
     public Pusher pusher() {
@@ -40,7 +47,7 @@ public class WebSocketConfiguration {
     private static class GsonLocalDateTimeAdapter implements JsonSerializer<LocalDateTime> {
 
         public JsonElement serialize(LocalDateTime localDateTime, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            return new JsonPrimitive(localDateTime.format(ISO_LOCAL_DATE_TIME));
         }
 
     }

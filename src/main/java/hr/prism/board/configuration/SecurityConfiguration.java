@@ -7,28 +7,36 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.inject.Inject;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    private final Long sessionRefreshBeforeExpirationSeconds;
+
+    private final AuthenticationService authenticationService;
+
     @Inject
-    private AuthenticationService authenticationService;
+    public SecurityConfiguration(
+        @Value("${session.refreshBeforeExpiration.seconds}") Long sessionRefreshBeforeExpirationSeconds,
+        AuthenticationService authenticationService) {
+        this.sessionRefreshBeforeExpirationSeconds = sessionRefreshBeforeExpirationSeconds;
+        this.authenticationService = authenticationService;
+    }
 
-    @Value("${session.refreshBeforeExpiration.seconds}")
-    private Long sessionRefreshBeforeExpirationSeconds;
-
-    public void configure(WebSecurity web) throws Exception {
+    public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/api/auth/*", "/api/redirect");
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        AuthenticationFilter filter = new AuthenticationFilter(authenticationService, sessionRefreshBeforeExpirationSeconds);
-        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        AuthenticationFilter filter =
+            new AuthenticationFilter(authenticationService, sessionRefreshBeforeExpirationSeconds);
+        http.sessionManagement().sessionCreationPolicy(STATELESS)
             .and().csrf().disable().anonymous().disable()
             .authorizeRequests().antMatchers("/api/auth/*", "/api/redirect").permitAll()
             .and().addFilterAt(filter, BasicAuthenticationFilter.class);

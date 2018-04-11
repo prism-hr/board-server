@@ -1,7 +1,6 @@
 package hr.prism.board.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import freemarker.template.TemplateException;
 import hr.prism.board.utils.ObjectMapperProvider;
 import no.api.freemarker.java8.Java8ObjectWrapper;
@@ -14,21 +13,29 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
+
+import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+import static freemarker.template.Configuration.VERSION_2_3_26;
 
 @EnableWebMvc
 @Configuration
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
-    @Value("${jackson.pretty}")
-    private boolean jacksonPretty;
+    private final boolean jacksonPretty;
+
+    @Inject
+    public WebMvcConfiguration(@Value("${jackson.pretty}") boolean jacksonPretty) {
+        this.jacksonPretty = jacksonPretty;
+    }
 
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = ObjectMapperProvider.getObjectMapper().copy();
         if (jacksonPretty) {
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+            objectMapper.enable(INDENT_OUTPUT);
         }
 
         return objectMapper;
@@ -52,7 +59,7 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
         public void afterPropertiesSet() throws IOException, TemplateException {
             super.afterPropertiesSet();
             this.getConfiguration()
-                .setObjectWrapper(new Java8ObjectWrapper(freemarker.template.Configuration.VERSION_2_3_26));
+                .setObjectWrapper(new Java8ObjectWrapper(VERSION_2_3_26));
         }
 
     }

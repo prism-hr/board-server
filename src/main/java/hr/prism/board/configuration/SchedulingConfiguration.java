@@ -7,16 +7,16 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 @Configuration
 @EnableScheduling
 public class SchedulingConfiguration implements SchedulingConfigurer {
 
     @Bean(destroyMethod = "shutdown")
-    @SuppressWarnings("ContextJavaBeanUnresolvedMethodsInspection")
     public Executor taskExecutor() {
-        return Executors.newScheduledThreadPool(5);
+        return newScheduledThreadPool(5);
     }
 
     @Override
