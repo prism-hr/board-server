@@ -2,6 +2,7 @@ package hr.prism.board.enums;
 
 public enum BadgeType {
 
-    SIMPLE, LIST
+    SIMPLE,
+    LIST
 
 }

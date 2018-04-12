@@ -9,10 +9,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class ObjectMapperProvider {
 
-    private static final ObjectMapper objectMapper = createObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = createObjectMapper();
 
     public static ObjectMapper getObjectMapper() {
-        return objectMapper;
+        return OBJECT_MAPPER;
     }
 
     private static ObjectMapper createObjectMapper() {

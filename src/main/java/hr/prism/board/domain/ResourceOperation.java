@@ -1,19 +1,12 @@
 package hr.prism.board.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedAttributeNode;
-import javax.persistence.NamedEntityGraph;
-import javax.persistence.Table;
-
 import hr.prism.board.enums.Action;
 
+import javax.persistence.*;
+
+import static javax.persistence.EnumType.STRING;
+
 @Entity
-@SuppressWarnings("unused")
 @Table(name = "resource_operation")
 @NamedEntityGraph(
     name = "resource.operation",
@@ -24,7 +17,7 @@ public class ResourceOperation extends BoardEntity {
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "action", nullable = false)
     private Action action;
 

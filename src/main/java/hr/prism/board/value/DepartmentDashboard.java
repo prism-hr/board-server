@@ -1,9 +1,9 @@
-package hr.prism.board.domain;
+package hr.prism.board.value;
 
 import com.stripe.model.Invoice;
-import hr.prism.board.value.Organization;
-import hr.prism.board.value.PostStatistics;
-import hr.prism.board.value.Statistics;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceTask;
 
 import java.util.List;
 

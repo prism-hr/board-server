@@ -32,7 +32,8 @@ public class ActivityEvent extends ApplicationEvent {
         this.entityId = entityId;
     }
 
-    public ActivityEvent(Object source, Long resourceId, Class<? extends BoardEntity> entityClass, Long entityId, List<Activity> activities) {
+    public ActivityEvent(Object source, Long resourceId, Class<? extends BoardEntity> entityClass, Long entityId,
+                         List<Activity> activities) {
         super(source);
         this.resourceId = resourceId;
         this.entityClass = entityClass;

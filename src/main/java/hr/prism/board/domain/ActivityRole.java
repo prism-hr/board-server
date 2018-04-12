@@ -5,6 +5,8 @@ import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
 
+import static javax.persistence.EnumType.STRING;
+
 @Entity
 @Table(name = "activity_role", uniqueConstraints = @UniqueConstraint(columnNames = {"activity_id", "scope", "role"}))
 public class ActivityRole extends BoardEntity {
@@ -13,11 +15,11 @@ public class ActivityRole extends BoardEntity {
     @JoinColumn(name = "activity_id", nullable = false)
     private Activity activity;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "scope", nullable = false)
     private Scope scope;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "role", nullable = false)
     private Role role;
 

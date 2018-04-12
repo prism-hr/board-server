@@ -1,10 +1,14 @@
 package hr.prism.board.mapper;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceTask;
+import hr.prism.board.domain.University;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.value.DepartmentDashboard;
 import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.Statistics;

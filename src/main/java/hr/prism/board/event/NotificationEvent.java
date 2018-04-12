@@ -44,7 +44,8 @@ public class NotificationEvent extends ApplicationEvent {
         this.notifications = notifications;
     }
 
-    public NotificationEvent(Object source, Long resourceId, List<ResourceTask> tasks, List<Notification> notifications) {
+    public NotificationEvent(Object source, Long resourceId, List<ResourceTask> tasks,
+                             List<Notification> notifications) {
         super(source);
         this.resourceId = resourceId;
         this.tasks = tasks;

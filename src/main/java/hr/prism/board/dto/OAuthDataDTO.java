@@ -29,8 +29,7 @@ public class OAuthDataDTO {
     public boolean equals(Object other) {
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
-        OAuthDataDTO that = (OAuthDataDTO) other;
-        return Objects.equals(code, that.code);
+        return Objects.equals(code, ((OAuthDataDTO) other).code);
     }
 
 }

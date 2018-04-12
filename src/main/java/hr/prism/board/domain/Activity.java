@@ -4,9 +4,11 @@ import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import static javax.persistence.EnumType.STRING;
+
 @Entity
-@SuppressWarnings("unused")
-@Table(name = "activity", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_role_id", "resource_event_id", "activity"}))
+@Table(name = "activity", uniqueConstraints = @UniqueConstraint(
+    columnNames = {"resource_id", "user_role_id", "resource_event_id", "activity"}))
 public class Activity extends BoardEntity {
 
     @ManyToOne
@@ -21,7 +23,7 @@ public class Activity extends BoardEntity {
     @JoinColumn(name = "resource_event_id")
     private ResourceEvent resourceEvent;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "activity", nullable = false)
     private hr.prism.board.enums.Activity activity;
 
@@ -98,4 +100,5 @@ public class Activity extends BoardEntity {
         this.viewed = viewed;
         return this;
     }
+
 }

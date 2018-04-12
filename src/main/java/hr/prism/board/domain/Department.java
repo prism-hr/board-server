@@ -1,14 +1,14 @@
 package hr.prism.board.domain;
 
 import com.stripe.model.Customer;
-import hr.prism.board.enums.Scope;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
+
 @Entity
-@SuppressWarnings({"unused", "UnusedReturnValue"})
-@DiscriminatorValue(value = Scope.Value.DEPARTMENT)
+@DiscriminatorValue(value = DEPARTMENT)
 @NamedEntityGraph(
     name = "department.extended",
     attributeNodes = {
@@ -97,7 +97,6 @@ public class Department extends Resource {
     }
 
     public void decrementMemberToBeUploadedCount() {
-        // We shouldn't ever have null here but if we do, not a good reason to crash the app - just let the count reset itself
         if (this.memberToBeUploadedCount != null) {
             if (this.memberToBeUploadedCount == 1L) {
                 this.memberToBeUploadedCount = null;

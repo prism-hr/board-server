@@ -1,11 +1,11 @@
 package hr.prism.board.domain;
 
-import hr.prism.board.enums.Scope;
-
 import javax.persistence.*;
 
+import static hr.prism.board.enums.Scope.Value.BOARD;
+
 @Entity
-@DiscriminatorValue(value = Scope.Value.BOARD)
+@DiscriminatorValue(value = BOARD)
 @NamedEntityGraph(
     name = "board.extended",
     attributeNodes = {

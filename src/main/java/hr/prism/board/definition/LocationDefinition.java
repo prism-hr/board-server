@@ -4,14 +4,14 @@ import java.math.BigDecimal;
 
 public interface LocationDefinition {
 
-    public String getName();
+    String getName();
 
-    public String getDomicile();
+    String getDomicile();
 
-    public String getGoogleId();
+    String getGoogleId();
 
-    public BigDecimal getLatitude();
+    BigDecimal getLatitude();
 
-    public BigDecimal getLongitude();
+    BigDecimal getLongitude();
 
 }

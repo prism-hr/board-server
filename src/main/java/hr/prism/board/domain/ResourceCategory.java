@@ -4,9 +4,10 @@ import hr.prism.board.enums.CategoryType;
 
 import javax.persistence.*;
 
+import static javax.persistence.EnumType.STRING;
+
 @Entity
 @Table(name = "resource_category")
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class ResourceCategory extends BoardEntity {
 
     @ManyToOne
@@ -16,8 +17,8 @@ public class ResourceCategory extends BoardEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Enumerated(STRING)
     @Column(name = "type", nullable = false)
-    @Enumerated(EnumType.STRING)
     private CategoryType type;
 
     public Resource getResource() {

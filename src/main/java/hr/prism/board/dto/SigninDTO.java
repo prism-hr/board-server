@@ -45,8 +45,8 @@ public class SigninDTO extends AuthenticateDTO<SigninDTO> {
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         SigninDTO signinDTO = (SigninDTO) other;
-        return Objects.equals(authorizationData, signinDTO.authorizationData) &&
-            Objects.equals(oauthData, signinDTO.oauthData);
+        return Objects.equals(authorizationData, signinDTO.authorizationData)
+            && Objects.equals(oauthData, signinDTO.oauthData);
     }
 
 }

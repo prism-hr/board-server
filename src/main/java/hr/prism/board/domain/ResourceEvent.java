@@ -11,6 +11,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static javax.persistence.EnumType.STRING;
+
 @Entity
 @SuppressWarnings("unused")
 @Table(name = "resource_event")
@@ -20,7 +22,7 @@ public class ResourceEvent extends BoardEntity {
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "event", nullable = false)
     private hr.prism.board.enums.ResourceEvent event;
 
@@ -34,11 +36,11 @@ public class ResourceEvent extends BoardEntity {
     @Column(name = "referral", unique = true)
     private String referral;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "gender")
     private Gender gender;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "age_range")
     private AgeRange ageRange;
 
@@ -46,7 +48,7 @@ public class ResourceEvent extends BoardEntity {
     @JoinColumn(name = "location_nationality_id")
     private Location locationNationality;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "member_category")
     private MemberCategory memberCategory;
 
@@ -260,7 +262,8 @@ public class ResourceEvent extends BoardEntity {
     }
 
     public boolean hasDemographicData() {
-        return Stream.of(gender, ageRange, locationNationality, memberCategory, memberProgram, memberYear).anyMatch(Objects::nonNull);
+        return Stream.of(gender, ageRange, locationNationality, memberCategory, memberProgram, memberYear)
+            .anyMatch(Objects::nonNull);
     }
 
 }

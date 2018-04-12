@@ -1,11 +1,12 @@
 package hr.prism.board.enums;
 
-import org.apache.commons.collections.CollectionUtils;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import static hr.prism.board.utils.BoardUtils.isPresent;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 public enum MemberCategory {
 
@@ -15,18 +16,16 @@ public enum MemberCategory {
     RESEARCH_STAFF;
 
     public static List<String> toStrings(List<MemberCategory> categories) {
-        if (CollectionUtils.isEmpty(categories)) {
-            return Collections.emptyList();
+        if (isEmpty(categories)) {
+            return emptyList();
         }
 
-        return categories.stream().map(MemberCategory::name).collect(Collectors.toList());
+        return categories.stream().map(MemberCategory::name).collect(toList());
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static Optional<List<String>> toStrings(Optional<List<MemberCategory>> categories) {
-        if (categories == null) {
-            return null;
-        } else if (categories.isPresent()) {
+        if (isPresent(categories)) {
             return Optional.of(toStrings(categories.get()));
         }
 
@@ -34,11 +33,11 @@ public enum MemberCategory {
     }
 
     public static List<MemberCategory> fromStrings(List<String> categories) {
-        if (CollectionUtils.isEmpty(categories)) {
-            return Collections.emptyList();
+        if (isEmpty(categories)) {
+            return emptyList();
         }
 
-        return categories.stream().map(MemberCategory::valueOf).collect(Collectors.toList());
+        return categories.stream().map(MemberCategory::valueOf).collect(toList());
     }
 
 }

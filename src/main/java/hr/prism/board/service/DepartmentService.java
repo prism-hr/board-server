@@ -8,7 +8,6 @@ import hr.prism.board.enums.*;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.BoardExceptionFactory;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.DepartmentRepository;
@@ -17,10 +16,7 @@ import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.UserRoleEventService;
-import hr.prism.board.value.Organization;
-import hr.prism.board.value.PostStatistics;
-import hr.prism.board.value.ResourceFilter;
-import hr.prism.board.value.Statistics;
+import hr.prism.board.value.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -40,6 +36,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static hr.prism.board.exception.BoardExceptionFactory.throwFor;
 
 @Service
 @Transactional
@@ -395,14 +393,15 @@ public class DepartmentService {
         return user;
     }
 
-    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass, ExceptionCode exceptionCode) {
+    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass,
+                                   ExceptionCode exceptionCode) {
         PostResponseReadinessRepresentation responseReadiness = makePostResponseReadiness(user, department, true);
         if (!responseReadiness.isReady()) {
             if (responseReadiness.isRequireUserDemographicData()) {
-                BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
+                throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
             }
 
-            BoardExceptionFactory.throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
+            throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
         }
     }
 

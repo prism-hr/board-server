@@ -1,6 +1,7 @@
 package hr.prism.board.enums;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 public enum PasswordHash {
 
@@ -10,9 +11,9 @@ public enum PasswordHash {
     public boolean matches(String input, String target) {
         switch (this) {
             case MD5:
-                return DigestUtils.md5Hex(input).equals(target);
+                return md5Hex(input).equals(target);
             case SHA256:
-                return DigestUtils.sha256Hex(input).equals(target);
+                return sha256Hex(input).equals(target);
         }
 
         return false;

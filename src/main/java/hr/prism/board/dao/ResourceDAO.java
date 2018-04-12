@@ -3,22 +3,18 @@ package hr.prism.board.dao;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Lists;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceSearchRepository;
 import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,34 +27,49 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static hr.prism.board.enums.Role.PUBLIC;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
+import static hr.prism.board.enums.State.ARCHIVED;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.Comparator.naturalOrder;
+import static java.util.UUID.randomUUID;
+import static org.slf4j.LoggerFactory.getLogger;
+
 @Repository
 @Transactional
-@SuppressWarnings({"unchecked", "JpaQlInspection", "unused"})
 public class ResourceDAO {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceDAO.class);
+    private static final Logger LOGGER = getLogger(ResourceDAO.class);
 
     private static final String PUBLIC_RESOURCE =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.resource4_state, workflow.activity, workflow.notification " +
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, " +
+            "workflow.resource4_state, workflow.activity, workflow.notification " +
             "FROM resource " +
             "INNER join workflow " +
             "ON resource.scope = workflow.resource2_scope " +
             "AND resource.state = workflow.resource2_state " +
             "INNER JOIN resource_relation AS owner_relation " +
             "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "AND (resource.scope = :departmentScope " +
+            "OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id";
 
     private static final String SECURE_RESOURCE =
-        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, workflow.resource4_state, workflow.activity, workflow.notification " +
+        "SELECT resource.id, workflow.action, workflow.resource3_scope, workflow.resource3_state, " +
+            "workflow.resource4_state, workflow.activity, workflow.notification " +
             "FROM resource " +
             "INNER JOIN workflow " +
             "ON resource.scope = workflow.resource2_scope " +
             "AND resource.state = workflow.resource2_state " +
             "INNER JOIN resource_relation AS owner_relation " +
             "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "AND (resource.scope = :departmentScope " +
+            "OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
             "INNER JOIN resource_relation " +
@@ -68,7 +79,9 @@ public class ResourceDAO {
             "AND workflow.resource1_scope = parent.scope " +
             "INNER JOIN user_role " +
             "ON parent.id = user_role.resource_id " +
-            "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline)";
+            "AND workflow.role = user_role.role " +
+            "AND user_role.state IN (:userRoleStates) " +
+            "AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline)";
 
     private static final String ARCHIVE_RESOURCE =
         "SELECT DISTINCT resource.quarter " +
@@ -78,7 +91,8 @@ public class ResourceDAO {
             "AND resource.state = workflow.resource2_state " +
             "INNER JOIN resource_relation AS owner_relation " +
             "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
+            "AND (resource.scope = :departmentScope " +
+            "OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
             "INNER JOIN resource_relation " +
@@ -88,35 +102,44 @@ public class ResourceDAO {
             "AND workflow.resource1_scope = parent.scope " +
             "INNER JOIN user_role " +
             "ON parent.id = user_role.resource_id " +
-            "AND workflow.role = user_role.role AND user_role.state IN (:userRoleStates) AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline) " +
+            "AND workflow.role = user_role.role " +
+            "AND user_role.state IN (:userRoleStates) " +
+            "AND (user_role.expiry_date IS NULL " +
+            "OR user_role.expiry_date >= :baseline) " +
             "WHERE resource.scope = :scope " +
             "AND user_role.user_id = :userId " +
             "AND resource.state = :archiveState";
 
-    @Inject
-    private ResourceSearchRepository resourceSearchRepository;
+    private final ResourceSearchRepository resourceSearchRepository;
+
+    private final EntityManager entityManager;
 
     @Inject
-    private EntityManager entityManager;
+    public ResourceDAO(ResourceSearchRepository resourceSearchRepository, EntityManager entityManager) {
+        this.resourceSearchRepository = resourceSearchRepository;
+        this.entityManager = entityManager;
+    }
 
     public List<Resource> getResources(User user, ResourceFilter filter) {
         List<String> publicFilterStatements = new ArrayList<>();
         publicFilterStatements.add("workflow.role = :role ");
 
         Map<String, Object> publicFilterParameters = new HashMap<>();
-        publicFilterParameters.put("role", Role.PUBLIC.name());
-        publicFilterParameters.put("departmentScope", Scope.DEPARTMENT.name());
+        publicFilterParameters.put("role", PUBLIC.name());
+        publicFilterParameters.put("departmentScope", DEPARTMENT.name());
 
         List<String> secureFilterStatements = new ArrayList<>();
         Map<String, Object> secureFilterParameters = new HashMap<>();
         prepareDefaultFilters(user, secureFilterStatements, secureFilterParameters);
-        prepareCustomFilters(filter, publicFilterStatements, publicFilterParameters, secureFilterStatements, secureFilterParameters);
+        prepareCustomFilters(
+            filter, publicFilterStatements, publicFilterParameters, secureFilterStatements, secureFilterParameters);
 
         entityManager.flush();
         List<Object[]> publicResources = getResources(PUBLIC_RESOURCE, publicFilterStatements, publicFilterParameters);
         List<Object[]> secureResources = getResources(SECURE_RESOURCE, secureFilterStatements, secureFilterParameters);
 
-        Map<ResourceAction, ActionRepresentation> rowIndex = mergePublicAndSecureResources(filter, publicResources, secureResources);
+        Map<ResourceAction, ActionRepresentation> rowIndex =
+            mergePublicAndSecureResources(filter, publicResources, secureResources);
         if (rowIndex.isEmpty()) {
             return Collections.emptyList();
         }
@@ -133,7 +156,7 @@ public class ResourceDAO {
         prepareDefaultFilters(user, filterStatements, filterParameters);
 
         filterParameters.put("scope", scope.name());
-        filterParameters.put("archiveState", State.ARCHIVED.name());
+        filterParameters.put("archiveState", ARCHIVED.name());
 
         String statement = ARCHIVE_RESOURCE;
         if (parentId != null) {
@@ -149,6 +172,9 @@ public class ResourceDAO {
 
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+
+
+        //noinspection unchecked
         return (List<String>) query.getResultList();
     }
 
@@ -159,7 +185,8 @@ public class ResourceDAO {
                 "where resourceOperation.resource = :resource " +
                 "order by resourceOperation.id desc", ResourceOperation.class)
             .setParameter("resource", resource)
-            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("resource.operation"))
+            .setHint("javax.persistence.loadgraph",
+                entityManager.getEntityGraph("resource.operation"))
             .getResultList();
     }
 
@@ -186,9 +213,11 @@ public class ResourceDAO {
             .setParameter("name", name);
         constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
 
+        @SuppressWarnings("unchecked")
         List<Long> resourceIds = query.getResultList();
         if (!resourceIds.isEmpty()) {
-            throw new BoardDuplicateException(exceptionCode, scope.name() + " with name " + name + " exists already", resourceIds.get(0));
+            throw new BoardDuplicateException(exceptionCode,
+                scope.name() + " with name " + name + " exists already", resourceIds.get(0));
         }
     }
 
@@ -201,34 +230,41 @@ public class ResourceDAO {
             .setParameter("handle", handle)
             .setParameter("id", resource.getId());
 
-        if (!new ArrayList<>(query.getResultList()).isEmpty()) {
+        if (!query.getResultList().isEmpty()) {
             throw new BoardDuplicateException(exceptionCode, "Specified handle would not be unique");
         }
     }
 
-    private List<Object[]> getResources(String statement, List<String> filterStatements, Map<String, Object> filterParameters) {
-        Query query = entityManager.createNativeQuery(Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
+    private List<Object[]> getResources(String statement, List<String> filterStatements,
+                                        Map<String, Object> filterParameters) {
+        Query query = entityManager.createNativeQuery(
+            Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
+
+        //noinspection unchecked
         return query.getResultList();
     }
 
-    private void prepareDefaultFilters(User user, List<String> secureFilterStatements, Map<String, Object> secureFilterParameters) {
+    private void prepareDefaultFilters(User user, List<String> secureFilterStatements,
+                                       Map<String, Object> secureFilterParameters) {
         secureFilterStatements.add("user_role.user_id = :userId ");
 
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
-        secureFilterParameters.put("departmentScope", Scope.DEPARTMENT.name());
-        secureFilterParameters.put("userRoleStates", State.ACTIVE_USER_ROLE_STATE_STRINGS);
+        secureFilterParameters.put("departmentScope", DEPARTMENT.name());
+        secureFilterParameters.put("userRoleStates", ACTIVE_USER_ROLE_STATE_STRINGS);
         secureFilterParameters.put("baseline", LocalDate.now());
     }
 
-    private void prepareCustomFilters(ResourceFilter filter, List<String> publicFilterStatements, Map<String, Object> publicFilterParameters,
-                                      List<String> secureFilterStatements, Map<String, Object> secureFilterParameters) {
+    private void prepareCustomFilters(ResourceFilter filter, List<String> publicFilterStatements,
+                                      Map<String, Object> publicFilterParameters, List<String> secureFilterStatements,
+                                      Map<String, Object> secureFilterParameters) {
         for (Field field : ResourceFilter.class.getDeclaredFields()) {
             try {
                 field.setAccessible(true);
                 Object value = field.get(filter);
                 if (value != null) {
-                    ResourceFilter.ResourceFilterProperty resourceFilter = field.getAnnotation(ResourceFilter.ResourceFilterProperty.class);
+                    ResourceFilter.ResourceFilterProperty resourceFilter =
+                        field.getAnnotation(ResourceFilter.ResourceFilterProperty.class);
                     if (resourceFilter != null) {
                         String statement = resourceFilter.statement();
                         String parameter = resourceFilter.parameter();
@@ -246,7 +282,9 @@ public class ResourceDAO {
         }
     }
 
-    private Map<ResourceAction, ActionRepresentation> mergePublicAndSecureResources(ResourceFilter filter, List<Object[]> publicResults, List<Object[]> secureResults) {
+    private Map<ResourceAction, ActionRepresentation> mergePublicAndSecureResources(ResourceFilter filter,
+                                                                                    List<Object[]> publicResults,
+                                                                                    List<Object[]> secureResults) {
         List<Object[]> rows = new ArrayList<>(secureResults);
         if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
             // Return public and secure results
@@ -314,19 +352,20 @@ public class ResourceDAO {
         return rowIndex;
     }
 
-    private List<Resource> getResources(ResourceFilter filter, LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
+    private List<Resource> getResources(ResourceFilter filter,
+                                        LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
         Scope scope = filter.getScope();
         Class<? extends Resource> resourceClass = scope.resourceClass;
         EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
 
-        String search = UUID.randomUUID().toString();
+        String search = randomUUID().toString();
         String searchTerm = filter.getSearchTerm();
         Collection<Long> resourceIds = resourceActionIndex.keySet();
 
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             // Apply the search query
-            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), resourceIds);
+            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), makeSoundex(searchTerm), resourceIds);
             entityManager.flush();
         }
 
@@ -342,7 +381,8 @@ public class ResourceDAO {
 
         statement += Joiner.on(", ").skipNulls().join("order by search.id", filter.getOrderStatement());
 
-        List<Resource> resources = (List<Resource>) entityManager.createQuery(statement, resourceClass)
+        @SuppressWarnings("unchecked")
+        List<Resource> resources = entityManager.createQuery(statement)
             .setParameter("search", search)
             .setParameter("resourceIds", resourceIds)
             .setHint("javax.persistence.loadgraph", entityGraph)
@@ -357,19 +397,20 @@ public class ResourceDAO {
         return resources;
     }
 
-    private void mergeResourcesWithActions(List<Resource> resources, LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
+    private void mergeResourcesWithActions(List<Resource> resources,
+                                           LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
         for (Resource resource : resources) {
             // Find the states of the parents
             List<State> parentStates = Collections.emptyList();
             if (resource instanceof Post) {
                 Resource board = resource.getParent();
-                parentStates = Arrays.asList(board.getState(), board.getParent().getState());
+                parentStates = asList(board.getState(), board.getParent().getState());
             } else if (resource instanceof Board) {
-                parentStates = Collections.singletonList(resource.getParent().getState());
+                parentStates = singletonList(resource.getParent().getState());
             }
 
             // Remove any actions that should be suppressed due to parent state
-            List<ActionRepresentation> actionRepresentations = Lists.newArrayList(resourceActionIndex.get(resource.getId()));
+            List<ActionRepresentation> actionRepresentations = newArrayList(resourceActionIndex.get(resource.getId()));
             Iterator<ActionRepresentation> actionRepresentationIterator = actionRepresentations.iterator();
             while (actionRepresentationIterator.hasNext()) {
                 ActionRepresentation actionRepresentation = actionRepresentationIterator.next();
@@ -379,7 +420,7 @@ public class ResourceDAO {
                 }
             }
 
-            actionRepresentations.sort(Comparator.naturalOrder());
+            actionRepresentations.sort(naturalOrder());
             resource.setActions(actionRepresentations);
         }
     }
@@ -410,7 +451,9 @@ public class ResourceDAO {
             }
 
             ResourceAction other = (ResourceAction) object;
-            return Objects.equals(id, other.id) && Objects.equals(action, other.action) && Objects.equals(scope, other.scope);
+            return Objects.equals(id, other.id)
+                && Objects.equals(action, other.action)
+                && Objects.equals(scope, other.scope);
         }
 
     }

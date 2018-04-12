@@ -42,4 +42,5 @@ public class Document extends BoardEntity implements DocumentDefinition {
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
+
 }

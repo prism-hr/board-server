@@ -1,37 +1,21 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
-
-import org.apache.commons.lang3.ObjectUtils;
+import hr.prism.board.enums.*;
 import org.hibernate.validator.constraints.Email;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
-import hr.prism.board.enums.AgeRange;
-import hr.prism.board.enums.DocumentRequestState;
-import hr.prism.board.enums.Gender;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.PasswordHash;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.utils.BoardUtils;
+import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
+import static javax.persistence.EnumType.STRING;
+import static org.apache.commons.lang3.ObjectUtils.compare;
 
 @Entity
 @Table(name = "user")
-@SuppressWarnings({"unused", "SameParameterValue", "UnusedReturnValue"})
 public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "uuid", nullable = false)
@@ -53,7 +37,7 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "password")
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "password_hash")
     private PasswordHash passwordHash;
 
@@ -63,7 +47,7 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "password_reset_timestamp")
     private LocalDateTime passwordResetTimestamp;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "oauth_provider")
     private OauthProvider oauthProvider;
 
@@ -77,18 +61,18 @@ public class User extends BoardEntity implements Comparable<User> {
     @JoinColumn(name = "document_image_id")
     private Document documentImage;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "document_image_request_state")
     private DocumentRequestState documentImageRequestState;
-    
+
     @Column(name = "seen_walk_through")
     private Boolean seenWalkThrough;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "gender")
     private Gender gender;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "age_range")
     private AgeRange ageRange;
 
@@ -157,7 +141,7 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setEmail(String email) {
         this.email = email;
-        this.emailDisplay = BoardUtils.obfuscateEmail(email);
+        this.emailDisplay = obfuscateEmail(email);
         return this;
     }
 
@@ -245,16 +229,16 @@ public class User extends BoardEntity implements Comparable<User> {
         this.documentImageRequestState = documentImageRequestState;
         return this;
     }
-    
+
     public Boolean getSeenWalkThrough() {
         return seenWalkThrough;
     }
-    
+
     public User setSeenWalkThrough(Boolean seenWalkThrough) {
         this.seenWalkThrough = seenWalkThrough;
         return this;
     }
-    
+
     public Gender getGender() {
         return gender;
     }
@@ -373,9 +357,9 @@ public class User extends BoardEntity implements Comparable<User> {
     @Override
     @SuppressWarnings("NullableProblems")
     public int compareTo(User other) {
-        int compare = ObjectUtils.compare(givenName, other.getGivenName());
-        compare = compare == 0 ? ObjectUtils.compare(surname, other.getSurname()) : compare;
-        return compare == 0 ? ObjectUtils.compare(getId(), other.getId()) : compare;
+        int compare = compare(givenName, other.getGivenName());
+        compare = compare == 0 ? compare(surname, other.getSurname()) : compare;
+        return compare == 0 ? compare(getId(), other.getId()) : compare;
     }
 
 }

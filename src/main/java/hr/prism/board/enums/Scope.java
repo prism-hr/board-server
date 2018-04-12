@@ -22,7 +22,8 @@ public enum Scope {
         this.resourceClass = resourceClass;
     }
 
-    Scope(String value, Class<? extends Resource> resourceClass, Class<? extends StateChangeInterceptor> stateChangeInterceptorClass) {
+    Scope(String value, Class<? extends Resource> resourceClass,
+          Class<? extends StateChangeInterceptor> stateChangeInterceptorClass) {
         this(value, resourceClass);
         this.stateChangeInterceptorClass = stateChangeInterceptorClass;
     }

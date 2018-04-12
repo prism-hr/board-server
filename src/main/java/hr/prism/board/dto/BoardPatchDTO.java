@@ -10,8 +10,10 @@ public class BoardPatchDTO extends ResourcePatchDTO<BoardPatchDTO> {
 
     @Size(min = 1, max = 25)
     @Pattern(regexp = "^[a-z0-9-]+$")
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<String> handle;
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<List<String>> postCategories;
 
     public Optional<String> getHandle() {

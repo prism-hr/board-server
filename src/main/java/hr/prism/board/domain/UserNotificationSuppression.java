@@ -3,7 +3,8 @@ package hr.prism.board.domain;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "user_notification_suppression", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "resource_id"}))
+@Table(name = "user_notification_suppression",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "resource_id"}))
 public class UserNotificationSuppression extends BoardEntity {
 
     @ManyToOne

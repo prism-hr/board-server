@@ -2,8 +2,9 @@ package hr.prism.board.domain;
 
 import javax.persistence.*;
 
+import static javax.persistence.EnumType.STRING;
+
 @Entity
-@SuppressWarnings("unused")
 @Table(name = "resource_task", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "task"}))
 public class ResourceTask extends BoardEntity {
 
@@ -11,7 +12,7 @@ public class ResourceTask extends BoardEntity {
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "task", nullable = false)
     private hr.prism.board.enums.ResourceTask task;
 

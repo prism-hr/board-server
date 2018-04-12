@@ -3,7 +3,8 @@ package hr.prism.board.domain;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "resource_relation", uniqueConstraints = @UniqueConstraint(columnNames = {"resource1_id", "resource2_id"}))
+@Table(name = "resource_relation",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"resource1_id", "resource2_id"}))
 public class ResourceRelation extends BoardEntity {
 
     @ManyToOne

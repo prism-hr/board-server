@@ -45,8 +45,8 @@ public class OAuthAuthorizationDataDTO {
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         OAuthAuthorizationDataDTO that = (OAuthAuthorizationDataDTO) other;
-        return Objects.equals(clientId, that.clientId) &&
-            Objects.equals(redirectUri, that.redirectUri);
+        return Objects.equals(clientId, that.clientId)
+            && Objects.equals(redirectUri, that.redirectUri);
     }
 
 }

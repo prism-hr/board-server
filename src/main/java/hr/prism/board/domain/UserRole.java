@@ -9,6 +9,8 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static javax.persistence.EnumType.STRING;
+
 @Entity
 @NamedEntityGraph(
     name = "userRole.extended",
@@ -18,10 +20,13 @@ import java.time.LocalDateTime;
 @NamedNativeQuery(
     name = "memberStatistics",
     query =
-        "SELECT COALESCE(SUM(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), 0) as countLive, " +
-            "COALESCE(SUM(IF(user_role.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
+        "SELECT COALESCE(SUM(IF(user_role.expiry_date IS NULL " +
+            "OR user_role.expiry_date >= CURRENT_DATE(), 1, 0)), 0) as countLive, " +
+            "COALESCE(SUM(IF(user_role.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+            "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
             "COUNT(user_role.id) as countAllTime, " +
-            "MAX(IF(user_role.expiry_date IS NULL OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL)) as mostRecent " +
+            "MAX(IF(user_role.expiry_date IS NULL " +
+            "OR user_role.expiry_date >= CURRENT_DATE(), user_role.created_timestamp, NULL)) as mostRecent " +
             "FROM user_role " +
             "WHERE user_role.resource_id = :departmentId " +
             "AND user_role.role = 'MEMBER' " +
@@ -53,11 +58,11 @@ public class UserRole extends BoardEntity {
     @Column(name = "email")
     private String email;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "role", nullable = false)
     private Role role;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "member_category")
     private MemberCategory memberCategory;
 
@@ -70,7 +75,7 @@ public class UserRole extends BoardEntity {
     @Column(name = "member_date")
     private LocalDate memberDate;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(name = "state", nullable = false)
     private State state;
 

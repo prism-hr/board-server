@@ -3,12 +3,14 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.BadgeListType;
 import hr.prism.board.enums.BadgeType;
 
-@SuppressWarnings("unused")
+import static hr.prism.board.enums.BadgeListType.STATIC;
+import static hr.prism.board.enums.BadgeType.SIMPLE;
+
 public class WidgetOptionsDTO extends ResourceDTO {
 
-    private BadgeType badgeType = BadgeType.SIMPLE;
+    private BadgeType badgeType = SIMPLE;
 
-    private BadgeListType badgeListType = BadgeListType.STATIC;
+    private BadgeListType badgeListType = STATIC;
 
     private Integer postCount = 3;
 

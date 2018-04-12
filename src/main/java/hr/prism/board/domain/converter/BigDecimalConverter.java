@@ -6,7 +6,8 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Locale;
+
+import static java.util.Locale.UK;
 
 @Converter(autoApply = true)
 public class BigDecimalConverter implements AttributeConverter<BigDecimal, String> {
@@ -22,7 +23,7 @@ public class BigDecimalConverter implements AttributeConverter<BigDecimal, Strin
             return null;
         }
 
-        NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.UK);
+        NumberFormat numberFormat = NumberFormat.getNumberInstance(UK);
         DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
         decimalFormat.setParseBigDecimal(true);
 

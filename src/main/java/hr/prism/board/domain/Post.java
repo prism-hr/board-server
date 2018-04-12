@@ -1,9 +1,7 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
-import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.PostResponseReadinessRepresentation;
-import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import org.hibernate.validator.constraints.Email;
@@ -11,8 +9,11 @@ import org.hibernate.validator.constraints.Email;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.Scope.Value.POST;
+import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
+
 @Entity
-@DiscriminatorValue(value = Scope.Value.POST)
+@DiscriminatorValue(value = POST)
 @NamedEntityGraph(
     name = "post.extended",
     attributeNodes = {
@@ -54,19 +55,23 @@ import java.time.LocalDateTime;
             name = "postStatistics",
             query =
                 "SELECT COALESCE(SUM(IF(post.state = 'ACCEPTED', 1, 0)), 0) AS countLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
+                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
                     "COUNT(post.id) AS countAllTime, " +
                     "MAX(post.created_timestamp) AS mostRecent, " +
                     "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.view_count, 0)), 0) AS viewCountLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.view_count, 0)), 0) AS viewCountThisYear, " +
+                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.view_count, 0)), 0) AS viewCountThisYear, " +
                     "COALESCE(SUM(post.view_count), 0)  AS viewCountAllTime, " +
                     "MAX(post.last_view_timestamp) AS mostRecentView, " +
                     "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.referral_count, 0)), 0) AS referralCountLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.referral_count, 0)), 0) AS referralCountThisYear, " +
+                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.referral_count, 0)), 0) AS referralCountThisYear, " +
                     "COALESCE(SUM(post.referral_count), 0) AS referralCountAllTime, " +
                     "MAX(post.last_referral_timestamp) AS mostRecentReferral, " +
                     "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.response_count, 0)), 0) AS responseCountLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.response_count, 0)), 0) AS responseCountThisYear, " +
+                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.response_count, 0)), 0) AS responseCountThisYear, " +
                     "COALESCE(SUM(post.response_count), 0) AS responseCountAllTime, " +
                     "MAX(post.last_response_timestamp) AS mostRecentResponse " +
                     "FROM resource AS post " +
@@ -238,7 +243,7 @@ public class Post extends Resource {
 
     public void setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
-        this.applyEmailDisplay = BoardUtils.obfuscateEmail(applyEmail);
+        this.applyEmailDisplay = obfuscateEmail(applyEmail);
     }
 
     public String getApplyEmailDisplay() {

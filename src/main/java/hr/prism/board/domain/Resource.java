@@ -9,17 +9,21 @@ import hr.prism.board.representation.ChangeListRepresentation;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.CategoryType.POST;
+import static java.util.Comparator.comparingLong;
+import static java.util.stream.Collectors.toList;
+import static javax.persistence.DiscriminatorType.STRING;
+import static javax.persistence.InheritanceType.SINGLE_TABLE;
 
 @Entity
 @Table(name = "resource")
-@SuppressWarnings("unused")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "scope", discriminatorType = DiscriminatorType.STRING)
+@Inheritance(strategy = SINGLE_TABLE)
+@DiscriminatorColumn(name = "scope", discriminatorType = STRING)
 public class Resource extends BoardEntity {
 
     @ManyToOne
@@ -196,11 +200,11 @@ public class Resource extends BoardEntity {
     }
 
     public List<ResourceCategory> getMemberCategories() {
-        return getCategories(CategoryType.MEMBER);
+        return getCategories(MEMBER);
     }
 
     public List<ResourceCategory> getPostCategories() {
-        return getCategories(CategoryType.POST);
+        return getCategories(POST);
     }
 
     public Set<UserRole> getUserRoles() {
@@ -254,8 +258,8 @@ public class Resource extends BoardEntity {
     public List<ResourceCategory> getCategories(CategoryType type) {
         return categories.stream()
             .filter(category -> category.getType() == type)
-            .sorted(Comparator.comparingLong(ResourceCategory::getId))
-            .collect(Collectors.toList());
+            .sorted(comparingLong(ResourceCategory::getId))
+            .collect(toList());
     }
 
     @Override
