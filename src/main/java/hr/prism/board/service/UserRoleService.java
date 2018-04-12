@@ -98,7 +98,7 @@ public class UserRoleService {
         createOrUpdateUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
-    public UserRoleRepresentation createResourceUser(Scope scope, Long resourceId, UserRoleDTO userRoleDTO) {
+    public UserRoleRepresentation createUserRole(Scope scope, Long resourceId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
 
@@ -126,7 +126,7 @@ public class UserRoleService {
         userRole.setEmail(userDTO.getEmail());
     }
 
-    public void deleteResourceUser(Scope scope, Long resourceId, Long userId) {
+    public void deleteUserRoles(Scope scope, Long resourceId, Long userId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
@@ -137,7 +137,7 @@ public class UserRoleService {
         });
     }
 
-    public UserRoleRepresentation updateResourceUser(Scope scope, Long resourceId, Long userId, UserRoleDTO userRoleDTO) {
+    public UserRoleRepresentation updateUserRole(Scope scope, Long resourceId, Long userId, UserRoleDTO userRoleDTO) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userCacheService.findOne(userId);
@@ -183,7 +183,7 @@ public class UserRoleService {
         if (userRole == null) {
             return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, Role.NOTIFIABLE.contains(role));
         } else {
-            userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
+            userRoleCacheService.updateMembershipData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);
             userRole.setExpiryDate(userRoleDTO.getExpiryDate());
             return userRole;

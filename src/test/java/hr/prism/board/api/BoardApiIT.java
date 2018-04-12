@@ -55,7 +55,7 @@ public class BoardApiIT extends AbstractIT {
 
         User user11 = testUserService.authenticate();
         Long departmentId1 =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
 
         BoardDTO boardDTO11 = TestHelper.sampleBoard();
         boardDTO11.setName("board11");
@@ -64,7 +64,7 @@ public class BoardApiIT extends AbstractIT {
 
         User user21 = testUserService.authenticate();
         Long departmentId2 =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary")).getId();
 
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard();
         boardDTO21.setName("board21");
@@ -107,11 +107,11 @@ public class BoardApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
         BoardDTO boardDTO = TestHelper.sampleBoard();
 
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
-        ExceptionUtils.verifyDuplicateException(() -> boardApi.postBoard(departmentId, boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId());
+        BoardRepresentation boardR = boardApi.createBoard(departmentId, boardDTO);
+        ExceptionUtils.verifyDuplicateException(() -> boardApi.createBoard(departmentId, boardDTO), ExceptionCode.DUPLICATE_BOARD, boardR.getId());
     }
 
     @Test
@@ -119,13 +119,13 @@ public class BoardApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
         BoardDTO boardDTO = new BoardDTO().setName("new board with long name");
         verifyPostBoard(departmentId, boardDTO, "new-board-with-long-name");
 
         Long boardId = verifyPostBoard(departmentId, boardDTO.setName("new board with long name too"), "new-board-with-long-name-2").getId();
-        BoardRepresentation boardR = boardApi.patchBoard(boardId,
+        BoardRepresentation boardR = boardApi.updateBoard(boardId,
             new BoardPatchDTO()
                 .setHandle(Optional.of("new-board-with-longer-name")));
         Assert.assertEquals("new-board-with-longer-name", boardR.getHandle());
@@ -138,7 +138,7 @@ public class BoardApiIT extends AbstractIT {
         BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
         boardPatchDTO.setName(Optional.of(boardRs.getValue().getName()));
         ExceptionUtils.verifyDuplicateException(() ->
-            boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId());
+            boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD, boardRs.getValue().getId());
     }
 
     @Test
@@ -146,7 +146,7 @@ public class BoardApiIT extends AbstractIT {
         Pair<BoardRepresentation, BoardRepresentation> boardRs = verifyPostTwoBoards();
         BoardPatchDTO boardPatchDTO = new BoardPatchDTO();
         boardPatchDTO.setHandle(Optional.of(boardRs.getValue().getHandle()));
-        ExceptionUtils.verifyException(BoardDuplicateException.class, () -> boardApi.patchBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE);
+        ExceptionUtils.verifyException(BoardDuplicateException.class, () -> boardApi.updateBoard(boardRs.getKey().getId(), boardPatchDTO), ExceptionCode.DUPLICATE_BOARD_HANDLE);
     }
 
     @Test
@@ -154,7 +154,7 @@ public class BoardApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
         verifyPostBoard(departmentId, new BoardDTO().setName("board 1"), "board-1");
         verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
@@ -165,7 +165,7 @@ public class BoardApiIT extends AbstractIT {
         List<String> boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         Assert.assertThat(boardNames, Matchers.containsInAnyOrder("board 1", "board 2", "Career Opportunities", "Research Opportunities"));
 
-        departmentApi.patchDepartment(departmentId,
+        departmentApi.updateDepartment(departmentId,
             new DepartmentPatchDTO()
                 .setHandle(Optional.of("new-department-updated")));
 
@@ -198,7 +198,7 @@ public class BoardApiIT extends AbstractIT {
         User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
 
         // Create a board in the draft state
@@ -215,9 +215,9 @@ public class BoardApiIT extends AbstractIT {
         // Create unprivileged users
         List<User> unprivilegedUsers = Lists.newArrayList(makeUnprivilegedUsers(2).values());
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
-            .put(Action.EDIT, () -> boardApi.patchBoard(boardId, new BoardPatchDTO()))
-            .put(Action.REJECT, () -> boardApi.executeAction(boardId, "reject", new BoardPatchDTO().setComment("comment")))
-            .put(Action.RESTORE, () -> boardApi.executeAction(boardId, "restore", new BoardPatchDTO()))
+            .put(Action.EDIT, () -> boardApi.updateBoard(boardId, new BoardPatchDTO()))
+            .put(Action.REJECT, () -> boardApi.performActionOnBoard(boardId, "reject", new BoardPatchDTO().setComment("comment")))
+            .put(Action.RESTORE, () -> boardApi.performActionOnBoard(boardId, "restore", new BoardPatchDTO()))
             .build();
 
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
@@ -315,14 +315,14 @@ public class BoardApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
         BoardRepresentation boardR1 = verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
         BoardRepresentation boardR2 = verifyPostBoard(departmentId, new BoardDTO().setName("board 2"), "board-2");
         return Pair.of(boardR1, boardR2);
     }
 
     private BoardRepresentation verifyPostBoard(Long departmentId, BoardDTO boardDTO, String expectedHandle) {
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, boardDTO);
+        BoardRepresentation boardR = boardApi.createBoard(departmentId, boardDTO);
 
         Assert.assertEquals(boardDTO.getName(), boardR.getName());
         Assert.assertEquals(expectedHandle, boardR.getHandle());
@@ -342,14 +342,14 @@ public class BoardApiIT extends AbstractIT {
 
     private void verifyExecuteBoard(Long boardId, Long departmentUserId, String action, String comment, State expectedState) {
         testUserService.setAuthentication(departmentUserId);
-        BoardRepresentation boardR = boardApi.executeAction(boardId, action, new BoardPatchDTO().setComment(comment));
+        BoardRepresentation boardR = boardApi.performActionOnBoard(boardId, action, new BoardPatchDTO().setComment(comment));
         Assert.assertEquals(expectedState, boardR.getState());
     }
 
     private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
         Board board = boardService.getBoard(boardId);
-        BoardRepresentation boardR = boardApi.patchBoard(boardId, boardDTO);
+        BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
 
         Optional<String> nameOptional = boardDTO.getName();
         Assert.assertEquals(nameOptional == null ? board.getName() : nameOptional.orElse(null), boardR.getName());

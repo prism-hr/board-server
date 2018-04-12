@@ -85,7 +85,7 @@ public class UserRoleCacheService {
         UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource)
             .setUser(user).setEmail(BoardUtils.emptyToNull(userRoleDTO.getEmail())).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
         userRole.setCreatorId(resource.getCreatorId());
-        updateUserRoleDemographicData(userRole, userRoleDTO);
+        updateMembershipData(userRole, userRoleDTO);
 
         if (notify) {
             String scopeName = scope.name();
@@ -151,7 +151,7 @@ public class UserRoleCacheService {
         userRoleRepository.updateByUser(newUser, oldUser);
     }
 
-    public void updateUserRoleDemographicData(UserRole userRole, UserRoleDTO userRoleDTO) {
+    public void updateMembershipData(UserRole userRole, UserRoleDTO userRoleDTO) {
         boolean updated = false;
         boolean clearStudyData = false;
         MemberCategory oldMemberCategory = userRole.getMemberCategory();

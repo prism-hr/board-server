@@ -304,13 +304,13 @@ public class AuthenticationApiIT extends AbstractIT {
     public void shouldReconcileAuthenticationsWithInvitations() {
         Long userId1 = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
-        DepartmentRepresentation departmentR1 = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1"));
+        DepartmentRepresentation departmentR1 = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department1"));
         Long departmentId1 = departmentR1.getId();
 
-        BoardRepresentation boardR1 = boardApi.postBoard(departmentId1, TestHelper.smallSampleBoard());
+        BoardRepresentation boardR1 = boardApi.createBoard(departmentId1, TestHelper.smallSampleBoard());
         Long boardId1 = boardR1.getId();
 
-        departmentApi.postMembers(departmentId1, Arrays.asList(
+        departmentUserApi.createMembers(departmentId1, Arrays.asList(
             new UserRoleDTO().setUser(new UserDTO().setGivenName("member1")
                 .setSurname("member1")
                 .setEmail("member1@member1.com"))
@@ -416,7 +416,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice());
         testUserService.setAuthentication(member1.getId());
-        departmentApi.putMembershipUpdate(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -435,7 +435,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice());
         testUserService.setAuthentication(member2.getId());
-        departmentApi.putMembershipUpdate(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -447,7 +447,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR1.getReferral());
 
         testUserService.setAuthentication(userId1);
-        List<String> emails1 = departmentApi.getUserRoles(departmentId1, null)
+        List<String> emails1 = departmentUserApi.getUserRoles(departmentId1, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails1, BoardUtils.obfuscateEmail("member1@member1.com"),
             BoardUtils.obfuscateEmail("member4@member4.com"), BoardUtils.obfuscateEmail("member3@member3.com"));
@@ -471,14 +471,14 @@ public class AuthenticationApiIT extends AbstractIT {
             ExceptionCode.DUPLICATE_REGISTRATION);
 
         Long userId2 = testUserService.authenticate().getId();
-        DepartmentRepresentation departmentR2 = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2"));
+        DepartmentRepresentation departmentR2 = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department2"));
         Long departmentId2 = departmentR2.getId();
 
-        BoardRepresentation boardR2 = boardApi.postBoard(departmentId2, new BoardDTO()
+        BoardRepresentation boardR2 = boardApi.createBoard(departmentId2, new BoardDTO()
             .setName("board2"));
         Long boardId2 = boardR2.getId();
 
-        departmentApi.postMembers(departmentId2, Arrays.asList(
+        departmentUserApi.createMembers(departmentId2, Arrays.asList(
             new UserRoleDTO().setUser(new UserDTO().setGivenName("member1")
                 .setSurname("member1")
                 .setEmail("member1@member1.com"))
@@ -559,7 +559,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice());
         testUserService.setAuthentication(member1.getId());
-        departmentApi.putMembershipUpdate(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -575,7 +575,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice());
         testUserService.setAuthentication(member2.getId());
-        departmentApi.putMembershipUpdate(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -587,19 +587,19 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR2.getReferral());
 
         testUserService.setAuthentication(userId2);
-        List<String> emails2 = departmentApi.getUserRoles(departmentId2, null)
+        List<String> emails2 = departmentUserApi.getUserRoles(departmentId2, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails2, BoardUtils.obfuscateEmail("member1@member1.com"), BoardUtils.obfuscateEmail("member4@member4.com"));
 
         Long userId3 = testUserService.authenticate().getId();
         DepartmentRepresentation departmentR3 =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department3"));
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department3"));
         Long departmentId3 = departmentR3.getId();
 
-        BoardRepresentation boardR3 = boardApi.postBoard(departmentId3, new BoardDTO().setName("board3"));
+        BoardRepresentation boardR3 = boardApi.createBoard(departmentId3, new BoardDTO().setName("board3"));
         Long boardId3 = boardR3.getId();
 
-        departmentApi.postMembers(departmentId3, Arrays.asList(
+        departmentUserApi.createMembers(departmentId3, Arrays.asList(
             new UserRoleDTO().setUser(new UserDTO().setGivenName("member5")
                 .setSurname("member5")
                 .setEmail("member5@member5.com"))
@@ -703,7 +703,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice());
         testUserService.setAuthentication(member5.getId());
-        departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -720,7 +720,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
                 .setOauthData(new OAuthDataDTO().setCode("code2")), TestHelper.mockDevice());
         testUserService.setAuthentication(member6.getId());
-        departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -738,7 +738,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setOauthData(new OAuthDataDTO().setCode("code3")),
             TestHelper.mockDevice());
         testUserService.setAuthentication(member1.getId());
-        departmentApi.putMembershipUpdate(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -750,20 +750,20 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR3.getReferral());
 
         testUserService.setAuthentication(userId3);
-        List<String> emails3 = departmentApi.getUserRoles(departmentId3, null)
+        List<String> emails3 = departmentUserApi.getUserRoles(departmentId3, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails3, BoardUtils.obfuscateEmail("alastair@prism.hr"),
             BoardUtils.obfuscateEmail("jakub@prism.hr"), BoardUtils.obfuscateEmail("member1@member1.com"));
 
         Long userId4 = testUserService.authenticate().getId();
         DepartmentRepresentation departmentR4 =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department4"));
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department4"));
         Long departmentId4 = departmentR4.getId();
 
-        BoardRepresentation boardR4 = boardApi.postBoard(departmentId4, new BoardDTO().setName("board4"));
+        BoardRepresentation boardR4 = boardApi.createBoard(departmentId4, new BoardDTO().setName("board4"));
         Long boardId4 = boardR4.getId();
 
-        departmentApi.postMembers(departmentId4, Collections.singletonList(
+        departmentUserApi.createMembers(departmentId4, Collections.singletonList(
             new UserRoleDTO().setUser(new UserDTO().setGivenName("member8")
                 .setSurname("member8")
                 .setEmail("member8@member8.com"))
@@ -826,7 +826,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice());
         testUserService.setAuthentication(member5.getId());
-        departmentApi.putMembershipUpdate(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembershipData(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -838,7 +838,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(postR4.getReferral());
 
         testUserService.setAuthentication(userId4);
-        List<String> emails4 = departmentApi.getUserRoles(departmentId4, null)
+        List<String> emails4 = departmentUserApi.getUserRoles(departmentId4, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails4, BoardUtils.obfuscateEmail("alastair@prism.hr"));
     }

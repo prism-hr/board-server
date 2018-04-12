@@ -43,7 +43,7 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/boards", method = POST)
-    public BoardRepresentation postBoard(@PathVariable Long departmentId, @RequestBody @Valid BoardDTO boardDTO) {
+    public BoardRepresentation createBoard(@PathVariable Long departmentId, @RequestBody @Valid BoardDTO boardDTO) {
         Board board = boardService.createBoard(departmentId, boardDTO);
         return boardMapper.apply(board);
     }
@@ -75,13 +75,13 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/boards/{boardId}", method = PATCH)
-    public BoardRepresentation patchBoard(@PathVariable Long boardId, @RequestBody @Valid BoardPatchDTO boardDTO) {
+    public BoardRepresentation updateBoard(@PathVariable Long boardId, @RequestBody @Valid BoardPatchDTO boardDTO) {
         return boardMapper.apply(boardService.executeAction(boardId, EDIT, boardDTO));
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/actions/{action:reject|restore}", method = POST)
-    public BoardRepresentation executeAction(@PathVariable Long boardId, @PathVariable String action,
-                                             @RequestBody @Valid BoardPatchDTO boardDTO) {
+    public BoardRepresentation performActionOnBoard(@PathVariable Long boardId, @PathVariable String action,
+                                                    @RequestBody @Valid BoardPatchDTO boardDTO) {
         return boardMapper.apply(boardService.executeAction(boardId, Action.valueOf(action.toUpperCase()), boardDTO));
     }
 

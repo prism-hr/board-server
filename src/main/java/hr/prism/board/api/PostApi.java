@@ -3,16 +3,13 @@ package hr.prism.board.api;
 import hr.prism.board.domain.Post;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
-import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.mapper.OrganizationMapper;
 import hr.prism.board.mapper.PostMapper;
-import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.OrganizationRepresentation;
 import hr.prism.board.representation.PostRepresentation;
-import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
@@ -20,15 +17,14 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.util.List;
 
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.utils.BoardUtils.getClientIpAddress;
 import static java.util.stream.Collectors.toList;
-import static org.springframework.web.bind.annotation.RequestMethod.*;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.PATCH;
 
 @RestController
 public class PostApi {
@@ -43,18 +39,14 @@ public class PostApi {
 
     private final ResourceOperationMapper resourceOperationMapper;
 
-    private final ResourceEventMapper resourceEventMapper;
-
     @Inject
     public PostApi(PostService postService, PostMapper postMapper, OrganizationMapper organizationMapper,
-                   ResourceService resourceService, ResourceOperationMapper resourceOperationMapper,
-                   ResourceEventMapper resourceEventMapper) {
+                   ResourceService resourceService, ResourceOperationMapper resourceOperationMapper) {
         this.postService = postService;
         this.postMapper = postMapper;
         this.organizationMapper = organizationMapper;
         this.resourceService = resourceService;
         this.resourceOperationMapper = resourceOperationMapper;
-        this.resourceEventMapper = resourceEventMapper;
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.POST)
@@ -85,47 +77,20 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts/{postId}", method = PATCH)
-    public PostRepresentation patchPost(@PathVariable Long postId, @RequestBody @Valid PostPatchDTO postDTO) {
+    public PostRepresentation updatePost(@PathVariable Long postId, @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(postId, Action.EDIT, postDTO));
     }
 
     @RequestMapping(value = "/api/posts/{postId}/actions/{action}", method = RequestMethod.POST)
-    public PostRepresentation executeAction(@PathVariable Long postId, @PathVariable String action,
-                                            @RequestBody @Valid PostPatchDTO postDTO) {
+    public PostRepresentation executeActionOnPost(@PathVariable Long postId, @PathVariable String action,
+                                                  @RequestBody @Valid PostPatchDTO postDTO) {
         return postMapper.apply(postService.executeAction(postId, Action.valueOf(action.toUpperCase()), postDTO));
     }
 
     @RequestMapping(value = "/api/posts/organizations", method = GET)
-    public List<OrganizationRepresentation> lookupOrganizations(@RequestParam String query) {
+    public List<OrganizationRepresentation> findPostOrganizations(@RequestParam String query) {
         return postService.findOrganizationsBySimilarName(query)
             .stream().map(organizationMapper::applySmall).collect(toList());
-    }
-
-    @RequestMapping(value = "/api/posts/referrals/{referral}", method = GET)
-    public void getPostReferral(@PathVariable String referral, HttpServletResponse response) throws IOException {
-        response.sendRedirect(postService.getPostReferral(referral));
-    }
-
-    @RequestMapping(value = "/api/posts/{postId}/respond", method = RequestMethod.POST)
-    public ResourceEventRepresentation postPostResponse(@PathVariable Long postId,
-                                                        @RequestBody @Valid ResourceEventDTO resourceEvent) {
-        return resourceEventMapper.apply(postService.createPostResponse(postId, resourceEvent));
-    }
-
-    @RequestMapping(value = "/api/posts/{postId}/responses", method = GET)
-    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId,
-                                                              @RequestParam(required = false) String searchTerm) {
-        return postService.getPostResponses(postId, searchTerm).stream().map(resourceEventMapper).collect(toList());
-    }
-
-    @RequestMapping(value = "/api/posts/{postId}/responses/{responseId}", method = GET)
-    public ResourceEventRepresentation getPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
-        return resourceEventMapper.apply(postService.getPostResponse(postId, responseId));
-    }
-
-    @RequestMapping(value = "/api/posts/{postId}/responses/{responseId}/view", method = PUT)
-    public ResourceEventRepresentation putPostResponseView(@PathVariable Long postId, @PathVariable Long responseId) {
-        return resourceEventMapper.apply(postService.putPostResponseView(postId, responseId));
     }
 
     @RequestMapping(value = "/api/posts/archiveQuarters", method = GET)

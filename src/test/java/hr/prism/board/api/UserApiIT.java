@@ -70,15 +70,15 @@ public class UserApiIT extends AbstractIT {
         User adminUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
-        Long department1id = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1")).getId();
-        departmentApi.patchDepartment(department1id, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
-        Long board11id = boardApi.postBoard(department1id, new BoardDTO().setName("board11")).getId();
-        Long board12id = boardApi.postBoard(department1id, new BoardDTO().setName("board12")).getId();
-        boardApi.postBoard(department1id, new BoardDTO().setName("board13"));
+        Long department1id = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department1")).getId();
+        departmentApi.updateDepartment(department1id, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
+        Long board11id = boardApi.createBoard(department1id, new BoardDTO().setName("board11")).getId();
+        Long board12id = boardApi.createBoard(department1id, new BoardDTO().setName("board12")).getId();
+        boardApi.createBoard(department1id, new BoardDTO().setName("board13"));
 
-        Long department2id = departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2")
+        Long department2id = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department2")
             .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
-        boardApi.postBoard(department2id, new BoardDTO().setName("board23"));
+        boardApi.createBoard(department2id, new BoardDTO().setName("board23"));
 
         User memberUser1 = testUserService.authenticate();
         User memberUser2 = testUserService.authenticate();
@@ -88,14 +88,14 @@ public class UserApiIT extends AbstractIT {
         String memberUser2Email = memberUser2.getEmail();
         testUserService.setAuthentication(adminUser.getId());
         for (String memberUserEmail : new String[]{memberUser1Email, memberUser2Email}) {
-            departmentApi.createResourceUser(department1id, new UserRoleDTO().setUser(
+            departmentUserApi.createUserRole(department1id, new UserRoleDTO().setUser(
                 new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER));
 
-            departmentApi.createResourceUser(department2id, new UserRoleDTO().setUser(
+            departmentUserApi.createUserRole(department2id, new UserRoleDTO().setUser(
                 new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
         }
 
-        departmentApi.createResourceUser(department2id, new UserRoleDTO().setUser(
+        departmentUserApi.createUserRole(department2id, new UserRoleDTO().setUser(
             new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
 

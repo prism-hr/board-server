@@ -54,10 +54,19 @@ public abstract class AbstractIT {
     DepartmentApi departmentApi;
 
     @Inject
+    DepartmentPaymentApi departmentPaymentApi;
+
+    @Inject
+    DepartmentUserApi departmentUserApi;
+
+    @Inject
     BoardApi boardApi;
 
     @Inject
     PostApi postApi;
+
+    @Inject
+    PostResponseApi postResponseApi;
 
     @Inject
     UserApi userApi;
@@ -159,13 +168,13 @@ public abstract class AbstractIT {
         unprivilegedUsers.put(Scope.DEPARTMENT, testUserService.authenticate());
 
         Long universityId = transactionTemplate.execute(status -> universityService.getOrCreateUniversity("University College London", "ucl").getId());
-        Long otherDepartmentId = transactionTemplate.execute(status -> departmentApi.postDepartment(
+        Long otherDepartmentId = transactionTemplate.execute(status -> departmentApi.createDepartment(
             universityId,
             new DepartmentDTO()
                 .setName("department" + departmentSuffix)
                 .setSummary("department summary")).getId());
 
-        transactionTemplate.execute(status -> boardApi.postBoard(
+        transactionTemplate.execute(status -> boardApi.createBoard(
             otherDepartmentId,
             new BoardDTO()
                 .setName("board" + departmentSuffix)).getId());

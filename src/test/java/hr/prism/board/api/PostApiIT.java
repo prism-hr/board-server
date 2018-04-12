@@ -82,10 +82,10 @@ public class PostApiIT extends AbstractIT {
 
         User user11 = testUserService.authenticate();
         Long departmentId1 =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department1").setSummary("department summary")).getId();
 
         BoardDTO boardDTO11 = TestHelper.sampleBoard().setName("board11");
-        BoardRepresentation boardR11 = boardApi.postBoard(departmentId1, boardDTO11);
+        BoardRepresentation boardR11 = boardApi.createBoard(departmentId1, boardDTO11);
 
         Long board11Id = boardR11.getId();
         String board11PostName = boardR11.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -96,10 +96,10 @@ public class PostApiIT extends AbstractIT {
 
         User user21 = testUserService.authenticate();
         Long departmentId2 =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary")).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department2").setSummary("department summary")).getId();
 
         BoardDTO boardDTO21 = TestHelper.smallSampleBoard().setName("board21");
-        BoardRepresentation boardR21 = boardApi.postBoard(departmentId2, boardDTO21);
+        BoardRepresentation boardR21 = boardApi.createBoard(departmentId2, boardDTO21);
 
         Long board21Id = boardR21.getId();
         String board21PostName = boardR21.getName() + " " + State.DRAFT.name().toLowerCase() + " " + 0;
@@ -202,8 +202,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
 
         PostDTO postDTO =
             new PostDTO()
@@ -224,8 +224,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
 
         PostDTO postDTO =
             new PostDTO()
@@ -248,8 +248,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
         testUserService.authenticate();
 
         PostDTO postDTO = new PostDTO()
@@ -271,13 +271,13 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.smallSampleBoard()).getId();
 
         PostDTO postDTO0 = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
         ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
 
-        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
+        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
         PostDTO postDTO1 = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
         ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
     }
@@ -287,8 +287,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
 
         PostDTO postDTO0 = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
         ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.MISSING_POST_POST_CATEGORIES);
@@ -302,13 +302,13 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.sampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
 
         PostDTO postDTO0 = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
         ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.INVALID_POST_POST_CATEGORIES);
 
-        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
+        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
         PostDTO postDTO1 = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
         ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
     }
@@ -318,43 +318,43 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        BoardRepresentation boardRepresentation = boardApi.postBoard(departmentId, TestHelper.sampleBoard());
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        BoardRepresentation boardRepresentation = boardApi.createBoard(departmentId, TestHelper.sampleBoard());
         Long boardId = boardRepresentation.getId();
         Long postId = postApi.postPost(boardId, TestHelper.samplePost()).getId();
 
         ExceptionUtils.verifyException(BoardException.class, () ->
-                postApi.patchPost(postId, new PostPatchDTO()
+                postApi.updatePost(postId, new PostPatchDTO()
                     .setPostCategories(Optional.empty())),
             ExceptionCode.MISSING_POST_POST_CATEGORIES);
 
         ExceptionUtils.verifyException(BoardException.class, () ->
-                postApi.patchPost(postId, new PostPatchDTO()
+                postApi.updatePost(postId, new PostPatchDTO()
                     .setMemberCategories(Optional.empty())),
             ExceptionCode.MISSING_POST_MEMBER_CATEGORIES);
 
         ExceptionUtils.verifyException(BoardException.class, () ->
-                postApi.patchPost(postId, new PostPatchDTO()
+                postApi.updatePost(postId, new PostPatchDTO()
                     .setPostCategories(Optional.of(Collections.singletonList("p4")))),
             ExceptionCode.INVALID_POST_POST_CATEGORIES);
 
-        departmentApi.patchDepartment(departmentId,
+        departmentApi.updateDepartment(departmentId,
             new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
         ExceptionUtils.verifyException(BoardException.class, () ->
-                postApi.patchPost(postId, new PostPatchDTO()
+                postApi.updatePost(postId, new PostPatchDTO()
                     .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
             ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
 
-        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
-        boardApi.patchBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty()));
+        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
+        boardApi.updateBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty()));
 
         ExceptionUtils.verifyException(BoardException.class, () ->
-                postApi.patchPost(postId, new PostPatchDTO()
+                postApi.updatePost(postId, new PostPatchDTO()
                     .setPostCategories(Optional.of(Collections.singletonList("p1")))),
             ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
 
         ExceptionUtils.verifyException(BoardException.class, () ->
-                postApi.patchPost(postId, new PostPatchDTO()
+                postApi.updatePost(postId, new PostPatchDTO()
                     .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
             ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
     }
@@ -365,12 +365,12 @@ public class PostApiIT extends AbstractIT {
         User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("departmentResource summary")).getId();
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, TestHelper.sampleBoard());
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("departmentResource summary")).getId();
+        BoardRepresentation boardR = boardApi.createBoard(departmentId, TestHelper.sampleBoard());
         Long boardId = boardR.getId();
 
         // Allow departmentResource to have research students
-        departmentApi.patchDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(
+        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(
             Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT, MemberCategory.RESEARCH_STUDENT))));
 
         User boardUser = testUserService.authenticate();
@@ -466,13 +466,13 @@ public class PostApiIT extends AbstractIT {
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")))
-            .put(Action.EDIT, () -> postApi.patchPost(postId, new PostPatchDTO()))
-            .put(Action.ACCEPT, () -> postApi.executeAction(postId, "accept", new PostPatchDTO()))
-            .put(Action.SUSPEND, () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")))
-            .put(Action.CORRECT, () -> postApi.executeAction(postId, "correct", new PostPatchDTO()))
-            .put(Action.REJECT, () -> postApi.executeAction(postId, "reject", new PostPatchDTO().setComment("comment")))
-            .put(Action.RESTORE, () -> postApi.executeAction(postId, "restore", new PostPatchDTO()))
-            .put(Action.WITHDRAW, () -> postApi.executeAction(postId, "withdraw", new PostPatchDTO()))
+            .put(Action.EDIT, () -> postApi.updatePost(postId, new PostPatchDTO()))
+            .put(Action.ACCEPT, () -> postApi.executeActionOnPost(postId, "accept", new PostPatchDTO()))
+            .put(Action.SUSPEND, () -> postApi.executeActionOnPost(postId, "suspend", new PostPatchDTO().setComment("comment")))
+            .put(Action.CORRECT, () -> postApi.executeActionOnPost(postId, "correct", new PostPatchDTO()))
+            .put(Action.REJECT, () -> postApi.executeActionOnPost(postId, "reject", new PostPatchDTO().setComment("comment")))
+            .put(Action.RESTORE, () -> postApi.executeActionOnPost(postId, "restore", new PostPatchDTO()))
+            .put(Action.WITHDRAW, () -> postApi.executeActionOnPost(postId, "withdraw", new PostPatchDTO()))
             .build();
 
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
@@ -507,7 +507,7 @@ public class PostApiIT extends AbstractIT {
             .setLiveTimestamp(Optional.of(liveTimestampDelayed))
             .setDeadTimestamp(Optional.of(deadTimestampDelayed));
 
-        postR = verifyPatchPost(postUser, postId, updateDTO, () -> postApi.patchPost(postId, updateDTO), State.DRAFT);
+        postR = verifyPatchPost(postUser, postId, updateDTO, () -> postApi.updatePost(postId, updateDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
         postName = postR.getName();
 
@@ -517,7 +517,7 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.of(deadTimestamp))
             .setComment("could you please explain what you will pay the successful applicant");
 
-        verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeAction(postId, "suspend", suspendDTO), State.SUSPENDED);
+        verifyPatchPost(departmentUser, postId, suspendDTO, () -> postApi.executeActionOnPost(postId, "suspend", suspendDTO), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         testActivityService.verify(departmentUserId);
@@ -549,7 +549,7 @@ public class PostApiIT extends AbstractIT {
             .setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT)))
             .setComment("i uploaded a document this time which explains that");
 
-        verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeAction(postId, "correct", correctDTO), State.DRAFT);
+        verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeActionOnPost(postId, "correct", correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
@@ -582,7 +582,7 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.empty())
             .setComment("accepting without time constraints");
 
-        verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeAction(postId, "accept", acceptDTO), State.PENDING);
+        verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeActionOnPost(postId, "accept", acceptDTO), State.PENDING);
         testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         postService.publishAndRetirePosts(LocalDateTime.now());
@@ -615,7 +615,7 @@ public class PostApiIT extends AbstractIT {
 
         // Suspend the post so that it can be accepted again
         verifyPatchPost(boardUser, postId, new PostPatchDTO(),
-            () -> postApi.executeAction(postId, "suspend", new PostPatchDTO().setComment("comment")), State.SUSPENDED);
+            () -> postApi.executeActionOnPost(postId, "suspend", new PostPatchDTO().setComment("comment")), State.SUSPENDED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.SUSPENDED, operations);
 
         testActivityService.verify(departmentUserId);
@@ -642,7 +642,7 @@ public class PostApiIT extends AbstractIT {
             .setDeadTimestamp(Optional.of(deadTimestampDelayed))
             .setComment("this looks good now - i replaced the document with the complete website for the opportunity");
 
-        verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.executeAction(postId, "accept", acceptPendingDTO), State.PENDING);
+        verifyPatchPost(boardUser, postId, acceptPendingDTO, () -> postApi.executeActionOnPost(postId, "accept", acceptPendingDTO), State.PENDING);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.PENDING, operations);
 
         testActivityService.verify(departmentUserId);
@@ -672,7 +672,7 @@ public class PostApiIT extends AbstractIT {
         // Should be notified
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember1Id =
-            departmentApi.createResourceUser(departmentId,
+            departmentUserApi.createUserRole(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student1")
@@ -684,7 +684,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should be notified
         Long departmentMember2Id =
-            departmentApi.createResourceUser(departmentId,
+            departmentUserApi.createUserRole(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student2")
@@ -695,7 +695,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should not be notified - suppressed
         Long departmentMember3Id =
-            departmentApi.createResourceUser(departmentId,
+            departmentUserApi.createUserRole(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student3")
@@ -710,7 +710,7 @@ public class PostApiIT extends AbstractIT {
         // Should not be notified
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember4Id =
-            departmentApi.createResourceUser(departmentId,
+            departmentUserApi.createUserRole(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student4")
@@ -722,7 +722,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should not be notified
         Long departmentMember5Id =
-            departmentApi.createResourceUser(departmentId,
+            departmentUserApi.createUserRole(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student5")
@@ -802,7 +802,7 @@ public class PostApiIT extends AbstractIT {
         PostPatchDTO rejectDTO = new PostPatchDTO()
             .setComment("we have received a complaint, we're closing down the post");
 
-        verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeAction(postId, "reject", rejectDTO), State.REJECTED);
+        verifyPatchPost(departmentUser, postId, rejectDTO, () -> postApi.executeActionOnPost(postId, "reject", rejectDTO), State.REJECTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.REJECTED, operations);
 
         testActivityService.verify(departmentUserId);
@@ -829,7 +829,7 @@ public class PostApiIT extends AbstractIT {
         PostPatchDTO restoreFromRejectedDTO = new PostPatchDTO()
             .setComment("sorry we made a mistake, we're restoring the post");
 
-        verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeAction(postId, "restore", restoreFromRejectedDTO), State.PENDING);
+        verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeActionOnPost(postId, "restore", restoreFromRejectedDTO), State.PENDING);
         testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
         postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
@@ -916,13 +916,13 @@ public class PostApiIT extends AbstractIT {
 
         // Check that the author can withdraw the post
         PostPatchDTO withdrawDTO = new PostPatchDTO();
-        verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeAction(postId, "withdraw", withdrawDTO), State.WITHDRAWN);
+        verifyPatchPost(postUser, postId, withdrawDTO, () -> postApi.executeActionOnPost(postId, "withdraw", withdrawDTO), State.WITHDRAWN);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.WITHDRAWN, operations);
 
         // Check that the author can restore the post
         PostPatchDTO restoreFromWithdrawnDTO = new PostPatchDTO();
 
-        verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeAction(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
+        verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeActionOnPost(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
         Post localPost2 = postService.getPost(postId);
@@ -1073,31 +1073,31 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/organization_autosuggest_setup.sql")
     public void shouldSuggestOrganizations() {
-        List<OrganizationRepresentation> organizations = postApi.lookupOrganizations("Computer");
+        List<OrganizationRepresentation> organizations = postApi.findPostOrganizations("Computer");
         Assert.assertEquals(3, organizations.size());
 
         Assert.assertEquals("Computer Science Department", organizations.get(0).getName());
         Assert.assertEquals("Department of Computer Science", organizations.get(1).getName());
         Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(2).getName());
 
-        organizations = postApi.lookupOrganizations("Computer Science Laboratory");
+        organizations = postApi.findPostOrganizations("Computer Science Laboratory");
         Assert.assertEquals(3, organizations.size());
 
         Assert.assertEquals("Laboratory for the Foundations of Computer Science", organizations.get(0).getName());
         Assert.assertEquals("Computer Science Department", organizations.get(1).getName());
         Assert.assertEquals("Department of Computer Science", organizations.get(2).getName());
 
-        organizations = postApi.lookupOrganizations("School of Informatics");
+        organizations = postApi.findPostOrganizations("School of Informatics");
         Assert.assertEquals(1, organizations.size());
 
         Assert.assertEquals("School of Informatics", organizations.get(0).getName());
 
-        organizations = postApi.lookupOrganizations("Physics");
+        organizations = postApi.findPostOrganizations("Physics");
         Assert.assertEquals(1, organizations.size());
 
         Assert.assertEquals("Physics Department", organizations.get(0).getName());
 
-        organizations = postApi.lookupOrganizations("Mathematics");
+        organizations = postApi.findPostOrganizations("Mathematics");
         Assert.assertEquals(0, organizations.size());
     }
 
@@ -1106,8 +1106,8 @@ public class PostApiIT extends AbstractIT {
         Long boardUserId = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard());
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        BoardRepresentation boardR = boardApi.createBoard(departmentId, TestHelper.smallSampleBoard());
         Long boardId = boardR.getId();
 
         postApi.postPost(boardId,
@@ -1120,13 +1120,13 @@ public class PostApiIT extends AbstractIT {
         Long memberUser2 = testUserService.authenticate().getId();
 
         testUserService.setAuthentication(boardUserId);
-        departmentApi.createResourceUser(departmentId,
+        departmentUserApi.createUserRole(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser1)).setRole(Role.MEMBER));
-        departmentApi.createResourceUser(departmentId,
+        departmentUserApi.createUserRole(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER));
 
         testUserService.setAuthentication(memberUser1);
-        departmentApi.putMembershipUpdate(departmentId,
+        departmentUserApi.updateMembershipData(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
@@ -1139,7 +1139,7 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
 
         testUserService.setAuthentication(memberUser2);
-        departmentApi.putMembershipUpdate(departmentId,
+        departmentUserApi.updateMembershipData(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
@@ -1183,28 +1183,28 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(boardUserId);
         DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
-        postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty()));
+        postApi.updatePost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty()));
 
         testUserService.setAuthentication(memberUser2);
         verifyPostReferral(referral2, response, "http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf");
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 0L);
 
         ExceptionUtils.verifyException(BoardException.class,
-            () -> postApi.postPostResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT);
+            () -> postResponseApi.createPostResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT);
 
         testUserService.setAuthentication(boardUserId);
-        postApi.patchPost(postId, new PostPatchDTO().setApplyDocument(Optional.empty()).setApplyEmail(Optional.of("email@email.com")));
+        postApi.updatePost(postId, new PostPatchDTO().setApplyDocument(Optional.empty()).setApplyEmail(Optional.of("email@email.com")));
 
         testUserService.setAuthentication(memberUser1);
         ResourceEventDTO resourceEventDTO = new ResourceEventDTO().setDocumentResume(documentDTO).setWebsiteResume("website").setCoveringNote("note");
-        postApi.postPostResponse(postId, resourceEventDTO);
+        postResponseApi.createPostResponse(postId, resourceEventDTO);
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 1L);
 
         ExceptionUtils.verifyException(BoardDuplicateException.class, () ->
-            postApi.postPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT);
+            postResponseApi.createPostResponse(postId, resourceEventDTO), ExceptionCode.DUPLICATE_RESOURCE_EVENT);
 
         testUserService.setAuthentication(memberUser2);
-        postApi.postPostResponse(postId, resourceEventDTO);
+        postResponseApi.createPostResponse(postId, resourceEventDTO);
         verifyViewReferralAndResponseCounts(postId, 5L, 2L, 2L);
     }
 
@@ -1213,8 +1213,8 @@ public class PostApiIT extends AbstractIT {
         Long boardUserId = testUserService.authenticate().getId();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        BoardRepresentation boardR = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard());
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        BoardRepresentation boardR = boardApi.createBoard(departmentId, TestHelper.smallSampleBoard());
         Long boardId = boardR.getId();
 
         User postUser = testUserService.authenticate();
@@ -1233,13 +1233,13 @@ public class PostApiIT extends AbstractIT {
         Long memberUser3Id = memberUser3.getId();
 
         testUserService.setAuthentication(boardUserId);
-        departmentApi.createResourceUser(departmentId,
+        departmentUserApi.createUserRole(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(Role.MEMBER));
-        departmentApi.createResourceUser(departmentId,
+        departmentUserApi.createUserRole(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(Role.MEMBER));
-        departmentApi.createResourceUser(departmentId,
+        departmentUserApi.createUserRole(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER));
-        postApi.executeAction(postId, "accept", new PostPatchDTO());
+        postApi.executeActionOnPost(postId, "accept", new PostPatchDTO());
         postService.publishAndRetirePosts(LocalDateTime.now());
 
         testUserService.setAuthentication(postUserId);
@@ -1251,13 +1251,13 @@ public class PostApiIT extends AbstractIT {
         listenForActivities(postUserId);
 
         testUserService.setAuthentication(memberUser1Id);
-        departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
+        departmentUserApi.updateMembershipData(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
-        Long responseId = postApi.postPostResponse(postId,
+        Long responseId = postResponseApi.createPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO1).setWebsiteResume("website1").setCoveringNote("note1")).getId();
 
         User postEmailUser = new User();
@@ -1273,24 +1273,24 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
-        List<ResourceEventRepresentation> responses = postApi.getPostResponses(postId, null);
+        List<ResourceEventRepresentation> responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(1, responses.size());
         Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(1, responses.size());
         Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
-        postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
+        postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
         testUserService.setAuthentication(memberUser2Id);
-        departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
+        departmentUserApi.updateMembershipData(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments2.pdf");
-        postApi.postPostResponse(postId,
+        postResponseApi.createPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO2).setWebsiteResume("website2").setCoveringNote("note2"));
 
         postEmailUser.setEmail("other@other.com");
@@ -1304,39 +1304,39 @@ public class PostApiIT extends AbstractIT {
             new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testUserService.setAuthentication(postUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
-        postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail)));
+        postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail)));
 
         testUserService.setAuthentication(postUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
-        postApi.patchPost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
+        postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
         testUserService.setAuthentication(memberUser3Id);
-        departmentApi.putMembershipUpdate(departmentId, new UserRoleDTO().setUser(
+        departmentUserApi.updateMembershipData(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
         DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments3.pdf");
-        postApi.postPostResponse(postId,
+        postResponseApi.createPostResponse(postId,
             new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3"));
 
         testNotificationService.verify(
@@ -1353,38 +1353,38 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.stop();
 
         testUserService.setAuthentication(postUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(3, responses.size());
         Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
         testUserService.setAuthentication(boardUserId);
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(3, responses.size());
         Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
         testUserService.setAuthentication(postUserId);
-        postApi.putPostResponseView(postId, responseId);
+        postResponseApi.viewPostResponse(postId, responseId);
 
-        ResourceEventRepresentation response1 = postApi.getPostResponse(postId, responseId);
+        ResourceEventRepresentation response1 = postResponseApi.getPostResponse(postId, responseId);
         Assert.assertEquals(memberUser1Id, response1.getUser().getId());
 
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertFalse(responses.get(0).isViewed());
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());
 
         testUserService.setAuthentication(boardUserId);
-        postApi.getPostResponses(postId, null).forEach(response -> Assert.assertFalse(response.isViewed()));
-        postApi.putPostResponseView(postId, responseId);
+        postResponseApi.getPostResponses(postId, null).forEach(response -> Assert.assertFalse(response.isViewed()));
+        postResponseApi.viewPostResponse(postId, responseId);
 
-        response1 = postApi.getPostResponse(postId, responseId);
+        response1 = postResponseApi.getPostResponse(postId, responseId);
         Assert.assertEquals(memberUser1Id, response1.getUser().getId());
 
-        responses = postApi.getPostResponses(postId, null);
+        responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertFalse(responses.get(0).isViewed());
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());
@@ -1402,12 +1402,12 @@ public class PostApiIT extends AbstractIT {
         Long postId = resourceRepository.findByHandle("cs/opportunities/4").getId();
         testUserService.setAuthentication(userId);
 
-        List<ResourceEventRepresentation> responses = postApi.getPostResponses(postId, null);
+        List<ResourceEventRepresentation> responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()),
             BoardUtils.obfuscateEmail("jakub@fibinger.com"), BoardUtils.obfuscateEmail("juan@mingo.com"));
 
-        responses = postApi.getPostResponses(postId, "madrid");
+        responses = postResponseApi.getPostResponses(postId, "madrid");
         Assert.assertEquals(1, responses.size());
         verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), BoardUtils.obfuscateEmail("juan@mingo.com"));
     }
@@ -1417,8 +1417,8 @@ public class PostApiIT extends AbstractIT {
         testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
-            departmentApi.postDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
-        Long boardId = boardApi.postBoard(departmentId, TestHelper.smallSampleBoard()).getId();
+            departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
+        Long boardId = boardApi.createBoard(departmentId, TestHelper.smallSampleBoard()).getId();
         Long postId1 = postApi.postPost(boardId,
             TestHelper.smallSamplePost().setName("post1").setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
 
@@ -1715,7 +1715,7 @@ public class PostApiIT extends AbstractIT {
 
     private void verifyPostReferral(String referral, TestHelper.MockHttpServletResponse response, String expectedLocation) {
         try {
-            postApi.getPostReferral(referral, response);
+            postResponseApi.getPostReferral(referral, response);
         } catch (IOException e) {
             e.printStackTrace();
         }

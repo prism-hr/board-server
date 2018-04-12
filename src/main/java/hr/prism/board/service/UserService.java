@@ -173,7 +173,7 @@ public class UserService {
     }
 
     @SuppressWarnings("unchecked")
-    public List<UserRepresentation> findBySimilarNameAndEmail(Scope scope, Long resourceId, String searchTerm) {
+    public List<UserRepresentation> findUsers(Scope scope, Long resourceId, String searchTerm) {
         // Apply security to the lookup request
         User currentUser = getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
@@ -233,7 +233,7 @@ public class UserService {
         return userRepository.findByUuid(uuid);
     }
 
-    public void updateUserDemographicData(User user, UserDTO userDTO) {
+    public void updateMembershipData(User user, UserDTO userDTO) {
         Gender gender = userDTO.getGender();
         if (gender != null) {
             user.setGender(gender);

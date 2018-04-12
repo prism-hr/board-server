@@ -38,7 +38,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.MemberCategory.toStrings;
+import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.enums.State.REJECTED;
 import static hr.prism.board.exception.BoardExceptionFactory.throwFor;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_PERMISSION;
+import static hr.prism.board.exception.ExceptionCode.INVALID_MEMBERSHIP;
 
 @Service
 @Transactional
@@ -266,7 +270,7 @@ public class DepartmentService {
         });
     }
 
-    public List<DepartmentRepresentation> findBySimilarName(Long universityId, String searchTerm) {
+    public List<DepartmentRepresentation> findDepartment(Long universityId, String searchTerm) {
         List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_DEPARTMENT)
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
@@ -301,8 +305,8 @@ public class DepartmentService {
         return rows.stream().map(row -> row[0].toString()).collect(Collectors.toList());
     }
 
-    public Department postMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
-        if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != Role.MEMBER)) {
+    public Department createMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
+        if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != MEMBER)) {
             throw new BoardException(ExceptionCode.INVALID_RESOURCE_USER, "Only members can be bulk created");
         }
 
@@ -316,15 +320,15 @@ public class DepartmentService {
         });
     }
 
-    public User postMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
+    public User createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(departmentId);
 
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
         if (userRole != null) {
-            if (userRole.getState() == State.REJECTED) {
+            if (userRole.getState() == REJECTED) {
                 // User has been rejected already, don't let them be a nuisance by repeatedly retrying
-                throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION, "User has already been rejected as a member");
+                throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "User has already been rejected as a member");
             }
 
             throw new BoardException(ExceptionCode.DUPLICATE_PERMISSION, "User has already requested membership");
@@ -334,12 +338,12 @@ public class DepartmentService {
         UserDTO userDTO = userRoleDTO.getUser();
         if (userDTO != null) {
             // We validate the membership later - avoid NPE now
-            userService.updateUserDemographicData(user, userDTO);
+            userService.updateMembershipData(user, userDTO);
         }
 
-        userRoleDTO.setRole(Role.MEMBER);
+        userRoleDTO.setRole(MEMBER);
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, State.PENDING, false);
-        validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
+        validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
             .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
@@ -355,16 +359,16 @@ public class DepartmentService {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
-        UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
+        UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
         activityService.viewActivity(userRole.getActivity(), user);
         return userRole.setViewed(true);
     }
 
-    public void putMembershipRequest(Long departmentId, Long userId, State state) {
+    public void reviewMembershipRequest(Long departmentId, Long userId, State state) {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
-            UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, Role.MEMBER);
+            UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
             if (userRole.getState() == State.PENDING) {
                 userRole.setState(state);
                 activityEventService.publishEvent(this, departmentId, userRole);
@@ -374,23 +378,23 @@ public class DepartmentService {
         });
     }
 
-    public User putMembershipUpdate(Long departmentId, UserRoleDTO userRoleDTO) {
+    public User updateMembershipData(Long departmentId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(departmentId);
 
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
-        if (userRole == null || userRole.getState() == State.REJECTED) {
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_PERMISSION, "User is not a member");
+        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
+        if (userRole == null || userRole.getState() == REJECTED) {
+            throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "User is not a member");
         }
 
         UserDTO userDTO = userRoleDTO.getUser();
         if (userDTO != null) {
             // We validate the membership later - avoid NPE now
-            userService.updateUserDemographicData(user, userDTO);
+            userService.updateMembershipData(user, userDTO);
         }
 
-        userRoleCacheService.updateUserRoleDemographicData(userRole, userRoleDTO);
-        validateMembership(user, department, BoardException.class, ExceptionCode.INVALID_MEMBERSHIP);
+        userRoleCacheService.updateMembershipData(userRole, userRoleDTO);
+        validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
         return user;
     }
 
@@ -441,7 +445,7 @@ public class DepartmentService {
         executeActions(State.DRAFT, draftExpiryTimestamp, Action.CONVERT, State.PENDING);
 
         LocalDateTime pendingExpiryTimestamp = baseline.minusSeconds(departmentPendingExpirySeconds);
-        executeActions(State.PENDING, pendingExpiryTimestamp, Action.REJECT, State.REJECTED);
+        executeActions(State.PENDING, pendingExpiryTimestamp, Action.REJECT, REJECTED);
     }
 
     public List<Long> findAllIdsForSubscribeNotification(LocalDateTime baseline) {
@@ -597,7 +601,7 @@ public class DepartmentService {
                 state = department.getState();
                 break;
             case UNSUBSCRIBE:
-                state = State.REJECTED;
+                state = REJECTED;
                 break;
             default:
                 throw new BoardException(ExceptionCode.PROBLEM, "Unexpected action");
@@ -634,7 +638,7 @@ public class DepartmentService {
 
         if (!department.getMemberCategories().isEmpty()) {
             // Member category required - user role data expected
-            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, Role.MEMBER);
+            UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
             if (userRole == null) {
                 // Don't bug administrator for user role data
                 responseReadiness.setRequireUserRoleDemographicData(!canPursue);
