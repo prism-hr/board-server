@@ -3,7 +3,6 @@ package hr.prism.board.enums;
 import java.util.List;
 import java.util.Optional;
 
-import static hr.prism.board.utils.BoardUtils.isPresent;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
@@ -25,7 +24,10 @@ public enum MemberCategory {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static Optional<List<String>> toStrings(Optional<List<MemberCategory>> categories) {
-        if (isPresent(categories)) {
+        if (categories == null) {
+            // Do not change this Optional.empty()
+            return null;
+        } else if (categories.isPresent()) {
             return Optional.of(toStrings(categories.get()));
         }
 

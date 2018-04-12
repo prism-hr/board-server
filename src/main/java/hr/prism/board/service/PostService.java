@@ -39,6 +39,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hr.prism.board.enums.MemberCategory.toStrings;
+
 @Service
 @Transactional
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
@@ -178,7 +180,7 @@ public class PostService {
             post = postRepository.save(post);
 
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-            updateCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
+            updateCategories(post, CategoryType.MEMBER, toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
             setIndexDataAndQuarter(post);
             userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
@@ -455,7 +457,7 @@ public class PostService {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
         patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-        patchCategories(post, CategoryType.MEMBER, MemberCategory.toStrings(postDTO.getMemberCategories()), department);
+        patchCategories(post, CategoryType.MEMBER, toStrings(postDTO.getMemberCategories()), department);
 
         resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
         patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());

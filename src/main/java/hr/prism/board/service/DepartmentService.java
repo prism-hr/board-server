@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.exception.BoardExceptionFactory.throwFor;
 
 @Service
@@ -225,7 +226,7 @@ public class DepartmentService {
         if (CollectionUtils.isEmpty(memberCategories)) {
             memberCategoryStrings = MEMBER_CATEGORY_STRINGS;
         } else {
-            memberCategoryStrings = MemberCategory.toStrings(departmentDTO.getMemberCategories());
+            memberCategoryStrings = toStrings(departmentDTO.getMemberCategories());
         }
 
         resourceService.updateCategories(department, CategoryType.MEMBER, memberCategoryStrings);
@@ -258,7 +259,7 @@ public class DepartmentService {
             resourcePatchService.patchProperty(department, "summary", department::getSummary, department::setSummary, departmentDTO.getSummary());
             resourcePatchService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
-            resourcePatchService.patchCategories(department, CategoryType.MEMBER, MemberCategory.toStrings(departmentDTO.getMemberCategories()));
+            resourcePatchService.patchCategories(department, CategoryType.MEMBER, toStrings(departmentDTO.getMemberCategories()));
             departmentRepository.update(department);
             resourceService.setIndexDataAndQuarter(department);
             return department;
