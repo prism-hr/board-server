@@ -1,6 +1,5 @@
 package hr.prism.board;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import com.tapstream.rollbar.RollbarAppender;
@@ -15,6 +14,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.TimeZone;
+
+import static ch.qos.logback.classic.Level.ERROR;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 @Configuration
 @SpringBootApplication
@@ -24,6 +27,7 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(BoardApplication.class);
 
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         ClassLoader classLoader = BoardApplication.class.getClassLoader();
         try (InputStream propertiesStream = classLoader.getResourceAsStream("application.properties")) {
             Properties properties = new Properties();
@@ -42,12 +46,12 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
                 rollbarAppender.setContext(loggerContext);
 
                 ThresholdFilter thresholdFilter = new ThresholdFilter();
-                thresholdFilter.setLevel(Level.ERROR.levelStr);
+                thresholdFilter.setLevel(ERROR.levelStr);
                 thresholdFilter.setContext(loggerContext);
                 thresholdFilter.start();
 
                 rollbarAppender.addFilter(thresholdFilter);
-                ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+                ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
                 rootLogger.addAppender(rollbarAppender);
                 rollbarAppender.start();
             }
