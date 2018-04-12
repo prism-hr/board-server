@@ -57,9 +57,9 @@ public class ChangeListRepresentation extends LinkedList<ChangeListRepresentatio
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             ChangeRepresentation that = (ChangeRepresentation) o;
-            return Objects.equals(property, that.property) &&
-                Objects.equals(oldValue, that.oldValue) &&
-                Objects.equals(newValue, that.newValue);
+            return Objects.equals(property, that.property)
+                && Objects.equals(oldValue, that.oldValue)
+                && Objects.equals(newValue, that.newValue);
         }
 
         @Override

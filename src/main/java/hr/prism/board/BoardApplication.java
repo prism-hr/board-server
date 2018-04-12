@@ -18,6 +18,7 @@ import java.util.TimeZone;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
+import static org.slf4j.LoggerFactory.getILoggerFactory;
 
 @Configuration
 @SpringBootApplication
@@ -39,25 +40,29 @@ public class BoardApplication extends WebMvcConfigurerAdapter {
             springApplication.run(args);
 
             if ("uat".equals(profile) || "prod".equals(profile)) {
-                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-                RollbarAppender rollbarAppender = new RollbarAppender();
-                rollbarAppender.setApiKey("f22ab8d8627945fcb587d757fc4e6a71");
-                rollbarAppender.setEnvironment(profile);
-                rollbarAppender.setContext(loggerContext);
-
-                ThresholdFilter thresholdFilter = new ThresholdFilter();
-                thresholdFilter.setLevel(ERROR.levelStr);
-                thresholdFilter.setContext(loggerContext);
-                thresholdFilter.start();
-
-                rollbarAppender.addFilter(thresholdFilter);
-                ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
-                rootLogger.addAppender(rollbarAppender);
-                rollbarAppender.start();
+                activateRollbarAppender(profile);
             }
         } catch (Exception e) {
             LOGGER.error("Unable to start application", e);
         }
+    }
+
+    private static void activateRollbarAppender(String profile) {
+        LoggerContext loggerContext = (LoggerContext) getILoggerFactory();
+        RollbarAppender rollbarAppender = new RollbarAppender();
+        rollbarAppender.setApiKey("f22ab8d8627945fcb587d757fc4e6a71");
+        rollbarAppender.setEnvironment(profile);
+        rollbarAppender.setContext(loggerContext);
+
+        ThresholdFilter thresholdFilter = new ThresholdFilter();
+        thresholdFilter.setLevel(ERROR.levelStr);
+        thresholdFilter.setContext(loggerContext);
+        thresholdFilter.start();
+
+        rollbarAppender.addFilter(thresholdFilter);
+        ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
+        rootLogger.addAppender(rollbarAppender);
+        rollbarAppender.start();
     }
 
 }

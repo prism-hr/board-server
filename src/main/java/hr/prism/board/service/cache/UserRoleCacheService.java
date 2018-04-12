@@ -5,7 +5,10 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
@@ -28,6 +31,11 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.exception.ExceptionCode.*;
+import static java.util.Collections.singletonList;
 
 @Service
 @Transactional
@@ -93,11 +101,11 @@ public class UserRoleCacheService {
 
             Activity activity = new Activity().setUserId(user.getId())
                 .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY"));
-            activityEventService.publishEvent(this, resourceId, false, Collections.singletonList(activity));
+            activityEventService.publishEvent(this, resourceId, false, singletonList(activity));
 
             Notification notification = new Notification().setInvitation(userRole.getUuid())
                 .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION"));
-            notificationEventService.publishEvent(this, resourceId, Collections.singletonList(notification));
+            notificationEventService.publishEvent(this, resourceId, singletonList(notification));
         }
 
         return userRole;
@@ -157,9 +165,9 @@ public class UserRoleCacheService {
         MemberCategory oldMemberCategory = userRole.getMemberCategory();
         MemberCategory newMemberCategory = userRoleDTO.getMemberCategory();
         if (newMemberCategory != null) {
-            Resource department = resourceService.findByResourceAndEnclosingScope(userRole.getResource(), Scope.DEPARTMENT);
-            resourceService.validateCategories(department, CategoryType.MEMBER, Collections.singletonList(newMemberCategory.name()),
-                ExceptionCode.MISSING_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.INVALID_USER_ROLE_MEMBER_CATEGORIES, ExceptionCode.CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
+            Resource department = resourceService.findByResourceAndEnclosingScope(userRole.getResource(), DEPARTMENT);
+            resourceService.validateCategories(department, MEMBER, singletonList(newMemberCategory.name()),
+                MISSING_USER_ROLE_MEMBER_CATEGORIES, INVALID_USER_ROLE_MEMBER_CATEGORIES, CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
 
             userRole.setMemberCategory(newMemberCategory);
             clearStudyData = newMemberCategory != oldMemberCategory;
@@ -184,7 +192,7 @@ public class UserRoleCacheService {
     }
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {
-        if (resource.getScope() == Scope.DEPARTMENT) {
+        if (resource.getScope() == DEPARTMENT) {
             List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, Role.ADMINISTRATOR);
             if (remainingAdminRoles.isEmpty()) {
                 throw new BoardException(exceptionCode, "Cannot remove last remaining administrator");

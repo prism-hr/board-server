@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
-public interface UserNotificationSuppressionRepository extends BoardEntityRepository<UserNotificationSuppression, Long> {
+public interface UserNotificationSuppressionRepository
+    extends BoardEntityRepository<UserNotificationSuppression, Long> {
 
     List<UserNotificationSuppression> findByUser(User user);
 
@@ -34,7 +34,8 @@ public interface UserNotificationSuppressionRepository extends BoardEntityReposi
 
     @Modifying
     @Query(value =
-        "INSERT INTO user_notification_suppression (user_id, resource_id, creator_id, created_timestamp, updated_timestamp) " +
+        "INSERT INTO user_notification_suppression (user_id, resource_id, creator_id, created_timestamp, " +
+            "updated_timestamp) " +
             "SELECT user_role.user_id, suppressed.id, :userId, :baseline, :baseline " +
             "FROM user_role " +
             "INNER JOIN resource_relation " +
@@ -50,7 +51,7 @@ public interface UserNotificationSuppressionRepository extends BoardEntityReposi
             "AND user_notification_suppression.id IS NULL " +
             "GROUP BY user_role.user_id, suppressed.id",
         nativeQuery = true)
-    void insertByUserId(@Param("userId") Long userId, @Param("baseline") LocalDateTime baseline, @Param("scope") String scope,
-                        @Param("userRoleStates") List<String> userRoleStates);
+    void insertByUserId(@Param("userId") Long userId, @Param("baseline") LocalDateTime baseline,
+                        @Param("scope") String scope, @Param("userRoleStates") List<String> userRoleStates);
 
 }

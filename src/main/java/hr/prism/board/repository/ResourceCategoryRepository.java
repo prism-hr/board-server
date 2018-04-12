@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface ResourceCategoryRepository extends BoardEntityRepository<ResourceCategory, Long> {
 
     @Modifying

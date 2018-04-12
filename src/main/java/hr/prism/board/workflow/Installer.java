@@ -1,9 +1,7 @@
 package hr.prism.board.workflow;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.utils.ObjectMapperProvider;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -18,47 +16,51 @@ import static hr.prism.board.enums.Notification.*;
 import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Component
-@SuppressWarnings("unused")
 public class Installer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Installer.class);
-
-    @Inject
-    private ObjectMapper objectMapper;
+    private static final Logger LOGGER = getLogger(Installer.class);
 
     private static final Workflow DEPARTMENT_WORKFLOW =
         new Workflow(ObjectMapperProvider.getObjectMapper())
             // Department draft state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DRAFT)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(DRAFT).creating(BOARD)
+            .inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(DRAFT).transitioningTo(ACCEPTED)
 
             // Department pending state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(PENDING)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(PENDING)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(PENDING).creating(BOARD)
+            .inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(PENDING).transitioningTo(ACCEPTED)
 
             // Department accepted state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD).inState(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(ACCEPTED).transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, DEPARTMENT).inState(ACCEPTED).creating(BOARD)
+            .inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(ACCEPTED)
+            .transitioningTo(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(UNSUBSCRIBE, DEPARTMENT).inState(ACCEPTED)
+            .transitioningTo(ACCEPTED)
 
             // Department rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, DEPARTMENT).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(REJECTED).transitioningTo(ACCEPTED);
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUBSCRIBE, DEPARTMENT).inState(REJECTED)
+            .transitioningTo(ACCEPTED);
 
     private static final Workflow BOARD_WORKFLOW =
         new Workflow(ObjectMapperProvider.getObjectMapper())
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
-            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(DRAFT)
+            .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST)
+            .inState(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .prompting(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
@@ -67,9 +69,12 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(ACCEPTED).transitioningTo(REJECTED)
-            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
-            .permitThat(DEPARTMENT, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .creating(POST).inState(ACCEPTED)
+            .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .creating(POST).inState(ACCEPTED)
+            .permitThat(DEPARTMENT, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED)
+            .creating(POST).inState(ACCEPTED)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .prompting(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
@@ -250,11 +255,15 @@ public class Installer {
             .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
-    @Inject
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
+
+    private final PlatformTransactionManager platformTransactionManager;
 
     @Inject
-    private PlatformTransactionManager platformTransactionManager;
+    public Installer(EntityManager entityManager, PlatformTransactionManager platformTransactionManager) {
+        this.entityManager = entityManager;
+        this.platformTransactionManager = platformTransactionManager;
+    }
 
     @PostConstruct
     public void install() {
@@ -272,7 +281,8 @@ public class Installer {
 
     private void install(Workflow workflow) {
         entityManager.createNativeQuery("INSERT INTO workflow(" +
-            "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, resource4_state, activity, notification) " +
+            "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, " +
+            "resource4_state, activity, notification) " +
             "VALUES" + workflow.toString()).executeUpdate();
     }
 

@@ -15,7 +15,7 @@ public class Notification extends Update<Notification> {
     private String invitation;
 
     public Notification() {
-        setType(Update.NOTIFICATION);
+        setType(NOTIFICATION);
     }
 
     public hr.prism.board.enums.Notification getNotification() {

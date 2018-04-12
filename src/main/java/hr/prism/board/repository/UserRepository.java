@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface UserRepository extends BoardEntityRepository<User, Long> {
 
     User findByUuid(String uuid);

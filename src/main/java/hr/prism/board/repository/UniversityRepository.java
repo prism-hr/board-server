@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface UniversityRepository extends BoardEntityRepository<University, Long> {
 
     @Query(value =

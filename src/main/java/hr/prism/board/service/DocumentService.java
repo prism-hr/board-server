@@ -10,11 +10,14 @@ import javax.inject.Inject;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class DocumentService {
 
+    private final DocumentRepository documentRepository;
+
     @Inject
-    private DocumentRepository documentRepository;
+    public DocumentService(DocumentRepository documentRepository) {
+        this.documentRepository = documentRepository;
+    }
 
     public Document getOrCreateDocument(DocumentDTO documentDTO) {
         Long documentId = documentDTO.getId();

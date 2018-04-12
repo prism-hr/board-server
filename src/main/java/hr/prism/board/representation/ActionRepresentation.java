@@ -6,7 +6,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import org.apache.commons.lang3.ObjectUtils;
 
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"suppressedInOwnerState", "activity", "notification"})
+@JsonIgnoreProperties({"suppressedInOwnerState", "activity", "notification"})
 public class ActionRepresentation implements Comparable<ActionRepresentation> {
 
     private Action action;

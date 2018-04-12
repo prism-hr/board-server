@@ -18,7 +18,6 @@ import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.service.event.UserRoleEventService;
 import hr.prism.board.value.*;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,10 +38,11 @@ import java.util.stream.Stream;
 
 import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.REJECTED;
 import static hr.prism.board.exception.BoardExceptionFactory.throwFor;
-import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_PERMISSION;
-import static hr.prism.board.exception.ExceptionCode.INVALID_MEMBERSHIP;
+import static hr.prism.board.exception.ExceptionCode.*;
+import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
 @Service
 @Transactional
@@ -157,19 +157,19 @@ public class DepartmentService {
 
     public Department getDepartment(Long id) {
         User user = userService.getCurrentUser();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         return verifyCanView(user, department);
     }
 
     public Department getDepartment(String handle) {
         User user = userService.getCurrentUser();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, handle);
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, handle);
         return verifyCanView(user, department);
     }
 
     public DepartmentDashboard getDepartmentDashboard(Long id) {
         User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, id);
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
 
         List<hr.prism.board.domain.ResourceTask> tasks = resourceTaskService.getTasks(id);
@@ -194,7 +194,7 @@ public class DepartmentService {
         List<Resource> resources =
             resourceService.getResources(user,
                 new ResourceFilter()
-                    .setScope(Scope.DEPARTMENT)
+                    .setScope(DEPARTMENT)
                     .setSearchTerm(searchTerm)
                     .setIncludePublicResources(includePublicDepartments)
                     .setOrderStatement("resource.name"));
@@ -207,8 +207,9 @@ public class DepartmentService {
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
         User user = userService.getCurrentUserSecured();
         University university = universityService.getUniversity(universityId);
-        resourceService.validateUniqueName(Scope.DEPARTMENT, null, university, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
-        String name = StringUtils.normalizeSpace(departmentDTO.getName());
+        resourceService.validateUniqueName(
+            DEPARTMENT, null, university, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
+        String name = normalizeSpace(departmentDTO.getName());
 
         Department department = new Department();
         department.setName(name);
@@ -221,7 +222,8 @@ public class DepartmentService {
             department.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
         }
 
-        department.setHandle(resourceService.createHandle(university, name, departmentRepository::findHandleByLikeSuggestedHandle));
+        department.setHandle(resourceService.createHandle(university, name,
+            departmentRepository::findHandleByLikeSuggestedHandle));
         department = departmentRepository.save(department);
         resourceService.updateState(department, State.DRAFT);
 
@@ -251,15 +253,15 @@ public class DepartmentService {
         resourceTaskService.createForNewResource(departmentId, user.getId(), DEPARTMENT_TASKS);
 
         entityManager.refresh(department);
-        return (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        return (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
     }
 
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
         User currentUser = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
+        Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.setChangeList(new ChangeListRepresentation());
-            resourcePatchService.patchName(department, departmentDTO.getName(), ExceptionCode.DUPLICATE_DEPARTMENT);
+            resourcePatchService.patchName(department, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
             resourcePatchService.patchProperty(department, "summary", department::getSummary, department::setSummary, departmentDTO.getSummary());
             resourcePatchService.patchHandle(department, departmentDTO.getHandle(), ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
             resourcePatchService.patchDocument(department, "documentLogo", department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
@@ -275,7 +277,7 @@ public class DepartmentService {
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
             .setParameter("universityId", universityId)
-            .setParameter("scope", Scope.DEPARTMENT.name())
+            .setParameter("scope", DEPARTMENT.name())
             .setParameter("state", State.ACCEPTED.name())
             .getResultList();
 
@@ -311,7 +313,7 @@ public class DepartmentService {
         }
 
         User currentUser = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(currentUser, Scope.DEPARTMENT, departmentId);
+        Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, Action.EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
             userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
@@ -346,18 +348,18 @@ public class DepartmentService {
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
         hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
+            .setScope(DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY);
         activityEventService.publishEvent(this, departmentId, userRole, Collections.singletonList(activity));
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
+            .setScope(DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
         return user;
     }
 
     public UserRole viewMembershipRequest(Long departmentId, Long userId) {
         User user = userService.getCurrentUserSecured();
-        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
         UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
         activityService.viewActivity(userRole.getActivity(), user);
@@ -366,7 +368,7 @@ public class DepartmentService {
 
     public void reviewMembershipRequest(Long departmentId, Long userId, State state) {
         User user = userService.getCurrentUserSecured();
-        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> {
             UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
             if (userRole.getState() == State.PENDING) {
@@ -457,15 +459,15 @@ public class DepartmentService {
     public void sendSubscribeNotification(Long departmentId) {
         Department department = (Department) resourceService.findOne(departmentId);
         hr.prism.board.domain.Activity subscribeActivity = activityService.findByResourceAndActivityAndRole(
-            department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, Scope.DEPARTMENT, Role.ADMINISTRATOR);
+            department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, Role.ADMINISTRATOR);
         if (subscribeActivity == null) {
             hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-                .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY);
+                .setScope(DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY);
             activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
         }
 
         hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION);
+            .setScope(DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION);
         notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
 
         Integer notifiedCount = department.getNotifiedCount();
@@ -612,15 +614,15 @@ public class DepartmentService {
         entityManager.refresh(department);
         if (action == Action.SUSPEND) {
             hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
-                department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, Scope.DEPARTMENT, Role.ADMINISTRATOR);
+                department, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, Role.ADMINISTRATOR);
             if (suspendActivity == null) {
                 hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-                    .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
+                    .setScope(DEPARTMENT).setRole(Role.ADMINISTRATOR).setActivity(Activity.SUSPEND_DEPARTMENT_ACTIVITY);
                 activityEventService.publishEvent(this, departmentId, false, Collections.singletonList(activity));
             }
 
             hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-                .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
+                .setScope(DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.SUSPEND_DEPARTMENT_NOTIFICATION);
             notificationEventService.publishEvent(this, departmentId, Collections.singletonList(notification));
         }
     }
@@ -672,7 +674,7 @@ public class DepartmentService {
 
     private String getCustomerIdSecured(Long departmentId) {
         User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
         actionService.executeAction(user, department, Action.EDIT, () -> department);
         return department.getCustomerId();
     }

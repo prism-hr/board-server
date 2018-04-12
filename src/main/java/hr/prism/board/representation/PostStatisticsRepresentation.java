@@ -1,9 +1,9 @@
 package hr.prism.board.representation;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.time.LocalDateTime;
+
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 
 public class PostStatisticsRepresentation extends StatisticsRepresentation<PostStatisticsRepresentation> {
 
@@ -141,13 +141,14 @@ public class PostStatisticsRepresentation extends StatisticsRepresentation<PostS
 
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(
-            17, 37, this, false, StatisticsRepresentation.class);
+        return reflectionHashCode(
+            17, 37,
+            this, false, StatisticsRepresentation.class);
     }
 
     @Override
     public boolean equals(Object other) {
-        return EqualsBuilder.reflectionEquals(this, other, false, StatisticsRepresentation.class);
+        return reflectionEquals(this, other, false, StatisticsRepresentation.class);
     }
 
 }

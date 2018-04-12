@@ -115,7 +115,8 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return existingRelationExplanation;
     }
 
-    public PostRepresentation setExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
+    public PostRepresentation setExistingRelationExplanation(
+        LinkedHashMap<String, Object> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }

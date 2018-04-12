@@ -1,11 +1,10 @@
 package hr.prism.board.representation;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.time.LocalDateTime;
 
-@SuppressWarnings("unchecked")
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
+
 public class StatisticsRepresentation<T extends StatisticsRepresentation> {
 
     private Long countLive;
@@ -20,6 +19,7 @@ public class StatisticsRepresentation<T extends StatisticsRepresentation> {
         return countLive;
     }
 
+    @SuppressWarnings("unchecked")
     public T setCountLive(Long countLive) {
         this.countLive = countLive;
         return (T) this;
@@ -29,6 +29,7 @@ public class StatisticsRepresentation<T extends StatisticsRepresentation> {
         return countThisYear;
     }
 
+    @SuppressWarnings("unchecked")
     public T setCountThisYear(Long countThisYear) {
         this.countThisYear = countThisYear;
         return (T) this;
@@ -38,6 +39,7 @@ public class StatisticsRepresentation<T extends StatisticsRepresentation> {
         return countAllTime;
     }
 
+    @SuppressWarnings("unchecked")
     public T setCountAllTime(Long countAllTime) {
         this.countAllTime = countAllTime;
         return (T) this;
@@ -47,6 +49,7 @@ public class StatisticsRepresentation<T extends StatisticsRepresentation> {
         return mostRecent;
     }
 
+    @SuppressWarnings("unchecked")
     public T setMostRecent(LocalDateTime mostRecent) {
         this.mostRecent = mostRecent;
         return (T) this;
@@ -54,12 +57,12 @@ public class StatisticsRepresentation<T extends StatisticsRepresentation> {
 
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        return reflectionHashCode(this);
     }
 
     @Override
     public boolean equals(Object other) {
-        return EqualsBuilder.reflectionEquals(this, other);
+        return reflectionEquals(this, other);
     }
 
 }

@@ -6,7 +6,8 @@ import hr.prism.board.enums.State;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Objects;
+
+import static java.util.Objects.hash;
 
 public class UserRoleRepresentation {
 
@@ -133,7 +134,7 @@ public class UserRoleRepresentation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(user, role, state);
+        return hash(user, role, state);
     }
 
     @Override
@@ -143,7 +144,9 @@ public class UserRoleRepresentation {
         }
 
         UserRoleRepresentation that = (UserRoleRepresentation) object;
-        return user.equals(that.getUser()) && role == that.getRole() && state == that.getState();
+        return user.equals(that.getUser())
+            && role == that.getRole()
+            && state == that.getState();
     }
 
 }

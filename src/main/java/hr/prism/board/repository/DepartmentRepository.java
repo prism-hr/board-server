@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface DepartmentRepository extends BoardEntityRepository<Department, Long> {
 
     @Query(value =
@@ -20,7 +19,8 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "and (department.lastMemberTimestamp is null or department.lastMemberTimestamp < :baseline1) " +
             "and (department.lastTaskCreationTimestamp is null or department.lastTaskCreationTimestamp < :baseline2) " +
             "order by department.id")
-    List<Long> findAllIdsForTaskUpdates(@Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2);
+    List<Long> findAllIdsForTaskUpdates(@Param("baseline1") LocalDateTime baseline1,
+                                        @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
         "select department.id " +
@@ -30,8 +30,10 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "or (department.notifiedCount = :notifiedCount1 and department.stateChangeTimestamp < :baseline1) " +
             "or (department.notifiedCount = :notifiedCount2 and department.stateChangeTimestamp < :baseline2)) " +
             "order by department.id")
-    List<Long> findAllIdsForSubscribeNotification(@Param("pendingState") State pendingState, @Param("notifiedCount1") Integer notifiedCount1,
-                                                  @Param("notifiedCount2") Integer notifiedCount2, @Param("baseline1") LocalDateTime baseline1,
+    List<Long> findAllIdsForSubscribeNotification(@Param("pendingState") State pendingState,
+                                                  @Param("notifiedCount1") Integer notifiedCount1,
+                                                  @Param("notifiedCount2") Integer notifiedCount2,
+                                                  @Param("baseline1") LocalDateTime baseline1,
                                                   @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
@@ -47,7 +49,8 @@ public interface DepartmentRepository extends BoardEntityRepository<Department, 
             "from Department department " +
             "where department.state = :state " +
             "and department.stateChangeTimestamp < :expiryTimestamp")
-    List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state, @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
+    List<Long> findByStateAndStateChangeTimestampLessThan(@Param("state") State state,
+                                                          @Param("expiryTimestamp") LocalDateTime expiryTimestamp);
 
     Department findByCustomerId(String customerId);
 

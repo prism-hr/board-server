@@ -80,7 +80,11 @@ public class Permission {
             this.activities = new ArrayList<>();
         }
 
-        Activity activity = new Activity().setWorkflow(this.workflow).setObjectMapper(this.objectMapper).setScope(scope).setRole(role);
+        Activity activity =
+            new Activity()
+                .setWorkflow(this.workflow)
+                .setObjectMapper(this.objectMapper)
+                .setScope(scope).setRole(role);
         this.activities.add(activity);
         return activity;
     }
@@ -90,7 +94,12 @@ public class Permission {
             this.notifications = new ArrayList<>();
         }
 
-        Notification notification = new Notification().setWorkflow(this.workflow).setObjectMapper(this.objectMapper).setScope(scope).setRole(role);
+        Notification notification =
+            new Notification()
+                .setWorkflow(this.workflow)
+                .setObjectMapper(this.objectMapper)
+                .setScope(scope)
+                .setRole(role);
         this.notifications.add(notification);
         return notification;
     }
@@ -120,7 +129,8 @@ public class Permission {
     @Override
     public String toString() {
         List<String> values = new ArrayList<>();
-        for (Object value : new Object[]{resource1Scope, role, resource2Scope, resource2State, action, resource3Scope, resource3State, resource4State, activities, notifications}) {
+        for (Object value : new Object[]{resource1Scope, role, resource2Scope,
+            resource2State, action, resource3Scope, resource3State, resource4State, activities, notifications}) {
             String valueString;
             if (value == null) {
                 valueString = "NULL";

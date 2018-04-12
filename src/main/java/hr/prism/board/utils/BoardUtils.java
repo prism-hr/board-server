@@ -23,8 +23,9 @@ public class BoardUtils {
     private static RandomStringGenerator RANDOM_STRING_GENERATOR =
         new RandomStringGenerator.Builder()
             .withinRange('0', 'z')
-            .filteredBy((codePoint) -> Range.between(48, 57).contains(codePoint) || Range.between(97, 122)
-                .contains(codePoint))
+            .filteredBy((codePoint) ->
+                Range.between(48, 57).contains(codePoint)
+                    || Range.between(97, 122).contains(codePoint))
             .build();
 
     private static SimpleTokenizer TOKENIZER = SimpleTokenizer.INSTANCE;

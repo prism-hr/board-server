@@ -25,7 +25,8 @@ public class PostResponseReadinessRepresentation {
         return requireUserRoleDemographicData;
     }
 
-    public PostResponseReadinessRepresentation setRequireUserRoleDemographicData(boolean requireUserRoleDemographicData) {
+    public PostResponseReadinessRepresentation setRequireUserRoleDemographicData(
+        boolean requireUserRoleDemographicData) {
         this.requireUserRoleDemographicData = requireUserRoleDemographicData;
         return this;
     }

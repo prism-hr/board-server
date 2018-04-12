@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface TestEmailRepository extends BoardEntityRepository<TestEmail, Long> {
 
     @Query(value =

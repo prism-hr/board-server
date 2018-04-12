@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings({"JpaQlInspection", "SameParameterValue", "SpringDataRepositoryMethodReturnTypeInspection", "SqlResolve"})
 public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTask, Long> {
 
     @Query(value =
@@ -36,8 +35,10 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
             "or (resourceTask.notifiedCount = :notifiedCount1 and resourceTask.createdTimestamp < :baseline2) " +
             "or (resourceTask.notifiedCount = :notifiedCount2 and resourceTask.createdTimestamp < :baseline3) " +
             "order by resourceTask.resource, resourceTask.task")
-    List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1, @Param("notifiedCount2") Integer notifiedCount2,
-                                                 @Param("baseline1") LocalDateTime baseline1, @Param("baseline2") LocalDateTime baseline2,
+    List<ResourceTask> findByNotificationHistory(@Param("notifiedCount1") Integer notifiedCount1,
+                                                 @Param("notifiedCount2") Integer notifiedCount2,
+                                                 @Param("baseline1") LocalDateTime baseline1,
+                                                 @Param("baseline2") LocalDateTime baseline2,
                                                  @Param("baseline3") LocalDateTime baseline3);
 
     @Modifying
@@ -52,12 +53,15 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
             "set resourceTask.completed = :completed " +
             "where resourceTask.resource = :resource " +
             "and resourceTask.task in (:tasks)")
-    void updateByResourceAndTasks(@Param("resource") Resource resource, @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks, @Param("completed") Boolean completed);
+    void updateByResourceAndTasks(@Param("resource") Resource resource,
+                                  @Param("tasks") List<hr.prism.board.enums.ResourceTask> tasks,
+                                  @Param("completed") Boolean completed);
 
     @Modifying
     @Query(value =
         "UPDATE resource_task " +
-            "SET resource_task.notified_count = IF(resource_task.notified_count IS NULL, 1, resource_task.notified_count + 1) " +
+            "SET resource_task.notified_count = IF(resource_task.notified_count IS NULL, 1, " +
+            "resource_task.notified_count + 1) " +
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
     void updateNotifiedCountByResourceId(@Param("resourceId") Long resourceId);
@@ -68,7 +72,8 @@ public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTa
             "SET resource_task.created_timestamp = :createdTimestamp " +
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
-    void updateCreatedTimestampByResourceId(@Param("resourceId") Long resourceId, @Param("createdTimestamp") LocalDateTime createdTimestamp);
+    void updateCreatedTimestampByResourceId(@Param("resourceId") Long resourceId,
+                                            @Param("createdTimestamp") LocalDateTime createdTimestamp);
 
     @Query(value =
         "select resourceTask.id " +

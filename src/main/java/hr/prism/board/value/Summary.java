@@ -10,7 +10,7 @@ public abstract class Summary<T> {
 
     private LocalDateTime lastTimestamp;
 
-    public Summary(T key, Long count, LocalDateTime lastTimestamp) {
+    Summary(T key, Long count, LocalDateTime lastTimestamp) {
         this.key = key;
         this.count = count;
         this.lastTimestamp = lastTimestamp;
@@ -43,7 +43,7 @@ public abstract class Summary<T> {
         return this;
     }
 
-    public Summary<T> merge(Summary<T> other) {
+    public void merge(Summary<T> other) {
         assert key == other.getKey();
         Long otherCount = other.getCount();
         if (count != null || otherCount != null) {
@@ -62,8 +62,6 @@ public abstract class Summary<T> {
                 lastTimestamp = lastTimestamp.isAfter(otherLastTimestamp) ? lastTimestamp : otherLastTimestamp;
             }
         }
-
-        return this;
     }
 
 }

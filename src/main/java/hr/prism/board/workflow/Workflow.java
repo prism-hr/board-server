@@ -21,14 +21,23 @@ public class Workflow extends ArrayList<Permission> {
     }
 
     public Permission permitThatAnybody() {
-        Permission permission = new Permission().setWorkflow(this).setObjectMapper(this.objectMapper).setRole(PUBLIC);
+        Permission permission =
+            new Permission()
+                .setWorkflow(this)
+                .setObjectMapper(this.objectMapper)
+                .setRole(PUBLIC);
         this.permission = permission;
         add(permission);
         return permission;
     }
 
     public Permission permitThat(Scope scope, Role role) {
-        Permission permission = new Permission().setWorkflow(this).setObjectMapper(this.objectMapper).setResource1Scope(scope).setRole(role);
+        Permission permission =
+            new Permission()
+                .setWorkflow(this)
+                .setObjectMapper(this.objectMapper)
+                .setResource1Scope(scope)
+                .setRole(role);
         this.permission = permission;
         add(permission);
         return permission;

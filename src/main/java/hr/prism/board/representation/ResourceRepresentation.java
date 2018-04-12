@@ -6,7 +6,6 @@ import hr.prism.board.enums.State;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@SuppressWarnings("unchecked")
 public class ResourceRepresentation<T extends ResourceRepresentation> {
 
     private Long id;

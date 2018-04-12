@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface PostRepository extends BoardEntityRepository<Post, Long> {
 
     List<Post> findByName(String name);
@@ -40,7 +39,9 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
             "or post.liveTimestamp is null) " +
             "and (post.deadTimestamp >= :baseline " +
             "or post.deadTimestamp is null)")
-    List<Long> findPostsToPublish(@Param("states") Collection<State> states, @Param("rejectedState") State rejectedState, @Param("baseline") LocalDateTime baseline);
+    List<Long> findPostsToPublish(@Param("states") Collection<State> states,
+                                  @Param("rejectedState") State rejectedState,
+                                  @Param("baseline") LocalDateTime baseline);
 
     @Query(value =
         "select post " +
@@ -56,8 +57,8 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
 
     @Query(value =
         "select new hr.prism.board.value.Organization(post.organizationName, post.organizationLogo, count(post.id), " +
-            "max(post.createdTimestamp) as mostRecentPost, coalesce(sum(post.viewCount), 0), coalesce(sum(post.referralCount), 0), " +
-            "coalesce(sum(post.responseCount), 0)) " +
+            "max(post.createdTimestamp) as mostRecentPost, coalesce(sum(post.viewCount), 0), " +
+            "coalesce(sum(post.referralCount), 0), coalesce(sum(post.responseCount), 0)) " +
             "from Post post " +
             "inner join post.parent board " +
             "where board.parent.id = :departmentId " +

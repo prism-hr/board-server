@@ -5,7 +5,7 @@ public class Activity extends Update<Activity> {
     private hr.prism.board.enums.Activity activity;
 
     public Activity() {
-        setType(Update.ACTIVITY);
+        setType(ACTIVITY);
     }
 
     public hr.prism.board.enums.Activity getActivity() {

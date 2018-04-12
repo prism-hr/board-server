@@ -4,7 +4,6 @@ import hr.prism.board.enums.MemberCategory;
 
 import java.util.List;
 
-@SuppressWarnings("unused")
 public class DepartmentRepresentation extends ResourceRepresentation<DepartmentRepresentation> {
 
     private String summary;

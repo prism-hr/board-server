@@ -28,10 +28,11 @@ public class PostStatistics extends Statistics {
 
     private LocalDateTime mostRecentResponse;
 
-    public PostStatistics(Long countLive, Long countThisYear, Long countAllTime, LocalDateTime mostRecent, Long viewCountLive,
-                          Long viewCountThisYear, Long viewCountAllTime, LocalDateTime mostRecentView, Long referralCountLive,
-                          Long referralCountThisYear, Long referralCountAllTime, LocalDateTime mostRecentReferral,
-                          Long responseCountLive, Long responseCountThisYear, Long responseCountAllTime, LocalDateTime mostRecentResponse) {
+    public PostStatistics(Long countLive, Long countThisYear, Long countAllTime, LocalDateTime mostRecent,
+                          Long viewCountLive, Long viewCountThisYear, Long viewCountAllTime,
+                          LocalDateTime mostRecentView, Long referralCountLive, Long referralCountThisYear,
+                          Long referralCountAllTime, LocalDateTime mostRecentReferral, Long responseCountLive,
+                          Long responseCountThisYear, Long responseCountAllTime, LocalDateTime mostRecentResponse) {
         super(countLive, countThisYear, countAllTime, mostRecent);
         this.viewCountLive = viewCountLive;
         this.viewCountThisYear = viewCountThisYear;

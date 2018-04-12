@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface ResourceRepository extends BoardEntityRepository<Resource, Long> {
 
     Resource findByHandle(String handle);
@@ -44,8 +43,10 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
             "or resourceCategory.id is null and userRole.memberCategory is null " +
             "or resourceCategory.type = :categoryType and resourceCategory.name = userRole.memberCategory) " +
             "order by parent.name, resource.name")
-    List<Resource> findByScopeAndUserAndRolesOrCategory(@Param("scope") Scope scope, @Param("user") User user, @Param("roles") List<Role> roles,
-                                                        @Param("categoryType") CategoryType categoryType, @Param("userRoleStates") List<State> userRoleStates);
+    List<Resource> findByScopeAndUserAndRolesOrCategory(@Param("scope") Scope scope, @Param("user") User user,
+                                                        @Param("roles") List<Role> roles,
+                                                        @Param("categoryType") CategoryType categoryType,
+                                                        @Param("userRoleStates") List<State> userRoleStates);
 
     @Modifying
     @Query(value =
@@ -56,7 +57,8 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
 
     @Query(value =
-        "select new hr.prism.board.value.ResourceSummary(resource.scope, count(resource.id), max(resource.createdTimestamp)) " +
+        "select new hr.prism.board.value.ResourceSummary(resource.scope, count(resource.id), " +
+            "max(resource.createdTimestamp)) " +
             "from UserRole userRole " +
             "inner join userRole.resource resource " +
             "where userRole.user = :user " +
@@ -69,7 +71,8 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
             "from Resource resource " +
             "where resource.state in (:states) " +
             "and resource.updatedTimestamp < :baseline")
-    List<Long> findByStatesAndLessThanUpdatedTimestamp(@Param("states") List<State> states, @Param("baseline") LocalDateTime baseline);
+    List<Long> findByStatesAndLessThanUpdatedTimestamp(@Param("states") List<State> states,
+                                                       @Param("baseline") LocalDateTime baseline);
 
     @Modifying
     @Query(value =

@@ -20,7 +20,6 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "where activityEvent.activity in (:activities) " +
             "and activityEvent.user.id = :userId " +
             "and activityEvent.event = :event")
-    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<Long> findIdsByActivitiesAndUserIdAndEvent(@Param("activities") Collection<Activity> activities,
                                                     @Param("userId") Long userId,
                                                     @Param("event") hr.prism.board.enums.ActivityEvent event);
