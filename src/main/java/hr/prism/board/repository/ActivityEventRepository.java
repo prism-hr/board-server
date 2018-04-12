@@ -12,10 +12,10 @@ import java.util.Collection;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings({"JpaQlInspection", "SqlResolve"})
 public interface ActivityEventRepository extends BoardEntityRepository<ActivityEvent, Long> {
 
-    ActivityEvent findByActivityAndUserAndEvent(Activity activity, User user, hr.prism.board.enums.ActivityEvent event);
+    ActivityEvent findByActivityAndUserAndEvent(Activity activity, User user,
+                                                hr.prism.board.enums.ActivityEvent event);
 
     @Query(value =
         "select activityEvent " +
@@ -23,7 +23,8 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "where activityEvent.activity in (:activities) " +
             "and activityEvent.user = :user " +
             "and activityEvent.event = :event")
-    List<ActivityEvent> findByActivitiesAndUserAndEvent(@Param("activities") Collection<Activity> activities, @Param("user") User user,
+    List<ActivityEvent> findByActivitiesAndUserAndEvent(@Param("activities") Collection<Activity> activities,
+                                                        @Param("user") User user,
                                                         @Param("event") hr.prism.board.enums.ActivityEvent event);
 
     @Modifying
@@ -47,7 +48,8 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "from Activity activity " +
             "where activity.resource = :resource " +
             "and activity.activity in (:activities))")
-    void deleteByResourceAndActivities(@Param("resource") Resource resource, @Param("activities") List<hr.prism.board.enums.Activity> activities);
+    void deleteByResourceAndActivities(@Param("resource") Resource resource,
+                                       @Param("activities") List<hr.prism.board.enums.Activity> activities);
 
     @Modifying
     @Query(value =
@@ -88,7 +90,8 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
             "and userRole.role = :role)")
-    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user,
+                                        @Param("role") Role role);
 
     @Modifying
     @Query(value =
@@ -99,6 +102,8 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "AND activity.activity IN (:activities)",
         nativeQuery = true)
     void insertByResourceIdActivitiesUserIdAndEvent(@Param("resourceId") Long resourceId,
-                                                    @Param("activities") List<String> activities, @Param("userId") Long userId, @Param("event") String event, @Param("baseline") LocalDateTime baseline);
+                                                    @Param("activities") List<String> activities,
+                                                    @Param("userId") Long userId, @Param("event") String event,
+                                                    @Param("baseline") LocalDateTime baseline);
 
 }

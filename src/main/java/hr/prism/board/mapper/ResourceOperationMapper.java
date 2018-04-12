@@ -5,24 +5,28 @@ import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Component
 public class ResourceOperationMapper implements Function<ResourceOperation, ResourceOperationRepresentation> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceOperationMapper.class);
+    private static final Logger LOGGER = getLogger(ResourceOperationMapper.class);
+
+    private final UserMapper userMapper;
+
+    private final ObjectMapper objectMapper;
 
     @Inject
-    private UserMapper userMapper;
-
-    @Inject
-    private ObjectMapper objectMapper;
+    public ResourceOperationMapper(UserMapper userMapper, ObjectMapper objectMapper) {
+        this.userMapper = userMapper;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public ResourceOperationRepresentation apply(ResourceOperation resourceOperation) {
@@ -36,7 +40,7 @@ public class ResourceOperationMapper implements Function<ResourceOperation, Reso
             try {
                 changeListRepresentation = objectMapper.readValue(changeList, ChangeListRepresentation.class);
             } catch (IOException e) {
-                LOGGER.info("Could not deserialize change list", e);
+                LOGGER.warn("Could not deserialize change list", e);
             }
         }
 

@@ -2,17 +2,20 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.University;
 import hr.prism.board.representation.UniversityRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@Component
 public class UniversityMapper implements Function<University, UniversityRepresentation> {
 
+    private final DocumentMapper documentMapper;
+
     @Inject
-    private DocumentMapper documentMapper;
+    public UniversityMapper(DocumentMapper documentMapper) {
+        this.documentMapper = documentMapper;
+    }
 
     @Override
     public UniversityRepresentation apply(University university) {

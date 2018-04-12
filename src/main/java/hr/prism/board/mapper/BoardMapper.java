@@ -2,26 +2,31 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
-import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.service.ResourceService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+import static hr.prism.board.enums.CategoryType.POST;
+
+@Component
 public class BoardMapper implements Function<Board, BoardRepresentation> {
 
-    @Inject
-    private DepartmentMapper departmentMapper;
+    private final DepartmentMapper departmentMapper;
+
+    private final ResourceMapper resourceMapper;
+
+    private final ResourceService resourceService;
 
     @Inject
-    private ResourceMapper resourceMapper;
-
-    @Inject
-    private ResourceService resourceService;
+    public BoardMapper(DepartmentMapper departmentMapper, ResourceMapper resourceMapper,
+                       ResourceService resourceService) {
+        this.departmentMapper = departmentMapper;
+        this.resourceMapper = resourceMapper;
+        this.resourceService = resourceService;
+    }
 
     @Override
     public BoardRepresentation apply(Board board) {
@@ -33,7 +38,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
         return resourceMapper.apply(board, BoardRepresentation.class)
             .setHandle(resourceMapper.getHandle(board, department))
             .setDepartment(departmentMapper.applySmall((Department) board.getParent()))
-            .setPostCategories(resourceService.getCategories(board, CategoryType.POST));
+            .setPostCategories(resourceService.getCategories(board, POST));
     }
 
     BoardRepresentation applySmall(Board board) {

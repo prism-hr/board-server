@@ -7,22 +7,27 @@ import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 @Component
 public class DefinedRecipientList implements NotificationRecipientList {
 
+    private final UserCacheService userCacheService;
+
     @Inject
-    private UserCacheService userCacheService;
+    public DefinedRecipientList(UserCacheService userCacheService) {
+        this.userCacheService = userCacheService;
+    }
 
     public List<UserNotification> list(Resource resource, Notification notification) {
         String uuid = notification.getInvitation();
         if (uuid == null) {
-            return Collections.singletonList(new UserNotification(userCacheService.findOneFresh(notification.getUserId())));
+            return singletonList(new UserNotification(userCacheService.findOneFresh(notification.getUserId())));
         }
 
-        return Collections.singletonList(new UserNotification(userCacheService.findByUserRoleUuid(uuid), uuid));
+        return singletonList(new UserNotification(userCacheService.findByUserRoleUuid(uuid), uuid));
     }
 
 }

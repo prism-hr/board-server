@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
+
 @Component
 public class PostRecipientList implements NotificationRecipientList {
 
@@ -21,7 +23,7 @@ public class PostRecipientList implements NotificationRecipientList {
                 user.setGivenName("Author");
                 user.setSurname("Author");
                 user.setEmail(applyEmail);
-                return Collections.singletonList(new UserNotification(user));
+                return singletonList(new UserNotification(user));
             }
         }
 

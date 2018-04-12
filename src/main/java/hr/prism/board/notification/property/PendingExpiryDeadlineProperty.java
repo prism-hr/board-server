@@ -1,24 +1,31 @@
 package hr.prism.board.notification.property;
 
 import hr.prism.board.domain.Department;
-import hr.prism.board.service.NotificationService;
-import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.service.NotificationService.NotificationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.time.LocalDate;
 
+import static hr.prism.board.utils.BoardUtils.DATETIME_FORMATTER;
+
 @Component
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class PendingExpiryDeadlineProperty implements NotificationProperty {
 
-    @Value("${department.pending.expiry.seconds}")
-    private Long departmentPendingExpirySeconds;
+    private final Long departmentPendingExpirySeconds;
 
-    public String getValue(NotificationService.NotificationRequest notificationRequest) {
+    @Inject
+    public PendingExpiryDeadlineProperty(
+        @Value("${department.pending.expiry.seconds}") Long departmentPendingExpirySeconds) {
+        this.departmentPendingExpirySeconds = departmentPendingExpirySeconds;
+    }
+
+    public String getValue(NotificationRequest notificationRequest) {
         Department department = (Department) notificationRequest.getResource();
-        LocalDate deadline = department.getStateChangeTimestamp().plusSeconds(departmentPendingExpirySeconds).toLocalDate();
-        return deadline.format(BoardUtils.DATETIME_FORMATTER);
+        LocalDate deadline = department.getStateChangeTimestamp()
+            .plusSeconds(departmentPendingExpirySeconds).toLocalDate();
+        return deadline.format(DATETIME_FORMATTER);
     }
 
 }

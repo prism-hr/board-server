@@ -2,40 +2,47 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.CategoryType.POST;
+import static hr.prism.board.enums.MemberCategory.fromStrings;
+
+@Component
 public class PostMapper implements Function<Post, PostRepresentation> {
 
-    @Inject
-    private LocationMapper locationMapper;
+    private final LocationMapper locationMapper;
+
+    private final DocumentMapper documentMapper;
+
+    private final BoardMapper boardMapper;
+
+    private final ResourceMapper resourceMapper;
+
+    private final ResourceEventMapper resourceEventMapper;
+
+    private final ResourceService resourceService;
+
+    private final PostService postService;
 
     @Inject
-    private DocumentMapper documentMapper;
-
-    @Inject
-    private BoardMapper boardMapper;
-
-    @Inject
-    private ResourceMapper resourceMapper;
-
-    @Inject
-    private ResourceEventMapper resourceEventMapper;
-
-    @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private PostService postService;
+    public PostMapper(LocationMapper locationMapper, DocumentMapper documentMapper, BoardMapper boardMapper,
+                      ResourceMapper resourceMapper, ResourceEventMapper resourceEventMapper,
+                      ResourceService resourceService, PostService postService) {
+        this.locationMapper = locationMapper;
+        this.documentMapper = documentMapper;
+        this.boardMapper = boardMapper;
+        this.resourceMapper = resourceMapper;
+        this.resourceEventMapper = resourceEventMapper;
+        this.resourceService = resourceService;
+        this.postService = postService;
+    }
 
     @Override
     public PostRepresentation apply(Post post) {
@@ -51,9 +58,10 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 .setOrganizationLogo(post.getOrganizationLogo())
                 .setLocation(locationMapper.apply(post.getLocation()))
                 .setExistingRelation(post.getExistingRelation())
-                .setExistingRelationExplanation(postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
-                .setPostCategories(resourceService.getCategories(post, CategoryType.POST))
-                .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(post, CategoryType.MEMBER)));
+                .setExistingRelationExplanation(
+                    postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
+                .setPostCategories(resourceService.getCategories(post, POST))
+                .setMemberCategories(fromStrings(resourceService.getCategories(post, MEMBER)));
 
         String applyEmail = post.getApplyEmail();
         if (post.isExposeApplyData()) {

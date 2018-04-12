@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface ActivityRoleRepository extends BoardEntityRepository<ActivityRole, Long> {
 
     ActivityRole findByActivityAndScopeAndRole(Activity activity, Scope scope, Role role);
@@ -37,7 +36,8 @@ public interface ActivityRoleRepository extends BoardEntityRepository<ActivityRo
             "from Activity activity " +
             "where activity.resource = :resource " +
             "and activity.activity in (:activities))")
-    void deleteByResourceAndActivities(@Param("resource") Resource resource, @Param("activities") List<hr.prism.board.enums.Activity> activities);
+    void deleteByResourceAndActivities(@Param("resource") Resource resource,
+                                       @Param("activities") List<hr.prism.board.enums.Activity> activities);
 
     @Modifying
     @Query(value =
@@ -78,6 +78,7 @@ public interface ActivityRoleRepository extends BoardEntityRepository<ActivityRo
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
             "and userRole.role = :role)")
-    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user,
+                                        @Param("role") Role role);
 
 }

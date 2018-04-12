@@ -5,22 +5,25 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.representation.ResourceRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@Component
 public class ResourceMapperFactory {
 
-    @Inject
-    private DepartmentMapper departmentMapper;
+    private final DepartmentMapper departmentMapper;
+
+    private final BoardMapper boardMapper;
+
+    private final PostMapper postMapper;
 
     @Inject
-    private BoardMapper boardMapper;
-
-    @Inject
-    private PostMapper postMapper;
+    public ResourceMapperFactory(DepartmentMapper departmentMapper, BoardMapper boardMapper, PostMapper postMapper) {
+        this.departmentMapper = departmentMapper;
+        this.boardMapper = boardMapper;
+        this.postMapper = postMapper;
+    }
 
     ResourceRepresentation applySmall(Resource resource) {
         if (resource instanceof Department) {

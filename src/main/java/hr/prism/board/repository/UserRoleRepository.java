@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long> {
 
     UserRole findByUuid(String uuid);
@@ -38,7 +37,8 @@ public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long
             "where resource = :resource " +
             "and user.id = :userId " +
             "and role = :role")
-    UserRole findByResourceAndUserIdAndRole(@Param("resource") Resource resource, @Param("userId") Long userId, @Param("role") Role role);
+    UserRole findByResourceAndUserIdAndRole(@Param("resource") Resource resource, @Param("userId") Long userId,
+                                            @Param("role") Role role);
 
     @Query(value =
         "select userRole " +
@@ -46,7 +46,8 @@ public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
             "and userRole.role in (:roles)")
-    List<UserRole> findByResourceAndUserAndRoles(@Param("resource") Resource resource, @Param("user") User user, @Param("roles") List<Role> roles);
+    List<UserRole> findByResourceAndUserAndRoles(@Param("resource") Resource resource, @Param("user") User user,
+                                                 @Param("roles") List<Role> roles);
 
     Long deleteByResourceAndUser(Resource resource, User user);
 
@@ -78,8 +79,10 @@ public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long
             "where userRole.user = :user " +
             "and userRole.role = :role " +
             "and userRole.state in (:userRoleStates) " +
-            "and " + ACTIVE_USER_ROLE_CONSTRAINT)
-    List<Long> findIdsByUserAndRole(@Param("user") User user, @Param("role") Role role, @Param("userRoleStates") List<State> userRoleStates,
+            "and (userRole.expiryDate is null " +
+            "or userRole.expiryDate >= :baseline)")
+    List<Long> findIdsByUserAndRole(@Param("user") User user, @Param("role") Role role,
+                                    @Param("userRoleStates") List<State> userRoleStates,
                                     @Param("baseline") LocalDate baseline);
 
 }

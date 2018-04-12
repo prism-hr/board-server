@@ -4,39 +4,46 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.University;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.value.DepartmentDashboard;
 import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.Statistics;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.CategoryType.POST;
+import static hr.prism.board.enums.MemberCategory.fromStrings;
+import static java.util.stream.Collectors.toList;
+
+@Component
 public class DepartmentMapper implements Function<Department, DepartmentRepresentation> {
 
-    @Inject
-    private DocumentMapper documentMapper;
+    private final DocumentMapper documentMapper;
+
+    private final ResourceMapper resourceMapper;
+
+    private final UniversityMapper universityMapper;
+
+    private final OrganizationMapper organizationMapper;
+
+    private final ResourceService resourceService;
 
     @Inject
-    private ResourceMapper resourceMapper;
-
-    @Inject
-    private UniversityMapper universityMapper;
-
-    @Inject
-    private OrganizationMapper organizationMapper;
-
-    @Inject
-    private ResourceService resourceService;
+    public DepartmentMapper(DocumentMapper documentMapper, ResourceMapper resourceMapper,
+                            UniversityMapper universityMapper, OrganizationMapper organizationMapper,
+                            ResourceService resourceService) {
+        this.documentMapper = documentMapper;
+        this.resourceMapper = resourceMapper;
+        this.universityMapper = universityMapper;
+        this.organizationMapper = organizationMapper;
+        this.resourceService = resourceService;
+    }
 
     @Override
     public DepartmentRepresentation apply(Department department) {
@@ -51,7 +58,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(resourceMapper.getHandle(department, university))
             .setCustomerId(department.getCustomerId())
-            .setMemberCategories(MemberCategory.fromStrings(resourceService.getCategories(department, CategoryType.MEMBER)));
+            .setMemberCategories(fromStrings(resourceService.getCategories(department, MEMBER)));
     }
 
     public DepartmentDashboardRepresentation apply(DepartmentDashboard departmentDashboard) {
@@ -86,8 +93,11 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         }
 
         return tasks.stream().map(task ->
-            new ResourceTaskRepresentation().setId(task.getId()).setTask(task.getTask()).setCompleted(task.getCompleted()))
-            .collect(Collectors.toList());
+            new ResourceTaskRepresentation()
+                .setId(task.getId())
+                .setTask(task.getTask())
+                .setCompleted(task.getCompleted()))
+            .collect(toList());
     }
 
     private List<BoardRepresentation> applyBoards(Department department, List<Board> boards) {
@@ -98,8 +108,8 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         return boards.stream().map(board ->
             resourceMapper.apply(board, BoardRepresentation.class)
                 .setHandle(resourceMapper.getHandle(board, department))
-                .setPostCategories(resourceService.getCategories(board, CategoryType.POST)))
-            .collect(Collectors.toList());
+                .setPostCategories(resourceService.getCategories(board, POST)))
+            .collect(toList());
     }
 
     private StatisticsRepresentation applyMemberStatistics(Statistics memberStatistics) {
@@ -119,7 +129,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             return null;
         }
 
-        return organizations.stream().map(organizationMapper).collect(Collectors.toList());
+        return organizations.stream().map(organizationMapper).collect(toList());
     }
 
     private PostStatisticsRepresentation applyPostStatistics(PostStatistics postStatistics) {

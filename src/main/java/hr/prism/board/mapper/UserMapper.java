@@ -2,20 +2,23 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.User;
 import hr.prism.board.representation.UserRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@Component
 public class UserMapper implements Function<User, UserRepresentation> {
 
-    @Inject
-    private DocumentMapper documentMapper;
+    private final DocumentMapper documentMapper;
+
+    private final LocationMapper locationMapper;
 
     @Inject
-    private LocationMapper locationMapper;
+    public UserMapper(DocumentMapper documentMapper, LocationMapper locationMapper) {
+        this.documentMapper = documentMapper;
+        this.locationMapper = locationMapper;
+    }
 
     @Override
     public UserRepresentation apply(User user) {

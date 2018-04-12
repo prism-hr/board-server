@@ -3,9 +3,9 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.representation.ResourceRepresentation;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class ResourceMapper {
 
     public <T extends ResourceRepresentation<T>> T apply(Resource resource, Class<T> representationClass) {

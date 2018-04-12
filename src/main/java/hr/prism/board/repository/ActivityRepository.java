@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.List;
 
 @Transactional
-@SuppressWarnings("JpaQlInspection")
 public interface ActivityRepository extends BoardEntityRepository<Activity, Long> {
 
     @Query(value =
@@ -22,7 +21,8 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "and activityEvent.user.id = :userId " +
             "and activityEvent.event = :event")
     @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
-    List<Long> findIdsByActivitiesAndUserIdAndEvent(@Param("activities") Collection<Activity> activities, @Param("userId") Long userId,
+    List<Long> findIdsByActivitiesAndUserIdAndEvent(@Param("activities") Collection<Activity> activities,
+                                                    @Param("userId") Long userId,
                                                     @Param("event") hr.prism.board.enums.ActivityEvent event);
 
     @Query(value =
@@ -31,7 +31,8 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "where activity.resource = :resource " +
             "and activity.activity = :activity " +
             "and activity.userRole is null")
-    Activity findByResourceAndActivity(@Param("resource") Resource resource, @Param("activity") hr.prism.board.enums.Activity activity);
+    Activity findByResourceAndActivity(@Param("resource") Resource resource,
+                                       @Param("activity") hr.prism.board.enums.Activity activity);
 
     @Query(value =
         "select activity " +
@@ -42,7 +43,8 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "and activity.userRole is null " +
             "and activityRole.scope = :scope " +
             "and activityRole.role = :role")
-    Activity findByResourceAndActivityAndRole(@Param("resource") Resource resource, @Param("activity") hr.prism.board.enums.Activity activity,
+    Activity findByResourceAndActivityAndRole(@Param("resource") Resource resource,
+                                              @Param("activity") hr.prism.board.enums.Activity activity,
                                               @Param("scope") Scope scope, @Param("role") Role role);
 
     Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity);
@@ -71,7 +73,8 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
         "delete from Activity activity " +
             "where activity.resource = :resource " +
             "and activity.activity in (:activities)")
-    void deleteByResourceAndActivities(@Param("resource") Resource resource, @Param("activities") List<hr.prism.board.enums.Activity> activities);
+    void deleteByResourceAndActivities(@Param("resource") Resource resource,
+                                       @Param("activities") List<hr.prism.board.enums.Activity> activities);
 
     @Modifying
     @Query(value =
@@ -104,7 +107,8 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "where userRole.resource = :resource " +
             "and userRole.user = :user " +
             "and userRole.role = :role)")
-    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user, @Param("role") Role role);
+    void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user,
+                                        @Param("role") Role role);
 
     @Query(value =
         "select activity.id " +
@@ -113,7 +117,6 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "where activity.resource = :resource " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
-    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<Long> findByResourceWithActivityUsers(@Param("resource") Resource resource);
 
 }

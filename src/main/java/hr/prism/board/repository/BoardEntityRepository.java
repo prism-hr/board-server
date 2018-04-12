@@ -7,10 +7,8 @@ import org.springframework.data.repository.NoRepositoryBean;
 import java.io.Serializable;
 
 @NoRepositoryBean
-public interface BoardEntityRepository<ENTITY extends BoardEntity, ID extends Serializable> extends JpaRepository<ENTITY, ID> {
-
-    String ACTIVE_USER_ROLE_CONSTRAINT =
-        "(userRole.expiryDate is null or userRole.expiryDate >= :baseline)";
+public interface BoardEntityRepository<ENTITY extends BoardEntity, ID extends Serializable>
+    extends JpaRepository<ENTITY, ID> {
 
     <T extends ENTITY> T save(T entity);
 

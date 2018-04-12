@@ -2,11 +2,11 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Document;
 import hr.prism.board.representation.DocumentRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
 
-@Service
+@Component
 public class DocumentMapper implements Function<Document, DocumentRepresentation> {
 
     @Override

@@ -2,17 +2,20 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.representation.UserRoleRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@Component
 public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation> {
 
+    private final UserMapper userMapper;
+
     @Inject
-    private UserMapper userMapper;
+    public UserRoleMapper(UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
 
     @Override
     public UserRoleRepresentation apply(UserRole userRole) {

@@ -3,12 +3,11 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.representation.ActivityRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
 
-@Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+@Component
 public class ActivityMapper implements Function<Activity, ActivityRepresentation> {
 
     @Override

@@ -12,11 +12,16 @@ import java.util.List;
 @Component
 public class AuthorizedCategorizedRecipientList implements NotificationRecipientList {
 
+    private final UserService userService;
+
     @Inject
-    private UserService userService;
+    public AuthorizedCategorizedRecipientList(UserService userService) {
+        this.userService = userService;
+    }
 
     public List<UserNotification> list(Resource resource, Notification notification) {
-        return userService.findByResourceAndEnclosingScopeAndRoleAndCategories(resource, notification.getScope(), notification.getRole());
+        return userService.findByResourceAndEnclosingScopeAndRoleAndCategories(
+            resource, notification.getScope(), notification.getRole());
     }
 
 }

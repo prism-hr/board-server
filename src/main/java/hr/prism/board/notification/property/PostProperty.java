@@ -1,20 +1,25 @@
 package hr.prism.board.notification.property;
 
-import hr.prism.board.enums.Scope;
-import hr.prism.board.service.NotificationService;
+import hr.prism.board.service.NotificationService.NotificationRequest;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
+import static hr.prism.board.enums.Scope.POST;
+
 @Component
 public class PostProperty implements NotificationProperty {
 
-    @Inject
-    private ResourceService resourceService;
+    private final ResourceService resourceService;
 
-    public String getValue(NotificationService.NotificationRequest notificationRequest) {
-        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), Scope.POST).getName();
+    @Inject
+    public PostProperty(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
+    public String getValue(NotificationRequest notificationRequest) {
+        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), POST).getName();
     }
 
 }

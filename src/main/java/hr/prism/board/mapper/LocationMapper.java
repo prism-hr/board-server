@@ -2,11 +2,11 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Location;
 import hr.prism.board.representation.LocationRepresentation;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
 
-@Service
+@Component
 public class LocationMapper implements Function<Location, LocationRepresentation> {
 
     @Override

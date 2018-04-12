@@ -1,13 +1,14 @@
 package hr.prism.board.notification.property;
 
 import hr.prism.board.service.NotificationService;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.text.WordUtils.uncapitalize;
 
 public interface NotificationProperty extends Comparable<NotificationProperty> {
 
     default String getKey() {
-        return WordUtils.uncapitalize(getClass().getSimpleName().replace("Property", StringUtils.EMPTY));
+        return uncapitalize(getClass().getSimpleName().replace("Property", EMPTY));
     }
 
     String getValue(NotificationService.NotificationRequest notificationRequest);
