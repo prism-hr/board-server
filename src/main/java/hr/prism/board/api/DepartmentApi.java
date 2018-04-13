@@ -61,7 +61,8 @@ public class DepartmentApi {
     @RequestMapping(value = "/api/universities/{universityId}/departments", method = GET)
     public List<DepartmentRepresentation> findDepartments(@PathVariable Long universityId,
                                                           @RequestParam String query) {
-        return departmentService.findDepartment(universityId, query);
+        return departmentService.findDepartment(universityId, query)
+            .stream().map(departmentMapper::apply).collect(toList());
     }
 
     @RequestMapping(value = "/api/departments", method = GET)

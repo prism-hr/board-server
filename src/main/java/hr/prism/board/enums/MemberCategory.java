@@ -2,6 +2,7 @@ package hr.prism.board.enums;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -13,6 +14,9 @@ public enum MemberCategory {
     MASTER_STUDENT,
     RESEARCH_STUDENT,
     RESEARCH_STAFF;
+
+    public static List<String> MEMBER_CATEGORY_STRINGS =
+        Stream.of(values()).map(MemberCategory::name).collect(toList());
 
     public static List<String> toStrings(List<MemberCategory> categories) {
         if (isEmpty(categories)) {

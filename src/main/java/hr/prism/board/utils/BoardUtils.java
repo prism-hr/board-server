@@ -11,6 +11,7 @@ import org.apache.commons.text.RandomStringGenerator;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -124,6 +125,17 @@ public class BoardUtils {
 
     public static String emptyToNull(String string) {
         return string == null ? null : Strings.emptyToNull(string.trim());
+    }
+
+    public static LocalDate getAcademicYearStart() {
+        LocalDate baseline = LocalDate.now();
+        if (baseline.getMonthValue() > 9) {
+            // Academic year started this year
+            return LocalDate.of(baseline.getYear(), 10, 1);
+        }
+
+        // Academic year started last year
+        return LocalDate.of(baseline.getYear() - 1, 10, 1);
     }
 
 }

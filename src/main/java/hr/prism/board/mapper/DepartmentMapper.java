@@ -6,10 +6,7 @@ import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.University;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.ResourceService;
-import hr.prism.board.value.DepartmentDashboard;
-import hr.prism.board.value.Organization;
-import hr.prism.board.value.PostStatistics;
-import hr.prism.board.value.Statistics;
+import hr.prism.board.value.*;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -59,6 +56,27 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setHandle(resourceMapper.getHandle(department, university))
             .setCustomerId(department.getCustomerId())
             .setMemberCategories(fromStrings(resourceService.getCategories(department, MEMBER)));
+    }
+
+    public DepartmentRepresentation apply(DepartmentSearch department) {
+        if (department == null) {
+            return null;
+        }
+
+        DocumentRepresentation documentLogo = null;
+        String documentImageCloudinaryId = department.getDocumentLogoCloudinaryId();
+        if (documentImageCloudinaryId != null) {
+            documentLogo =
+                new DocumentRepresentation()
+                    .setCloudinaryId(documentImageCloudinaryId)
+                    .setCloudinaryUrl(department.getDocumentLogoCloudinaryUrl())
+                    .setFileName(department.getDocumentLogoFileName());
+        }
+
+        return new DepartmentRepresentation()
+            .setId(department.getId())
+            .setName(department.getName())
+            .setDocumentLogo(documentLogo);
     }
 
     public DepartmentDashboardRepresentation apply(DepartmentDashboard departmentDashboard) {
