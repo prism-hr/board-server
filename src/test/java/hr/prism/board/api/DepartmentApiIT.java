@@ -16,6 +16,7 @@ import hr.prism.board.exception.*;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.representation.*;
+import hr.prism.board.service.DepartmentPaymentService;
 import hr.prism.board.service.ScheduledService;
 import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
@@ -83,6 +84,9 @@ public class DepartmentApiIT extends AbstractIT {
 
     @Inject
     private ResourceTaskRepository resourceTaskRepository;
+
+    @Inject
+    private DepartmentPaymentService departmentPaymentService;
 
     @Inject
     private ScheduledService scheduledService;
@@ -829,7 +833,7 @@ public class DepartmentApiIT extends AbstractIT {
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
         String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 
-        departmentService.processStripeWebhookEvent("id", Action.SUSPEND);
+        departmentPaymentService.processSubscriptionSuspension("id");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
@@ -843,7 +847,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        departmentService.processStripeWebhookEvent("id", Action.SUSPEND);
+        departmentPaymentService.processSubscriptionSuspension("id");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
@@ -868,7 +872,7 @@ public class DepartmentApiIT extends AbstractIT {
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
-        departmentService.processStripeWebhookEvent("id", Action.UNSUBSCRIBE);
+        departmentPaymentService.processSubscriptionCancellation("id");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(State.REJECTED, departmentR.getState());
     }

@@ -1,6 +1,6 @@
 package hr.prism.board.representation;
 
-public class PostResponseReadinessRepresentation {
+public class DemographicDataStatusRepresentation {
 
     // true: post / put with user demographic data (gender, age range, home country)
     // false: user demographic data already complete, skip this step
@@ -16,7 +16,7 @@ public class PostResponseReadinessRepresentation {
         return requireUserDemographicData;
     }
 
-    public PostResponseReadinessRepresentation setRequireUserDemographicData(boolean requireUserDemographicData) {
+    public DemographicDataStatusRepresentation setRequireUserDemographicData(boolean requireUserDemographicData) {
         this.requireUserDemographicData = requireUserDemographicData;
         return this;
     }
@@ -25,7 +25,7 @@ public class PostResponseReadinessRepresentation {
         return requireUserRoleDemographicData;
     }
 
-    public PostResponseReadinessRepresentation setRequireUserRoleDemographicData(
+    public DemographicDataStatusRepresentation setRequireUserRoleDemographicData(
         boolean requireUserRoleDemographicData) {
         this.requireUserRoleDemographicData = requireUserRoleDemographicData;
         return this;
@@ -35,7 +35,7 @@ public class PostResponseReadinessRepresentation {
         return userRole;
     }
 
-    public PostResponseReadinessRepresentation setUserRole(UserRoleRepresentation userRole) {
+    public DemographicDataStatusRepresentation setUserRole(UserRoleRepresentation userRole) {
         this.userRole = userRole;
         return this;
     }

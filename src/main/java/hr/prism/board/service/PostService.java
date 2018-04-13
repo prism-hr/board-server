@@ -15,7 +15,7 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.PostResponseReadinessRepresentation;
+import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.service.event.ActivityEventService;
 import hr.prism.board.service.event.NotificationEventService;
@@ -83,6 +83,9 @@ public class PostService {
 
     @Inject
     private DepartmentService departmentService;
+
+    @Inject
+    private DepartmentUserService departmentUserService;
 
     @Inject
     private ResourceTaskService resourceTaskService;
@@ -228,7 +231,7 @@ public class PostService {
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
-        departmentService.validateMembership(resourceEvent.getUser(), (Department) post.getParent()
+        departmentUserService.validateMembership(resourceEvent.getUser(), (Department) post.getParent()
             .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_REFERRAL);
 
         Document applyDocument = post.getApplyDocument();
@@ -245,7 +248,7 @@ public class PostService {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> {
-            departmentService.validateMembership(user, (Department) post.getParent()
+            departmentUserService.validateMembership(user, (Department) post.getParent()
                 .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
             return post;
         });
@@ -598,8 +601,8 @@ public class PostService {
 
     private void addPostResponseReadiness(Post post, User user) {
         boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
-        PostResponseReadinessRepresentation responseReadiness =
-            departmentService.makePostResponseReadiness(user, (Department) post.getParent().getParent(), canPursue);
+        DemographicDataStatusRepresentation responseReadiness =
+            userRoleService.makeDemographicDataStatus(user, (Department) post.getParent().getParent(), canPursue);
         post.setResponseReadiness(responseReadiness);
         if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
             resourceEventService.createPostReferral(post, user);

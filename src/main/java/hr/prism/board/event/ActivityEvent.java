@@ -6,6 +6,9 @@ import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
 
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
+
 public class ActivityEvent extends ApplicationEvent {
 
     private Long resourceId;
@@ -59,6 +62,16 @@ public class ActivityEvent extends ApplicationEvent {
 
     public List<Activity> getActivities() {
         return activities;
+    }
+
+    @Override
+    public int hashCode() {
+        return reflectionHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return reflectionEquals(this, other);
     }
 
 }

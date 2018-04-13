@@ -5,7 +5,7 @@ import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.DepartmentUserService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.cache.UserCacheService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,7 +27,7 @@ public class UserRoleEventService {
     private UserRoleService userRoleService;
 
     @Inject
-    private DepartmentService departmentService;
+    private DepartmentUserService departmentUserService;
 
     @Inject
     private ApplicationEventPublisher applicationEventPublisher;
@@ -52,7 +52,7 @@ public class UserRoleEventService {
             } catch (Throwable t) {
                 throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);
             } finally {
-                departmentService.decrementMemberCountPending(resourceId);
+                departmentUserService.decrementMemberCountPending(resourceId);
             }
         }
     }

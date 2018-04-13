@@ -11,6 +11,7 @@ import hr.prism.board.representation.DepartmentDashboardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BadgeService;
+import hr.prism.board.service.DepartmentDashboardService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,8 @@ public class DepartmentApi {
 
     private final DepartmentService departmentService;
 
+    private final DepartmentDashboardService departmentDashboardService;
+
     private final ResourceService resourceService;
 
     private final BadgeService badgeService;
@@ -41,10 +44,11 @@ public class DepartmentApi {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public DepartmentApi(DepartmentService departmentService, ResourceService resourceService,
-                         BadgeService badgeService, DepartmentMapper departmentMapper,
+    public DepartmentApi(DepartmentService departmentService, DepartmentDashboardService departmentDashboardService,
+                         ResourceService resourceService, BadgeService badgeService, DepartmentMapper departmentMapper,
                          ResourceOperationMapper resourceOperationMapper, ObjectMapper objectMapper) {
         this.departmentService = departmentService;
+        this.departmentDashboardService = departmentDashboardService;
         this.resourceService = resourceService;
         this.badgeService = badgeService;
         this.departmentMapper = departmentMapper;
@@ -84,7 +88,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/dashboard", method = GET)
     public DepartmentDashboardRepresentation getDepartmentDashboard(@PathVariable Long departmentId) {
-        return departmentMapper.apply(departmentService.getDepartmentDashboard(departmentId));
+        return departmentMapper.apply(departmentDashboardService.getDepartmentDashboard(departmentId));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/operations", method = GET)

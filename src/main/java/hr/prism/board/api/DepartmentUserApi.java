@@ -9,7 +9,7 @@ import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
-import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.DepartmentUserService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +24,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 @RestController
 public class DepartmentUserApi {
 
-    private final DepartmentService departmentService;
+    private final DepartmentUserService departmentUserService;
 
     private final UserService userService;
 
@@ -37,10 +37,10 @@ public class DepartmentUserApi {
     private final UserRoleMapper userRoleMapper;
 
     @Inject
-    public DepartmentUserApi(DepartmentService departmentService, UserService userService,
+    public DepartmentUserApi(DepartmentUserService departmentUserService, UserService userService,
                              UserRoleService userRoleService, DepartmentMapper departmentMapper, UserMapper userMapper,
                              UserRoleMapper userRoleMapper) {
-        this.departmentService = departmentService;
+        this.departmentUserService = departmentUserService;
         this.userService = userService;
         this.userRoleService = userRoleService;
         this.departmentMapper = departmentMapper;
@@ -51,31 +51,31 @@ public class DepartmentUserApi {
     @RequestMapping(value = "/api/departments/{departmentId}/users/bulk", method = POST)
     public DepartmentRepresentation createMembers(@PathVariable Long departmentId,
                                                   @RequestBody @Valid List<UserRoleDTO> users) {
-        return departmentMapper.apply(departmentService.createMembers(departmentId, users));
+        return departmentMapper.apply(departmentUserService.createMembers(departmentId, users));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = POST)
     public UserRepresentation createMembershipRequest(@PathVariable Long departmentId,
                                                       @RequestBody @Valid UserRoleDTO userRoleDTO) {
-        return userMapper.apply(departmentService.createMembershipRequest(departmentId, userRoleDTO));
+        return userMapper.apply(departmentUserService.createMembershipRequest(departmentId, userRoleDTO));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = PUT)
     public UserRoleRepresentation viewMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId) {
-        return userRoleMapper.apply(departmentService.viewMembershipRequest(departmentId, userId));
+        return userRoleMapper.apply(departmentUserService.viewMembershipRequest(departmentId, userId));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}/{state:accepted|rejected}",
         method = PUT)
     public void reviewMembershipRequest(@PathVariable Long departmentId, @PathVariable Long userId,
                                         @PathVariable String state) {
-        departmentService.reviewMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
+        departmentUserService.reviewMembershipRequest(departmentId, userId, State.valueOf(state.toUpperCase()));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = PUT)
     public UserRepresentation updateMembershipData(@PathVariable Long departmentId,
                                                    @RequestBody @Valid UserRoleDTO userRoleDTO) {
-        return userMapper.apply(departmentService.updateMembershipData(departmentId, userRoleDTO));
+        return userMapper.apply(departmentUserService.updateMembershipData(departmentId, userRoleDTO));
     }
 
     @RequestMapping(value = "/api/departments/{resourceId}/users", method = GET)

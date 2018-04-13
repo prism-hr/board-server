@@ -7,6 +7,9 @@ import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
 
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
+
 public class NotificationEvent extends ApplicationEvent {
 
     private Long resourceId;
@@ -70,6 +73,16 @@ public class NotificationEvent extends ApplicationEvent {
 
     public List<Notification> getNotifications() {
         return notifications;
+    }
+
+    @Override
+    public int hashCode() {
+        return reflectionHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return reflectionEquals(this, other);
     }
 
 }

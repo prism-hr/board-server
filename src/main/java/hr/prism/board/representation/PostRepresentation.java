@@ -51,7 +51,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private LocalDateTime lastResponseTimestamp;
 
-    private PostResponseReadinessRepresentation responseReadiness;
+    private DemographicDataStatusRepresentation responseReadiness;
 
     private ResourceEventRepresentation referral;
 
@@ -247,11 +247,11 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public PostResponseReadinessRepresentation getResponseReadiness() {
+    public DemographicDataStatusRepresentation getResponseReadiness() {
         return responseReadiness;
     }
 
-    public PostRepresentation setResponseReadiness(PostResponseReadinessRepresentation responseReadiness) {
+    public PostRepresentation setResponseReadiness(DemographicDataStatusRepresentation responseReadiness) {
         this.responseReadiness = responseReadiness;
         return this;
     }

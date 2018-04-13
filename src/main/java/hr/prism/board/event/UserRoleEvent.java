@@ -5,6 +5,9 @@ import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
 
+import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
+import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
+
 public class UserRoleEvent extends ApplicationEvent {
 
     private Long creatorId;
@@ -30,6 +33,16 @@ public class UserRoleEvent extends ApplicationEvent {
 
     public List<UserRoleDTO> getUserRoles() {
         return userRoles;
+    }
+
+    @Override
+    public int hashCode() {
+        return reflectionHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return reflectionEquals(this, other);
     }
 
 }

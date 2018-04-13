@@ -5,9 +5,8 @@ import com.stripe.model.Customer;
 import com.stripe.model.Event;
 import com.stripe.model.Invoice;
 import com.stripe.net.Webhook;
-import hr.prism.board.enums.Action;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.service.DepartmentService;
+import hr.prism.board.service.DepartmentPaymentService;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,8 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static hr.prism.board.enums.Action.SUSPEND;
-import static hr.prism.board.enums.Action.UNSUBSCRIBE;
 import static hr.prism.board.exception.ExceptionCode.PAYMENT_INTEGRATION_ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -32,13 +29,13 @@ public class WebhookApi {
 
     private final String stripeApiEventSecret;
 
-    private final DepartmentService departmentService;
+    private final DepartmentPaymentService departmentPaymentService;
 
     @Inject
     public WebhookApi(@Value("${stripe.api.event.secret}") String stripeApiEventSecret,
-                      DepartmentService departmentService) {
+                      DepartmentPaymentService departmentPaymentService) {
         this.stripeApiEventSecret = stripeApiEventSecret;
-        this.departmentService = departmentService;
+        this.departmentPaymentService = departmentPaymentService;
     }
 
     @RequestMapping(value = "/api/webhooks/stripe", method = POST, consumes = "application/json")
@@ -50,18 +47,15 @@ public class WebhookApi {
         String eventType = event.getType();
         if ("invoice.payment_failed".equals(eventType)) {
             String customerId = ((Invoice) event.getData().getObject()).getCustomer();
-            processStripeEvent(customerId, eventType, SUSPEND);
+            LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
+            departmentPaymentService.processSubscriptionSuspension(customerId);
         } else if ("customer.subscription.deleted".equals(eventType)) {
             String customerId = ((Customer) event.getData().getObject()).getId();
-            processStripeEvent(customerId, eventType, UNSUBSCRIBE);
+            LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
+            departmentPaymentService.processSubscriptionCancellation(customerId);
         } else {
             throw new BoardException(PAYMENT_INTEGRATION_ERROR, "Event of type: " + eventType + " not expected");
         }
-    }
-
-    private void processStripeEvent(String customerId, String eventType, Action action) {
-        LOGGER.info("Processing event of type: " + eventType + " for customer ID: " + customerId);
-        departmentService.processStripeWebhookEvent(customerId, action);
     }
 
 }
