@@ -6,13 +6,13 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Execution;
 import hr.prism.board.workflow.Notification;
@@ -21,7 +21,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,14 +41,6 @@ public class ActionService {
     @Inject
     private ResourceService resourceService;
 
-    @Lazy
-    @Inject
-    private ActivityEventService activityEventService;
-
-    @Lazy
-    @Inject
-    private NotificationEventService notificationEventService;
-
     @Inject
     private ObjectMapper objectMapper;
 
@@ -57,6 +49,9 @@ public class ActionService {
 
     @Inject
     private ApplicationContext applicationContext;
+
+    @Inject
+    private ApplicationEventPublisher applicationEventPublisher;
 
     public Resource executeAction(User user, Resource resource, Action action, Execution execution) {
         if (resource == null) {
@@ -94,12 +89,14 @@ public class ActionService {
                     Long newResourceId = newResource.getId();
                     List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
                     if (activities != null) {
-                        activityEventService.publishEvent(this, newResourceId, true, activities);
+                        applicationEventPublisher.publishEvent(
+                            new ActivityEvent(this, newResourceId, true, activities));
                     }
 
                     List<Notification> notifications = deserializeUpdates(actionRepresentation.getNotification(), Notification.class);
                     if (notifications != null) {
-                        notificationEventService.publishEvent(this, newResourceId, action, notifications);
+                        applicationEventPublisher.publishEvent(
+                            new NotificationEvent(this, newResourceId, action, notifications));
                     }
 
                     return newResource;

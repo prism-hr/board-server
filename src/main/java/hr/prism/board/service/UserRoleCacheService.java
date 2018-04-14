@@ -1,4 +1,4 @@
-package hr.prism.board.service.cache;
+package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Resource;
@@ -9,20 +9,17 @@ import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
-import hr.prism.board.service.ActivityService;
-import hr.prism.board.service.ResourceService;
-import hr.prism.board.service.ResourceTaskService;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -57,16 +54,11 @@ public class UserRoleCacheService {
     @Inject
     private ResourceTaskService resourceTaskService;
 
-    @Lazy
-    @Inject
-    private ActivityEventService activityEventService;
-
-    @Lazy
-    @Inject
-    private NotificationEventService notificationEventService;
-
     @Inject
     private EntityManager entityManager;
+
+    @Inject
+    private EventProducer eventProducer;
 
     public UserRole findByUuid(String uuid) {
         return userRoleRepository.findByUuid(uuid);
@@ -99,13 +91,18 @@ public class UserRoleCacheService {
             String scopeName = scope.name();
             Long resourceId = resource.getId();
 
-            Activity activity = new Activity().setUserId(user.getId())
-                .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY"));
-            activityEventService.publishEvent(this, resourceId, false, singletonList(activity));
-
-            Notification notification = new Notification().setInvitation(userRole.getUuid())
-                .setNotification(hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION"));
-            notificationEventService.publishEvent(this, resourceId, singletonList(notification));
+            eventProducer.produce(
+                new ActivityEvent(this, resourceId, false,
+                    singletonList(
+                        new Activity()
+                            .setUserId(user.getId())
+                            .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY")))),
+                new NotificationEvent(this, resourceId,
+                    singletonList(
+                        new Notification()
+                            .setInvitation(userRole.getUuid())
+                            .setNotification(
+                                hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION")))));
         }
 
         return userRole;

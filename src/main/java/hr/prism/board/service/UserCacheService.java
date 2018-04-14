@@ -1,4 +1,4 @@
-package hr.prism.board.service.cache;
+package hr.prism.board.service;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -8,7 +8,6 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
-import hr.prism.board.service.ResourceService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceSummary;
 import org.slf4j.Logger;

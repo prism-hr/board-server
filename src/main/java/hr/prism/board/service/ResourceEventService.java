@@ -2,23 +2,25 @@ package hr.prism.board.service;
 
 import com.google.common.base.Joiner;
 import hr.prism.board.domain.*;
-import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.Gender;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.repository.ResourceEventSearchRepository;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceEventSummary;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,10 @@ import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY;
+import static hr.prism.board.enums.Notification.RESPOND_POST_NOTIFICATION;
+import static java.util.Collections.singletonList;
 
 @Service
 @Transactional
@@ -48,16 +54,11 @@ public class ResourceEventService {
     @Inject
     private UserRoleService userRoleService;
 
-    @Lazy
-    @Inject
-    private ActivityEventService activityEventService;
-
-    @Lazy
-    @Inject
-    private NotificationEventService notificationEventService;
-
     @Inject
     private EntityManager entityManager;
+
+    @Inject
+    private EventProducer eventProducer;
 
     public ResourceEvent findOne(Long resourceEventId) {
         return resourceEventRepository.findOne(resourceEventId);
@@ -110,18 +111,30 @@ public class ResourceEventService {
         }
 
         Long postId = post.getId();
-        hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-            .setScope(Scope.POST).setRole(Role.ADMINISTRATOR).setActivity(hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY);
-        activityEventService.publishEvent(this, postId, response, Collections.singletonList(activity));
+        Long responseId = response.getId();
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification().setNotification(Notification.RESPOND_POST_NOTIFICATION).addAttachment(
-            new hr.prism.board.workflow.Notification.Attachment().setName(documentResume.getFileName()).setUrl(documentResume.getCloudinaryUrl()).setLabel("Application"));
-        notificationEventService.publishEvent(this, postId, response.getId(), Collections.singletonList(notification));
+        eventProducer.produce(
+            new ActivityEvent(this, postId, ResourceEvent.class, responseId,
+                singletonList(
+                    new hr.prism.board.workflow.Activity()
+                        .setScope(Scope.POST)
+                        .setRole(Role.ADMINISTRATOR)
+                        .setActivity(RESPOND_POST_ACTIVITY))),
+            new NotificationEvent(this, postId, responseId,
+                singletonList(
+                    new hr.prism.board.workflow.Notification()
+                        .setNotification(RESPOND_POST_NOTIFICATION)
+                        .addAttachment(
+                            new hr.prism.board.workflow.Notification.Attachment()
+                                .setName(documentResume.getFileName())
+                                .setUrl(documentResume.getCloudinaryUrl())
+                                .setLabel("Application")))));
+
         return response;
     }
 
     public ResourceEvent findByResourceAndEventAndUser(Resource resource, hr.prism.board.enums.ResourceEvent event, User user) {
-        List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(Collections.singletonList(resource), event, user);
+        List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(singletonList(resource), event, user);
         return ids.isEmpty() ? null : resourceEventRepository.findOne(ids.get(0));
     }
 

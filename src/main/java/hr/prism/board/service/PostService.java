@@ -10,21 +10,20 @@ import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.ResourceTask;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
-import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +39,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.MemberCategory.toStrings;
+
+import hr.prism.board.event.ActivityEvent;
 
 @Service
 @Transactional
@@ -90,19 +91,14 @@ public class PostService {
     @Inject
     private ResourceTaskService resourceTaskService;
 
-    @Lazy
-    @Inject
-    private ActivityEventService activityEventService;
-
-    @Lazy
-    @Inject
-    private NotificationEventService notificationEventService;
-
     @Inject
     private ObjectMapper objectMapper;
 
     @Inject
     private EntityManager entityManager;
+
+    @Inject
+    private EventProducer eventProducer;
 
     public Post getPost(Long id) {
         return getPost(id, null, false);
@@ -564,8 +560,9 @@ public class PostService {
                         .setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
 
-                activityEventService.publishEvent(this, postId, true, activities);
-                notificationEventService.publishEvent(this, postId, notifications);
+                eventProducer.produce(
+                    new ActivityEvent(this, postId, true, activities),
+                    new NotificationEvent(this, postId, notifications));
             }
         }
     }

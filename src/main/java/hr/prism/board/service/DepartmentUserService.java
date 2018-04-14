@@ -8,14 +8,13 @@ import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
-import hr.prism.board.service.cache.UserRoleCacheService;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,19 +50,19 @@ public class DepartmentUserService {
 
     private final ActivityService activityService;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final EventProducer eventProducer;
 
     @Inject
     public DepartmentUserService(UserService userService, ResourceService resourceService, ActionService actionService,
                                  UserRoleService userRoleService, UserRoleCacheService userRoleCacheService,
-                                 ActivityService activityService, ApplicationEventPublisher applicationEventPublisher) {
+                                 ActivityService activityService, EventProducer eventProducer) {
         this.userService = userService;
         this.resourceService = resourceService;
         this.actionService = actionService;
         this.userRoleService = userRoleService;
         this.userRoleCacheService = userRoleCacheService;
         this.activityService = activityService;
-        this.applicationEventPublisher = applicationEventPublisher;
+        this.eventProducer = eventProducer;
     }
 
     public Department createMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
@@ -76,7 +75,7 @@ public class DepartmentUserService {
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
 
-            applicationEventPublisher.publishEvent(
+            eventProducer.produce(
                 new UserRoleEvent(this, currentUser.getId(), departmentId, userRoleDTOs));
 
             department.setLastMemberTimestamp(LocalDateTime.now());
@@ -109,15 +108,13 @@ public class DepartmentUserService {
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, PENDING, false);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
-        applicationEventPublisher.publishEvent(
+        eventProducer.produce(
             new ActivityEvent(this, departmentId, UserRole.class, userRole.getId(),
                 singletonList(
                     new hr.prism.board.workflow.Activity()
                         .setScope(DEPARTMENT)
                         .setRole(ADMINISTRATOR)
-                        .setActivity(JOIN_DEPARTMENT_REQUEST_ACTIVITY))));
-
-        applicationEventPublisher.publishEvent(
+                        .setActivity(JOIN_DEPARTMENT_REQUEST_ACTIVITY))),
             new NotificationEvent(this, departmentId,
                 singletonList(
                     new hr.prism.board.workflow.Notification()
@@ -145,7 +142,7 @@ public class DepartmentUserService {
             if (userRole.getState() == PENDING) {
                 userRole.setState(state);
 
-                applicationEventPublisher.publishEvent(
+                eventProducer.produce(
                     new ActivityEvent(this, departmentId, UserRole.class, userRole.getId()));
             }
 

@@ -12,6 +12,7 @@ import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
@@ -19,7 +20,6 @@ import hr.prism.board.value.DepartmentSearch;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,9 +88,9 @@ public class DepartmentService {
 
     private final ResourceTaskService resourceTaskService;
 
-    private final EntityManager entityManager;
+    private final EventProducer eventProducer;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final EntityManager entityManager;
 
     public DepartmentService(@Value("${department.draft.expiry.seconds}") Long departmentDraftExpirySeconds,
                              @Value("${department.pending.expiry.seconds}") Long departmentPendingExpirySeconds,
@@ -103,8 +103,8 @@ public class DepartmentService {
                              ResourcePatchService resourcePatchService, UserRoleService userRoleService,
                              ActionService actionService, ActivityService activityService,
                              UniversityService universityService, BoardService boardService,
-                             ResourceTaskService resourceTaskService, EntityManager entityManager,
-                             ApplicationEventPublisher applicationEventPublisher) {
+                             ResourceTaskService resourceTaskService, EventProducer eventProducer,
+                             EntityManager entityManager) {
         this.departmentDraftExpirySeconds = departmentDraftExpirySeconds;
         this.departmentPendingExpirySeconds = departmentPendingExpirySeconds;
         this.departmentPendingNotificationInterval1Seconds = departmentPendingNotificationInterval1Seconds;
@@ -121,8 +121,8 @@ public class DepartmentService {
         this.universityService = universityService;
         this.boardService = boardService;
         this.resourceTaskService = resourceTaskService;
+        this.eventProducer = eventProducer;
         this.entityManager = entityManager;
-        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Department getDepartment(Long id) {
@@ -278,7 +278,7 @@ public class DepartmentService {
         hr.prism.board.domain.Activity subscribeActivity = activityService.findByResourceAndActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (subscribeActivity == null) {
-            applicationEventPublisher.publishEvent(
+            eventProducer.produce(
                 new ActivityEvent(this, departmentId, false,
                     singletonList(
                         new hr.prism.board.workflow.Activity()
@@ -287,7 +287,7 @@ public class DepartmentService {
                             .setActivity(SUBSCRIBE_DEPARTMENT_ACTIVITY))));
         }
 
-        applicationEventPublisher.publishEvent(
+        eventProducer.produce(
             new NotificationEvent(this, departmentId,
                 singletonList(
                     new hr.prism.board.workflow.Notification()

@@ -30,6 +30,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static hr.prism.board.enums.ActivityEvent.DISMISSAL;
+
 @Service
 @Transactional
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "UnusedReturnValue", "WeakerAccess"})
@@ -121,7 +123,7 @@ public class ActivityService {
             .setParameter("userId", userId)
             .setParameter("userRoleStates", State.ACTIVE_USER_ROLE_STATES)
             .setParameter("categoryType", CategoryType.MEMBER)
-            .setParameter("activityEvent", hr.prism.board.enums.ActivityEvent.DISMISSAL)
+            .setParameter("activityEvent", DISMISSAL)
             .setMaxResults(25)
             .getResultList();
 
@@ -185,9 +187,9 @@ public class ActivityService {
         User user = userService.getCurrentUserSecured();
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
         if (activity != null) {
-            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, hr.prism.board.enums.ActivityEvent.DISMISSAL);
+            ActivityEvent activityEvent = activityEventRepository.findByActivityAndUserAndEvent(activity, user, DISMISSAL);
             if (activityEvent == null) {
-                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(hr.prism.board.enums.ActivityEvent.DISMISSAL));
+                activityEventRepository.save(new ActivityEvent().setActivity(activity).setUser(user).setEvent(DISMISSAL));
                 sendActivities(user.getId());
             }
         }
@@ -256,7 +258,7 @@ public class ActivityService {
     public void dismissActivities(Long resourceId, List<hr.prism.board.enums.Activity> activities, Long userId) {
         activityEventRepository.insertByResourceIdActivitiesUserIdAndEvent(resourceId,
             activities.stream().map(hr.prism.board.enums.Activity::name).collect(Collectors.toList()), userId,
-            hr.prism.board.enums.ActivityEvent.DISMISSAL.name(), LocalDateTime.now());
+            DISMISSAL.name(), LocalDateTime.now());
     }
 
     public void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {

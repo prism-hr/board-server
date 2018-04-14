@@ -11,8 +11,6 @@ import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
-import hr.prism.board.service.cache.UserCacheService;
-import hr.prism.board.service.cache.UserRoleCacheService;
 import hr.prism.board.value.Statistics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -116,8 +114,8 @@ public class UserRoleService {
         return getUserRole(resource, user, userRoleDTO.getRole());
     }
 
-    public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO, boolean invokedAsynchronously) {
-        if (invokedAsynchronously && userService.getCurrentUser() != null) {
+    public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO) {
+        if (userService.getCurrentUser() != null) {
             // There should never be an authenticated user inside this method invocation
             throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
         }

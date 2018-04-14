@@ -7,23 +7,45 @@ import hr.prism.board.dto.OAuthAuthorizationDataDTO;
 import hr.prism.board.dto.OAuthDataDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.NotificationEvent;
+import hr.prism.board.event.UserRoleEvent;
+import hr.prism.board.event.consumer.ActivityEventConsumer;
+import hr.prism.board.event.consumer.NotificationEventConsumer;
+import hr.prism.board.event.consumer.UserRoleEventConsumer;
 import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestPaymentService;
 import hr.prism.board.service.TestScheduledService;
-import hr.prism.board.service.event.*;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import javax.inject.Inject;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+
 @Configuration
 public class TestConfiguration {
+
+    @Inject
+    private ActivityEventConsumer activityEventConsumer;
+
+    @Inject
+    private NotificationEventConsumer notificationEventConsumer;
+
+    @Inject
+    private UserRoleEventConsumer userRoleEventConsumer;
 
     @Bean
     @Primary
     public FacebookAdapter facebookAdapter() {
-        FacebookAdapter facebookAdapter = Mockito.mock(FacebookAdapter.class);
+        FacebookAdapter facebookAdapter = mock(FacebookAdapter.class);
         Mockito.when(facebookAdapter.exchangeForUser(
             new SigninDTO()
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
@@ -66,7 +88,7 @@ public class TestConfiguration {
     @Bean
     @Primary
     public LinkedinAdapter linkedinAdapter() {
-        LinkedinAdapter linkedinAdapter = Mockito.mock(LinkedinAdapter.class);
+        LinkedinAdapter linkedinAdapter = mock(LinkedinAdapter.class);
         Mockito.when(linkedinAdapter.exchangeForUser(
             new SigninDTO()
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
@@ -84,26 +106,8 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public NotificationEventService notificationEventService() {
-        return new TestNotificationEventService();
-    }
-
-    @Bean
-    @Primary
     public TestNotificationService notificationService() {
         return new TestNotificationService();
-    }
-
-    @Bean
-    @Primary
-    public UserRoleEventService userRoleEventService() {
-        return new TestUserRoleEventService();
-    }
-
-    @Bean
-    @Primary
-    public TestActivityEventService activityEventService() {
-        return new TestActivityEventService();
     }
 
     @Bean
@@ -122,6 +126,29 @@ public class TestConfiguration {
     @Primary
     public TestPaymentService testPaymentService() {
         return new TestPaymentService();
+    }
+
+    @Bean
+    @Primary
+    public ApplicationEventPublisher applicationEventPublisher() {
+        ApplicationEventPublisher applicationEventPublisher = mock(ApplicationEventPublisher.class);
+
+        // Forward events to consumers in same thread so we can test
+        doAnswer(invocation -> {
+            ApplicationEvent event = (ApplicationEvent) invocation.getArguments()[0];
+            if (event instanceof ActivityEvent) {
+                activityEventConsumer.consume((ActivityEvent) invocation.getArguments()[0]);
+            } else if (event instanceof NotificationEvent) {
+                notificationEventConsumer.consume((NotificationEvent) invocation.getArguments()[0]);
+            } else if (event instanceof UserRoleEvent) {
+                userRoleEventConsumer.consume((UserRoleEvent) invocation.getArguments()[0]);
+            }
+
+            return event;
+        }).when(applicationEventPublisher)
+            .publishEvent(any(ApplicationEvent.class));
+
+        return applicationEventPublisher;
     }
 
 }

@@ -11,16 +11,12 @@ import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.PasswordHash;
-import hr.prism.board.exception.BoardException;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.service.cache.UserCacheService;
-import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Notification;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -29,14 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -44,10 +38,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Map;
 import java.util.UUID;
+
+import static hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION;
+import static java.util.Collections.singletonList;
 
 @Service
 @Transactional
@@ -58,6 +53,9 @@ public class AuthenticationService {
 
     private String jwsSecret;
 
+    @Value("${session.duration.seconds}")
+    private Long sessionDurationSeconds;
+
     @Inject
     private UserCacheService userCacheService;
 
@@ -67,18 +65,14 @@ public class AuthenticationService {
     @Inject
     private ActivityService activityService;
 
-    @Lazy
-    @Inject
-    private NotificationEventService notificationEventService;
-
     @Inject
     private EntityManager entityManager;
 
     @Inject
     private ApplicationContext applicationContext;
 
-    @Value("${session.duration.seconds}")
-    private Long sessionDurationSeconds;
+    @Inject
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @PostConstruct
     public void postConstruct() {
@@ -214,9 +208,12 @@ public class AuthenticationService {
         user.setPasswordResetTimestamp(LocalDateTime.now());
         userCacheService.updateUser(user);
 
-        notificationEventService.publishEvent(this,
-            Collections.singletonList(new Notification().setUserId(user.getId())
-                .setNotification(hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION)));
+        applicationEventPublisher.publishEvent(
+            new NotificationEvent(this,
+                singletonList(
+                    new Notification()
+                        .setUserId(user.getId())
+                        .setNotification(RESET_PASSWORD_NOTIFICATION))));
     }
 
     public User getInvitee(String invitationUuid) {
@@ -236,23 +233,6 @@ public class AuthenticationService {
             .setSigningKey(jwsSecret)
             .parseClaimsJws(accessToken)
             .getBody();
-    }
-
-    public Map<String, String> refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String authorization = request.getHeader("Authorization");
-        if (authorization == null) {
-            throw new BoardException(ExceptionCode.UNAUTHENTICATED_USER, "User not authenticated");
-        }
-
-        String accessToken = authorization.replaceFirst("Bearer ", "");
-        try {
-            Claims token = decodeAccessToken(accessToken);
-            long userId = Long.parseLong(token.getSubject());
-            return Collections.singletonMap("token", makeAccessToken(userId, true));
-        } catch (ExpiredJwtException e) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
-            return null;
-        }
     }
 
     private void verifyEmailUnique(String email) {

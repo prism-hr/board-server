@@ -6,13 +6,13 @@ import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.repository.ResourceTaskRepository;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.workflow.Activity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +21,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
 
 @Service
 @Transactional
@@ -53,16 +54,11 @@ public class ResourceTaskService {
     @Inject
     private ActivityService activityService;
 
-    @Lazy
-    @Inject
-    private ActivityEventService activityEventService;
-
-    @Lazy
-    @Inject
-    private NotificationEventService notificationEventService;
-
     @Inject
     private EntityManager entityManager;
+
+    @Inject
+    private EventProducer eventProducer;
 
     public ResourceTask findOne(Long id) {
         return resourceTaskRepository.findOne(id);
@@ -112,15 +108,24 @@ public class ResourceTaskService {
         Integer notifiedCount = resource.getValue();
         String notificationContext = CREATE_TASKS.contains(tasks.get(0)) ? "CREATE" : "UPDATE";
         if (notifiedCount == null) {
-            Activity activity = new Activity().setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR)
-                .setActivity(hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY"));
-            activityEventService.publishEvent(this, resourceId, false, Collections.singletonList(activity));
+            eventProducer.produce(
+                new ActivityEvent(this, resourceId, false,
+                    singletonList(
+                        new Activity()
+                            .setScope(Scope.DEPARTMENT)
+                            .setRole(Role.ADMINISTRATOR)
+                            .setActivity(
+                                hr.prism.board.enums.Activity.valueOf(notificationContext + "_TASK_ACTIVITY")))));
         }
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(Scope.DEPARTMENT).setRole(Role.ADMINISTRATOR).setNotification(Notification.valueOf(notificationContext + "_TASK_NOTIFICATION"));
+        eventProducer.produce(
+            new NotificationEvent(this, resourceId, tasks,
+                singletonList(
+                    new hr.prism.board.workflow.Notification()
+                        .setScope(Scope.DEPARTMENT)
+                        .setRole(Role.ADMINISTRATOR)
+                        .setNotification(Notification.valueOf(notificationContext + "_TASK_NOTIFICATION")))));
 
-        notificationEventService.publishEvent(this, resourceId, tasks, Collections.singletonList(notification));
         resourceTaskRepository.updateNotifiedCountByResourceId(resourceId);
     }
 

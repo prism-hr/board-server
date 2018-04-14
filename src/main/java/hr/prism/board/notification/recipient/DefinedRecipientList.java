@@ -1,7 +1,7 @@
 package hr.prism.board.notification.recipient;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.service.cache.UserCacheService;
+import hr.prism.board.service.UserCacheService;
 import hr.prism.board.value.UserNotification;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Component;

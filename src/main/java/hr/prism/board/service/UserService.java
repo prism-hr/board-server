@@ -17,7 +17,6 @@ import hr.prism.board.repository.UserRepository;
 import hr.prism.board.repository.UserSearchRepository;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.service.cache.UserCacheService;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.UserNotification;
 import org.apache.commons.codec.digest.DigestUtils;

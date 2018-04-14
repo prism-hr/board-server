@@ -7,11 +7,11 @@ import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
 import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.repository.DepartmentRepository;
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,22 +44,22 @@ public class DepartmentPaymentService {
 
     private final ActivityService activityService;
 
-    private final EntityManager entityManager;
+    private final EventProducer eventProducer;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final EntityManager entityManager;
 
     public DepartmentPaymentService(DepartmentRepository departmentRepository, ActionService actionService,
                                     PaymentService paymentService, ResourceService resourceService,
                                     UserService userService, ActivityService activityService,
-                                    EntityManager entityManager, ApplicationEventPublisher applicationEventPublisher) {
+                                    EventProducer eventProducer, EntityManager entityManager) {
         this.departmentRepository = departmentRepository;
         this.actionService = actionService;
         this.paymentService = paymentService;
         this.resourceService = resourceService;
         this.userService = userService;
         this.activityService = activityService;
+        this.eventProducer = eventProducer;
         this.entityManager = entityManager;
-        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Customer getPaymentSources(Long departmentId) {
@@ -181,7 +181,7 @@ public class DepartmentPaymentService {
         hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (suspendActivity == null) {
-            applicationEventPublisher.publishEvent(
+            eventProducer.produce(
                 new ActivityEvent(this, departmentId, false,
                     singletonList(
                         new hr.prism.board.workflow.Activity()
@@ -190,7 +190,7 @@ public class DepartmentPaymentService {
                             .setActivity(SUSPEND_DEPARTMENT_ACTIVITY))));
         }
 
-        applicationEventPublisher.publishEvent(
+        eventProducer.produce(
             new NotificationEvent(this, departmentId,
                 singletonList(
                     new hr.prism.board.workflow.Notification()

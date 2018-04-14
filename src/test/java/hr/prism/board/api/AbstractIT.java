@@ -16,7 +16,6 @@ import hr.prism.board.repository.*;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.service.*;
-import hr.prism.board.service.cache.UserCacheService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
