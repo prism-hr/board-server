@@ -8,22 +8,15 @@ import hr.prism.board.dto.LoginDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.dto.SigninDTO;
-import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.PasswordHash;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Notification;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -36,43 +29,57 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.UUID;
 
+import static hr.prism.board.enums.DocumentRequestState.DISPLAY_FIRST;
 import static hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION;
+import static hr.prism.board.enums.PasswordHash.SHA256;
+import static hr.prism.board.exception.ExceptionCode.*;
+import static hr.prism.board.utils.BoardUtils.randomAlphanumericString;
+import static io.jsonwebtoken.SignatureAlgorithm.HS512;
+import static java.lang.System.currentTimeMillis;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class AuthenticationService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+    private static Logger LOGGER = getLogger(AuthenticationService.class);
 
     private String jwsSecret;
 
-    @Value("${session.duration.seconds}")
-    private Long sessionDurationSeconds;
+    private final Long sessionDurationSeconds;
+
+    private final UserCacheService userCacheService;
+
+    private final UserRoleCacheService userRoleCacheService;
+
+    private final ActivityService activityService;
+
+    private final EventProducer eventProducer;
+
+    private final EntityManager entityManager;
+
+    private final ApplicationContext applicationContext;
 
     @Inject
-    private UserCacheService userCacheService;
-
-    @Inject
-    private UserRoleCacheService userRoleCacheService;
-
-    @Inject
-    private ActivityService activityService;
-
-    @Inject
-    private EventProducer eventProducer;
-
-    @Inject
-    private EntityManager entityManager;
-
-    @Inject
-    private ApplicationContext applicationContext;
+    public AuthenticationService(@Value("${session.duration.seconds}") Long sessionDurationSeconds,
+                                 UserCacheService userCacheService, UserRoleCacheService userRoleCacheService,
+                                 ActivityService activityService, EventProducer eventProducer,
+                                 EntityManager entityManager, ApplicationContext applicationContext) {
+        this.sessionDurationSeconds = sessionDurationSeconds;
+        this.userCacheService = userCacheService;
+        this.userRoleCacheService = userRoleCacheService;
+        this.activityService = activityService;
+        this.eventProducer = eventProducer;
+        this.entityManager = entityManager;
+        this.applicationContext = applicationContext;
+    }
 
     @PostConstruct
     public void postConstruct() {
@@ -80,10 +87,10 @@ public class AuthenticationService {
             String userHome = System.getProperty("user.home");
             File secretFile = new File(userHome + "/jws.secret");
             if (secretFile.exists()) {
-                jwsSecret = IOUtils.toString(secretFile.toURI(), StandardCharsets.UTF_8);
+                jwsSecret = IOUtils.toString(secretFile.toURI(), UTF_8);
             } else {
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"))) {
-                    jwsSecret = BoardUtils.randomAlphanumericString(256);
+                    jwsSecret = randomAlphanumericString(256);
                     writer.write(jwsSecret);
                 } catch (IOException e) {
                     LOGGER.error("Unable to write jws secret", e);
@@ -98,11 +105,11 @@ public class AuthenticationService {
         return jwsSecret;
     }
 
-    public User login(LoginDTO loginDTO) {
+    public User login(LoginDTO loginDTO) throws BoardForbiddenException {
         String email = loginDTO.getEmail();
         User user = userCacheService.findByEmail(loginDTO.getEmail());
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User: " + email + " cannot be found");
+            throw new BoardForbiddenException(UNKNOWN_USER, "User: " + email + " cannot be found");
         }
 
         if (user.passwordMatches(loginDTO.getPassword())) {
@@ -114,14 +121,14 @@ public class AuthenticationService {
             return user;
         }
 
-        throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "Incorrect password for user: " + email);
+        throw new BoardForbiddenException(UNAUTHENTICATED_USER, "Incorrect password for user: " + email);
     }
 
     public User signin(OauthProvider provider, SigninDTO signinDTO) {
         Class<? extends OauthAdapter> oauthAdapterClass = provider.getOauthAdapter();
         User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(signinDTO);
         if (newUser.getEmail() == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNIDENTIFIABLE_USER, "User not identifiable, no email address");
+            throw new BoardForbiddenException(UNIDENTIFIABLE_USER, "User not identifiable, no email address");
         }
 
         String accountId = newUser.getOauthAccountId();
@@ -137,7 +144,7 @@ public class AuthenticationService {
 
                 if (invitee == null || invitee.isRegistered()) {
                     user = newUser;
-                    user.setUuid(UUID.randomUUID().toString());
+                    user.setUuid(randomUUID().toString());
                     user = userCacheService.saveUser(user);
                 } else {
                     user = invitee;
@@ -171,17 +178,18 @@ public class AuthenticationService {
             verifyEmailUnique(email);
             return userCacheService.saveUser(
                 new User()
-                    .setUuid(UUID.randomUUID().toString())
+                    .setUuid(randomUUID().toString())
                     .setGivenName(registerDTO.getGivenName())
                     .setSurname(registerDTO.getSurname())
                     .setEmail(email)
-                    .setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()))
-                    .setPasswordHash(PasswordHash.SHA256)
-                    .setDocumentImageRequestState(DocumentRequestState.DISPLAY_FIRST));
+                    .setPassword(sha256Hex(registerDTO.getPassword()))
+                    .setPasswordHash(SHA256)
+                    .setDocumentImageRequestState(DISPLAY_FIRST));
         } else {
             User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
             if (invitee.isRegistered()) {
-                throw new BoardForbiddenException(ExceptionCode.DUPLICATE_REGISTRATION, "User: " + invitee.getEmail() + " is already registered");
+                throw new BoardForbiddenException(DUPLICATE_REGISTRATION,
+                    "User: " + invitee.getEmail() + " is already registered");
             }
 
             if (!email.equals(invitee.getEmail())) {
@@ -191,8 +199,8 @@ public class AuthenticationService {
 
             invitee.setGivenName(registerDTO.getGivenName());
             invitee.setSurname(registerDTO.getSurname());
-            invitee.setPassword(DigestUtils.sha256Hex(registerDTO.getPassword()));
-            invitee.setPasswordHash(PasswordHash.SHA256);
+            invitee.setPassword(sha256Hex(registerDTO.getPassword()));
+            invitee.setPasswordHash(SHA256);
             return invitee;
         }
     }
@@ -200,10 +208,10 @@ public class AuthenticationService {
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
         User user = userCacheService.findByEmail(resetPasswordDTO.getEmail());
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User cannot be found");
+            throw new BoardForbiddenException(UNKNOWN_USER, "User cannot be found");
         }
 
-        String resetUuid = UUID.randomUUID().toString();
+        String resetUuid = randomUUID().toString();
         user.setPasswordResetUuid(resetUuid);
         user.setPasswordResetTimestamp(LocalDateTime.now());
         userCacheService.updateUser(user);
@@ -223,8 +231,9 @@ public class AuthenticationService {
     public String makeAccessToken(Long userId, boolean specifyExpirationDate) {
         return Jwts.builder()
             .setSubject(userId.toString())
-            .setExpiration(specifyExpirationDate ? new Date(System.currentTimeMillis() + sessionDurationSeconds * 1000) : null)
-            .signWith(SignatureAlgorithm.HS512, getJwsSecret())
+            .setExpiration(
+                specifyExpirationDate ? new Date(currentTimeMillis() + sessionDurationSeconds * 1000) : null)
+            .signWith(HS512, getJwsSecret())
             .compact();
     }
 
@@ -238,7 +247,7 @@ public class AuthenticationService {
     private void verifyEmailUnique(String email) {
         User user = userCacheService.findByEmail(email);
         if (user != null) {
-            throw new BoardForbiddenException(ExceptionCode.DUPLICATE_USER, "User: " + email + " exists already");
+            throw new BoardForbiddenException(DUPLICATE_USER, "User: " + email + " exists already");
         }
     }
 

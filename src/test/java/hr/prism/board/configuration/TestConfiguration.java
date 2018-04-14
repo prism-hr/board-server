@@ -128,8 +128,6 @@ public class TestConfiguration {
         return new TestPaymentService();
     }
 
-    // This may not be needed eventually, though the mock could be useful for verifying behaviour
-
     @Bean
     @Primary
     public ApplicationEventPublisher applicationEventPublisher() {
