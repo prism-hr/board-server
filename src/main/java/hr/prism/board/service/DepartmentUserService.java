@@ -7,14 +7,15 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.State;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.NotificationEvent;
+import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.service.cache.UserRoleCacheService;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
-import hr.prism.board.service.event.UserRoleEventService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,32 +45,25 @@ public class DepartmentUserService {
 
     private final ActionService actionService;
 
-    private final UserRoleEventService userRoleEventService;
-
     private final UserRoleService userRoleService;
 
     private final UserRoleCacheService userRoleCacheService;
 
-    private final ActivityEventService activityEventService;
-
-    private final NotificationEventService notificationEventService;
-
     private final ActivityService activityService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Inject
     public DepartmentUserService(UserService userService, ResourceService resourceService, ActionService actionService,
-                                 UserRoleEventService userRoleEventService, UserRoleService userRoleService,
-                                 UserRoleCacheService userRoleCacheService, ActivityEventService activityEventService,
-                                 NotificationEventService notificationEventService, ActivityService activityService) {
+                                 UserRoleService userRoleService, UserRoleCacheService userRoleCacheService,
+                                 ActivityService activityService, ApplicationEventPublisher applicationEventPublisher) {
         this.userService = userService;
         this.resourceService = resourceService;
         this.actionService = actionService;
-        this.userRoleEventService = userRoleEventService;
         this.userRoleService = userRoleService;
         this.userRoleCacheService = userRoleCacheService;
-        this.activityEventService = activityEventService;
-        this.notificationEventService = notificationEventService;
         this.activityService = activityService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Department createMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
@@ -81,7 +75,10 @@ public class DepartmentUserService {
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
-            userRoleEventService.publishEvent(this, currentUser.getId(), departmentId, userRoleDTOs);
+
+            applicationEventPublisher.publishEvent(
+                new UserRoleEvent(this, currentUser.getId(), departmentId, userRoleDTOs));
+
             department.setLastMemberTimestamp(LocalDateTime.now());
             return department;
         });
@@ -112,13 +109,22 @@ public class DepartmentUserService {
         userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, PENDING, false);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
-        hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-            .setScope(DEPARTMENT).setRole(ADMINISTRATOR).setActivity(JOIN_DEPARTMENT_REQUEST_ACTIVITY);
-        activityEventService.publishEvent(this, departmentId, userRole, singletonList(activity));
+        applicationEventPublisher.publishEvent(
+            new ActivityEvent(this, departmentId, UserRole.class, userRole.getId(),
+                singletonList(
+                    new hr.prism.board.workflow.Activity()
+                        .setScope(DEPARTMENT)
+                        .setRole(ADMINISTRATOR)
+                        .setActivity(JOIN_DEPARTMENT_REQUEST_ACTIVITY))));
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(DEPARTMENT).setRole(ADMINISTRATOR).setNotification(JOIN_DEPARTMENT_REQUEST_NOTIFICATION);
-        notificationEventService.publishEvent(this, departmentId, singletonList(notification));
+        applicationEventPublisher.publishEvent(
+            new NotificationEvent(this, departmentId,
+                singletonList(
+                    new hr.prism.board.workflow.Notification()
+                        .setScope(DEPARTMENT)
+                        .setRole(ADMINISTRATOR)
+                        .setNotification(JOIN_DEPARTMENT_REQUEST_NOTIFICATION))));
+
         return user;
     }
 
@@ -138,7 +144,9 @@ public class DepartmentUserService {
             UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
             if (userRole.getState() == PENDING) {
                 userRole.setState(state);
-                activityEventService.publishEvent(this, departmentId, userRole);
+
+                applicationEventPublisher.publishEvent(
+                    new ActivityEvent(this, departmentId, UserRole.class, userRole.getId()));
             }
 
             return department;

@@ -6,11 +6,12 @@ import com.stripe.model.ExternalAccountCollection;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.repository.DepartmentRepository;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,26 +44,22 @@ public class DepartmentPaymentService {
 
     private final ActivityService activityService;
 
-    private final ActivityEventService activityEventService;
-
-    private final NotificationEventService notificationEventService;
-
     private final EntityManager entityManager;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public DepartmentPaymentService(DepartmentRepository departmentRepository, ActionService actionService,
                                     PaymentService paymentService, ResourceService resourceService,
                                     UserService userService, ActivityService activityService,
-                                    ActivityEventService activityEventService,
-                                    NotificationEventService notificationEventService, EntityManager entityManager) {
+                                    EntityManager entityManager, ApplicationEventPublisher applicationEventPublisher) {
         this.departmentRepository = departmentRepository;
         this.actionService = actionService;
         this.paymentService = paymentService;
         this.resourceService = resourceService;
         this.userService = userService;
         this.activityService = activityService;
-        this.activityEventService = activityEventService;
-        this.notificationEventService = notificationEventService;
         this.entityManager = entityManager;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Customer getPaymentSources(Long departmentId) {
@@ -184,14 +181,22 @@ public class DepartmentPaymentService {
         hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (suspendActivity == null) {
-            hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-                .setScope(DEPARTMENT).setRole(ADMINISTRATOR).setActivity(SUSPEND_DEPARTMENT_ACTIVITY);
-            activityEventService.publishEvent(this, departmentId, false, singletonList(activity));
+            applicationEventPublisher.publishEvent(
+                new ActivityEvent(this, departmentId, false,
+                    singletonList(
+                        new hr.prism.board.workflow.Activity()
+                            .setScope(DEPARTMENT)
+                            .setRole(ADMINISTRATOR)
+                            .setActivity(SUSPEND_DEPARTMENT_ACTIVITY))));
         }
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(DEPARTMENT).setRole(ADMINISTRATOR).setNotification(SUSPEND_DEPARTMENT_NOTIFICATION);
-        notificationEventService.publishEvent(this, departmentId, singletonList(notification));
+        applicationEventPublisher.publishEvent(
+            new NotificationEvent(this, departmentId,
+                singletonList(
+                    new hr.prism.board.workflow.Notification()
+                        .setScope(DEPARTMENT)
+                        .setRole(ADMINISTRATOR)
+                        .setNotification(SUSPEND_DEPARTMENT_NOTIFICATION))));
     }
 
     public void processSubscriptionCancellation(String customerId) {

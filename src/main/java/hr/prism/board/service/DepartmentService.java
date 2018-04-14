@@ -11,14 +11,15 @@ import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.*;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.service.event.ActivityEventService;
-import hr.prism.board.service.event.NotificationEventService;
 import hr.prism.board.value.DepartmentSearch;
 import hr.prism.board.value.ResourceFilter;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,11 +88,9 @@ public class DepartmentService {
 
     private final ResourceTaskService resourceTaskService;
 
-    private final ActivityEventService activityEventService;
-
-    private final NotificationEventService notificationEventService;
-
     private final EntityManager entityManager;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public DepartmentService(@Value("${department.draft.expiry.seconds}") Long departmentDraftExpirySeconds,
                              @Value("${department.pending.expiry.seconds}") Long departmentPendingExpirySeconds,
@@ -104,8 +103,8 @@ public class DepartmentService {
                              ResourcePatchService resourcePatchService, UserRoleService userRoleService,
                              ActionService actionService, ActivityService activityService,
                              UniversityService universityService, BoardService boardService,
-                             ResourceTaskService resourceTaskService, ActivityEventService activityEventService,
-                             NotificationEventService notificationEventService, EntityManager entityManager) {
+                             ResourceTaskService resourceTaskService, EntityManager entityManager,
+                             ApplicationEventPublisher applicationEventPublisher) {
         this.departmentDraftExpirySeconds = departmentDraftExpirySeconds;
         this.departmentPendingExpirySeconds = departmentPendingExpirySeconds;
         this.departmentPendingNotificationInterval1Seconds = departmentPendingNotificationInterval1Seconds;
@@ -122,9 +121,8 @@ public class DepartmentService {
         this.universityService = universityService;
         this.boardService = boardService;
         this.resourceTaskService = resourceTaskService;
-        this.activityEventService = activityEventService;
-        this.notificationEventService = notificationEventService;
         this.entityManager = entityManager;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Department getDepartment(Long id) {
@@ -280,14 +278,22 @@ public class DepartmentService {
         hr.prism.board.domain.Activity subscribeActivity = activityService.findByResourceAndActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (subscribeActivity == null) {
-            hr.prism.board.workflow.Activity activity = new hr.prism.board.workflow.Activity()
-                .setScope(DEPARTMENT).setRole(ADMINISTRATOR).setActivity(SUBSCRIBE_DEPARTMENT_ACTIVITY);
-            activityEventService.publishEvent(this, departmentId, false, singletonList(activity));
+            applicationEventPublisher.publishEvent(
+                new ActivityEvent(this, departmentId, false,
+                    singletonList(
+                        new hr.prism.board.workflow.Activity()
+                            .setScope(DEPARTMENT)
+                            .setRole(ADMINISTRATOR)
+                            .setActivity(SUBSCRIBE_DEPARTMENT_ACTIVITY))));
         }
 
-        hr.prism.board.workflow.Notification notification = new hr.prism.board.workflow.Notification()
-            .setScope(DEPARTMENT).setRole(ADMINISTRATOR).setNotification(SUBSCRIBE_DEPARTMENT_NOTIFICATION);
-        notificationEventService.publishEvent(this, departmentId, singletonList(notification));
+        applicationEventPublisher.publishEvent(
+            new NotificationEvent(this, departmentId,
+                singletonList(
+                    new hr.prism.board.workflow.Notification()
+                        .setScope(DEPARTMENT)
+                        .setRole(ADMINISTRATOR)
+                        .setNotification(SUBSCRIBE_DEPARTMENT_NOTIFICATION))));
 
         Integer notifiedCount = department.getNotifiedCount();
         department.setNotifiedCount(notifiedCount == null ? 1 : notifiedCount + 1);

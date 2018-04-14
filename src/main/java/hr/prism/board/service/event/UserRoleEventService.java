@@ -4,7 +4,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.service.DepartmentUserService;
 import hr.prism.board.service.UserRoleService;
 import hr.prism.board.service.cache.UserCacheService;
@@ -15,6 +14,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.inject.Inject;
 import java.util.List;
+
+import static hr.prism.board.exception.ExceptionCode.UNPROCESSABLE_RESOURCE_USER;
 
 @Service
 @SuppressWarnings("WeakerAccess")
@@ -50,7 +51,7 @@ public class UserRoleEventService {
             try {
                 userRoleService.createOrUpdateResourceUser(currentUser, resourceId, userRoleDTO, invokedAsynchronously);
             } catch (Throwable t) {
-                throw new BoardException(ExceptionCode.UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);
+                throw new BoardException(UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);
             } finally {
                 departmentUserService.decrementMemberCountPending(resourceId);
             }
