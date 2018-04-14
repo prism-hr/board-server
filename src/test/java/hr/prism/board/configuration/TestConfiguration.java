@@ -18,6 +18,7 @@ import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestPaymentService;
 import hr.prism.board.service.TestScheduledService;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.inject.Inject;
+import java.util.concurrent.Executor;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -33,14 +35,12 @@ import static org.mockito.Mockito.mock;
 @Configuration
 public class TestConfiguration {
 
-    @Inject
-    private ActivityEventConsumer activityEventConsumer;
+    private final ApplicationContext applicationContext;
 
     @Inject
-    private NotificationEventConsumer notificationEventConsumer;
-
-    @Inject
-    private UserRoleEventConsumer userRoleEventConsumer;
+    public TestConfiguration(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     @Bean
     @Primary
@@ -112,7 +112,7 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public TestActivityService userActivityService() {
+    public TestActivityService activityService() {
         return new TestActivityService();
     }
 
@@ -128,12 +128,18 @@ public class TestConfiguration {
         return new TestPaymentService();
     }
 
+    // This may not be needed eventually, though the mock could be useful for verifying behaviour
+
     @Bean
     @Primary
     public ApplicationEventPublisher applicationEventPublisher() {
         ApplicationEventPublisher applicationEventPublisher = mock(ApplicationEventPublisher.class);
 
-        // Forward events to consumers in same thread so we can test
+        ActivityEventConsumer activityEventConsumer = applicationContext.getBean(ActivityEventConsumer.class);
+        NotificationEventConsumer notificationEventConsumer =
+            applicationContext.getBean(NotificationEventConsumer.class);
+        UserRoleEventConsumer userRoleEventConsumer = applicationContext.getBean(UserRoleEventConsumer.class);
+
         doAnswer(invocation -> {
             ApplicationEvent event = (ApplicationEvent) invocation.getArguments()[0];
             if (event instanceof ActivityEvent) {
@@ -149,6 +155,20 @@ public class TestConfiguration {
             .publishEvent(any(ApplicationEvent.class));
 
         return applicationEventPublisher;
+    }
+
+    @Bean
+    @Primary
+    public Executor asyncExecutor() {
+        Executor executor = mock(Executor.class);
+        doAnswer(invocation -> {
+            Runnable runnable = (Runnable) invocation.getArguments()[0];
+            runnable.run();
+            return null;
+        }).when(executor)
+            .execute(any(Runnable.class));
+
+        return executor;
     }
 
 }

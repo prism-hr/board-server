@@ -3,7 +3,6 @@ package hr.prism.board.service;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.RegisterDTO;
-import hr.prism.board.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +13,23 @@ import java.security.SecureRandom;
 @Service
 public class TestUserService {
 
-    @Inject
-    private UserRepository userRepository;
+    private final AuthenticationService authenticationService;
 
     @Inject
-    private AuthenticationService authenticationService;
+    public TestUserService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     private SecureRandom random = new SecureRandom();
 
-    public synchronized User authenticate() {
+    public User authenticate() {
         String id = new BigInteger(140, random).toString(30);
-        User user = authenticationService.register(new RegisterDTO().setGivenName(id).setSurname(id).setEmail(id + "@example.com").setPassword("password"));
+        User user = authenticationService.register(
+            new RegisterDTO()
+                .setGivenName(id)
+                .setSurname(id)
+                .setEmail(id + "@example.com").setPassword("password"));
+
         setAuthentication(user.getId());
         return user;
     }

@@ -149,7 +149,7 @@ public abstract class AbstractIT {
 
             @SuppressWarnings("unchecked")
             List<String> tablesNames = entityManager.createNativeQuery("SHOW TABLES").getResultList();
-            tablesNames.stream().filter(tableName -> !Arrays.asList("schema_version", "workflow").contains(tableName)).forEach(tableName -> {
+            tablesNames.stream().filter(tableName -> !Arrays.asList("flyway_schema_history", "workflow").contains(tableName)).forEach(tableName -> {
                 Query emptyTable = entityManager.createNativeQuery("DELETE FROM " + tableName);
                 emptyTable.executeUpdate();
             });

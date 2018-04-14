@@ -11,6 +11,7 @@ import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.PasswordHash;
+import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -25,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -66,13 +66,13 @@ public class AuthenticationService {
     private ActivityService activityService;
 
     @Inject
+    private EventProducer eventProducer;
+
+    @Inject
     private EntityManager entityManager;
 
     @Inject
     private ApplicationContext applicationContext;
-
-    @Inject
-    private ApplicationEventPublisher applicationEventPublisher;
 
     @PostConstruct
     public void postConstruct() {
@@ -208,7 +208,7 @@ public class AuthenticationService {
         user.setPasswordResetTimestamp(LocalDateTime.now());
         userCacheService.updateUser(user);
 
-        applicationEventPublisher.publishEvent(
+        eventProducer.produce(
             new NotificationEvent(this,
                 singletonList(
                     new Notification()

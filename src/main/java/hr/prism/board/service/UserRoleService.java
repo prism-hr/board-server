@@ -115,11 +115,6 @@ public class UserRoleService {
     }
 
     public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO) {
-        if (userService.getCurrentUser() != null) {
-            // There should never be an authenticated user inside this method invocation
-            throw new IllegalStateException("Bulk resource user creation should always be processed anonymously");
-        }
-
         UserDTO userDTO = userRoleDTO.getUser();
         Resource resource = resourceService.findOne(resourceId);
         User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(resource, email, Role.MEMBER));

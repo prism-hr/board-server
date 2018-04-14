@@ -39,10 +39,10 @@ public class UserRoleEventConsumer {
     @TransactionalEventListener
     public void consume(UserRoleEvent userRoleEvent) {
         Long resourceId = userRoleEvent.getResourceId();
-        User currentUser = userCacheService.findOne(userRoleEvent.getCreatorId());
+        User user = userCacheService.findOne(userRoleEvent.getCreatorId());
         for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
             try {
-                userRoleService.createOrUpdateResourceUser(currentUser, resourceId, userRoleDTO);
+                userRoleService.createOrUpdateResourceUser(user, resourceId, userRoleDTO);
             } catch (Throwable t) {
                 throw new BoardException(
                     UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);
