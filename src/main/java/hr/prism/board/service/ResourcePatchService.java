@@ -14,12 +14,18 @@ import java.util.Optional;
 
 @Service
 @Transactional
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "WeakerAccess", "SpringAutowiredFieldsWarningInspection"})
 public class ResourcePatchService extends PatchService<Resource> {
 
-    @Inject
-    private ResourceService resourceService;
+    private final ResourceService resourceService;
 
+    @Inject
+    public ResourcePatchService(LocationService locationService, DocumentService documentService,
+                                ResourceService resourceService) {
+        super(locationService, documentService);
+        this.resourceService = resourceService;
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getName();
@@ -27,7 +33,8 @@ public class ResourcePatchService extends PatchService<Resource> {
                 String newValue = newValueOptional.get();
                 if (!Objects.equals(oldValue, newValue)) {
                     if (unique != null) {
-                        resourceService.validateUniqueName(resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
+                        resourceService.validateUniqueName(
+                            resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
                     }
 
                     patchProperty(resource, "name", resource::setName, oldValue, newValue);
@@ -38,6 +45,7 @@ public class ResourcePatchService extends PatchService<Resource> {
         }
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
@@ -61,11 +69,15 @@ public class ResourcePatchService extends PatchService<Resource> {
         }
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional) {
-        super.patchLocation(resource, "location", resource::getLocation, resource::setLocation, newValueOptional);
+        super.patchLocation(resource, "location",
+            resource::getLocation, resource::setLocation, newValueOptional);
     }
 
-    public void patchCategories(Resource resource, CategoryType categoryType, Optional<List<String>> newValuesOptional) {
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public void patchCategories(Resource resource, CategoryType categoryType,
+                                Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
             List<String> oldValues = resourceService.getCategories(resource, categoryType);
             List<String> newValues = newValuesOptional.orElse(null);
@@ -86,12 +98,17 @@ public class ResourcePatchService extends PatchService<Resource> {
         resource.getChangeList().put("handle", getHandleLeaf(oldValue), getHandleLeaf(newValue));
     }
 
-    private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues, List<String> newValues) {
+    private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues,
+                                 List<String> newValues) {
         resourceService.updateCategories(resource, categoryType, newValues);
         resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);
     }
 
     private String getHandleLeaf(String value) {
+        if (value == null) {
+            return null;
+        }
+
         String[] parts = value.split("/");
         return parts[(parts.length - 1)];
     }

@@ -1,27 +1,6 @@
 package hr.prism.board;
 
 import com.google.common.base.Joiner;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.junit.Assert;
-import org.mockito.Mockito;
-import org.springframework.mobile.device.Device;
-import org.springframework.mobile.device.DevicePlatform;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.LocationDTO;
@@ -29,12 +8,22 @@ import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.representation.ResourceRepresentation;
-import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.util.ObjectUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.junit.Assert;
+import org.mockito.Mockito;
+import org.springframework.mobile.device.Device;
+import org.springframework.mobile.device.DevicePlatform;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TestHelper {
 

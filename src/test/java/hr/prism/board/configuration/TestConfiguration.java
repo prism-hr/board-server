@@ -3,6 +3,7 @@ package hr.prism.board.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pusher.rest.Pusher;
 import com.sendgrid.SendGrid;
+import com.stripe.model.Customer;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.dao.ActivityDAO;
@@ -205,8 +206,18 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public TestPaymentService testPaymentService() {
-        return new TestPaymentService();
+    public PaymentService paymentService() {
+        Customer customer = new Customer();
+        customer.setId("id");
+
+        PaymentService paymentService = mock(PaymentService.class);
+        when(paymentService.getCustomer(anyString())).thenReturn(customer);
+        when(paymentService.createCustomer(anyString())).thenReturn(customer);
+        when(paymentService.createSubscription(anyString())).thenReturn(customer);
+        when(paymentService.appendSource(anyString(), anyString())).thenReturn(customer);
+        when(paymentService.setSourceAsDefault(anyString(), anyString())).thenReturn(customer);
+        when(paymentService.cancelSubscription(anyString())).thenReturn(customer);
+        return paymentService;
     }
 
     @Bean
