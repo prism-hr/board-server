@@ -1,11 +1,13 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.Activity;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.mapper.UserRoleMapper;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
@@ -22,6 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 
@@ -64,7 +67,7 @@ public class UserRoleService {
     public UserRolesRepresentation getUserRoles(Scope scope, Long resourceId, String searchTerm) {
         User user = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(user, scope, resourceId);
-        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
+        actionService.executeAction(user, resource, EDIT, () -> resource);
 
         List<UserRole> users;
         List<UserRole> members = Collections.emptyList();
@@ -72,9 +75,9 @@ public class UserRoleService {
 
         if (scope == Scope.DEPARTMENT) {
             users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
-            members = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.ACCEPTED, searchTerm);
+            members = getUserRoles(resource, Collections.singletonList(MEMBER), State.ACCEPTED, searchTerm);
 
-            memberRequests = getUserRoles(resource, Collections.singletonList(Role.MEMBER), State.PENDING, searchTerm);
+            memberRequests = getUserRoles(resource, Collections.singletonList(MEMBER), State.PENDING, searchTerm);
             if (!memberRequests.isEmpty()) {
                 Map<Activity, UserRole> indexByActivities = memberRequests.stream()
                     .filter(userRole -> userRole.getActivity() != null).collect(Collectors.toMap(UserRole::getActivity, userRole -> userRole));
@@ -105,7 +108,7 @@ public class UserRoleService {
 
         UserDTO userDTO = userRoleDTO.getUser();
         User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(email));
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
+        actionService.executeAction(currentUser, resource, EDIT, () -> {
             createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
             return resource;
         });
@@ -114,18 +117,19 @@ public class UserRoleService {
         return getUserRole(resource, user, userRoleDTO.getRole());
     }
 
-    public void createOrUpdateResourceUser(User currentUser, Long resourceId, UserRoleDTO userRoleDTO) {
+    public void createOrUpdateResourceUser(User user, Long resourceId, UserRoleDTO userRoleDTO) {
         UserDTO userDTO = userRoleDTO.getUser();
         Resource resource = resourceService.findOne(resourceId);
-        User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(resource, email, Role.MEMBER));
-        UserRole userRole = createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
+        User userCreate = userService.getOrCreateUser(userDTO,
+            (email) -> userCacheService.findByEmail(resource, email, MEMBER));
+        UserRole userRole = createOrUpdateUserRole(user, resource, userCreate, userRoleDTO);
         userRole.setEmail(userDTO.getEmail());
     }
 
     public void deleteUserRoles(Scope scope, Long resourceId, Long userId) {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
+        actionService.executeAction(currentUser, resource, EDIT, () -> {
             User user = userCacheService.findOne(userId);
             userRoleCacheService.deleteResourceUser(resource, user);
             activityService.sendActivities(resource);
@@ -137,7 +141,7 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         User user = userCacheService.findOne(userId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> {
+        actionService.executeAction(currentUser, resource, EDIT, () -> {
             userRoleCacheService.updateResourceUser(currentUser, resource, user, userRoleDTO);
             activityService.sendActivities(resource);
             return resource;

@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Transactional
@@ -87,5 +88,16 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
             "set resource.stateChangeTimestamp = :baseline " +
             "where resource.id = :id")
     void updateStateChangeTimestampById(@Param("id") Long id, @Param("baseline") LocalDateTime baseline);
+
+    @Modifying
+    @Query(value =
+        "update Resource resource " +
+            "set resource.previousState = resource.state, " +
+            "resource.state = :state, " +
+            "resource.stateChangeTimestamp = :baseline, " +
+            "resource.updatedTimestamp = :baseline " +
+            "where resource.id in (:resourceIds)")
+    void updateStateByIds(@Param("resourceIds") Collection<Long> resourceIds, @Param("state") State state,
+                          @Param("baseline") LocalDateTime baseline);
 
 }

@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,17 +45,14 @@ public class ActionService {
 
     private final ObjectMapper objectMapper;
 
-    private final EntityManager entityManager;
-
     private final ApplicationContext applicationContext;
 
     @Inject
     public ActionService(ResourceService resourceService, EventProducer eventProducer, ObjectMapper objectMapper,
-                         EntityManager entityManager, ApplicationContext applicationContext) {
+                         ApplicationContext applicationContext) {
         this.resourceService = resourceService;
         this.eventProducer = eventProducer;
         this.objectMapper = objectMapper;
-        this.entityManager = entityManager;
         this.applicationContext = applicationContext;
     }
 
@@ -99,31 +95,8 @@ public class ActionService {
         throw new BoardForbiddenException(FORBIDDEN_ACTION, "User cannot perform action");
     }
 
-    @SuppressWarnings("JpaQlInspection")
-    public void executeAnonymously(List<Long> resourceIds, Action action, State newState, LocalDateTime baseline) {
-        entityManager.createQuery(
-            "update Resource resource " +
-                "set resource.previousState = resource.state, " +
-                "resource.state = :newState, " +
-                "resource.stateChangeTimestamp = :baseline, " +
-                "resource.updatedTimestamp = :baseline " +
-                "where resource.id in (:resourceIds)")
-            .setParameter("newState", newState)
-            .setParameter("baseline", baseline)
-            .setParameter("resourceIds", resourceIds)
-            .executeUpdate();
-
-        //noinspection SqlResolve
-        entityManager.createNativeQuery(
-            "INSERT INTO resource_operation (resource_id, action, creator_id, created_timestamp, updated_timestamp) " +
-                "SELECT resource.id, :action, resource.creator_id, :baseline, :baseline " +
-                "FROM resource " +
-                "WHERE resource.id IN (:postIds) " +
-                "ORDER BY resource.id")
-            .setParameter("action", action.name())
-            .setParameter("baseline", baseline)
-            .setParameter("postIds", resourceIds)
-            .executeUpdate();
+    public void executeAnonymously(List<Long> resourceIds, Action action, State state, LocalDateTime baseline) {
+        resourceService.updateStates(resourceIds, action, state, baseline);
     }
 
     public boolean canExecuteAction(Resource resource, Action action) {

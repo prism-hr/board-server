@@ -1,22 +1,29 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
+import com.pusher.rest.Pusher;
+import hr.prism.board.dao.ActivityDAO;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.enums.Role;
+import hr.prism.board.mapper.ActivityMapper;
+import hr.prism.board.repository.ActivityEventRepository;
+import hr.prism.board.repository.ActivityRepository;
+import hr.prism.board.repository.ActivityRoleRepository;
+import hr.prism.board.repository.ActivityUserRepository;
 import hr.prism.board.representation.ActivityRepresentation;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Service
 public class TestActivityService extends ActivityService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
@@ -24,6 +31,16 @@ public class TestActivityService extends ActivityService {
     private boolean recording = false;
 
     private ArrayListMultimap<Long, List<ActivityRepresentation>> sentActivities = ArrayListMultimap.create();
+
+    public TestActivityService(boolean pusherOn, ActivityRepository activityRepository, ActivityDAO activityDAO,
+                               ActivityRoleRepository activityRoleRepository,
+                               ActivityUserRepository activityUserRepository,
+                               ActivityEventRepository activityEventRepository, UserService userService,
+                               ActivityMapper activityMapper, Pusher pusher, ObjectMapper objectMapper,
+                               EntityManager entityManager) {
+        super(pusherOn, activityRepository, activityDAO, activityRoleRepository, activityUserRepository,
+            activityEventRepository, userService, activityMapper, pusher, objectMapper, entityManager);
+    }
 
     public void record() {
         this.recording = true;

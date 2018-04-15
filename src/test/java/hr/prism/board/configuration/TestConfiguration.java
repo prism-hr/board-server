@@ -1,7 +1,10 @@
 package hr.prism.board.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pusher.rest.Pusher;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
+import hr.prism.board.dao.ActivityDAO;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.OAuthAuthorizationDataDTO;
 import hr.prism.board.dto.OAuthDataDTO;
@@ -12,10 +15,13 @@ import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.event.consumer.ActivityEventConsumer;
 import hr.prism.board.event.consumer.NotificationEventConsumer;
 import hr.prism.board.event.consumer.UserRoleEventConsumer;
-import hr.prism.board.service.TestActivityService;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.service.TestPaymentService;
-import hr.prism.board.service.TestScheduledService;
+import hr.prism.board.mapper.ActivityMapper;
+import hr.prism.board.repository.ActivityEventRepository;
+import hr.prism.board.repository.ActivityRepository;
+import hr.prism.board.repository.ActivityRoleRepository;
+import hr.prism.board.repository.ActivityUserRepository;
+import hr.prism.board.service.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,6 +30,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 
 import static hr.prism.board.enums.OauthProvider.FACEBOOK;
 import static hr.prism.board.enums.OauthProvider.LINKEDIN;
@@ -33,10 +40,48 @@ import static org.mockito.Mockito.*;
 @Configuration
 public class TestConfiguration {
 
+    private final boolean pusherOn;
+
+    private final ActivityRepository activityRepository;
+
+    private final ActivityDAO activityDAO;
+
+    private final ActivityRoleRepository activityRoleRepository;
+
+    private final ActivityUserRepository activityUserRepository;
+
+    private final ActivityEventRepository activityEventRepository;
+
+    private final UserService userService;
+
+    private final ActivityMapper activityMapper;
+
+    private final Pusher pusher;
+
+    private final ObjectMapper objectMapper;
+
+    private final EntityManager entityManager;
+
     private final ApplicationContext applicationContext;
 
     @Inject
-    public TestConfiguration(ApplicationContext applicationContext) {
+    public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, ActivityRepository activityRepository,
+                             ActivityDAO activityDAO, ActivityRoleRepository activityRoleRepository,
+                             ActivityUserRepository activityUserRepository,
+                             ActivityEventRepository activityEventRepository, UserService userService,
+                             ActivityMapper activityMapper, Pusher pusher, ObjectMapper objectMapper,
+                             EntityManager entityManager, ApplicationContext applicationContext) {
+        this.pusherOn = pusherOn;
+        this.activityRepository = activityRepository;
+        this.activityDAO = activityDAO;
+        this.activityRoleRepository = activityRoleRepository;
+        this.activityUserRepository = activityUserRepository;
+        this.activityEventRepository = activityEventRepository;
+        this.userService = userService;
+        this.activityMapper = activityMapper;
+        this.pusher = pusher;
+        this.objectMapper = objectMapper;
+        this.entityManager = entityManager;
         this.applicationContext = applicationContext;
     }
 
@@ -131,7 +176,9 @@ public class TestConfiguration {
     @Bean
     @Primary
     public TestActivityService activityService() {
-        return new TestActivityService();
+        return new TestActivityService(pusherOn, activityRepository, activityDAO, activityRoleRepository,
+            activityUserRepository, activityEventRepository, userService, activityMapper, pusher, objectMapper,
+            entityManager);
     }
 
     @Bean

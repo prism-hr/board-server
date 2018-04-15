@@ -4,39 +4,39 @@ import freemarker.template.TemplateException;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.dto.WidgetOptionsDTO;
-import hr.prism.board.enums.ResourceTask;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static hr.prism.board.enums.ResourceTask.BADGE_TASKS;
+
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class BadgeService {
 
-    private static final List<ResourceTask> BADGE_TASKS = Collections.singletonList(ResourceTask.DEPLOY_BADGE);
+    private final String appUrl;
 
-    @Inject
-    private PostService postService;
+    private final PostService postService;
 
-    @Inject
-    private ResourceTaskService resourceTaskService;
+    private final ResourceTaskService resourceTaskService;
 
-    @Inject
-    private FreeMarkerConfig freemarkerConfig;
+    private final FreeMarkerConfig freemarkerConfig;
 
-    @Value("${app.url}")
-    private String appUrl;
+    public BadgeService(@Value("${app.url}") String appUrl, PostService postService,
+                        ResourceTaskService resourceTaskService, FreeMarkerConfig freemarkerConfig) {
+        this.appUrl = appUrl;
+        this.postService = postService;
+        this.resourceTaskService = resourceTaskService;
+        this.freemarkerConfig = freemarkerConfig;
+    }
 
     // TODO add test coverage
     public String getResourceBadge(Resource resource, WidgetOptionsDTO options) {

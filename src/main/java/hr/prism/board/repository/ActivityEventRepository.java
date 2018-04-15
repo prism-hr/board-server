@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -92,18 +91,5 @@ public interface ActivityEventRepository extends BoardEntityRepository<ActivityE
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user,
                                         @Param("role") Role role);
-
-    @Modifying
-    @Query(value =
-        "INSERT INTO activity_event (activity_id, user_id, event, creator_id, created_timestamp, updated_timestamp) " +
-            "SELECT activity.id, :userId, :event, :userId, :baseline, :baseline " +
-            "FROM activity " +
-            "WHERE activity.resource_id = :resourceId " +
-            "AND activity.activity IN (:activities)",
-        nativeQuery = true)
-    void insertByResourceIdActivitiesUserIdAndEvent(@Param("resourceId") Long resourceId,
-                                                    @Param("activities") List<String> activities,
-                                                    @Param("userId") Long userId, @Param("event") String event,
-                                                    @Param("baseline") LocalDateTime baseline);
 
 }

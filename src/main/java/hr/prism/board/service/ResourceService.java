@@ -232,6 +232,11 @@ public class ResourceService {
         entityManager.flush();
     }
 
+    public void updateStates(List<Long> resourceIds, Action action, State state, LocalDateTime baseline) {
+        resourceRepository.updateStateByIds(resourceIds, state, baseline);
+        resourceOperationRepository.insertByResourceIdsActionAndCreatedTimestamp(resourceIds, action.name(), baseline);
+    }
+
     public void createResourceOperation(Resource resource, Action action, User user) {
         ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
         if (action == Action.EDIT) {

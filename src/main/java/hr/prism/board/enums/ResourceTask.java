@@ -13,6 +13,8 @@ public enum ResourceTask {
 
     public static List<ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(CREATE_MEMBER, CREATE_POST, DEPLOY_BADGE);
 
+    public static List<ResourceTask> BADGE_TASKS = ImmutableList.of(DEPLOY_BADGE);
+
     private String message;
 
     ResourceTask(String message) {
