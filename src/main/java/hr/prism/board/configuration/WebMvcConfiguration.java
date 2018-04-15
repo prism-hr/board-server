@@ -2,7 +2,6 @@ package hr.prism.board.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import freemarker.template.TemplateException;
-import hr.prism.board.utils.ObjectMapperProvider;
 import no.api.freemarker.java8.Java8ObjectWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +18,7 @@ import java.util.List;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static freemarker.template.Configuration.VERSION_2_3_26;
+import static hr.prism.board.utils.ObjectMapperProvider.getObjectMapper;
 
 @EnableWebMvc
 @Configuration
@@ -33,7 +33,7 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
     @Bean
     public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = ObjectMapperProvider.getObjectMapper().copy();
+        ObjectMapper objectMapper = getObjectMapper().copy();
         if (jacksonPretty) {
             objectMapper.enable(INDENT_OUTPUT);
         }

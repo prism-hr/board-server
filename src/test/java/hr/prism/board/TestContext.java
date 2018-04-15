@@ -6,16 +6,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
+@Target(TYPE)
+@Retention(RUNTIME)
 
 @Inherited
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    webEnvironment = RANDOM_PORT,
     classes = {BoardApplication.class, CacheConfiguration.class, DatabaseConfiguration.class,
         SecurityConfiguration.class, WebMvcConfiguration.class, PusherConfiguration.class, TestConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})

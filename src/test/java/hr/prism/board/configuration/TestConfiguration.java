@@ -6,7 +6,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.OAuthAuthorizationDataDTO;
 import hr.prism.board.dto.OAuthDataDTO;
 import hr.prism.board.dto.SigninDTO;
-import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.event.UserRoleEvent;
@@ -17,7 +16,6 @@ import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.service.TestPaymentService;
 import hr.prism.board.service.TestScheduledService;
-import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,11 +24,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.inject.Inject;
-import java.util.concurrent.Executor;
 
+import static hr.prism.board.enums.OauthProvider.FACEBOOK;
+import static hr.prism.board.enums.OauthProvider.LINKEDIN;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @Configuration
 public class TestConfiguration {
@@ -46,40 +44,55 @@ public class TestConfiguration {
     @Primary
     public FacebookAdapter facebookAdapter() {
         FacebookAdapter facebookAdapter = mock(FacebookAdapter.class);
-        Mockito.when(facebookAdapter.exchangeForUser(
+        when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
-                .setOauthData(new OAuthDataDTO().setCode("code"))))
+                .setAuthorizationData(
+                    new OAuthAuthorizationDataDTO()
+                        .setClientId("clientId")
+                        .setRedirectUri("redirectUri"))
+                .setOauthData(
+                    new OAuthDataDTO()
+                        .setCode("code"))))
             .thenReturn(
                 new User()
                     .setGivenName("alastair")
                     .setSurname("knowles")
                     .setEmail("alastair@prism.hr")
-                    .setOauthProvider(OauthProvider.FACEBOOK)
+                    .setOauthProvider(FACEBOOK)
                     .setOauthAccountId("facebookId"));
 
-        Mockito.when(facebookAdapter.exchangeForUser(
+        when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
-                .setOauthData(new OAuthDataDTO().setCode("code2"))))
+                .setAuthorizationData(
+                    new OAuthAuthorizationDataDTO()
+                        .setClientId("clientId2")
+                        .setRedirectUri("redirectUri2"))
+                .setOauthData(
+                    new OAuthDataDTO()
+                        .setCode("code2"))))
             .thenReturn(
                 new User()
                     .setGivenName("jakub")
                     .setSurname("fibinger")
                     .setEmail("jakub@prism.hr")
-                    .setOauthProvider(OauthProvider.FACEBOOK)
+                    .setOauthProvider(FACEBOOK)
                     .setOauthAccountId("facebookId2"));
 
-        Mockito.when(facebookAdapter.exchangeForUser(
+        when(facebookAdapter.exchangeForUser(
             new SigninDTO()
-                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId3").setRedirectUri("redirectUri3"))
-                .setOauthData(new OAuthDataDTO().setCode("code3"))))
+                .setAuthorizationData(
+                    new OAuthAuthorizationDataDTO()
+                        .setClientId("clientId3")
+                        .setRedirectUri("redirectUri3"))
+                .setOauthData(
+                    new OAuthDataDTO()
+                        .setCode("code3"))))
             .thenReturn(
                 new User()
                     .setGivenName("member1")
                     .setSurname("member1")
                     .setEmail("member1@member1.com")
-                    .setOauthProvider(OauthProvider.FACEBOOK)
+                    .setOauthProvider(FACEBOOK)
                     .setOauthAccountId("facebookId3"));
 
         return facebookAdapter;
@@ -89,16 +102,21 @@ public class TestConfiguration {
     @Primary
     public LinkedinAdapter linkedinAdapter() {
         LinkedinAdapter linkedinAdapter = mock(LinkedinAdapter.class);
-        Mockito.when(linkedinAdapter.exchangeForUser(
+        when(linkedinAdapter.exchangeForUser(
             new SigninDTO()
-                .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
-                .setOauthData(new OAuthDataDTO().setCode("code"))))
+                .setAuthorizationData(
+                    new OAuthAuthorizationDataDTO()
+                        .setClientId("clientId")
+                        .setRedirectUri("redirectUri"))
+                .setOauthData(
+                    new OAuthDataDTO()
+                        .setCode("code"))))
             .thenReturn(
                 new User()
                     .setGivenName("alastair")
                     .setSurname("knowles")
                     .setEmail("alastair@prism.hr")
-                    .setOauthProvider(OauthProvider.LINKEDIN)
+                    .setOauthProvider(LINKEDIN)
                     .setOauthAccountId("linkedinId"));
 
         return linkedinAdapter;
@@ -153,20 +171,6 @@ public class TestConfiguration {
             .publishEvent(any(ApplicationEvent.class));
 
         return applicationEventPublisher;
-    }
-
-    @Bean
-    @Primary
-    public Executor asyncExecutor() {
-        Executor executor = mock(Executor.class);
-        doAnswer(invocation -> {
-            Runnable runnable = (Runnable) invocation.getArguments()[0];
-            runnable.run();
-            return null;
-        }).when(executor)
-            .execute(any(Runnable.class));
-
-        return executor;
     }
 
 }
