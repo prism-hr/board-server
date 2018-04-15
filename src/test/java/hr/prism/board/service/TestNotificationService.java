@@ -1,23 +1,28 @@
 package hr.prism.board.service;
 
 import com.sendgrid.Attachments;
+import com.sendgrid.SendGrid;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.notification.BoardAttachments;
 import org.junit.Assert;
-import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-@Service
 public class TestNotificationService extends NotificationService {
 
     private boolean recording = false;
 
     private List<NotificationInstance> instances = new LinkedList<>();
+
+    public TestNotificationService(boolean mailOn, String senderEmail, TestEmailService testEmailService,
+                                   SendGrid sendGrid, ApplicationContext applicationContext) {
+        super(mailOn, senderEmail, testEmailService, sendGrid, applicationContext);
+    }
 
     public void record() {
         this.recording = true;

@@ -6,79 +6,86 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.utils.BoardUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.CategoryType.POST;
+import static hr.prism.board.enums.Scope.BOARD;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD_HANDLE;
+import static hr.prism.board.service.ResourceService.makeResourceFilter;
+import static java.util.stream.Collectors.toList;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class BoardService {
 
-    @Inject
-    private BoardRepository boardRepository;
+    private final BoardRepository boardRepository;
+
+    private final ActionService actionService;
+
+    private final ResourceService resourceService;
+
+    private final ResourcePatchService resourcePatchService;
+
+    private final UserService userService;
 
     @Inject
-    private ActionService actionService;
-
-    @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private ResourcePatchService resourcePatchService;
-
-    @Inject
-    private UserService userService;
-
-    @Value("${app.url}")
-    private String appUrl;
+    public BoardService(BoardRepository boardRepository, ActionService actionService, ResourceService resourceService,
+                        ResourcePatchService resourcePatchService, UserService userService) {
+        this.boardRepository = boardRepository;
+        this.actionService = actionService;
+        this.resourceService = resourceService;
+        this.resourcePatchService = resourcePatchService;
+        this.userService = userService;
+    }
 
     public Board getBoard(Long id) {
         User user = userService.getCurrentUser();
-        Board board = (Board) resourceService.getResource(user, Scope.BOARD, id);
-        return (Board) actionService.executeAction(user, board, Action.VIEW, () -> board);
+        Board board = (Board) resourceService.getResource(user, BOARD, id);
+        return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
     public Board getBoard(String handle) {
         User user = userService.getCurrentUser();
-        Board board = (Board) resourceService.getResource(user, Scope.BOARD, handle);
-        return (Board) actionService.executeAction(user, board, Action.VIEW, () -> board);
+        Board board = (Board) resourceService.getResource(user, BOARD, handle);
+        return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
-    public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter, String searchTerm) {
+    public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter,
+                                 String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
-            ResourceService.makeResourceFilter(Scope.BOARD, departmentId, includePublicBoards, state, quarter, searchTerm)
-                .setOrderStatement("resource.name"))
-            .stream().map(resource -> (Board) resource).collect(Collectors.toList());
+            makeResourceFilter(
+                BOARD, departmentId, includePublicBoards, state, quarter, searchTerm).setOrderStatement("resource.name"))
+            .stream().map(resource -> (Board) resource).collect(toList());
     }
 
     public Board createBoard(Long departmentId, BoardDTO boardDTO) {
         User user = userService.getCurrentUserSecured();
-        Resource department = resourceService.getResource(user, Scope.DEPARTMENT, departmentId);
-        return (Board) actionService.executeAction(user, department, Action.EXTEND, () -> {
+        Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
+        return (Board) actionService.executeAction(user, department, EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
-            resourceService.validateUniqueName(Scope.BOARD, null, department, name, ExceptionCode.DUPLICATE_BOARD);
+            resourceService.validateUniqueName(BOARD, null, department, name, DUPLICATE_BOARD);
 
             Board board = new Board();
             board.setName(name);
 
-            board.setHandle(resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle));
+            board.setHandle(
+                resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle));
             board = boardRepository.save(board);
 
-            resourceService.updateCategories(board, CategoryType.POST, boardDTO.getPostCategories());
+            resourceService.updateCategories(board, POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
             resourceService.setIndexDataAndQuarter(board);
             return board;
@@ -87,13 +94,13 @@ public class BoardService {
 
     public Board executeAction(Long id, Action action, BoardPatchDTO boardDTO) {
         User currentUser = userService.getCurrentUserSecured();
-        Board board = (Board) resourceService.getResource(currentUser, Scope.BOARD, id);
+        Board board = (Board) resourceService.getResource(currentUser, BOARD, id);
         board.setComment(boardDTO.getComment());
         return (Board) actionService.executeAction(currentUser, board, action, () -> {
-            if (action == Action.EDIT) {
+            if (action == EDIT) {
                 updateBoard(board, boardDTO);
             } else if (BoardUtils.hasUpdates(boardDTO)) {
-                actionService.executeAction(currentUser, board, Action.EDIT, () -> {
+                actionService.executeAction(currentUser, board, EDIT, () -> {
                     updateBoard(board, boardDTO);
                     return board;
                 });
@@ -103,12 +110,11 @@ public class BoardService {
         });
     }
 
-    @SuppressWarnings("unchecked")
     private void updateBoard(Board board, BoardPatchDTO boardDTO) {
         board.setChangeList(new ChangeListRepresentation());
-        resourcePatchService.patchName(board, boardDTO.getName(), ExceptionCode.DUPLICATE_BOARD);
-        resourcePatchService.patchHandle(board, boardDTO.getHandle(), ExceptionCode.DUPLICATE_BOARD_HANDLE);
-        resourcePatchService.patchCategories(board, CategoryType.POST, boardDTO.getPostCategories());
+        resourcePatchService.patchName(board, boardDTO.getName(), DUPLICATE_BOARD);
+        resourcePatchService.patchHandle(board, boardDTO.getHandle(), DUPLICATE_BOARD_HANDLE);
+        resourcePatchService.patchCategories(board, POST, boardDTO.getPostCategories());
         resourceService.setIndexDataAndQuarter(board);
         boardRepository.update(board);
     }

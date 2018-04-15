@@ -6,18 +6,15 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Notification;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.notification.property.NotificationProperty;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrSubstitutor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -26,15 +23,23 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static com.sendgrid.Method.POST;
+import static hr.prism.board.exception.ExceptionCode.MISSING_NOTIFICATION_PROPERTY;
+import static hr.prism.board.exception.ExceptionCode.UNDELIVERABLE_NOTIFICATION;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.*;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class NotificationService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
+    private static Logger LOGGER = getLogger(NotificationService.class);
 
     private Map<Notification, String> subjects = new TreeMap<>();
 
@@ -42,39 +47,41 @@ public class NotificationService {
 
     private Map<Notification, Map<String, NotificationProperty>> properties = new TreeMap<>();
 
-    @Value("${mail.on}")
-    private Boolean mailOn;
+    private final boolean mailOn;
 
-    @Value("${system.email}")
-    private String senderEmail;
+    private final String senderEmail;
 
-    @Inject
-    private TestEmailService testEmailService;
+    private final TestEmailService testEmailService;
 
-    @Inject
-    private SendGrid sendGrid;
+    private final SendGrid sendGrid;
+
+    private final ApplicationContext applicationContext;
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    private static String toString(org.springframework.core.io.Resource resource) throws IOException {
-        try (InputStream inputStream = resource.getInputStream()) {
-            String template = IOUtils.toString(inputStream, StandardCharsets.UTF_8).trim();
-            return template.trim();
-        }
+    public NotificationService(@Value("${mail.on}") boolean mailOn, @Value("${system.email}") String senderEmail,
+                               TestEmailService testEmailService, SendGrid sendGrid,
+                               ApplicationContext applicationContext) {
+        this.mailOn = mailOn;
+        this.senderEmail = senderEmail;
+        this.testEmailService = testEmailService;
+        this.sendGrid = sendGrid;
+        this.applicationContext = applicationContext;
     }
 
     @PostConstruct
     public void postConstruct() throws IOException {
         Map<String, NotificationProperty> propertiesMap =
-            applicationContext.getBeansOfType(NotificationProperty.class).values().stream().collect(Collectors.toMap(NotificationProperty::getKey, property -> property));
+            applicationContext.getBeansOfType(NotificationProperty.class).values().stream()
+                .collect(toMap(NotificationProperty::getKey, identity()));
 
         String header = toString(applicationContext.getResource("classpath:notification/content/header.html"));
         String footer = toString(applicationContext.getResource("classpath:notification/content/footer.html"));
 
         for (Notification notification : Notification.values()) {
-            String subject = toString(applicationContext.getResource("classpath:notification/subject/" + notification + ".html"));
-            String content = toString(applicationContext.getResource("classpath:notification/content/" + notification + ".html"))
+            String subject = toString(
+                applicationContext.getResource("classpath:notification/subject/" + notification + ".html"));
+            String content = toString(
+                applicationContext.getResource("classpath:notification/content/" + notification + ".html"))
                 .replace("${header}", header).replace("${footer}", footer);
 
             Set<String> placeholders = new HashSet<>();
@@ -85,7 +92,7 @@ public class NotificationService {
             for (String placeholder : placeholders) {
                 NotificationProperty property = propertiesMap.get(placeholder);
                 if (property == null) {
-                    throw new BoardException(ExceptionCode.MISSING_NOTIFICATION_PROPERTY, placeholder);
+                    throw new BoardException(MISSING_NOTIFICATION_PROPERTY, placeholder);
                 }
 
                 properties.put(placeholder, property);
@@ -101,7 +108,7 @@ public class NotificationService {
         Notification notification = request.getNotification();
 
         Map<String, String> properties = this.properties.get(notification).entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getValue(request)));
+            .collect(toMap(Map.Entry::getKey, entry -> entry.getValue().getValue(request)));
 
         StrSubstitutor parser = new StrSubstitutor(properties);
         String subject = parser.replace(this.subjects.get(notification));
@@ -111,8 +118,8 @@ public class NotificationService {
             // Front end integration tests
             Long creatorId = recipient.getId() == null ? request.getResource().getCreatorId() : recipient.getId();
             testEmailService.createTestEmail(recipient, subject, makePlainTextVersion(content),
-                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(Collectors.toList()), creatorId);
-        } else if (BooleanUtils.isTrue(mailOn)) {
+                request.getAttachments().stream().map(BoardAttachments::getUrl).collect(toList()), creatorId);
+        } else if (mailOn) {
             // Real emails
             Mail mail = new Mail();
             mail.setFrom(new Email(senderEmail, "PRiSM Board"));
@@ -128,7 +135,7 @@ public class NotificationService {
 
             try {
                 Request sendGridRequest = new Request();
-                sendGridRequest.setMethod(Method.POST);
+                sendGridRequest.setMethod(POST);
                 sendGridRequest.setEndpoint("mail/send");
                 sendGridRequest.setBody(mail.build());
                 sendGrid.api(sendGridRequest);
@@ -136,7 +143,7 @@ public class NotificationService {
                 LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail));
             } catch (IOException e) {
                 LOGGER.error("Failed to send notification", e);
-                throw new BoardException(ExceptionCode.UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
+                throw new BoardException(UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
             }
         } else {
             // Local/Test contexts
@@ -147,9 +154,9 @@ public class NotificationService {
         return properties;
     }
 
-    private List<String> indexTemplate(Notification notification, String template, Map<Notification, String> index) throws IOException {
+    private List<String> indexTemplate(Notification notification, String template, Map<Notification, String> index) {
         index.put(notification, template);
-        return Arrays.asList(StringUtils.substringsBetween(template, "${", "}"));
+        return asList(StringUtils.substringsBetween(template, "${", "}"));
     }
 
     private String makeLogHeader(Notification notification, String sender, String recipient) {
@@ -160,17 +167,19 @@ public class NotificationService {
         Document document = Jsoup.parse(html);
         Element contentBody = document.getElementsByClass("comment_body_td").first();
 
-        StringBuilder stringBuilder = new StringBuilder(StringUtils.EMPTY);
+        StringBuilder stringBuilder = new StringBuilder(EMPTY);
         for (Element element : contentBody.children()) {
             String tagName = element.tagName();
             if (tagName.equals("p")) {
                 List<Element> as = element.select("a");
                 if (as.isEmpty()) {
                     String[] lines = element.html().split("<br>");
-                    stringBuilder.append(Arrays.stream(lines).map(String::trim).collect(Collectors.joining("\n"))).append("\n\n");
+                    stringBuilder.append(stream(lines).map(String::trim).collect(joining("\n")))
+                        .append("\n\n");
                 } else {
                     for (Element a : as) {
-                        stringBuilder.append("\t- ").append(a.text()).append(": ").append(a.attr("abs:href")).append("\n");
+                        stringBuilder.append("\t- ").append(a.text()).append(": ")
+                            .append(a.attr("abs:href")).append("\n");
                     }
 
                     stringBuilder.append("\n");
@@ -184,10 +193,16 @@ public class NotificationService {
             }
         }
 
-        return stringBuilder.toString().replaceAll("\\n$", StringUtils.EMPTY);
+        return stringBuilder.toString().replaceAll("\\n$", EMPTY);
     }
 
-    @SuppressWarnings("WeakerAccess")
+    private static String toString(org.springframework.core.io.Resource resource) throws IOException {
+        try (InputStream inputStream = resource.getInputStream()) {
+            String template = IOUtils.toString(inputStream, UTF_8).trim();
+            return template.trim();
+        }
+    }
+
     public static class NotificationRequest {
 
         private Notification notification;
@@ -202,7 +217,8 @@ public class NotificationService {
 
         private List<BoardAttachments> attachments = new ArrayList<>();
 
-        public NotificationRequest(Notification notification, User recipient, String invitation, Resource resource, Action action, List<BoardAttachments> attachments) {
+        public NotificationRequest(Notification notification, User recipient, String invitation, Resource resource,
+                                   Action action, List<BoardAttachments> attachments) {
             this.notification = notification;
             this.recipient = recipient;
             this.invitation = invitation;

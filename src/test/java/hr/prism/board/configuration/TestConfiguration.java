@@ -2,6 +2,7 @@ package hr.prism.board.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pusher.rest.Pusher;
+import com.sendgrid.SendGrid;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.dao.ActivityDAO;
@@ -42,6 +43,10 @@ public class TestConfiguration {
 
     private final boolean pusherOn;
 
+    private final boolean mailOn;
+
+    private final String senderEmail;
+
     private final ActivityRepository activityRepository;
 
     private final ActivityDAO activityDAO;
@@ -54,9 +59,13 @@ public class TestConfiguration {
 
     private final UserService userService;
 
+    private final TestEmailService testEmailService;
+
     private final ActivityMapper activityMapper;
 
     private final Pusher pusher;
+
+    private final SendGrid sendGrid;
 
     private final ObjectMapper objectMapper;
 
@@ -65,21 +74,28 @@ public class TestConfiguration {
     private final ApplicationContext applicationContext;
 
     @Inject
-    public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, ActivityRepository activityRepository,
-                             ActivityDAO activityDAO, ActivityRoleRepository activityRoleRepository,
+    public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, @Value("${mail.on}") boolean mailOn,
+                             @Value("${system.email}") String senderEmail,
+                             ActivityRepository activityRepository, ActivityDAO activityDAO,
+                             ActivityRoleRepository activityRoleRepository,
                              ActivityUserRepository activityUserRepository,
                              ActivityEventRepository activityEventRepository, UserService userService,
-                             ActivityMapper activityMapper, Pusher pusher, ObjectMapper objectMapper,
-                             EntityManager entityManager, ApplicationContext applicationContext) {
+                             TestEmailService testEmailService, ActivityMapper activityMapper, Pusher pusher,
+                             SendGrid sendGrid, ObjectMapper objectMapper, EntityManager entityManager,
+                             ApplicationContext applicationContext) {
         this.pusherOn = pusherOn;
+        this.mailOn = mailOn;
+        this.senderEmail = senderEmail;
         this.activityRepository = activityRepository;
         this.activityDAO = activityDAO;
         this.activityRoleRepository = activityRoleRepository;
         this.activityUserRepository = activityUserRepository;
         this.activityEventRepository = activityEventRepository;
         this.userService = userService;
+        this.testEmailService = testEmailService;
         this.activityMapper = activityMapper;
         this.pusher = pusher;
+        this.sendGrid = sendGrid;
         this.objectMapper = objectMapper;
         this.entityManager = entityManager;
         this.applicationContext = applicationContext;
@@ -170,7 +186,7 @@ public class TestConfiguration {
     @Bean
     @Primary
     public TestNotificationService notificationService() {
-        return new TestNotificationService();
+        return new TestNotificationService(mailOn, senderEmail, testEmailService, sendGrid, applicationContext);
     }
 
     @Bean

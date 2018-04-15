@@ -10,11 +10,14 @@ import javax.inject.Inject;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class LocationService {
 
+    private final LocationRepository locationRepository;
+
     @Inject
-    private LocationRepository locationRepository;
+    public LocationService(LocationRepository locationRepository) {
+        this.locationRepository = locationRepository;
+    }
 
     public Location getOrCreateLocation(LocationDTO locationDTO) {
         Location location = locationRepository.findByGoogleId(locationDTO.getGoogleId());

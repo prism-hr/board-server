@@ -1,10 +1,7 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-import org.apache.commons.text.WordUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -12,66 +9,69 @@ import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static hr.prism.board.enums.OauthProvider.FACEBOOK;
+import static hr.prism.board.enums.OauthProvider.LINKEDIN;
+import static hr.prism.board.exception.ExceptionCode.INITIALIZATION_ERROR;
+import static java.util.Arrays.stream;
+import static org.apache.commons.text.WordUtils.uncapitalize;
+
 @Service
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class DefinitionService {
 
     private static final String TEST_QUERY = "SELECT 1";
 
-    @SuppressWarnings("unchecked")
-    private volatile TreeMap<String, Object> definitions;
+    public static TreeMap<String, Object> DEFINITIONS = new TreeMap<>();
 
-    @Value("${profile}")
-    private String profile;
+    private final String profile;
 
-    @Value("${app.url}")
-    private String appUrl;
+    private final String appUrl;
 
-    @Value("${auth.facebook.clientId}")
-    private String facebookClientId;
+    private final String facebookClientId;
 
-    @Value("${auth.linkedin.clientId}")
-    private String linkedinClientId;
+    private final String linkedinClientId;
 
-    @Value("${cloudinary.folder}")
-    private String cloudinaryFolder;
+    private final String cloudinaryFolder;
 
-    @Inject
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
+
+    public DefinitionService(@Value("${profile}") String profile, @Value("${app.url}") String appUrl,
+                             @Value("${auth.facebook.clientId}") String facebookClientId,
+                             @Value("${auth.linkedin.clientId}") String linkedinClientId,
+                             @Value("${cloudinary.folder}") String cloudinaryFolder, EntityManager entityManager) {
+        this.profile = profile;
+        this.appUrl = appUrl;
+        this.facebookClientId = facebookClientId;
+        this.linkedinClientId = linkedinClientId;
+        this.cloudinaryFolder = cloudinaryFolder;
+        this.entityManager = entityManager;
+    }
 
     @PostConstruct
-    public TreeMap<String, Object> getDefinitions() {
+    public void populateDefinitions() {
         try {
             // Check that the database connection is running
             entityManager.createNativeQuery(TEST_QUERY).getResultList();
-            if (this.definitions == null) {
-                synchronized (this) {
-                    if (this.definitions == null) {
-                        this.definitions = new TreeMap<>();
-                        getDefinitionClasses().forEach(definitionClass -> {
-                            List<String> values = Arrays.stream(definitionClass.getEnumConstants()).map(Enum::name).collect(Collectors.toList());
-                            this.definitions.put(getDefinitionKey(definitionClass), values);
-                        });
+            getDefinitionClasses().forEach(definitionClass -> {
+                List<String> values = stream(definitionClass.getEnumConstants())
+                    .map(Enum::name)
+                    .collect(Collectors.toList());
+                DEFINITIONS.put(getDefinitionKey(definitionClass), values);
+            });
 
-                        this.definitions.put("profile", profile);
-                        this.definitions.put("applicationUrl", appUrl);
-                        this.definitions.put("cloudinaryFolder", cloudinaryFolder);
-                        List<Map<String, Object>> oauthProviders = new ArrayList<>();
-                        oauthProviders.add(ImmutableMap.of("id", OauthProvider.FACEBOOK, "clientId", facebookClientId));
-                        oauthProviders.add(ImmutableMap.of("id", OauthProvider.LINKEDIN, "clientId", linkedinClientId));
-                        this.definitions.put("oauthProvider", oauthProviders);
-                    }
-                }
-            }
+            DEFINITIONS.put("profile", profile);
+            DEFINITIONS.put("applicationUrl", appUrl);
+            DEFINITIONS.put("cloudinaryFolder", cloudinaryFolder);
 
-            return this.definitions;
+            List<Map<String, Object>> oauthProviders = new ArrayList<>();
+            oauthProviders.add(ImmutableMap.of("id", FACEBOOK, "clientId", facebookClientId));
+            oauthProviders.add(ImmutableMap.of("id", LINKEDIN, "clientId", linkedinClientId));
+            DEFINITIONS.put("oauthProvider", oauthProviders);
         } catch (Exception e) {
-            throw new BoardException(ExceptionCode.INITIALIZATION_ERROR, "Could not initialize application", e);
+            throw new BoardException(INITIALIZATION_ERROR, "Could not initialize application", e);
         }
     }
 
@@ -79,7 +79,8 @@ public class DefinitionService {
     private Set<Class<? extends Enum<?>>> getDefinitionClasses() {
         Set<Class<? extends Enum<?>>> definitionClasses = new LinkedHashSet<>();
         try {
-            ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+            ClassPathScanningCandidateComponentProvider scanner =
+                new ClassPathScanningCandidateComponentProvider(false);
             scanner.addIncludeFilter(new AssignableTypeFilter(Enum.class));
 
             for (BeanDefinition beanDefinition : scanner.findCandidateComponents("hr.prism.board.enums")) {
@@ -96,7 +97,7 @@ public class DefinitionService {
     }
 
     private String getDefinitionKey(Class<? extends Enum<?>> definitionClass) {
-        return WordUtils.uncapitalize(definitionClass.getSimpleName());
+        return uncapitalize(definitionClass.getSimpleName());
     }
 
 }
