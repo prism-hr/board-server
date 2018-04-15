@@ -632,7 +632,7 @@ public class DepartmentApiIT extends AbstractIT {
         scheduledService.updateDepartmentSubscriptions(baseline);
 
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY));
-        userApi.dismissActivity(userApi.getActivities().iterator().next().getId());
+        userActivityApi.dismissActivity(userActivityApi.getActivities().iterator().next().getId());
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", recipient)
@@ -838,7 +838,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUSPEND_DEPARTMENT_ACTIVITY));
-        userApi.dismissActivity(userApi.getActivities().iterator().next().getId());
+        userActivityApi.dismissActivity(userActivityApi.getActivities().iterator().next().getId());
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_DEPARTMENT_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", recipient)
@@ -852,7 +852,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(State.ACCEPTED, departmentR.getState());
 
         // Second failed payment event should not result in another activity
-        Assertions.assertThat(userApi.getActivities()).isEmpty();
+        Assertions.assertThat(userActivityApi.getActivities()).isEmpty();
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_DEPARTMENT_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", recipient)
@@ -1190,7 +1190,7 @@ public class DepartmentApiIT extends AbstractIT {
         Long activityId = activityService.findByUserRoleAndActivity(userRole, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY).getId();
 
         testUserService.setAuthentication(departmentUserId);
-        userApi.dismissActivity(activityId);
+        userActivityApi.dismissActivity(activityId);
 
         verifyActivitiesEmpty(departmentUserId);
         testActivityService.stop();

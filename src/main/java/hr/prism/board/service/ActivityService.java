@@ -3,12 +3,16 @@ package hr.prism.board.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.pusher.rest.Pusher;
+import com.pusher.rest.data.PresenceUser;
 import com.pusher.rest.data.Result;
 import hr.prism.board.dao.ActivityDAO;
 import hr.prism.board.domain.*;
+import hr.prism.board.dto.PusherAuthenticationDTO;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.repository.ActivityEventRepository;
 import hr.prism.board.repository.ActivityRepository;
@@ -31,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static hr.prism.board.enums.ActivityEvent.DISMISSAL;
 import static hr.prism.board.enums.ActivityEvent.VIEW;
+import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -255,6 +260,24 @@ public class ActivityService {
 
     public void deleteActivityUsers(User user) {
         activityUserRepository.deleteByUser(user);
+    }
+
+    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
+        String channel = pusherAuthentication.getChannelName();
+        String channelUserId = channel.split("-")[2];
+
+        User user = userService.getCurrentUserSecured();
+        Long userId = user.getId();
+
+        if (channelUserId.equals(userId.toString())) {
+            LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
+            return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
+                new PresenceUser(userId,
+                    ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
+        } else {
+            throw new BoardForbiddenException(UNAUTHENTICATED_USER,
+                "User ID: " + userId + " does not have permission to connect to channel: " + channel);
+        }
     }
 
     public void updateActivities() throws IOException {

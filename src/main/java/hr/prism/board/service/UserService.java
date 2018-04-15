@@ -1,14 +1,15 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.ImmutableMap;
 import com.pusher.rest.Pusher;
-import com.pusher.rest.data.PresenceUser;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.UserDTO;
+import hr.prism.board.dto.UserPasswordDTO;
+import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
@@ -313,22 +314,6 @@ public class UserService {
 
     public void deleteSearchResults(String search) {
         userSearchRepository.deleteBySearch(search);
-    }
-
-    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
-        String channel = pusherAuthentication.getChannelName();
-        String channelUserId = channel.split("-")[2];
-
-        User user = getCurrentUserSecured();
-        Long userId = user.getId();
-        if (channelUserId.equals(userId.toString())) {
-            LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
-            return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
-                new PresenceUser(userId, ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
-        } else {
-            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER,
-                "User ID: " + userId + " does not have permission to connect to channel: " + channel);
-        }
     }
 
     private User getCurrentUser(boolean fresh) {

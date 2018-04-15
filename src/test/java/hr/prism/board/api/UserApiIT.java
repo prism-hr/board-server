@@ -107,23 +107,23 @@ public class UserApiIT extends AbstractIT {
         testUserService.setAuthentication(adminUserId);
         String[] expectedBoardNames = new String[]{"board11", "board12", "board13", "board23"};
         List<UserNotificationSuppressionRepresentation> adminUserSuppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, adminUserSuppressions.size());
         adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         testUserService.setAuthentication(memberUser1Id);
-        userApi.postSuppressions();
+        userNotificationSuppressionApi.postSuppressions();
         List<UserNotificationSuppressionRepresentation> memberUser1Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, memberUser1Suppressions.size());
         memberUser1Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
 
         testUserService.unauthenticate();
-        userApi.postSuppression(board11id, memberUser2.getUuid());
+        userNotificationSuppressionApi.postSuppression(board11id, memberUser2.getUuid());
         testUserService.setAuthentication(memberUser2Id);
-        userApi.postSuppression(board12id, null);
+        userNotificationSuppressionApi.postSuppression(board12id, null);
         List<UserNotificationSuppressionRepresentation> memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 2)
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
@@ -132,20 +132,20 @@ public class UserApiIT extends AbstractIT {
 
         testUserService.unauthenticate();
         ExceptionUtils.verifyException(
-            BoardForbiddenException.class, () -> userApi.postSuppression(board11id, memberUser3.getUuid()), ExceptionCode.FORBIDDEN_RESOURCE);
+            BoardForbiddenException.class, () -> userNotificationSuppressionApi.postSuppression(board11id, memberUser3.getUuid()), ExceptionCode.FORBIDDEN_RESOURCE);
         testUserService.setAuthentication(memberUser3Id);
         ExceptionUtils.verifyException(
-            BoardForbiddenException.class, () -> userApi.postSuppression(board11id, null), ExceptionCode.FORBIDDEN_RESOURCE);
-        userApi.postSuppressions();
+            BoardForbiddenException.class, () -> userNotificationSuppressionApi.postSuppression(board11id, null), ExceptionCode.FORBIDDEN_RESOURCE);
+        userNotificationSuppressionApi.postSuppressions();
         List<UserNotificationSuppressionRepresentation> memberUser3Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(0, memberUser3Suppressions.size());
 
         testUserService.setAuthentication(memberUser2Id);
-        userApi.deleteSuppression(board12id);
+        userNotificationSuppressionApi.deleteSuppression(board12id);
 
         memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.subList(0, 1)
             .forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
@@ -153,13 +153,13 @@ public class UserApiIT extends AbstractIT {
             .forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
         memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.postSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.postSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(true, suppression.getSuppressed()));
-        userApi.deleteSuppressions();
+        userNotificationSuppressionApi.deleteSuppressions();
 
         memberUser2Suppressions =
-            removeSuppressionsForAutomaticallyCreatedBoards(userApi.getSuppressions(), expectedBoardNames);
+            removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, memberUser2Suppressions.size());
         memberUser2Suppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
     }

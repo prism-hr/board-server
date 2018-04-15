@@ -231,12 +231,12 @@ public class BoardApiIT extends AbstractIT {
         // Check that the department user can reject the board
         verifyExecuteBoard(boardId, departmentUserId, "reject", "rejecting", State.REJECTED);
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.REJECTED, operations);
-        Assertions.assertThat(userApi.getActivities()).isEmpty();
+        Assertions.assertThat(userActivityApi.getActivities()).isEmpty();
 
         // Check that the department user can restore the board to accepted
         verifyExecuteBoard(boardId, departmentUserId, "restore", "restoring", State.ACCEPTED);
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
-        Assertions.assertThat(userApi.getActivities()).isEmpty();
+        Assertions.assertThat(userActivityApi.getActivities()).isEmpty();
 
         // Create post
         User postUser = testUserService.authenticate();

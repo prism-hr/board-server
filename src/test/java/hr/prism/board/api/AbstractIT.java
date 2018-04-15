@@ -71,6 +71,12 @@ public abstract class AbstractIT {
     UserApi userApi;
 
     @Inject
+    UserActivityApi userActivityApi;
+
+    @Inject
+    UserNotificationSuppressionApi userNotificationSuppressionApi;
+
+    @Inject
     AuthenticationApi authenticationApi;
 
     @Inject
@@ -224,7 +230,7 @@ public abstract class AbstractIT {
 
     void listenForActivities(Long userId) {
         testUserService.setAuthentication(userId);
-        Assert.assertTrue(userApi.getActivities().isEmpty());
+        Assert.assertTrue(userActivityApi.getActivities().isEmpty());
     }
 
     void verifyActivitiesEmpty(Long userId) {

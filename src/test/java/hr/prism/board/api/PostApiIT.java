@@ -454,7 +454,7 @@ public class PostApiIT extends AbstractIT {
                 activityService.getActivities(userId).stream().map(ActivityRepresentation::getId).collect(Collectors.toList());
             Assert.assertEquals(2, activityIds.size());
             for (Long activityId : activityIds) {
-                userApi.dismissActivity(activityId);
+                userActivityApi.dismissActivity(activityId);
             }
 
             listenForActivities(userId);
@@ -705,7 +705,7 @@ public class PostApiIT extends AbstractIT {
                     .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId();
 
         testUserService.setAuthentication(departmentMember3Id);
-        userApi.postSuppressions();
+        userNotificationSuppressionApi.postSuppressions();
 
         // Should not be notified
         testUserService.setAuthentication(departmentUserId);
@@ -1244,7 +1244,7 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(postUserId);
         List<ActivityRepresentation> activities = activityService.getActivities(postUserId);
-        activities.forEach(activity -> userApi.dismissActivity(activity.getId()));
+        activities.forEach(activity -> userActivityApi.dismissActivity(activity.getId()));
 
         testActivityService.record();
         testNotificationService.record();
