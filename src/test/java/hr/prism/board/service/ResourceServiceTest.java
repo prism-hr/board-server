@@ -1,25 +1,30 @@
 package hr.prism.board.service;
 
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
+import static hr.prism.board.utils.ResourceUtils.suggestHandle;
+import static org.junit.Assert.assertEquals;
+
+@RunWith(MockitoJUnitRunner.class)
 public class ResourceServiceTest {
 
     @Test
     public void shouldSuggestHandleForVeryShortText() {
-        Assert.assertEquals("iamtiny", ResourceService.suggestHandle("IAmTiny"));
+        assertEquals("iamtiny", suggestHandle("IAmTiny"));
     }
 
     @Test
     public void shouldSuggestHandleForVeryLongText() {
-        Assert.assertEquals("iamaveryverylongpieceofte", ResourceService.suggestHandle("IAmAVeryVeryLongPieceOfText"));
+        assertEquals("iamaveryverylongpieceofte", suggestHandle("IAmAVeryVeryLongPieceOfText"));
     }
 
     @Test
     public void shouldSuggestHandleForTextWithSpaces() {
-        Assert.assertEquals("i-am-a-piece", ResourceService.suggestHandle("I am a piece"));
-        Assert.assertEquals("i-am-a-piece-of-text-with", ResourceService.suggestHandle("I am a piece of text with spaces"));
-        Assert.assertEquals("i-am-another-piece-of", ResourceService.suggestHandle("I am another piece of text with spaces"));
+        assertEquals("i-am-a-piece", suggestHandle("I am a piece"));
+        assertEquals("i-am-a-piece-of-text-with", suggestHandle("I am a piece of text with spaces"));
+        assertEquals("i-am-another-piece-of", suggestHandle("I am another piece of text with spaces"));
     }
 
 }

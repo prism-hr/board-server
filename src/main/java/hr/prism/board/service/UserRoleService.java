@@ -226,7 +226,7 @@ public class UserRoleService {
         Role role = userRoleDTO.getRole();
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, userRoleDTO.getRole());
         if (userRole == null) {
-            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, Role.NOTIFIABLE.contains(role));
+            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, Role.NON_MEMBER_ROLES.contains(role));
         } else {
             userRoleCacheService.updateMembershipData(userRole, userRoleDTO);
             userRole.setState(State.ACCEPTED);

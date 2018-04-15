@@ -1,4 +1,4 @@
-package hr.prism.board.api;
+package hr.prism.board.api.advice;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;

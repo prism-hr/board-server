@@ -1,12 +1,12 @@
-package hr.prism.board.api;
+package hr.prism.board.api.advice;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.AbstractJsonpResponseBodyAdvice;
 
 @ControllerAdvice
-public class JsonpControllerAdvice extends AbstractJsonpResponseBodyAdvice {
+public class JsonpAdvice extends AbstractJsonpResponseBodyAdvice {
 
-    public JsonpControllerAdvice() {
+    public JsonpAdvice() {
         super("callback");
     }
 

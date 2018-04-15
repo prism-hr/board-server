@@ -23,7 +23,7 @@ import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD_HANDLE;
-import static hr.prism.board.service.ResourceService.makeResourceFilter;
+import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -66,8 +66,8 @@ public class BoardService {
                                  String searchTerm) {
         User currentUser = userService.getCurrentUser();
         return resourceService.getResources(currentUser,
-            makeResourceFilter(
-                BOARD, departmentId, includePublicBoards, state, quarter, searchTerm).setOrderStatement("resource.name"))
+            makeResourceFilter(BOARD,
+                departmentId, includePublicBoards, state, quarter, searchTerm).setOrderStatement("resource.name"))
             .stream().map(resource -> (Board) resource).collect(toList());
     }
 

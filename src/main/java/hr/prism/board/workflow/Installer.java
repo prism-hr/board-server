@@ -1,6 +1,6 @@
 package hr.prism.board.workflow;
 
-import hr.prism.board.utils.ObjectMapperProvider;
+import hr.prism.board.utils.ObjectMapperUtils;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -24,7 +24,7 @@ public class Installer {
     private static final Logger LOGGER = getLogger(Installer.class);
 
     private static final Workflow DEPARTMENT_WORKFLOW =
-        new Workflow(ObjectMapperProvider.getObjectMapper())
+        new Workflow(ObjectMapperUtils.getObjectMapper())
             // Department draft state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DRAFT)
@@ -56,7 +56,7 @@ public class Installer {
             .transitioningTo(ACCEPTED);
 
     private static final Workflow BOARD_WORKFLOW =
-        new Workflow(ObjectMapperProvider.getObjectMapper())
+        new Workflow(ObjectMapperUtils.getObjectMapper())
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST)
@@ -89,7 +89,7 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(ACCEPTED);
 
     private static final Workflow POST_WORKFLOW =
-        new Workflow(ObjectMapperProvider.getObjectMapper())
+        new Workflow(ObjectMapperUtils.getObjectMapper())
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)

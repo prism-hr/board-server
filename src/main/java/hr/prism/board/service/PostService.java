@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.MemberCategory.toStrings;
+import static hr.prism.board.enums.Scope.POST;
+import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 
 import hr.prism.board.event.ActivityEvent;
 
@@ -106,7 +108,7 @@ public class PostService {
 
     public Post getPost(Long id, String ipAddress, boolean recordView) {
         User user = userService.getCurrentUser();
-        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, Action.VIEW, () -> post);
 
         if (recordView) {
@@ -128,7 +130,7 @@ public class PostService {
         User user = userService.getCurrentUser();
         List<Post> posts =
             resourceService.getResources(user,
-                ResourceService.makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
+                makeResourceFilter(POST, boardId, includePublicPosts, state, quarter, searchTerm)
                     .setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
@@ -198,7 +200,7 @@ public class PostService {
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User user = userService.getCurrentUserSecured();
-        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        Post post = (Post) resourceService.getResource(user, POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {
             if (action == Action.EDIT) {
@@ -400,7 +402,7 @@ public class PostService {
         return (List<Organization>) entityManager.createNamedQuery("similarOrganizations")
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
-            .setParameter("scope", Scope.POST.name())
+            .setParameter("scope", POST.name())
             .getResultList();
     }
 
@@ -410,7 +412,7 @@ public class PostService {
     }
 
     public Post findLatestPost(User user) {
-        return postRepository.findLatestPost(user, Role.ADMINISTRATOR, Scope.POST);
+        return postRepository.findLatestPost(user, Role.ADMINISTRATOR, POST);
     }
 
     public List<Post> getPosts(Long boardId) {
@@ -539,23 +541,23 @@ public class PostService {
                 List<Activity> activities = new ArrayList<>();
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
-                    activities.add(new Activity().setScope(Scope.POST)
+                    activities.add(new Activity().setScope(POST)
                         .setRole(Role.ADMINISTRATOR)
                         .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
                     activities.add(new Activity().setScope(Scope.DEPARTMENT)
                         .setRole(Role.MEMBER)
                         .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST)
+                    notifications.add(new Notification().setScope(POST)
                         .setRole(Role.ADMINISTRATOR)
                         .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
                     notifications.add(new Notification().setScope(Scope.DEPARTMENT)
                         .setRole(Role.MEMBER)
                         .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
-                    activities.add(new Activity().setScope(Scope.POST)
+                    activities.add(new Activity().setScope(POST)
                         .setRole(Role.ADMINISTRATOR)
                         .setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST)
+                    notifications.add(new Notification().setScope(POST)
                         .setRole(Role.ADMINISTRATOR)
                         .setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }

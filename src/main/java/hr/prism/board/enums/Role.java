@@ -11,6 +11,6 @@ public enum Role {
     MEMBER,
     PUBLIC;
 
-    public static final List<Role> NOTIFIABLE = ImmutableList.of(ADMINISTRATOR, AUTHOR);
+    public static final List<Role> NON_MEMBER_ROLES = ImmutableList.of(ADMINISTRATOR, AUTHOR);
 
 }

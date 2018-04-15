@@ -78,7 +78,7 @@ public class UserRoleCacheService {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
-        if (notify && (Objects.equals(currentUser, user) || !userRoleRepository.findByResourceAndUserAndRoles(resource, user, Role.NOTIFIABLE).isEmpty())) {
+        if (notify && (Objects.equals(currentUser, user) || !userRoleRepository.findByResourceAndUserAndRoles(resource, user, Role.NON_MEMBER_ROLES).isEmpty())) {
             notify = false;
         }
 

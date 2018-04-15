@@ -13,14 +13,17 @@ import java.util.List;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class TestEmailService {
 
-    @Inject
-    private TestEmailRepository testEmailRepository;
+    private final TestEmailRepository testEmailRepository;
+
+    private final UserMapper userMapper;
 
     @Inject
-    private UserMapper userMapper;
+    public TestEmailService(TestEmailRepository testEmailRepository, UserMapper userMapper) {
+        this.testEmailRepository = testEmailRepository;
+        this.userMapper = userMapper;
+    }
 
     public List<TestEmailMessageRepresentation> findAll() {
         return testEmailRepository.findAllMessages();

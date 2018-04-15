@@ -18,7 +18,7 @@ import java.util.List;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static freemarker.template.Configuration.VERSION_2_3_26;
-import static hr.prism.board.utils.ObjectMapperProvider.getObjectMapper;
+import static hr.prism.board.utils.ObjectMapperUtils.getObjectMapper;
 
 @EnableWebMvc
 @Configuration

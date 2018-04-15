@@ -13,13 +13,9 @@ import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceSummary;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,64 +23,95 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static hr.prism.board.enums.Action.ARCHIVE;
+import static hr.prism.board.enums.Action.EDIT;
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
+import static hr.prism.board.enums.State.*;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
+import static hr.prism.board.utils.ResourceUtils.confirmHandle;
+import static hr.prism.board.utils.ResourceUtils.suggestHandle;
+import static java.lang.Math.ceil;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Service
 @Transactional
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "SpringAutowiredFieldsWarningInspection", "unused"})
 public class ResourceService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
+    private static final Logger LOGGER = getLogger(ResourceService.class);
 
-    private static final int MAX_HANDLE_LENGTH = 25;
-
-    @Value("${scheduler.on}")
-    private Boolean schedulerOn;
-
-    @Value("${resource.archive.duration.seconds}")
-    private Long resourceArchiveDurationSeconds;
+    private final Long resourceArchiveDurationSeconds;
 
     @Inject
-    private ResourceRepository resourceRepository;
+    private final ResourceRepository resourceRepository;
 
     @Inject
-    private ResourceDAO resourceDAO;
+    private final ResourceDAO resourceDAO;
 
     @Inject
-    private ResourceRelationRepository resourceRelationRepository;
+    private final ResourceRelationRepository resourceRelationRepository;
 
     @Inject
-    private ResourceCategoryRepository resourceCategoryRepository;
+    private final ResourceCategoryRepository resourceCategoryRepository;
 
     @Inject
-    private ResourceOperationRepository resourceOperationRepository;
+    private final ResourceOperationRepository resourceOperationRepository;
 
     @Inject
-    private ActionService actionService;
+    private final UserService userService;
 
     @Inject
-    private UserService userService;
+    private final EntityManager entityManager;
 
     @Inject
-    private EntityManager entityManager;
+    private final ObjectMapper objectMapper;
 
     @Inject
-    private ObjectMapper objectMapper;
+    public ResourceService(@Value("${resource.archive.duration.seconds}") Long resourceArchiveDurationSeconds,
+                           ResourceRepository resourceRepository, ResourceDAO resourceDAO,
+                           ResourceRelationRepository resourceRelationRepository,
+                           ResourceCategoryRepository resourceCategoryRepository,
+                           ResourceOperationRepository resourceOperationRepository, UserService userService,
+                           EntityManager entityManager, ObjectMapper objectMapper) {
+        this.resourceArchiveDurationSeconds = resourceArchiveDurationSeconds;
+        this.resourceRepository = resourceRepository;
+        this.resourceDAO = resourceDAO;
+        this.resourceRelationRepository = resourceRelationRepository;
+        this.resourceCategoryRepository = resourceCategoryRepository;
+        this.resourceOperationRepository = resourceOperationRepository;
+        this.userService = userService;
+        this.entityManager = entityManager;
+        this.objectMapper = objectMapper;
+    }
 
     public Resource findOne(Long id) {
         return resourceRepository.findOne(id);
     }
 
     public Resource getResource(User user, Scope scope, Long id) {
-        List<Resource> resources = resourceDAO.getResources(user, new ResourceFilter().setScope(scope).setId(id).setIncludePublicResources(true));
+        List<Resource> resources = resourceDAO.getResources(user,
+            new ResourceFilter()
+                .setScope(scope)
+                .setId(id)
+                .setIncludePublicResources(true));
+
         return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
     }
 
     public Resource getResource(User user, Scope scope, String handle) {
-        List<Resource> resources = resourceDAO.getResources(user, new ResourceFilter().setScope(scope).setHandle(handle).setIncludePublicResources(true));
+        List<Resource> resources = resourceDAO.getResources(user,
+            new ResourceFilter()
+                .setScope(scope)
+                .setHandle(handle)
+                .setIncludePublicResources(true));
+
         return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
     }
 
@@ -95,7 +122,7 @@ public class ResourceService {
     public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
         User user = userService.getCurrentUserSecured();
         Resource resource = getResource(user, scope, id);
-        actionService.executeAction(user, resource, Action.EDIT, () -> resource);
+        actionService.executeAction(user, resource, EDIT, () -> resource);
         return resourceDAO.getResourceOperations(resource);
     }
 
@@ -106,18 +133,24 @@ public class ResourceService {
 
     public List<String> getCategories(Resource resource, CategoryType categoryType) {
         List<ResourceCategory> categories = resource.getCategories(categoryType);
-        return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(Collectors.toList());
+        return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(toList());
     }
 
-    public void validateCategories(Resource reference, CategoryType type, List<String> categories, ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
+    public void validateCategories(Resource reference, CategoryType type, List<String> categories,
+                                   ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
         List<ResourceCategory> referenceCategories = reference.getCategories(type);
         if (!referenceCategories.isEmpty()) {
-            if (CollectionUtils.isEmpty(categories)) {
+            if (isEmpty(categories)) {
                 throw new BoardException(missing, "Categories must be specified");
-            } else if (!referenceCategories.stream().map(ResourceCategory::getName).collect(Collectors.toList()).containsAll(categories)) {
+            } else if (
+                !referenceCategories
+                    .stream()
+                    .map(ResourceCategory::getName)
+                    .collect(toList())
+                    .containsAll(categories)) {
                 throw new BoardException(invalid, "Valid categories must be specified - check parent categories");
             }
-        } else if (CollectionUtils.isNotEmpty(categories)) {
+        } else if (isNotEmpty(categories)) {
             throw new BoardException(corrupted, "Categories must not be specified");
         }
     }
@@ -141,9 +174,9 @@ public class ResourceService {
     public void archiveResources() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
-            State.RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
+            RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
         if (!resourceIds.isEmpty()) {
-            actionService.executeAnonymously(resourceIds, Action.ARCHIVE, State.ARCHIVED, baseline);
+            actionService.executeAnonymously(resourceIds, ARCHIVE, ARCHIVED, baseline);
         }
     }
 
@@ -157,20 +190,22 @@ public class ResourceService {
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
         return resourceRepository.findByScopeAndUserAndRolesOrCategory(
-            scope, user, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), CategoryType.MEMBER, State.ACTIVE_USER_ROLE_STATES);
+            scope, user, NON_MEMBER_ROLES, MEMBER, ACTIVE_USER_ROLE_STATES);
     }
 
-    @SuppressWarnings("ConstantConditions")
     public void setIndexDataAndQuarter(Resource resource, String... parts) {
         Resource parent = resource.getParent();
         if (resource.equals(parent)) {
-            resource.setIndexData(BoardUtils.makeSoundex(parts));
+            resource.setIndexData(makeSoundex(parts));
         } else {
-            resource.setIndexData(Joiner.on(" ").skipNulls().join(parent.getIndexData(), BoardUtils.makeSoundex(parts)));
+            String soundex = makeSoundex(parts);
+            requireNonNull(soundex, "soundex cannot be null");
+            resource.setIndexData(Joiner.on(" ").skipNulls().join(parent.getIndexData(), soundex));
         }
 
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
-        resource.setQuarter(Integer.toString(createdTimestamp.getYear()) + (int) Math.ceil((double) createdTimestamp.getMonthValue() / 3));
+        resource.setQuarter(
+            Integer.toString(createdTimestamp.getYear()) + (int) ceil((double) createdTimestamp.getMonthValue() / 3));
     }
 
     public void updateHandle(Resource resource, String newHandle) {
@@ -189,12 +224,16 @@ public class ResourceService {
 
         if ((resource1Ordinal + resource2Ordinal) == 0 || resource1Ordinal == (resource2Ordinal - 1)) {
             resource2.setParent(resource1);
-            resource1.getParents().stream().map(ResourceRelation::getResource1).forEach(parentResource -> commitResourceRelation(parentResource, resource2));
+            resource1.getParents()
+                .stream()
+                .map(ResourceRelation::getResource1)
+                .forEach(parentResource -> commitResourceRelation(parentResource, resource2));
+
             commitResourceRelation(resource2, resource2);
             return;
         }
 
-        throw new IllegalStateException("Incorrect use of method. First argument must be of direct parent scope of second argument. " +
+        throw new IllegalStateException("First argument must be of direct parent scope of second argument. " +
             "Arguments passed were: " + Joiner.on(", ").join(resource1, resource2));
     }
 
@@ -209,7 +248,10 @@ public class ResourceService {
             categories.forEach(category ->
                 oldCategories.add(
                     createResourceCategory(
-                        new ResourceCategory().setResource(resource).setName(category).setType(type))));
+                        new ResourceCategory()
+                            .setResource(resource)
+                            .setName(category)
+                            .setType(type))));
         }
     }
 
@@ -219,7 +261,7 @@ public class ResourceService {
             previousState = state;
         }
 
-        if (state == State.PREVIOUS) {
+        if (state == PREVIOUS) {
             throw new IllegalStateException("Previous state is anonymous - cannot be assigned to a resource");
         }
 
@@ -238,10 +280,15 @@ public class ResourceService {
     }
 
     public void createResourceOperation(Resource resource, Action action, User user) {
-        ResourceOperation resourceOperation = new ResourceOperation().setResource(resource).setAction(action).setUser(user);
-        if (action == Action.EDIT) {
+        ResourceOperation resourceOperation =
+            new ResourceOperation()
+                .setResource(resource)
+                .setAction(action)
+                .setUser(user);
+
+        if (action == EDIT) {
             ChangeListRepresentation changeList = resource.getChangeList();
-            if (CollectionUtils.isNotEmpty(changeList)) {
+            if (isNotEmpty(changeList)) {
                 try {
                     resourceOperation.setChangeList(objectMapper.writeValueAsString(changeList));
                 } catch (JsonProcessingException e) {
@@ -260,102 +307,24 @@ public class ResourceService {
     public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
         String handle;
         if (parent == null) {
-            handle = ResourceService.suggestHandle(name);
+            handle = suggestHandle(name);
         } else {
-            handle = parent.getHandle() + "/" + ResourceService.suggestHandle(name);
+            handle = parent.getHandle() + "/" + suggestHandle(name);
         }
 
         List<String> similarHandles = similarHandleFinder.find(handle);
-        return ResourceService.confirmHandle(handle, similarHandles);
-    }
-
-    public static String suggestHandle(String name) {
-        String suggestion = "";
-        name = StringUtils.stripAccents(name.toLowerCase());
-        String[] parts = name.split(" ");
-        for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (StringUtils.isAlphanumeric(part)) {
-                String newSuggestion;
-                if (suggestion.length() > 0) {
-                    newSuggestion = suggestion + "-" + part;
-                } else {
-                    newSuggestion = part;
-                }
-
-                if (newSuggestion.length() > MAX_HANDLE_LENGTH) {
-                    if (i == 0) {
-                        return newSuggestion.substring(0, MAX_HANDLE_LENGTH);
-                    }
-
-                    return suggestion;
-                }
-
-                suggestion = newSuggestion;
-            }
-        }
-
-        return suggestion;
-    }
-
-    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
-        String stateString = null;
-        String negatedStateString = State.ARCHIVED.name();
-        if (state != null) {
-            stateString = state.name();
-            if (state == State.ARCHIVED) {
-                negatedStateString = null;
-                if (quarter == null) {
-                    throw new BoardException(ExceptionCode.INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
-                }
-            }
-        }
-
-        return new ResourceFilter()
-            .setScope(scope)
-            .setParentId(parentId)
-            .setState(stateString)
-            .setNegatedState(negatedStateString)
-            .setQuarter(quarter)
-            .setSearchTerm(searchTerm)
-            .setIncludePublicResources(includePublicPosts);
+        return confirmHandle(handle, similarHandles);
     }
 
     private void commitResourceRelation(Resource resource1, Resource resource2) {
-        ResourceRelation resourceRelation = new ResourceRelation().setResource1(resource1).setResource2(resource2);
+        ResourceRelation resourceRelation =
+            new ResourceRelation()
+                .setResource1(resource1)
+                .setResource2(resource2);
         resourceRelationRepository.save(resourceRelation);
 
         resource1.getChildren().add(resourceRelation);
         resource2.getParents().add(resourceRelation);
-    }
-
-    private static String confirmHandle(String suggestedHandle, List<String> similarHandles) {
-        if (similarHandles.contains(suggestedHandle)) {
-            int ordinal = 2;
-            int suggestedHandleLength = suggestedHandle.length();
-            List<String> similarHandleSuffixes = similarHandles.stream()
-                .map(similarHandle -> similarHandle.substring(suggestedHandleLength))
-                .collect(Collectors.toList());
-            for (String similarHandleSuffix : similarHandleSuffixes) {
-                if (similarHandleSuffix.startsWith("-")) {
-                    String[] parts = similarHandleSuffix.replaceFirst("-", "").split("-");
-
-                    // We only care about creating a unique value in a formatted sequence
-                    // We can ignore anything else that has been reformatted by an end user
-                    if (parts.length == 1) {
-                        String firstPart = parts[0];
-                        if (StringUtils.isNumeric(firstPart)) {
-                            ordinal = Integer.parseInt(firstPart) + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return suggestedHandle + "-" + ordinal;
-        }
-
-        return suggestedHandle;
     }
 
     private ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {
