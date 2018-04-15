@@ -15,6 +15,13 @@ import java.util.List;
 public interface ActivityRepository extends BoardEntityRepository<Activity, Long> {
 
     @Query(value =
+        "select activity " +
+            "from Activity activity " +
+            "where activity.id in (:ids) " +
+            "order by activity.updatedTimestamp desc, activity.id desc")
+    List<Activity> findByIds(@Param("ids") Collection<Long> ids);
+
+    @Query(value =
         "select activityEvent.activity.id " +
             "from ActivityEvent activityEvent " +
             "where activityEvent.activity in (:activities) " +

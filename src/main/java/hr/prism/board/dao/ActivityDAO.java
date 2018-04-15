@@ -1,6 +1,7 @@
 package hr.prism.board.dao;
 
 import hr.prism.board.domain.Activity;
+import hr.prism.board.repository.ActivityRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +11,8 @@ import java.util.List;
 
 import static hr.prism.board.enums.ActivityEvent.DISMISSAL;
 import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATES;
+import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
+import static java.util.Collections.emptyList;
 
 @Repository
 @Transactional
@@ -43,21 +45,25 @@ public class ActivityDAO {
             "and activityEvent.event = :activityEvent) " +
             "order by activity.updatedTimestamp desc, activity.id desc";
 
+    private final ActivityRepository activityRepository;
+
     private final EntityManager entityManager;
 
     @Inject
-    public ActivityDAO(EntityManager entityManager) {
+    public ActivityDAO(ActivityRepository activityRepository, EntityManager entityManager) {
+        this.activityRepository = activityRepository;
         this.entityManager = entityManager;
     }
 
     public List<Activity> getActivities(Long userId) {
-        return entityManager.createQuery(USER_ACTIVITY, Activity.class)
+        List<Long> ids = entityManager.createNamedQuery("userActivities", Long.class)
             .setParameter("userId", userId)
-            .setParameter("userRoleStates", ACTIVE_USER_ROLE_STATES)
-            .setParameter("categoryType", MEMBER)
-            .setParameter("activityEvent", DISMISSAL)
-            .setMaxResults(25)
+            .setParameter("userRoleStates", ACTIVE_USER_ROLE_STATE_STRINGS)
+            .setParameter("categoryType", MEMBER.name())
+            .setParameter("activityEvent", DISMISSAL.name())
             .getResultList();
+
+        return ids.isEmpty() ? emptyList() : activityRepository.findByIds(ids);
     }
 
 }
