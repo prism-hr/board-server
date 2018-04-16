@@ -30,7 +30,6 @@ import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 
 @Service
 @Transactional
-@SuppressWarnings({"JpaQlInspection", "SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class UserRoleService {
 
     @Inject
@@ -39,8 +38,8 @@ public class UserRoleService {
     @Inject
     private UserRoleCacheService userRoleCacheService;
 
-    @Inject
-    private ActivityService activityService;
+//    @Inject
+//    private ActivityService activityService;
 
     @Inject
     private ResourceService resourceService;
@@ -51,8 +50,8 @@ public class UserRoleService {
     @Inject
     private UserCacheService userCacheService;
 
-    @Inject
-    private ActionService actionService;
+//    @Inject
+//    private ActionService actionService;
 
     @Inject
     private UserRoleMapper userRoleMapper;

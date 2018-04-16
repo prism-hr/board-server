@@ -1435,7 +1435,7 @@ public class PostApiIT extends AbstractIT {
         resourceRepository.updateUpdatedTimestampById(postId3,
             post3.getUpdatedTimestamp().minusSeconds(resourceArchiveDurationSeconds + 1));
 
-        resourceService.archiveResources();
+        postService.archivePosts();
         Assert.assertEquals(State.PENDING, resourceRepository.findOne(postId1).getState());
         Assert.assertEquals(State.ARCHIVED, resourceRepository.findOne(postId2).getState());
         Assert.assertEquals(State.ARCHIVED, resourceRepository.findOne(postId3).getState());

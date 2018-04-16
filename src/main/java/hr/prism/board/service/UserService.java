@@ -66,12 +66,6 @@ public class UserService {
     private UserCacheService userCacheService;
 
     @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private ActionService actionService;
-
-    @Inject
     private UserPatchService userPatchService;
 
     @Inject
@@ -173,12 +167,7 @@ public class UserService {
     }
 
     @SuppressWarnings("unchecked")
-    public List<UserRepresentation> findUsers(Scope scope, Long resourceId, String searchTerm) {
-        // Apply security to the lookup request
-        User currentUser = getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        actionService.executeAction(currentUser, resource, Action.EDIT, () -> resource);
-
+    public List<UserRepresentation> findUsers(String searchTerm) {
         List<Object[]> results = entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
             .setParameter("searchTerm", searchTerm + "%")
             .getResultList();

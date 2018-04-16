@@ -2,15 +2,13 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.DepartmentDAO;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.University;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.*;
+import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
@@ -43,6 +41,8 @@ import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
+
+import hr.prism.board.event.ActivityEvent;
 
 @Service
 @Transactional
@@ -150,6 +150,13 @@ public class DepartmentService {
         return resources.stream()
             .map(resource -> (Department) resource)
             .collect(toList());
+    }
+
+    public List<ResourceOperation> getDepartmentOperations(Long id) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+        return resourceService.getResourceOperations(department);
     }
 
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {

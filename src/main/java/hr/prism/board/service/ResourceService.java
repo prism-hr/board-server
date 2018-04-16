@@ -26,7 +26,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import static hr.prism.board.enums.Action.ARCHIVE;
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
@@ -65,9 +64,6 @@ public class ResourceService {
     private final ResourceOperationRepository resourceOperationRepository;
 
     @Inject
-    private final UserService userService;
-
-    @Inject
     private final EntityManager entityManager;
 
     @Inject
@@ -78,15 +74,14 @@ public class ResourceService {
                            ResourceRepository resourceRepository, ResourceDAO resourceDAO,
                            ResourceRelationRepository resourceRelationRepository,
                            ResourceCategoryRepository resourceCategoryRepository,
-                           ResourceOperationRepository resourceOperationRepository, UserService userService,
-                           EntityManager entityManager, ObjectMapper objectMapper) {
+                           ResourceOperationRepository resourceOperationRepository, EntityManager entityManager,
+                           ObjectMapper objectMapper) {
         this.resourceArchiveDurationSeconds = resourceArchiveDurationSeconds;
         this.resourceRepository = resourceRepository;
         this.resourceDAO = resourceDAO;
         this.resourceRelationRepository = resourceRelationRepository;
         this.resourceCategoryRepository = resourceCategoryRepository;
         this.resourceOperationRepository = resourceOperationRepository;
-        this.userService = userService;
         this.entityManager = entityManager;
         this.objectMapper = objectMapper;
     }
@@ -119,15 +114,11 @@ public class ResourceService {
         return resourceDAO.getResources(user, filter);
     }
 
-    public List<ResourceOperation> getResourceOperations(Scope scope, Long id) {
-        User user = userService.getCurrentUserSecured();
-        Resource resource = getResource(user, scope, id);
-        actionService.executeAction(user, resource, EDIT, () -> resource);
+    public List<ResourceOperation> getResourceOperations(Resource resource) {
         return resourceDAO.getResourceOperations(resource);
     }
 
-    public List<String> getResourceArchiveQuarters(Scope scope, Long parentId) {
-        User user = userService.getCurrentUserSecured();
+    public List<String> getResourceArchiveQuarters(User user, Scope scope, Long parentId) {
         return resourceDAO.getResourceArchiveQuarters(user, scope, parentId);
     }
 
@@ -171,13 +162,9 @@ public class ResourceService {
         return resourceRepository.findSummaryByUserAndRole(user, role);
     }
 
-    public void archiveResources() {
-        LocalDateTime baseline = LocalDateTime.now();
-        List<Long> resourceIds = resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
+    public List<Long> getResourcesToArchive(LocalDateTime baseline) {
+        return resourceRepository.findByStatesAndLessThanUpdatedTimestamp(
             RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
-        if (!resourceIds.isEmpty()) {
-            actionService.executeAnonymously(resourceIds, ARCHIVE, ARCHIVED, baseline);
-        }
     }
 
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {

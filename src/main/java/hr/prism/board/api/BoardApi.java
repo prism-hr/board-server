@@ -4,14 +4,12 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
-import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -29,16 +27,13 @@ public class BoardApi {
 
     private final BoardMapper boardMapper;
 
-    private final ResourceService resourceService;
-
     private final ResourceOperationMapper resourceOperationMapper;
 
     @Inject
-    public BoardApi(BoardService boardService, BoardMapper boardMapper, ResourceService resourceService,
+    public BoardApi(BoardService boardService, BoardMapper boardMapper,
                     ResourceOperationMapper resourceOperationMapper) {
         this.boardService = boardService;
         this.boardMapper = boardMapper;
-        this.resourceService = resourceService;
         this.resourceOperationMapper = resourceOperationMapper;
     }
 
@@ -70,8 +65,7 @@ public class BoardApi {
 
     @RequestMapping(value = "/api/boards/{boardId}/operations", method = GET)
     public List<ResourceOperationRepresentation> getBoardOperations(@PathVariable Long boardId) {
-        return resourceService.getResourceOperations(Scope.BOARD, boardId)
-            .stream().map(resourceOperationMapper).collect(toList());
+        return boardService.getBoardOperations(boardId).stream().map(resourceOperationMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}", method = PATCH)

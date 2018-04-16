@@ -62,13 +62,13 @@ public class DepartmentPaymentService {
         this.entityManager = entityManager;
     }
 
-    public Customer getPaymentSources(Long departmentId) {
-        String customerId = getCustomerIdSecured(departmentId);
+    public Customer getPaymentSources(Long id) {
+        String customerId = getCustomerIdSecured(id);
         return customerId == null ? null : paymentService.getCustomer(customerId);
     }
 
-    public InvoiceCollection getInvoices(Long departmentId) {
-        String customerId = getCustomerIdSecured(departmentId);
+    public InvoiceCollection getInvoices(Long id) {
+        String customerId = getCustomerIdSecured(id);
         return customerId == null ? null : paymentService.getInvoices(customerId);
     }
 
@@ -209,9 +209,9 @@ public class DepartmentPaymentService {
         return (Department) resourceService.getResource(user, DEPARTMENT, id);
     }
 
-    private String getCustomerIdSecured(Long departmentId) {
+    private String getCustomerIdSecured(Long id) {
         User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return department.getCustomerId();
     }

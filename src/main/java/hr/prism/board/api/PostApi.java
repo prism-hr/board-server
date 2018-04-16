@@ -12,7 +12,6 @@ import hr.prism.board.representation.OrganizationRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.PostService;
-import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -20,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
-import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.utils.BoardUtils.getClientIpAddress;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -35,17 +33,14 @@ public class PostApi {
 
     private final OrganizationMapper organizationMapper;
 
-    private final ResourceService resourceService;
-
     private final ResourceOperationMapper resourceOperationMapper;
 
     @Inject
     public PostApi(PostService postService, PostMapper postMapper, OrganizationMapper organizationMapper,
-                   ResourceService resourceService, ResourceOperationMapper resourceOperationMapper) {
+                   ResourceOperationMapper resourceOperationMapper) {
         this.postService = postService;
         this.postMapper = postMapper;
         this.organizationMapper = organizationMapper;
-        this.resourceService = resourceService;
         this.resourceOperationMapper = resourceOperationMapper;
     }
 
@@ -72,8 +67,7 @@ public class PostApi {
 
     @RequestMapping(value = "/api/posts/{postId}/operations", method = GET)
     public List<ResourceOperationRepresentation> getPostOperations(@PathVariable Long postId) {
-        return resourceService.getResourceOperations(POST, postId)
-            .stream().map(resourceOperationMapper).collect(toList());
+        return postService.getPostOperations(postId).stream().map(resourceOperationMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/posts/{postId}", method = PATCH)
@@ -95,7 +89,7 @@ public class PostApi {
 
     @RequestMapping(value = "/api/posts/archiveQuarters", method = GET)
     public List<String> getPostArchiveQuarters(@RequestParam(required = false) Long parentId) {
-        return resourceService.getResourceArchiveQuarters(POST, parentId);
+        return postService.getPostArchiveQuarters(parentId);
     }
 
 }

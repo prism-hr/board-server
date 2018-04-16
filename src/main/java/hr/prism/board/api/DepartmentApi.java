@@ -10,10 +10,9 @@ import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.DepartmentDashboardRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
-import hr.prism.board.service.BadgeService;
+import hr.prism.board.service.DepartmentBadgeService;
 import hr.prism.board.service.DepartmentDashboardService;
 import hr.prism.board.service.DepartmentService;
-import hr.prism.board.service.ResourceService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -22,7 +21,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
-import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -33,9 +31,7 @@ public class DepartmentApi {
 
     private final DepartmentDashboardService departmentDashboardService;
 
-    private final ResourceService resourceService;
-
-    private final BadgeService badgeService;
+    private final DepartmentBadgeService departmentBadgeService;
 
     private final DepartmentMapper departmentMapper;
 
@@ -45,12 +41,11 @@ public class DepartmentApi {
 
     @Inject
     public DepartmentApi(DepartmentService departmentService, DepartmentDashboardService departmentDashboardService,
-                         ResourceService resourceService, BadgeService badgeService, DepartmentMapper departmentMapper,
+                         DepartmentBadgeService departmentBadgeService, DepartmentMapper departmentMapper,
                          ResourceOperationMapper resourceOperationMapper, ObjectMapper objectMapper) {
         this.departmentService = departmentService;
         this.departmentDashboardService = departmentDashboardService;
-        this.resourceService = resourceService;
-        this.badgeService = badgeService;
+        this.departmentBadgeService = departmentBadgeService;
         this.departmentMapper = departmentMapper;
         this.resourceOperationMapper = resourceOperationMapper;
         this.objectMapper = objectMapper;
@@ -93,7 +88,7 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/operations", method = GET)
     public List<ResourceOperationRepresentation> getDepartmentOperations(@PathVariable Long departmentId) {
-        return resourceService.getResourceOperations(DEPARTMENT, departmentId)
+        return departmentService.getDepartmentOperations(departmentId)
             .stream().map(resourceOperationMapper).collect(toList());
     }
 
@@ -108,11 +103,11 @@ public class DepartmentApi {
         return departmentService.findProgramsBySimilarName(departmentId, searchTerm);
     }
 
-    @RequestMapping(value = "/api/departments/{id}/badge", method = GET)
-    public String getDepartmentBadge(@PathVariable Long id, @RequestParam String options, HttpServletResponse response)
-        throws IOException {
+    @RequestMapping(value = "/api/departments/{departmentId}/badge", method = GET)
+    public String getDepartmentBadge(@PathVariable Long departmentId, @RequestParam String options,
+                                     HttpServletResponse response) throws IOException {
         response.setHeader("X-Frame-Options", "ALLOW");
-        return badgeService.getResourceBadge(resourceService.getResource(null, DEPARTMENT, id),
+        return departmentBadgeService.getBadge(departmentId,
             objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
             }));
     }

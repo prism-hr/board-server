@@ -2,47 +2,51 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
 import hr.prism.board.enums.ResourceTask;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.time.LocalDateTime;
+
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
 @Service
 public class ScheduledService {
 
-    @Value("${scheduler.on}")
-    private Boolean schedulerOn;
+    private final boolean schedulerOn;
 
-    @Inject
-    private ActivityService activityService;
+    private final ActivityService activityService;
 
-    @Inject
-    private PostService postService;
+    private final PostService postService;
 
-    @Inject
-    private ResourceTaskService resourceTaskService;
+    private final ResourceTaskService resourceTaskService;
 
-    @Inject
-    private DepartmentService departmentService;
+    private final DepartmentService departmentService;
 
-    @Inject
-    private ResourceService resourceService;
+    public ScheduledService(@Value("${scheduler.on}") boolean schedulerOn, ActivityService activityService,
+                            PostService postService, ResourceTaskService resourceTaskService,
+                            DepartmentService departmentService) {
+        this.schedulerOn = schedulerOn;
+        this.activityService = activityService;
+        this.postService = postService;
+        this.resourceTaskService = resourceTaskService;
+        this.departmentService = departmentService;
+    }
 
+    @SuppressWarnings("unused")
     @Scheduled(initialDelay = 60000, fixedDelay = 10000)
     public void processActivities() throws IOException {
-        if (BooleanUtils.isTrue(schedulerOn)) {
+        if (isTrue(schedulerOn)) {
             activityService.updateActivities();
         }
     }
 
+    @SuppressWarnings("unused")
     @Scheduled(initialDelay = 60000, fixedDelay = 10000)
     public void processResources() {
-        if (BooleanUtils.isTrue(schedulerOn)) {
+        if (isTrue(schedulerOn)) {
             // Publish / retire posts
             LocalDateTime baseline = getBaseline();
             postService.publishAndRetirePosts(baseline);
@@ -56,20 +60,22 @@ public class ScheduledService {
             // Update department tasks
             updateDepartmentTasks(baseline);
 
-            // Archive expired resources
-            resourceService.archiveResources();
+            // Archive expired posts
+            postService.archivePosts();
         }
     }
 
     public void notifyDepartmentTasks(LocalDateTime baseline) {
-        ArrayListMultimap<Pair<Long, Integer>, ResourceTask> resourceTasks = resourceTaskService.getResourceTasks(baseline);
-        resourceTasks.keySet().forEach(resourceId -> resourceTaskService.sendNotification(resourceId, resourceTasks.get(resourceId)));
+        ArrayListMultimap<Pair<Long, Integer>, ResourceTask> resourceTasks =
+            resourceTaskService.getResourceTasks(baseline);
+        resourceTasks.keySet().forEach(resourceId ->
+            resourceTaskService.sendNotification(resourceId, resourceTasks.get(resourceId)));
     }
 
     public void updateDepartmentSubscriptions(LocalDateTime baseline) {
         departmentService.updateSubscriptions(baseline);
         departmentService.findAllIdsForSubscribeNotification(baseline)
-            .forEach(departmentId -> departmentService.sendSubscribeNotification(departmentId));
+            .forEach(departmentService::sendSubscribeNotification);
     }
 
     public void updateDepartmentTasks(LocalDateTime baseline) {

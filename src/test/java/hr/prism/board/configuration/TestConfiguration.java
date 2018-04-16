@@ -46,6 +46,8 @@ public class TestConfiguration {
 
     private final boolean mailOn;
 
+    private final boolean schedulerOn;
+
     private final String senderEmail;
 
     private final ActivityRepository activityRepository;
@@ -62,6 +64,14 @@ public class TestConfiguration {
 
     private final TestEmailService testEmailService;
 
+    private final PostService postService;
+
+    private final ActivityService activityService;
+
+    private final ResourceTaskService resourceTaskService;
+
+    private final DepartmentService departmentService;
+
     private final ActivityMapper activityMapper;
 
     private final Pusher pusher;
@@ -76,16 +86,19 @@ public class TestConfiguration {
 
     @Inject
     public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, @Value("${mail.on}") boolean mailOn,
-                             @Value("${system.email}") String senderEmail,
-                             ActivityRepository activityRepository, ActivityDAO activityDAO,
-                             ActivityRoleRepository activityRoleRepository,
+                             @Value("${scheduler.on}") boolean schedulerOn,
+                             @Value("${system.email}") String senderEmail, ActivityRepository activityRepository,
+                             ActivityDAO activityDAO, ActivityRoleRepository activityRoleRepository,
                              ActivityUserRepository activityUserRepository,
                              ActivityEventRepository activityEventRepository, UserService userService,
-                             TestEmailService testEmailService, ActivityMapper activityMapper, Pusher pusher,
+                             TestEmailService testEmailService, ActivityService activityService,
+                             PostService postService, ResourceTaskService resourceTaskService,
+                             DepartmentService departmentService, ActivityMapper activityMapper, Pusher pusher,
                              SendGrid sendGrid, ObjectMapper objectMapper, EntityManager entityManager,
                              ApplicationContext applicationContext) {
         this.pusherOn = pusherOn;
         this.mailOn = mailOn;
+        this.schedulerOn = schedulerOn;
         this.senderEmail = senderEmail;
         this.activityRepository = activityRepository;
         this.activityDAO = activityDAO;
@@ -94,6 +107,10 @@ public class TestConfiguration {
         this.activityEventRepository = activityEventRepository;
         this.userService = userService;
         this.testEmailService = testEmailService;
+        this.activityService = activityService;
+        this.postService = postService;
+        this.resourceTaskService = resourceTaskService;
+        this.departmentService = departmentService;
         this.activityMapper = activityMapper;
         this.pusher = pusher;
         this.sendGrid = sendGrid;
@@ -201,7 +218,8 @@ public class TestConfiguration {
     @Bean
     @Primary
     public TestScheduledService scheduledService() {
-        return new TestScheduledService();
+        return new TestScheduledService(schedulerOn, activityService, postService, resourceTaskService,
+            departmentService);
     }
 
     @Bean

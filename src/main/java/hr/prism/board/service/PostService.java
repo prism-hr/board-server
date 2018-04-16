@@ -38,8 +38,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hr.prism.board.enums.Action.ARCHIVE;
+import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.Scope.POST;
+import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 
 import hr.prism.board.event.ActivityEvent;
@@ -140,6 +143,18 @@ public class PostService {
 
         decoratePosts(user, posts);
         return posts;
+    }
+
+    public List<ResourceOperation> getPostOperations(Long id) {
+        User user = userService.getCurrentUserSecured();
+        Post post = (Post) resourceService.getResource(user, POST, id);
+        actionService.executeAction(user, post, EDIT, () -> post);
+        return resourceService.getResourceOperations(post);
+    }
+
+    public List<String> getPostArchiveQuarters(Long parentId) {
+        User user = userService.getCurrentUserSecured();
+        return resourceService.getResourceArchiveQuarters(user, POST, parentId);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
@@ -472,6 +487,14 @@ public class PostService {
 
         setIndexDataAndQuarter(post);
         postRepository.update(post);
+    }
+
+    public void archivePosts() {
+        LocalDateTime baseline = LocalDateTime.now();
+        List<Long> postIds = resourceService.getResourcesToArchive(baseline);
+        if (!postIds.isEmpty()) {
+            actionService.executeAnonymously(postIds, ARCHIVE, ARCHIVED, baseline);
+        }
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
@@ -69,6 +70,13 @@ public class BoardService {
             makeResourceFilter(BOARD,
                 departmentId, includePublicBoards, state, quarter, searchTerm).setOrderStatement("resource.name"))
             .stream().map(resource -> (Board) resource).collect(toList());
+    }
+
+    public List<ResourceOperation> getBoardOperations(Long id) {
+        User user = userService.getCurrentUserSecured();
+        Board board = (Board) resourceService.getResource(user, BOARD, id);
+        actionService.executeAction(user, board, EDIT, () -> board);
+        return resourceService.getResourceOperations(board);
     }
 
     public Board createBoard(Long departmentId, BoardDTO boardDTO) {

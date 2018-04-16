@@ -11,7 +11,6 @@ import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.DepartmentUserService;
 import hr.prism.board.service.UserRoleService;
-import hr.prism.board.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -26,8 +25,6 @@ public class DepartmentUserApi {
 
     private final DepartmentUserService departmentUserService;
 
-    private final UserService userService;
-
     private final UserRoleService userRoleService;
 
     private final DepartmentMapper departmentMapper;
@@ -37,15 +34,18 @@ public class DepartmentUserApi {
     private final UserRoleMapper userRoleMapper;
 
     @Inject
-    public DepartmentUserApi(DepartmentUserService departmentUserService, UserService userService,
-                             UserRoleService userRoleService, DepartmentMapper departmentMapper, UserMapper userMapper,
-                             UserRoleMapper userRoleMapper) {
+    public DepartmentUserApi(DepartmentUserService departmentUserService, UserRoleService userRoleService,
+                             DepartmentMapper departmentMapper, UserMapper userMapper, UserRoleMapper userRoleMapper) {
         this.departmentUserService = departmentUserService;
-        this.userService = userService;
         this.userRoleService = userRoleService;
         this.departmentMapper = departmentMapper;
         this.userMapper = userMapper;
         this.userRoleMapper = userRoleMapper;
+    }
+
+    @RequestMapping(value = "/api/departments/{departmentId}/lookupUsers", method = GET)
+    public List<UserRepresentation> findUsers(@PathVariable Long departmentId, @RequestParam String query) {
+        return departmentUserService.findUsers(departmentId, query);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/bulk", method = POST)
@@ -99,11 +99,6 @@ public class DepartmentUserApi {
     @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = DELETE)
     public void deleteUserRoles(@PathVariable Long resourceId, @PathVariable Long userId) {
         userRoleService.deleteUserRoles(DEPARTMENT, resourceId, userId);
-    }
-
-    @RequestMapping(value = "/api/departments/{resourceId}/lookupUsers", method = GET)
-    public List<UserRepresentation> findUsers(@PathVariable Long resourceId, @RequestParam String query) {
-        return userService.findUsers(DEPARTMENT, resourceId, query);
     }
 
 }

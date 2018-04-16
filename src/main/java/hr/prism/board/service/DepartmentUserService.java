@@ -15,6 +15,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
+import hr.prism.board.representation.UserRepresentation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,27 +66,34 @@ public class DepartmentUserService {
         this.eventProducer = eventProducer;
     }
 
-    public Department createMembers(Long departmentId, List<UserRoleDTO> userRoleDTOs) {
+    public List<UserRepresentation> findUsers(Long id, String searchTerm) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+        return userService.findUsers(searchTerm);
+    }
+
+    public Department createMembers(Long id, List<UserRoleDTO> userRoleDTOs) {
         if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != MEMBER)) {
             throw new BoardException(INVALID_RESOURCE_USER, "Only members can be bulk created");
         }
 
         User currentUser = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
+        Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
 
             eventProducer.produce(
-                new UserRoleEvent(this, currentUser.getId(), departmentId, userRoleDTOs));
+                new UserRoleEvent(this, currentUser.getId(), id, userRoleDTOs));
 
             department.setLastMemberTimestamp(LocalDateTime.now());
             return department;
         });
     }
 
-    public User createMembershipRequest(Long departmentId, UserRoleDTO userRoleDTO) {
+    public User createMembershipRequest(Long id, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
-        Department department = (Department) resourceService.findOne(departmentId);
+        Department department = (Department) resourceService.findOne(id);
 
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
         if (userRole != null) {
@@ -109,13 +117,13 @@ public class DepartmentUserService {
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
         eventProducer.produce(
-            new ActivityEvent(this, departmentId, UserRole.class, userRole.getId(),
+            new ActivityEvent(this, id, UserRole.class, userRole.getId(),
                 singletonList(
                     new hr.prism.board.workflow.Activity()
                         .setScope(DEPARTMENT)
                         .setRole(ADMINISTRATOR)
                         .setActivity(JOIN_DEPARTMENT_REQUEST_ACTIVITY))),
-            new NotificationEvent(this, departmentId,
+            new NotificationEvent(this, id,
                 singletonList(
                     new hr.prism.board.workflow.Notification()
                         .setScope(DEPARTMENT)
@@ -125,34 +133,34 @@ public class DepartmentUserService {
         return user;
     }
 
-    public UserRole viewMembershipRequest(Long departmentId, Long userId) {
+    public UserRole viewMembershipRequest(Long id, Long userId) {
         User user = userService.getCurrentUserSecured();
-        Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
+        Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
         activityService.viewActivity(userRole.getActivity(), user);
         return userRole.setViewed(true);
     }
 
-    public void reviewMembershipRequest(Long departmentId, Long userId, State state) {
+    public void reviewMembershipRequest(Long id, Long userId, State state) {
         User user = userService.getCurrentUserSecured();
-        Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
+        Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> {
             UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
             if (userRole.getState() == PENDING) {
                 userRole.setState(state);
 
                 eventProducer.produce(
-                    new ActivityEvent(this, departmentId, UserRole.class, userRole.getId()));
+                    new ActivityEvent(this, id, UserRole.class, userRole.getId()));
             }
 
             return department;
         });
     }
 
-    public User updateMembershipData(Long departmentId, UserRoleDTO userRoleDTO) {
+    public User updateMembershipData(Long id, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured(true);
-        Department department = (Department) resourceService.findOne(departmentId);
+        Department department = (Department) resourceService.findOne(id);
 
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
         if (userRole == null || userRole.getState() == REJECTED) {
@@ -182,8 +190,8 @@ public class DepartmentUserService {
         }
     }
 
-    public void decrementMemberCountPending(Long departmentId) {
-        ((Department) resourceService.findOne(departmentId)).decrementMemberToBeUploadedCount();
+    public void decrementMemberCountPending(Long id) {
+        ((Department) resourceService.findOne(id)).decrementMemberToBeUploadedCount();
     }
 
 }
