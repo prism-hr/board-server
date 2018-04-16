@@ -42,7 +42,7 @@ public class UserRoleEventConsumer {
         User user = userCacheService.findOne(userRoleEvent.getCreatorId());
         for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
             try {
-                userRoleService.createOrUpdateResourceUser(user, resourceId, userRoleDTO);
+                userRoleService.createOrUpdateUserRole(user, resourceId, userRoleDTO);
             } catch (Throwable t) {
                 throw new BoardException(
                     UNPROCESSABLE_RESOURCE_USER, "Unable to add member: " + userRoleDTO.getUser().toString(), t);

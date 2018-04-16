@@ -10,7 +10,6 @@ import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.representation.UserRoleRepresentation;
 import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.DepartmentUserService;
-import hr.prism.board.service.UserRoleService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -25,8 +24,6 @@ public class DepartmentUserApi {
 
     private final DepartmentUserService departmentUserService;
 
-    private final UserRoleService userRoleService;
-
     private final DepartmentMapper departmentMapper;
 
     private final UserMapper userMapper;
@@ -34,10 +31,9 @@ public class DepartmentUserApi {
     private final UserRoleMapper userRoleMapper;
 
     @Inject
-    public DepartmentUserApi(DepartmentUserService departmentUserService, UserRoleService userRoleService,
-                             DepartmentMapper departmentMapper, UserMapper userMapper, UserRoleMapper userRoleMapper) {
+    public DepartmentUserApi(DepartmentUserService departmentUserService, DepartmentMapper departmentMapper,
+                             UserMapper userMapper, UserRoleMapper userRoleMapper) {
         this.departmentUserService = departmentUserService;
-        this.userRoleService = userRoleService;
         this.departmentMapper = departmentMapper;
         this.userMapper = userMapper;
         this.userRoleMapper = userRoleMapper;
@@ -84,10 +80,10 @@ public class DepartmentUserApi {
         return userRoleService.getUserRoles(DEPARTMENT, resourceId, searchTerm);
     }
 
-    @RequestMapping(value = "/api/departments/{resourceId}/users", method = POST)
-    public UserRoleRepresentation createUserRole(@PathVariable Long resourceId,
+    @RequestMapping(value = "/api/departments/{departmentId}/users", method = POST)
+    public UserRoleRepresentation createUserRole(@PathVariable Long departmentId,
                                                  @RequestBody @Valid UserRoleDTO user) {
-        return userRoleService.createUserRole(DEPARTMENT, resourceId, user);
+        return userRoleMapper.apply(departmentUserService.createUserRole(departmentId, user));
     }
 
     @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = PUT)

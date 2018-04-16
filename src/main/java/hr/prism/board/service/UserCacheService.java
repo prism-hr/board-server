@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+
 @Service
 @Transactional
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
@@ -131,7 +133,7 @@ public class UserCacheService {
 
     private void appendScopes(User user) {
         if (user != null) {
-            List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, Role.ADMINISTRATOR)
+            List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, ADMINISTRATOR)
                 .stream().map(ResourceSummary::getKey).collect(Collectors.toList());
             if (scopes.contains(Scope.DEPARTMENT)) {
                 user.setScopes(Arrays.asList(Scope.DEPARTMENT, Scope.BOARD, Scope.POST));

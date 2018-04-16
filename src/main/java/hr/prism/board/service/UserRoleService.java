@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EDIT;
-import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 
 @Service
@@ -73,8 +74,8 @@ public class UserRoleService {
         List<UserRole> memberRequests = Collections.emptyList();
 
         if (scope == Scope.DEPARTMENT) {
-            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
-            members = getUserRoles(resource, Collections.singletonList(MEMBER), State.ACCEPTED, searchTerm);
+            users = getUserRoles(resource, ImmutableList.of(Role.ADMINISTRATOR, Role.AUTHOR), ACCEPTED, searchTerm);
+            members = getUserRoles(resource, Collections.singletonList(MEMBER), ACCEPTED, searchTerm);
 
             memberRequests = getUserRoles(resource, Collections.singletonList(MEMBER), State.PENDING, searchTerm);
             if (!memberRequests.isEmpty()) {
@@ -85,7 +86,7 @@ public class UserRoleService {
                 }
             }
         } else if (scope == Scope.BOARD) {
-            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), State.ACCEPTED, searchTerm);
+            users = getUserRoles(resource, Arrays.asList(Role.ADMINISTRATOR, Role.AUTHOR), ACCEPTED, searchTerm);
         } else {
             throw new IllegalStateException("Cannot request user roles for post");
         }
@@ -101,22 +102,13 @@ public class UserRoleService {
         createOrUpdateUserRole(user, resource, user, new UserRoleDTO().setRole(role));
     }
 
-    public UserRoleRepresentation createUserRole(Scope scope, Long resourceId, UserRoleDTO userRoleDTO) {
-        User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-
+    public UserRole createUserRole(User user, Resource resource, UserRoleDTO userRoleDTO) {
         UserDTO userDTO = userRoleDTO.getUser();
-        User user = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(email));
-        actionService.executeAction(currentUser, resource, EDIT, () -> {
-            createOrUpdateUserRole(currentUser, resource, user, userRoleDTO);
-            return resource;
-        });
-
-        entityManager.flush();
-        return getUserRole(resource, user, userRoleDTO.getRole());
+        User userCreateUpdate = userService.getOrCreateUser(userDTO, (email) -> userCacheService.findByEmail(email));
+        return createOrUpdateUserRole(user, resource, userCreateUpdate, userRoleDTO);
     }
 
-    public void createOrUpdateResourceUser(User user, Long resourceId, UserRoleDTO userRoleDTO) {
+    public void createOrUpdateUserRole(User user, Long resourceId, UserRoleDTO userRoleDTO) {
         UserDTO userDTO = userRoleDTO.getUser();
         Resource resource = resourceService.findOne(resourceId);
         User userCreate = userService.getOrCreateUser(userDTO,
@@ -136,17 +128,16 @@ public class UserRoleService {
         });
     }
 
-    public UserRoleRepresentation updateUserRole(Scope scope, Long resourceId, Long userId, UserRoleDTO userRoleDTO) {
-        User currentUser = userService.getCurrentUserSecured();
-        Resource resource = resourceService.getResource(currentUser, scope, resourceId);
-        User user = userCacheService.findOne(userId);
+    public UserRole updateUserRole(Scope scope, Long resourceId, Long userUpdateId, UserRoleDTO userRoleDTO) {
+
+        User userUpdate = userCacheService.findOne(userUpdateId);
         actionService.executeAction(currentUser, resource, EDIT, () -> {
-            userRoleCacheService.updateResourceUser(currentUser, resource, user, userRoleDTO);
+            userRoleCacheService.updateUserRole(currentUser, resource, userUpdate, userRoleDTO);
             activityService.sendActivities(resource);
             return resource;
         });
 
-        return getUserRole(resource, user, userRoleDTO.getRole());
+        return getUserRole(resource, userUpdate, userRoleDTO.getRole());
     }
 
     public UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role) {
@@ -218,25 +209,26 @@ public class UserRoleService {
     }
 
     private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
-        if (userRoleDTO.getRole() == Role.PUBLIC) {
+        if (userRoleDTO.getRole() == PUBLIC) {
             throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
         }
 
         Role role = userRoleDTO.getRole();
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, userRoleDTO.getRole());
+        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
         if (userRole == null) {
-            return userRoleCacheService.createUserRole(currentUser, resource, user, userRoleDTO, Role.NON_MEMBER_ROLES.contains(role));
+            return userRoleCacheService.createUserRole(
+                currentUser, resource, user, userRoleDTO, NON_MEMBER_ROLES.contains(role));
         } else {
             userRoleCacheService.updateMembershipData(userRole, userRoleDTO);
-            userRole.setState(State.ACCEPTED);
+            userRole.setState(ACCEPTED);
             userRole.setExpiryDate(userRoleDTO.getExpiryDate());
             return userRole;
         }
     }
 
-    private UserRoleRepresentation getUserRole(Resource resource, User user, Role role) {
+    private UserRole getUserRole(Resource resource, User user, Role role) {
         entityManager.flush();
-        List<UserRole> userRoles = entityManager.createQuery(
+        return entityManager.createQuery(
             "select distinct userRole " +
                 "from UserRole userRole " +
                 "where userRole.resource = :resource " +
@@ -248,12 +240,7 @@ public class UserRoleService {
             .setParameter("role", role)
             .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
             .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
-            .getResultList();
-        if (userRoles.isEmpty()) {
-            return null;
-        }
-
-        return userRoleMapper.apply(userRoles.get(0));
+            .getSingleResult();
     }
 
     @SuppressWarnings("JpaQlInspection")

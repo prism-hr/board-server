@@ -41,6 +41,8 @@ public class DepartmentUserService {
 
     private final UserService userService;
 
+    private final UserCacheService userCacheService;
+
     private final ResourceService resourceService;
 
     private final ActionService actionService;
@@ -54,10 +56,12 @@ public class DepartmentUserService {
     private final EventProducer eventProducer;
 
     @Inject
-    public DepartmentUserService(UserService userService, ResourceService resourceService, ActionService actionService,
+    public DepartmentUserService(UserService userService, UserCacheService userCacheService,
+                                 ResourceService resourceService, ActionService actionService,
                                  UserRoleService userRoleService, UserRoleCacheService userRoleCacheService,
                                  ActivityService activityService, EventProducer eventProducer) {
         this.userService = userService;
+        this.userCacheService = userCacheService;
         this.resourceService = resourceService;
         this.actionService = actionService;
         this.userRoleService = userRoleService;
@@ -175,6 +179,22 @@ public class DepartmentUserService {
         userRoleCacheService.updateMembershipData(userRole, userRoleDTO);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
         return user;
+    }
+
+    public UserRole createUserRole(Long id, UserRoleDTO userRole) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+        return userRoleService.createUserRole(user, department, userRole);
+    }
+
+    public UserRole appendUserRole(Long id, Long userUpdateId, UserRoleDTO userRoleDTO) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+        User userUpdate = userCacheService.findOne(userUpdateId);
+        userRoleCacheService.updateUserRole(user, department, userUpdate, userRoleDTO);
+        activityService.sendActivities(department);
     }
 
     public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass,

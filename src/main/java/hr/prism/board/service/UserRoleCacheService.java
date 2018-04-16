@@ -15,7 +15,6 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
-import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
@@ -30,13 +29,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.exception.ExceptionCode.*;
+import static hr.prism.board.utils.BoardUtils.emptyToNull;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserRoleCacheService {
 
     private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
@@ -64,26 +67,37 @@ public class UserRoleCacheService {
         return userRoleRepository.findByUuid(uuid);
     }
 
-    @CacheEvict(key = "#user.id", value = "users")
-    public UserRole createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, boolean notify) {
-        if (Role.MEMBER.equals(userRoleDTO.getRole())) {
+    @CacheEvict(key = "#userCreate.id", value = "users")
+    public UserRole createUserRole(User user, Resource resource, User userCreate,
+                                   UserRoleDTO userRoleDTO, boolean notify) {
+        if (Role.MEMBER == userRoleDTO.getRole()) {
             resourceTaskService.completeTasks(resource, MEMBER_TASKS);
         }
 
-        return createUserRole(currentUser, resource, user, userRoleDTO, State.ACCEPTED, notify);
+        return createUserRole(user, resource, userCreate, userRoleDTO, ACCEPTED, notify);
     }
 
-    @CacheEvict(key = "#user.id", value = "users")
-    public UserRole createUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO, State state, boolean notify) {
+    @CacheEvict(key = "#userCreate.id", value = "users")
+    public UserRole createUserRole(User currentUser, Resource resource, User userCreate, UserRoleDTO userRoleDTO,
+                                   State state, boolean notify) {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
-        if (notify && (Objects.equals(currentUser, user) || !userRoleRepository.findByResourceAndUserAndRoles(resource, user, Role.NON_MEMBER_ROLES).isEmpty())) {
+        if (notify && (Objects.equals(currentUser, userCreate) ||
+            !userRoleRepository.findByResourceAndUserAndRoles(resource, userCreate, NON_MEMBER_ROLES).isEmpty())) {
             notify = false;
         }
 
-        UserRole userRole = userRoleRepository.save(new UserRole().setUuid(UUID.randomUUID().toString()).setResource(resource)
-            .setUser(user).setEmail(BoardUtils.emptyToNull(userRoleDTO.getEmail())).setRole(role).setState(state).setExpiryDate(userRoleDTO.getExpiryDate()));
+        UserRole userRole = userRoleRepository.save(
+            new UserRole()
+                .setUuid(randomUUID().toString())
+                .setResource(resource)
+                .setUser(userCreate)
+                .setEmail(emptyToNull(userRoleDTO.getEmail()))
+                .setRole(role)
+                .setState(state)
+                .setExpiryDate(userRoleDTO.getExpiryDate()));
+
         userRole.setCreatorId(resource.getCreatorId());
         updateMembershipData(userRole, userRoleDTO);
 
@@ -95,7 +109,7 @@ public class UserRoleCacheService {
                 new ActivityEvent(this, resourceId, false,
                     singletonList(
                         new Activity()
-                            .setUserId(user.getId())
+                            .setUserId(userCreate.getId())
                             .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY")))),
                 new NotificationEvent(this, resourceId,
                     singletonList(
@@ -111,16 +125,16 @@ public class UserRoleCacheService {
     @CacheEvict(key = "#user.id", value = "users")
     public void deleteResourceUser(Resource resource, User user) {
         deleteUserRoles(resource, user);
-        checkSafety(resource, ExceptionCode.IRREMOVABLE_USER);
+        checkSafety(resource, IRREMOVABLE_USER);
     }
 
     @CacheEvict(key = "#user.id", value = "users")
-    public void updateResourceUser(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
+    public void updateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         deleteUserRoles(resource, user);
         entityManager.flush();
 
         createUserRole(currentUser, resource, user, userRoleDTO, false);
-        checkSafety(resource, ExceptionCode.IRREMOVABLE_USER_ROLE);
+        checkSafety(resource, IRREMOVABLE_USER_ROLE);
     }
 
     @CacheEvict(key = "#user.id", value = "users")
@@ -164,7 +178,8 @@ public class UserRoleCacheService {
         if (newMemberCategory != null) {
             Resource department = resourceService.findByResourceAndEnclosingScope(userRole.getResource(), DEPARTMENT);
             resourceService.validateCategories(department, MEMBER, singletonList(newMemberCategory.name()),
-                MISSING_USER_ROLE_MEMBER_CATEGORIES, INVALID_USER_ROLE_MEMBER_CATEGORIES, CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
+                MISSING_USER_ROLE_MEMBER_CATEGORIES, INVALID_USER_ROLE_MEMBER_CATEGORIES,
+                CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
 
             userRole.setMemberCategory(newMemberCategory);
             clearStudyData = newMemberCategory != oldMemberCategory;
@@ -190,7 +205,7 @@ public class UserRoleCacheService {
 
     private void checkSafety(Resource resource, ExceptionCode exceptionCode) {
         if (resource.getScope() == DEPARTMENT) {
-            List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, Role.ADMINISTRATOR);
+            List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, ADMINISTRATOR);
             if (remainingAdminRoles.isEmpty()) {
                 throw new BoardException(exceptionCode, "Cannot remove last remaining administrator");
             }
