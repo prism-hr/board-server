@@ -8,6 +8,7 @@ import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.UserRepository;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -133,17 +134,17 @@ public class UserCacheService {
             return;
         }
 
-        List<Scope> scopes =
+        List<Pair<Scope, Role>> permissions =
             user.getUserRoles()
                 .stream()
-                .map(userRole -> userRole.getResource().getScope())
+                .map(userRole -> Pair.of(userRole.getResource().getScope(), userRole.getRole()))
                 .distinct()
                 .collect(toList());
 
-        if (scopes.contains(DEPARTMENT)) {
-            user.setScopes(ImmutableList.of(DEPARTMENT, POST));
+        if (permissions.contains(Pair.of(DEPARTMENT, Role.ADMINISTRATOR))) {
+            user.setPermissions(ImmutableList.of(DEPARTMENT, POST));
         } else {
-            user.setScopes(singletonList(POST));
+            user.setPermissions(singletonList(POST));
         }
     }
 

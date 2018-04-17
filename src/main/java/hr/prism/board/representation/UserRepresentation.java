@@ -37,7 +37,9 @@ public class UserRepresentation {
 
     private List<Scope> scopes;
 
-    private String defaultOrganizationName;
+    private boolean postAuthor;
+
+    private OrganizationRepresentation defaultOrganization;
 
     private LocationRepresentation defaultLocation;
 
@@ -160,12 +162,21 @@ public class UserRepresentation {
         return this;
     }
 
-    public String getDefaultOrganizationName() {
-        return defaultOrganizationName;
+    public boolean isPostAuthor() {
+        return postAuthor;
     }
 
-    public UserRepresentation setDefaultOrganizationName(String defaultOrganizationName) {
-        this.defaultOrganizationName = defaultOrganizationName;
+    public UserRepresentation setPostAuthor(boolean postAuthor) {
+        this.postAuthor = postAuthor;
+        return this;
+    }
+
+    public OrganizationRepresentation getDefaultOrganization() {
+        return defaultOrganization;
+    }
+
+    public UserRepresentation setDefaultOrganization(OrganizationRepresentation defaultOrganization) {
+        this.defaultOrganization = defaultOrganization;
         return this;
     }
 

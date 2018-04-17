@@ -39,33 +39,26 @@ import static java.util.Collections.singletonList;
 @Transactional
 public class DepartmentUserService {
 
-    private final UserService userService;
-
-    private final UserCacheService userCacheService;
+    private final NewUserService userService;
 
     private final ResourceService resourceService;
 
     private final ActionService actionService;
 
-    private final UserRoleService userRoleServicee;
-
-    private final UserRoleCacheService userRoleCacheService;
+    private final NewUserRoleService userRoleService;
 
     private final ActivityService activityService;
 
     private final EventProducer eventProducer;
 
     @Inject
-    public DepartmentUserService(UserService userService, UserCacheService userCacheService,
-                                 ResourceService resourceService, ActionService actionService,
-                                 UserRoleService userRoleService, UserRoleCacheService userRoleCacheService,
+    public DepartmentUserService(NewUserService userService, ResourceService resourceService,
+                                 ActionService actionService, NewUserRoleService userRoleService,
                                  ActivityService activityService, EventProducer eventProducer) {
         this.userService = userService;
-        this.userCacheService = userCacheService;
         this.resourceService = resourceService;
         this.actionService = actionService;
         this.userRoleService = userRoleService;
-        this.userRoleCacheService = userRoleCacheService;
         this.activityService = activityService;
         this.eventProducer = eventProducer;
     }
@@ -98,26 +91,15 @@ public class DepartmentUserService {
     public User createMembershipRequest(Long id, MemberDTO memberDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(id);
-
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
-        if (userRole != null) {
-            if (userRole.getState() == REJECTED) {
-                // User has been rejected already, don't let them be a nuisance by repeatedly retrying
-                throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "User has already been rejected as a member");
-            }
-
-            throw new BoardException(DUPLICATE_PERMISSION, "User has already requested membership");
-        }
+        checkExistingMemberRequest(department, user);
 
 
         UserDTO userDTO = memberDTO.getUser();
         if (userDTO != null) {
-            // We validate the membership later - avoid NPE now
             userService.updateMembershipData(user, userDTO);
         }
 
-        userRoleDTO.setRole(MEMBER);
-        userRole = userRoleCacheService.createUserRole(user, department, user, userRoleDTO, PENDING, false);
+        UserRole userRole = userRoleService.createUserRole(department, memberDTO, PENDING);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
         eventProducer.produce(
@@ -141,7 +123,7 @@ public class DepartmentUserService {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
-        UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
+        UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
         activityService.viewActivity(userRole.getActivity(), user);
         return userRole.setViewed(true);
     }
@@ -150,7 +132,7 @@ public class DepartmentUserService {
         User user = userService.getCurrentUserSecured();
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> {
-            UserRole userRole = userRoleService.findByResourceAndUserIdAndRole(department, userId, MEMBER);
+            UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
             if (userRole.getState() == PENDING) {
                 userRole.setState(state);
 
@@ -166,7 +148,7 @@ public class DepartmentUserService {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(id);
 
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
         if (userRole == null || userRole.getState() == REJECTED) {
             throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "User is not a member");
         }
@@ -176,7 +158,7 @@ public class DepartmentUserService {
             userService.updateMembershipData(user, userDTO);
         }
 
-        userRoleCacheService.updateMembershipData(userRole, memberDTO);
+        userRoleService.updateMembership(userRole, memberDTO);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
         return user;
     }
@@ -192,7 +174,7 @@ public class DepartmentUserService {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
-        User userUpdate = userCacheService.getUser(userUpdateId);
+        User userUpdate = userService.getById(userUpdateId);
         userRoleCacheService.updateUserRole(user, department, userUpdate, userRoleDTO);
         activityService.sendActivities(department);
     }
@@ -212,6 +194,19 @@ public class DepartmentUserService {
 
     public void decrementMemberCountPending(Long id) {
         ((Department) resourceService.findOne(id)).decrementMemberToBeUploadedCount();
+    }
+
+    private void checkExistingMemberRequest(Department department, User user) {
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
+        if (userRole == null) {
+            return;
+        }
+
+        if (userRole.getState() == REJECTED) {
+            throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "Member request already rejected");
+        }
+
+        throw new BoardException(DUPLICATE_PERMISSION, "Member request already submitted");
     }
 
 }

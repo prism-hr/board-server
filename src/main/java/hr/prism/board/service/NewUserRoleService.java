@@ -70,10 +70,39 @@ public class NewUserRoleService {
         return userRoleRepository.save(userRole);
     }
 
+    public UserRole createUserRole(Resource resource, MemberDTO memberDTO, State state) {
+        MemberCategory memberCategory = memberDTO.getMemberCategory();
+        validateCategories(resource, MEMBER, singletonList(memberCategory.name()),
+            MISSING_USER_ROLE_MEMBER_CATEGORIES,
+            INVALID_USER_ROLE_MEMBER_CATEGORIES,
+            CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
+
+        UserDTO userDTO = memberDTO.getUser();
+        User user = userService.getOrCreateUser(
+            userDTO, (email) -> userService.getByEmail(resource, email, Role.MEMBER));
+
+        UserRole userRole =
+            new UserRole()
+                .setUuid(randomUUID().toString())
+                .setResource(resource)
+                .setUser(user)
+                .setEmail(emptyToNull(memberDTO.getEmail()))
+                .setRole(Role.MEMBER)
+                .setMemberCategory(memberCategory)
+                .setMemberProgram(memberDTO.getMemberProgram())
+                .setMemberYear(memberDTO.getMemberYear())
+                .setMemberDate(LocalDate.now())
+                .setState(state)
+                .setExpiryDate(memberDTO.getExpiryDate());
+
+        userRole.setCreatorId(resource.getCreatorId());
+        return userRoleRepository.save(userRole);
+    }
+
     // TODO: remember notify
     public List<UserRole> getOrCreateUserRoles(Resource resource, StaffDTO staffDTO) {
         UserDTO userDTO = staffDTO.getUser();
-        User userCreateUpdate = userService.getOrCreateUser(userDTO, userService::findByEmail);
+        User userCreateUpdate = userService.getOrCreateUser(userDTO, userService::getByEmail);
         return getOrCreateUserRoles(resource, userCreateUpdate, staffDTO);
     }
 
@@ -130,31 +159,6 @@ public class NewUserRoleService {
         }
 
         return userRole;
-    }
-
-    private UserRole createUserRole(Resource resource, User user, MemberDTO memberDTO, State state) {
-        MemberCategory memberCategory = memberDTO.getMemberCategory();
-        validateCategories(resource, MEMBER, singletonList(memberCategory.name()),
-            MISSING_USER_ROLE_MEMBER_CATEGORIES,
-            INVALID_USER_ROLE_MEMBER_CATEGORIES,
-            CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
-
-        UserRole userRole =
-            new UserRole()
-                .setUuid(randomUUID().toString())
-                .setResource(resource)
-                .setUser(user)
-                .setEmail(emptyToNull(memberDTO.getEmail()))
-                .setRole(Role.MEMBER)
-                .setMemberCategory(memberCategory)
-                .setMemberProgram(memberDTO.getMemberProgram())
-                .setMemberYear(memberDTO.getMemberYear())
-                .setMemberDate(LocalDate.now())
-                .setState(state)
-                .setExpiryDate(memberDTO.getExpiryDate());
-
-        userRole.setCreatorId(resource.getCreatorId());
-        return userRoleRepository.save(userRole);
     }
 
 }

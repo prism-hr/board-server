@@ -2,6 +2,7 @@ package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
@@ -116,7 +117,7 @@ public class User extends BoardEntity implements Comparable<User> {
     private Set<UserSearch> searches = new HashSet<>();
 
     @Transient
-    private List<Scope> scopes;
+    private List<Pair<Scope, Role>> permissions;
 
     @Transient
     private boolean revealEmail;
@@ -332,12 +333,12 @@ public class User extends BoardEntity implements Comparable<User> {
         return searches;
     }
 
-    public List<Scope> getScopes() {
-        return scopes;
+    public List<Pair<Scope, Role>> getPermissions() {
+        return permissions;
     }
 
-    public User setScopes(List<Scope> scopes) {
-        this.scopes = scopes;
+    public User setPermissions(List<Pair<Scope, Role>> permissions) {
+        this.permissions = permissions;
         return this;
     }
 
