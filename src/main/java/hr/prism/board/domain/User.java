@@ -16,6 +16,15 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
 
 @Entity
 @Table(name = "user")
+@NamedEntityGraph(
+    name = "user.extended",
+    attributeNodes = {
+        @NamedAttributeNode(value = "userRoles", subgraph = "userRole")},
+    subgraphs = {
+        @NamedSubgraph(
+            name = "userRole",
+            attributeNodes = {
+                @NamedAttributeNode(value = "resource")})})
 public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "uuid", nullable = false)

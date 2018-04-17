@@ -36,6 +36,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static hr.prism.board.exception.ExceptionCode.*;
+
 @Service
 @Transactional
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "SqlResolve", "WeakerAccess"})
@@ -95,7 +97,9 @@ public class UserService {
     }
 
     public User getUserForRepresentation() {
-        User user = getCurrentUserSecured().setRevealEmail(true);
+        User user = getCurrentUserSecured()
+            .setRevealEmail(true);
+
         if (!userRoleService.hasAdministratorRole(user)) {
             // Assume user is usually posting - should have default values for organization
             Post latestPost = postService.findLatestPost(user);
@@ -121,10 +125,10 @@ public class UserService {
                 if (duplicateUser == null) {
                     user.setEmail(email);
                 } else {
-                    throw new BoardException(ExceptionCode.DUPLICATE_USER, "Email address already in use");
+                    throw new BoardException(DUPLICATE_USER, "Email address already in use");
                 }
             } else {
-                throw new BoardException(ExceptionCode.MISSING_USER_EMAIL, "Cannot unset email address");
+                throw new BoardException(MISSING_USER_EMAIL, "Cannot unset email address");
             }
         }
 
@@ -279,7 +283,7 @@ public class UserService {
     public User getCurrentUserSecured(boolean fresh) {
         User user = getCurrentUser(fresh);
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNAUTHENTICATED_USER, "User cannot be authenticated");
+            throw new BoardForbiddenException(UNAUTHENTICATED_USER, "User cannot be authenticated");
         }
 
         return user;
@@ -312,10 +316,10 @@ public class UserService {
         }
 
         if (fresh) {
-            return userCacheService.findOneFresh(((AuthenticationToken) authentication).getUserId());
+            return userCacheService.getUserFromDatabase(((AuthenticationToken) authentication).getUserId());
         }
 
-        return userCacheService.findOne(((AuthenticationToken) authentication).getUserId());
+        return userCacheService.getUser(((AuthenticationToken) authentication).getUserId());
     }
 
     public interface UserFinder {

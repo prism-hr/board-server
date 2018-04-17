@@ -24,7 +24,7 @@ public class DefinedRecipientList implements NotificationRecipientList {
     public List<UserNotification> list(Resource resource, Notification notification) {
         String uuid = notification.getInvitation();
         if (uuid == null) {
-            return singletonList(new UserNotification(userCacheService.findOneFresh(notification.getUserId())));
+            return singletonList(new UserNotification(userCacheService.getUserFromDatabase(notification.getUserId())));
         }
 
         return singletonList(new UserNotification(userCacheService.findByUserRoleUuid(uuid), uuid));

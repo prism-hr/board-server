@@ -18,7 +18,6 @@ import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -67,7 +66,6 @@ public class UserRoleCacheService {
         return userRoleRepository.findByUuid(uuid);
     }
 
-    @CacheEvict(key = "#userCreate.id", value = "users")
     public UserRole createUserRole(User user, Resource resource, User userCreate,
                                    UserRoleDTO userRoleDTO, boolean notify) {
         if (Role.MEMBER == userRoleDTO.getRole()) {
@@ -77,7 +75,6 @@ public class UserRoleCacheService {
         return createUserRole(user, resource, userCreate, userRoleDTO, ACCEPTED, notify);
     }
 
-    @CacheEvict(key = "#userCreate.id", value = "users")
     public UserRole createUserRole(User currentUser, Resource resource, User userCreate, UserRoleDTO userRoleDTO,
                                    State state, boolean notify) {
         Role role = userRoleDTO.getRole();
@@ -122,13 +119,11 @@ public class UserRoleCacheService {
         return userRole;
     }
 
-    @CacheEvict(key = "#user.id", value = "users")
     public void deleteResourceUser(Resource resource, User user) {
         deleteUserRoles(resource, user);
         checkSafety(resource, IRREMOVABLE_USER);
     }
 
-    @CacheEvict(key = "#user.id", value = "users")
     public void updateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
         deleteUserRoles(resource, user);
         entityManager.flush();
@@ -137,13 +132,11 @@ public class UserRoleCacheService {
         checkSafety(resource, IRREMOVABLE_USER_ROLE);
     }
 
-    @CacheEvict(key = "#user.id", value = "users")
     public void deleteUserRole(Resource resource, User user, Role role) {
         activityService.deleteActivities(resource, user, role);
         userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
     }
 
-    @CacheEvict(key = "#newUser.id", value = "users")
     public void mergeUserRoles(User newUser, User oldUser) {
         Map<Pair<Resource, Role>, UserRole> newUserRoles = new HashMap<>();
         Map<Pair<Resource, Role>, UserRole> oldUserRoles = new HashMap<>();
@@ -176,9 +169,11 @@ public class UserRoleCacheService {
         MemberCategory oldMemberCategory = userRole.getMemberCategory();
         MemberCategory newMemberCategory = userRoleDTO.getMemberCategory();
         if (newMemberCategory != null) {
-            Resource department = resourceService.findByResourceAndEnclosingScope(userRole.getResource(), DEPARTMENT);
+            Resource resource = userRole.getResource();
+            Resource department = resourceService.findByResourceAndEnclosingScope(resource, DEPARTMENT);
             resourceService.validateCategories(department, MEMBER, singletonList(newMemberCategory.name()),
-                MISSING_USER_ROLE_MEMBER_CATEGORIES, INVALID_USER_ROLE_MEMBER_CATEGORIES,
+                MISSING_USER_ROLE_MEMBER_CATEGORIES,
+                INVALID_USER_ROLE_MEMBER_CATEGORIES,
                 CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
 
             userRole.setMemberCategory(newMemberCategory);

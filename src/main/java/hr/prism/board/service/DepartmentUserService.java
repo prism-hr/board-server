@@ -192,7 +192,7 @@ public class DepartmentUserService {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
-        User userUpdate = userCacheService.findOne(userUpdateId);
+        User userUpdate = userCacheService.getUser(userUpdateId);
         userRoleCacheService.updateUserRole(user, department, userUpdate, userRoleDTO);
         activityService.sendActivities(department);
     }

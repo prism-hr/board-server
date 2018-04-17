@@ -49,7 +49,6 @@ import hr.prism.board.event.ActivityEvent;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "unchecked", "WeakerAccess"})
 public class PostService {
 
     private static final List<ResourceTask> POST_TASKS = ImmutableList.of(ResourceTask.CREATE_POST);

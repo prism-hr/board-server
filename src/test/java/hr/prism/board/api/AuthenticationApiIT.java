@@ -78,7 +78,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse();
         UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
 
-        User user = userCacheService.findOneFresh(userRepresentation.getId());
+        User user = userCacheService.getUserFromDatabase(userRepresentation.getId());
         Long userId = user.getId();
 
         verifyAccessToken(loginAccessToken, userId);
@@ -159,7 +159,7 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
 
         Long userId = userR.getId();
-        User user = userCacheService.findOneFresh(userId);
+        User user = userCacheService.getUserFromDatabase(userId);
         String passwordResetUuid = user.getPasswordResetUuid();
         Assert.assertNotNull(passwordResetUuid);
         Assert.assertNotNull(user.getPasswordResetTimestamp());
@@ -186,7 +186,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
-        user = userCacheService.findOneFresh(userId);
+        user = userCacheService.getUserFromDatabase(userId);
         Assert.assertNull(user.getPasswordResetUuid());
         Assert.assertNull(user.getPasswordResetTimestamp());
     }
@@ -227,7 +227,7 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
 
         Long userId = userR.getId();
-        User user = userCacheService.findOneFresh(userId);
+        User user = userCacheService.getUserFromDatabase(userId);
         String passwordResetUuid = user.getPasswordResetUuid();
         Assert.assertNotNull(passwordResetUuid);
         Assert.assertNotNull(user.getPasswordResetTimestamp());
@@ -279,7 +279,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getContentAsString(),
             UserRepresentation.class).getId();
 
-        User user = userCacheService.findOneFresh(userId);
+        User user = userCacheService.getUserFromDatabase(userId);
         Assert.assertEquals("alastair", user.getGivenName());
         Assert.assertEquals("knowles", user.getSurname());
         Assert.assertEquals("alastair@prism.hr", user.getEmail());
@@ -295,7 +295,7 @@ public class AuthenticationApiIT extends AbstractIT {
                         .setOauthData(new OAuthDataDTO().setCode("code")))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
-        user = userCacheService.findOneFresh(userId);
+        user = userCacheService.getUserFromDatabase(userId);
         Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
         Assert.assertEquals("linkedinId", user.getOauthAccountId());
     }
@@ -347,7 +347,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department1 = resourceService.findOne(departmentId1);
         Resource post1 = resourceService.findOne(postId1);
-        User user1 = userCacheService.findOne(userId1);
+        User user1 = userCacheService.getUser(userId1);
 
         String post1AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post1, user1, Role.ADMINISTRATOR).getUuid();
         String department1MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department1, member1, Role.MEMBER).getUuid();
@@ -507,7 +507,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department2 = resourceService.findOne(departmentId2);
         Resource post2 = resourceService.findOne(postId2);
-        User user2 = userCacheService.findOne(userId2);
+        User user2 = userCacheService.getUser(userId2);
         String post2AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post2, user2, Role.ADMINISTRATOR).getUuid();
         String department2MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department2, member1, Role.MEMBER).getUuid();
         String department2MemberRole3Uuid = userRoleService.findByResourceAndUserAndRole(department2, member3, Role.MEMBER).getUuid();
@@ -636,7 +636,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department3 = resourceService.findOne(departmentId3);
         Resource post3 = resourceService.findOne(postId3);
-        User user3 = userCacheService.findOne(userId3);
+        User user3 = userCacheService.getUser(userId3);
         String post3AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post3, user3, Role.ADMINISTRATOR).getUuid();
         String department3MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department3, member5, Role.MEMBER).getUuid();
         String department3MemberRole2Uuid = userRoleService.findByResourceAndUserAndRole(department3, member6, Role.MEMBER).getUuid();
@@ -785,7 +785,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         User member8 = userRepository.findByEmail("member8@member8.com");
 
-        User user4 = userCacheService.findOne(userId4);
+        User user4 = userCacheService.getUser(userId4);
         Resource department4 = resourceService.findOne(departmentId4);
         Resource post4 = resourceService.findOne(postId4);
         String post4AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post4, user4, Role.ADMINISTRATOR).getUuid();

@@ -82,6 +82,7 @@ public class AuthenticationService {
     }
 
     @PostConstruct
+    @SuppressWarnings("unused")
     public void postConstruct() {
         try {
             String userHome = System.getProperty("user.home");

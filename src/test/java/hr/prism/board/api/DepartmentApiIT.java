@@ -365,10 +365,10 @@ public class DepartmentApiIT extends AbstractIT {
                         .setEmail("admin1@admin1.com"))
                     .setRole(Role.ADMINISTRATOR)).getUser().getId();
 
-        User departmentUser2 = userCacheService.findOne(departmentUser2Id);
+        User departmentUser2 = userCacheService.getUser(departmentUser2Id);
         UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.findOne(departmentUser2Id),
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.getUser(departmentUser2Id),
             ImmutableMap.<String, String>builder()
                 .put("recipient", "admin1")
                 .put("department", "department 4")
@@ -1501,7 +1501,7 @@ public class DepartmentApiIT extends AbstractIT {
         departmentUserApi.deleteUserRoles(departmentId, creator.getId());
 
         // authenticate as another administrator
-        User newUser = userCacheService.findOneFresh(boardManager.getUser().getId());
+        User newUser = userCacheService.getUserFromDatabase(boardManager.getUser().getId());
         testUserService.setAuthentication(newUser.getId());
 
         // try to remove yourself as administrator

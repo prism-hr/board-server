@@ -4,6 +4,7 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.*;
 import hr.prism.board.value.UserNotification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,8 +12,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH;
+
 @Transactional
 public interface UserRepository extends BoardEntityRepository<User, Long> {
+
+    @Query(value =
+        "select distinct user " +
+            "from User user " +
+            "where user.id = :id")
+    @EntityGraph(value = "user.extended", type = FETCH)
+    User findOneExtended(@Param("id") Long id);
 
     User findByUuid(String uuid);
 

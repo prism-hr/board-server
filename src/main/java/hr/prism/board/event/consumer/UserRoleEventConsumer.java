@@ -39,7 +39,7 @@ public class UserRoleEventConsumer {
     @TransactionalEventListener
     public void consume(UserRoleEvent userRoleEvent) {
         Long resourceId = userRoleEvent.getResourceId();
-        User user = userCacheService.findOne(userRoleEvent.getCreatorId());
+        User user = userCacheService.getUser(userRoleEvent.getCreatorId());
         for (UserRoleDTO userRoleDTO : userRoleEvent.getUserRoles()) {
             try {
                 userRoleService.createOrUpdateUserRole(user, resourceId, userRoleDTO);

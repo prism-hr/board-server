@@ -121,7 +121,7 @@ public class ActivityEventConsumer {
             if (userId == null) {
                 activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
             } else {
-                User user = userCacheService.findOne(userId);
+                User user = userCacheService.getUser(userId);
                 activityService.getOrCreateActivityUser(activityEntity, user);
             }
         });

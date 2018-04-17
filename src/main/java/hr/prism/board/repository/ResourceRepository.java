@@ -6,7 +6,6 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.value.ResourceSummary;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,16 +55,6 @@ public interface ResourceRepository extends BoardEntityRepository<Resource, Long
             "WHERE handle LIKE CONCAT(:handle, '/%')",
         nativeQuery = true)
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
-
-    @Query(value =
-        "select new hr.prism.board.value.ResourceSummary(resource.scope, count(resource.id), " +
-            "max(resource.createdTimestamp)) " +
-            "from UserRole userRole " +
-            "inner join userRole.resource resource " +
-            "where userRole.user = :user " +
-            "and userRole.role = :role " +
-            "group by resource.scope")
-    List<ResourceSummary> findSummaryByUserAndRole(@Param("user") User user, @Param("role") Role role);
 
     @Query(value =
         "select resource.id " +

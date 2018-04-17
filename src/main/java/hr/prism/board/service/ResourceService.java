@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.Action;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceCategoryRepository;
@@ -14,7 +17,6 @@ import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.value.ResourceFilter;
-import hr.prism.board.value.ResourceSummary;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -156,10 +158,6 @@ public class ResourceService {
 
     public void setIndexDataAndQuarter(Resource resource) {
         setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
-    }
-
-    public List<ResourceSummary> findSummaryByUserAndRole(User user, Role role) {
-        return resourceRepository.findSummaryByUserAndRole(user, role);
     }
 
     public List<Long> getResourcesToArchive(LocalDateTime baseline) {

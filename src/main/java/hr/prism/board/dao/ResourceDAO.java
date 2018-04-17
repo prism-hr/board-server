@@ -185,7 +185,7 @@ public class ResourceDAO {
                 "where resourceOperation.resource = :resource " +
                 "order by resourceOperation.id desc", ResourceOperation.class)
             .setParameter("resource", resource)
-            .setHint("javax.persistence.loadgraph",
+            .setHint("javax.persistence.fetchgraph",
                 entityManager.getEntityGraph("resource.operation"))
             .getResultList();
     }
@@ -385,7 +385,7 @@ public class ResourceDAO {
         List<Resource> resources = entityManager.createQuery(statement)
             .setParameter("search", search)
             .setParameter("resourceIds", resourceIds)
-            .setHint("javax.persistence.loadgraph", entityGraph)
+            .setHint("javax.persistence.fetchgraph", entityGraph)
             .getResultList();
 
         if (searchTermApplied) {

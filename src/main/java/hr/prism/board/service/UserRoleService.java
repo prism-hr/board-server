@@ -121,7 +121,7 @@ public class UserRoleService {
         User currentUser = userService.getCurrentUserSecured();
         Resource resource = resourceService.getResource(currentUser, scope, resourceId);
         actionService.executeAction(currentUser, resource, EDIT, () -> {
-            User user = userCacheService.findOne(userId);
+            User user = userCacheService.getUser(userId);
             userRoleCacheService.deleteResourceUser(resource, user);
             activityService.sendActivities(resource);
             return resource;
@@ -130,7 +130,7 @@ public class UserRoleService {
 
     public UserRole updateUserRole(Scope scope, Long resourceId, Long userUpdateId, UserRoleDTO userRoleDTO) {
 
-        User userUpdate = userCacheService.findOne(userUpdateId);
+        User userUpdate = userCacheService.getUser(userUpdateId);
         actionService.executeAction(currentUser, resource, EDIT, () -> {
             userRoleCacheService.updateUserRole(currentUser, resource, userUpdate, userRoleDTO);
             activityService.sendActivities(resource);
@@ -226,6 +226,7 @@ public class UserRoleService {
         }
     }
 
+    // TODO: move to repository
     private UserRole getUserRole(Resource resource, User user, Role role) {
         entityManager.flush();
         return entityManager.createQuery(
@@ -239,7 +240,7 @@ public class UserRoleService {
             .setParameter("user", user)
             .setParameter("role", role)
             .setParameter("states", State.ACTIVE_USER_ROLE_STATES)
-            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
+            .setHint("javax.persistence.fetchgraph", entityManager.getEntityGraph("userRole.extended"))
             .getSingleResult();
     }
 
@@ -271,13 +272,15 @@ public class UserRoleService {
         }
 
         statement += "order by search.id, user.id desc";
+
+        // TODO: move to repository
         List<UserRole> userRoles = entityManager.createQuery(statement, UserRole.class)
             .setParameter("search", search)
             .setParameter("resource", resource)
             .setParameter("userIds", userIds)
             .setParameter("roles", roles)
             .setParameter("state", state)
-            .setHint("javax.persistence.loadgraph", entityManager.getEntityGraph("userRole.extended"))
+            .setHint("javax.persistence.fetchgraph", entityManager.getEntityGraph("userRole.extended"))
             .getResultList();
 
         if (searchTermApplied) {

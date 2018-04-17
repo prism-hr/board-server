@@ -1,59 +1,53 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.OauthProvider;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRepository;
-import hr.prism.board.utils.BoardUtils;
-import hr.prism.board.value.ResourceSummary;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.Scope.POST;
+import static hr.prism.board.exception.ExceptionCode.UNKNOWN_USER;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UserCacheService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserCacheService.class);
 
     private static final String TEST_USER_SUFFIX = "@test.prism.hr";
 
-    @Inject
-    private CacheManager cacheManager;
+    private final UserRepository userRepository;
+
+    private final EntityManager entityManager;
 
     @Inject
-    private UserRepository userRepository;
+    public UserCacheService(UserRepository userRepository, EntityManager entityManager) {
+        this.userRepository = userRepository;
+        this.entityManager = entityManager;
+    }
 
-    @Inject
-    private ResourceService resourceService;
-
-    @Cacheable(key = "#userId", value = "users")
-    public User findOne(Long userId) {
-        User user = userRepository.findOne(userId);
+    public User getUser(Long userId) {
+        User user = userRepository.findOneExtended(userId);
         appendScopes(user);
         return user;
     }
 
-    @CacheEvict(key = "#userId", value = "users", beforeInvocation = true)
-    public User findOneFresh(Long userId) {
-        User user = userRepository.findOne(userId);
+    public User getUserFromDatabase(Long userId) {
+        User user = userRepository.findOneExtended(userId);
         appendScopes(user);
         return user;
     }
@@ -65,22 +59,21 @@ public class UserCacheService {
         return userRepository.update(user);
     }
 
-    @Cacheable(key = "#user.id", value = "users")
+    @CacheEvict(key = "#user.id", value = "users")
     public void deleteUser(User user) {
-        try {
-            userRepository.delete(user);
-        } catch (Exception e) {
-            // Should not happen but in case it does, not a reason to crash the process
-            LOGGER.warn("Could not delete user: " + user.toString(), e);
-        }
+        userRepository.delete(user);
     }
 
     public User saveUser(User user) {
+        setIndexData(user);
         user = userRepository.save(user);
         setCreator(user);
-        setIndexData(user);
+        entityManager.flush();
+
+        Long userId = user.getId();
+        user = userRepository.findOneExtended(userId);
+
         appendScopes(user);
-        cacheManager.getCache("users").put(user.getId(), user);
         return user;
     }
 
@@ -96,12 +89,16 @@ public class UserCacheService {
     }
 
     public User findByEmail(Resource resource, String email, Role role) {
-        List<User> users = userRepository.findByEmail(resource, email, role);
-        if (users.isEmpty()) {
+        List<User> potentialUsers = userRepository.findByEmail(resource, email, role);
+        if (potentialUsers.isEmpty()) {
             return null;
         }
 
-        User user = users.stream().filter(usr -> usr.getEmail().equals(email)).findFirst().orElse(users.get(0));
+        User user = potentialUsers.stream()
+            .filter(potentialUser -> potentialUser.getEmail().equals(email))
+            .findFirst()
+            .orElse(potentialUsers.get(0));
+
         appendScopes(user);
         return user;
     }
@@ -115,7 +112,7 @@ public class UserCacheService {
     public User findByUserRoleUuidSecured(String uuid) {
         User user = userRepository.findByUserRoleUuid(uuid);
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User with user role uuid; " + uuid + " cannot be found");
+            throw new BoardForbiddenException(UNKNOWN_USER, "User with user role uuid; " + uuid + " cannot be found");
         }
 
         return user;
@@ -128,20 +125,25 @@ public class UserCacheService {
     }
 
     public void setIndexData(User user) {
-        user.setIndexData(BoardUtils.makeSoundex(user.getGivenName(), user.getSurname()));
+        user.setIndexData(makeSoundex(user.getGivenName(), user.getSurname()));
     }
 
     private void appendScopes(User user) {
-        if (user != null) {
-            List<Scope> scopes = resourceService.findSummaryByUserAndRole(user, ADMINISTRATOR)
-                .stream().map(ResourceSummary::getKey).collect(Collectors.toList());
-            if (scopes.contains(Scope.DEPARTMENT)) {
-                user.setScopes(Arrays.asList(Scope.DEPARTMENT, Scope.BOARD, Scope.POST));
-            } else if (scopes.contains(Scope.BOARD)) {
-                user.setScopes(Arrays.asList(Scope.BOARD, Scope.POST));
-            } else {
-                user.setScopes(Collections.singletonList(Scope.POST));
-            }
+        if (user == null) {
+            return;
+        }
+
+        List<Scope> scopes =
+            user.getUserRoles()
+                .stream()
+                .map(userRole -> userRole.getResource().getScope())
+                .distinct()
+                .collect(toList());
+
+        if (scopes.contains(DEPARTMENT)) {
+            user.setScopes(ImmutableList.of(DEPARTMENT, POST));
+        } else {
+            user.setScopes(singletonList(POST));
         }
     }
 
