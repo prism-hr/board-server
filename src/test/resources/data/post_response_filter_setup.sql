@@ -14,7 +14,7 @@ SET @alastairLocationId = (
   WHERE location.name = 'London, United Kingdom');
 
 UPDATE user
-INNER JOIN location
+INNER JOIN defaultLocation
   SET user.location_nationality_id = @alastairLocationId
 WHERE user.given_name = 'alastair';
 
@@ -24,7 +24,7 @@ SET @jakubLocationId = (
   WHERE location.name = 'Krakow, Poland');
 
 UPDATE user
-  INNER JOIN location
+  INNER JOIN defaultLocation
 SET user.location_nationality_id = @jakubLocationId
 WHERE user.given_name = 'jakub';
 
@@ -34,7 +34,7 @@ SET @juanLocationId = (
   WHERE location.name = 'Madrid, Spain');
 
 UPDATE user
-  INNER JOIN location
+  INNER JOIN defaultLocation
 SET user.location_nationality_id = @juanLocationId
 WHERE user.given_name = 'juan';
 

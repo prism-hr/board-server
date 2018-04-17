@@ -20,7 +20,6 @@ import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.utils.BoardUtils;
-import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
@@ -38,10 +37,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static hr.prism.board.enums.Action.ARCHIVE;
-import static hr.prism.board.enums.Action.EDIT;
+import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.MemberCategory.toStrings;
-import static hr.prism.board.enums.Scope.POST;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 
@@ -61,6 +61,9 @@ public class PostService {
 
     @Inject
     private LocationService locationService;
+
+    @Inject
+    private OrganizationService organizationService;
 
     @Inject
     private ResourceService resourceService;
@@ -110,8 +113,8 @@ public class PostService {
 
     public Post getPost(Long id, String ipAddress, boolean recordView) {
         User user = userService.getCurrentUser();
-        Post post = (Post) resourceService.getResource(user, POST, id);
-        actionService.executeAction(user, post, Action.VIEW, () -> post);
+        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        actionService.executeAction(user, post, VIEW, () -> post);
 
         if (recordView) {
             resourceEventService.createPostView(post, user, ipAddress);
@@ -132,7 +135,7 @@ public class PostService {
         User user = userService.getCurrentUser();
         List<Post> posts =
             resourceService.getResources(user,
-                makeResourceFilter(POST, boardId, includePublicPosts, state, quarter, searchTerm)
+                makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
                     .setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
@@ -146,20 +149,20 @@ public class PostService {
 
     public List<ResourceOperation> getPostOperations(Long id) {
         User user = userService.getCurrentUserSecured();
-        Post post = (Post) resourceService.getResource(user, POST, id);
+        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return resourceService.getResourceOperations(post);
     }
 
     public List<String> getPostArchiveQuarters(Long parentId) {
         User user = userService.getCurrentUserSecured();
-        return resourceService.getResourceArchiveQuarters(user, POST, parentId);
+        return resourceService.getResourceArchiveQuarters(user, Scope.POST, parentId);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
         User user = userService.getCurrentUserSecured();
-        Board board = (Board) resourceService.getResource(user, Scope.BOARD, boardId);
-        Post createdPost = (Post) actionService.executeAction(user, board, Action.EXTEND, () -> {
+        Board board = (Board) resourceService.getResource(user, BOARD, boardId);
+        Post createdPost = (Post) actionService.executeAction(user, board, EXTEND, () -> {
             Post post = new Post();
             Department department = (Department) board.getParent();
 
@@ -167,10 +170,17 @@ public class PostService {
             post.setSummary(postDTO.getSummary());
             post.setDescription(postDTO.getDescription());
 
-            post.setOrganizationName(postDTO.getOrganizationName());
-            post.setOrganizationLogo(postDTO.getOrganizationLogo());
+            Organization organization = organizationService.getOrCreateOrganization(postDTO.getOrganization());
+            post.setOrganization(organization);
+            user.setDefaultOrganization(organization);
+
+            Location location = locationService.getOrCreateLocation(postDTO.getLocation());
+            post.setLocation(location);
+            user.setDefaultLocation(location);
+
             post.setExistingRelation(postDTO.getExistingRelation());
-            post.setExistingRelationExplanation(mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
+            post.setExistingRelationExplanation(
+                mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
 
             String applyWebsite = postDTO.getApplyWebsite();
             if (applyWebsite != null) {
@@ -186,19 +196,18 @@ public class PostService {
             }
 
             validatePostApply(post);
-            post.setLocation(locationService.getOrCreateLocation(postDTO.getLocation()));
 
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
             LocalDateTime deadTimestamp = postDTO.getDeadTimestamp();
-            post.setLiveTimestamp(liveTimestamp == null ? null : liveTimestamp.truncatedTo(ChronoUnit.SECONDS));
-            post.setDeadTimestamp(deadTimestamp == null ? null : deadTimestamp.truncatedTo(ChronoUnit.SECONDS));
+            post.setLiveTimestamp(liveTimestamp);
+            post.setDeadTimestamp(deadTimestamp);
             post = postRepository.save(post);
 
             updateCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-            updateCategories(post, CategoryType.MEMBER, toStrings(postDTO.getMemberCategories()), department);
+            updateCategories(post, MEMBER, toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
             setIndexDataAndQuarter(post);
-            userRoleService.createOrUpdateUserRole(post, user, Role.ADMINISTRATOR);
+            userRoleService.createOrUpdateUserRole(post, user, ADMINISTRATOR);
             resourceTaskService.completeTasks(department, POST_TASKS);
             return post;
         });
@@ -214,7 +223,7 @@ public class PostService {
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User user = userService.getCurrentUserSecured();
-        Post post = (Post) resourceService.getResource(user, POST, id);
+        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {
             if (action == Action.EDIT) {
@@ -222,7 +231,7 @@ public class PostService {
             } else {
                 if (action == Action.ACCEPT) {
                     Resource department = post.getParent().getParent();
-                    userService.findByRoleWithoutRole(post, Role.ADMINISTRATOR, department, Role.AUTHOR)
+                    userService.findByRoleWithoutRole(post, ADMINISTRATOR, department, Role.AUTHOR)
                         .forEach(author -> userRoleCacheService.createUserRole(author, department, author, new UserRoleDTO(Role.AUTHOR), false));
                 }
 
@@ -413,20 +422,20 @@ public class PostService {
     }
 
     public List<Organization> findOrganizationsBySimilarName(String searchTerm) {
-        return (List<Organization>) entityManager.createNamedQuery("similarOrganizations")
+        return (List<Organization>) entityManager.createNamedQuery("searchOrganizations")
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
-            .setParameter("scope", POST.name())
+            .setParameter("scope", Scope.POST.name())
             .getResultList();
     }
 
     public void setIndexDataAndQuarter(Post post) {
-        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(), post.getOrganizationName(),
-            post.getLocation().getName());
+        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(),
+            post.getOrganization().getName(), post.getLocation().getName());
     }
 
     public Post findLatestPost(User user) {
-        return postRepository.findLatestPost(user, Role.ADMINISTRATOR, POST);
+        return postRepository.findLatestPost(user, ADMINISTRATOR, Scope.POST);
     }
 
     public List<Post> getPosts(Long boardId) {
@@ -472,7 +481,7 @@ public class PostService {
         Board board = (Board) post.getParent();
         Department department = (Department) board.getParent();
         patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
-        patchCategories(post, CategoryType.MEMBER, toStrings(postDTO.getMemberCategories()), department);
+        patchCategories(post, MEMBER, toStrings(postDTO.getMemberCategories()), department);
 
         resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
         patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
@@ -563,24 +572,24 @@ public class PostService {
                 List<Activity> activities = new ArrayList<>();
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
-                    activities.add(new Activity().setScope(POST)
-                        .setRole(Role.ADMINISTRATOR)
+                    activities.add(new Activity().setScope(Scope.POST)
+                        .setRole(ADMINISTRATOR)
                         .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
                     activities.add(new Activity().setScope(Scope.DEPARTMENT)
                         .setRole(Role.MEMBER)
                         .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-                    notifications.add(new Notification().setScope(POST)
-                        .setRole(Role.ADMINISTRATOR)
+                    notifications.add(new Notification().setScope(Scope.POST)
+                        .setRole(ADMINISTRATOR)
                         .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
                     notifications.add(new Notification().setScope(Scope.DEPARTMENT)
                         .setRole(Role.MEMBER)
                         .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
-                    activities.add(new Activity().setScope(POST)
-                        .setRole(Role.ADMINISTRATOR)
+                    activities.add(new Activity().setScope(Scope.POST)
+                        .setRole(ADMINISTRATOR)
                         .setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
-                    notifications.add(new Notification().setScope(POST)
-                        .setRole(Role.ADMINISTRATOR)
+                    notifications.add(new Notification().setScope(Scope.POST)
+                        .setRole(ADMINISTRATOR)
                         .setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
 

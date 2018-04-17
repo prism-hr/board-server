@@ -156,29 +156,29 @@ VALUES ('London, United Kingdom', 'GB', 'code1', 1.00, 1.00, NOW()),
   ('Krakow, Poland', 'PL', 'code3', 3.00, 3.00, NOW());
 
 UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
+  INNER JOIN defaultLocation
+SET resource.location_id = defaultLocation.id
 WHERE resource.scope = 'POST'
       AND resource.state <> 'ACCEPTED'
-      AND location.google_id = 'code1';
+      AND defaultLocation.google_id = 'code1';
 
 UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
+  INNER JOIN defaultLocation
+SET resource.location_id = defaultLocation.id
 WHERE resource.scope = 'POST'
       AND resource.name = 'Database Engineer'
-      AND location.google_id = 'code1';
+      AND defaultLocation.google_id = 'code1';
 
 UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
+  INNER JOIN defaultLocation
+SET resource.location_id = defaultLocation.id
 WHERE resource.scope = 'POST'
       AND resource.name = 'Java Web Developer'
-      AND location.google_id = 'code2';
+      AND defaultLocation.google_id = 'code2';
 
 UPDATE resource
-  INNER JOIN location
-SET resource.location_id = location.id
+  INNER JOIN defaultLocation
+SET resource.location_id = defaultLocation.id
 WHERE resource.scope = 'POST'
       AND resource.name = 'Technical Analyst'
-      AND location.google_id = 'code3';
+      AND defaultLocation.google_id = 'code3';

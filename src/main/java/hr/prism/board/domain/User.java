@@ -19,7 +19,9 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
 @NamedEntityGraph(
     name = "user.extended",
     attributeNodes = {
-        @NamedAttributeNode(value = "userRoles", subgraph = "userRole")},
+        @NamedAttributeNode(value = "userRoles", subgraph = "userRole"),
+        @NamedAttributeNode(value = "defaultOrganization"),
+        @NamedAttributeNode(value = "defaultLocation")},
     subgraphs = {
         @NamedSubgraph(
             name = "userRole",
@@ -96,6 +98,14 @@ public class User extends BoardEntity implements Comparable<User> {
     @Column(name = "website_resume")
     private String websiteResume;
 
+    @ManyToOne
+    @JoinColumn(name = "default_organization_id")
+    private Organization defaultOrganization;
+
+    @ManyToOne
+    @JoinColumn(name = "default_location_id")
+    private Location defaultLocation;
+
     @Column(name = "index_data")
     private String indexData;
 
@@ -110,12 +120,6 @@ public class User extends BoardEntity implements Comparable<User> {
 
     @Transient
     private boolean revealEmail;
-
-    @Transient
-    private String defaultOrganizationName;
-
-    @Transient
-    private Location defaultLocation;
 
     public String getUuid() {
         return uuid;
@@ -293,6 +297,24 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    public Organization getDefaultOrganization() {
+        return defaultOrganization;
+    }
+
+    public User setDefaultOrganization(Organization defaultOrganization) {
+        this.defaultOrganization = defaultOrganization;
+        return this;
+    }
+
+    public Location getDefaultLocation() {
+        return defaultLocation;
+    }
+
+    public User setDefaultLocation(Location defaultLocation) {
+        this.defaultLocation = defaultLocation;
+        return this;
+    }
+
     public String getIndexData() {
         return indexData;
     }
@@ -325,24 +347,6 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public User setRevealEmail(boolean revealEmail) {
         this.revealEmail = revealEmail;
-        return this;
-    }
-
-    public String getDefaultOrganizationName() {
-        return defaultOrganizationName;
-    }
-
-    public User setDefaultOrganizationName(String defaultOrganizationName) {
-        this.defaultOrganizationName = defaultOrganizationName;
-        return this;
-    }
-
-    public Location getDefaultLocation() {
-        return defaultLocation;
-    }
-
-    public User setDefaultLocation(Location defaultLocation) {
-        this.defaultLocation = defaultLocation;
         return this;
     }
 

@@ -1,4 +1,4 @@
-CREATE TABLE location (
+CREATE TABLE defaultLocation (
   id                BIGINT UNSIGNED NOT NULL     AUTO_INCREMENT,
   name              VARCHAR(255)    NOT NULL,
   domicile          VARCHAR(3)      NOT NULL,
@@ -40,6 +40,6 @@ ALTER TABLE resource
   AFTER apply_website,
   ADD COLUMN apply_email VARCHAR(254)
   AFTER apply_document_id,
-  ADD FOREIGN KEY (location_id) REFERENCES location (id),
+  ADD FOREIGN KEY (location_id) REFERENCES defaultLocation (id),
   ADD FOREIGN KEY (apply_document_id) REFERENCES document (id);
 

@@ -5,7 +5,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.value.Organization;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;

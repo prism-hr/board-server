@@ -7,7 +7,6 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.User;
 import hr.prism.board.value.DepartmentDashboard;
-import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.Statistics;
 import org.slf4j.Logger;

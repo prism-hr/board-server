@@ -1,7 +1,6 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.representation.OrganizationRepresentation;
-import hr.prism.board.value.Organization;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;

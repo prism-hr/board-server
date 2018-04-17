@@ -6,7 +6,7 @@
 </h1>
 <h2>
     <em>at</em> ${post.organizationName}
-    <span class="location"><i class="material-icons md-18">location_on</i> ${post.location.name} </span>
+    <span class="defaultLocation"><i class="material-icons md-18">location_on</i> ${post.defaultLocation.name} </span>
 
 
 </h2>

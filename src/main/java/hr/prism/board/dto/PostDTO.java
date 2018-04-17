@@ -5,6 +5,7 @@ import hr.prism.board.enums.MemberCategory;
 import org.hibernate.validator.constraints.Email;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -17,12 +18,12 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     private String description;
 
-    @Size(min = 3, max = 255)
-    private String organizationName;
-
-    private String organizationLogo;
+    @Valid
+    @NotNull
+    private OrganizationDTO organization;
 
     @Valid
+    @NotNull
     private LocationDTO location;
 
     private ExistingRelation existingRelation;
@@ -63,21 +64,12 @@ public class PostDTO extends ResourceDTO<PostDTO> {
         return this;
     }
 
-    public String getOrganizationName() {
-        return organizationName;
+    public OrganizationDTO getOrganization() {
+        return organization;
     }
 
-    public PostDTO setOrganizationName(String organizationName) {
-        this.organizationName = organizationName;
-        return this;
-    }
-
-    public String getOrganizationLogo() {
-        return organizationLogo;
-    }
-
-    public PostDTO setOrganizationLogo(String organizationLogo) {
-        this.organizationLogo = organizationLogo;
+    public PostDTO setOrganization(OrganizationDTO organization) {
+        this.organization = organization;
         return this;
     }
 

@@ -2,7 +2,6 @@ package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
-import hr.prism.board.value.Organization;
 import hr.prism.board.value.PostStatistics;
 import org.hibernate.validator.constraints.Email;
 
@@ -35,90 +34,63 @@ import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
             name = "university",
             attributeNodes = {
                 @NamedAttributeNode(value = "documentLogo")})})
-@NamedNativeQueries(
-    value = {
-        @NamedNativeQuery(
-            name = "similarOrganizations",
-            query =
-                "SELECT resource.organization_name AS name, " +
-                    "resource.organization_logo AS logo, " +
-                    "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-                    "MATCH (resource.organization_name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
-                    "FROM resource " +
-                    "WHERE resource.scope = :scope " +
-                    "GROUP BY resource.organization_name " +
-                    "HAVING similarityHard = 1 OR similaritySoft > 0 " +
-                    "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
-                    "LIMIT 10",
-            resultSetMapping = "similarOrganizations"),
-        @NamedNativeQuery(
-            name = "postStatistics",
-            query =
-                "SELECT COALESCE(SUM(IF(post.state = 'ACCEPTED', 1, 0)), 0) AS countLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
-                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
-                    "COUNT(post.id) AS countAllTime, " +
-                    "MAX(post.created_timestamp) AS mostRecent, " +
-                    "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.view_count, 0)), 0) AS viewCountLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
-                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.view_count, 0)), 0) AS viewCountThisYear, " +
-                    "COALESCE(SUM(post.view_count), 0)  AS viewCountAllTime, " +
-                    "MAX(post.last_view_timestamp) AS mostRecentView, " +
-                    "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.referral_count, 0)), 0) AS referralCountLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
-                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.referral_count, 0)), 0) AS referralCountThisYear, " +
-                    "COALESCE(SUM(post.referral_count), 0) AS referralCountAllTime, " +
-                    "MAX(post.last_referral_timestamp) AS mostRecentReferral, " +
-                    "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.response_count, 0)), 0) AS responseCountLive, " +
-                    "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
-                    "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.response_count, 0)), 0) AS responseCountThisYear, " +
-                    "COALESCE(SUM(post.response_count), 0) AS responseCountAllTime, " +
-                    "MAX(post.last_response_timestamp) AS mostRecentResponse " +
-                    "FROM resource AS post " +
-                    "INNER JOIN resource AS board " +
-                    "ON post.parent_id = board.id " +
-                    "WHERE board.parent_id = :departmentId",
-            resultSetMapping = "postStatistics")})
-@SqlResultSetMappings(
-    value = {
-        @SqlResultSetMapping(
-            name = "postStatistics",
-            classes = @ConstructorResult(
-                targetClass = PostStatistics.class,
-                columns = {
-                    @ColumnResult(name = "countLive", type = Long.class),
-                    @ColumnResult(name = "countThisYear", type = Long.class),
-                    @ColumnResult(name = "countAllTime", type = Long.class),
-                    @ColumnResult(name = "mostRecent", type = LocalDateTime.class),
-                    @ColumnResult(name = "viewCountLive", type = Long.class),
-                    @ColumnResult(name = "viewCountThisYear", type = Long.class),
-                    @ColumnResult(name = "viewCountAllTime", type = Long.class),
-                    @ColumnResult(name = "mostRecentView", type = LocalDateTime.class),
-                    @ColumnResult(name = "referralCountLive", type = Long.class),
-                    @ColumnResult(name = "referralCountThisYear", type = Long.class),
-                    @ColumnResult(name = "referralCountAllTime", type = Long.class),
-                    @ColumnResult(name = "mostRecentReferral", type = LocalDateTime.class),
-                    @ColumnResult(name = "responseCountLive", type = Long.class),
-                    @ColumnResult(name = "responseCountThisYear", type = Long.class),
-                    @ColumnResult(name = "responseCountAllTime", type = Long.class),
-                    @ColumnResult(name = "mostRecentResponse", type = LocalDateTime.class)})),
-        @SqlResultSetMapping(
-            name = "similarOrganizations",
-            classes = @ConstructorResult(
-                targetClass = Organization.class,
-                columns = {
-                    @ColumnResult(name = "name", type = String.class),
-                    @ColumnResult(name = "logo", type = String.class)}))})
+@NamedNativeQuery(
+    name = "postStatistics",
+    query =
+        "SELECT COALESCE(SUM(IF(post.state = 'ACCEPTED', 1, 0)), 0) AS countLive, " +
+            "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+            "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), 1, 0)), 0) AS countThisYear, " +
+            "COUNT(post.id) AS countAllTime, " +
+            "MAX(post.created_timestamp) AS mostRecent, " +
+            "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.view_count, 0)), 0) AS viewCountLive, " +
+            "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+            "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.view_count, 0)), 0) AS viewCountThisYear, " +
+            "COALESCE(SUM(post.view_count), 0)  AS viewCountAllTime, " +
+            "MAX(post.last_view_timestamp) AS mostRecentView, " +
+            "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.referral_count, 0)), 0) AS referralCountLive, " +
+            "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+            "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.referral_count, 0)), 0) AS referralCountThisYear, " +
+            "COALESCE(SUM(post.referral_count), 0) AS referralCountAllTime, " +
+            "MAX(post.last_referral_timestamp) AS mostRecentReferral, " +
+            "COALESCE(SUM(IF(post.state = 'ACCEPTED', post.response_count, 0)), 0) AS responseCountLive, " +
+            "COALESCE(SUM(IF(post.created_timestamp >= MAKEDATE(YEAR(CURRENT_DATE()) - IF(" +
+            "MONTH(CURRENT_DATE()) > 9, 0, 1), 10), post.response_count, 0)), 0) AS responseCountThisYear, " +
+            "COALESCE(SUM(post.response_count), 0) AS responseCountAllTime, " +
+            "MAX(post.last_response_timestamp) AS mostRecentResponse " +
+            "FROM resource AS post " +
+            "INNER JOIN resource AS board " +
+            "ON post.parent_id = board.id " +
+            "WHERE board.parent_id = :departmentId",
+    resultSetMapping = "postStatistics")
+@SqlResultSetMapping(
+    name = "postStatistics",
+    classes = @ConstructorResult(
+        targetClass = PostStatistics.class,
+        columns = {
+            @ColumnResult(name = "countLive", type = Long.class),
+            @ColumnResult(name = "countThisYear", type = Long.class),
+            @ColumnResult(name = "countAllTime", type = Long.class),
+            @ColumnResult(name = "mostRecent", type = LocalDateTime.class),
+            @ColumnResult(name = "viewCountLive", type = Long.class),
+            @ColumnResult(name = "viewCountThisYear", type = Long.class),
+            @ColumnResult(name = "viewCountAllTime", type = Long.class),
+            @ColumnResult(name = "mostRecentView", type = LocalDateTime.class),
+            @ColumnResult(name = "referralCountLive", type = Long.class),
+            @ColumnResult(name = "referralCountThisYear", type = Long.class),
+            @ColumnResult(name = "referralCountAllTime", type = Long.class),
+            @ColumnResult(name = "mostRecentReferral", type = LocalDateTime.class),
+            @ColumnResult(name = "responseCountLive", type = Long.class),
+            @ColumnResult(name = "responseCountThisYear", type = Long.class),
+            @ColumnResult(name = "responseCountAllTime", type = Long.class),
+            @ColumnResult(name = "mostRecentResponse", type = LocalDateTime.class)}))
 public class Post extends Resource {
 
     @Column(name = "description")
     private String description;
 
-    @Column(name = "organization_name", nullable = false)
-    private String organizationName;
-
-    @Column(name = "organization_logo")
-    private String organizationLogo;
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 
     @Column(name = "existing_relation")
     @Enumerated(EnumType.STRING)
@@ -189,20 +161,13 @@ public class Post extends Resource {
         this.description = description;
     }
 
-    public String getOrganizationName() {
-        return organizationName;
+    public Organization getOrganization() {
+        return organization;
     }
 
-    public void setOrganizationName(String organizationName) {
-        this.organizationName = organizationName;
-    }
-
-    public String getOrganizationLogo() {
-        return organizationLogo;
-    }
-
-    public void setOrganizationLogo(String organizationLogo) {
-        this.organizationLogo = organizationLogo;
+    public Post setOrganization(Organization organization) {
+        this.organization = organization;
+        return this;
     }
 
     public ExistingRelation getExistingRelation() {

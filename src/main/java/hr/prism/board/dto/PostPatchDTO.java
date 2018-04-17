@@ -5,7 +5,6 @@ import hr.prism.board.enums.MemberCategory;
 import org.hibernate.validator.constraints.Email;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,12 +18,9 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<String> description;
 
-    @Size(min = 3, max = 255)
+    @Valid
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<String> organizationName;
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<String> organizationLogo;
+    private Optional<OrganizationDTO> organization;
 
     @Valid
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -79,23 +75,13 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
         return this;
     }
 
-    public Optional<String> getOrganizationName() {
-        return organizationName;
+    public Optional<OrganizationDTO> getOrganization() {
+        return organization;
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public PostPatchDTO setOrganizationName(Optional<String> organizationName) {
-        this.organizationName = organizationName;
-        return this;
-    }
-
-    public Optional<String> getOrganizationLogo() {
-        return organizationLogo;
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public PostPatchDTO setOrganizationLogo(Optional<String> organizationLogo) {
-        this.organizationLogo = organizationLogo;
+    public PostPatchDTO setOrganization(Optional<OrganizationDTO> organization) {
+        this.organization = organization;
         return this;
     }
 
