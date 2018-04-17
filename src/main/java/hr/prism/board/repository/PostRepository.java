@@ -54,15 +54,4 @@ public interface PostRepository extends BoardEntityRepository<Post, Long> {
             "and resource.scope = :scope)")
     Post findLatestPost(@Param("user") User user, @Param("role") Role role, @Param("scope") Scope scope);
 
-    @Query(value =
-        "select new hr.prism.board.value.Organization(post.organizationName, post.organizationLogo, count(post.id), " +
-            "max(post.createdTimestamp) as mostRecentPost, coalesce(sum(post.viewCount), 0), " +
-            "coalesce(sum(post.referralCount), 0), coalesce(sum(post.responseCount), 0)) " +
-            "from Post post " +
-            "inner join post.parent board " +
-            "where board.parent.id = :departmentId " +
-            "group by post.organizationName " +
-            "order by mostRecentPost desc")
-    List<Organization> findOrganizations(@Param("departmentId") Long departmentId);
-
 }

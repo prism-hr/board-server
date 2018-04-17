@@ -12,7 +12,7 @@ public class DepartmentDashboardRepresentation {
 
     private StatisticsRepresentation memberStatistics;
 
-    private List<OrganizationRepresentation> organizations;
+    private List<OrganizationStatisticsRepresentation> organizationStatistics;
 
     private PostStatisticsRepresentation postStatistics;
 
@@ -45,12 +45,13 @@ public class DepartmentDashboardRepresentation {
         return this;
     }
 
-    public List<OrganizationRepresentation> getOrganizations() {
-        return organizations;
+    public List<OrganizationStatisticsRepresentation> getOrganizationStatistics() {
+        return organizationStatistics;
     }
 
-    public DepartmentDashboardRepresentation setOrganizations(List<OrganizationRepresentation> organizations) {
-        this.organizations = organizations;
+    public DepartmentDashboardRepresentation setOrganizationStatistics(
+        List<OrganizationStatisticsRepresentation> organizationStatistics) {
+        this.organizationStatistics = organizationStatistics;
         return this;
     }
 

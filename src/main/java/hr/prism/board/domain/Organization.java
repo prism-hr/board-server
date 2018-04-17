@@ -1,6 +1,10 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.value.OrganizationSearch;
+
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "organization")
@@ -21,7 +25,7 @@ import javax.persistence.*;
 @SqlResultSetMapping(
     name = "searchOrganizations",
     classes = @ConstructorResult(
-        targetClass = Organization.class,
+        targetClass = OrganizationSearch.class,
         columns = {
             @ColumnResult(name = "id", type = Long.class),
             @ColumnResult(name = "name", type = String.class),
@@ -33,6 +37,9 @@ public class Organization extends BoardEntity {
 
     @Column(name = "logo")
     private String logo;
+
+    @OneToMany(mappedBy = "organization")
+    Set<Post> posts = new HashSet<>();
 
     public String getName() {
         return name;
@@ -49,6 +56,15 @@ public class Organization extends BoardEntity {
 
     public Organization setLogo(String logo) {
         this.logo = logo;
+        return this;
+    }
+
+    public Set<Post> getPosts() {
+        return posts;
+    }
+
+    public Organization setPosts(Set<Post> posts) {
+        this.posts = posts;
         return this;
     }
 

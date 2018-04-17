@@ -88,6 +88,9 @@ public class UserRole extends BoardEntity {
     @Transient
     private boolean viewed;
 
+    @Transient
+    private boolean created;
+
     public String getUuid() {
         return uuid;
     }
@@ -202,6 +205,15 @@ public class UserRole extends BoardEntity {
 
     public UserRole setViewed(boolean viewed) {
         this.viewed = viewed;
+        return this;
+    }
+
+    public boolean isCreated() {
+        return created;
+    }
+
+    public UserRole setCreated(boolean created) {
+        this.created = created;
         return this;
     }
 

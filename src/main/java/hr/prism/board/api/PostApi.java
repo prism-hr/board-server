@@ -11,6 +11,7 @@ import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.OrganizationRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
+import hr.prism.board.service.OrganizationService;
 import hr.prism.board.service.PostService;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +30,8 @@ public class PostApi {
 
     private final PostService postService;
 
+    private final OrganizationService organizationService;
+
     private final PostMapper postMapper;
 
     private final OrganizationMapper organizationMapper;
@@ -36,9 +39,10 @@ public class PostApi {
     private final ResourceOperationMapper resourceOperationMapper;
 
     @Inject
-    public PostApi(PostService postService, PostMapper postMapper, OrganizationMapper organizationMapper,
-                   ResourceOperationMapper resourceOperationMapper) {
+    public PostApi(PostService postService, OrganizationService organizationService, PostMapper postMapper,
+                   OrganizationMapper organizationMapper, ResourceOperationMapper resourceOperationMapper) {
         this.postService = postService;
+        this.organizationService = organizationService;
         this.postMapper = postMapper;
         this.organizationMapper = organizationMapper;
         this.resourceOperationMapper = resourceOperationMapper;
@@ -83,8 +87,7 @@ public class PostApi {
 
     @RequestMapping(value = "/api/posts/organizations", method = GET)
     public List<OrganizationRepresentation> findPostOrganizations(@RequestParam String query) {
-        return postService.findOrganizationsBySimilarName(query)
-            .stream().map(organizationMapper::applySmall).collect(toList());
+        return organizationService.findOrganizations(query).stream().map(organizationMapper::apply).collect(toList());
     }
 
     @RequestMapping(value = "/api/posts/archiveQuarters", method = GET)

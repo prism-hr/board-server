@@ -4,6 +4,7 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
+import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.State;
@@ -31,7 +32,6 @@ import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.PENDING;
 import static hr.prism.board.enums.State.REJECTED;
-import static hr.prism.board.exception.BoardExceptionFactory.throwFor;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.util.Collections.singletonList;
 
@@ -47,7 +47,7 @@ public class DepartmentUserService {
 
     private final ActionService actionService;
 
-    private final UserRoleService userRoleService;
+    private final UserRoleService userRoleServicee;
 
     private final UserRoleCacheService userRoleCacheService;
 
@@ -95,7 +95,7 @@ public class DepartmentUserService {
         });
     }
 
-    public User createMembershipRequest(Long id, UserRoleDTO userRoleDTO) {
+    public User createMembershipRequest(Long id, MemberDTO memberDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(id);
 
@@ -110,7 +110,7 @@ public class DepartmentUserService {
         }
 
 
-        UserDTO userDTO = userRoleDTO.getUser();
+        UserDTO userDTO = memberDTO.getUser();
         if (userDTO != null) {
             // We validate the membership later - avoid NPE now
             userService.updateMembershipData(user, userDTO);
@@ -162,7 +162,7 @@ public class DepartmentUserService {
         });
     }
 
-    public User updateMembershipData(Long id, UserRoleDTO userRoleDTO) {
+    public User updateMembership(Long id, MemberDTO memberDTO) {
         User user = userService.getCurrentUserSecured(true);
         Department department = (Department) resourceService.findOne(id);
 
@@ -171,17 +171,17 @@ public class DepartmentUserService {
             throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "User is not a member");
         }
 
-        UserDTO userDTO = userRoleDTO.getUser();
+        UserDTO userDTO = memberDTO.getUser();
         if (userDTO != null) {
             userService.updateMembershipData(user, userDTO);
         }
 
-        userRoleCacheService.updateMembershipData(userRole, userRoleDTO);
+        userRoleCacheService.updateMembershipData(userRole, memberDTO);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
         return user;
     }
 
-    public UserRole createUserRole(Long id, UserRoleDTO userRole) {
+    public UserRole createOrUpdateUserRole(Long id, UserRoleDTO userRole) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);

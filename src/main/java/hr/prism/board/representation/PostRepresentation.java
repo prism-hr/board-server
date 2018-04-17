@@ -13,9 +13,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private String description;
 
-    private String organizationName;
-
-    private String organizationLogo;
+    private OrganizationRepresentation organization;
 
     private LocationRepresentation location;
 
@@ -75,21 +73,12 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public String getOrganizationName() {
-        return organizationName;
+    public OrganizationRepresentation getOrganization() {
+        return organization;
     }
 
-    public PostRepresentation setOrganizationName(String organizationName) {
-        this.organizationName = organizationName;
-        return this;
-    }
-
-    public String getOrganizationLogo() {
-        return organizationLogo;
-    }
-
-    public PostRepresentation setOrganizationLogo(String organizationLogo) {
-        this.organizationLogo = organizationLogo;
+    public PostRepresentation setOrganization(OrganizationRepresentation organization) {
+        this.organization = organization;
         return this;
     }
 

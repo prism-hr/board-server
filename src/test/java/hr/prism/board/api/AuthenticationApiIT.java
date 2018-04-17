@@ -416,7 +416,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice());
         testUserService.setAuthentication(member1.getId());
-        departmentUserApi.updateMembershipData(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -435,7 +435,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice());
         testUserService.setAuthentication(member2.getId());
-        departmentUserApi.updateMembershipData(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -559,7 +559,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice());
         testUserService.setAuthentication(member1.getId());
-        departmentUserApi.updateMembershipData(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -575,7 +575,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice());
         testUserService.setAuthentication(member2.getId());
-        departmentUserApi.updateMembershipData(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -703,7 +703,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice());
         testUserService.setAuthentication(member5.getId());
-        departmentUserApi.updateMembershipData(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -720,7 +720,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
                 .setOauthData(new OAuthDataDTO().setCode("code2")), TestHelper.mockDevice());
         testUserService.setAuthentication(member6.getId());
-        departmentUserApi.updateMembershipData(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -738,7 +738,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setOauthData(new OAuthDataDTO().setCode("code3")),
             TestHelper.mockDevice());
         testUserService.setAuthentication(member1.getId());
-        departmentUserApi.updateMembershipData(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")
@@ -826,7 +826,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice());
         testUserService.setAuthentication(member5.getId());
-        departmentUserApi.updateMembershipData(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
+        departmentUserApi.updateMembership(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
             .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
             .setLocationNationality(new LocationDTO().setName("United Kingdom")
                 .setDomicile("GBR")

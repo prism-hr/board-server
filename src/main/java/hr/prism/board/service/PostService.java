@@ -44,6 +44,7 @@ import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
+import static hr.prism.board.utils.ResourceUtils.validateCategories;
 
 import hr.prism.board.event.ActivityEvent;
 
@@ -421,14 +422,6 @@ public class PostService {
         return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
     }
 
-    public List<Organization> findOrganizationsBySimilarName(String searchTerm) {
-        return (List<Organization>) entityManager.createNamedQuery("searchOrganizations")
-            .setParameter("searchTermHard", searchTerm + "%")
-            .setParameter("searchTermSoft", searchTerm)
-            .setParameter("scope", Scope.POST.name())
-            .getResultList();
-    }
-
     public void setIndexDataAndQuarter(Post post) {
         resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(),
             post.getOrganization().getName(), post.getLocation().getName());
@@ -446,10 +439,6 @@ public class PostService {
         return (PostStatistics) entityManager.createNamedQuery("postStatistics")
             .setParameter("departmentId", departmentId)
             .getSingleResult();
-    }
-
-    public List<Organization> getOrganizations(Long departmentId) {
-        return postRepository.findOrganizations(departmentId);
     }
 
     @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
@@ -551,12 +540,12 @@ public class PostService {
     private void updateCategories(Post post, CategoryType type, List<String> categories, Resource reference) {
         // Validate the update
         if (type == CategoryType.POST) {
-            resourceService.validateCategories(reference, type, categories,
+            validateCategories(reference, type, categories,
                 ExceptionCode.MISSING_POST_POST_CATEGORIES,
                 ExceptionCode.INVALID_POST_POST_CATEGORIES,
                 ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
         } else {
-            resourceService.validateCategories(reference, type, categories,
+            validateCategories(reference, type, categories,
                 ExceptionCode.MISSING_POST_MEMBER_CATEGORIES,
                 ExceptionCode.INVALID_POST_MEMBER_CATEGORIES,
                 ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);

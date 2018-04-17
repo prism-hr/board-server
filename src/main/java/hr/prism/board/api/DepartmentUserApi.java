@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.State;
 import hr.prism.board.mapper.DepartmentMapper;
@@ -52,8 +53,8 @@ public class DepartmentUserApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = POST)
     public UserRepresentation createMembershipRequest(@PathVariable Long departmentId,
-                                                      @RequestBody @Valid UserRoleDTO userRoleDTO) {
-        return userMapper.apply(departmentUserService.createMembershipRequest(departmentId, userRoleDTO));
+                                                      @RequestBody @Valid MemberDTO memberDTO) {
+        return userMapper.apply(departmentUserService.createMembershipRequest(departmentId, memberDTO));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests/{userId}", method = PUT)
@@ -69,9 +70,9 @@ public class DepartmentUserApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/memberRequests", method = PUT)
-    public UserRepresentation updateMembershipData(@PathVariable Long departmentId,
-                                                   @RequestBody @Valid UserRoleDTO userRoleDTO) {
-        return userMapper.apply(departmentUserService.updateMembershipData(departmentId, userRoleDTO));
+    public UserRepresentation updateMembership(@PathVariable Long departmentId,
+                                               @RequestBody @Valid MemberDTO memberDTO) {
+        return userMapper.apply(departmentUserService.updateMembership(departmentId, memberDTO));
     }
 
     @RequestMapping(value = "/api/departments/{resourceId}/users", method = GET)
@@ -83,7 +84,7 @@ public class DepartmentUserApi {
     @RequestMapping(value = "/api/departments/{departmentId}/users", method = POST)
     public UserRoleRepresentation createUserRole(@PathVariable Long departmentId,
                                                  @RequestBody @Valid UserRoleDTO user) {
-        return userRoleMapper.apply(departmentUserService.createUserRole(departmentId, user));
+        return userRoleMapper.apply(departmentUserService.createOrUpdateUserRole(departmentId, user));
     }
 
     @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = PUT)

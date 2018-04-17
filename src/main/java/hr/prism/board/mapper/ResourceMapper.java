@@ -2,8 +2,9 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.representation.ResourceRepresentation;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
+
+import static org.springframework.beans.BeanUtils.instantiate;
 
 @Component
 public class ResourceMapper {
@@ -21,7 +22,7 @@ public class ResourceMapper {
     }
 
     <T extends ResourceRepresentation<T>> T applySmall(Resource resource, Class<T> representationClass) {
-        return BeanUtils.instantiate(representationClass)
+        return instantiate(representationClass)
             .setId(resource.getId())
             .setScope(resource.getScope())
             .setName(resource.getName());

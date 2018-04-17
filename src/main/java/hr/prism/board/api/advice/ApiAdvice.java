@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static hr.prism.board.exception.ExceptionCode.PROBLEM;
 import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
@@ -31,6 +32,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.*;
 
 @RestControllerAdvice
+@SuppressWarnings("unused")
 public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     private static final Logger LOGGER = getLogger(ApiAdvice.class);
@@ -42,52 +44,66 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         this.userService = userService;
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> processException(Exception exception, WebRequest request) {
-        Long id = null;
-        ExceptionCode exceptionCode = PROBLEM;
-        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
+    @ExceptionHandler(BoardForbiddenException.class)
+    public ResponseEntity<Object> handleBoardForbiddenException(BoardForbiddenException exception, WebRequest request) {
+        ExceptionCode exceptionCode = exception.getExceptionCode();
+        HttpStatus responseStatus = exceptionCode == UNAUTHENTICATED_USER ? UNAUTHORIZED : FORBIDDEN;
 
-        Class<? extends Exception> exceptionClass = exception.getClass();
-        if (BoardException.class.isAssignableFrom(exceptionClass)) {
-            exceptionCode = ((BoardException) exception).getExceptionCode();
-            if (exceptionClass == BoardForbiddenException.class) {
-                responseStatus = exceptionCode == UNAUTHENTICATED_USER ? UNAUTHORIZED : FORBIDDEN;
-            } else if (exceptionClass == BoardDuplicateException.class) {
-                id = ((BoardDuplicateException) exception).getId();
-                responseStatus = CONFLICT;
-            } else if (exceptionClass == BoardNotModifiedException.class) {
-                responseStatus = NOT_MODIFIED;
-            } else if (exceptionClass == BoardNotFoundException.class) {
-                responseStatus = NOT_FOUND;
-            }
-        }
-
-        String userPrefix = getCurrentUsername();
-        if (responseStatus == INTERNAL_SERVER_ERROR) {
-            LOGGER.error(userPrefix + ": " + responseStatus + " - " + exception.getMessage(), exception);
-        } else {
-            LOGGER.info(userPrefix + ": " + responseStatus + " - " + exception.getMessage());
-        }
-
-        HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
-        String uri = Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString());
-        ImmutableMap.Builder<String, Object> responseBuilder = ImmutableMap.<String, Object>builder()
-            .put("uri", uri)
-            .put("status", responseStatus.value())
-            .put("error", responseStatus.getReasonPhrase())
-            .put("exceptionCode", exceptionCode);
-        if (id != null) {
-            responseBuilder.put("id", id);
-        }
-
-        return handleExceptionInternal(exception, responseBuilder.build(), new HttpHeaders(), responseStatus, request);
+        logInfo(responseStatus, exception);
+        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
-    @Override
-    protected ResponseEntity<Object> handleExceptionInternal(Exception exception, Object body, HttpHeaders headers,
-                                                             HttpStatus status, WebRequest request) {
-        return super.handleExceptionInternal(exception, body, headers, status, request);
+    @ExceptionHandler(BoardDuplicateException.class)
+    public ResponseEntity<Object> handleBoardDuplicateException(BoardDuplicateException exception, WebRequest request) {
+        Long id = exception.getId();
+        ExceptionCode exceptionCode = exception.getExceptionCode();
+        HttpStatus responseStatus = CONFLICT;
+
+        logInfo(responseStatus, exception);
+        Map<String, Object> response = makeResponse(id, exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+    }
+
+    @ExceptionHandler(BoardNotModifiedException.class)
+    public ResponseEntity<Object> handleBoardNotModifiedException(BoardNotModifiedException exception,
+                                                                  WebRequest request) {
+        ExceptionCode exceptionCode = exception.getExceptionCode();
+        HttpStatus responseStatus = NOT_MODIFIED;
+
+        logInfo(responseStatus, exception);
+        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+    }
+
+    @ExceptionHandler(BoardNotFoundException.class)
+    public ResponseEntity<Object> handleBoardNotFoundException(BoardNotFoundException exception,
+                                                               WebRequest request) {
+        ExceptionCode exceptionCode = exception.getExceptionCode();
+        HttpStatus responseStatus = NOT_FOUND;
+
+        logInfo(responseStatus, exception);
+        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+    }
+
+    @ExceptionHandler(BoardException.class)
+    public ResponseEntity<Object> handleBoardException(BoardException exception, WebRequest request) {
+        ExceptionCode exceptionCode = exception.getExceptionCode();
+        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
+
+        logError(responseStatus, exception);
+        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleBaseException(Exception exception, WebRequest request) {
+        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
+
+        logError(responseStatus, exception);
+        Map<String, Object> response = makeResponse(PROBLEM, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
     @Override
@@ -129,6 +145,37 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     private String getCurrentUsername() {
         User user = userService.getCurrentUser();
         return user == null ? "Anonymous" : user.toString();
+    }
+
+    private void logInfo(HttpStatus responseStatus, Exception exception) {
+        String userName = getCurrentUsername();
+        LOGGER.info(userName + ": " + responseStatus + " - " + exception.getMessage());
+    }
+
+    private void logError(HttpStatus responseStatus, Exception exception) {
+        String userName = getCurrentUsername();
+        LOGGER.error(userName + ": " + responseStatus + " - " + exception.getMessage(), exception);
+    }
+
+    private Map<String, Object> makeResponse(ExceptionCode exceptionCode, HttpStatus responseStatus,
+                                             ServletWebRequest request) {
+        return makeResponse(null, exceptionCode, responseStatus, request);
+    }
+
+    private Map<String, Object> makeResponse(Long id, ExceptionCode exceptionCode, HttpStatus responseStatus,
+                                             ServletWebRequest request) {
+        HttpServletRequest servletRequest = request.getRequest();
+        String uri = Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString());
+        ImmutableMap.Builder<String, Object> responseBuilder = ImmutableMap.<String, Object>builder()
+            .put("uri", uri)
+            .put("status", responseStatus.value())
+            .put("error", responseStatus.getReasonPhrase())
+            .put("exceptionCode", exceptionCode);
+        if (id != null) {
+            responseBuilder.put("id", id);
+        }
+
+        return responseBuilder.build();
     }
 
 }

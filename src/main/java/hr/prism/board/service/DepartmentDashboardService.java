@@ -7,6 +7,7 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.User;
 import hr.prism.board.value.DepartmentDashboard;
+import hr.prism.board.value.OrganizationStatistics;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.Statistics;
 import org.slf4j.Logger;
@@ -43,11 +44,14 @@ public class DepartmentDashboardService {
 
     private final PaymentService paymentService;
 
+    private final OrganizationService organizationService;
+
     @Inject
     public DepartmentDashboardService(UserService userService, ResourceService resourceService,
                                       ActionService actionService, ResourceTaskService resourceTaskService,
                                       BoardService boardService, UserRoleService userRoleService,
-                                      PostService postService, PaymentService paymentService) {
+                                      PostService postService, PaymentService paymentService,
+                                      OrganizationService organizationService) {
         this.userService = userService;
         this.resourceService = resourceService;
         this.actionService = actionService;
@@ -56,6 +60,7 @@ public class DepartmentDashboardService {
         this.userRoleService = userRoleService;
         this.postService = postService;
         this.paymentService = paymentService;
+        this.organizationService = organizationService;
     }
 
     public DepartmentDashboard getDepartmentDashboard(Long id) {
@@ -66,7 +71,7 @@ public class DepartmentDashboardService {
         List<ResourceTask> tasks = resourceTaskService.getTasks(id);
         List<Board> boards = boardService.getBoards(id, true, ACCEPTED, null, null);
         Statistics memberStatistics = userRoleService.getMemberStatistics(id);
-        List<Organization> organizations = postService.getOrganizations(id);
+        List<OrganizationStatistics> organizationStatistics = organizationService.getOrganizationStatistics(id);
         PostStatistics postStatistics = postService.getPostStatistics(id);
 
         List<Invoice> invoices = null;
@@ -86,7 +91,7 @@ public class DepartmentDashboardService {
                 .setTasks(tasks)
                 .setBoards(boards)
                 .setMemberStatistics(memberStatistics)
-                .setOrganizations(organizations)
+                .setOrganizationStatistics(organizationStatistics)
                 .setPostStatistics(postStatistics)
                 .setInvoices(invoices);
     }

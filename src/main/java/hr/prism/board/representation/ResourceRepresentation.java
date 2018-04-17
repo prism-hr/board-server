@@ -26,6 +26,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return id;
     }
 
+    @SuppressWarnings("unchecked")
     public T setId(Long id) {
         this.id = id;
         return (T) this;
@@ -35,6 +36,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return scope;
     }
 
+    @SuppressWarnings("unchecked")
     public T setScope(Scope scope) {
         this.scope = scope;
         return (T) this;
@@ -44,6 +46,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return name;
     }
 
+    @SuppressWarnings("unchecked")
     public T setName(String name) {
         this.name = name;
         return (T) this;
@@ -53,6 +56,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return state;
     }
 
+    @SuppressWarnings("unchecked")
     public T setState(State state) {
         this.state = state;
         return (T) this;
@@ -62,6 +66,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return createdTimestamp;
     }
 
+    @SuppressWarnings("unchecked")
     public T setCreatedTimestamp(LocalDateTime createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
         return (T) this;
@@ -71,6 +76,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return updatedTimestamp;
     }
 
+    @SuppressWarnings("unchecked")
     public T setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
         this.updatedTimestamp = updatedTimestamp;
         return (T) this;
@@ -80,6 +86,7 @@ public class ResourceRepresentation<T extends ResourceRepresentation> {
         return actions;
     }
 
+    @SuppressWarnings("unchecked")
     public T setActions(List<ActionRepresentation> actions) {
         this.actions = actions;
         return (T) this;

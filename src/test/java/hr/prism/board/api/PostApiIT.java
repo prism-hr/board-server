@@ -1073,7 +1073,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/organization_autosuggest_setup.sql")
     public void shouldSuggestOrganizations() {
-        List<OrganizationRepresentation> organizations = postApi.findPostOrganizations("Computer");
+        List<OrganizationStatisticsRepresentation> organizations = postApi.findPostOrganizations("Computer");
         Assert.assertEquals(3, organizations.size());
 
         Assert.assertEquals("Computer Science Department", organizations.get(0).getName());
@@ -1126,7 +1126,7 @@ public class PostApiIT extends AbstractIT {
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER));
 
         testUserService.setAuthentication(memberUser1);
-        departmentUserApi.updateMembershipData(departmentId,
+        departmentUserApi.updateMembership(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
@@ -1139,7 +1139,7 @@ public class PostApiIT extends AbstractIT {
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
 
         testUserService.setAuthentication(memberUser2);
-        departmentUserApi.updateMembershipData(departmentId,
+        departmentUserApi.updateMembership(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
@@ -1251,7 +1251,7 @@ public class PostApiIT extends AbstractIT {
         listenForActivities(postUserId);
 
         testUserService.setAuthentication(memberUser1Id);
-        departmentUserApi.updateMembershipData(departmentId, new UserRoleDTO().setUser(
+        departmentUserApi.updateMembership(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
@@ -1284,7 +1284,7 @@ public class PostApiIT extends AbstractIT {
         postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
         testUserService.setAuthentication(memberUser2Id);
-        departmentUserApi.updateMembershipData(departmentId, new UserRoleDTO().setUser(
+        departmentUserApi.updateMembership(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
@@ -1330,7 +1330,7 @@ public class PostApiIT extends AbstractIT {
         postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
         testUserService.setAuthentication(memberUser3Id);
-        departmentUserApi.updateMembershipData(departmentId, new UserRoleDTO().setUser(
+        departmentUserApi.updateMembership(departmentId, new UserRoleDTO().setUser(
             new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
                 new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));

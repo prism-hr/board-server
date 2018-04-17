@@ -9,7 +9,6 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
@@ -38,7 +37,6 @@ import static hr.prism.board.utils.ResourceUtils.suggestHandle;
 import static java.lang.Math.ceil;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -127,25 +125,6 @@ public class ResourceService {
     public List<String> getCategories(Resource resource, CategoryType categoryType) {
         List<ResourceCategory> categories = resource.getCategories(categoryType);
         return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(toList());
-    }
-
-    public void validateCategories(Resource reference, CategoryType type, List<String> categories,
-                                   ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
-        List<ResourceCategory> referenceCategories = reference.getCategories(type);
-        if (!referenceCategories.isEmpty()) {
-            if (isEmpty(categories)) {
-                throw new BoardException(missing, "Categories must be specified");
-            } else if (
-                !referenceCategories
-                    .stream()
-                    .map(ResourceCategory::getName)
-                    .collect(toList())
-                    .containsAll(categories)) {
-                throw new BoardException(invalid, "Valid categories must be specified - check parent categories");
-            }
-        } else if (isNotEmpty(categories)) {
-            throw new BoardException(corrupted, "Categories must not be specified");
-        }
     }
 
     public ResourceOperation getLatestResourceOperation(Resource resource, Action action) {

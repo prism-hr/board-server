@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EDIT;
-import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 
@@ -209,9 +210,6 @@ public class UserRoleService {
     }
 
     private UserRole createOrUpdateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
-        if (userRoleDTO.getRole() == PUBLIC) {
-            throw new IllegalStateException("Public role is anonymous - cannot be assigned to a user");
-        }
 
         Role role = userRoleDTO.getRole();
         UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, user, role);

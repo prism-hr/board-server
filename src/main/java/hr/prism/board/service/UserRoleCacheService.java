@@ -1,6 +1,5 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
@@ -28,6 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.ResourceTask.MEMBER_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
@@ -40,9 +40,6 @@ import static java.util.UUID.randomUUID;
 @Service
 @Transactional
 public class UserRoleCacheService {
-
-    private static final List<hr.prism.board.enums.ResourceTask> MEMBER_TASKS = ImmutableList.of(
-        hr.prism.board.enums.ResourceTask.CREATE_MEMBER, hr.prism.board.enums.ResourceTask.UPDATE_MEMBER);
 
     @Inject
     private UserRoleRepository userRoleRepository;
@@ -75,12 +72,12 @@ public class UserRoleCacheService {
         return createUserRole(user, resource, userCreate, userRoleDTO, ACCEPTED, notify);
     }
 
-    public UserRole createUserRole(User currentUser, Resource resource, User userCreate, UserRoleDTO userRoleDTO,
+    public UserRole createUserRole(User user, Resource resource, User userCreate, UserRoleDTO userRoleDTO,
                                    State state, boolean notify) {
         Role role = userRoleDTO.getRole();
         Scope scope = resource.getScope();
 
-        if (notify && (Objects.equals(currentUser, userCreate) ||
+        if (notify && (Objects.equals(user, userCreate) ||
             !userRoleRepository.findByResourceAndUserAndRoles(resource, userCreate, NON_MEMBER_ROLES).isEmpty())) {
             notify = false;
         }

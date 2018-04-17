@@ -17,7 +17,7 @@ public class DepartmentDashboard {
 
     private Statistics memberStatistics;
 
-    private List<Organization> organizations;
+    private List<OrganizationStatistics> organizationStatistics;
 
     private PostStatistics postStatistics;
 
@@ -59,12 +59,12 @@ public class DepartmentDashboard {
         return this;
     }
 
-    public List<Organization> getOrganizations() {
-        return organizations;
+    public List<OrganizationStatistics> getOrganizationStatistics() {
+        return organizationStatistics;
     }
 
-    public DepartmentDashboard setOrganizations(List<Organization> organizations) {
-        this.organizations = organizations;
+    public DepartmentDashboard setOrganizationStatistics(List<OrganizationStatistics> organizationStatistics) {
+        this.organizationStatistics = organizationStatistics;
         return this;
     }
 

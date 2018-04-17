@@ -17,6 +17,7 @@ import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
     name = "post.extended",
     attributeNodes = {
         @NamedAttributeNode(value = "parent", subgraph = "board"),
+        @NamedAttributeNode(value = "organization"),
         @NamedAttributeNode(value = "location"),
         @NamedAttributeNode(value = "applyDocument"),
         @NamedAttributeNode(value = "categories")},

@@ -19,6 +19,8 @@ public class PostMapper implements Function<Post, PostRepresentation> {
 
     private final LocationMapper locationMapper;
 
+    private final OrganizationMapper organizationMapper;
+
     private final DocumentMapper documentMapper;
 
     private final BoardMapper boardMapper;
@@ -32,10 +34,12 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     private final PostService postService;
 
     @Inject
-    public PostMapper(LocationMapper locationMapper, DocumentMapper documentMapper, BoardMapper boardMapper,
-                      ResourceMapper resourceMapper, ResourceEventMapper resourceEventMapper,
-                      ResourceService resourceService, PostService postService) {
+    public PostMapper(LocationMapper locationMapper, OrganizationMapper organizationMapper,
+                      DocumentMapper documentMapper, BoardMapper boardMapper, ResourceMapper resourceMapper,
+                      ResourceEventMapper resourceEventMapper, ResourceService resourceService,
+                      PostService postService) {
         this.locationMapper = locationMapper;
+        this.organizationMapper = organizationMapper;
         this.documentMapper = documentMapper;
         this.boardMapper = boardMapper;
         this.resourceMapper = resourceMapper;
@@ -54,8 +58,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             resourceMapper.apply(post, PostRepresentation.class)
                 .setSummary(post.getSummary())
                 .setDescription(post.getDescription())
-                .setOrganizationName(post.getOrganizationName())
-                .setOrganizationLogo(post.getOrganizationLogo())
+                .setOrganization(organizationMapper.apply(post.getOrganization()))
                 .setLocation(locationMapper.apply(post.getLocation()))
                 .setExistingRelation(post.getExistingRelation())
                 .setExistingRelationExplanation(
@@ -92,7 +95,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
         }
 
         return resourceMapper.applySmall(post, PostRepresentation.class)
-            .setOrganizationName(post.getOrganizationName())
+            .setOrganization(organizationMapper.apply(post.getOrganization()))
             .setLocation(locationMapper.apply(post.getLocation()))
             .setBoard(boardMapper.applySmall((Board) post.getParent()));
     }

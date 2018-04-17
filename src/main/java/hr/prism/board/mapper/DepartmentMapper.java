@@ -88,7 +88,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setTasks(applyTasks(departmentDashboard.getTasks()))
             .setBoards(applyBoards(departmentDashboard.getDepartment(), departmentDashboard.getBoards()))
             .setMemberStatistics(applyMemberStatistics(departmentDashboard.getMemberStatistics()))
-            .setOrganizations(applyOrganizations(departmentDashboard.getOrganizations()))
+            .setOrganizationStatistics(applyOrganizations(departmentDashboard.getOrganizationStatistics()))
             .setInvoices(departmentDashboard.getInvoices())
             .setPostStatistics(applyPostStatistics(departmentDashboard.getPostStatistics()));
     }
@@ -142,12 +142,12 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setMostRecent(memberStatistics.getMostRecent());
     }
 
-    private List<OrganizationRepresentation> applyOrganizations(List<Organization> organizations) {
+    private List<OrganizationStatisticsRepresentation> applyOrganizations(List<OrganizationStatistics> organizations) {
         if (organizations == null) {
             return null;
         }
 
-        return organizations.stream().map(organizationMapper).collect(toList());
+        return organizations.stream().map(organizationMapper::apply).collect(toList());
     }
 
     private PostStatisticsRepresentation applyPostStatistics(PostStatistics postStatistics) {
