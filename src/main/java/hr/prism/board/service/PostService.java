@@ -43,6 +43,7 @@ import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ARCHIVED;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_REFERRAL;
 import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static hr.prism.board.utils.ResourceUtils.validateCategories;
 
@@ -254,7 +255,7 @@ public class PostService {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
         departmentUserService.validateMembership(resourceEvent.getUser(), (Department) post.getParent()
-            .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_REFERRAL);
+            .getParent(), BoardForbiddenException.class, FORBIDDEN_REFERRAL);
 
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();

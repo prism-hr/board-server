@@ -316,10 +316,10 @@ public class UserService {
         }
 
         if (fresh) {
-            return userCacheService.getUserFromDatabase(((AuthenticationToken) authentication).getUserId());
+            return userCacheService.getUserFromDatabase(((AuthenticationToken) authentication).getUser());
         }
 
-        return userCacheService.getUser(((AuthenticationToken) authentication).getUserId());
+        return userCacheService.getUser(((AuthenticationToken) authentication).getUser());
     }
 
     public interface UserFinder {

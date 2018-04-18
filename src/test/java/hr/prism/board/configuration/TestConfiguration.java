@@ -12,11 +12,11 @@ import hr.prism.board.dto.OAuthAuthorizationDataDTO;
 import hr.prism.board.dto.OAuthDataDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.DepartmentMemberEvent;
 import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.event.consumer.ActivityEventConsumer;
+import hr.prism.board.event.consumer.DepartmentMemberEventConsumer;
 import hr.prism.board.event.consumer.NotificationEventConsumer;
-import hr.prism.board.event.consumer.UserRoleEventConsumer;
 import hr.prism.board.mapper.ActivityMapper;
 import hr.prism.board.repository.ActivityEventRepository;
 import hr.prism.board.repository.ActivityRepository;
@@ -246,7 +246,7 @@ public class TestConfiguration {
         ActivityEventConsumer activityEventConsumer = applicationContext.getBean(ActivityEventConsumer.class);
         NotificationEventConsumer notificationEventConsumer =
             applicationContext.getBean(NotificationEventConsumer.class);
-        UserRoleEventConsumer userRoleEventConsumer = applicationContext.getBean(UserRoleEventConsumer.class);
+        DepartmentMemberEventConsumer departmentMemberEventConsumer = applicationContext.getBean(DepartmentMemberEventConsumer.class);
 
         doAnswer(invocation -> {
             ApplicationEvent event = (ApplicationEvent) invocation.getArguments()[0];
@@ -254,8 +254,8 @@ public class TestConfiguration {
                 activityEventConsumer.consume((ActivityEvent) invocation.getArguments()[0]);
             } else if (event instanceof NotificationEvent) {
                 notificationEventConsumer.consume((NotificationEvent) invocation.getArguments()[0]);
-            } else if (event instanceof UserRoleEvent) {
-                userRoleEventConsumer.consume((UserRoleEvent) invocation.getArguments()[0]);
+            } else if (event instanceof DepartmentMemberEvent) {
+                departmentMemberEventConsumer.consume((DepartmentMemberEvent) invocation.getArguments()[0]);
             }
 
             return event;

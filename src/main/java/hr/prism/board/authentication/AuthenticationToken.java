@@ -1,25 +1,26 @@
 package hr.prism.board.authentication;
 
+import hr.prism.board.domain.User;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import static java.util.Collections.emptyList;
 
 public class AuthenticationToken extends AbstractAuthenticationToken {
 
-    private Long userId;
+    private User user;
 
-    public AuthenticationToken(Long userId) {
+    public AuthenticationToken(User user) {
         super(emptyList());
-        this.userId = userId;
+        this.user = user;
     }
 
-    public Long getUserId() {
-        return this.userId;
+    public User getUser() {
+        return this.user;
     }
 
     @Override
     public Object getPrincipal() {
-        return this.userId;
+        return this.user;
     }
 
     @Override

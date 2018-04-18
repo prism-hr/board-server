@@ -25,7 +25,7 @@ public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Se
         if (entity.getCreatorId() == null) {
             AuthenticationToken authentication = (AuthenticationToken) getContext().getAuthentication();
             if (authentication != null) {
-                entity.setCreatorId(authentication.getUserId());
+                entity.setCreatorId(authentication.getUser());
             }
         }
 

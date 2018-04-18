@@ -3,15 +3,11 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.MemberCategory;
 import org.hibernate.validator.constraints.Email;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-public class MemberDTO {
+import static hr.prism.board.enums.UserRoleType.MEMBER;
 
-    @Valid
-    @NotNull
-    private UserDTO user;
+public class MemberDTO extends UserRoleDTO<MemberDTO> {
 
     @Email
     private String email;
@@ -24,13 +20,8 @@ public class MemberDTO {
 
     private LocalDate expiryDate;
 
-    public UserDTO getUser() {
-        return user;
-    }
-
-    public MemberDTO setUser(UserDTO user) {
-        this.user = user;
-        return this;
+    public MemberDTO() {
+        super(MEMBER);
     }
 
     public String getEmail() {

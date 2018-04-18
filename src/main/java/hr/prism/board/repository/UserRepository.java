@@ -22,7 +22,7 @@ public interface UserRepository extends BoardEntityRepository<User, Long> {
             "from User user " +
             "where user.id = :id")
     @EntityGraph(value = "user.extended", type = FETCH)
-    User findOneExtended(@Param("id") Long id);
+    User findOne(@Param("id") Long id);
 
     User findByUuid(String uuid);
 

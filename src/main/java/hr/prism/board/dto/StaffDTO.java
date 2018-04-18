@@ -3,26 +3,17 @@ package hr.prism.board.dto;
 import hr.prism.board.enums.Role;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
-public class StaffDTO {
+import static hr.prism.board.enums.UserRoleType.STAFF;
 
-    @Valid
-    @NotNull
-    private UserDTO user;
+public class StaffDTO extends UserRoleDTO<StaffDTO> {
 
     @NotEmpty
     private List<Role> roles;
 
-    public UserDTO getUser() {
-        return user;
-    }
-
-    public StaffDTO setUser(UserDTO user) {
-        this.user = user;
-        return this;
+    public StaffDTO() {
+        super(STAFF);
     }
 
     public List<Role> getRoles() {

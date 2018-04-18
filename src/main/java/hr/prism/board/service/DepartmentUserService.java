@@ -1,17 +1,16 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.enums.CategoryType;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.DepartmentMemberEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.event.UserRoleEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -30,8 +29,7 @@ import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICA
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
-import static hr.prism.board.enums.State.PENDING;
-import static hr.prism.board.enums.State.REJECTED;
+import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.util.Collections.singletonList;
 
@@ -49,17 +47,21 @@ public class DepartmentUserService {
 
     private final ActivityService activityService;
 
+    private final ResourceTaskService resourceTaskService;
+
     private final EventProducer eventProducer;
 
     @Inject
     public DepartmentUserService(NewUserService userService, ResourceService resourceService,
                                  ActionService actionService, NewUserRoleService userRoleService,
-                                 ActivityService activityService, EventProducer eventProducer) {
+                                 ResourceTaskService resourceTaskService, ActivityService activityService,
+                                 EventProducer eventProducer) {
         this.userService = userService;
         this.resourceService = resourceService;
         this.actionService = actionService;
         this.userRoleService = userRoleService;
         this.activityService = activityService;
+        this.resourceTaskService = resourceTaskService;
         this.eventProducer = eventProducer;
     }
 
@@ -70,36 +72,24 @@ public class DepartmentUserService {
         return userService.findUsers(searchTerm);
     }
 
-    public Department createMembers(Long id, List<UserRoleDTO> userRoleDTOs) {
-        if (userRoleDTOs.stream().map(UserRoleDTO::getRole).anyMatch(role -> role != MEMBER)) {
-            throw new BoardException(INVALID_RESOURCE_USER, "Only members can be bulk created");
-        }
-
+    public Department createMembers(Long id, List<MemberDTO> memberDTOs) {
         User currentUser = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
-            department.increaseMemberTobeUploadedCount((long) userRoleDTOs.size());
-
-            eventProducer.produce(
-                new UserRoleEvent(this, currentUser.getId(), id, userRoleDTOs));
-
+            department.increaseMemberTobeUploadedCount((long) memberDTOs.size());
+            eventProducer.produce(new DepartmentMemberEvent(this, id, memberDTOs));
             department.setLastMemberTimestamp(LocalDateTime.now());
             return department;
         });
     }
 
     public User createMembershipRequest(Long id, MemberDTO memberDTO) {
-        User user = userService.getCurrentUserSecured(true);
+        User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.findOne(id);
         checkExistingMemberRequest(department, user);
+        checkValidMemberCategory(department, memberDTO.getMemberCategory());
 
-
-        UserDTO userDTO = memberDTO.getUser();
-        if (userDTO != null) {
-            userService.updateMembershipData(user, userDTO);
-        }
-
-        UserRole userRole = userRoleService.createUserRole(department, memberDTO, PENDING);
+        UserRole userRole = userRoleService.createOrUpdateUserRole(department, memberDTO, PENDING);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
 
         eventProducer.produce(
@@ -145,7 +135,7 @@ public class DepartmentUserService {
     }
 
     public User updateMembership(Long id, MemberDTO memberDTO) {
-        User user = userService.getCurrentUserSecured(true);
+        User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.findOne(id);
 
         UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
@@ -154,10 +144,7 @@ public class DepartmentUserService {
         }
 
         UserDTO userDTO = memberDTO.getUser();
-        if (userDTO != null) {
-            userService.updateMembershipData(user, userDTO);
-        }
-
+        userService.updateMembership(user, userDTO);
         userRoleService.updateMembership(userRole, memberDTO);
         validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
         return user;
@@ -169,6 +156,12 @@ public class DepartmentUserService {
         actionService.executeAction(user, department, EDIT, () -> department);
         return userRoleService.createUserRole(user, department, userRole);
     }
+
+    public void createOrUpdateUserRole(Long id, MemberDTO memberDTO) {
+        Resource resource = resourceService.findOne(id);
+        userRoleService.createOrUpdateUserRole(resource, memberDTO, ACCEPTED);
+    }
+
 
     public UserRole appendUserRole(Long id, Long userUpdateId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
@@ -207,6 +200,29 @@ public class DepartmentUserService {
         }
 
         throw new BoardException(DUPLICATE_PERMISSION, "Member request already submitted");
+    }
+
+    private void checkValidMemberCategory(Department department, MemberCategory memberCategory) {
+        List<ResourceCategory> referenceCategories = department.getCategories(CategoryType.MEMBER);
+        if (referenceCategories.isEmpty()) {
+            if (memberCategory == null) {
+                return;
+            }
+
+            throw new BoardException(CORRUPTED_USER_ROLE_MEMBER_CATEGORIES, "Categories must not be specified");
+        }
+
+        if (memberCategory == null) {
+            throw new BoardException(MISSING_USER_ROLE_MEMBER_CATEGORIES, "Categories must be specified");
+        }
+
+        if (referenceCategories
+            .stream()
+            .map(ResourceCategory::getName)
+            .noneMatch(name -> name.equals(memberCategory.name()))) {
+            throw new BoardException(
+                INVALID_USER_ROLE_MEMBER_CATEGORIES, "Valid categories must be specified - check parent categories");
+        }
     }
 
 }

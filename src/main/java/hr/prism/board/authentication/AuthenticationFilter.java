@@ -1,7 +1,9 @@
 package hr.prism.board.authentication;
 
+import hr.prism.board.domain.User;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.service.AuthenticationService;
+import hr.prism.board.service.NewUserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -16,23 +18,26 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 
 import static hr.prism.board.exception.ExceptionCode.PROBLEM;
+import static java.lang.Long.parseLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger LOGGER = getLogger(AuthenticationFilter.class);
 
-    private AuthenticationService authenticationService;
+    private final Long sessionRefreshBeforeExpirationSeconds;
 
-    private Long sessionRefreshBeforeExpirationSeconds;
+    private final AuthenticationService authenticationService;
 
-    public AuthenticationFilter(AuthenticationService authenticationService,
-                                Long sessionRefreshBeforeExpirationSeconds) {
-        this.authenticationService = authenticationService;
+    private final NewUserService userService;
+
+    public AuthenticationFilter(Long sessionRefreshBeforeExpirationSeconds, AuthenticationService authenticationService,
+                                NewUserService userService) {
         this.sessionRefreshBeforeExpirationSeconds = sessionRefreshBeforeExpirationSeconds;
+        this.authenticationService = authenticationService;
+        this.userService = userService;
     }
 
     @Override
@@ -48,10 +53,13 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                     throw new BoardForbiddenException(PROBLEM, "Malformed JWT");
                 }
 
-                Long userId = Long.parseLong(claims.getSubject());
-                SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(userId));
-                Date expirationDate = claims.getExpiration();
-                LocalDateTime expiration = LocalDateTime.ofInstant(expirationDate.toInstant(), ZoneId.systemDefault());
+                Long userId = parseLong(claims.getSubject());
+                User user = userService.getById(userId);
+
+                SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(user));
+                LocalDateTime expiration = LocalDateTime.ofInstant(
+                    claims.getExpiration().toInstant(), ZoneId.systemDefault());
+
                 if (expiration.minusSeconds(sessionRefreshBeforeExpirationSeconds).isBefore(LocalDateTime.now())) {
                     response.setHeader("Authorization",
                         "Bearer " + authenticationService.makeAccessToken(userId, true));

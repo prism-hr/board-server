@@ -42,13 +42,13 @@ public class UserCacheService {
     }
 
     public User getUser(Long userId) {
-        User user = userRepository.findOneExtended(userId);
+        User user = userRepository.findOne(userId);
         appendScopes(user);
         return user;
     }
 
     public User getUserFromDatabase(Long userId) {
-        User user = userRepository.findOneExtended(userId);
+        User user = userRepository.findOne(userId);
         appendScopes(user);
         return user;
     }
@@ -72,7 +72,7 @@ public class UserCacheService {
         entityManager.flush();
 
         Long userId = user.getId();
-        user = userRepository.findOneExtended(userId);
+        user = userRepository.findOne(userId);
 
         appendScopes(user);
         return user;

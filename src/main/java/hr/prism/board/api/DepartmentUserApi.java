@@ -47,7 +47,7 @@ public class DepartmentUserApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/bulk", method = POST)
     public DepartmentRepresentation createMembers(@PathVariable Long departmentId,
-                                                  @RequestBody @Valid List<UserRoleDTO> users) {
+                                                  @RequestBody @Valid List<MemberDTO> users) {
         return departmentMapper.apply(departmentUserService.createMembers(departmentId, users));
     }
 

@@ -19,11 +19,7 @@ import javax.inject.Inject;
 import java.time.LocalDate;
 import java.util.List;
 
-import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.emptyToNull;
-import static hr.prism.board.utils.ResourceUtils.validateCategories;
-import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
@@ -70,39 +66,25 @@ public class NewUserRoleService {
         return userRoleRepository.save(userRole);
     }
 
-    public UserRole createUserRole(Resource resource, MemberDTO memberDTO, State state) {
-        MemberCategory memberCategory = memberDTO.getMemberCategory();
-        validateCategories(resource, MEMBER, singletonList(memberCategory.name()),
-            MISSING_USER_ROLE_MEMBER_CATEGORIES,
-            INVALID_USER_ROLE_MEMBER_CATEGORIES,
-            CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
-
+    public UserRole createOrUpdateUserRole(Resource resource, MemberDTO memberDTO, State state) {
         UserDTO userDTO = memberDTO.getUser();
-        User user = userService.getOrCreateUser(
+        User user = userService.createOrUpdateUser(
             userDTO, (email) -> userService.getByEmail(resource, email, Role.MEMBER));
 
-        UserRole userRole =
-            new UserRole()
-                .setUuid(randomUUID().toString())
-                .setResource(resource)
-                .setUser(user)
-                .setEmail(emptyToNull(memberDTO.getEmail()))
-                .setRole(Role.MEMBER)
-                .setMemberCategory(memberCategory)
-                .setMemberProgram(memberDTO.getMemberProgram())
-                .setMemberYear(memberDTO.getMemberYear())
-                .setMemberDate(LocalDate.now())
-                .setState(state)
-                .setExpiryDate(memberDTO.getExpiryDate());
+        UserRole userRole = getByResourceUserAndRole(resource, user, Role.MEMBER);
+        if (userRole == null) {
+            return createUserRole(resource, user, memberDTO, state);
+        }
 
-        userRole.setCreatorId(resource.getCreatorId());
-        return userRoleRepository.save(userRole);
+        userRole = updateMembership(userRole, memberDTO);
+        userRole.setState(state);
+        return userRole;
     }
 
     // TODO: remember notify
     public List<UserRole> getOrCreateUserRoles(Resource resource, StaffDTO staffDTO) {
         UserDTO userDTO = staffDTO.getUser();
-        User userCreateUpdate = userService.getOrCreateUser(userDTO, userService::getByEmail);
+        User userCreateUpdate = userService.createOrUpdateUser(userDTO, userService::getByEmail);
         return getOrCreateUserRoles(resource, userCreateUpdate, staffDTO);
     }
 
@@ -110,20 +92,13 @@ public class NewUserRoleService {
         return userRoleDAO.getMemberStatistics(departmentId);
     }
 
-    // TODO: remember can only be department role
-    public void updateMembership(UserRole userRole, MemberDTO memberDTO) {
+    public UserRole updateMembership(UserRole userRole, MemberDTO memberDTO) {
         boolean updated = false;
         boolean clearStudyData = false;
 
         MemberCategory oldMemberCategory = userRole.getMemberCategory();
         MemberCategory newMemberCategory = memberDTO.getMemberCategory();
         if (newMemberCategory != null) {
-            Resource resource = userRole.getResource();
-            validateCategories(resource, MEMBER, singletonList(newMemberCategory.name()),
-                MISSING_USER_ROLE_MEMBER_CATEGORIES,
-                INVALID_USER_ROLE_MEMBER_CATEGORIES,
-                CORRUPTED_USER_ROLE_MEMBER_CATEGORIES);
-
             userRole.setMemberCategory(newMemberCategory);
             clearStudyData = newMemberCategory != oldMemberCategory;
             updated = true;
@@ -144,6 +119,8 @@ public class NewUserRoleService {
         if (updated) {
             userRole.setMemberDate(LocalDate.now());
         }
+
+        return userRole;
     }
 
     private List<UserRole> getOrCreateUserRoles(Resource resource, User userCreateUpdate, StaffDTO staffDTO) {
@@ -159,6 +136,25 @@ public class NewUserRoleService {
         }
 
         return userRole;
+    }
+
+    private UserRole createUserRole(Resource resource, User user, MemberDTO memberDTO, State state) {
+        UserRole userRole =
+            new UserRole()
+                .setUuid(randomUUID().toString())
+                .setResource(resource)
+                .setUser(user)
+                .setEmail(emptyToNull(memberDTO.getEmail()))
+                .setRole(Role.MEMBER)
+                .setMemberCategory(memberDTO.getMemberCategory())
+                .setMemberProgram(memberDTO.getMemberProgram())
+                .setMemberYear(memberDTO.getMemberYear())
+                .setMemberDate(LocalDate.now())
+                .setState(state)
+                .setExpiryDate(memberDTO.getExpiryDate());
+
+        userRole.setCreatorId(resource.getCreatorId());
+        return userRoleRepository.save(userRole);
     }
 
 }
