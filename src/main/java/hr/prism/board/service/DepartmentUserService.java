@@ -27,9 +27,12 @@ import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static hr.prism.board.enums.Action.EDIT;
+import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_ACTIVITY;
 import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY;
+import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_NOTIFICATION;
 import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.MEMBER;
@@ -155,7 +158,7 @@ public class DepartmentUserService {
         return user;
     }
 
-    public UserRole createOrUpdateUserRoles(Long id, UserRoleDTO userRoleDTO) {
+    public List<UserRole> createOrUpdateUserRoles(Long id, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
@@ -163,32 +166,15 @@ public class DepartmentUserService {
         UserRoleType type = userRoleDTO.getType();
         switch (type) {
             case STAFF:
-                List<UserRole> userRoles = userRoleService.getOrCreateUserRoles(department, (StaffDTO) userRoleDTO);
-                User userCreate = userRoles.get(0).getUser();
-
-                if (shouldNotify(user, userCreate, userRoles)) {
-                    eventProducer.produce(
-                        new ActivityEvent(this, id, false,
-                            singletonList(
-                                new Activity()
-                                    .setUserId(userCreate.getId())
-                                    .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY")))),
-                        new NotificationEvent(this, id,
-                            singletonList(
-                                new Notification()
-                                    .setInvitation(userRole.getUuid())
-                                    .setNotification(
-                                        hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION")))));
-                }
-
+                // TODO: work out how to delete selectively
+                List<UserRole> userRoles = userRoleService.createOrUpdateUserRoles(department, (StaffDTO) userRoleDTO);
+                return notifyStaffUserIfNew(user, id, userRoles);
             case MEMBER:
-
+                return singletonList(
+                    userRoleService.createOrUpdateUserRole(department, (MemberDTO) userRoleDTO, ACCEPTED));
             default:
                 throw new IllegalStateException("Unexpected user role type: " + type);
         }
-
-
-        return userRoleService.createUserRole(user, department, userRoleDTO);
     }
 
     public void createOrUpdateUserRole(Long id, MemberDTO memberDTO) {
@@ -197,13 +183,24 @@ public class DepartmentUserService {
     }
 
 
-    public UserRole appendUserRole(Long id, Long userUpdateId, UserRoleDTO userRoleDTO) {
+    public List<UserRole> updateUserRoles(Long id, Long userUpdateId, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
-        User userUpdate = userService.getById(userUpdateId);
-        userRoleCacheService.updateUserRole(user, department, userUpdate, userRoleDTO);
-        activityService.sendActivities(department);
+
+        UserRoleType type = userRoleDTO.getType();
+        switch (type) {
+            case STAFF:
+                List<UserRole> userRoles = userRoleService.createOrUpdateUserRoles(department, (StaffDTO) userRoleDTO);
+                return notifyStaffUserIfNew(user, id, userRoles);
+            case MEMBER:
+                UserRole userRole =
+                    userRoleService.createOrUpdateUserRole(department, (MemberDTO) userRoleDTO, ACCEPTED);
+                activityService.sendActivities(department);
+                return singletonList(userRole);
+            default:
+                throw new IllegalStateException("Unexpected user role type: " + type);
+        }
     }
 
     public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass,
@@ -259,8 +256,35 @@ public class DepartmentUserService {
         }
     }
 
-    private boolean shouldNotify(User user, User userCreate, List<UserRole> userRoles) {
-        return !Objects.equals(user, userCreate) && userRoles.stream().allMatch(UserRole::isCreated);
+    private List<UserRole> notifyStaffUserIfNew(User user, Long id, List<UserRole> userRoles) {
+        Optional<UserRole> userRoleNotifyOptional =
+            userRoles
+                .stream()
+                .filter(UserRole::isCreated)
+                .findFirst();
+
+        if (userRoleNotifyOptional.isPresent()) {
+            UserRole userRoleNotify = userRoleNotifyOptional.get();
+            User userNotify = userRoleNotify.getUser();
+
+            if (Objects.equals(user, userNotify)) {
+                return userRoles;
+            }
+
+            eventProducer.produce(
+                new ActivityEvent(this, id, false,
+                    singletonList(
+                        new Activity()
+                            .setUserId(userNotify.getId())
+                            .setActivity(JOIN_DEPARTMENT_ACTIVITY))),
+                new NotificationEvent(this, id,
+                    singletonList(
+                        new Notification()
+                            .setInvitation(userRoleNotify.getUuid())
+                            .setNotification(JOIN_DEPARTMENT_NOTIFICATION))));
+        }
+
+        return userRoles;
     }
 
 }

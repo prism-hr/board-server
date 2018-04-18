@@ -87,10 +87,10 @@ public class DepartmentUserApi {
         return userRoleMapper.apply(departmentUserService.createOrUpdateUserRoles(departmentId, user));
     }
 
-    @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = PUT)
-    public UserRoleRepresentation updateUserRole(@PathVariable Long resourceId,
-                                                 @PathVariable Long userId, @RequestBody @Valid UserRoleDTO user) {
-        return userRoleService.updateUserRole(DEPARTMENT, resourceId, userId, user);
+    @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}", method = PUT)
+    public UserRoleRepresentation updateUserRole(@PathVariable Long departmentId, @PathVariable Long userId,
+                                                 @RequestBody @Valid UserRoleDTO user) {
+        return userRoleMapper.apply(departmentUserService.updateUserRoles(departmentId, userId, user));
     }
 
     @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = DELETE)
