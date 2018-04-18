@@ -2,11 +2,13 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.MemberDTO;
+import hr.prism.board.dto.StaffDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
+import hr.prism.board.enums.UserRoleType;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.DepartmentMemberEvent;
 import hr.prism.board.event.EventProducer;
@@ -16,12 +18,15 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.workflow.Activity;
+import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY;
@@ -150,11 +155,40 @@ public class DepartmentUserService {
         return user;
     }
 
-    public UserRole createOrUpdateUserRole(Long id, UserRoleDTO userRole) {
+    public UserRole createOrUpdateUserRoles(Long id, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
-        return userRoleService.createUserRole(user, department, userRole);
+
+        UserRoleType type = userRoleDTO.getType();
+        switch (type) {
+            case STAFF:
+                List<UserRole> userRoles = userRoleService.getOrCreateUserRoles(department, (StaffDTO) userRoleDTO);
+                User userCreate = userRoles.get(0).getUser();
+
+                if (shouldNotify(user, userCreate, userRoles)) {
+                    eventProducer.produce(
+                        new ActivityEvent(this, id, false,
+                            singletonList(
+                                new Activity()
+                                    .setUserId(userCreate.getId())
+                                    .setActivity(hr.prism.board.enums.Activity.valueOf("JOIN_" + scopeName + "_ACTIVITY")))),
+                        new NotificationEvent(this, id,
+                            singletonList(
+                                new Notification()
+                                    .setInvitation(userRole.getUuid())
+                                    .setNotification(
+                                        hr.prism.board.enums.Notification.valueOf("JOIN_" + scopeName + "_NOTIFICATION")))));
+                }
+
+            case MEMBER:
+
+            default:
+                throw new IllegalStateException("Unexpected user role type: " + type);
+        }
+
+
+        return userRoleService.createUserRole(user, department, userRoleDTO);
     }
 
     public void createOrUpdateUserRole(Long id, MemberDTO memberDTO) {
@@ -223,6 +257,10 @@ public class DepartmentUserService {
             throw new BoardException(
                 INVALID_USER_ROLE_MEMBER_CATEGORIES, "Valid categories must be specified - check parent categories");
         }
+    }
+
+    private boolean shouldNotify(User user, User userCreate, List<UserRole> userRoles) {
+        return !Objects.equals(user, userCreate) && userRoles.stream().allMatch(UserRole::isCreated);
     }
 
 }

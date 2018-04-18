@@ -66,6 +66,13 @@ public class NewUserRoleService {
         return userRoleRepository.save(userRole);
     }
 
+    // TODO: remember notify
+    public List<UserRole> getOrCreateUserRoles(Resource resource, StaffDTO staffDTO) {
+        UserDTO userDTO = staffDTO.getUser();
+        User userCreateUpdate = userService.createOrUpdateUser(userDTO, userService::getByEmail);
+        return getOrCreateUserRoles(resource, userCreateUpdate, staffDTO);
+    }
+
     public UserRole createOrUpdateUserRole(Resource resource, MemberDTO memberDTO, State state) {
         UserDTO userDTO = memberDTO.getUser();
         User user = userService.createOrUpdateUser(
@@ -79,17 +86,6 @@ public class NewUserRoleService {
         userRole = updateMembership(userRole, memberDTO);
         userRole.setState(state);
         return userRole;
-    }
-
-    // TODO: remember notify
-    public List<UserRole> getOrCreateUserRoles(Resource resource, StaffDTO staffDTO) {
-        UserDTO userDTO = staffDTO.getUser();
-        User userCreateUpdate = userService.createOrUpdateUser(userDTO, userService::getByEmail);
-        return getOrCreateUserRoles(resource, userCreateUpdate, staffDTO);
-    }
-
-    public Statistics getMemberStatistics(Long departmentId) {
-        return userRoleDAO.getMemberStatistics(departmentId);
     }
 
     public UserRole updateMembership(UserRole userRole, MemberDTO memberDTO) {
@@ -123,8 +119,14 @@ public class NewUserRoleService {
         return userRole;
     }
 
+
+    public Statistics getMemberStatistics(Long departmentId) {
+        return userRoleDAO.getMemberStatistics(departmentId);
+    }
+
     private List<UserRole> getOrCreateUserRoles(Resource resource, User userCreateUpdate, StaffDTO staffDTO) {
-        return staffDTO.getRoles().stream()
+        return staffDTO.getRoles()
+            .stream()
             .map(role -> getOrCreateUserRole(resource, userCreateUpdate, role))
             .collect(toList());
     }

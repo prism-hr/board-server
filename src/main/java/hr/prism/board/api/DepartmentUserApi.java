@@ -84,7 +84,7 @@ public class DepartmentUserApi {
     @RequestMapping(value = "/api/departments/{departmentId}/users", method = POST)
     public UserRoleRepresentation createUserRole(@PathVariable Long departmentId,
                                                  @RequestBody @Valid UserRoleDTO user) {
-        return userRoleMapper.apply(departmentUserService.createOrUpdateUserRole(departmentId, user));
+        return userRoleMapper.apply(departmentUserService.createOrUpdateUserRoles(departmentId, user));
     }
 
     @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = PUT)
