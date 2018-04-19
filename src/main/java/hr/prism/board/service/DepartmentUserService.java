@@ -5,41 +5,45 @@ import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.StaffDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.State;
-import hr.prism.board.enums.UserRoleType;
+import hr.prism.board.enums.*;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.DepartmentMemberEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.representation.DemographicDataStatusRepresentation;
-import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.value.DemographicDataStatus;
+import hr.prism.board.value.UserSearch;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_ACTIVITY;
 import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY;
 import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_NOTIFICATION;
 import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION;
+import static hr.prism.board.enums.ResourceTask.MEMBER_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
+import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+
+import hr.prism.board.event.ActivityEvent;
 
 @Service
 @Transactional
@@ -59,11 +63,13 @@ public class DepartmentUserService {
 
     private final EventProducer eventProducer;
 
+    private final EntityManager entityManager;
+
     @Inject
     public DepartmentUserService(NewUserService userService, ResourceService resourceService,
                                  ActionService actionService, NewUserRoleService userRoleService,
                                  ResourceTaskService resourceTaskService, ActivityService activityService,
-                                 EventProducer eventProducer) {
+                                 EventProducer eventProducer, EntityManager entityManager) {
         this.userService = userService;
         this.resourceService = resourceService;
         this.actionService = actionService;
@@ -71,9 +77,10 @@ public class DepartmentUserService {
         this.activityService = activityService;
         this.resourceTaskService = resourceTaskService;
         this.eventProducer = eventProducer;
+        this.entityManager = entityManager;
     }
 
-    public List<UserRepresentation> findUsers(Long id, String searchTerm) {
+    public List<UserSearch> findUsers(Long id, String searchTerm) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
@@ -97,8 +104,11 @@ public class DepartmentUserService {
         checkExistingMemberRequest(department, user);
         checkValidMemberCategory(department, memberDTO.getMemberCategory());
 
-        UserRole userRole = userRoleService.createOrUpdateUserRole(department, memberDTO, PENDING);
-        validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
+        UserDTO userDTO = memberDTO.getUser();
+        User userCreateUpdate = userService.createOrUpdateUser(
+            userDTO, (email) -> userService.getByEmail(department, email, Role.MEMBER));
+        UserRole userRole = userRoleService.createOrUpdateUserRole(department, userCreateUpdate, memberDTO, PENDING);
+        checkValidDemographicData(user, department);
 
         eventProducer.produce(
             new ActivityEvent(this, id, UserRole.class, userRole.getId(),
@@ -114,6 +124,7 @@ public class DepartmentUserService {
                         .setRole(ADMINISTRATOR)
                         .setNotification(JOIN_DEPARTMENT_REQUEST_NOTIFICATION))));
 
+        resourceTaskService.completeTasks(department, MEMBER_TASKS);
         return user;
     }
 
@@ -154,70 +165,147 @@ public class DepartmentUserService {
         UserDTO userDTO = memberDTO.getUser();
         userService.updateMembership(user, userDTO);
         userRoleService.updateMembership(userRole, memberDTO);
-        validateMembership(user, department, BoardException.class, INVALID_MEMBERSHIP);
+        checkValidDemographicData(user, department);
         return user;
     }
 
-    public List<UserRole> createOrUpdateUserRoles(Long id, UserRoleDTO userRoleDTO) {
+    public List<UserRole> createUserRoles(Long id, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
+        UserDTO userDTO = userRoleDTO.getUser();
         UserRoleType type = userRoleDTO.getType();
+
+        User userCreateUpdate;
         switch (type) {
             case STAFF:
-                // TODO: work out how to delete selectively
-                List<UserRole> userRoles = userRoleService.createOrUpdateUserRoles(department, (StaffDTO) userRoleDTO);
-                return notifyStaffUserIfNew(user, id, userRoles);
+                userCreateUpdate = userService.createOrUpdateUser(userDTO, userService::getByEmail);
+                break;
             case MEMBER:
-                return singletonList(
-                    userRoleService.createOrUpdateUserRole(department, (MemberDTO) userRoleDTO, ACCEPTED));
+                userCreateUpdate = userService.createOrUpdateUser(
+                    userDTO, (email) -> userService.getByEmail(department, email, Role.MEMBER));
+                break;
             default:
                 throw new IllegalStateException("Unexpected user role type: " + type);
         }
+
+        return createOrUpdateUserRoles(id, userCreateUpdate, userRoleDTO);
+    }
+
+    public List<UserRole> updateUserRoles(Long id, Long userCreateUpdateId, UserRoleDTO userRoleDTO) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+
+        User userCreateUpdate = userService.getById(userCreateUpdateId);
+        return createOrUpdateUserRoles(id, userCreateUpdate, userRoleDTO);
     }
 
     public void createOrUpdateUserRole(Long id, MemberDTO memberDTO) {
-        Resource resource = resourceService.findOne(id);
-        userRoleService.createOrUpdateUserRole(resource, memberDTO, ACCEPTED);
+        Department department = (Department) resourceService.findOne(id);
+        UserDTO userDTO = memberDTO.getUser();
+        User userCreateUpdate = userService.createOrUpdateUser(
+            userDTO, (email) -> userService.getByEmail(department, email, Role.MEMBER));
+        userRoleService.createOrUpdateUserRole(department, userCreateUpdate, memberDTO, ACCEPTED);
+        resourceTaskService.completeTasks(department, MEMBER_TASKS);
     }
 
-
-    public List<UserRole> updateUserRoles(Long id, Long userUpdateId, UserRoleDTO userRoleDTO) {
-        User user = userService.getCurrentUserSecured();
-        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
-        actionService.executeAction(user, department, EDIT, () -> department);
-
-        UserRoleType type = userRoleDTO.getType();
-        switch (type) {
-            case STAFF:
-                List<UserRole> userRoles = userRoleService.createOrUpdateUserRoles(department, (StaffDTO) userRoleDTO);
-                return notifyStaffUserIfNew(user, id, userRoles);
-            case MEMBER:
-                UserRole userRole =
-                    userRoleService.createOrUpdateUserRole(department, (MemberDTO) userRoleDTO, ACCEPTED);
-                activityService.sendActivities(department);
-                return singletonList(userRole);
-            default:
-                throw new IllegalStateException("Unexpected user role type: " + type);
+    public void checkValidDemographicData(User user, Department department) {
+        entityManager.flush();
+        DemographicDataStatus dataStatus = makeDemographicDataStatus(user, department);
+        if (dataStatus.isRequireUserData()) {
+            throw new BoardException(INVALID_MEMBERSHIP, "User data not valid / complete");
         }
-    }
 
-    public void validateMembership(User user, Department department, Class<? extends BoardException> exceptionClass,
-                                   ExceptionCode exceptionCode) {
-        DemographicDataStatusRepresentation dataStatus =
-            userRoleService.makeDemographicDataStatus(user, department, true);
-        if (!dataStatus.isReady()) {
-            if (dataStatus.isRequireUserDemographicData()) {
-                throwFor(exceptionClass, exceptionCode, "User demographic data not valid");
-            }
-
-            throwFor(exceptionClass, exceptionCode, "User role demographic data not valid");
+        if (dataStatus.isRequireMemberData()) {
+            throw new BoardException(INVALID_MEMBERSHIP, "Member data not valid / complete");
         }
     }
 
     public void decrementMemberCountPending(Long id) {
         ((Department) resourceService.findOne(id)).decrementMemberToBeUploadedCount();
+    }
+
+    public DemographicDataStatus makeDemographicDataStatus(User user, Department department) {
+        DemographicDataStatus responseReadiness = new DemographicDataStatus();
+        if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
+            // User data incomplete
+            responseReadiness.setRequireUserData(true);
+        }
+
+        if (department.getMemberCategories().isEmpty()) {
+            // No member data required
+            return responseReadiness;
+        }
+
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
+        if (userRole == null) {
+            // Must be administrator - no member data required
+            return responseReadiness;
+        }
+
+        MemberCategory memberCategory = userRole.getMemberCategory();
+        String memberProgram = userRole.getMemberProgram();
+        Integer memberYear = userRole.getMemberYear();
+
+        responseReadiness
+            .setMemberCategory(memberCategory)
+            .setMemberProgram(memberProgram)
+            .setMemberYear(memberYear);
+
+        if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+            // Member data incomplete
+            return responseReadiness.setRequireMemberData(true);
+        }
+
+        LocalDate academicYearStart = getAcademicYearStart();
+        if (academicYearStart.isAfter(userRole.getMemberDate())) {
+            // Member data out of date
+            return responseReadiness.setRequireMemberData(true);
+        }
+
+        // Member data complete and up to date
+        return responseReadiness;
+    }
+
+    private List<UserRole> createOrUpdateUserRoles(Long id, User userCreateUpdate, UserRoleDTO userRoleDTO) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+
+        UserRoleType type = userRoleDTO.getType();
+        switch (type) {
+            case STAFF:
+                List<Role> newRoles = ((StaffDTO) userRoleDTO).getRoles();
+                List<Role> oldRoles = userRoleService.getByResourceAndUser(department, userCreateUpdate);
+
+                List<UserRole> createdUserRoles =
+                    newRoles
+                        .stream()
+                        .filter(role -> !oldRoles.contains(role))
+                        .map(role -> userRoleService.createUserRole(department, userCreateUpdate, role))
+                        .collect(toList());
+
+                oldRoles
+                    .stream()
+                    .filter(role -> !newRoles.contains(role))
+                    .forEach(role -> {
+                        activityService.deleteActivities(department, userCreateUpdate, role);
+                        userRoleService.deleteUserRole(department, userCreateUpdate, role);
+                    });
+
+                activityService.sendActivities(department);
+                return notifyStaffUserIfNew(user, id, createdUserRoles);
+            case MEMBER:
+                UserRole userRole = userRoleService.createOrUpdateUserRole(
+                    department, userCreateUpdate, (MemberDTO) userRoleDTO, ACCEPTED);
+                resourceTaskService.completeTasks(department, MEMBER_TASKS);
+                activityService.sendActivities(department);
+                return singletonList(userRole);
+            default:
+                throw new IllegalStateException("Unexpected user role type: " + type);
+        }
     }
 
     private void checkExistingMemberRequest(Department department, User user) {

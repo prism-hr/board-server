@@ -5,8 +5,6 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.MemberDTO;
-import hr.prism.board.dto.StaffDTO;
-import hr.prism.board.dto.UserDTO;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
@@ -21,7 +19,6 @@ import java.util.List;
 
 import static hr.prism.board.utils.BoardUtils.emptyToNull;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
 
 @Service
 @Transactional
@@ -45,6 +42,10 @@ public class NewUserRoleService {
         return userRoleRepository.findOne(id);
     }
 
+    public List<Role> getByResourceAndUser(Resource resource, User user) {
+        return userRoleRepository.findByResourceAndUser(resource, user);
+    }
+
     public UserRole getByResourceUserAndRole(Resource resource, User user, Role role) {
         return userRoleRepository.findByResourceAndUserAndRole(resource, user, role);
     }
@@ -66,20 +67,10 @@ public class NewUserRoleService {
         return userRoleRepository.save(userRole);
     }
 
-    public List<UserRole> createOrUpdateUserRoles(Resource resource, StaffDTO staffDTO) {
-        UserDTO userDTO = staffDTO.getUser();
-        User userCreateUpdate = userService.createOrUpdateUser(userDTO, userService::getByEmail);
-        return createOrUpdateUserRoles(resource, userCreateUpdate, staffDTO);
-    }
-
-    public UserRole createOrUpdateUserRole(Resource resource, MemberDTO memberDTO, State state) {
-        UserDTO userDTO = memberDTO.getUser();
-        User user = userService.createOrUpdateUser(
-            userDTO, (email) -> userService.getByEmail(resource, email, Role.MEMBER));
-
-        UserRole userRole = getByResourceUserAndRole(resource, user, Role.MEMBER);
+    public UserRole createOrUpdateUserRole(Resource resource, User userCreateUpdate, MemberDTO memberDTO, State state) {
+        UserRole userRole = getByResourceUserAndRole(resource, userCreateUpdate, Role.MEMBER);
         if (userRole == null) {
-            return createUserRole(resource, user, memberDTO, state);
+            return createUserRole(resource, userCreateUpdate, memberDTO, state);
         }
 
         userRole = updateMembership(userRole, memberDTO);
@@ -118,16 +109,12 @@ public class NewUserRoleService {
         return userRole;
     }
 
+    public void deleteUserRole(Resource resource, User user, Role role) {
+        userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+    }
 
     public Statistics getMemberStatistics(Long departmentId) {
         return userRoleDAO.getMemberStatistics(departmentId);
-    }
-
-    private List<UserRole> createOrUpdateUserRoles(Resource resource, User userCreateUpdate, StaffDTO staffDTO) {
-        return staffDTO.getRoles()
-            .stream()
-            .map(role -> getOrCreateUserRole(resource, userCreateUpdate, role))
-            .collect(toList());
     }
 
     private UserRole getOrCreateUserRole(Resource resource, User userCreateUpdate, Role role) {

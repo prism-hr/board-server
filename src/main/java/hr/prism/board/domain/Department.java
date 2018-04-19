@@ -10,6 +10,17 @@ import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
 
 @Entity
 @DiscriminatorValue(value = DEPARTMENT)
+@NamedEntityGraph(
+    name = "department.extended",
+    attributeNodes = {
+        @NamedAttributeNode(value = "parent", subgraph = "university"),
+        @NamedAttributeNode(value = "documentLogo"),
+        @NamedAttributeNode(value = "categories")},
+    subgraphs = {
+        @NamedSubgraph(
+            name = "university",
+            attributeNodes = {
+                @NamedAttributeNode(value = "documentLogo")})})
 @NamedNativeQueries({
     @NamedNativeQuery(
         name = "departmentSearch",
@@ -57,17 +68,6 @@ import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
         columns = @ColumnResult(
             name = "program",
             type = String.class))})
-@NamedEntityGraph(
-    name = "department.extended",
-    attributeNodes = {
-        @NamedAttributeNode(value = "parent", subgraph = "university"),
-        @NamedAttributeNode(value = "documentLogo"),
-        @NamedAttributeNode(value = "categories")},
-    subgraphs = {
-        @NamedSubgraph(
-            name = "university",
-            attributeNodes = {
-                @NamedAttributeNode(value = "documentLogo")})})
 public class Department extends Resource {
 
     @Column(name = "notified_count")

@@ -357,7 +357,7 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
         testUserService.setAuthentication(departmentUser.getId());
         Long departmentUser2Id =
-            departmentUserApi.createUserRole(departmentId,
+            departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO()
                     .setUser(new UserDTO()
                         .setGivenName("admin1")
@@ -377,7 +377,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .build()));
 
         testUserService.setAuthentication(departmentUser.getId());
-        departmentUserApi.updateUserRole(departmentId, departmentUser2Id, new UserRoleDTO().setRole(Role.AUTHOR));
+        departmentUserApi.updateUserRoles(departmentId, departmentUser2Id, new UserRoleDTO().setRole(Role.AUTHOR));
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify();
@@ -1241,7 +1241,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyMemberStatistics, department2Dashboard1.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department2Dashboard1.getPostStatistics());
 
-        UserRoleRepresentation member1 = departmentUserApi.createUserRole(departmentId1,
+        UserRoleRepresentation member1 = departmentUserApi.createUserRoles(departmentId1,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
                 .setRole(Role.MEMBER));
@@ -1260,7 +1260,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyMemberStatistics, department2Dashboard2.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department2Dashboard2.getPostStatistics());
 
-        UserRoleRepresentation member2 = departmentUserApi.createUserRole(departmentId1,
+        UserRoleRepresentation member2 = departmentUserApi.createUserRoles(departmentId1,
             new UserRoleDTO()
                 .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
                 .setRole(Role.MEMBER));
@@ -1466,7 +1466,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         // add ADMINISTRATOR role
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
-        UserRoleRepresentation resourceManager = departmentUserApi.createUserRole(departmentId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
+        UserRoleRepresentation resourceManager = departmentUserApi.createUserRoles(departmentId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
         users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
@@ -1474,7 +1474,7 @@ public class DepartmentApiIT extends AbstractIT {
             .setEmail(BoardUtils.obfuscateEmail("board@mail.com"))).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // replace with MEMBER role
-        UserRoleRepresentation resourceUser = departmentUserApi.updateUserRole(departmentId, resourceManager.getUser().getId(),
+        UserRoleRepresentation resourceUser = departmentUserApi.updateUserRoles(departmentId, resourceManager.getUser().getId(),
             new UserRoleDTO().setUser(newUser).setRole(MEMBER).setMemberCategory(MASTER_STUDENT));
         verifyContains(Collections.singletonList(resourceUser), new UserRoleRepresentation().setUser(
             new UserRepresentation().setEmail(BoardUtils.obfuscateEmail("board@mail.com"))).setRole(MEMBER).setState(State.ACCEPTED));
@@ -1494,7 +1494,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         // add another administrator
         UserDTO newUserDTO = new UserDTO().setEmail("last-admin-role@mail.com").setGivenName("Sample").setSurname("User");
-        UserRoleRepresentation boardManager = departmentUserApi.createUserRole(departmentId,
+        UserRoleRepresentation boardManager = departmentUserApi.createUserRoles(departmentId,
             new UserRoleDTO().setUser(newUserDTO).setRole(Role.ADMINISTRATOR));
 
         // remove current user as administrator
@@ -1506,7 +1506,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         // try to remove yourself as administrator
         ExceptionUtils.verifyException(BoardException.class,
-            () -> departmentUserApi.updateUserRole(departmentId, boardManager.getUser().getId(),
+            () -> departmentUserApi.updateUserRoles(departmentId, boardManager.getUser().getId(),
                 new UserRoleDTO().setUser(newUserDTO).setRole(MEMBER).setMemberCategory(MASTER_STUDENT)),
             ExceptionCode.IRREMOVABLE_USER_ROLE);
 
@@ -1546,13 +1546,13 @@ public class DepartmentApiIT extends AbstractIT {
             new DepartmentPatchDTO().setMemberCategories(
                 Optional.of(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))));
         ExceptionUtils.verifyException(BoardException.class,
-            () -> departmentUserApi.createUserRole(departmentId,
+            () -> departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(newUser).setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
             INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
 
         // try to add a user to a department
         ExceptionUtils.verifyException(BoardException.class,
-            () -> departmentUserApi.createUserRole(departmentId,
+            () -> departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(newUser).setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
             INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
     }
@@ -1574,13 +1574,13 @@ public class DepartmentApiIT extends AbstractIT {
         departmentApi.updateDepartment(departmentId,
             new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(UNDERGRADUATE_STUDENT, MASTER_STUDENT))));
         ExceptionUtils.verifyException(BoardException.class,
-            () -> departmentUserApi.updateUserRole(departmentId, userId,
+            () -> departmentUserApi.updateUserRoles(departmentId, userId,
                 new UserRoleDTO().setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
             INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
 
         // try with a department
         ExceptionUtils.verifyException(BoardException.class,
-            () -> departmentUserApi.updateUserRole(departmentId, userId,
+            () -> departmentUserApi.updateUserRoles(departmentId, userId,
                 new UserRoleDTO().setRole(MEMBER).setMemberCategory(RESEARCH_STUDENT)),
             INVALID_USER_ROLE_MEMBER_CATEGORIES, null);
     }

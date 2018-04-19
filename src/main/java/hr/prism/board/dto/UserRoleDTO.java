@@ -14,7 +14,7 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = StaffDTO.class, name = "STAFF"),
     @JsonSubTypes.Type(value = MemberDTO.class, name = "MEMBER")})
-public class UserRoleDTO<T extends UserRoleDTO> {
+public abstract class UserRoleDTO<T extends UserRoleDTO> {
 
     @NotNull
     private UserRoleType type;

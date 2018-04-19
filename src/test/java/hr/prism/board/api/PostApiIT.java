@@ -672,7 +672,7 @@ public class PostApiIT extends AbstractIT {
         // Should be notified
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember1Id =
-            departmentUserApi.createUserRole(departmentId,
+            departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student1")
@@ -684,7 +684,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should be notified
         Long departmentMember2Id =
-            departmentUserApi.createUserRole(departmentId,
+            departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student2")
@@ -695,7 +695,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should not be notified - suppressed
         Long departmentMember3Id =
-            departmentUserApi.createUserRole(departmentId,
+            departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student3")
@@ -710,7 +710,7 @@ public class PostApiIT extends AbstractIT {
         // Should not be notified
         testUserService.setAuthentication(departmentUserId);
         Long departmentMember4Id =
-            departmentUserApi.createUserRole(departmentId,
+            departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student4")
@@ -722,7 +722,7 @@ public class PostApiIT extends AbstractIT {
 
         // Should not be notified
         Long departmentMember5Id =
-            departmentUserApi.createUserRole(departmentId,
+            departmentUserApi.createUserRoles(departmentId,
                 new UserRoleDTO().setUser(
                     new UserDTO()
                         .setGivenName("student5")
@@ -1120,9 +1120,9 @@ public class PostApiIT extends AbstractIT {
         Long memberUser2 = testUserService.authenticate().getId();
 
         testUserService.setAuthentication(boardUserId);
-        departmentUserApi.createUserRole(departmentId,
+        departmentUserApi.createUserRoles(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser1)).setRole(Role.MEMBER));
-        departmentUserApi.createUserRole(departmentId,
+        departmentUserApi.createUserRoles(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER));
 
         testUserService.setAuthentication(memberUser1);
@@ -1233,11 +1233,11 @@ public class PostApiIT extends AbstractIT {
         Long memberUser3Id = memberUser3.getId();
 
         testUserService.setAuthentication(boardUserId);
-        departmentUserApi.createUserRole(departmentId,
+        departmentUserApi.createUserRoles(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(Role.MEMBER));
-        departmentUserApi.createUserRole(departmentId,
+        departmentUserApi.createUserRoles(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(Role.MEMBER));
-        departmentUserApi.createUserRole(departmentId,
+        departmentUserApi.createUserRoles(departmentId,
             new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER));
         postApi.executeActionOnPost(postId, "accept", new PostPatchDTO());
         postService.publishAndRetirePosts(LocalDateTime.now());

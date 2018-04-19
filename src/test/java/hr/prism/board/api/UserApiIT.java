@@ -88,14 +88,14 @@ public class UserApiIT extends AbstractIT {
         String memberUser2Email = memberUser2.getEmail();
         testUserService.setAuthentication(adminUser.getId());
         for (String memberUserEmail : new String[]{memberUser1Email, memberUser2Email}) {
-            departmentUserApi.createUserRole(department1id, new UserRoleDTO().setUser(
+            departmentUserApi.createUserRoles(department1id, new UserRoleDTO().setUser(
                 new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER));
 
-            departmentUserApi.createUserRole(department2id, new UserRoleDTO().setUser(
+            departmentUserApi.createUserRoles(department2id, new UserRoleDTO().setUser(
                 new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
         }
 
-        departmentUserApi.createUserRole(department2id, new UserRoleDTO().setUser(
+        departmentUserApi.createUserRoles(department2id, new UserRoleDTO().setUser(
             new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
 

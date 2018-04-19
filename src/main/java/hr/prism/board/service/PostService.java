@@ -254,7 +254,7 @@ public class PostService {
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
-        departmentUserService.validateMembership(resourceEvent.getUser(), (Department) post.getParent()
+        departmentUserService.checkValidDemographicData(resourceEvent.getUser(), (Department) post.getParent()
             .getParent(), BoardForbiddenException.class, FORBIDDEN_REFERRAL);
 
         Document applyDocument = post.getApplyDocument();
@@ -271,7 +271,7 @@ public class PostService {
         Post post = getPost(postId);
         User user = userService.getCurrentUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> {
-            departmentUserService.validateMembership(user, (Department) post.getParent()
+            departmentUserService.checkValidDemographicData(user, (Department) post.getParent()
                 .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
             return post;
         });

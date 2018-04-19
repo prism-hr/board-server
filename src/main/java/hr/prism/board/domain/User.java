@@ -28,6 +28,36 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
             name = "userRole",
             attributeNodes = {
                 @NamedAttributeNode(value = "resource")})})
+@NamedNativeQuery(
+    name = "userSearch",
+    query =
+        "SELECT user.id AS id, user.given_name  AS givenName, user.surname AS surname, " +
+            "user.email_display AS emailDisplay, document_image.cloudinary_id AS documentImageCloudinaryId, " +
+            "document_image.cloudinary_url AS documentImageCloudinaryUrl, " +
+            "document_image.file_name AS documentImageFileName " +
+            "FROM user " +
+            "LEFT JOIN document AS document_image " +
+            "ON user.document_image_id = document_image.id " +
+            "WHERE user.given_name LIKE :searchTerm " +
+            "OR user.surname LIKE :searchTerm " +
+            "OR CONCAT(user.given_name, ' ', user.surname) LIKE :searchTerm " +
+            "OR user.email LIKE :searchTerm " +
+            "ORDER BY user.given_name, user.surname, user.email " +
+            "LIMIT 10",
+    resultSetMapping = "userSearch")
+@SqlResultSetMapping(
+    name = "userSearch",
+    classes = @ConstructorResult(
+        targetClass = UserSearch.class,
+        columns = {
+            @ColumnResult(name = "id", type = Long.class),
+            @ColumnResult(name = "givenName", type = String.class),
+            @ColumnResult(name = "surname", type = String.class),
+            @ColumnResult(name = "emailDisplay", type = String.class),
+            @ColumnResult(name = "documentImageCloudinaryId", type = String.class),
+            @ColumnResult(name = "documentImageCloudinaryUrl", type = String.class),
+            @ColumnResult(name = "documentImageFileName", type = String.class),
+        }))
 public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "uuid", nullable = false)

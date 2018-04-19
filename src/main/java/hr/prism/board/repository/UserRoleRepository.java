@@ -19,17 +19,24 @@ public interface UserRoleRepository extends BoardEntityRepository<UserRole, Long
     UserRole findByUuid(String uuid);
 
     @Query(value =
+        "select userRole.role " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.user = :user")
+    List<Role> findByResourceAndUser(Resource resource, User user);
+
+    List<UserRole> findByResourceAndRole(Resource resource, Role role);
+
+    UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);
+
+    @Query(value =
         "select userRole " +
             "from ResourceRelation resourceRelation " +
             "inner join resourceRelation.resource1 parentResource " +
             "inner join parentResource.userRoles userRole " +
             "where resourceRelation.resource2 = :resource " +
             "and userRole.user = :user")
-    List<UserRole> findByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
-
-    List<UserRole> findByResourceAndRole(Resource resource, Role role);
-
-    UserRole findByResourceAndUserAndRole(Resource resource, User user, Role role);
+    List<UserRole> findByResourceAndEnclosingUser(@Param("resource") Resource resource, @Param("user") User user);
 
     @Query(value =
         "select userRole " +

@@ -22,6 +22,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_RESOURCE;
+import static hr.prism.board.exception.ExceptionCode.UNSUPPRESSABLE_RESOURCE;
+
 @Service
 @Transactional
 @SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
@@ -76,11 +79,11 @@ public class UserNotificationSuppressionService {
         Resource resource = resourceService.findOne(resourceId);
         Scope scope = resource.getScope();
         if (scope != Scope.BOARD) {
-            throw new BoardException(ExceptionCode.UNSUPPRESSABLE_RESOURCE, "Notifications cannot be suppressed for resource of scope: " + scope);
+            throw new BoardException(UNSUPPRESSABLE_RESOURCE, "Notifications cannot be suppressed for resource of scope: " + scope);
         }
 
         if (userRoleService.findByResourceAndUser(resource, user).isEmpty()) {
-            throw new BoardForbiddenException(ExceptionCode.FORBIDDEN_RESOURCE, "User cannot access resource: " + scope + ": " + resourceId);
+            throw new BoardForbiddenException(FORBIDDEN_RESOURCE, "User cannot access resource: " + scope + ": " + resourceId);
         }
 
         if (userNotificationSuppressionRepository.findByUserAndResource(user, resource) == null) {

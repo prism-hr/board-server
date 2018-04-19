@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.authentication.AuthenticationToken;
+import hr.prism.board.dao.UserDAO;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LocationDTO;
@@ -10,6 +11,7 @@ import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.Role;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.UserRepository;
+import hr.prism.board.value.UserSearch;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -30,11 +32,14 @@ public class NewUserService {
 
     private final UserRepository userRepository;
 
+    private final UserDAO userDAO;
+
     private final LocationService locationService;
 
     @Inject
-    public NewUserService(UserRepository userRepository, LocationService locationService) {
+    public NewUserService(UserRepository userRepository, UserDAO userDAO, LocationService locationService) {
         this.userRepository = userRepository;
+        this.userDAO = userDAO;
         this.locationService = locationService;
     }
 
@@ -105,6 +110,10 @@ public class NewUserService {
         }
 
         return user;
+    }
+
+    public List<UserSearch> findUsers(String searchTerm) {
+        return userDAO.findUsers(searchTerm);
     }
 
     private User createUser(UserDTO userDTO) {

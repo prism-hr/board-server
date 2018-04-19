@@ -6,16 +6,14 @@ import hr.prism.board.enums.State;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
-import hr.prism.board.representation.DepartmentRepresentation;
-import hr.prism.board.representation.UserRepresentation;
-import hr.prism.board.representation.UserRoleRepresentation;
-import hr.prism.board.representation.UserRolesRepresentation;
+import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentUserService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
@@ -78,18 +76,19 @@ public class DepartmentUserApi {
     @RequestMapping(value = "/api/departments/{resourceId}/users", method = GET)
     public UserRolesRepresentation getUserRoles(
         @PathVariable Long resourceId, @RequestParam(value = "/searchTerm", required = false) String searchTerm) {
-        return userRoleService.getUserRoles(DEPARTMENT, resourceId, searchTerm);
+        return getUserRoles(DEPARTMENT, resourceId, searchTerm);
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users", method = POST)
-    public UserRoleRepresentation createUserRole(@PathVariable Long departmentId,
-                                                 @RequestBody @Valid UserRoleDTO user) {
-        return userRoleMapper.apply(departmentUserService.createOrUpdateUserRoles(departmentId, user));
+    public List<NewUserRoleRepresentation> createUserRoles(@PathVariable Long departmentId,
+                                                           @RequestBody @Valid UserRoleDTO user) {
+        return departmentUserService.createUserRoles(departmentId, user)
+            .stream().map(userRoleMapper).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}", method = PUT)
-    public UserRoleRepresentation updateUserRole(@PathVariable Long departmentId, @PathVariable Long userId,
-                                                 @RequestBody @Valid UserRoleDTO user) {
+    public List<UserRoleRepresentation> updateUserRoles(@PathVariable Long departmentId, @PathVariable Long userId,
+                                                        @RequestBody @Valid UserRoleDTO user) {
         return userRoleMapper.apply(departmentUserService.updateUserRoles(departmentId, userId, user));
     }
 

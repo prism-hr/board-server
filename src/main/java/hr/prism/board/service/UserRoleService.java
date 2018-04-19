@@ -146,7 +146,7 @@ public class UserRoleService {
     }
 
     public List<UserRole> findByResourceAndUser(Resource resource, User user) {
-        return userRoleRepository.findByResourceAndUser(resource, user);
+        return userRoleRepository.findByResourceAndEnclosingUser(resource, user);
     }
 
     public UserRole findByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
