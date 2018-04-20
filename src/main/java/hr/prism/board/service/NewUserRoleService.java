@@ -8,15 +8,21 @@ import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.value.Statistics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.List;
 
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER;
+import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER_ROLE;
 import static hr.prism.board.utils.BoardUtils.emptyToNull;
 import static java.util.UUID.randomUUID;
 
@@ -28,14 +34,14 @@ public class NewUserRoleService {
 
     private final UserRoleDAO userRoleDAO;
 
-    private final NewUserService userService;
+    private final EntityManager entityManager;
 
     @Inject
     public NewUserRoleService(UserRoleRepository userRoleRepository, UserRoleDAO userRoleDAO,
-                              NewUserService userService) {
+                              EntityManager entityManager) {
         this.userRoleRepository = userRoleRepository;
         this.userRoleDAO = userRoleDAO;
-        this.userService = userService;
+        this.entityManager = entityManager;
     }
 
     public UserRole getById(Long id) {
@@ -52,6 +58,10 @@ public class NewUserRoleService {
 
     public UserRole getByResourceAndUserIdAndRole(Resource resource, Long userId, Role role) {
         return userRoleRepository.findByResourceAndUserIdAndRole(resource, userId, role);
+    }
+
+    public List<UserRole> getUserRoles(Resource resource, List<Role> roles, State state, String searchTerm) {
+        return userRoleDAO.getUserRoles(resource, roles, state, searchTerm);
     }
 
     public UserRole createUserRole(Resource resource, User user, Role role) {
@@ -109,8 +119,14 @@ public class NewUserRoleService {
         return userRole;
     }
 
+    public void deleteUserRoles(Resource resource, User user) {
+        userRoleRepository.deleteByResourceAndUser(resource, user);
+        checkSafety(resource, IRREMOVABLE_USER);
+    }
+
     public void deleteUserRole(Resource resource, User user, Role role) {
         userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        checkSafety(resource, IRREMOVABLE_USER_ROLE);
     }
 
     public Statistics getMemberStatistics(Long departmentId) {
@@ -143,6 +159,14 @@ public class NewUserRoleService {
 
         userRole.setCreatorId(resource.getCreatorId());
         return userRoleRepository.save(userRole);
+    }
+
+    private void checkSafety(Resource resource, ExceptionCode exceptionCode) {
+        entityManager.flush();
+        List<UserRole> remainingAdministrators = userRoleRepository.findByResourceAndRole(resource, ADMINISTRATOR);
+        if (remainingAdministrators.isEmpty()) {
+            throw new BoardException(exceptionCode, "Cannot remove last remaining administrator");
+        }
     }
 
 }

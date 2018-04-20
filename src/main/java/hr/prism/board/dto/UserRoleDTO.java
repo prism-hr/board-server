@@ -2,7 +2,7 @@ package hr.prism.board.dto;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import hr.prism.board.enums.UserRoleType;
+import hr.prism.board.enums.RoleType;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -17,17 +17,17 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 public abstract class UserRoleDTO<T extends UserRoleDTO> {
 
     @NotNull
-    private UserRoleType type;
+    private RoleType type;
 
     @Valid
     @NotNull
     private UserDTO user;
 
-    public UserRoleDTO(UserRoleType type) {
+    public UserRoleDTO(RoleType type) {
         this.type = type;
     }
 
-    public UserRoleType getType() {
+    public RoleType getType() {
         return type;
     }
 

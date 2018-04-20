@@ -1,8 +1,9 @@
 package hr.prism.board.enums;
 
-public enum UserRoleType {
+public enum RoleType {
 
     STAFF,
-    MEMBER
+    MEMBER,
+    PUBLIC
 
 }

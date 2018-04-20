@@ -6,7 +6,6 @@ import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserPasswordDTO;
 import hr.prism.board.dto.UserPatchDTO;
@@ -170,35 +169,6 @@ public class UserService {
             .now());
     }
 
-    @SuppressWarnings("unchecked")
-    public List<UserRepresentation> findUsers(String searchTerm) {
-        List<Object[]> results = entityManager.createNativeQuery(USER_SEARCH_STATEMENT)
-            .setParameter("searchTerm", searchTerm + "%")
-            .getResultList();
-
-        List<UserRepresentation> userRepresentations = new ArrayList<>();
-        for (Object[] result : results) {
-            UserRepresentation userRepresentation = new UserRepresentation();
-            userRepresentation.setId(Long.parseLong(result[0].toString()));
-            userRepresentation.setGivenName(result[1].toString());
-            userRepresentation.setSurname(result[2].toString());
-            userRepresentation.setEmail(result[3].toString());
-
-            Object cloudinaryId = result[4];
-            if (cloudinaryId != null) {
-                DocumentRepresentation documentRepresentation = new DocumentRepresentation();
-                documentRepresentation.setCloudinaryId(cloudinaryId.toString());
-                documentRepresentation.setCloudinaryUrl(result[5].toString());
-                documentRepresentation.setFileName(result[6].toString());
-                userRepresentation.setDocumentImage(documentRepresentation);
-            }
-
-            userRepresentations.add(userRepresentation);
-        }
-
-        return userRepresentations;
-    }
-
     public void deleteTestUsers() {
         List<Long> userIds = userRepository.findByTestUser(true);
         if (!userIds.isEmpty()) {
@@ -226,55 +196,10 @@ public class UserService {
         return userRepository.findByUuid(uuid);
     }
 
-    public void updateMembershipData(User user, UserDTO userDTO) {
-        Gender gender = userDTO.getGender();
-        if (gender != null) {
-            user.setGender(gender);
-        }
-
-        AgeRange ageRange = userDTO.getAgeRange();
-        if (ageRange != null) {
-            user.setAgeRange(ageRange);
-        }
-
-        LocationDTO locationNationality = userDTO.getLocationNationality();
-        if (locationNationality != null) {
-            user.setLocationNationality(locationService.getOrCreateLocation(locationNationality));
-        }
-    }
-
     public void updateUserResume(User user, Document documentResume, String websiteResume) {
         user.setDocumentResume(documentResume);
         user.setWebsiteResume(websiteResume);
     }
-
-    public User getOrCreateUser(UserDTO userDTO, UserFinder userFinder) {
-        User user = null;
-        Long userId = userDTO.getId();
-        if (userId != null) {
-            user = userRepository.findOne(userId);
-        }
-
-        String email = userDTO.getEmail();
-        if (user == null && email != null) {
-            user = userFinder.getByEmail(email);
-        }
-
-        if (user == null) {
-            user = new User();
-            user.setUuid(UUID.randomUUID().toString());
-            user.setGivenName(userDTO.getGivenName());
-            user.setSurname(userDTO.getSurname());
-            user.setEmail(userDTO.getEmail());
-            user = userRepository.save(user);
-            userCacheService.setCreator(user);
-            userCacheService.setIndexData(user);
-            return user;
-        }
-
-        return user;
-    }
-
 
     public List<User> findByRoleWithoutRole(Resource resource, Role role, Resource withoutResource, Role withoutRole) {
         return userRepository.findByRoleWithoutRole(resource, role, withoutResource, withoutRole);
@@ -289,24 +214,12 @@ public class UserService {
         return user;
     }
 
-    public List<Long> findByResourceAndRoleAndStates(Resource resource, List<Role> roles, State state) {
-        return userRepository.findByResourceAndRolesAndState(resource, roles, state);
-    }
-
     public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
         return userRepository.findByResourceAndEvent(resource, event);
     }
 
     public List<Long> findByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
         return userRepository.findByResourceAndEvents(resource, events);
-    }
-
-    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
-        userSearchRepository.insertBySearch(search, LocalDateTime.now(), BoardUtils.makeSoundex(searchTerm), userIds);
-    }
-
-    public void deleteSearchResults(String search) {
-        userSearchRepository.deleteBySearch(search);
     }
 
     private User getCurrentUser(boolean fresh) {

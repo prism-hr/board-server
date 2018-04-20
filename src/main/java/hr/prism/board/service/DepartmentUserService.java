@@ -13,6 +13,7 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.value.DemographicDataStatus;
+import hr.prism.board.value.UserRoles;
 import hr.prism.board.value.UserSearch;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
@@ -24,8 +25,10 @@ import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EDIT;
@@ -34,16 +37,14 @@ import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY;
 import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_NOTIFICATION;
 import static hr.prism.board.enums.Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION;
 import static hr.prism.board.enums.ResourceTask.MEMBER_TASKS;
-import static hr.prism.board.enums.Role.ADMINISTRATOR;
-import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
-
-import hr.prism.board.event.ActivityEvent;
+import static java.util.stream.Collectors.toMap;
 
 @Service
 @Transactional
@@ -169,13 +170,42 @@ public class DepartmentUserService {
         return user;
     }
 
+    public UserRoles getUserRoles(Long id, String searchTerm) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+
+        List<UserRole> staff = userRoleService.getUserRoles(department, STAFF_ROLES, ACCEPTED, searchTerm);
+        List<UserRole> members = userRoleService.getUserRoles(department, MEMBER_ROLES, ACCEPTED, searchTerm);
+
+        List<UserRole> memberRequests = userRoleService.getUserRoles(department, MEMBER_ROLES, PENDING, searchTerm);
+        if (!memberRequests.isEmpty()) {
+            Map<hr.prism.board.domain.Activity, UserRole> indexByActivities =
+                memberRequests.stream()
+                    .filter(userRole -> userRole.getActivity() != null)
+                    .collect(toMap(UserRole::getActivity, Function.identity()));
+
+            List<hr.prism.board.domain.ActivityEvent> views =
+                activityService.findViews(indexByActivities.keySet(), user);
+            for (hr.prism.board.domain.ActivityEvent activityEvent : views) {
+                indexByActivities.get(activityEvent.getActivity()).setViewed(true);
+            }
+        }
+
+        return new UserRoles()
+            .setStaff(staff)
+            .setMembers(members)
+            .setMemberRequests(memberRequests)
+            .setMemberToBeUploadedCount(department.getMemberToBeUploadedCount());
+    }
+
     public List<UserRole> createUserRoles(Long id, UserRoleDTO userRoleDTO) {
         User user = userService.getCurrentUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
         UserDTO userDTO = userRoleDTO.getUser();
-        UserRoleType type = userRoleDTO.getType();
+        RoleType type = userRoleDTO.getType();
 
         User userCreateUpdate;
         switch (type) {
@@ -200,6 +230,16 @@ public class DepartmentUserService {
 
         User userCreateUpdate = userService.getById(userCreateUpdateId);
         return createOrUpdateUserRoles(id, userCreateUpdate, userRoleDTO);
+    }
+
+    public void deleteUserRoles(Long id, Long userDeleteId) {
+        User user = userService.getCurrentUserSecured();
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        actionService.executeAction(user, department, EDIT, () -> department);
+
+        User userDelete = userService.getById(userDeleteId);
+        userRoleService.deleteUserRoles(department, userDelete);
+        activityService.sendActivities(department);
     }
 
     public void createOrUpdateUserRole(Long id, MemberDTO memberDTO) {
@@ -274,7 +314,7 @@ public class DepartmentUserService {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
-        UserRoleType type = userRoleDTO.getType();
+        RoleType type = userRoleDTO.getType();
         switch (type) {
             case STAFF:
                 List<Role> newRoles = ((StaffDTO) userRoleDTO).getRoles();

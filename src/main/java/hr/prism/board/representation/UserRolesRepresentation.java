@@ -4,37 +4,37 @@ import java.util.List;
 
 public class UserRolesRepresentation {
 
-    private List<UserRoleRepresentation> users;
+    private List<StaffRepresentation> staff;
 
-    private List<UserRoleRepresentation> members;
+    private List<MemberRepresentation> members;
 
-    private List<UserRoleRepresentation> memberRequests;
+    private List<MemberRepresentation> memberRequests;
 
     private Long memberToBeUploadedCount;
 
-    public List<UserRoleRepresentation> getUsers() {
-        return users;
+    public List<StaffRepresentation> getStaff() {
+        return staff;
     }
 
-    public UserRolesRepresentation setUsers(List<UserRoleRepresentation> users) {
-        this.users = users;
+    public UserRolesRepresentation setStaff(List<StaffRepresentation> staff) {
+        this.staff = staff;
         return this;
     }
 
-    public List<UserRoleRepresentation> getMembers() {
+    public List<MemberRepresentation> getMembers() {
         return members;
     }
 
-    public UserRolesRepresentation setMembers(List<UserRoleRepresentation> members) {
+    public UserRolesRepresentation setMembers(List<MemberRepresentation> members) {
         this.members = members;
         return this;
     }
 
-    public List<UserRoleRepresentation> getMemberRequests() {
+    public List<MemberRepresentation> getMemberRequests() {
         return memberRequests;
     }
 
-    public UserRolesRepresentation setMemberRequests(List<UserRoleRepresentation> memberRequests) {
+    public UserRolesRepresentation setMemberRequests(List<MemberRepresentation> memberRequests) {
         this.memberRequests = memberRequests;
         return this;
     }

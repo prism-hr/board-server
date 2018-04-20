@@ -934,7 +934,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");
 
         DepartmentRepresentation departmentR = departmentApi.createDepartment(universityId, departmentDTO);
-        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentR.getId(), null).getUsers();
+        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentR.getId(), null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
@@ -949,7 +949,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         departmentUserApi.createMembers(departmentR.getId(), userRoleDTOs1);
         UserRolesRepresentation response = departmentUserApi.getUserRoles(departmentR.getId(), null);
-        Assert.assertEquals(1, response.getUsers().size());
+        Assert.assertEquals(1, response.getStaff().size());
         Assert.assertEquals(200, response.getMembers().size());
         Assert.assertNull(response.getMemberToBeUploadedCount());
 
@@ -982,7 +982,7 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");
 
         Long departmentId = departmentApi.createDepartment(universityId, departmentDTO).getId();
-        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
+        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
@@ -1461,13 +1461,13 @@ public class DepartmentApiIT extends AbstractIT {
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
-        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
+        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
 
         // add ADMINISTRATOR role
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");
         UserRoleRepresentation resourceManager = departmentUserApi.createUserRoles(departmentId, new UserRoleDTO().setUser(newUser).setRole(Role.ADMINISTRATOR));
-        users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
+        users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
@@ -1481,7 +1481,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         // remove from resource
         departmentUserApi.deleteUserRoles(departmentId, resourceManager.getUser().getId());
-        users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
+        users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(user.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
@@ -1510,7 +1510,7 @@ public class DepartmentApiIT extends AbstractIT {
                 new UserRoleDTO().setUser(newUserDTO).setRole(MEMBER).setMemberCategory(MASTER_STUDENT)),
             ExceptionCode.IRREMOVABLE_USER_ROLE);
 
-        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
+        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(BoardUtils.obfuscateEmail(newUserDTO.getEmail()))).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
@@ -1523,7 +1523,7 @@ public class DepartmentApiIT extends AbstractIT {
         ExceptionUtils.verifyException(BoardException.class,
             () -> departmentUserApi.deleteUserRoles(departmentId, creator.getId()), ExceptionCode.IRREMOVABLE_USER);
 
-        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getUsers();
+        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
         verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation()
             .setEmail(creator.getEmailDisplay())).setRole(Role.ADMINISTRATOR).setState(State.ACCEPTED));
     }
@@ -1805,35 +1805,35 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long departmentId = resourceRepository.findByHandle("cs").getId();
         UserRolesRepresentation userRoles = departmentUserApi.getUserRoles(departmentId, null);
-        Assert.assertEquals(2, userRoles.getUsers().size());
+        Assert.assertEquals(2, userRoles.getStaff().size());
         Assert.assertEquals(2, userRoles.getMembers().size());
         Assert.assertEquals(2, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+        verifyContains(userRoles.getStaff().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
             BoardUtils.obfuscateEmail("alastair@knowles.com"), BoardUtils.obfuscateEmail("jakub@fibinger.com"));
 
         userRoles = departmentUserApi.getUserRoles(departmentId, "alastair");
-        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(1, userRoles.getStaff().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+        verifyContains(userRoles.getStaff().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
             BoardUtils.obfuscateEmail("alastair@knowles.com"));
 
         userRoles = departmentUserApi.getUserRoles(departmentId, "alister");
-        Assert.assertEquals(1, userRoles.getUsers().size());
+        Assert.assertEquals(1, userRoles.getStaff().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
-        verifyContains(userRoles.getUsers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
+        verifyContains(userRoles.getStaff().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
             BoardUtils.obfuscateEmail("alastair@knowles.com"));
 
         userRoles = departmentUserApi.getUserRoles(departmentId, "beatriz");
-        Assert.assertEquals(0, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getStaff().size());
         Assert.assertEquals(1, userRoles.getMembers().size());
         Assert.assertEquals(0, userRoles.getMemberRequests().size());
         verifyContains(userRoles.getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),
             BoardUtils.obfuscateEmail("beatriz@rodriguez.com"));
 
         userRoles = departmentUserApi.getUserRoles(departmentId, "felipe");
-        Assert.assertEquals(0, userRoles.getUsers().size());
+        Assert.assertEquals(0, userRoles.getStaff().size());
         Assert.assertEquals(0, userRoles.getMembers().size());
         Assert.assertEquals(1, userRoles.getMemberRequests().size());
         verifyContains(userRoles.getMemberRequests().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList()),

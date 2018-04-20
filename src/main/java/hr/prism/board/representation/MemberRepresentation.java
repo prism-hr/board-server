@@ -1,10 +1,11 @@
 package hr.prism.board.representation;
 
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.State;
 
 import java.time.LocalDate;
 
-import static hr.prism.board.enums.UserRoleType.MEMBER;
+import static hr.prism.board.enums.RoleType.MEMBER;
 
 public class MemberRepresentation extends NewUserRoleRepresentation<MemberRepresentation> {
 
@@ -16,7 +17,11 @@ public class MemberRepresentation extends NewUserRoleRepresentation<MemberRepres
 
     private Integer memberYear;
 
+    private State state;
+
     private LocalDate expiryDate;
+
+    private boolean viewed;
 
     public MemberRepresentation() {
         super(MEMBER);
@@ -58,12 +63,30 @@ public class MemberRepresentation extends NewUserRoleRepresentation<MemberRepres
         return this;
     }
 
+    public State getState() {
+        return state;
+    }
+
+    public MemberRepresentation setState(State state) {
+        this.state = state;
+        return this;
+    }
+
     public LocalDate getExpiryDate() {
         return expiryDate;
     }
 
     public MemberRepresentation setExpiryDate(LocalDate expiryDate) {
         this.expiryDate = expiryDate;
+        return this;
+    }
+
+    public boolean isViewed() {
+        return viewed;
+    }
+
+    public MemberRepresentation setViewed(boolean viewed) {
+        this.viewed = viewed;
         return this;
     }
 

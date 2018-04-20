@@ -89,21 +89,6 @@ public class UserCacheService {
         return user;
     }
 
-    public User findByEmail(Resource resource, String email, Role role) {
-        List<User> potentialUsers = userRepository.findByEmail(resource, email, role);
-        if (potentialUsers.isEmpty()) {
-            return null;
-        }
-
-        User user = potentialUsers.stream()
-            .filter(potentialUser -> potentialUser.getEmail().equals(email))
-            .findFirst()
-            .orElse(potentialUsers.get(0));
-
-        appendScopes(user);
-        return user;
-    }
-
     public User findByUserRoleUuid(String uuid) {
         User user = userRepository.findByUserRoleUuid(uuid);
         appendScopes(user);

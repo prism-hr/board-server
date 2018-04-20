@@ -1,24 +1,24 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.enums.UserRoleType;
+import hr.prism.board.enums.RoleType;
 
 public abstract class NewUserRoleRepresentation<T extends NewUserRoleRepresentation> {
 
-    private UserRoleType userRoleType;
+    private RoleType roleType;
 
     private UserRepresentation user;
 
-    public NewUserRoleRepresentation(UserRoleType userRoleType) {
-        this.userRoleType = userRoleType;
+    public NewUserRoleRepresentation(RoleType roleType) {
+        this.roleType = roleType;
     }
 
-    public UserRoleType getUserRoleType() {
-        return userRoleType;
+    public RoleType getRoleType() {
+        return roleType;
     }
 
     @SuppressWarnings("unchecked")
-    public T setUserRoleType(UserRoleType userRoleType) {
-        this.userRoleType = userRoleType;
+    public T setRoleType(RoleType roleType) {
+        this.roleType = roleType;
         return (T) this;
     }
 

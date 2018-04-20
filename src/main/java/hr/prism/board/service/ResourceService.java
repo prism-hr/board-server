@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
+import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.ResourceUtils.confirmHandle;
@@ -154,7 +154,7 @@ public class ResourceService {
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
         return resourceRepository.findByScopeAndUserAndRolesOrCategory(
-            scope, user, NON_MEMBER_ROLES, MEMBER, ACTIVE_USER_ROLE_STATES);
+            scope, user, STAFF_ROLES, MEMBER, ACTIVE_USER_ROLE_STATES);
     }
 
     public void setIndexDataAndQuarter(Resource resource, String... parts) {

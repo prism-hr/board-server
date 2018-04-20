@@ -5,7 +5,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 
-import static hr.prism.board.enums.UserRoleType.STAFF;
+import static hr.prism.board.enums.RoleType.STAFF;
 
 public class StaffDTO extends UserRoleDTO<StaffDTO> {
 

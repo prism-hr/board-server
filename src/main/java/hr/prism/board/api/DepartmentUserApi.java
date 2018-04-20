@@ -13,9 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
@@ -40,7 +39,7 @@ public class DepartmentUserApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/lookupUsers", method = GET)
     public List<UserRepresentation> findUsers(@PathVariable Long departmentId, @RequestParam String query) {
-        return departmentUserService.findUsers(departmentId, query);
+        return departmentUserService.findUsers(departmentId, query).stream().map(userMapper::apply).collect(toList());
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/bulk", method = POST)
@@ -73,28 +72,27 @@ public class DepartmentUserApi {
         return userMapper.apply(departmentUserService.updateMembership(departmentId, memberDTO));
     }
 
-    @RequestMapping(value = "/api/departments/{resourceId}/users", method = GET)
+    @RequestMapping(value = "/api/departments/{departmentId}/users", method = GET)
     public UserRolesRepresentation getUserRoles(
-        @PathVariable Long resourceId, @RequestParam(value = "/searchTerm", required = false) String searchTerm) {
-        return getUserRoles(DEPARTMENT, resourceId, searchTerm);
+        @PathVariable Long departmentId, @RequestParam(value = "/searchTerm", required = false) String searchTerm) {
+        return userRoleMapper.apply(departmentUserService.getUserRoles(departmentId, searchTerm));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users", method = POST)
-    public List<NewUserRoleRepresentation> createUserRoles(@PathVariable Long departmentId,
-                                                           @RequestBody @Valid UserRoleDTO user) {
-        return departmentUserService.createUserRoles(departmentId, user)
-            .stream().map(userRoleMapper).collect(Collectors.toList());
+    public NewUserRoleRepresentation<?> createUserRoles(@PathVariable Long departmentId,
+                                                        @RequestBody @Valid UserRoleDTO user) {
+        return userRoleMapper.apply(departmentUserService.createUserRoles(departmentId, user));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}", method = PUT)
-    public List<UserRoleRepresentation> updateUserRoles(@PathVariable Long departmentId, @PathVariable Long userId,
+    public NewUserRoleRepresentation<?> updateUserRoles(@PathVariable Long departmentId, @PathVariable Long userId,
                                                         @RequestBody @Valid UserRoleDTO user) {
         return userRoleMapper.apply(departmentUserService.updateUserRoles(departmentId, userId, user));
     }
 
-    @RequestMapping(value = "/api/departments/{resourceId}/users/{userId}", method = DELETE)
-    public void deleteUserRoles(@PathVariable Long resourceId, @PathVariable Long userId) {
-        userRoleService.deleteUserRoles(DEPARTMENT, resourceId, userId);
+    @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}", method = DELETE)
+    public void deleteUserRoles(@PathVariable Long departmentId, @PathVariable Long userId) {
+        departmentUserService.deleteUserRoles(departmentId, userId);
     }
 
 }

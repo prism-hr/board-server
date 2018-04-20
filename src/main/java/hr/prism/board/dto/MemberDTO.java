@@ -5,7 +5,7 @@ import org.hibernate.validator.constraints.Email;
 
 import java.time.LocalDate;
 
-import static hr.prism.board.enums.UserRoleType.MEMBER;
+import static hr.prism.board.enums.RoleType.MEMBER;
 
 public class MemberDTO extends UserRoleDTO<MemberDTO> {
 

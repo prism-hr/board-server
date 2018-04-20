@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.ResourceTask.MEMBER_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
-import static hr.prism.board.enums.Role.NON_MEMBER_ROLES;
+import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.exception.ExceptionCode.*;
@@ -78,7 +78,7 @@ public class UserRoleCacheService {
         Scope scope = resource.getScope();
 
         if (notify && (Objects.equals(user, userCreate) ||
-            !userRoleRepository.findByResourceAndUserAndRoles(resource, userCreate, NON_MEMBER_ROLES).isEmpty())) {
+            !userRoleRepository.findByResourceAndUserAndRoles(resource, userCreate, STAFF_ROLES).isEmpty())) {
             notify = false;
         }
 
@@ -114,19 +114,6 @@ public class UserRoleCacheService {
         }
 
         return userRole;
-    }
-
-    public void deleteResourceUser(Resource resource, User user) {
-        deleteUserRoles(resource, user);
-        checkSafety(resource, IRREMOVABLE_USER);
-    }
-
-    public void updateUserRole(User currentUser, Resource resource, User user, UserRoleDTO userRoleDTO) {
-        deleteUserRoles(resource, user);
-        entityManager.flush();
-
-        createUserRole(currentUser, resource, user, userRoleDTO, false);
-        checkSafety(resource, IRREMOVABLE_USER_ROLE);
     }
 
     public void deleteUserRole(Resource resource, User user, Role role) {

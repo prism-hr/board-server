@@ -2,8 +2,10 @@ package hr.prism.board.repository;
 
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.BoardEntity;
+import hr.prism.board.domain.User;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
+@NoRepositoryBean
 public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Serializable>
     extends SimpleJpaRepository<ENTITY, ID> implements BoardEntityRepository<ENTITY, ID> {
 
@@ -23,10 +26,8 @@ public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Se
     @Transactional
     public <T extends ENTITY> T save(T entity) {
         if (entity.getCreatorId() == null) {
-            AuthenticationToken authentication = (AuthenticationToken) getContext().getAuthentication();
-            if (authentication != null) {
-                entity.setCreatorId(authentication.getUser());
-            }
+            Long creatorId = getUserId();
+            entity.setCreatorId(creatorId);
         }
 
         LocalDateTime baseline = LocalDateTime.now();
@@ -45,6 +46,20 @@ public class BoardEntityRepositoryImpl<ENTITY extends BoardEntity, ID extends Se
     @Transactional
     public <T extends ENTITY> T updateSilently(T entity) {
         return super.save(entity);
+    }
+
+    private Long getUserId() {
+        AuthenticationToken authentication = (AuthenticationToken) getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+
+        User user = authentication.getUser();
+        if (user == null) {
+            return null;
+        }
+
+        return user.getId();
     }
 
 }
