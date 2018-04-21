@@ -59,4 +59,8 @@ public class DemographicDataStatus {
         return this;
     }
 
+    public boolean isReady() {
+        return !(requireUserData || requireMemberData);
+    }
+
 }

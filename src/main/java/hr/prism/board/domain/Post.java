@@ -1,7 +1,7 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
-import hr.prism.board.representation.DemographicDataStatusRepresentation;
+import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import org.hibernate.validator.constraints.Email;
 
@@ -142,7 +142,7 @@ public class Post extends Resource {
     private boolean exposeApplyData;
 
     @Transient
-    private DemographicDataStatusRepresentation responseReadiness;
+    private DemographicDataStatus demographicDataStatus;
 
     @Transient
     private ResourceEvent referral;
@@ -288,12 +288,12 @@ public class Post extends Resource {
         this.exposeApplyData = exposeApplyData;
     }
 
-    public DemographicDataStatusRepresentation getResponseReadiness() {
-        return responseReadiness;
+    public DemographicDataStatus getDemographicDataStatus() {
+        return demographicDataStatus;
     }
 
-    public void setResponseReadiness(DemographicDataStatusRepresentation responseReadiness) {
-        this.responseReadiness = responseReadiness;
+    public void setDemographicDataStatus(DemographicDataStatus demographicDataStatus) {
+        this.demographicDataStatus = demographicDataStatus;
     }
 
     public ResourceEvent getReferral() {

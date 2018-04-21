@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Service
 @Transactional
-public class ResourcePatchService extends PatchService<Resource> {
+public class ResourcePatchService<T extends Resource> extends PatchService<T> {
 
     private final ResourceService resourceService;
 
@@ -26,7 +26,7 @@ public class ResourcePatchService extends PatchService<Resource> {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchName(Resource resource, Optional<String> newValueOptional, ExceptionCode unique) {
+    public void patchName(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getName();
             if (newValueOptional.isPresent()) {
@@ -46,7 +46,7 @@ public class ResourcePatchService extends PatchService<Resource> {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchHandle(Resource resource, Optional<String> newValueOptional, ExceptionCode unique) {
+    public void patchHandle(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
             if (newValueOptional.isPresent()) {
@@ -70,13 +70,13 @@ public class ResourcePatchService extends PatchService<Resource> {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchLocation(Resource resource, Optional<LocationDTO> newValueOptional) {
+    public void patchLocation(T resource, Optional<LocationDTO> newValueOptional) {
         super.patchLocation(resource, "location",
             resource::getLocation, resource::setLocation, newValueOptional);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchCategories(Resource resource, CategoryType categoryType,
+    public void patchCategories(T resource, CategoryType categoryType,
                                 Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
             List<String> oldValues = resourceService.getCategories(resource, categoryType);
@@ -88,17 +88,17 @@ public class ResourcePatchService extends PatchService<Resource> {
     }
 
     @Override
-    protected <U> void patchProperty(Resource resource, String property, Setter<U> setter, U oldValue, U newValue) {
+    protected <U> void patchProperty(T resource, String property, Setter<U> setter, U oldValue, U newValue) {
         super.patchProperty(resource, property, setter, oldValue, newValue);
         resource.getChangeList().put(property, oldValue, newValue);
     }
 
-    private void patchHandle(Resource resource, String oldValue, String newValue) {
+    private void patchHandle(T resource, String oldValue, String newValue) {
         resourceService.updateHandle(resource, newValue);
         resource.getChangeList().put("handle", getHandleLeaf(oldValue), getHandleLeaf(newValue));
     }
 
-    private void patchCategories(Resource resource, CategoryType categoryType, List<String> oldValues,
+    private void patchCategories(T resource, CategoryType categoryType, List<String> oldValues,
                                  List<String> newValues) {
         resourceService.updateCategories(resource, categoryType, newValues);
         resource.getChangeList().put(categoryType.name().toLowerCase() + "Categories", oldValues, newValues);

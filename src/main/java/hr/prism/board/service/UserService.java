@@ -64,9 +64,6 @@ public class UserService {
     private UserSearchRepository userSearchRepository;
 
     @Inject
-    private UserCacheService userCacheService;
-
-    @Inject
     private UserPatchService userPatchService;
 
     @Inject
@@ -212,14 +209,6 @@ public class UserService {
         }
 
         return user;
-    }
-
-    public List<Long> findByResourceAndEvent(Resource resource, ResourceEvent event) {
-        return userRepository.findByResourceAndEvent(resource, event);
-    }
-
-    public List<Long> findByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
-        return userRepository.findByResourceAndEvents(resource, events);
     }
 
     private User getCurrentUser(boolean fresh) {

@@ -7,7 +7,10 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.*;
 import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.dto.*;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.PostDTO;
+import hr.prism.board.dto.PostPatchDTO;
+import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.enums.*;
 import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.event.ActivityEvent;
@@ -18,7 +21,6 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.utils.BoardUtils;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
@@ -44,11 +46,14 @@ import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.RESPONSE;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.Scope.BOARD;
+import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_REFERRAL;
 import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static hr.prism.board.utils.ResourceUtils.validateCategories;
+import static java.util.Collections.emptyList;
 
 import hr.prism.board.event.ActivityEvent;
 
@@ -74,7 +79,7 @@ public class PostService {
     private ResourceService resourceService;
 
     @Inject
-    private ResourcePatchService resourcePatchService;
+    private PostPatchService postPatchService;
 
     @Inject
     private NewUserRoleService userRoleService;
@@ -112,7 +117,7 @@ public class PostService {
 
     public Post getPost(Long id, String ipAddress, boolean recordView) {
         User user = userService.getUser();
-        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
 
         if (recordView) {
@@ -134,7 +139,7 @@ public class PostService {
         User user = userService.getUser();
         List<Post> posts =
             resourceService.getResources(user,
-                makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
+                makeResourceFilter(POST, boardId, includePublicPosts, state, quarter, searchTerm)
                     .setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC"))
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
@@ -148,14 +153,14 @@ public class PostService {
 
     public List<ResourceOperation> getPostOperations(Long id) {
         User user = userService.getUserSecured();
-        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return resourceService.getResourceOperations(post);
     }
 
     public List<String> getPostArchiveQuarters(Long parentId) {
         User user = userService.getUserSecured();
-        return resourceService.getResourceArchiveQuarters(user, Scope.POST, parentId);
+        return resourceService.getResourceArchiveQuarters(user, POST, parentId);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
@@ -222,20 +227,20 @@ public class PostService {
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
         User user = userService.getUserSecured();
-        Post post = (Post) resourceService.getResource(user, Scope.POST, id);
+        Post post = (Post) resourceService.getResource(user, POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {
-            if (action == Action.EDIT) {
+            if (action == EDIT) {
                 updatePost(post, postDTO);
             } else {
-                if (action == Action.ACCEPT) {
+                if (action == ACCEPT) {
                     Resource department = post.getParent().getParent();
-                    userService.findByRoleWithoutRole(post, ADMINISTRATOR, department, Role.AUTHOR)
-                        .forEach(author -> userRoleService.createUserRole(author, department, author, new UserRoleDTO(Role.AUTHOR), false));
+                    userService.getUsersWithRoleWithoutRole(post, ADMINISTRATOR, department, AUTHOR)
+                        .forEach(author -> userRoleService.createUserRole(department, author, AUTHOR));
                 }
 
                 if (BoardUtils.hasUpdates(postDTO)) {
-                    actionService.executeAction(user, post, Action.EDIT, () -> {
+                    actionService.executeAction(user, post, EDIT, () -> {
                         updatePost(post, postDTO);
                         return post;
                     });
@@ -265,9 +270,9 @@ public class PostService {
 
     public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
-        User user = userService.getUserSecured(true);
+        User user = userService.getUserSecured();
         actionService.executeAction(user, post, Action.PURSUE, () -> {
-            checkValidDemographicData(user, (Department) post.getParent().getParent();
+            checkValidDemographicData(user, (Department) post.getParent().getParent());
             return post;
         });
 
@@ -279,18 +284,11 @@ public class PostService {
     public Collection<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
         User user = userService.getUserSecured();
-        actionService.executeAction(user, post, Action.EDIT, () -> post);
+        actionService.executeAction(user, post, EDIT, () -> post);
 
-        List<Long> userIds;
-        boolean targetingReferrals = post.getApplyEmail() == null;
-        if (targetingReferrals) {
-            userIds = userService.findByResourceAndEvents(post, Arrays.asList(REFERRAL, RESPONSE));
-        } else {
-            userIds = userService.findByResourceAndEvent(post, RESPONSE);
-        }
-
+        List<Long> userIds = userService.getByResourceAndEvents(post, Arrays.asList(REFERRAL, RESPONSE));
         if (userIds.isEmpty()) {
-            return Collections.emptyList();
+            return emptyList();
         }
 
         String search = UUID.randomUUID().toString();
@@ -322,7 +320,7 @@ public class PostService {
         }
 
         if (resourceEvents.isEmpty()) {
-            return Collections.emptyList();
+            return emptyList();
         }
 
         HashMultimap<String, User> userIpAddresses = HashMultimap.create();
@@ -423,7 +421,7 @@ public class PostService {
     }
 
     public Post findLatestPost(User user) {
-        return postRepository.findLatestPost(user, ADMINISTRATOR, Scope.POST);
+        return postRepository.findLatestPost(user, ADMINISTRATOR, POST);
     }
 
     public List<Post> getPosts(Long boardId) {
@@ -439,12 +437,11 @@ public class PostService {
     @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
     private void updatePost(Post post, PostPatchDTO postDTO) {
         post.setChangeList(new ChangeListRepresentation());
-        resourcePatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
-        resourcePatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
-        resourcePatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
-        resourcePatchService.patchProperty(post, "organizationName", post::getOrganizationName, post::setOrganizationName, postDTO.getOrganizationName());
-        resourcePatchService.patchProperty(post, "organizationLogo", post::getOrganizationLogo, post::setOrganizationLogo, postDTO.getOrganizationLogo());
-        resourcePatchService.patchLocation(post, postDTO.getLocation());
+        postPatchService.patchProperty(post, "name", post::getName, post::setName, postDTO.getName());
+        postPatchService.patchProperty(post, "summary", post::getSummary, post::setSummary, postDTO.getSummary());
+        postPatchService.patchProperty(post, "description", post::getDescription, post::setDescription, postDTO.getDescription());
+        postPatchService.patchOrganization(post, postDTO.getOrganization());
+        postPatchService.patchLocation(post, postDTO.getLocation());
 
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (BoardUtils.isPresent(applyWebsite)) {
@@ -467,14 +464,14 @@ public class PostService {
         patchCategories(post, CategoryType.POST, postDTO.getPostCategories(), board);
         patchCategories(post, MEMBER, toStrings(postDTO.getMemberCategories()), department);
 
-        resourcePatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
+        postPatchService.patchProperty(post, "existingRelation", post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
         patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
 
         Optional<LocalDateTime> liveTimestamp = postDTO.getLiveTimestamp();
         Optional<LocalDateTime> deadTimestamp = postDTO.getDeadTimestamp();
-        resourcePatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
+        postPatchService.patchProperty(post, "liveTimestamp", post::getLiveTimestamp, post::setLiveTimestamp,
             liveTimestamp != null ? liveTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
-        resourcePatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
+        postPatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
             deadTimestamp != null ? deadTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
 
         setIndexDataAndQuarter(post);
@@ -491,9 +488,9 @@ public class PostService {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchPostApply(Post post, Optional<String> applyWebsite, Optional<DocumentDTO> applyDocument, Optional<String> applyEmail) {
-        resourcePatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsite);
-        resourcePatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocument);
-        resourcePatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyEmail);
+        postPatchService.patchProperty(post, "applyWebsite", post::getApplyWebsite, post::setApplyWebsite, applyWebsite);
+        postPatchService.patchDocument(post, "applyDocument", post::getApplyDocument, post::setApplyDocument, applyDocument);
+        postPatchService.patchProperty(post, "applyEmail", post::getApplyEmail, post::setApplyEmail, applyEmail);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -556,23 +553,23 @@ public class PostService {
                 List<Activity> activities = new ArrayList<>();
                 List<Notification> notifications = new ArrayList<>();
                 if (action == Action.PUBLISH) {
-                    activities.add(new Activity().setScope(Scope.POST)
+                    activities.add(new Activity().setScope(POST)
                         .setRole(ADMINISTRATOR)
                         .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_ACTIVITY));
                     activities.add(new Activity().setScope(Scope.DEPARTMENT)
                         .setRole(Role.MEMBER)
                         .setActivity(hr.prism.board.enums.Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST)
+                    notifications.add(new Notification().setScope(POST)
                         .setRole(ADMINISTRATOR)
                         .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_NOTIFICATION));
                     notifications.add(new Notification().setScope(Scope.DEPARTMENT)
                         .setRole(Role.MEMBER)
                         .setNotification(hr.prism.board.enums.Notification.PUBLISH_POST_MEMBER_NOTIFICATION));
                 } else {
-                    activities.add(new Activity().setScope(Scope.POST)
+                    activities.add(new Activity().setScope(POST)
                         .setRole(ADMINISTRATOR)
                         .setActivity(hr.prism.board.enums.Activity.RETIRE_POST_ACTIVITY));
-                    notifications.add(new Notification().setScope(Scope.POST)
+                    notifications.add(new Notification().setScope(POST)
                         .setRole(ADMINISTRATOR)
                         .setNotification(hr.prism.board.enums.Notification.RETIRE_POST_NOTIFICATION));
                 }
@@ -607,7 +604,7 @@ public class PostService {
 
     private ResourceEvent getPostResponse(User user, Long postId, Long responseId) {
         Post post = getPost(postId);
-        actionService.executeAction(user, post, Action.EDIT, () -> post);
+        actionService.executeAction(user, post, EDIT, () -> post);
         ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
         resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
         return resourceEvent;
@@ -615,9 +612,9 @@ public class PostService {
 
     private void addPostResponseReadiness(Post post, User user) {
         boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
-        DemographicDataStatusRepresentation responseReadiness =
-            departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent();
-        post.setResponseReadiness(responseReadiness);
+        DemographicDataStatus responseReadiness =
+            departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
+        post.setDemographicDataStatus(responseReadiness);
         if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
             resourceEventService.createPostReferral(post, user);
         }
@@ -626,7 +623,7 @@ public class PostService {
     private void addPostResponse(Post post, User user) {
         if (user != null) {
             entityManager.flush();
-            post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
+            post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
             post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, REFERRAL, user));
             post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, RESPONSE, user));
         }
@@ -643,7 +640,7 @@ public class PostService {
 
             for (Map.Entry<Post, Post> postIndexEntry : postIndex.entrySet()) {
                 Post post = postIndexEntry.getValue();
-                post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
+                post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
                 post.setReferral(referrals.get(post));
                 post.setResponse(responses.get(post));
             }

@@ -7,10 +7,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.UserDTO;
-import hr.prism.board.enums.AgeRange;
-import hr.prism.board.enums.Gender;
-import hr.prism.board.enums.OauthProvider;
-import hr.prism.board.enums.Role;
+import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.value.UserSearch;
@@ -80,6 +77,15 @@ public class NewUserService {
             .filter(potentialUser -> potentialUser.getEmail().equals(email))
             .findFirst()
             .orElse(potentialUsers.get(0));
+    }
+
+    public List<Long> getByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
+        return userRepository.findByResourceAndEvents(resource, events);
+    }
+
+    public List<User> getUsersWithRoleWithoutRole(Resource resource, Role role, Resource withoutResource,
+                                                  Role withoutRole) {
+        return userRepository.findByRoleWithoutRole(resource, role, withoutResource, withoutRole);
     }
 
     public User createOrUpdateUser(UserDTO userDTO, UserFinder userFinder) {

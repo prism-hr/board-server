@@ -148,16 +148,6 @@ public interface UserRepository extends BoardEntityRepository<User, Long> {
         "select resourceEvent.user.id " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
-            "and resourceEvent.event = :event " +
-            "and resourceEvent.referral is null " +
-            "group by resourceEvent.resource, resourceEvent.user " +
-            "order by resourceEvent.id desc")
-    List<Long> findByResourceAndEvent(@Param("resource") Resource resource, @Param("event") ResourceEvent event);
-
-    @Query(value =
-        "select resourceEvent.user.id " +
-            "from ResourceEvent resourceEvent " +
-            "where resourceEvent.resource = :resource " +
             "and resourceEvent.event in (:events) " +
             "and resourceEvent.referral is null " +
             "group by resourceEvent.resource, resourceEvent.user " +

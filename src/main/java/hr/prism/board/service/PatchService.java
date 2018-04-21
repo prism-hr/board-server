@@ -20,7 +20,7 @@ public abstract class PatchService<T extends BoardEntity> {
         this.documentService = documentService;
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "WeakerAccess"})
     public <U> void patchProperty(T entity, String property, Getter<U> getter, Setter<U> setter,
                                   Optional<U> newValueOptional) {
         if (newValueOptional != null) {
@@ -36,7 +36,7 @@ public abstract class PatchService<T extends BoardEntity> {
         }
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "WeakerAccess"})
     public void patchDocument(T entity, String property, Getter<Document> getter, Setter<Document> setter,
                               Optional<DocumentDTO> newValueOptional) {
         if (newValueOptional != null) {
