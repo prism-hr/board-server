@@ -82,14 +82,14 @@ public class DepartmentUserService {
     }
 
     public List<UserSearch> findUsers(Long id, String searchTerm) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return userService.findUsers(searchTerm);
     }
 
     public Department createMembers(Long id, List<MemberDTO> memberDTOs) {
-        User currentUser = userService.getCurrentUserSecured();
+        User currentUser = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) memberDTOs.size());
@@ -100,7 +100,7 @@ public class DepartmentUserService {
     }
 
     public User createMembershipRequest(Long id, MemberDTO memberDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.findOne(id);
         checkExistingMemberRequest(department, user);
         checkValidMemberCategory(department, memberDTO.getMemberCategory());
@@ -130,7 +130,7 @@ public class DepartmentUserService {
     }
 
     public UserRole viewMembershipRequest(Long id, Long userId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
@@ -139,7 +139,7 @@ public class DepartmentUserService {
     }
 
     public void reviewMembershipRequest(Long id, Long userId, State state) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> {
             UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
@@ -155,7 +155,7 @@ public class DepartmentUserService {
     }
 
     public User updateMembership(Long id, MemberDTO memberDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.findOne(id);
 
         UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
@@ -171,7 +171,7 @@ public class DepartmentUserService {
     }
 
     public UserRoles getUserRoles(Long id, String searchTerm) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -200,7 +200,7 @@ public class DepartmentUserService {
     }
 
     public List<UserRole> createUserRoles(Long id, UserRoleDTO userRoleDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -224,7 +224,7 @@ public class DepartmentUserService {
     }
 
     public List<UserRole> updateUserRoles(Long id, Long userCreateUpdateId, UserRoleDTO userRoleDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -233,7 +233,7 @@ public class DepartmentUserService {
     }
 
     public void deleteUserRoles(Long id, Long userDeleteId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -249,18 +249,6 @@ public class DepartmentUserService {
             userDTO, (email) -> userService.getByEmail(department, email, Role.MEMBER));
         userRoleService.createOrUpdateUserRole(department, userCreateUpdate, memberDTO, ACCEPTED);
         resourceTaskService.completeTasks(department, MEMBER_TASKS);
-    }
-
-    public void checkValidDemographicData(User user, Department department) {
-        entityManager.flush();
-        DemographicDataStatus dataStatus = makeDemographicDataStatus(user, department);
-        if (dataStatus.isRequireUserData()) {
-            throw new BoardException(INVALID_MEMBERSHIP, "User data not valid / complete");
-        }
-
-        if (dataStatus.isRequireMemberData()) {
-            throw new BoardException(INVALID_MEMBERSHIP, "Member data not valid / complete");
-        }
     }
 
     public void decrementMemberCountPending(Long id) {
@@ -310,7 +298,7 @@ public class DepartmentUserService {
     }
 
     private List<UserRole> createOrUpdateUserRoles(Long id, User userCreateUpdate, UserRoleDTO userRoleDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -381,6 +369,18 @@ public class DepartmentUserService {
             .noneMatch(name -> name.equals(memberCategory.name()))) {
             throw new BoardException(
                 INVALID_USER_ROLE_MEMBER_CATEGORIES, "Valid categories must be specified - check parent categories");
+        }
+    }
+
+    private void checkValidDemographicData(User user, Department department) {
+        entityManager.flush();
+        DemographicDataStatus dataStatus = makeDemographicDataStatus(user, department);
+        if (dataStatus.isRequireUserData()) {
+            throw new BoardException(INVALID_MEMBERSHIP, "User data not valid / complete");
+        }
+
+        if (dataStatus.isRequireMemberData()) {
+            throw new BoardException(INVALID_MEMBERSHIP, "Member data not valid / complete");
         }
     }
 

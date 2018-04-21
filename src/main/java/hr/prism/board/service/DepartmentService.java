@@ -42,8 +42,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
-import hr.prism.board.event.ActivityEvent;
-
 @Service
 @Transactional
 public class DepartmentService {
@@ -282,7 +280,7 @@ public class DepartmentService {
 
     public void sendSubscribeNotification(Long departmentId) {
         Department department = (Department) resourceService.findOne(departmentId);
-        hr.prism.board.domain.Activity subscribeActivity = activityService.findByResourceAndActivityAndRole(
+        hr.prism.board.domain.Activity subscribeActivity = activityService.getByResourceActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (subscribeActivity == null) {
             eventProducer.produce(

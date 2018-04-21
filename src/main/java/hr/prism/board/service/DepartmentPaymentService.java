@@ -178,7 +178,7 @@ public class DepartmentPaymentService {
             singletonList(departmentId), SUSPEND, department.getState(), LocalDateTime.now());
         entityManager.refresh(department);
 
-        hr.prism.board.domain.Activity suspendActivity = activityService.findByResourceAndActivityAndRole(
+        hr.prism.board.domain.Activity suspendActivity = activityService.getByResourceActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (suspendActivity == null) {
             eventProducer.produce(

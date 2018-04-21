@@ -11,24 +11,19 @@ import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.ResourceTask.MEMBER_TASKS;
-import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACCEPTED;
@@ -58,10 +53,6 @@ public class UserRoleCacheService {
 
     @Inject
     private EventProducer eventProducer;
-
-    public UserRole findByUuid(String uuid) {
-        return userRoleRepository.findByUuid(uuid);
-    }
 
     public UserRole createUserRole(User user, Resource resource, User userCreate,
                                    UserRoleDTO userRoleDTO, boolean notify) {
@@ -116,37 +107,6 @@ public class UserRoleCacheService {
         return userRole;
     }
 
-    public void deleteUserRole(Resource resource, User user, Role role) {
-        activityService.deleteActivities(resource, user, role);
-        userRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
-    }
-
-    public void mergeUserRoles(User newUser, User oldUser) {
-        Map<Pair<Resource, Role>, UserRole> newUserRoles = new HashMap<>();
-        Map<Pair<Resource, Role>, UserRole> oldUserRoles = new HashMap<>();
-        userRoleRepository.findByUsersOrderByUser(Arrays.asList(newUser, oldUser)).forEach(userRole -> {
-            if (userRole.getUser().equals(newUser)) {
-                newUserRoles.put(Pair.of(userRole.getResource(), userRole.getRole()), userRole);
-            } else {
-                oldUserRoles.put(Pair.of(userRole.getResource(), userRole.getRole()), userRole);
-            }
-        });
-
-        List<UserRole> deletes = new ArrayList<>();
-        for (Map.Entry<Pair<Resource, Role>, UserRole> oldUserRoleEntry : oldUserRoles.entrySet()) {
-            if (newUserRoles.containsKey(oldUserRoleEntry.getKey())) {
-                deletes.add(oldUserRoleEntry.getValue());
-            }
-        }
-
-        if (!deletes.isEmpty()) {
-            activityService.deleteActivities(deletes);
-            userRoleRepository.deleteByIds(deletes.stream().map(UserRole::getId).collect(Collectors.toList()));
-        }
-
-        userRoleRepository.updateByUser(newUser, oldUser);
-    }
-
     public void updateMembershipData(UserRole userRole, UserRoleDTO userRoleDTO) {
         boolean updated = false;
         boolean clearStudyData = false;
@@ -180,20 +140,6 @@ public class UserRoleCacheService {
         if (updated) {
             userRole.setMemberDate(LocalDate.now());
         }
-    }
-
-    private void checkSafety(Resource resource, ExceptionCode exceptionCode) {
-        if (resource.getScope() == DEPARTMENT) {
-            List<UserRole> remainingAdminRoles = userRoleRepository.findByResourceAndRole(resource, ADMINISTRATOR);
-            if (remainingAdminRoles.isEmpty()) {
-                throw new BoardException(exceptionCode, "Cannot remove last remaining administrator");
-            }
-        }
-    }
-
-    private void deleteUserRoles(Resource resource, User user) {
-        activityService.deleteActivities(resource, user);
-        userRoleRepository.deleteByResourceAndUser(resource, user);
     }
 
 }

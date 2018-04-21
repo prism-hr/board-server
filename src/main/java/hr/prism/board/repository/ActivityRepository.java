@@ -61,18 +61,16 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
     @Query(value =
         "delete from Activity activity " +
             "where activity.resource = :resource " +
+            "and activity.id not in (" +
+            "select activity.id " +
+            "from ActivityUser activityUser " +
+            "inner join activityUser.activity " +
+            "where activity.resource = :resource " +
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null) " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
     void deleteByResource(@Param("resource") Resource resource);
-
-    @Modifying
-    @Query(value =
-        "delete from Activity activity " +
-            "where activity.resource = :resource " +
-            "and activity.id not in (:ignores) " +
-            "and activity.userRole is null " +
-            "and activity.resourceEvent is null")
-    void deleteByResourceWithIgnores(@Param("resource") Resource resource, @Param("ignores") List<Long> ignores);
 
     @Modifying
     @Query(value =
@@ -101,28 +99,9 @@ public interface ActivityRepository extends BoardEntityRepository<Activity, Long
             "select userRole " +
             "from UserRole userRole " +
             "where userRole.resource = :resource " +
-            "and userRole.user = :user)")
-    void deleteByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
-
-    @Modifying
-    @Query(value =
-        "delete from Activity activity " +
-            "where activity.userRole in (" +
-            "select userRole " +
-            "from UserRole userRole " +
-            "where userRole.resource = :resource " +
             "and userRole.user = :user " +
             "and userRole.role = :role)")
     void deleteByResourceAndUserAndRole(@Param("resource") Resource resource, @Param("user") User user,
                                         @Param("role") Role role);
-
-    @Query(value =
-        "select activity.id " +
-            "from Activity activity " +
-            "inner join activity.activityUsers activityUser " +
-            "where activity.resource = :resource " +
-            "and activity.userRole is null " +
-            "and activity.resourceEvent is null")
-    List<Long> findByResourceWithActivityUsers(@Param("resource") Resource resource);
 
 }

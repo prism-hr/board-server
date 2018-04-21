@@ -20,6 +20,7 @@ import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
@@ -40,6 +41,8 @@ import java.util.stream.Stream;
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.MemberCategory.toStrings;
+import static hr.prism.board.enums.ResourceEvent.REFERRAL;
+import static hr.prism.board.enums.ResourceEvent.RESPONSE;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ARCHIVED;
@@ -74,13 +77,10 @@ public class PostService {
     private ResourcePatchService resourcePatchService;
 
     @Inject
-    private UserRoleService userRoleService;
+    private NewUserRoleService userRoleService;
 
     @Inject
-    private UserRoleCacheService userRoleCacheService;
-
-    @Inject
-    private UserService userService;
+    private NewUserService userService;
 
     @Inject
     private ActionService actionService;
@@ -90,9 +90,6 @@ public class PostService {
 
     @Inject
     private ActivityService activityService;
-
-    @Inject
-    private DepartmentService departmentService;
 
     @Inject
     private DepartmentUserService departmentUserService;
@@ -114,7 +111,7 @@ public class PostService {
     }
 
     public Post getPost(Long id, String ipAddress, boolean recordView) {
-        User user = userService.getCurrentUser();
+        User user = userService.getUser();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
 
@@ -134,7 +131,7 @@ public class PostService {
     }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
-        User user = userService.getCurrentUser();
+        User user = userService.getUser();
         List<Post> posts =
             resourceService.getResources(user,
                 makeResourceFilter(Scope.POST, boardId, includePublicPosts, state, quarter, searchTerm)
@@ -150,19 +147,19 @@ public class PostService {
     }
 
     public List<ResourceOperation> getPostOperations(Long id) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return resourceService.getResourceOperations(post);
     }
 
     public List<String> getPostArchiveQuarters(Long parentId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         return resourceService.getResourceArchiveQuarters(user, Scope.POST, parentId);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Board board = (Board) resourceService.getResource(user, BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(user, board, EXTEND, () -> {
             Post post = new Post();
@@ -186,7 +183,7 @@ public class PostService {
 
             String applyWebsite = postDTO.getApplyWebsite();
             if (applyWebsite != null) {
-                verifyApplyWebsiteAccessible(applyWebsite);
+                checkApplyWebsiteAccessible(applyWebsite);
                 post.setApplyWebsite(applyWebsite);
             }
 
@@ -209,7 +206,7 @@ public class PostService {
             updateCategories(post, MEMBER, toStrings(postDTO.getMemberCategories()), department);
             resourceService.createResourceRelation(board, post);
             setIndexDataAndQuarter(post);
-            userRoleService.createOrUpdateUserRole(post, user, ADMINISTRATOR);
+            userRoleService.getOrCreateUserRole(post, user, ADMINISTRATOR);
             resourceTaskService.completeTasks(department, POST_TASKS);
             return post;
         });
@@ -224,7 +221,7 @@ public class PostService {
     }
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Post post = (Post) resourceService.getResource(user, Scope.POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {
@@ -234,7 +231,7 @@ public class PostService {
                 if (action == Action.ACCEPT) {
                     Resource department = post.getParent().getParent();
                     userService.findByRoleWithoutRole(post, ADMINISTRATOR, department, Role.AUTHOR)
-                        .forEach(author -> userRoleCacheService.createUserRole(author, department, author, new UserRoleDTO(Role.AUTHOR), false));
+                        .forEach(author -> userRoleService.createUserRole(author, department, author, new UserRoleDTO(Role.AUTHOR), false));
                 }
 
                 if (BoardUtils.hasUpdates(postDTO)) {
@@ -254,8 +251,7 @@ public class PostService {
     public String getPostReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventService.getAndConsumeReferral(referral);
         Post post = (Post) resourceEvent.getResource();
-        departmentUserService.checkValidDemographicData(resourceEvent.getUser(), (Department) post.getParent()
-            .getParent(), BoardForbiddenException.class, FORBIDDEN_REFERRAL);
+        checkValidDemographicData(resourceEvent.getUser(), (Department) post.getParent().getParent());
 
         Document applyDocument = post.getApplyDocument();
         String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
@@ -269,10 +265,9 @@ public class PostService {
 
     public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
-        User user = userService.getCurrentUserSecured(true);
+        User user = userService.getUserSecured(true);
         actionService.executeAction(user, post, Action.PURSUE, () -> {
-            departmentUserService.checkValidDemographicData(user, (Department) post.getParent()
-                .getParent(), BoardForbiddenException.class, ExceptionCode.FORBIDDEN_RESPONSE);
+            checkValidDemographicData(user, (Department) post.getParent().getParent();
             return post;
         });
 
@@ -283,16 +278,15 @@ public class PostService {
     @SuppressWarnings("JpaQlInspection")
     public Collection<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         actionService.executeAction(user, post, Action.EDIT, () -> post);
 
         List<Long> userIds;
         boolean targetingReferrals = post.getApplyEmail() == null;
         if (targetingReferrals) {
-            userIds = userService.findByResourceAndEvents(post,
-                Arrays.asList(hr.prism.board.enums.ResourceEvent.REFERRAL, hr.prism.board.enums.ResourceEvent.RESPONSE));
+            userIds = userService.findByResourceAndEvents(post, Arrays.asList(REFERRAL, RESPONSE));
         } else {
-            userIds = userService.findByResourceAndEvent(post, hr.prism.board.enums.ResourceEvent.RESPONSE);
+            userIds = userService.findByResourceAndEvent(post, RESPONSE);
         }
 
         if (userIds.isEmpty()) {
@@ -339,7 +333,7 @@ public class PostService {
             ResourceEvent headResourceEvent = userResourceEvents.get(resourceEventUser);
             if (headResourceEvent == null) {
                 userResourceEvents.put(resourceEventUser, resourceEvent);
-            } else if (resourceEvent.getEvent() == hr.prism.board.enums.ResourceEvent.RESPONSE || resourceEvent.hasDemographicData()) {
+            } else if (resourceEvent.getEvent() == RESPONSE || resourceEvent.hasDemographicData()) {
                 userResourceEvents.put(resourceEventUser, resourceEvent);
                 List<ResourceEvent> resourceEventHistory = new ArrayList<>();
                 resourceEventHistory.add(headResourceEvent);
@@ -387,11 +381,11 @@ public class PostService {
     }
 
     public ResourceEvent getPostResponse(Long postId, Long responseId) {
-        return getPostResponse(userService.getCurrentUserSecured(), postId, responseId);
+        return getPostResponse(userService.getUserSecured(), postId, responseId);
     }
 
     public ResourceEvent putPostResponseView(Long postId, Long responseId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
         return resourceEvent.setViewed(true);
@@ -454,7 +448,7 @@ public class PostService {
 
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (BoardUtils.isPresent(applyWebsite)) {
-            verifyApplyWebsiteAccessible(applyWebsite.get());
+            checkApplyWebsiteAccessible(applyWebsite.get());
             patchPostApply(post, applyWebsite, Optional.empty(), Optional.empty());
         }
 
@@ -622,7 +616,7 @@ public class PostService {
     private void addPostResponseReadiness(Post post, User user) {
         boolean canPursue = actionService.canExecuteAction(post, Action.PURSUE);
         DemographicDataStatusRepresentation responseReadiness =
-            userRoleService.makeDemographicDataStatus(user, (Department) post.getParent().getParent(), canPursue);
+            departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent();
         post.setResponseReadiness(responseReadiness);
         if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
             resourceEventService.createPostReferral(post, user);
@@ -633,8 +627,8 @@ public class PostService {
         if (user != null) {
             entityManager.flush();
             post.setExposeApplyData(actionService.canExecuteAction(post, Action.EDIT));
-            post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.REFERRAL, user));
-            post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, hr.prism.board.enums.ResourceEvent.RESPONSE, user));
+            post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, REFERRAL, user));
+            post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, RESPONSE, user));
         }
     }
 
@@ -642,9 +636,9 @@ public class PostService {
         if (user != null) {
             entityManager.flush();
             Map<Post, Post> postIndex = posts.stream().collect(Collectors.toMap(post -> post, post -> post));
-            Map<Resource, ResourceEvent> referrals = resourceEventService.findByResourceIdsAndEventAndUser(posts, hr.prism.board.enums.ResourceEvent.REFERRAL, user)
+            Map<Resource, ResourceEvent> referrals = resourceEventService.findByResourceIdsAndEventAndUser(posts, REFERRAL, user)
                 .stream().collect(Collectors.toMap(ResourceEvent::getResource, referral -> referral));
-            Map<Resource, ResourceEvent> responses = resourceEventService.findByResourceIdsAndEventAndUser(posts, hr.prism.board.enums.ResourceEvent.RESPONSE, user)
+            Map<Resource, ResourceEvent> responses = resourceEventService.findByResourceIdsAndEventAndUser(posts, RESPONSE, user)
                 .stream().collect(Collectors.toMap(ResourceEvent::getResource, referral -> referral));
 
             for (Map.Entry<Post, Post> postIndexEntry : postIndex.entrySet()) {
@@ -666,7 +660,7 @@ public class PostService {
         resourceEventHistory.add(resourceEvent);
     }
 
-    private void verifyApplyWebsiteAccessible(String applyWebsite) {
+    private void checkApplyWebsiteAccessible(String applyWebsite) {
         try {
             URL url = new URL(applyWebsite);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -680,6 +674,18 @@ public class PostService {
             }
         } catch (IOException e) {
             throw new BoardException(ExceptionCode.INACCESSIBLE_POST_APPLY, "Cannot access apply website");
+        }
+    }
+
+    public void checkValidDemographicData(User user, Department department) {
+        entityManager.flush();
+        DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+        if (dataStatus.isRequireUserData()) {
+            throw new BoardForbiddenException(FORBIDDEN_REFERRAL, "User data not valid / complete");
+        }
+
+        if (dataStatus.isRequireMemberData()) {
+            throw new BoardForbiddenException(FORBIDDEN_REFERRAL, "Member data not valid / complete");
         }
     }
 

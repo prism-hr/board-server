@@ -1,7 +1,13 @@
 package hr.prism.board.dao;
 
 import hr.prism.board.domain.Activity;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
+import hr.prism.board.enums.Role;
+import hr.prism.board.repository.ActivityEventRepository;
 import hr.prism.board.repository.ActivityRepository;
+import hr.prism.board.repository.ActivityRoleRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,43 +24,24 @@ import static java.util.Collections.emptyList;
 @Transactional
 public class ActivityDAO {
 
-    private static final String USER_ACTIVITY =
-        "select distinct activity " +
-            "from Activity activity " +
-            "left join activity.activityRoles activityRole " +
-            "left join activity.resource resource " +
-            "left join resource.parents parentRelation " +
-            "left join parentRelation.resource1 parent " +
-            "left join parent.userRoles userRole " +
-            "left join resource.categories resourceCategory " +
-            "left join activity.activityUsers activityUser " +
-            "where (activityUser.id is null " +
-            "and activityRole.scope = parent.scope " +
-            "and activityRole.role = userRole.role " +
-            "and userRole.user.id = :userId " +
-            "and userRole.state in (:userRoleStates) " +
-            "and (activity.filterByCategory = false " +
-            "or resourceCategory.id is null " +
-            "or resourceCategory.type = :categoryType " +
-            "and resourceCategory.name = userRole.memberCategory) " +
-            "or activityUser.user.id = :userId) " +
-            "and activity.id not in (" +
-            "select activityEvent.activity.id " +
-            "from ActivityEvent activityEvent " +
-            "where activityEvent.user.id = :userId " +
-            "and activityEvent.event = :activityEvent) " +
-            "order by activity.updatedTimestamp desc, activity.id desc";
-
     private final ActivityRepository activityRepository;
+
+    private final ActivityEventRepository activityEventRepository;
+
+    private final ActivityRoleRepository activityRoleRepository;
 
     private final EntityManager entityManager;
 
     @Inject
-    public ActivityDAO(ActivityRepository activityRepository, EntityManager entityManager) {
+    public ActivityDAO(ActivityRepository activityRepository, ActivityEventRepository activityEventRepository,
+                       ActivityRoleRepository activityRoleRepository, EntityManager entityManager) {
         this.activityRepository = activityRepository;
+        this.activityEventRepository = activityEventRepository;
+        this.activityRoleRepository = activityRoleRepository;
         this.entityManager = entityManager;
     }
 
+    @SuppressWarnings("JpaQueryApiInspection")
     public List<Activity> getActivities(Long userId) {
         List<Long> ids = entityManager.createNamedQuery("userActivities", Long.class)
             .setParameter("userId", userId)
@@ -64,6 +51,36 @@ public class ActivityDAO {
             .getResultList();
 
         return ids.isEmpty() ? emptyList() : activityRepository.findByIds(ids);
+    }
+
+    public void deleteActivities(Resource resource) {
+        activityEventRepository.deleteByResource(resource);
+        activityRoleRepository.deleteByResource(resource);
+        activityRepository.deleteByResource(resource);
+    }
+
+    public void deleteActivities(UserRole userRole) {
+        activityEventRepository.deleteByUserRole(userRole);
+        activityRoleRepository.deleteByUserRole(userRole);
+        activityRepository.deleteByUserRole(userRole);
+    }
+
+    public void deleteActivities(List<UserRole> userRoles) {
+        activityEventRepository.deleteByUserRoles(userRoles);
+        activityRoleRepository.deleteByUserRoles(userRoles);
+        activityRepository.deleteByUserRoles(userRoles);
+    }
+
+    public void deleteActivities(Resource resource, User user, Role role) {
+        activityEventRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        activityRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
+        activityRepository.deleteByResourceAndUserAndRole(resource, user, role);
+    }
+
+    public void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {
+        activityEventRepository.deleteByResourceAndActivities(resource, activities);
+        activityRoleRepository.deleteByResourceAndActivities(resource, activities);
+        activityRepository.deleteByResourceAndActivities(resource, activities);
     }
 
 }

@@ -5,6 +5,7 @@ import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.UserRepository;
+import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.repository.UserSearchRepository;
 import hr.prism.board.value.Statistics;
 import org.springframework.stereotype.Repository;
@@ -17,21 +18,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+
 @Repository
 @Transactional
 public class UserRoleDAO {
+
+    private UserRoleRepository userRoleRepository;
 
     private UserRepository userRepository;
 
     private UserSearchRepository userSearchRepository;
 
+    private ActivityDAO activityDAO;
+
     private final EntityManager entityManager;
 
     @Inject
-    public UserRoleDAO(UserRepository userRepository, UserSearchRepository userSearchRepository,
+    public UserRoleDAO(UserRoleRepository userRoleRepository, UserRepository userRepository,
+                       UserSearchRepository userSearchRepository, ActivityDAO activityDAO,
                        EntityManager entityManager) {
+        this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
         this.userSearchRepository = userSearchRepository;
+        this.activityDAO = activityDAO;
         this.entityManager = entityManager;
     }
 
@@ -78,6 +89,17 @@ public class UserRoleDAO {
         }
 
         return userRoles;
+    }
+
+    public void deleteUserRoles(List<UserRole> userRoles) {
+        if (isNotEmpty(userRoles)) {
+            activityDAO.deleteActivities(userRoles);
+            userRoleRepository.deleteByIds(
+                userRoles
+                    .stream()
+                    .map(UserRole::getId)
+                    .collect(toList()));
+        }
     }
 
     public Statistics getMemberStatistics(Long departmentId) {

@@ -365,10 +365,10 @@ public class DepartmentApiIT extends AbstractIT {
                         .setEmail("admin1@admin1.com"))
                     .setRole(Role.ADMINISTRATOR)).getUser().getId();
 
-        User departmentUser2 = userCacheService.getUser(departmentUser2Id);
+        User departmentUser2 = userService.getUser(departmentUser2Id);
         UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userCacheService.getUser(departmentUser2Id),
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userService.getUser(departmentUser2Id),
             ImmutableMap.<String, String>builder()
                 .put("recipient", "admin1")
                 .put("department", "department 4")
@@ -1187,7 +1187,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .build()));
 
         UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER);
-        Long activityId = activityService.findByUserRoleAndActivity(userRole, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY).getId();
+        Long activityId = activityService.getByUserRoleAndActivity(userRole, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY).getId();
 
         testUserService.setAuthentication(departmentUserId);
         userActivityApi.dismissActivity(activityId);
@@ -1501,7 +1501,7 @@ public class DepartmentApiIT extends AbstractIT {
         departmentUserApi.deleteUserRoles(departmentId, creator.getId());
 
         // authenticate as another administrator
-        User newUser = userCacheService.getUserFromDatabase(boardManager.getUser().getId());
+        User newUser = userService.getUserFromDatabase(boardManager.getUser().getId());
         testUserService.setAuthentication(newUser.getId());
 
         // try to remove yourself as administrator
@@ -1652,7 +1652,7 @@ public class DepartmentApiIT extends AbstractIT {
                 resourceRepository.update(resource);
             });
 
-        Long userId = userCacheService.findByEmail("department@administrator.com").getId();
+        Long userId = userService.findByEmail("department@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         List<BoardRepresentation> boardRs = boardApi.getBoards(null, false, null, null, null);
@@ -1673,7 +1673,7 @@ public class DepartmentApiIT extends AbstractIT {
         boardNames = boardRs.stream().map(BoardRepresentation::getName).collect(Collectors.toList());
         verifyContains(boardNames, "Opportunities");
 
-        userId = userCacheService.findByEmail("department@author.com").getId();
+        userId = userService.findByEmail("department@author.com").getId();
         testUserService.setAuthentication(userId);
 
         boardRs = boardApi.getBoards(null, false, null, null, null);
@@ -1703,7 +1703,7 @@ public class DepartmentApiIT extends AbstractIT {
         postRs = postApi.getPosts(null, false, State.REJECTED, null, null);
         Assert.assertEquals(0, postRs.size());
 
-        userId = userCacheService.findByEmail("department@member.com").getId();
+        userId = userService.findByEmail("department@member.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(null, false, null, null, null);
@@ -1733,7 +1733,7 @@ public class DepartmentApiIT extends AbstractIT {
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Database Engineer");
 
-        userId = userCacheService.findByEmail("post@administrator.com").getId();
+        userId = userService.findByEmail("post@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(boardId, false, null, null, null);
@@ -1748,7 +1748,7 @@ public class DepartmentApiIT extends AbstractIT {
         postNames = postRs.stream().map(PostRepresentation::getName).collect(Collectors.toList());
         verifyContains(postNames, "Technical Analyst");
 
-        userId = userCacheService.findByEmail("department@administrator.com").getId();
+        userId = userService.findByEmail("department@administrator.com").getId();
         testUserService.setAuthentication(userId);
 
         postRs = postApi.getPosts(boardId, false, null, null, null);
@@ -1796,11 +1796,11 @@ public class DepartmentApiIT extends AbstractIT {
     @Sql("classpath:data/user_role_filter_setup.sql")
     public void shouldListAndFilterUserRoles() {
         for (User user : userRepository.findAll()) {
-            userCacheService.setIndexData(user);
+            userService.setIndexData(user);
             userRepository.update(user);
         }
 
-        Long userId = userCacheService.findByEmail("alastair@knowles.com").getId();
+        Long userId = userService.findByEmail("alastair@knowles.com").getId();
         testUserService.setAuthentication(userId);
 
         Long departmentId = resourceRepository.findByHandle("cs").getId();

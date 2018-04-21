@@ -21,21 +21,21 @@ public class ActivityEventConsumer {
 
     private final ResourceService resourceService;
 
-    private final UserRoleService userRoleService;
+    private final NewUserRoleService userRoleService;
 
     private final ResourceEventService resourceEventService;
 
-    private final UserCacheService userCacheService;
+    private final NewUserService userService;
 
     @Inject
     public ActivityEventConsumer(ActivityService activityService, ResourceService resourceService,
-                                 UserRoleService userRoleService, ResourceEventService resourceEventService,
-                                 UserCacheService userCacheService) {
+                                 NewUserRoleService userRoleService, ResourceEventService resourceEventService,
+                                 NewUserService userService) {
         this.activityService = activityService;
         this.resourceService = resourceService;
         this.userRoleService = userRoleService;
         this.resourceEventService = resourceEventService;
-        this.userCacheService = userCacheService;
+        this.userService = userService;
     }
 
     @Async
@@ -87,7 +87,7 @@ public class ActivityEventConsumer {
     private Resource processUserRole(
         ActivityEvent activityEvent, Long userRoleId,
         Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
-        UserRole userRole = userRoleService.fineOne(userRoleId);
+        UserRole userRole = userRoleService.getById(userRoleId);
         if (userRole.getState() == State.PENDING) {
             activityEvent.getActivities().forEach(activity -> {
                 Activity activityEnum = activity.getActivity();
@@ -121,7 +121,7 @@ public class ActivityEventConsumer {
             if (userId == null) {
                 activityService.getOrCreateActivityRole(activityEntity, activity.getScope(), activity.getRole());
             } else {
-                User user = userCacheService.getUser(userId);
+                User user = userService.getById(userId);
                 activityService.getOrCreateActivityUser(activityEntity, user);
             }
         });

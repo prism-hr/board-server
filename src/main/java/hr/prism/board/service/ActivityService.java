@@ -90,12 +90,12 @@ public class ActivityService {
         this.entityManager = entityManager;
     }
 
-    public Activity findByResourceAndActivityAndRole(Resource resource, hr.prism.board.enums.Activity activity,
-                                                     Scope scope, Role role) {
+    public Activity getByResourceActivityAndRole(Resource resource, hr.prism.board.enums.Activity activity,
+                                                 Scope scope, Role role) {
         return activityRepository.findByResourceAndActivityAndRole(resource, activity, scope, role);
     }
 
-    public Activity findByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
+    public Activity getByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         return activityRepository.findByUserRoleAndActivity(userRole, activity);
     }
 
@@ -143,6 +143,7 @@ public class ActivityService {
             activityRepository.update(entity);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ActivityRole getOrCreateActivityRole(Activity activity, Scope scope, Role role) {
         ActivityRole activityRole = activityRoleRepository.findByActivityAndScopeAndRole(activity, scope, role);
         if (activityRole == null) {
@@ -156,6 +157,7 @@ public class ActivityService {
         return activityRole;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ActivityUser getOrCreateActivityUser(Activity activity, User user) {
         ActivityUser activityUser = activityUserRepository.findByActivityAndUser(activity, user);
         if (activityUser == null) {
@@ -192,39 +194,15 @@ public class ActivityService {
     }
 
     public void deleteActivities(Resource resource) {
-        activityEventRepository.deleteByResource(resource);
-        activityRoleRepository.deleteByResource(resource);
-
-        List<Long> ignores = activityRepository.findByResourceWithActivityUsers(resource);
-        if (ignores.isEmpty()) {
-            activityRepository.deleteByResource(resource);
-        } else {
-            activityRepository.deleteByResourceWithIgnores(resource, ignores);
-        }
+        activityDAO.deleteActivities(resource);
     }
 
     public void deleteActivities(UserRole userRole) {
-        activityEventRepository.deleteByUserRole(userRole);
-        activityRoleRepository.deleteByUserRole(userRole);
-        activityRepository.deleteByUserRole(userRole);
-    }
-
-    public void deleteActivities(Resource resource, User user) {
-        activityEventRepository.deleteByResourceAndUser(resource, user);
-        activityRoleRepository.deleteByResourceAndUser(resource, user);
-        activityRepository.deleteByResourceAndUser(resource, user);
+        activityDAO.deleteActivities(userRole);
     }
 
     public void deleteActivities(Resource resource, User user, Role role) {
-        activityEventRepository.deleteByResourceAndUserAndRole(resource, user, role);
-        activityRoleRepository.deleteByResourceAndUserAndRole(resource, user, role);
-        activityRepository.deleteByResourceAndUserAndRole(resource, user, role);
-    }
-
-    public void deleteActivities(List<UserRole> userRoles) {
-        activityEventRepository.deleteByUserRoles(userRoles);
-        activityRoleRepository.deleteByUserRoles(userRoles);
-        activityRepository.deleteByUserRoles(userRoles);
+        activityDAO.deleteActivities(resource, user, role);
     }
 
     public void sendActivities(Resource resource) {
@@ -238,9 +216,7 @@ public class ActivityService {
     }
 
     public void deleteActivities(Resource resource, List<hr.prism.board.enums.Activity> activities) {
-        activityEventRepository.deleteByResourceAndActivities(resource, activities);
-        activityRoleRepository.deleteByResourceAndActivities(resource, activities);
-        activityRepository.deleteByResourceAndActivities(resource, activities);
+        activityDAO.deleteActivities(resource, activities);
     }
 
     public List<ActivityEvent> findViews(Collection<Activity> activities, User user) {

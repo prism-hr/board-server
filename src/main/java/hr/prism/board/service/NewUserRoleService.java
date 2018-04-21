@@ -12,13 +12,14 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.value.Statistics;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER;
@@ -48,6 +49,10 @@ public class NewUserRoleService {
         return userRoleRepository.findOne(id);
     }
 
+    public UserRole getByUuid(String uuid) {
+        return userRoleRepository.findByUuid(uuid);
+    }
+
     public List<Role> getByResourceAndUser(Resource resource, User user) {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
@@ -75,6 +80,15 @@ public class NewUserRoleService {
 
         userRole.setCreatorId(resource.getCreatorId());
         return userRoleRepository.save(userRole);
+    }
+
+    public UserRole getOrCreateUserRole(Resource resource, User userCreateUpdate, Role role) {
+        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, userCreateUpdate, role);
+        if (userRole == null) {
+            return createUserRole(resource, userCreateUpdate, role);
+        }
+
+        return userRole;
     }
 
     public UserRole createOrUpdateUserRole(Resource resource, User userCreateUpdate, MemberDTO memberDTO, State state) {
@@ -129,17 +143,31 @@ public class NewUserRoleService {
         checkSafety(resource, IRREMOVABLE_USER_ROLE);
     }
 
-    public Statistics getMemberStatistics(Long departmentId) {
-        return userRoleDAO.getMemberStatistics(departmentId);
-    }
+    public int mergeUserRoles(User newUser, User oldUser) {
+        Map<Pair<Resource, Role>, UserRole> newUserRoles = new HashMap<>();
+        Map<Pair<Resource, Role>, UserRole> oldUserRoles = new HashMap<>();
+        userRoleRepository.findByUsersOrderByUser(Arrays.asList(newUser, oldUser)).forEach(userRole -> {
+            if (userRole.getUser().equals(newUser)) {
+                newUserRoles.put(Pair.of(userRole.getResource(), userRole.getRole()), userRole);
+            } else {
+                oldUserRoles.put(Pair.of(userRole.getResource(), userRole.getRole()), userRole);
+            }
+        });
 
-    private UserRole getOrCreateUserRole(Resource resource, User userCreateUpdate, Role role) {
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, userCreateUpdate, role);
-        if (userRole == null) {
-            return createUserRole(resource, userCreateUpdate, role);
+        List<UserRole> deletes = new ArrayList<>();
+        for (Map.Entry<Pair<Resource, Role>, UserRole> oldUserRoleEntry : oldUserRoles.entrySet()) {
+            if (newUserRoles.containsKey(oldUserRoleEntry.getKey())) {
+                deletes.add(oldUserRoleEntry.getValue());
+            }
         }
 
-        return userRole;
+        userRoleDAO.deleteUserRoles(deletes);
+        userRoleRepository.updateByUser(newUser, oldUser);
+        return deletes.size();
+    }
+
+    public Statistics getMemberStatistics(Long departmentId) {
+        return userRoleDAO.getMemberStatistics(departmentId);
     }
 
     private UserRole createUserRole(Resource resource, User user, MemberDTO memberDTO, State state) {

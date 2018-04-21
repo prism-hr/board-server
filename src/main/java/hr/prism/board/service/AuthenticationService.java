@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 
-import static hr.prism.board.enums.DocumentRequestState.DISPLAY_FIRST;
 import static hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION;
 import static hr.prism.board.enums.PasswordHash.SHA256;
 import static hr.prism.board.exception.ExceptionCode.*;
@@ -55,9 +54,9 @@ public class AuthenticationService {
 
     private final Long sessionDurationSeconds;
 
-    private final UserCacheService userCacheService;
+    private final NewUserService userService;
 
-    private final UserRoleCacheService userRoleCacheService;
+    private final NewUserRoleService userRoleService;
 
     private final ActivityService activityService;
 
@@ -69,12 +68,12 @@ public class AuthenticationService {
 
     @Inject
     public AuthenticationService(@Value("${session.duration.seconds}") Long sessionDurationSeconds,
-                                 UserCacheService userCacheService, UserRoleCacheService userRoleCacheService,
+                                 NewUserService userService, NewUserRoleService userRoleService,
                                  ActivityService activityService, EventProducer eventProducer,
                                  EntityManager entityManager, ApplicationContext applicationContext) {
         this.sessionDurationSeconds = sessionDurationSeconds;
-        this.userCacheService = userCacheService;
-        this.userRoleCacheService = userRoleCacheService;
+        this.userService = userService;
+        this.userRoleService = userRoleService;
         this.activityService = activityService;
         this.eventProducer = eventProducer;
         this.entityManager = entityManager;
@@ -108,7 +107,7 @@ public class AuthenticationService {
 
     public User login(LoginDTO loginDTO) throws BoardForbiddenException {
         String email = loginDTO.getEmail();
-        User user = userCacheService.findByEmail(loginDTO.getEmail());
+        User user = userService.getByEmail(loginDTO.getEmail());
         if (user == null) {
             throw new BoardForbiddenException(UNKNOWN_USER, "User: " + email + " cannot be found");
         }
@@ -127,40 +126,40 @@ public class AuthenticationService {
 
     public User signin(OauthProvider provider, SigninDTO signinDTO) {
         Class<? extends OauthAdapter> oauthAdapterClass = provider.getOauthAdapter();
-        User newUser = applicationContext.getBean(oauthAdapterClass).exchangeForUser(signinDTO);
-        if (newUser.getEmail() == null) {
+        User oauth = applicationContext.getBean(oauthAdapterClass).exchangeForUser(signinDTO);
+        if (oauth.getEmail() == null) {
             throw new BoardForbiddenException(UNIDENTIFIABLE_USER, "User not identifiable, no email address");
         }
 
-        String accountId = newUser.getOauthAccountId();
-        User user = userCacheService.findByOauthProviderAndOauthAccountId(provider, accountId);
+        String accountId = oauth.getOauthAccountId();
+        User user = userService.getByOauthCredentials(provider, accountId);
         if (user == null) {
-            user = userCacheService.findByEmail(newUser.getEmail());
+            user = userService.getByEmail(oauth.getEmail());
             if (user == null) {
                 User invitee = null;
                 String uuid = signinDTO.getUuid();
                 if (uuid != null) {
-                    invitee = userCacheService.findByUserRoleUuid(signinDTO.getUuid());
+                    invitee = userService.getByUserRoleUuid(signinDTO.getUuid());
                 }
 
                 if (invitee == null || invitee.isRegistered()) {
-                    user = newUser;
+                    user = oauth;
                     user.setUuid(randomUUID().toString());
-                    user = userCacheService.saveUser(user);
+                    user = userService.saveUser(user);
                 } else {
                     user = invitee;
-                    user.setGivenName(newUser.getGivenName());
-                    user.setSurname(newUser.getSurname());
-                    user.setEmail(newUser.getEmail());
-                    user.setOauthProvider(newUser.getOauthProvider());
-                    user.setOauthAccountId(newUser.getOauthAccountId());
-                    user.setDocumentImageRequestState(newUser.getDocumentImageRequestState());
-                    user = userCacheService.updateUser(user);
+                    user.setGivenName(oauth.getGivenName());
+                    user.setSurname(oauth.getSurname());
+                    user.setEmail(oauth.getEmail());
+                    user.setOauthProvider(oauth.getOauthProvider());
+                    user.setOauthAccountId(oauth.getOauthAccountId());
+                    user.setDocumentImageRequestState(oauth.getDocumentImageRequestState());
+                    user = userService.indexAndUpdateUser(user);
                 }
             } else {
                 user.setOauthProvider(provider);
                 user.setOauthAccountId(accountId);
-                userCacheService.updateUser(user);
+                userService.updateUser(user);
             }
         }
 
@@ -176,28 +175,20 @@ public class AuthenticationService {
         String uuid = registerDTO.getUuid();
         String email = registerDTO.getEmail();
         if (uuid == null) {
-            verifyEmailUnique(email);
-            return userCacheService.saveUser(
-                new User()
-                    .setUuid(randomUUID().toString())
-                    .setGivenName(registerDTO.getGivenName())
-                    .setSurname(registerDTO.getSurname())
-                    .setEmail(email)
-                    .setPassword(sha256Hex(registerDTO.getPassword()))
-                    .setPasswordHash(SHA256)
-                    .setDocumentImageRequestState(DISPLAY_FIRST));
+            checkUniqueEmail(email);
+            return userService.createUser(registerDTO);
         } else {
-            User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
+            User invitee = userService.getByUserRoleUuid(uuid);
             if (invitee.isRegistered()) {
                 throw new BoardForbiddenException(DUPLICATE_REGISTRATION,
                     "User: " + invitee.getEmail() + " is already registered");
             }
 
             if (!email.equals(invitee.getEmail())) {
-                verifyEmailUnique(email);
-                invitee.setEmail(registerDTO.getEmail());
+                checkUniqueEmail(email);
             }
 
+            invitee.setEmail(registerDTO.getEmail());
             invitee.setGivenName(registerDTO.getGivenName());
             invitee.setSurname(registerDTO.getSurname());
             invitee.setPassword(sha256Hex(registerDTO.getPassword()));
@@ -207,7 +198,7 @@ public class AuthenticationService {
     }
 
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
-        User user = userCacheService.findByEmail(resetPasswordDTO.getEmail());
+        User user = userService.getByEmail(resetPasswordDTO.getEmail());
         if (user == null) {
             throw new BoardForbiddenException(UNKNOWN_USER, "User cannot be found");
         }
@@ -215,7 +206,7 @@ public class AuthenticationService {
         String resetUuid = randomUUID().toString();
         user.setPasswordResetUuid(resetUuid);
         user.setPasswordResetTimestamp(LocalDateTime.now());
-        userCacheService.updateUser(user);
+        userService.updateUser(user);
 
         eventProducer.produce(
             new NotificationEvent(this,
@@ -225,8 +216,8 @@ public class AuthenticationService {
                         .setNotification(RESET_PASSWORD_NOTIFICATION))));
     }
 
-    public User getInvitee(String invitationUuid) {
-        return userCacheService.findByUserRoleUuidSecured(invitationUuid);
+    public User getInvitee(String uuid) {
+        return userService.getByUserRoleUuid(uuid);
     }
 
     public String makeAccessToken(Long userId, boolean specifyExpirationDate) {
@@ -245,27 +236,27 @@ public class AuthenticationService {
             .getBody();
     }
 
-    private void verifyEmailUnique(String email) {
-        User user = userCacheService.findByEmail(email);
+    private void checkUniqueEmail(String email) {
+        User user = userService.getByEmail(email);
         if (user != null) {
             throw new BoardForbiddenException(DUPLICATE_USER, "User: " + email + " exists already");
         }
     }
 
     private void processInvitation(User user, String uuid) {
-        User invitee = userCacheService.findByUserRoleUuidSecured(uuid);
+        User invitee = userService.getByUserRoleUuid(uuid);
         if (!user.equals(invitee)) {
-            UserRole userRole = userRoleCacheService.findByUuid(uuid);
+            UserRole userRole = userRoleService.getByUuid(uuid);
             Resource resource = userRole.getResource();
 
-            userRoleCacheService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
+            userRoleService.deleteUserRole(userRole.getResource(), user, userRole.getRole());
             entityManager.flush();
             userRole.setUser(user);
 
             if (!invitee.isRegistered()) {
-                userRoleCacheService.mergeUserRoles(user, invitee);
+                userRoleService.mergeUserRoles(user, invitee);
                 activityService.deleteActivityUsers(invitee);
-                userCacheService.deleteUser(invitee);
+                userService.deleteUser(invitee);
             }
 
             activityService.sendActivities(resource);

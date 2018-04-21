@@ -92,7 +92,7 @@ public abstract class AbstractIT {
     ResourceService resourceService;
 
     @Inject
-    UserCacheService userCacheService;
+    NewUserService userService;
 
     @Inject
     UserRoleService userRoleService;
