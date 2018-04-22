@@ -20,7 +20,7 @@ public class AuthorizedCategorizedRecipientList implements NotificationRecipient
     }
 
     public List<UserNotification> list(Resource resource, Notification notification) {
-        return userService.findByResourceAndEnclosingScopeAndRoleAndCategories(
+        return userService.getByResourceAndEnclosingRoleCategorized(
             resource, notification.getScope(), notification.getRole());
     }
 

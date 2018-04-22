@@ -5,9 +5,11 @@ import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.util.function.Function;
 
 @Component
-public class UserNotificationSuppressionMapper {
+public class UserNotificationSuppressionMapper
+    implements Function<Resource, UserNotificationSuppressionRepresentation> {
 
     private final ResourceMapperFactory resourceMapperFactory;
 
@@ -16,10 +18,15 @@ public class UserNotificationSuppressionMapper {
         this.resourceMapperFactory = resourceMapperFactory;
     }
 
-    public UserNotificationSuppressionRepresentation apply(Resource resource, boolean suppressed) {
+    @Override
+    public UserNotificationSuppressionRepresentation apply(Resource resource) {
+        if (resource == null) {
+            return null;
+        }
+
         return new UserNotificationSuppressionRepresentation()
             .setResource(resourceMapperFactory.applySmall(resource))
-            .setSuppressed(suppressed);
+            .setSuppressed(resource.isNotificationSuppressedForUser());
     }
 
 }

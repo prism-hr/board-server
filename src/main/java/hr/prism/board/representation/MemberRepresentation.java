@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 import static hr.prism.board.enums.RoleType.MEMBER;
 
-public class MemberRepresentation extends NewUserRoleRepresentation<MemberRepresentation> {
+public class MemberRepresentation extends UserRoleRepresentation<MemberRepresentation> {
 
     private String email;
 

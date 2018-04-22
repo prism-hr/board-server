@@ -85,6 +85,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "select userNotificationSuppression.user " +
             "from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.resource <> :resource)")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<UserNotification> findByResourceAndEnclosingScopeAndRole(@Param("resource") Resource resource,
                                                                   @Param("enclosingScope") Scope enclosingScope,
                                                                   @Param("role") Role role,
@@ -116,6 +117,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.user = userRole.user)")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<UserNotification> findByResourceAndEnclosingScopeAndRoleAndCategory(
         @Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
         @Param("userRoleStates") List<State> userRoleStates, @Param("categoryType") CategoryType categoryType,

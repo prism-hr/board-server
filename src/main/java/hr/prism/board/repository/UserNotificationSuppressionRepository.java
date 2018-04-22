@@ -15,7 +15,12 @@ import java.util.List;
 @Transactional
 public interface UserNotificationSuppressionRepository extends JpaRepository<UserNotificationSuppression, Long> {
 
-    List<UserNotificationSuppression> findByUser(User user);
+    @Query(value =
+        "select userNotificationSuppression.resource " +
+            "from UserNotificationSuppression userNotificationSuppression " +
+            "where userNotificationSuppression.user = :user")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
+    List<Resource> findByUser(User user);
 
     UserNotificationSuppression findByUserAndResource(User user, Resource resource);
 
@@ -51,6 +56,7 @@ public interface UserNotificationSuppressionRepository extends JpaRepository<Use
             "AND user_notification_suppression.id IS NULL " +
             "GROUP BY user_role.user_id, suppressed.id",
         nativeQuery = true)
+    @SuppressWarnings("SqlResolve")
     void insertByUserId(@Param("userId") Long userId, @Param("baseline") LocalDateTime baseline,
                         @Param("scope") String scope, @Param("userRoleStates") List<String> userRoleStates);
 

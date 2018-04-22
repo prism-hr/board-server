@@ -55,6 +55,8 @@ import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static hr.prism.board.utils.ResourceUtils.validateCategories;
 import static java.util.Collections.emptyList;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class PostService {
@@ -80,10 +82,10 @@ public class PostService {
     private PostPatchService postPatchService;
 
     @Inject
-    private NewUserRoleService userRoleService;
+    private UserRoleService userRoleService;
 
     @Inject
-    private NewUserService userService;
+    private UserService userService;
 
     @Inject
     private ActionService actionService;
@@ -114,7 +116,7 @@ public class PostService {
     }
 
     public Post getPost(Long id, String ipAddress, boolean recordView) {
-        User user = userService.getAuthenticatedUser();
+        User user = userService.getUser();
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
 
@@ -134,7 +136,7 @@ public class PostService {
     }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
-        User user = userService.getAuthenticatedUser();
+        User user = userService.getUser();
         List<Post> posts =
             resourceService.getResources(user,
                 makeResourceFilter(POST, boardId, includePublicPosts, state, quarter, searchTerm)
@@ -150,19 +152,19 @@ public class PostService {
     }
 
     public List<ResourceOperation> getPostOperations(Long id) {
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return resourceService.getResourceOperations(post);
     }
 
     public List<String> getPostArchiveQuarters(Long parentId) {
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         return resourceService.getResourceArchiveQuarters(user, POST, parentId);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         Board board = (Board) resourceService.getResource(user, BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(user, board, EXTEND, () -> {
             Post post = new Post();
@@ -224,7 +226,7 @@ public class PostService {
     }
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         Post post = (Post) resourceService.getResource(user, POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {
@@ -233,7 +235,7 @@ public class PostService {
             } else {
                 if (action == ACCEPT) {
                     Resource department = post.getParent().getParent();
-                    userService.getUsersWithRoleWithoutRole(post, ADMINISTRATOR, department, AUTHOR)
+                    userService.getByUserRoleWithoutUserRole(post, ADMINISTRATOR, department, AUTHOR)
                         .forEach(author -> userRoleService.createUserRole(department, author, AUTHOR));
                 }
 
@@ -268,7 +270,7 @@ public class PostService {
 
     public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         actionService.executeAction(user, post, Action.PURSUE, () -> {
             checkValidDemographicData(user, (Department) post.getParent().getParent());
             return post;
@@ -281,7 +283,7 @@ public class PostService {
     @SuppressWarnings("JpaQlInspection")
     public Collection<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         actionService.executeAction(user, post, EDIT, () -> post);
 
         List<Long> userIds = userService.getByResourceAndEvents(post, Arrays.asList(REFERRAL, RESPONSE));
@@ -377,11 +379,11 @@ public class PostService {
     }
 
     public ResourceEvent getPostResponse(Long postId, Long responseId) {
-        return getPostResponse(userService.requireAuthenticatedUser(), postId, responseId);
+        return getPostResponse(userService.getUserSecured(), postId, responseId);
     }
 
     public ResourceEvent putPostResponseView(Long postId, Long responseId) {
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
         return resourceEvent.setViewed(true);
@@ -473,7 +475,6 @@ public class PostService {
             deadTimestamp != null ? deadTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
 
         setIndexDataAndQuarter(post);
-        postRepository.update(post);
     }
 
     public void archivePosts() {

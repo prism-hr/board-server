@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class OrganizationProperty implements NotificationProperty {
 
     public String getValue(NotificationRequest notificationRequest) {
-        return ((Post) notificationRequest.getResource()).getOrganizationName();
+        return ((Post) notificationRequest.getResource()).getOrganization().getName();
     }
 
 }

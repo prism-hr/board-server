@@ -41,7 +41,7 @@ public abstract class AbstractIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIT.class);
 
-    TransactionTemplate transactionTemplate;
+    private TransactionTemplate transactionTemplate;
 
     @Value("${server.url}")
     String serverUrl;
@@ -92,10 +92,10 @@ public abstract class AbstractIT {
     ResourceService resourceService;
 
     @Inject
-    NewUserService userService;
+    UserService userService;
 
     @Inject
-    NewUserRoleService userRoleService;
+    UserRoleService userRoleService;
 
     @Inject
     PostService postService;
@@ -213,29 +213,29 @@ public abstract class AbstractIT {
     @SuppressWarnings("ConstantConditions")
     void verifyResourceActions(Scope scope, Long id, Map<Action, Runnable> operations, Collection<Action> expectedActions) {
         User user = null;
-        verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[expectedActions.size()]));
+        verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[0]));
     }
 
     void verifyResourceActions(User user, Scope scope, Long id, Map<Action, Runnable> operations, Collection<Action> expectedActions) {
-        verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[expectedActions.size()]));
+        verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[0]));
     }
 
     void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Collection<Action> expectedActions) {
-        users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[expectedActions.size()])));
+        users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions.toArray(new Action[0])));
     }
 
     void verifyResourceActions(Collection<User> users, Scope scope, Long id, Map<Action, Runnable> operations, Action... expectedActions) {
         users.forEach(user -> verifyResourceActions(user, scope, id, operations, expectedActions));
     }
 
-    void listenForActivities(Long userId) {
-        testUserService.setAuthentication(userId);
+    void listenForActivities(User user) {
+        testUserService.setAuthentication(user);
         Assert.assertTrue(userActivityApi.getActivities().isEmpty());
     }
 
-    void verifyActivitiesEmpty(Long userId) {
-        testUserService.setAuthentication(userId);
-        Assert.assertTrue(activityService.getActivities(userId).isEmpty());
+    void verifyActivitiesEmpty(User user) {
+        testUserService.setAuthentication(user);
+        Assert.assertTrue(activityService.getActivities(user.getId()).isEmpty());
     }
 
     @SafeVarargs
@@ -272,7 +272,7 @@ public abstract class AbstractIT {
                                 exceptionCode = ExceptionCode.UNAUTHENTICATED_USER;
                             }
                         } else {
-                            testUserService.setAuthentication(user.getId());
+                            testUserService.setAuthentication(user);
                             exceptionCode = ExceptionCode.FORBIDDEN_ACTION;
                         }
 

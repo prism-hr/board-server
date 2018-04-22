@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.inject.Inject;
 import javax.validation.Valid;
 
-import static org.springframework.web.bind.annotation.RequestMethod.*;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.PATCH;
 
 @RestController
 public class UserApi {
@@ -30,7 +31,7 @@ public class UserApi {
 
     @RequestMapping(value = "/api/user", method = GET)
     public UserRepresentation getUser() {
-        return userMapper.apply(userService.getUserForRepresentation());
+        return userMapper.apply(userService.getUserSecured());
     }
 
     @RequestMapping(value = "/api/user", method = PATCH)
@@ -42,11 +43,6 @@ public class UserApi {
     @RequestMapping(value = "/api/user/password", method = PATCH)
     public void resetPassword(@RequestBody @Valid UserPasswordDTO userPasswordDTO) {
         userService.resetPassword(userPasswordDTO);
-    }
-
-    @RequestMapping(value = "/api/user/test", method = DELETE)
-    public void deleteTestUsers() {
-        userService.deleteTestUsers();
     }
 
 }

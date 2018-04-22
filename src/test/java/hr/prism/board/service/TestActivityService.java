@@ -32,6 +32,7 @@ public class TestActivityService extends ActivityService {
 
     private ArrayListMultimap<Long, List<ActivityRepresentation>> sentActivities = ArrayListMultimap.create();
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     public TestActivityService(boolean pusherOn, ActivityRepository activityRepository, ActivityDAO activityDAO,
                                ActivityRoleRepository activityRoleRepository,
                                ActivityUserRepository activityUserRepository,

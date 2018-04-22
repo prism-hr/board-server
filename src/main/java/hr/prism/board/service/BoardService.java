@@ -37,13 +37,13 @@ public class BoardService {
 
     private final ResourceService resourceService;
 
-    private final ResourcePatchService resourcePatchService;
+    private final ResourcePatchService<Board> resourcePatchService;
 
     private final UserService userService;
 
     @Inject
     public BoardService(BoardRepository boardRepository, ActionService actionService, ResourceService resourceService,
-                        ResourcePatchService resourcePatchService, UserService userService) {
+                        ResourcePatchService<Board> resourcePatchService, UserService userService) {
         this.boardRepository = boardRepository;
         this.actionService = actionService;
         this.resourceService = resourceService;
@@ -52,20 +52,20 @@ public class BoardService {
     }
 
     public Board getBoard(Long id) {
-        User user = userService.getCurrentUser();
+        User user = userService.getUser();
         Board board = (Board) resourceService.getResource(user, BOARD, id);
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
     public Board getBoard(String handle) {
-        User user = userService.getCurrentUser();
+        User user = userService.getUser();
         Board board = (Board) resourceService.getResource(user, BOARD, handle);
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
     public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter,
                                  String searchTerm) {
-        User currentUser = userService.getCurrentUser();
+        User currentUser = userService.getUser();
         return resourceService.getResources(currentUser,
             makeResourceFilter(BOARD,
                 departmentId, includePublicBoards, state, quarter, searchTerm).setOrderStatement("resource.name"))
@@ -73,14 +73,14 @@ public class BoardService {
     }
 
     public List<ResourceOperation> getBoardOperations(Long id) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Board board = (Board) resourceService.getResource(user, BOARD, id);
         actionService.executeAction(user, board, EDIT, () -> board);
         return resourceService.getResourceOperations(board);
     }
 
     public Board createBoard(Long departmentId, BoardDTO boardDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
@@ -101,7 +101,7 @@ public class BoardService {
     }
 
     public Board executeAction(Long id, Action action, BoardPatchDTO boardDTO) {
-        User currentUser = userService.getCurrentUserSecured();
+        User currentUser = userService.getUserSecured();
         Board board = (Board) resourceService.getResource(currentUser, BOARD, id);
         board.setComment(boardDTO.getComment());
         return (Board) actionService.executeAction(currentUser, board, action, () -> {
@@ -124,7 +124,6 @@ public class BoardService {
         resourcePatchService.patchHandle(board, boardDTO.getHandle(), DUPLICATE_BOARD_HANDLE);
         resourcePatchService.patchCategories(board, POST, boardDTO.getPostCategories());
         resourceService.setIndexDataAndQuarter(board);
-        boardRepository.update(board);
     }
 
 }

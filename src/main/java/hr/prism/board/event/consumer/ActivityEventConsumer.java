@@ -21,16 +21,16 @@ public class ActivityEventConsumer {
 
     private final ResourceService resourceService;
 
-    private final NewUserRoleService userRoleService;
+    private final UserRoleService userRoleService;
 
     private final ResourceEventService resourceEventService;
 
-    private final NewUserService userService;
+    private final UserService userService;
 
     @Inject
     public ActivityEventConsumer(ActivityService activityService, ResourceService resourceService,
-                                 NewUserRoleService userRoleService, ResourceEventService resourceEventService,
-                                 NewUserService userService) {
+                                 UserRoleService userRoleService, ResourceEventService resourceEventService,
+                                 UserService userService) {
         this.activityService = activityService;
         this.resourceService = resourceService;
         this.userRoleService = userRoleService;
@@ -106,7 +106,7 @@ public class ActivityEventConsumer {
     private Resource processResource(
         ActivityEvent activityEvent,
         Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
-        Resource resource = resourceService.findOne(activityEvent.getResourceId());
+        Resource resource = resourceService.getById(activityEvent.getResourceId());
         if (activityEvent.isStateChange()) {
             activityService.deleteActivities(resource);
         }

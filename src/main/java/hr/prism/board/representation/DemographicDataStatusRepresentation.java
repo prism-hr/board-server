@@ -1,47 +1,62 @@
 package hr.prism.board.representation;
 
+import hr.prism.board.enums.MemberCategory;
+
 public class DemographicDataStatusRepresentation {
 
-    // true: post / put with user demographic data (gender, age range, home country)
-    // false: user demographic data already complete, skip this step
-    private boolean requireUserDemographicData;
+    private boolean requireUserData;
 
-    // true: post / put with user role demographic data (member category, member program, member year)
-    // false: user role demographic data not required or already provided, skip this step
-    private boolean requireUserRoleDemographicData;
+    private boolean requireMemberData;
 
-    private UserRoleRepresentation userRole;
+    private MemberCategory memberCategory;
 
-    public boolean isRequireUserDemographicData() {
-        return requireUserDemographicData;
+    private String memberProgram;
+
+    private Integer memberYear;
+
+    public boolean isRequireUserData() {
+        return requireUserData;
     }
 
-    public DemographicDataStatusRepresentation setRequireUserDemographicData(boolean requireUserDemographicData) {
-        this.requireUserDemographicData = requireUserDemographicData;
+    public DemographicDataStatusRepresentation setRequireUserData(boolean requireUserData) {
+        this.requireUserData = requireUserData;
         return this;
     }
 
-    public boolean isRequireUserRoleDemographicData() {
-        return requireUserRoleDemographicData;
+    public boolean isRequireMemberData() {
+        return requireMemberData;
     }
 
-    public DemographicDataStatusRepresentation setRequireUserRoleDemographicData(
-        boolean requireUserRoleDemographicData) {
-        this.requireUserRoleDemographicData = requireUserRoleDemographicData;
+    public DemographicDataStatusRepresentation setRequireMemberData(boolean requireMemberData) {
+        this.requireMemberData = requireMemberData;
         return this;
     }
 
-    public UserRoleRepresentation getUserRole() {
-        return userRole;
+    public MemberCategory getMemberCategory() {
+        return memberCategory;
     }
 
-    public DemographicDataStatusRepresentation setUserRole(UserRoleRepresentation userRole) {
-        this.userRole = userRole;
+    public DemographicDataStatusRepresentation setMemberCategory(MemberCategory memberCategory) {
+        this.memberCategory = memberCategory;
         return this;
     }
 
-    public boolean isReady() {
-        return !requireUserDemographicData && !requireUserRoleDemographicData;
+    public String getMemberProgram() {
+        return memberProgram;
+    }
+
+    public DemographicDataStatusRepresentation setMemberProgram(String memberProgram) {
+        this.memberProgram = memberProgram;
+        return this;
+    }
+
+    public Integer getMemberYear() {
+        return memberYear;
+    }
+
+    public DemographicDataStatusRepresentation setMemberYear(Integer memberYear) {
+        this.memberYear = memberYear;
+        return this;
     }
 
 }

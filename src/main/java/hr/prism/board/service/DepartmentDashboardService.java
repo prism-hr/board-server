@@ -28,7 +28,7 @@ public class DepartmentDashboardService {
 
     private static final Logger LOGGER = getLogger(DepartmentDashboardService.class);
 
-    private final NewUserService userService;
+    private final UserService userService;
 
     private final ResourceService resourceService;
 
@@ -38,7 +38,7 @@ public class DepartmentDashboardService {
 
     private final BoardService boardService;
 
-    private final NewUserRoleService userRoleService;
+    private final UserRoleService userRoleService;
 
     private final PostService postService;
 
@@ -47,9 +47,9 @@ public class DepartmentDashboardService {
     private final OrganizationService organizationService;
 
     @Inject
-    public DepartmentDashboardService(NewUserService userService, ResourceService resourceService,
+    public DepartmentDashboardService(UserService userService, ResourceService resourceService,
                                       ActionService actionService, ResourceTaskService resourceTaskService,
-                                      BoardService boardService, NewUserRoleService userRoleService,
+                                      BoardService boardService, UserRoleService userRoleService,
                                       PostService postService, PaymentService paymentService,
                                       OrganizationService organizationService) {
         this.userService = userService;
@@ -64,7 +64,7 @@ public class DepartmentDashboardService {
     }
 
     public DepartmentDashboard getDepartmentDashboard(Long id) {
-        User user = userService.requireAuthenticatedUser();
+        User user = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 

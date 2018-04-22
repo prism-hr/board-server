@@ -3,7 +3,7 @@ package hr.prism.board.authentication;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.service.AuthenticationService;
-import hr.prism.board.service.NewUserService;
+import hr.prism.board.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -31,10 +31,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
     private final AuthenticationService authenticationService;
 
-    private final NewUserService userService;
+    private final UserService userService;
 
     public AuthenticationFilter(Long sessionRefreshBeforeExpirationSeconds, AuthenticationService authenticationService,
-                                NewUserService userService) {
+                                UserService userService) {
         this.sessionRefreshBeforeExpirationSeconds = sessionRefreshBeforeExpirationSeconds;
         this.authenticationService = authenticationService;
         this.userService = userService;

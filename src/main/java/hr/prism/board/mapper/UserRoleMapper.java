@@ -4,7 +4,10 @@ import hr.prism.board.domain.User;
 import hr.prism.board.domain.UserRole;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.RoleType;
-import hr.prism.board.representation.*;
+import hr.prism.board.representation.MemberRepresentation;
+import hr.prism.board.representation.StaffRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.value.UserRoles;
 import org.springframework.stereotype.Component;
 
@@ -33,21 +36,16 @@ public class UserRoleMapper implements Function<UserRole, UserRoleRepresentation
             return null;
         }
 
-        return new UserRoleRepresentation()
-            .setUser(userMapper.apply(userRole.getUser()))
-            .setEmail(userRole.getEmail())
-            .setRole(userRole.getRole())
-            .setState(userRole.getState())
-            .setMemberCategory(userRole.getMemberCategory())
-            .setMemberProgram(userRole.getMemberProgram())
-            .setMemberYear(userRole.getMemberYear())
-            .setExpiryDate(userRole.getExpiryDate())
-            .setViewed(userRole.isViewed())
-            .setCreatedTimestamp(userRole.getCreatedTimestamp())
-            .setUpdatedTimestamp(userRole.getUpdatedTimestamp());
+        RoleType roleType = userRole.getRole().getType();
+        switch (roleType) {
+            case MEMBER:
+                return applyMember(userRole);
+            default:
+                throw new IllegalStateException("Unexpected role type: " + roleType);
+        }
     }
 
-    public NewUserRoleRepresentation<?> apply(List<UserRole> userRoles) {
+    public UserRoleRepresentation<?> apply(List<UserRole> userRoles) {
         if (isEmpty(userRoles)) {
             return null;
         }

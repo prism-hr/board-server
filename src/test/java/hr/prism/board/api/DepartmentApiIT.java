@@ -104,7 +104,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         documentRepository.save(documentLogo);
         university.setDocumentLogo(documentLogo);
-        universityRepository.update(university);
+        universityRepository.save(university);
 
         DepartmentDTO department =
             new DepartmentDTO()
@@ -179,7 +179,7 @@ public class DepartmentApiIT extends AbstractIT {
         unprivilegedUsers.put("department1", makeUnprivilegedUsers(boardId1, 10,
             TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
-        testUserService.setAuthentication(user1.getId());
+        testUserService.setAuthentication(user1);
         DepartmentDTO departmentDTO2 = new DepartmentDTO().setName("department2").setSummary("department summary");
         DepartmentRepresentation departmentR2 = verifyPostDepartment(universityId, departmentDTO2, "department2");
 
@@ -199,7 +199,7 @@ public class DepartmentApiIT extends AbstractIT {
         unprivilegedUsers.put("department3", makeUnprivilegedUsers(boardId3, 30,
             TestHelper.samplePost().setPostCategories(Collections.singletonList("Employment"))));
 
-        testUserService.setAuthentication(user2.getId());
+        testUserService.setAuthentication(user2);
         DepartmentDTO departmentDTO4 = new DepartmentDTO().setName("department4").setSummary("department summary");
         DepartmentRepresentation departmentR4 = verifyPostDepartment(universityId, departmentDTO4, "department4");
 
@@ -219,7 +219,7 @@ public class DepartmentApiIT extends AbstractIT {
         for (String departmentName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(departmentName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
-                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getId());
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope));
                 if (scope == Scope.DEPARTMENT) {
                     verifyPrivilegedDepartmentUser(departmentNames, Collections.singletonList(departmentName + "0"));
                 } else {
@@ -228,10 +228,10 @@ public class DepartmentApiIT extends AbstractIT {
             }
         }
 
-        testUserService.setAuthentication(user1.getId());
+        testUserService.setAuthentication(user1);
         verifyPrivilegedDepartmentUser(departmentNames, Arrays.asList("department1", "department2"));
 
-        testUserService.setAuthentication(user2.getId());
+        testUserService.setAuthentication(user2);
         verifyPrivilegedDepartmentUser(departmentNames, Arrays.asList("department3", "department4"));
     }
 
@@ -365,10 +365,10 @@ public class DepartmentApiIT extends AbstractIT {
                         .setEmail("admin1@admin1.com"))
                     .setRole(Role.ADMINISTRATOR)).getUser().getId();
 
-        User departmentUser2 = userService.getAuthenticatedUser(departmentUser2Id);
-        UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
+        User departmentUser2 = userService.getUser(departmentUser2Id);
+        UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.getById(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userService.getAuthenticatedUser(departmentUser2Id),
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userService.getUser(departmentUser2Id),
             ImmutableMap.<String, String>builder()
                 .put("recipient", "admin1")
                 .put("department", "department 4")
@@ -451,7 +451,7 @@ public class DepartmentApiIT extends AbstractIT {
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
 
-        Department department0 = (Department) resourceService.findOne(departmentId);
+        Department department0 = (Department) resourceService.getById(departmentId);
         String departmentAdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(department0, departmentUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(
@@ -619,7 +619,7 @@ public class DepartmentApiIT extends AbstractIT {
         listenForActivities(departmentUserId);
 
         String recipient = departmentUser.getGivenName();
-        department = (Department) resourceService.findOne(departmentId);
+        department = (Department) resourceService.getById(departmentId);
         Assert.assertNull(department.getNotifiedCount());
 
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
@@ -642,14 +642,14 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        department = (Department) resourceService.findOne(departmentId);
+        department = (Department) resourceService.getById(departmentId);
         Assert.assertEquals(new Integer(1), department.getNotifiedCount());
         LocalDateTime pendingCommencedTimestamp = department.getStateChangeTimestamp();
 
         // Simulate end of first notification period
         resourceRepository.updateStateChangeTimestampById(departmentId, pendingCommencedTimestamp.minusSeconds(departmentPendingNotificationInterval1Seconds + 1));
         departmentService.updateSubscriptions(LocalDateTime.now());
-        department = (Department) resourceService.findOne(departmentId);
+        department = (Department) resourceService.getById(departmentId);
 
         pendingExpiryDeadline = department.getStateChangeTimestamp()
             .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
@@ -671,7 +671,7 @@ public class DepartmentApiIT extends AbstractIT {
         // Simulate end of second notification period
         resourceRepository.updateStateChangeTimestampById(departmentId, pendingCommencedTimestamp.minusSeconds(departmentPendingNotificationInterval2Seconds + 1));
         departmentService.updateSubscriptions(LocalDateTime.now());
-        department = (Department) resourceService.findOne(departmentId);
+        department = (Department) resourceService.getById(departmentId);
 
         pendingExpiryDeadline = department.getStateChangeTimestamp()
             .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(BoardUtils.DATETIME_FORMATTER);
@@ -829,7 +829,7 @@ public class DepartmentApiIT extends AbstractIT {
         listenForActivities(departmentUserId);
 
         String recipient = departmentUser.getGivenName();
-        Department department = (Department) resourceService.findOne(departmentId);
+        Department department = (Department) resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
         String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 
@@ -1046,7 +1046,7 @@ public class DepartmentApiIT extends AbstractIT {
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
-        Resource department = resourceService.findOne(departmentId);
+        Resource department = resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
@@ -1114,7 +1114,7 @@ public class DepartmentApiIT extends AbstractIT {
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
-        Resource department = resourceService.findOne(departmentId);
+        Resource department = resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
@@ -1175,7 +1175,7 @@ public class DepartmentApiIT extends AbstractIT {
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
-        Resource department = resourceService.findOne(departmentId);
+        Resource department = resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,

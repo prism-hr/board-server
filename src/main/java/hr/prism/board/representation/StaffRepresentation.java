@@ -7,7 +7,7 @@ import java.util.List;
 
 import static hr.prism.board.enums.RoleType.STAFF;
 
-public class StaffRepresentation extends NewUserRoleRepresentation<StaffRepresentation> {
+public class StaffRepresentation extends UserRoleRepresentation<StaffRepresentation> {
 
     private List<Role> roles = new ArrayList<>();
 

@@ -1,9 +1,11 @@
 package hr.prism.board;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.OrganizationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 
 public class TestHelper {
 
+    public static final ImmutableList<String> FRAMEWORK_TABLES = ImmutableList.of("flyway_schema_history", "workflow");
+
     public static BoardDTO smallSampleBoard() {
         return new BoardDTO().setName("board");
     }
@@ -42,7 +46,9 @@ public class TestHelper {
             .setName("post")
             .setSummary("summary")
             .setDescription("description")
-            .setOrganizationName("organization name")
+            .setOrganization(
+                new OrganizationDTO()
+                    .setName("organization name"))
             .setLocation(new LocationDTO()
                 .setName("krakow")
                 .setDomicile("PL")
@@ -60,7 +66,9 @@ public class TestHelper {
         return new PostDTO()
             .setName("post")
             .setSummary("summary")
-            .setOrganizationName("organization name")
+            .setOrganization(
+                new OrganizationDTO()
+                    .setName("organization name"))
             .setLocation(new LocationDTO()
                 .setName("krakow")
                 .setDomicile("PL")
@@ -242,7 +250,7 @@ public class TestHelper {
         }
 
         @Override
-        public void sendRedirect(String location) throws IOException {
+        public void sendRedirect(String location) {
             this.location = location;
         }
 

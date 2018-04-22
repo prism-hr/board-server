@@ -100,7 +100,7 @@ public class ActivityService {
     }
 
     public List<ActivityRepresentation> getActivities() {
-        Long userId = userService.getCurrentUserSecured().getId();
+        Long userId = userService.getUserSecured().getId();
         return getActivities(userId);
     }
 
@@ -126,21 +126,21 @@ public class ActivityService {
         Activity entity = activityRepository.findByResourceAndActivity(resource, activity);
         return entity == null ?
             createActivity(resource, null, null, activity) :
-            activityRepository.update(entity);
+            activityRepository.save(entity);
     }
 
     public Activity createOrUpdateActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByUserRoleAndActivity(userRole, activity);
         return entity == null ?
             createActivity(userRole.getResource(), userRole, null, activity) :
-            activityRepository.update(entity);
+            activityRepository.save(entity);
     }
 
     public Activity createOrUpdateActivity(ResourceEvent resourceEvent, hr.prism.board.enums.Activity activity) {
         Activity entity = activityRepository.findByResourceEventAndActivity(resourceEvent, activity);
         return entity == null ?
             createActivity(resourceEvent.getResource(), null, resourceEvent, activity) :
-            activityRepository.update(entity);
+            activityRepository.save(entity);
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -171,13 +171,13 @@ public class ActivityService {
     }
 
     public void viewActivity(Long activityId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Activity activity = activityRepository.findOne(activityId);
         viewActivity(activity, user);
     }
 
     public void dismissActivity(Long activityId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
         if (activity != null) {
             ActivityEvent activityEvent =
@@ -209,7 +209,7 @@ public class ActivityService {
         entityManager.flush();
         List<Long> userIds = getUserIds();
         if (!userIds.isEmpty()) {
-            for (Long userId : userService.findByResourceAndUserIds(resource, userIds)) {
+            for (Long userId : userService.getByResourceAndUserIds(resource, userIds)) {
                 sendActivities(userId);
             }
         }
@@ -242,7 +242,7 @@ public class ActivityService {
         String channel = pusherAuthentication.getChannelName();
         String channelUserId = channel.split("-")[2];
 
-        User user = userService.getCurrentUserSecured();
+        User user = userService.getUserSecured();
         Long userId = user.getId();
 
         if (channelUserId.equals(userId.toString())) {

@@ -42,7 +42,7 @@ public class UniversityService {
     private EntityManager entityManager;
 
     public University getUniversity(Long id) {
-        return (University) resourceService.findOne(id);
+        return (University) resourceService.getById(id);
     }
 
     @SuppressWarnings("SameParameterValue")

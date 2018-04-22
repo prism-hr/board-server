@@ -2,11 +2,15 @@ package hr.prism.board.api;
 
 import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.UserRoleDTO;
+import hr.prism.board.enums.RoleType;
 import hr.prism.board.enums.State;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.mapper.UserRoleMapper;
-import hr.prism.board.representation.*;
+import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.representation.UserRepresentation;
+import hr.prism.board.representation.UserRoleRepresentation;
+import hr.prism.board.representation.UserRolesRepresentation;
 import hr.prism.board.service.DepartmentUserService;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,20 +83,21 @@ public class DepartmentUserApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users", method = POST)
-    public NewUserRoleRepresentation<?> createUserRoles(@PathVariable Long departmentId,
-                                                        @RequestBody @Valid UserRoleDTO user) {
+    public UserRoleRepresentation<?> createUserRoles(@PathVariable Long departmentId,
+                                                     @RequestBody @Valid UserRoleDTO user) {
         return userRoleMapper.apply(departmentUserService.createUserRoles(departmentId, user));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}", method = PUT)
-    public NewUserRoleRepresentation<?> updateUserRoles(@PathVariable Long departmentId, @PathVariable Long userId,
-                                                        @RequestBody @Valid UserRoleDTO user) {
+    public UserRoleRepresentation<?> updateUserRoles(@PathVariable Long departmentId, @PathVariable Long userId,
+                                                     @RequestBody @Valid UserRoleDTO user) {
         return userRoleMapper.apply(departmentUserService.updateUserRoles(departmentId, userId, user));
     }
 
-    @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}", method = DELETE)
-    public void deleteUserRoles(@PathVariable Long departmentId, @PathVariable Long userId) {
-        departmentUserService.deleteUserRoles(departmentId, userId);
+    @RequestMapping(value = "/api/departments/{departmentId}/users/{userId}/{roleType}", method = DELETE)
+    public void deleteUserRoles(@PathVariable Long departmentId, @PathVariable Long userId,
+                                @PathVariable RoleType roleType) {
+        departmentUserService.deleteUserRoles(departmentId, userId, roleType);
     }
 
 }

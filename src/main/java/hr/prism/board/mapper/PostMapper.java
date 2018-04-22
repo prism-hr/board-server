@@ -2,9 +2,11 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
+import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.service.ResourceService;
+import hr.prism.board.value.DemographicDataStatus;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -16,6 +18,10 @@ import static hr.prism.board.enums.MemberCategory.fromStrings;
 
 @Component
 public class PostMapper implements Function<Post, PostRepresentation> {
+
+    private final ResourceService resourceService;
+
+    private final PostService postService;
 
     private final LocationMapper locationMapper;
 
@@ -29,23 +35,18 @@ public class PostMapper implements Function<Post, PostRepresentation> {
 
     private final ResourceEventMapper resourceEventMapper;
 
-    private final ResourceService resourceService;
-
-    private final PostService postService;
-
     @Inject
-    public PostMapper(LocationMapper locationMapper, OrganizationMapper organizationMapper,
-                      DocumentMapper documentMapper, BoardMapper boardMapper, ResourceMapper resourceMapper,
-                      ResourceEventMapper resourceEventMapper, ResourceService resourceService,
-                      PostService postService) {
+    public PostMapper(ResourceService resourceService, PostService postService, LocationMapper locationMapper,
+                      OrganizationMapper organizationMapper, DocumentMapper documentMapper, BoardMapper boardMapper,
+                      ResourceMapper resourceMapper, ResourceEventMapper resourceEventMapper) {
+        this.resourceService = resourceService;
+        this.postService = postService;
         this.locationMapper = locationMapper;
         this.organizationMapper = organizationMapper;
         this.documentMapper = documentMapper;
         this.boardMapper = boardMapper;
         this.resourceMapper = resourceMapper;
         this.resourceEventMapper = resourceEventMapper;
-        this.resourceService = resourceService;
-        this.postService = postService;
     }
 
     @Override
@@ -84,7 +85,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setLastViewTimestamp(post.getLastViewTimestamp())
             .setLastReferralTimestamp(post.getLastReferralTimestamp())
             .setLastResponseTimestamp(post.getLastResponseTimestamp())
-            .setResponseReadiness(post.getDemographicDataStatus())
+            .setResponseReadiness(applyDemographicDataStatus(post.getDemographicDataStatus()))
             .setReferral(resourceEventMapper.apply(post.getReferral()))
             .setResponse(resourceEventMapper.apply(post.getResponse()));
     }
@@ -98,6 +99,20 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setOrganization(organizationMapper.apply(post.getOrganization()))
             .setLocation(locationMapper.apply(post.getLocation()))
             .setBoard(boardMapper.applySmall((Board) post.getParent()));
+    }
+
+    private DemographicDataStatusRepresentation applyDemographicDataStatus(
+        DemographicDataStatus demographicDataStatus) {
+        if (demographicDataStatus == null) {
+            return null;
+        }
+
+        return new DemographicDataStatusRepresentation()
+            .setRequireUserData(demographicDataStatus.isRequireUserData())
+            .setRequireMemberData(demographicDataStatus.isRequireMemberData())
+            .setMemberCategory(demographicDataStatus.getMemberCategory())
+            .setMemberProgram(demographicDataStatus.getMemberProgram())
+            .setMemberYear(demographicDataStatus.getMemberYear());
     }
 
 }

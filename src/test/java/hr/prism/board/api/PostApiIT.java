@@ -404,9 +404,9 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
         testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
 
-        Resource departmentResource = resourceService.findOne(departmentId);
-        Resource boardResource = resourceService.findOne(boardId);
-        Resource postResource = resourceService.findOne(postId);
+        Resource departmentResource = resourceService.getById(departmentId);
+        Resource boardResource = resourceService.getById(boardId);
+        Resource postResource = resourceService.getById(postId);
         String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentUser, Role.ADMINISTRATOR).getUuid();
         String boardAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(boardResource, boardUser, Role.ADMINISTRATOR).getUuid();
         String postAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(postResource, postUser, Role.ADMINISTRATOR).getUuid();
@@ -742,8 +742,8 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        User departmentMember1 = userService.getAuthenticatedUser(departmentMember1Id);
-        User departmentMember2 = userService.getAuthenticatedUser(departmentMember2Id);
+        User departmentMember1 = userService.getUser(departmentMember1Id);
+        User departmentMember2 = userService.getUser(departmentMember2Id);
 
         String departmentMember1Uuid = departmentMember1.getUuid();
         String departmentMember2Uuid = departmentMember2.getUuid();

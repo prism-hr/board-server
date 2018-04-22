@@ -98,6 +98,9 @@ public class Resource extends BoardEntity {
 
     @Transient
     private String comment;
+    
+    @Transient
+    private boolean notificationSuppressedForUser;
 
     public Scope getScope() {
         return scope;
@@ -253,6 +256,14 @@ public class Resource extends BoardEntity {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isNotificationSuppressedForUser() {
+        return notificationSuppressedForUser;
+    }
+
+    public void setNotificationSuppressedForUser(boolean notificationSuppressedForUser) {
+        this.notificationSuppressedForUser = notificationSuppressedForUser;
     }
 
     public List<ResourceCategory> getCategories(CategoryType type) {

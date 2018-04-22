@@ -2,7 +2,7 @@ package hr.prism.board.configuration;
 
 import hr.prism.board.authentication.AuthenticationFilter;
 import hr.prism.board.service.AuthenticationService;
-import hr.prism.board.service.NewUserService;
+import hr.prism.board.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,12 +21,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationService authenticationService;
 
-    private final NewUserService userService;
+    private final UserService userService;
 
     @Inject
     public SecurityConfiguration(
         @Value("${session.refreshBeforeExpiration.seconds}") Long sessionRefreshBeforeExpirationSeconds,
-        AuthenticationService authenticationService, NewUserService userService) {
+        AuthenticationService authenticationService, UserService userService) {
         this.sessionRefreshBeforeExpirationSeconds = sessionRefreshBeforeExpirationSeconds;
         this.authenticationService = authenticationService;
         this.userService = userService;

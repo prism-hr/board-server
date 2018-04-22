@@ -54,9 +54,9 @@ public class AuthenticationService {
 
     private final Long sessionDurationSeconds;
 
-    private final NewUserService userService;
+    private final UserService userService;
 
-    private final NewUserRoleService userRoleService;
+    private final UserRoleService userRoleService;
 
     private final ActivityService activityService;
 
@@ -68,7 +68,7 @@ public class AuthenticationService {
 
     @Inject
     public AuthenticationService(@Value("${session.duration.seconds}") Long sessionDurationSeconds,
-                                 NewUserService userService, NewUserRoleService userRoleService,
+                                 UserService userService, UserRoleService userRoleService,
                                  ActivityService activityService, EventProducer eventProducer,
                                  EntityManager entityManager, ApplicationContext applicationContext) {
         this.sessionDurationSeconds = sessionDurationSeconds;
@@ -154,7 +154,7 @@ public class AuthenticationService {
                     user.setOauthProvider(oauth.getOauthProvider());
                     user.setOauthAccountId(oauth.getOauthAccountId());
                     user.setDocumentImageRequestState(oauth.getDocumentImageRequestState());
-                    user = userService.indexAndUpdateUser(user);
+                    user = userService.updateUserIndex(user);
                 }
             } else {
                 user.setOauthProvider(provider);

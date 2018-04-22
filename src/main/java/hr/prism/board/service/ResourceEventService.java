@@ -53,9 +53,9 @@ public class ResourceEventService {
 
     private final DocumentService documentService;
 
-    private final NewUserService userService;
+    private final UserService userService;
 
-    private final NewUserRoleService userRoleService;
+    private final UserRoleService userRoleService;
 
     private final EntityManager entityManager;
 
@@ -64,8 +64,8 @@ public class ResourceEventService {
     @Inject
     public ResourceEventService(ResourceEventRepository resourceEventRepository,
                                 ResourceEventSearchRepository resourceEventSearchRepository,
-                                DocumentService documentService, NewUserService userService,
-                                NewUserRoleService userRoleService, EntityManager entityManager,
+                                DocumentService documentService, UserService userService,
+                                UserRoleService userRoleService, EntityManager entityManager,
                                 EventProducer eventProducer) {
         this.resourceEventRepository = resourceEventRepository;
         this.resourceEventSearchRepository = resourceEventSearchRepository;
@@ -208,7 +208,6 @@ public class ResourceEventService {
         setIndexData(resourceEvent);
         resourceEvent.setReferral(null);
 
-        resourceEvent = resourceEventRepository.update(resourceEvent);
         updateResourceEventSummary((Post) resourceEvent.getResource());
         return resourceEvent;
     }

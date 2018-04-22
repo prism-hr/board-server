@@ -98,7 +98,7 @@ public class NotificationEventConsumer {
             return null;
         }
 
-        Resource resource = resourceService.findOne(resourceId);
+        Resource resource = resourceService.getById(resourceId);
         if (resource == null) {
             return null;
         }

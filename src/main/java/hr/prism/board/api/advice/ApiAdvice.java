@@ -32,7 +32,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.*;
 
 @RestControllerAdvice
-@SuppressWarnings("unused")
 public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     private static final Logger LOGGER = getLogger(ApiAdvice.class);
@@ -48,62 +47,36 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleBoardForbiddenException(BoardForbiddenException exception, WebRequest request) {
         ExceptionCode exceptionCode = exception.getExceptionCode();
         HttpStatus responseStatus = exceptionCode == UNAUTHENTICATED_USER ? UNAUTHORIZED : FORBIDDEN;
-
-        logInfo(responseStatus, exception);
-        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
-        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+        return handleExceptionLoggingInfo(exception, request, responseStatus);
     }
 
     @ExceptionHandler(BoardDuplicateException.class)
     public ResponseEntity<Object> handleBoardDuplicateException(BoardDuplicateException exception, WebRequest request) {
         Long id = exception.getId();
-        ExceptionCode exceptionCode = exception.getExceptionCode();
-        HttpStatus responseStatus = CONFLICT;
-
-        logInfo(responseStatus, exception);
-        Map<String, Object> response = makeResponse(id, exceptionCode, responseStatus, (ServletWebRequest) request);
-        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+        return handleExceptionLoggingInfo(exception, request, CONFLICT, id);
     }
 
     @ExceptionHandler(BoardNotModifiedException.class)
     public ResponseEntity<Object> handleBoardNotModifiedException(BoardNotModifiedException exception,
                                                                   WebRequest request) {
-        ExceptionCode exceptionCode = exception.getExceptionCode();
-        HttpStatus responseStatus = NOT_MODIFIED;
-
-        logInfo(responseStatus, exception);
-        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
-        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+        return handleExceptionLoggingInfo(exception, request, NOT_MODIFIED);
     }
 
     @ExceptionHandler(BoardNotFoundException.class)
     public ResponseEntity<Object> handleBoardNotFoundException(BoardNotFoundException exception,
                                                                WebRequest request) {
-        ExceptionCode exceptionCode = exception.getExceptionCode();
-        HttpStatus responseStatus = NOT_FOUND;
-
-        logInfo(responseStatus, exception);
-        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
-        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+        return handleExceptionLoggingInfo(exception, request, NOT_FOUND);
     }
 
     @ExceptionHandler(BoardException.class)
     public ResponseEntity<Object> handleBoardException(BoardException exception, WebRequest request) {
         ExceptionCode exceptionCode = exception.getExceptionCode();
-        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
-
-        logError(responseStatus, exception);
-        Map<String, Object> response = makeResponse(exceptionCode, responseStatus, (ServletWebRequest) request);
-        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+        return handleExceptionLoggingError(exception, exceptionCode, request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleBaseException(Exception exception, WebRequest request) {
-        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
-
-        logError(responseStatus, exception);
-        Map<String, Object> response = makeResponse(PROBLEM, responseStatus, (ServletWebRequest) request);
-        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
+        return handleExceptionLoggingError(exception, PROBLEM, request);
     }
 
     @Override
@@ -142,24 +115,35 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(exception, exception.getMessage(), headers, status, request);
     }
 
-    private String getCurrentUsername() {
-        User user = userService.getCurrentUser();
-        return user == null ? "Anonymous" : user.toString();
+    private ResponseEntity<Object> handleExceptionLoggingInfo(BoardException exception, WebRequest request,
+                                                              HttpStatus responseStatus) {
+        return handleExceptionLoggingInfo(exception, request, responseStatus, null);
     }
 
-    private void logInfo(HttpStatus responseStatus, Exception exception) {
+    private ResponseEntity<Object> handleExceptionLoggingInfo(BoardException exception, WebRequest request,
+                                                              HttpStatus responseStatus, Long id) {
+        ExceptionCode exceptionCode = exception.getExceptionCode();
         String userName = getCurrentUsername();
         LOGGER.info(userName + ": " + responseStatus + " - " + exception.getMessage());
+
+        Map<String, Object> response = makeResponse(id, exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
-    private void logError(HttpStatus responseStatus, Exception exception) {
+    private ResponseEntity<Object> handleExceptionLoggingError(Exception exception, ExceptionCode exceptionCode,
+                                                               WebRequest request) {
+        HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
         String userName = getCurrentUsername();
         LOGGER.error(userName + ": " + responseStatus + " - " + exception.getMessage(), exception);
+
+        Map<String, Object> response =
+            makeResponse(null, exceptionCode, responseStatus, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
-    private Map<String, Object> makeResponse(ExceptionCode exceptionCode, HttpStatus responseStatus,
-                                             ServletWebRequest request) {
-        return makeResponse(null, exceptionCode, responseStatus, request);
+    private String getCurrentUsername() {
+        User user = userService.getUser();
+        return user == null ? "Anonymous" : user.toString();
     }
 
     private Map<String, Object> makeResponse(Long id, ExceptionCode exceptionCode, HttpStatus responseStatus,

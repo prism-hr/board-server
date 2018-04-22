@@ -45,7 +45,7 @@ public class DepartmentBadgeService {
 
     // TODO test coverage
     public String getBadge(Long id, WidgetOptionsDTO options) {
-        Resource resource = resourceService.findOne(id);
+        Resource resource = resourceService.getById(id);
         Map<String, Object> model = makeBadgeModel(resource, options);
 
         List<Post> posts = postService.getPosts(resource.getId());

@@ -1,7 +1,7 @@
 package hr.prism.board.notification.recipient;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.service.NewUserService;
+import hr.prism.board.service.UserService;
 import hr.prism.board.value.UserNotification;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Component;
@@ -14,10 +14,10 @@ import static java.util.Collections.singletonList;
 @Component
 public class DefinedRecipientList implements NotificationRecipientList {
 
-    private final NewUserService userService;
+    private final UserService userService;
 
     @Inject
-    public DefinedRecipientList(NewUserService userService) {
+    public DefinedRecipientList(UserService userService) {
         this.userService = userService;
     }
 

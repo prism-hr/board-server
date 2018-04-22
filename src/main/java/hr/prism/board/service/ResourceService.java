@@ -48,25 +48,18 @@ public class ResourceService {
 
     private final Long resourceArchiveDurationSeconds;
 
-    @Inject
     private final ResourceRepository resourceRepository;
 
-    @Inject
     private final ResourceDAO resourceDAO;
 
-    @Inject
     private final ResourceRelationRepository resourceRelationRepository;
 
-    @Inject
     private final ResourceCategoryRepository resourceCategoryRepository;
 
-    @Inject
     private final ResourceOperationRepository resourceOperationRepository;
 
-    @Inject
     private final EntityManager entityManager;
 
-    @Inject
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -86,7 +79,7 @@ public class ResourceService {
         this.objectMapper = objectMapper;
     }
 
-    public Resource findOne(Long id) {
+    public Resource getById(Long id) {
         return resourceRepository.findOne(id);
     }
 
@@ -265,7 +258,7 @@ public class ResourceService {
 
         resourceOperation = resourceOperationRepository.save(resourceOperation);
         resource.getOperations().add(resourceOperation);
-        resourceRepository.update(resource);
+        resourceRepository.save(resource);
     }
 
     public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
