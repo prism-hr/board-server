@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.enums.Action;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 
 @Transactional
-public interface ResourceOperationRepository extends BoardEntityRepository<ResourceOperation, Long> {
+public interface ResourceOperationRepository extends JpaRepository<ResourceOperation, Long> {
 
     ResourceOperation findFirstByResourceAndActionOrderByIdDesc(Resource resource, Action action);
 

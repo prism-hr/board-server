@@ -6,6 +6,7 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Transactional
-public interface ResourceRepository extends BoardEntityRepository<Resource, Long> {
+public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     Resource findByHandle(String handle);
 

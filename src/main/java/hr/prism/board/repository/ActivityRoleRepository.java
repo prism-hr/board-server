@@ -3,6 +3,7 @@ package hr.prism.board.repository;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Transactional
-public interface ActivityRoleRepository extends BoardEntityRepository<ActivityRole, Long> {
+public interface ActivityRoleRepository extends JpaRepository<ActivityRole, Long> {
 
     ActivityRole findByActivityAndScopeAndRole(Activity activity, Scope scope, Role role);
 

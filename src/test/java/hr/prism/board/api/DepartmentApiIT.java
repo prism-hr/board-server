@@ -365,10 +365,10 @@ public class DepartmentApiIT extends AbstractIT {
                         .setEmail("admin1@admin1.com"))
                     .setRole(Role.ADMINISTRATOR)).getUser().getId();
 
-        User departmentUser2 = userService.getUser(departmentUser2Id);
+        User departmentUser2 = userService.getAuthenticatedUser(departmentUser2Id);
         UserRole department2UserRole = userRoleService.findByResourceAndUserAndRole(resourceService.findOne(departmentId), departmentUser2, Role.ADMINISTRATOR);
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userService.getUser(departmentUser2Id),
+        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.JOIN_DEPARTMENT_NOTIFICATION, userService.getAuthenticatedUser(departmentUser2Id),
             ImmutableMap.<String, String>builder()
                 .put("recipient", "admin1")
                 .put("department", "department 4")

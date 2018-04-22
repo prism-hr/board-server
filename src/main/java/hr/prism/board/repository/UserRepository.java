@@ -5,6 +5,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.*;
 import hr.prism.board.value.UserNotification;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH;
 
 @Transactional
-public interface UserRepository extends BoardEntityRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value =
         "select distinct user " +

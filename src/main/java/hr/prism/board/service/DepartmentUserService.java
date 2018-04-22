@@ -82,14 +82,14 @@ public class DepartmentUserService {
     }
 
     public List<UserSearch> findUsers(Long id, String searchTerm) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return userService.findUsers(searchTerm);
     }
 
     public Department createMembers(Long id, List<MemberDTO> memberDTOs) {
-        User currentUser = userService.getUserSecured();
+        User currentUser = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, id);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) memberDTOs.size());
@@ -100,7 +100,7 @@ public class DepartmentUserService {
     }
 
     public User createMembershipRequest(Long id, MemberDTO memberDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.findOne(id);
         checkExistingMemberRequest(department, user);
         checkValidMemberCategory(department, memberDTO.getMemberCategory());
@@ -130,7 +130,7 @@ public class DepartmentUserService {
     }
 
     public UserRole viewMembershipRequest(Long id, Long userId) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
@@ -139,7 +139,7 @@ public class DepartmentUserService {
     }
 
     public void reviewMembershipRequest(Long id, Long userId, State state) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> {
             UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
@@ -155,7 +155,7 @@ public class DepartmentUserService {
     }
 
     public User updateMembership(Long id, MemberDTO memberDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.findOne(id);
 
         UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
@@ -171,7 +171,7 @@ public class DepartmentUserService {
     }
 
     public UserRoles getUserRoles(Long id, String searchTerm) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -200,7 +200,7 @@ public class DepartmentUserService {
     }
 
     public List<UserRole> createUserRoles(Long id, UserRoleDTO userRoleDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -224,7 +224,7 @@ public class DepartmentUserService {
     }
 
     public List<UserRole> updateUserRoles(Long id, Long userCreateUpdateId, UserRoleDTO userRoleDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -233,7 +233,7 @@ public class DepartmentUserService {
     }
 
     public void deleteUserRoles(Long id, Long userDeleteId) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -298,7 +298,7 @@ public class DepartmentUserService {
     }
 
     private List<UserRole> createOrUpdateUserRoles(Long id, User userCreateUpdate, UserRoleDTO userRoleDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 

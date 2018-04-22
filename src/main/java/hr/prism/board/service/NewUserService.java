@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.dao.UserDAO;
+import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.LocationDTO;
@@ -48,6 +49,10 @@ public class NewUserService {
 
     public User getById(Long id) {
         return userRepository.findOne(id);
+    }
+
+    public User getByUuid(String uuid) {
+        return userRepository.findByUuid(uuid);
     }
 
     public User getByEmail(String email) {
@@ -113,13 +118,13 @@ public class NewUserService {
         return userRepository.update(user);
     }
 
-    public User getUser() {
+    public User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication == null ? null : ((AuthenticationToken) authentication).getUser();
     }
 
-    public User getUserSecured() {
-        User user = getUser();
+    public User requireAuthenticatedUser() {
+        User user = getAuthenticatedUser();
         if (user == null) {
             throw new BoardForbiddenException(UNAUTHENTICATED_USER, "User cannot be authenticated");
         }
@@ -144,6 +149,12 @@ public class NewUserService {
         }
 
         return user;
+    }
+
+    public void updateUserResume(User user, Document documentResume, String websiteResume) {
+        user.setDocumentResume(documentResume);
+        user.setWebsiteResume(websiteResume);
+
     }
 
     public List<UserSearch> findUsers(String searchTerm) {

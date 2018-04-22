@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Organization;
 import hr.prism.board.value.OrganizationStatistics;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Transactional
-public interface OrganizationRepository extends BoardEntityRepository<Organization, Long> {
+public interface OrganizationRepository extends JpaRepository<Organization, Long> {
 
     Organization findByName(String name);
 

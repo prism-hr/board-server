@@ -1,15 +1,14 @@
 package hr.prism.board.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import hr.prism.board.authentication.AuthenticationToken;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static javax.persistence.GenerationType.IDENTITY;
+import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @MappedSuperclass
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"id", "creatorId", "createdTimestamp", "updatedTimestamp"})
@@ -60,6 +59,23 @@ public abstract class BoardEntity {
         this.updatedTimestamp = updatedTimestamp;
     }
 
+    @PrePersist
+    public void onCreate() {
+        if (this.creatorId == null) {
+            this.creatorId = getUserId();
+        }
+
+        LocalDateTime baseline = LocalDateTime.now();
+        this.createdTimestamp = baseline;
+        this.updatedTimestamp = baseline;
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        LocalDateTime baseline = LocalDateTime.now();
+        this.updatedTimestamp = baseline;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(id);
@@ -69,6 +85,20 @@ public abstract class BoardEntity {
     public boolean equals(Object object) {
         return !(object == null || getClass() != object.getClass())
             && Objects.equals(id, ((BoardEntity) object).getId());
+    }
+
+    private Long getUserId() {
+        AuthenticationToken authentication = (AuthenticationToken) getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+
+        User user = authentication.getUser();
+        if (user == null) {
+            return null;
+        }
+
+        return user.getId();
     }
 
 }

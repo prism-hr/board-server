@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceTask;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Transactional
-public interface ResourceTaskRepository extends BoardEntityRepository<ResourceTask, Long> {
+public interface ResourceTaskRepository extends JpaRepository<ResourceTask, Long> {
 
     @Query(value =
         "select resourceTask " +

@@ -71,7 +71,7 @@ public class ActivityEventConsumer {
         ActivityEvent activityEvent, Long resourceEventId,
         Map<Pair<BoardEntity, Activity>, hr.prism.board.domain.Activity> activityEntitiesByEntity) {
         Resource resource;
-        ResourceEvent resourceEvent = resourceEventService.findOne(resourceEventId);
+        ResourceEvent resourceEvent = resourceEventService.getById(resourceEventId);
         activityEvent.getActivities().forEach(activity -> {
             Activity activityEnum = activity.getActivity();
             hr.prism.board.domain.Activity activityEntity = activityEntitiesByEntity.computeIfAbsent(

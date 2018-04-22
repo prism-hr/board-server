@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Department;
 import hr.prism.board.enums.State;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Transactional
-public interface DepartmentRepository extends BoardEntityRepository<Department, Long> {
+public interface DepartmentRepository extends JpaRepository<Department, Long> {
 
     @Query(value =
         "select department.id " +

@@ -26,9 +26,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Transactional
 public class DepartmentDashboardService {
 
-    private static final Logger LOGGER = getLogger(DepartmentPaymentService.class);
+    private static final Logger LOGGER = getLogger(DepartmentDashboardService.class);
 
-    private final UserService userService;
+    private final NewUserService userService;
 
     private final ResourceService resourceService;
 
@@ -38,7 +38,7 @@ public class DepartmentDashboardService {
 
     private final BoardService boardService;
 
-    private final UserRoleService userRoleService;
+    private final NewUserRoleService userRoleService;
 
     private final PostService postService;
 
@@ -47,9 +47,9 @@ public class DepartmentDashboardService {
     private final OrganizationService organizationService;
 
     @Inject
-    public DepartmentDashboardService(UserService userService, ResourceService resourceService,
+    public DepartmentDashboardService(NewUserService userService, ResourceService resourceService,
                                       ActionService actionService, ResourceTaskService resourceTaskService,
-                                      BoardService boardService, UserRoleService userRoleService,
+                                      BoardService boardService, NewUserRoleService userRoleService,
                                       PostService postService, PaymentService paymentService,
                                       OrganizationService organizationService) {
         this.userService = userService;
@@ -64,7 +64,7 @@ public class DepartmentDashboardService {
     }
 
     public DepartmentDashboard getDepartmentDashboard(Long id) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 

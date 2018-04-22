@@ -3,12 +3,9 @@ package hr.prism.board;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import com.tapstream.rollbar.RollbarAppender;
-import hr.prism.board.repository.BoardEntityRepositoryImpl;
 import org.slf4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -20,9 +17,7 @@ import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getILoggerFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Configuration
 @SpringBootApplication
-@EnableJpaRepositories(repositoryBaseClass = BoardEntityRepositoryImpl.class)
 public class BoardApplication {
 
     private static final Logger LOGGER = getLogger(BoardApplication.class);

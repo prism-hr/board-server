@@ -27,29 +27,35 @@ import static hr.prism.board.exception.ExceptionCode.UNSUPPRESSABLE_RESOURCE;
 
 @Service
 @Transactional
-@SuppressWarnings({"SpringAutowiredFieldsWarningInspection", "WeakerAccess"})
 public class UserNotificationSuppressionService {
 
-    @Inject
-    private UserNotificationSuppressionRepository userNotificationSuppressionRepository;
+    private final UserNotificationSuppressionRepository userNotificationSuppressionRepository;
+
+    private final ResourceService resourceService;
+
+    private final NewUserRoleService userRoleService;
+
+    private final NewUserService userService;
+
+    private final UserNotificationSuppressionMapper userNotificationSuppressionMapper;
+
+    private final EntityManager entityManager;
 
     @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private UserRoleService userRoleService;
-
-    @Inject
-    private UserService userService;
-
-    @Inject
-    private UserNotificationSuppressionMapper userNotificationSuppressionMapper;
-
-    @Inject
-    private EntityManager entityManager;
+    public UserNotificationSuppressionService(
+        UserNotificationSuppressionRepository userNotificationSuppressionRepository, ResourceService resourceService,
+        NewUserRoleService userRoleService, NewUserService userService,
+        UserNotificationSuppressionMapper userNotificationSuppressionMapper, EntityManager entityManager) {
+        this.userNotificationSuppressionRepository = userNotificationSuppressionRepository;
+        this.resourceService = resourceService;
+        this.userRoleService = userRoleService;
+        this.userService = userService;
+        this.userNotificationSuppressionMapper = userNotificationSuppressionMapper;
+        this.entityManager = entityManager;
+    }
 
     public List<UserNotificationSuppressionRepresentation> getSuppressions() {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         return getSuppressions(user);
     }
 
@@ -67,9 +73,9 @@ public class UserNotificationSuppressionService {
     }
 
     public UserNotificationSuppressionRepresentation postSuppression(String uuid, Long resourceId) {
-        User user = userService.getCurrentUser();
+        User user = userService.getAuthenticatedUser();
         if (user == null && uuid != null) {
-            user = userService.findByUuid(uuid);
+            user = userService.getByUuid(uuid);
         }
 
         if (user == null) {
@@ -82,7 +88,7 @@ public class UserNotificationSuppressionService {
             throw new BoardException(UNSUPPRESSABLE_RESOURCE, "Notifications cannot be suppressed for resource of scope: " + scope);
         }
 
-        if (userRoleService.findByResourceAndUser(resource, user).isEmpty()) {
+        if (userRoleService.getByResourceAndUser(resource, user).isEmpty()) {
             throw new BoardForbiddenException(FORBIDDEN_RESOURCE, "User cannot access resource: " + scope + ": " + resourceId);
         }
 
@@ -94,19 +100,19 @@ public class UserNotificationSuppressionService {
     }
 
     public List<UserNotificationSuppressionRepresentation> postSuppressions() {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         userNotificationSuppressionRepository.insertByUserId(user.getId(), LocalDateTime.now(), Scope.BOARD.name(), State.ACTIVE_USER_ROLE_STATE_STRINGS);
         entityManager.flush();
         return getSuppressions(user);
     }
 
     public void deleteSuppressions() {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         userNotificationSuppressionRepository.deleteByUser(user);
     }
 
     public void deleteSuppression(Long resourceId) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         userNotificationSuppressionRepository.deleteByUserAndResourceId(user, resourceId);
     }
 

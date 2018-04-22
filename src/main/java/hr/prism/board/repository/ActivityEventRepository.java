@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Transactional
-public interface ActivityEventRepository extends BoardEntityRepository<ActivityEvent, Long> {
+public interface ActivityEventRepository extends JpaRepository<ActivityEvent, Long> {
 
     ActivityEvent findByActivityAndUserAndEvent(Activity activity, User user,
                                                 hr.prism.board.enums.ActivityEvent event);

@@ -105,7 +105,7 @@ public class NotificationEventConsumer {
 
         Long resourceEventId = notificationEvent.getResourceEventId();
         if (resourceEventId != null) {
-            ((Post) resource).setResponse(resourceEventService.findOne(resourceEventId));
+            ((Post) resource).setResponse(resourceEventService.getById(resourceEventId));
         }
 
         return resource;

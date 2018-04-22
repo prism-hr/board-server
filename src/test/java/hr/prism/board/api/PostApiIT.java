@@ -742,8 +742,8 @@ public class PostApiIT extends AbstractIT {
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        User departmentMember1 = userService.getUser(departmentMember1Id);
-        User departmentMember2 = userService.getUser(departmentMember2Id);
+        User departmentMember1 = userService.getAuthenticatedUser(departmentMember1Id);
+        User departmentMember2 = userService.getAuthenticatedUser(departmentMember2Id);
 
         String departmentMember1Uuid = departmentMember1.getUuid();
         String departmentMember2Uuid = departmentMember2.getUuid();

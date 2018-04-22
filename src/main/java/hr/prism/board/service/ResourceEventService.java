@@ -53,9 +53,9 @@ public class ResourceEventService {
 
     private final DocumentService documentService;
 
-    private final UserService userService;
+    private final NewUserService userService;
 
-    private final UserRoleService userRoleService;
+    private final NewUserRoleService userRoleService;
 
     private final EntityManager entityManager;
 
@@ -64,8 +64,8 @@ public class ResourceEventService {
     @Inject
     public ResourceEventService(ResourceEventRepository resourceEventRepository,
                                 ResourceEventSearchRepository resourceEventSearchRepository,
-                                DocumentService documentService, UserService userService,
-                                UserRoleService userRoleService, EntityManager entityManager,
+                                DocumentService documentService, NewUserService userService,
+                                NewUserRoleService userRoleService, EntityManager entityManager,
                                 EventProducer eventProducer) {
         this.resourceEventRepository = resourceEventRepository;
         this.resourceEventSearchRepository = resourceEventSearchRepository;
@@ -76,10 +76,11 @@ public class ResourceEventService {
         this.eventProducer = eventProducer;
     }
 
-    public ResourceEvent findOne(Long resourceEventId) {
+    public ResourceEvent getById(Long resourceEventId) {
         return resourceEventRepository.findOne(resourceEventId);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceEvent createPostView(Post post, User user, String ipAddress) {
         if (user == null && ipAddress == null) {
             throw new BoardException(UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
@@ -100,6 +101,7 @@ public class ResourceEventService {
         return saveResourceEvent(post, resourceEvent);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceEvent createPostReferral(Post post, User user) {
         String referral = sha256Hex(randomUUID().toString());
         return saveResourceEvent(post,
@@ -126,7 +128,7 @@ public class ResourceEventService {
         }
 
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(post.getParent().getParent(), user, MEMBER);
+        UserRole userRole = userRoleService.getByResourceUserAndRole(post.getParent().getParent(), user, MEMBER);
 
         ResourceEvent response = saveResourceEvent(post,
             new ResourceEvent()
@@ -197,7 +199,7 @@ public class ResourceEventService {
         resourceEvent.setLocationNationality(user.getLocationNationality());
 
         Department department = (Department) resourceEvent.getResource().getParent().getParent();
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, user, MEMBER);
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
 
         resourceEvent.setMemberCategory(userRole.getMemberCategory());
         resourceEvent.setMemberProgram(userRole.getMemberProgram());

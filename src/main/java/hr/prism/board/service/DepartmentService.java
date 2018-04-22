@@ -66,15 +66,15 @@ public class DepartmentService {
 
     private final DepartmentDAO departmentDAO;
 
-    private final UserService userService;
+    private final NewUserService userService;
 
     private final DocumentService documentService;
 
     private final ResourceService resourceService;
 
-    private final ResourcePatchService resourcePatchService;
+    private final ResourcePatchService<Department> resourcePatchService;
 
-    private final UserRoleService userRoleService;
+    private final NewUserRoleService userRoleService;
 
     private final ActionService actionService;
 
@@ -97,8 +97,8 @@ public class DepartmentService {
                              @Value("${department.pending.notification.interval2.seconds}")
                                  Long departmentPendingNotificationInterval2Seconds,
                              DepartmentRepository departmentRepository, DepartmentDAO departmentDAO,
-                             UserService userService, DocumentService documentService, ResourceService resourceService,
-                             ResourcePatchService resourcePatchService, UserRoleService userRoleService,
+                             NewUserService userService, DocumentService documentService, ResourceService resourceService,
+                             ResourcePatchService<Department> resourcePatchService, NewUserRoleService userRoleService,
                              ActionService actionService, ActivityService activityService,
                              UniversityService universityService, BoardService boardService,
                              ResourceTaskService resourceTaskService, EventProducer eventProducer,
@@ -124,19 +124,19 @@ public class DepartmentService {
     }
 
     public Department getDepartment(Long id) {
-        User user = userService.getCurrentUser();
+        User user = userService.getAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         return verifyCanView(user, department);
     }
 
     public Department getDepartment(String handle) {
-        User user = userService.getCurrentUser();
+        User user = userService.getAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, handle);
         return verifyCanView(user, department);
     }
 
     public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
-        User user = userService.getCurrentUser();
+        User user = userService.getAuthenticatedUser();
         List<Resource> resources =
             resourceService.getResources(user,
                 new ResourceFilter()
@@ -151,14 +151,14 @@ public class DepartmentService {
     }
 
     public List<ResourceOperation> getDepartmentOperations(Long id) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return resourceService.getResourceOperations(department);
     }
 
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
-        User user = userService.getCurrentUserSecured();
+        User user = userService.requireAuthenticatedUser();
         University university = universityService.getUniversity(universityId);
         resourceService.validateUniqueName(
             DEPARTMENT, null, university, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
@@ -192,7 +192,7 @@ public class DepartmentService {
         resourceService.createResourceRelation(university, department);
         resourceService.setIndexDataAndQuarter(department);
         resourceService.createResourceOperation(department, EXTEND, user);
-        userRoleService.createOrUpdateUserRole(department, user, ADMINISTRATOR);
+        userRoleService.createUserRole(department, user, ADMINISTRATOR);
 
         // Create the initial boards
         Long departmentId = department.getId();
@@ -210,7 +210,7 @@ public class DepartmentService {
     }
 
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
-        User currentUser = userService.getCurrentUserSecured();
+        User currentUser = userService.requireAuthenticatedUser();
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.setChangeList(new ChangeListRepresentation());

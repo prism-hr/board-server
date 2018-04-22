@@ -95,7 +95,7 @@ public abstract class AbstractIT {
     NewUserService userService;
 
     @Inject
-    UserRoleService userRoleService;
+    NewUserRoleService userRoleService;
 
     @Inject
     PostService postService;

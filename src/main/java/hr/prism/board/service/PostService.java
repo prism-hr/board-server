@@ -55,8 +55,6 @@ import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static hr.prism.board.utils.ResourceUtils.validateCategories;
 import static java.util.Collections.emptyList;
 
-import hr.prism.board.event.ActivityEvent;
-
 @Service
 @Transactional
 public class PostService {
@@ -116,7 +114,7 @@ public class PostService {
     }
 
     public Post getPost(Long id, String ipAddress, boolean recordView) {
-        User user = userService.getUser();
+        User user = userService.getAuthenticatedUser();
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
 
@@ -136,7 +134,7 @@ public class PostService {
     }
 
     public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter, String searchTerm) {
-        User user = userService.getUser();
+        User user = userService.getAuthenticatedUser();
         List<Post> posts =
             resourceService.getResources(user,
                 makeResourceFilter(POST, boardId, includePublicPosts, state, quarter, searchTerm)
@@ -152,19 +150,19 @@ public class PostService {
     }
 
     public List<ResourceOperation> getPostOperations(Long id) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return resourceService.getResourceOperations(post);
     }
 
     public List<String> getPostArchiveQuarters(Long parentId) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         return resourceService.getResourceArchiveQuarters(user, POST, parentId);
     }
 
     public Post createPost(Long boardId, PostDTO postDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Board board = (Board) resourceService.getResource(user, BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(user, board, EXTEND, () -> {
             Post post = new Post();
@@ -226,7 +224,7 @@ public class PostService {
     }
 
     public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         Post post = (Post) resourceService.getResource(user, POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {
@@ -270,7 +268,7 @@ public class PostService {
 
     public ResourceEvent createPostResponse(Long postId, ResourceEventDTO resourceEvent) {
         Post post = getPost(postId);
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         actionService.executeAction(user, post, Action.PURSUE, () -> {
             checkValidDemographicData(user, (Department) post.getParent().getParent());
             return post;
@@ -283,7 +281,7 @@ public class PostService {
     @SuppressWarnings("JpaQlInspection")
     public Collection<ResourceEvent> getPostResponses(Long postId, String searchTerm) {
         Post post = getPost(postId);
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         actionService.executeAction(user, post, EDIT, () -> post);
 
         List<Long> userIds = userService.getByResourceAndEvents(post, Arrays.asList(REFERRAL, RESPONSE));
@@ -379,11 +377,11 @@ public class PostService {
     }
 
     public ResourceEvent getPostResponse(Long postId, Long responseId) {
-        return getPostResponse(userService.getUserSecured(), postId, responseId);
+        return getPostResponse(userService.requireAuthenticatedUser(), postId, responseId);
     }
 
     public ResourceEvent putPostResponseView(Long postId, Long responseId) {
-        User user = userService.getUserSecured();
+        User user = userService.requireAuthenticatedUser();
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
         return resourceEvent.setViewed(true);
@@ -605,7 +603,7 @@ public class PostService {
     private ResourceEvent getPostResponse(User user, Long postId, Long responseId) {
         Post post = getPost(postId);
         actionService.executeAction(user, post, EDIT, () -> post);
-        ResourceEvent resourceEvent = resourceEventService.findOne(responseId);
+        ResourceEvent resourceEvent = resourceEventService.getById(responseId);
         resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
         return resourceEvent;
     }

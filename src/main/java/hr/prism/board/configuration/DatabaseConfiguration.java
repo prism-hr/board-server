@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
 import javax.inject.Inject;
@@ -18,6 +19,7 @@ import java.util.TimeZone;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Configuration
+@EnableJpaRepositories(basePackages = "hr.prism.board.repository")
 public class DatabaseConfiguration {
 
     private static final Logger LOGGER = getLogger(DatabaseConfiguration.class);

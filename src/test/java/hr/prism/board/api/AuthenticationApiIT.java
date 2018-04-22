@@ -347,7 +347,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department1 = resourceService.findOne(departmentId1);
         Resource post1 = resourceService.findOne(postId1);
-        User user1 = userService.getUser(userId1);
+        User user1 = userService.getAuthenticatedUser(userId1);
 
         String post1AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post1, user1, Role.ADMINISTRATOR).getUuid();
         String department1MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department1, member1, Role.MEMBER).getUuid();
@@ -507,7 +507,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department2 = resourceService.findOne(departmentId2);
         Resource post2 = resourceService.findOne(postId2);
-        User user2 = userService.getUser(userId2);
+        User user2 = userService.getAuthenticatedUser(userId2);
         String post2AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post2, user2, Role.ADMINISTRATOR).getUuid();
         String department2MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department2, member1, Role.MEMBER).getUuid();
         String department2MemberRole3Uuid = userRoleService.findByResourceAndUserAndRole(department2, member3, Role.MEMBER).getUuid();
@@ -636,7 +636,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department3 = resourceService.findOne(departmentId3);
         Resource post3 = resourceService.findOne(postId3);
-        User user3 = userService.getUser(userId3);
+        User user3 = userService.getAuthenticatedUser(userId3);
         String post3AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post3, user3, Role.ADMINISTRATOR).getUuid();
         String department3MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department3, member5, Role.MEMBER).getUuid();
         String department3MemberRole2Uuid = userRoleService.findByResourceAndUserAndRole(department3, member6, Role.MEMBER).getUuid();
@@ -785,7 +785,7 @@ public class AuthenticationApiIT extends AbstractIT {
 
         User member8 = userRepository.findByEmail("member8@member8.com");
 
-        User user4 = userService.getUser(userId4);
+        User user4 = userService.getAuthenticatedUser(userId4);
         Resource department4 = resourceService.findOne(departmentId4);
         Resource post4 = resourceService.findOne(postId4);
         String post4AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post4, user4, Role.ADMINISTRATOR).getUuid();

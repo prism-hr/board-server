@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.TestEmail;
 import hr.prism.board.representation.TestEmailMessageRepresentation;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Transactional
-public interface TestEmailRepository extends BoardEntityRepository<TestEmail, Long> {
+public interface TestEmailRepository extends JpaRepository<TestEmail, Long> {
 
     @Query(value =
         "select testEmail.message " +
