@@ -247,6 +247,7 @@ public class NotificationService {
             return action;
         }
 
+        @SuppressWarnings("WeakerAccess")
         public List<BoardAttachments> getAttachments() {
             return attachments;
         }
