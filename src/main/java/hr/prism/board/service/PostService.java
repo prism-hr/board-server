@@ -217,9 +217,9 @@ public class PostService {
             post.setDeadTimestamp(deadTimestamp);
             post = postRepository.save(post);
 
+            resourceService.createResourceRelation(board, post);
             updatePostCategories(post, postDTO.getPostCategories());
             updateMemberCategories(post, toStrings(postDTO.getMemberCategories()));
-            resourceService.createResourceRelation(board, post);
             setIndexDataAndQuarter(post);
 
             userRoleService.getOrCreateUserRole(post, user, ADMINISTRATOR);
