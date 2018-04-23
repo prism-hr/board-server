@@ -4,7 +4,6 @@ import hr.prism.board.TestContext;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.MemberCategory;
-import hr.prism.board.enums.Role;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.ExceptionCode;
@@ -21,7 +20,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @TestContext
 @RunWith(SpringRunner.class)
@@ -29,8 +27,6 @@ public class UserApiIT extends AbstractIT {
 
     @Value("${local.server.port}")
     private String localServerPort;
-
-    private CompletableFuture<Object> completableFuture = new CompletableFuture<>();
 
     @Test
     public void shouldCreateAndUpdateUser() {
@@ -57,7 +53,7 @@ public class UserApiIT extends AbstractIT {
         User user1 = testUserService.authenticate();
         User user2 = testUserService.authenticate();
 
-        testUserService.setAuthentication(user1.getId());
+        testUserService.setAuthentication(user1);
         ExceptionUtils.verifyException(
             BoardException.class,
             () -> userApi.updateUser(
@@ -86,32 +82,36 @@ public class UserApiIT extends AbstractIT {
 
         String memberUser1Email = memberUser1.getEmail();
         String memberUser2Email = memberUser2.getEmail();
-        testUserService.setAuthentication(adminUser.getId());
+        testUserService.setAuthentication(adminUser);
         for (String memberUserEmail : new String[]{memberUser1Email, memberUser2Email}) {
-            departmentUserApi.createUserRoles(department1id, new UserRoleDTO().setUser(
-                new UserDTO().setEmail(memberUserEmail)).setRole(Role.MEMBER));
+            departmentUserApi.createUserRoles(department1id,
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setEmail(memberUserEmail)));
 
-            departmentUserApi.createUserRoles(department2id, new UserRoleDTO().setUser(
-                new UserDTO().setEmail(memberUserEmail)).setRole(Role.AUTHOR));
+            departmentUserApi.createUserRoles(department2id,
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setEmail(memberUserEmail)));
         }
 
-        departmentUserApi.createUserRoles(department2id, new UserRoleDTO().setUser(
-            new UserDTO().setEmail(memberUser1Email)).setRole(Role.MEMBER)
+        departmentUserApi.createUserRoles(department2id,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setEmail(memberUser1Email))
             .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT));
 
-        Long adminUserId = adminUser.getId();
-        Long memberUser1Id = memberUser1.getId();
-        Long memberUser2Id = memberUser2.getId();
-        Long memberUser3Id = memberUser3.getId();
-
-        testUserService.setAuthentication(adminUserId);
+        testUserService.setAuthentication(adminUser);
         String[] expectedBoardNames = new String[]{"board11", "board12", "board13", "board23"};
         List<UserNotificationSuppressionRepresentation> adminUserSuppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(4, adminUserSuppressions.size());
         adminUserSuppressions.forEach(suppression -> Assert.assertEquals(false, suppression.getSuppressed()));
 
-        testUserService.setAuthentication(memberUser1Id);
+        testUserService.setAuthentication(memberUser1);
         userNotificationSuppressionApi.postSuppressions();
         List<UserNotificationSuppressionRepresentation> memberUser1Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
@@ -120,7 +120,7 @@ public class UserApiIT extends AbstractIT {
 
         testUserService.unauthenticate();
         userNotificationSuppressionApi.postSuppression(board11id, memberUser2.getUuid());
-        testUserService.setAuthentication(memberUser2Id);
+        testUserService.setAuthentication(memberUser2);
         userNotificationSuppressionApi.postSuppression(board12id, null);
         List<UserNotificationSuppressionRepresentation> memberUser2Suppressions =
             removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
@@ -133,7 +133,7 @@ public class UserApiIT extends AbstractIT {
         testUserService.unauthenticate();
         ExceptionUtils.verifyException(
             BoardForbiddenException.class, () -> userNotificationSuppressionApi.postSuppression(board11id, memberUser3.getUuid()), ExceptionCode.FORBIDDEN_RESOURCE);
-        testUserService.setAuthentication(memberUser3Id);
+        testUserService.setAuthentication(memberUser3);
         ExceptionUtils.verifyException(
             BoardForbiddenException.class, () -> userNotificationSuppressionApi.postSuppression(board11id, null), ExceptionCode.FORBIDDEN_RESOURCE);
         userNotificationSuppressionApi.postSuppressions();
@@ -141,7 +141,7 @@ public class UserApiIT extends AbstractIT {
             removeSuppressionsForAutomaticallyCreatedBoards(userNotificationSuppressionApi.getSuppressions(), expectedBoardNames);
         Assert.assertEquals(0, memberUser3Suppressions.size());
 
-        testUserService.setAuthentication(memberUser2Id);
+        testUserService.setAuthentication(memberUser2);
         userNotificationSuppressionApi.deleteSuppression(board12id);
 
         memberUser2Suppressions =
