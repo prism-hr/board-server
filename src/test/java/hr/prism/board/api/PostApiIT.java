@@ -15,7 +15,7 @@ import hr.prism.board.exception.*;
 import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.TestActivityService;
+import hr.prism.board.service.TestActivityService.ActivityInstance;
 import hr.prism.board.service.TestNotificationService;
 import hr.prism.board.util.ObjectUtils;
 import hr.prism.board.utils.BoardUtils;
@@ -38,8 +38,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 
 @TestContext
@@ -113,7 +113,7 @@ public class PostApiIT extends AbstractIT {
         int postCount = 1;
         LocalDateTime baseline = LocalDateTime.now();
         LinkedHashMap<User, LinkedHashMap<Long, LinkedHashMultimap<State, String>>> posts = new LinkedHashMap<>();
-        for (State state : Arrays.stream(State.values()).filter(state -> !Arrays.asList(State.ARCHIVED, State.PREVIOUS).contains(state)).collect(Collectors.toList())) {
+        for (State state : Arrays.stream(State.values()).filter(state -> !Arrays.asList(State.ARCHIVED, State.PREVIOUS).contains(state)).collect(toList())) {
             if (state == State.DRAFT) {
                 reschedulePost(board11PostName, baseline, postCount);
                 boardPostNames11.put(state, board11PostName);
@@ -168,7 +168,7 @@ public class PostApiIT extends AbstractIT {
         for (Long boardId : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardId);
             for (Scope scope : unprivilegedUserMap.keySet()) {
-                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getId());
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope));
                 if (scope == Scope.DEPARTMENT || scope == Scope.BOARD) {
                     verifyPrivilegedPostUser(publicPostNames, new LinkedHashMap<>(), PostAdminContext.ADMIN);
                 } else if (scope == Scope.POST) {
@@ -181,18 +181,18 @@ public class PostApiIT extends AbstractIT {
             }
         }
 
-        testUserService.setAuthentication(user11.getId());
+        testUserService.setAuthentication(user11);
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user11BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board11Id, boardPostNames11);
         verifyPrivilegedPostUser(publicPostNames, user11BoardPostNames, PostAdminContext.ADMIN);
 
-        testUserService.setAuthentication(user21.getId());
+        testUserService.setAuthentication(user21);
         LinkedHashMap<Long, LinkedHashMultimap<State, String>> user21BoardPostNames = new LinkedHashMap<>();
         user11BoardPostNames.put(board21Id, boardPostNames21);
         verifyPrivilegedPostUser(publicPostNames, user21BoardPostNames, PostAdminContext.ADMIN);
 
         for (User postUser : posts.keySet()) {
-            testUserService.setAuthentication(postUser.getId());
+            testUserService.setAuthentication(postUser);
             verifyPrivilegedPostUser(publicPostNames, posts.get(postUser), PostAdminContext.AUTHOR);
         }
     }
@@ -209,7 +209,9 @@ public class PostApiIT extends AbstractIT {
             new PostDTO()
                 .setName("post")
                 .setSummary("summary")
-                .setOrganizationName("organization name")
+                .setOrganization(
+                    new OrganizationDTO()
+                        .setName("organization name"))
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
@@ -231,7 +233,9 @@ public class PostApiIT extends AbstractIT {
             new PostDTO()
                 .setName("post")
                 .setSummary("summary")
-                .setOrganizationName("organization name")
+                .setOrganization(
+                    new OrganizationDTO()
+                        .setName("organization name"))
                 .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                     .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
                 .setPostCategories(Collections.singletonList("p1"))
@@ -255,7 +259,9 @@ public class PostApiIT extends AbstractIT {
         PostDTO postDTO = new PostDTO()
             .setName("post")
             .setSummary("summary")
-            .setOrganizationName("organization name")
+            .setOrganization(
+                new OrganizationDTO()
+                    .setName("organization name"))
             .setLocation(new LocationDTO().setName("location").setDomicile("PL")
                 .setGoogleId("google").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE))
             .setPostCategories(Collections.singletonList("p1"))
@@ -375,7 +381,7 @@ public class PostApiIT extends AbstractIT {
 
         User boardUser = testUserService.authenticate();
         Board board = boardService.getById(boardId);
-        userRoleService.createOrUpdateUserRole(board, boardUser, Role.ADMINISTRATOR);
+        userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
 
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
 
@@ -384,10 +390,10 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForActivities(departmentUserId);
+        listenForActivities(departmentUser);
 
         Long boardUserId = boardUser.getId();
-        listenForActivities(boardUserId);
+        listenForActivities(boardUser);
 
         User postUser = testUserService.authenticate();
         PostRepresentation postR = verifyPostPost(boardId, TestHelper.samplePost());
@@ -401,15 +407,15 @@ public class PostApiIT extends AbstractIT {
         String postUserGivenName = postUser.getGivenName();
         String resourceRedirect = serverUrl + "/redirect?resource=" + postId;
 
-        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
+        testActivityService.verify(departmentUserId, new ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
+        testActivityService.verify(boardUserId, new ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
 
         Resource departmentResource = resourceService.getById(departmentId);
         Resource boardResource = resourceService.getById(boardId);
         Resource postResource = resourceService.getById(postId);
-        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentUser, Role.ADMINISTRATOR).getUuid();
-        String boardAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(boardResource, boardUser, Role.ADMINISTRATOR).getUuid();
-        String postAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(postResource, postUser, Role.ADMINISTRATOR).getUuid();
+        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(departmentResource, departmentUser, Role.ADMINISTRATOR).getUuid();
+        String boardAdminRoleUuid = userRoleService.getByResourceUserAndRole(boardResource, boardUser, Role.ADMINISTRATOR).getUuid();
+        String postAdminRoleUuid = userRoleService.getByResourceUserAndRole(postResource, postUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
@@ -448,21 +454,23 @@ public class PostApiIT extends AbstractIT {
         testNotificationService.record();
 
         // Clear activity streams for the admin users
-        for (Long userId : new Long[]{departmentUserId, boardUserId}) {
-            testUserService.setAuthentication(userId);
+        for (User user : new User[]{departmentUser, boardUser}) {
+            testUserService.setAuthentication(user);
+
+            Long userId = user.getId();
             List<Long> activityIds =
-                activityService.getActivities(userId).stream().map(ActivityRepresentation::getId).collect(Collectors.toList());
+                activityService.getActivities(userId).stream().map(ActivityRepresentation::getId).collect(toList());
             Assert.assertEquals(2, activityIds.size());
             for (Long activityId : activityIds) {
                 userActivityApi.dismissActivity(activityId);
             }
 
-            listenForActivities(userId);
+            listenForActivities(user);
             testActivityService.verify(userId);
         }
 
         Long postUserId = postUser.getId();
-        listenForActivities(postUserId);
+        listenForActivities(postUser);
 
         Map<Action, Runnable> operations = ImmutableMap.<Action, Runnable>builder()
             .put(Action.VIEW, () -> postApi.getPost(postId, TestHelper.mockHttpServletRequest("address")))
@@ -491,7 +499,10 @@ public class PostApiIT extends AbstractIT {
             .setName(Optional.of("post 2"))
             .setSummary(Optional.of("summary 2"))
             .setDescription(Optional.of("description"))
-            .setOrganizationName(Optional.of("organization name 2"))
+            .setOrganization(
+                Optional.of(
+                    new OrganizationDTO()
+                        .setName("organization name 2")))
             .setLocation(Optional.of(
                 new LocationDTO()
                     .setName("london")
@@ -522,7 +533,7 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder()
@@ -536,7 +547,10 @@ public class PostApiIT extends AbstractIT {
 
         // Check that the author can make changes and correct the post
         PostPatchDTO correctDTO = new PostPatchDTO()
-            .setOrganizationName(Optional.of("organization name"))
+            .setOrganization(
+                Optional.of(
+                    new OrganizationDTO()
+                        .setName("organization name")))
             .setDescription(Optional.of("description 2"))
             .setLocation(Optional.of(
                 new LocationDTO()
@@ -552,8 +566,8 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(postUser, postId, correctDTO, () -> postApi.executeActionOnPost(postId, "correct", correctDTO), State.DRAFT);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.DRAFT, operations);
 
-        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
-        testActivityService.verify(boardUserId, new TestActivityService.ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
+        testActivityService.verify(departmentUserId, new ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
+        testActivityService.verify(boardUserId, new ActivityInstance(postId, Activity.CORRECT_POST_ACTIVITY));
         testActivityService.verify(postUserId);
 
         testNotificationService.verify(
@@ -583,14 +597,14 @@ public class PostApiIT extends AbstractIT {
             .setComment("accepting without time constraints");
 
         verifyPatchPost(boardUser, postId, acceptDTO, () -> postApi.executeActionOnPost(postId, "accept", acceptDTO), State.PENDING);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
@@ -620,7 +634,7 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
@@ -647,7 +661,7 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
@@ -667,83 +681,83 @@ public class PostApiIT extends AbstractIT {
         Post localPost0 = postService.getById(postId);
         localPost0.setLiveTimestamp(liveTimestamp);
         localPost0.setDeadTimestamp(deadTimestamp);
-        resourceRepository.updateSilently(localPost0);
+        resourceRepository.save(localPost0);
 
         // Should be notified
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         Long departmentMember1Id =
             departmentUserApi.createUserRoles(departmentId,
-                new UserRoleDTO().setUser(
-                    new UserDTO()
-                        .setGivenName("student1")
-                        .setSurname("student1")
-                        .setEmail("student1@student1.com"))
-                    .setRole(Role.MEMBER)
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("student1")
+                            .setSurname("student1")
+                            .setEmail("student1@student1.com"))
                     .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                     .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId();
 
         // Should be notified
         Long departmentMember2Id =
             departmentUserApi.createUserRoles(departmentId,
-                new UserRoleDTO().setUser(
-                    new UserDTO()
-                        .setGivenName("student2")
-                        .setSurname("student2")
-                        .setEmail("student2@student2.com"))
-                    .setRole(Role.MEMBER)
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("student2")
+                            .setSurname("student2")
+                            .setEmail("student2@student2.com"))
                     .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId();
 
         // Should not be notified - suppressed
         Long departmentMember3Id =
             departmentUserApi.createUserRoles(departmentId,
-                new UserRoleDTO().setUser(
-                    new UserDTO()
-                        .setGivenName("student3")
-                        .setSurname("student3")
-                        .setEmail("student3@student3.com"))
-                    .setRole(Role.MEMBER)
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("student3")
+                            .setSurname("student3")
+                            .setEmail("student3@student3.com"))
                     .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId();
 
-        testUserService.setAuthentication(departmentMember3Id);
+        testUserService.setAuthentication(userService.getById(departmentMember3Id));
         userNotificationSuppressionApi.postSuppressions();
 
         // Should not be notified
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         Long departmentMember4Id =
             departmentUserApi.createUserRoles(departmentId,
-                new UserRoleDTO().setUser(
-                    new UserDTO()
-                        .setGivenName("student4")
-                        .setSurname("student4")
-                        .setEmail("student4@student4.com"))
-                    .setRole(Role.MEMBER)
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("student4")
+                            .setSurname("student4")
+                            .setEmail("student4@student4.com"))
                     .setMemberCategory(MemberCategory.RESEARCH_STUDENT)
                     .setExpiryDate(LocalDate.now().plusDays(1))).getUser().getId();
 
         // Should not be notified
         Long departmentMember5Id =
             departmentUserApi.createUserRoles(departmentId,
-                new UserRoleDTO().setUser(
-                    new UserDTO()
-                        .setGivenName("student5")
-                        .setSurname("student5")
-                        .setEmail("student5@student5.com"))
-                    .setRole(Role.MEMBER)
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("student5")
+                            .setSurname("student5")
+                            .setEmail("student5@student5.com"))
                     .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                     .setExpiryDate(LocalDate.now().minusDays(1))).getUser().getId();
 
-        listenForActivities(departmentMember1Id);
-        listenForActivities(departmentMember2Id);
-        listenForActivities(departmentMember3Id);
-        listenForActivities(departmentMember4Id);
-        listenForActivities(departmentMember5Id);
+        listenForActivities(userService.getById(departmentMember1Id));
+        listenForActivities(userService.getById(departmentMember2Id));
+        listenForActivities(userService.getById(departmentMember3Id));
+        listenForActivities(userService.getById(departmentMember4Id));
+        listenForActivities(userService.getById(departmentMember5Id));
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
-        User departmentMember1 = userService.getUser(departmentMember1Id);
-        User departmentMember2 = userService.getUser(departmentMember2Id);
+        User departmentMember1 = userService.getById(departmentMember1Id);
+        User departmentMember2 = userService.getById(departmentMember2Id);
 
         String departmentMember1Uuid = departmentMember1.getUuid();
         String departmentMember2Uuid = departmentMember2.getUuid();
@@ -751,15 +765,15 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
-        testActivityService.verify(departmentMember1Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testActivityService.verify(departmentMember2Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testActivityService.verify(departmentMember3Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember2Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember3Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
         testActivityService.verify(departmentMember4Id);
-        testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember5Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
-        UserRole departmentMemberRole1 = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentMember1, Role.MEMBER);
-        UserRole departmentMemberRole2 = userRoleService.findByResourceAndUserAndRole(departmentResource, departmentMember2, Role.MEMBER);
+        UserRole departmentMemberRole1 = userRoleService.getByResourceUserAndRole(departmentResource, departmentMember1, Role.MEMBER);
+        UserRole departmentMemberRole2 = userRoleService.getByResourceUserAndRole(departmentResource, departmentMember2, Role.MEMBER);
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
@@ -807,7 +821,7 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.REJECT_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.REJECT_POST_ACTIVITY));
         testActivityService.verify(departmentMember1Id);
         testActivityService.verify(departmentMember2Id);
         testActivityService.verify(departmentMember3Id);
@@ -830,18 +844,18 @@ public class PostApiIT extends AbstractIT {
             .setComment("sorry we made a mistake, we're restoring the post");
 
         verifyPatchPost(boardUser, postId, restoreFromRejectedDTO, () -> postApi.executeActionOnPost(postId, "restore", restoreFromRejectedDTO), State.PENDING);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.RESTORE_POST_ACTIVITY));
         postService.publishAndRetirePosts(LocalDateTime.now());
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
-        testActivityService.verify(departmentMember1Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testActivityService.verify(departmentMember2Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testActivityService.verify(departmentMember3Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember2Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember3Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
         testActivityService.verify(departmentMember4Id);
-        testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember5Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         testNotificationService.verify(
             new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
@@ -889,7 +903,7 @@ public class PostApiIT extends AbstractIT {
 
         Post localPost1 = postService.getById(postId);
         localPost1.setDeadTimestamp(liveTimestamp.minusSeconds(1));
-        resourceRepository.updateSilently(localPost1);
+        resourceRepository.save(localPost1);
 
         // Check that the post now moves to the expired state when the update job runs
         verifyPublishAndRetirePost(postId, State.EXPIRED);
@@ -897,7 +911,7 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.RETIRE_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.RETIRE_POST_ACTIVITY));
         testActivityService.verify(departmentMember1Id);
         testActivityService.verify(departmentMember2Id);
         testActivityService.verify(departmentMember3Id);
@@ -927,7 +941,7 @@ public class PostApiIT extends AbstractIT {
 
         Post localPost2 = postService.getById(postId);
         localPost2.setDeadTimestamp(null);
-        resourceRepository.updateSilently(localPost2);
+        resourceRepository.save(localPost2);
 
         // Check that the post now moves to the accepted state when the update job runs
         verifyPublishAndRetirePost(postId, State.ACCEPTED);
@@ -935,12 +949,12 @@ public class PostApiIT extends AbstractIT {
 
         testActivityService.verify(departmentUserId);
         testActivityService.verify(boardUserId);
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
-        testActivityService.verify(departmentMember1Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testActivityService.verify(departmentMember2Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
-        testActivityService.verify(departmentMember3Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
+        testActivityService.verify(departmentMember1Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember2Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember3Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
         testActivityService.verify(departmentMember4Id);
-        testActivityService.verify(departmentMember5Id, new TestActivityService.ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
+        testActivityService.verify(departmentMember5Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
@@ -980,7 +994,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.stop();
         testNotificationService.stop();
 
-        testUserService.setAuthentication(postUser.getId());
+        testUserService.setAuthentication(postUser);
         List<ResourceOperationRepresentation> resourceOperationRs = postApi.getPostOperations(postId);
         Assert.assertEquals(20, resourceOperationRs.size());
 
@@ -1073,7 +1087,7 @@ public class PostApiIT extends AbstractIT {
     @Test
     @Sql("classpath:data/organization_autosuggest_setup.sql")
     public void shouldSuggestOrganizations() {
-        List<OrganizationStatisticsRepresentation> organizations = postApi.findPostOrganizations("Computer");
+        List<OrganizationRepresentation> organizations = postApi.findPostOrganizations("Computer");
         Assert.assertEquals(3, organizations.size());
 
         Assert.assertEquals("Computer Science Department", organizations.get(0).getName());
@@ -1103,7 +1117,7 @@ public class PostApiIT extends AbstractIT {
 
     @Test
     public void shouldCountPostViewsReferralsAndResponses() throws IOException {
-        Long boardUserId = testUserService.authenticate().getId();
+        User boardUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
             departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
@@ -1116,20 +1130,32 @@ public class PostApiIT extends AbstractIT {
             TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))).getId();
         postService.publishAndRetirePosts(LocalDateTime.now());
 
-        Long memberUser1 = testUserService.authenticate().getId();
-        Long memberUser2 = testUserService.authenticate().getId();
+        User memberUser1 = testUserService.authenticate();
+        User memberUser2 = testUserService.authenticate();
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         departmentUserApi.createUserRoles(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1)).setRole(Role.MEMBER));
+            new MemberDTO().setUser(new UserDTO().setId(memberUser1.getId())));
         departmentUserApi.createUserRoles(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2)).setRole(Role.MEMBER));
+            new MemberDTO().setUser(new UserDTO().setId(memberUser2.getId())));
 
         testUserService.setAuthentication(memberUser1);
         departmentUserApi.updateMembership(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.THIRTY_THIRTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2015));
         PostRepresentation viewPostMemberUser1 = postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser1"));
         verifyViewReferralAndResponseCounts(postId, 1L, 0L, 0L);
         String referral1 = viewPostMemberUser1.getReferral().getReferral();
@@ -1140,9 +1166,21 @@ public class PostApiIT extends AbstractIT {
 
         testUserService.setAuthentication(memberUser2);
         departmentUserApi.updateMembership(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.THIRTY_THIRTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2015));
         PostRepresentation viewPostMemberUser2 = postApi.getPost(postId, TestHelper.mockHttpServletRequest("memberUser2"));
         verifyViewReferralAndResponseCounts(postId, 2L, 0L, 0L);
         String referral2 = viewPostMemberUser2.getReferral().getReferral();
@@ -1180,7 +1218,7 @@ public class PostApiIT extends AbstractIT {
         ExceptionUtils.verifyException(BoardForbiddenException.class,
             () -> verifyPostReferral(referral1, response, "http://www.google.co.uk"), ExceptionCode.FORBIDDEN_REFERRAL);
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         DocumentDTO documentDTO = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
         postApi.updatePost(postId, new PostPatchDTO().setApplyDocument(Optional.of(documentDTO)).setApplyEmail(Optional.empty()));
@@ -1192,7 +1230,7 @@ public class PostApiIT extends AbstractIT {
         ExceptionUtils.verifyException(BoardException.class,
             () -> postResponseApi.createPostResponse(postId, new ResourceEventDTO()), ExceptionCode.INVALID_RESOURCE_EVENT);
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         postApi.updatePost(postId, new PostPatchDTO().setApplyDocument(Optional.empty()).setApplyEmail(Optional.of("email@email.com")));
 
         testUserService.setAuthentication(memberUser1);
@@ -1210,7 +1248,7 @@ public class PostApiIT extends AbstractIT {
 
     @Test
     public void shouldNotifyAndListPostResponses() throws IOException {
-        Long boardUserId = testUserService.authenticate().getId();
+        User boardUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId =
             departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
@@ -1232,29 +1270,41 @@ public class PostApiIT extends AbstractIT {
         User memberUser3 = testUserService.authenticate();
         Long memberUser3Id = memberUser3.getId();
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         departmentUserApi.createUserRoles(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser1Id)).setRole(Role.MEMBER));
+            new MemberDTO().setUser(new UserDTO().setId(memberUser1Id)));
         departmentUserApi.createUserRoles(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser2Id)).setRole(Role.MEMBER));
+            new MemberDTO().setUser(new UserDTO().setId(memberUser2Id)));
         departmentUserApi.createUserRoles(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setId(memberUser3Id)).setRole(Role.MEMBER));
+            new MemberDTO().setUser(new UserDTO().setId(memberUser3Id)));
         postApi.executeActionOnPost(postId, "accept", new PostPatchDTO());
         postService.publishAndRetirePosts(LocalDateTime.now());
 
-        testUserService.setAuthentication(postUserId);
+        testUserService.setAuthentication(postUser);
         List<ActivityRepresentation> activities = activityService.getActivities(postUserId);
         activities.forEach(activity -> userActivityApi.dismissActivity(activity.getId()));
 
         testActivityService.record();
         testNotificationService.record();
-        listenForActivities(postUserId);
+        listenForActivities(postUser);
 
-        testUserService.setAuthentication(memberUser1Id);
-        departmentUserApi.updateMembership(departmentId, new UserRoleDTO().setUser(
-            new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
+        testUserService.setAuthentication(memberUser1);
+        departmentUserApi.updateMembership(departmentId,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.MALE)
+                        .setAgeRange(AgeRange.NINETEEN_TWENTYFOUR)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2010));
         DocumentDTO documentDTO1 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments1.pdf");
         Long responseId = postResponseApi.createPostResponse(postId,
@@ -1270,24 +1320,36 @@ public class PostApiIT extends AbstractIT {
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").build(),
                 makeTestAttachments("attachments1.pdf")));
-        testActivityService.verify(postUserId, new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+        testActivityService.verify(postUserId, new ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
-        testUserService.setAuthentication(postUserId);
+        testUserService.setAuthentication(postUser);
         List<ResourceEventRepresentation> responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(1, responses.size());
         Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(1, responses.size());
         Assert.assertEquals(memberUser1Id, responses.get(0).getUser().getId());
         postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
-        testUserService.setAuthentication(memberUser2Id);
-        departmentUserApi.updateMembership(departmentId, new UserRoleDTO().setUser(
-            new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
+        testUserService.setAuthentication(memberUser2);
+        departmentUserApi.updateMembership(departmentId,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.MALE)
+                        .setAgeRange(AgeRange.NINETEEN_TWENTYFOUR)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2010));
         DocumentDTO documentDTO2 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments2.pdf");
         postResponseApi.createPostResponse(postId,
@@ -1300,40 +1362,52 @@ public class PostApiIT extends AbstractIT {
                     .put("coveringNote", "note2").put("profile", "website2").build(),
                 makeTestAttachments("attachments2.pdf")));
         testActivityService.verify(postUserId,
-            new TestActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
-            new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+            new ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
-        testUserService.setAuthentication(postUserId);
+        testUserService.setAuthentication(postUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
         postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of(postUserEmail)));
 
-        testUserService.setAuthentication(postUserId);
+        testUserService.setAuthentication(postUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
         Assert.assertEquals(memberUser2Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(1).getUser().getId());
         postApi.updatePost(postId, new PostPatchDTO().setApplyEmail(Optional.of("other@other.com")));
 
-        testUserService.setAuthentication(memberUser3Id);
-        departmentUserApi.updateMembership(departmentId, new UserRoleDTO().setUser(
-            new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.NINETEEN_TWENTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom").setDomicile("GBR").setGoogleId("googleId").setLatitude(BigDecimal.ONE).setLongitude(BigDecimal.ONE)))
-            .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2010));
+        testUserService.setAuthentication(memberUser3);
+        departmentUserApi.updateMembership(departmentId,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.MALE)
+                        .setAgeRange(AgeRange.NINETEEN_TWENTYFOUR)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE)))
+                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2010));
         DocumentDTO documentDTO3 = new DocumentDTO().setCloudinaryId("v1504040061")
             .setCloudinaryUrl("http://res.cloudinary.com/board-prism-hr/image/upload/v1506846526/test/attachment.pdf").setFileName("attachments3.pdf");
         postResponseApi.createPostResponse(postId,
@@ -1345,28 +1419,28 @@ public class PostApiIT extends AbstractIT {
                     .put("coveringNote", "note3").put("profile", "website3").build(),
                 makeTestAttachments("attachments3.pdf")));
         testActivityService.verify(postUserId,
-            new TestActivityService.ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
-            new TestActivityService.ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
-            new TestActivityService.ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
+            new ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
+            new ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
 
         testActivityService.stop();
         testNotificationService.stop();
 
-        testUserService.setAuthentication(postUserId);
+        testUserService.setAuthentication(postUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(3, responses.size());
         Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(3, responses.size());
         Assert.assertEquals(memberUser3Id, responses.get(0).getUser().getId());
         Assert.assertEquals(memberUser2Id, responses.get(1).getUser().getId());
         Assert.assertEquals(memberUser1Id, responses.get(2).getUser().getId());
 
-        testUserService.setAuthentication(postUserId);
+        testUserService.setAuthentication(postUser);
         postResponseApi.viewPostResponse(postId, responseId);
 
         ResourceEventRepresentation response1 = postResponseApi.getPostResponse(postId, responseId);
@@ -1377,7 +1451,7 @@ public class PostApiIT extends AbstractIT {
         Assert.assertFalse(responses.get(1).isViewed());
         Assert.assertTrue(responses.get(2).isViewed());
 
-        testUserService.setAuthentication(boardUserId);
+        testUserService.setAuthentication(boardUser);
         postResponseApi.getPostResponses(postId, null).forEach(response -> Assert.assertFalse(response.isViewed()));
         postResponseApi.viewPostResponse(postId, responseId);
 
@@ -1395,21 +1469,21 @@ public class PostApiIT extends AbstractIT {
     public void shouldListAndFilterPostResponses() {
         resourceEventRepository.findAll().forEach(resourceEvent -> {
             resourceEventService.setIndexData(resourceEvent);
-            resourceEventRepository.update(resourceEvent);
+            resourceEventRepository.save(resourceEvent);
         });
 
-        Long userId = userRepository.findByEmail("alastair@knowles.com").getId();
+        User user = userRepository.findByEmail("alastair@knowles.com");
         Long postId = resourceRepository.findByHandle("cs/opportunities/4").getId();
-        testUserService.setAuthentication(userId);
+        testUserService.setAuthentication(user);
 
         List<ResourceEventRepresentation> responses = postResponseApi.getPostResponses(postId, null);
         Assert.assertEquals(2, responses.size());
-        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()),
+        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(toList()),
             BoardUtils.obfuscateEmail("jakub@fibinger.com"), BoardUtils.obfuscateEmail("juan@mingo.com"));
 
         responses = postResponseApi.getPostResponses(postId, "madrid");
         Assert.assertEquals(1, responses.size());
-        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(Collectors.toList()), BoardUtils.obfuscateEmail("juan@mingo.com"));
+        verifyContains(responses.stream().map(response -> response.getUser().getEmail()).collect(toList()), BoardUtils.obfuscateEmail("juan@mingo.com"));
     }
 
     @Test
@@ -1446,7 +1520,7 @@ public class PostApiIT extends AbstractIT {
         assertEquals(postDTO.getName(), postR.getName());
         assertEquals(postDTO.getSummary(), postR.getSummary());
         assertEquals(postDTO.getDescription(), postR.getDescription());
-        assertEquals(postDTO.getOrganizationName(), postR.getOrganizationName());
+        assertEquals(postDTO.getOrganization().getName(), postR.getOrganization().getName());
         verifyLocation(postDTO.getLocation(), postR);
 
         assertEquals(Optional.ofNullable(postDTO.getPostCategories()).orElse(new ArrayList<>()), postR.getPostCategories());
@@ -1469,13 +1543,13 @@ public class PostApiIT extends AbstractIT {
         University university = universityService.getUniversity(postR.getBoard().getDepartment().getUniversity().getId());
 
         List<ResourceRelation> parents = resourceRelationRepository.findByResource2(post);
-        assertThat(parents.stream().map(ResourceRelation::getResource1).collect(Collectors.toList()),
+        assertThat(parents.stream().map(ResourceRelation::getResource1).collect(toList()),
             Matchers.containsInAnyOrder(university, department, board, post));
         return postR;
     }
 
     private PostRepresentation verifyPatchPost(User user, Long postId, PostPatchDTO postDTO, PostOperation operation, State expectedState) {
-        testUserService.setAuthentication(user.getId());
+        testUserService.setAuthentication(user);
         Post post = postService.getById(postId);
         PostRepresentation postR = operation.execute();
 
@@ -1488,8 +1562,8 @@ public class PostApiIT extends AbstractIT {
         Optional<String> descriptionOptional = postDTO.getDescription();
         assertEquals(descriptionOptional == null ? post.getDescription() : descriptionOptional.orElse(null), postR.getDescription());
 
-        Optional<String> organizationNameOptional = postDTO.getOrganizationName();
-        assertEquals(organizationNameOptional == null ? post.getOrganizationName() : organizationNameOptional.orElse(null), postR.getOrganizationName());
+        Optional<OrganizationDTO> organizationNameOptional = postDTO.getOrganization();
+        assertEquals(organizationNameOptional == null ? post.getOrganization().getName() : organizationNameOptional.orElse(null), postR.getOrganization());
 
         Optional<LocationDTO> locationOptional = postDTO.getLocation();
         verifyLocation(locationOptional == null ? post.getLocation() : locationOptional.orElse(null), postR);
@@ -1548,8 +1622,8 @@ public class PostApiIT extends AbstractIT {
         assertEquals(locationDefinition.getName(), locationR.getName());
         assertEquals(locationDefinition.getDomicile(), locationR.getDomicile());
         assertEquals(locationDefinition.getGoogleId(), locationR.getGoogleId());
-        assertTrue(locationDefinition.getLatitude().compareTo(locationR.getLatitude()) == 0);
-        assertTrue(locationDefinition.getLongitude().compareTo(locationR.getLongitude()) == 0);
+        assertEquals(0, locationDefinition.getLatitude().compareTo(locationR.getLatitude()));
+        assertEquals(0, locationDefinition.getLongitude().compareTo(locationR.getLongitude()));
     }
 
     private void verifyPostActions(List<User> adminUsers, User postUser, Collection<User> unprivilegedUsers, Long postId, State state, Map<Action, Runnable> operations) {
@@ -1575,7 +1649,7 @@ public class PostApiIT extends AbstractIT {
         Post post = postService.getById(postR.getId());
         post.setState(state);
         post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
-        resourceRepository.updateSilently(post);
+        resourceRepository.save(post);
 
         userStatePosts.put(state, postDTO.getName());
     }
@@ -1583,7 +1657,7 @@ public class PostApiIT extends AbstractIT {
     private void reschedulePost(String postName, LocalDateTime baseline, int seconds) {
         Post post = postService.getByName(postName).get(0);
         post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
-        resourceRepository.updateSilently(post);
+        resourceRepository.save(post);
     }
 
     private void verifyUnprivilegedPostUser(LinkedHashMap<Long, LinkedHashMultimap<State, String>> postNames) {
