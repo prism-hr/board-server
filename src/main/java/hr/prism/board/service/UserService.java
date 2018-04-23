@@ -5,6 +5,7 @@ import hr.prism.board.dao.UserDAO;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -29,6 +30,8 @@ import java.util.Optional;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.DocumentRequestState.DISPLAY_FIRST;
 import static hr.prism.board.enums.PasswordHash.SHA256;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACCEPTED_STATES;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.isPresent;
@@ -78,7 +81,24 @@ public class UserService {
     }
 
     public User getById(Long id) {
-        return userRepository.findOne(id);
+        User user = userRepository.findOne(id);
+        if (user == null) {
+            return null;
+        }
+
+        for (UserRole userRole : user.getUserRoles()) {
+            Role role = userRole.getRole();
+            if (role == ADMINISTRATOR) {
+                user.setDepartmentAdministrator(DEPARTMENT == userRole.getResource().getScope());
+                user.setPostCreator(true);
+            }
+
+            if (user.isDepartmentAdministrator() && user.isPostCreator()) {
+                return user;
+            }
+        }
+
+        return user;
     }
 
     public User getByUuid(String uuid) {
@@ -114,10 +134,6 @@ public class UserService {
             .orElse(potentialUsers.get(0));
     }
 
-    public List<Long> getByResourceAndEvents(Resource resource, List<ResourceEvent> events) {
-        return userRepository.findByResourceAndEvents(resource, events);
-    }
-
     public List<User> getByUserRoleWithoutUserRole(Resource resource, Role role, Resource withoutResource,
                                                    Role withoutRole) {
         return userRepository.findByRoleWithoutRole(resource, role, withoutResource, withoutRole);
@@ -137,7 +153,6 @@ public class UserService {
         return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategory(
             resource, enclosingScope, role, ACCEPTED_STATES, MEMBER, LocalDate.now());
     }
-
 
     public List<UserSearch> findUsers(String searchTerm) {
         return userDAO.findUsers(searchTerm);
@@ -201,14 +216,20 @@ public class UserService {
             throw new BoardException(MISSING_USER_EMAIL, "Cannot unset email address");
         }
 
-        userPatchService.patchDocument(user, user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
-        userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState, userDTO.getDocumentImageRequestState());
-        userPatchService.patchProperty(user, user::getSeenWalkThrough, user::setSeenWalkThrough, userDTO.getSeenWalkThrough());
+        userPatchService.patchDocument(user,
+            user::getDocumentImage, user::setDocumentImage, userDTO.getDocumentImage());
+        userPatchService.patchProperty(user, user::getDocumentImageRequestState, user::setDocumentImageRequestState,
+            userDTO.getDocumentImageRequestState());
+        userPatchService.patchProperty(user,
+            user::getSeenWalkThrough, user::setSeenWalkThrough, userDTO.getSeenWalkThrough());
         userPatchService.patchProperty(user, user::getGender, user::setGender, userDTO.getGender());
         userPatchService.patchProperty(user, user::getAgeRange, user::setAgeRange, userDTO.getAgeRange());
-        userPatchService.patchLocation(user, user::getLocationNationality, user::setLocationNationality, userDTO.getLocationNationality());
-        userPatchService.patchDocument(user, user::getDocumentResume, user::setDocumentResume, userDTO.getDocumentResume());
-        userPatchService.patchProperty(user, user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
+        userPatchService.patchLocation(user,
+            user::getLocationNationality, user::setLocationNationality, userDTO.getLocationNationality());
+        userPatchService.patchDocument(user,
+            user::getDocumentResume, user::setDocumentResume, userDTO.getDocumentResume());
+        userPatchService.patchProperty(user,
+            user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
         return updateUserIndex(user);
     }
 

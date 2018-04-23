@@ -2,13 +2,11 @@ package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
 import hr.prism.board.enums.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
@@ -56,8 +54,8 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
             @ColumnResult(name = "emailDisplay", type = String.class),
             @ColumnResult(name = "documentImageCloudinaryId", type = String.class),
             @ColumnResult(name = "documentImageCloudinaryUrl", type = String.class),
-            @ColumnResult(name = "documentImageFileName", type = String.class),
-        }))
+            @ColumnResult(name = "documentImageFileName", type = String.class)}))
+@SuppressWarnings("SqlResolve")
 public class User extends BoardEntity implements Comparable<User> {
 
     @Column(name = "uuid", nullable = false)
@@ -147,7 +145,10 @@ public class User extends BoardEntity implements Comparable<User> {
     private Set<UserSearch> searches = new HashSet<>();
 
     @Transient
-    private List<Pair<Scope, Role>> permissions;
+    private boolean departmentAdministrator;
+
+    @Transient
+    private boolean postCreator;
 
     @Transient
     private boolean revealEmail;
@@ -202,6 +203,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public PasswordHash getPasswordHash() {
         return passwordHash;
     }
@@ -215,6 +217,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return passwordResetUuid;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setPasswordResetUuid(String passwordResetUuid) {
         this.passwordResetUuid = passwordResetUuid;
         return this;
@@ -224,6 +227,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return passwordResetTimestamp;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setPasswordResetTimestamp(LocalDateTime passwordResetTimestamp) {
         this.passwordResetTimestamp = passwordResetTimestamp;
         return this;
@@ -247,10 +251,12 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public Boolean getTestUser() {
         return testUser;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setTestUser(Boolean testUser) {
         this.testUser = testUser;
         return this;
@@ -332,6 +338,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return defaultOrganization;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setDefaultOrganization(Organization defaultOrganization) {
         this.defaultOrganization = defaultOrganization;
         return this;
@@ -346,10 +353,12 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public String getIndexData() {
         return indexData;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setIndexData(String indexData) {
         this.indexData = indexData;
         return this;
@@ -359,16 +368,26 @@ public class User extends BoardEntity implements Comparable<User> {
         return userRoles;
     }
 
+    @SuppressWarnings("unused")
     public Set<UserSearch> getSearches() {
         return searches;
     }
 
-    public List<Pair<Scope, Role>> getPermissions() {
-        return permissions;
+    public boolean isDepartmentAdministrator() {
+        return departmentAdministrator;
     }
 
-    public User setPermissions(List<Pair<Scope, Role>> permissions) {
-        this.permissions = permissions;
+    public User setDepartmentAdministrator(boolean departmentAdministrator) {
+        this.departmentAdministrator = departmentAdministrator;
+        return this;
+    }
+
+    public boolean isPostCreator() {
+        return postCreator;
+    }
+
+    public User setPostCreator(boolean postCreator) {
+        this.postCreator = postCreator;
         return this;
     }
 
@@ -376,6 +395,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return revealEmail;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setRevealEmail(boolean revealEmail) {
         this.revealEmail = revealEmail;
         return this;

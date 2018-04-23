@@ -36,9 +36,9 @@ public class UserRepresentation {
 
     private String websiteResume;
 
-    private List<Scope> scopes;
+    private boolean departmentAdministrator;
 
-    private boolean postAuthor;
+    private boolean postCreator;
 
     private OrganizationRepresentation defaultOrganization;
 
@@ -154,21 +154,21 @@ public class UserRepresentation {
         return this;
     }
 
-    public List<Scope> getScopes() {
-        return scopes;
+    public boolean isDepartmentAdministrator() {
+        return departmentAdministrator;
     }
 
-    public UserRepresentation setScopes(List<Scope> scopes) {
-        this.scopes = scopes;
+    public UserRepresentation setDepartmentAdministrator(boolean departmentAdministrator) {
+        this.departmentAdministrator = departmentAdministrator;
         return this;
     }
 
-    public boolean isPostAuthor() {
-        return postAuthor;
+    public boolean isPostCreator() {
+        return postCreator;
     }
 
-    public UserRepresentation setPostAuthor(boolean postAuthor) {
-        this.postAuthor = postAuthor;
+    public UserRepresentation setPostCreator(boolean postCreator) {
+        this.postCreator = postCreator;
         return this;
     }
 
