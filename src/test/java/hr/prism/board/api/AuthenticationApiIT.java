@@ -1,5 +1,6 @@
 package hr.prism.board.api;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.TestContext;
 import hr.prism.board.TestHelper;
@@ -33,7 +34,6 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -78,7 +78,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getResponse();
         UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
 
-        User user = userService.getUserFromDatabase(userRepresentation.getId());
+        User user = userService.getById(userRepresentation.getId());
         Long userId = user.getId();
 
         verifyAccessToken(loginAccessToken, userId);
@@ -159,7 +159,7 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
 
         Long userId = userR.getId();
-        User user = userService.getUserFromDatabase(userId);
+        User user = userService.getById(userId);
         String passwordResetUuid = user.getPasswordResetUuid();
         Assert.assertNotNull(passwordResetUuid);
         Assert.assertNotNull(user.getPasswordResetTimestamp());
@@ -186,7 +186,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .setPassword("newpassword"))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
-        user = userService.getUserFromDatabase(userId);
+        user = userService.getById(userId);
         Assert.assertNull(user.getPasswordResetUuid());
         Assert.assertNull(user.getPasswordResetTimestamp());
     }
@@ -227,7 +227,7 @@ public class AuthenticationApiIT extends AbstractIT {
             .andReturn();
 
         Long userId = userR.getId();
-        User user = userService.getUserFromDatabase(userId);
+        User user = userService.getById(userId);
         String passwordResetUuid = user.getPasswordResetUuid();
         Assert.assertNotNull(passwordResetUuid);
         Assert.assertNotNull(user.getPasswordResetTimestamp());
@@ -279,7 +279,7 @@ public class AuthenticationApiIT extends AbstractIT {
                 .getContentAsString(),
             UserRepresentation.class).getId();
 
-        User user = userService.getUserFromDatabase(userId);
+        User user = userService.getById(userId);
         Assert.assertEquals("alastair", user.getGivenName());
         Assert.assertEquals("knowles", user.getSurname());
         Assert.assertEquals("alastair@prism.hr", user.getEmail());
@@ -295,14 +295,14 @@ public class AuthenticationApiIT extends AbstractIT {
                         .setOauthData(new OAuthDataDTO().setCode("code")))))
             .andExpect(MockMvcResultMatchers.status().isOk());
 
-        user = userService.getUserFromDatabase(userId);
+        user = userService.getById(userId);
         Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
         Assert.assertEquals("linkedinId", user.getOauthAccountId());
     }
 
     @Test
     public void shouldReconcileAuthenticationsWithInvitations() {
-        Long userId1 = testUserService.authenticate().getId();
+        User user1 = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         DepartmentRepresentation departmentR1 = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department1"));
         Long departmentId1 = departmentR1.getId();
@@ -311,24 +311,33 @@ public class AuthenticationApiIT extends AbstractIT {
         Long boardId1 = boardR1.getId();
 
         departmentUserApi.createMembers(departmentId1, Arrays.asList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member1")
-                .setSurname("member1")
-                .setEmail("member1@member1.com"))
-                .setRole(Role.MEMBER)
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGivenName("member1")
+                        .setSurname("member1")
+                        .setEmail("member1@member1.com"))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(2017),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member2")
-                .setSurname("member2")
-                .setEmail("member2@member2.com"))
-                .setRole(Role.MEMBER)
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGivenName("member2")
+                        .setSurname("member2")
+                        .setEmail("member2@member2.com"))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(2017),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member3")
-                .setSurname("member3")
-                .setEmail("member3@member3.com")).setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2017)));
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGivenName("member3")
+                        .setSurname("member3")
+                        .setEmail("member3@member3.com"))
+                .setMemberCategory(MemberCategory.MASTER_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2017)));
 
         testNotificationService.record();
         PostRepresentation postR1 = postApi.postPost(boardId1,
@@ -347,12 +356,11 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department1 = resourceService.getById(departmentId1);
         Resource post1 = resourceService.getById(postId1);
-        User user1 = userService.getUser(userId1);
 
-        String post1AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post1, user1, Role.ADMINISTRATOR).getUuid();
-        String department1MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department1, member1, Role.MEMBER).getUuid();
-        String department1MemberRole2Uuid = userRoleService.findByResourceAndUserAndRole(department1, member2, Role.MEMBER).getUuid();
-        String department1MemberRole3Uuid = userRoleService.findByResourceAndUserAndRole(department1, member3, Role.MEMBER).getUuid();
+        String post1AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post1, user1, Role.ADMINISTRATOR).getUuid();
+        String department1MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department1, member1, Role.MEMBER).getUuid();
+        String department1MemberRole2Uuid = userRoleService.getByResourceUserAndRole(department1, member2, Role.MEMBER).getUuid();
+        String department1MemberRole3Uuid = userRoleService.getByResourceUserAndRole(department1, member3, Role.MEMBER).getUuid();
 
         String parentRedirect1 = serverUrl + "/redirect?resource=" + boardId1;
         String resourceRedirect1 = serverUrl + "/redirect?resource=" + postId1;
@@ -415,14 +423,20 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setSurname("member1")
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice());
-        testUserService.setAuthentication(member1.getId());
-        departmentUserApi.updateMembership(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member1);
+        departmentUserApi.updateMembership(departmentId1,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR1 = postApi.getPost(postId1, TestHelper.mockHttpServletRequest("ip1"));
         Assert.assertNotNull(postR1.getReferral());
@@ -434,19 +448,25 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setSurname("member4")
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice());
-        testUserService.setAuthentication(member2.getId());
-        departmentUserApi.updateMembership(departmentId1, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member2);
+        departmentUserApi.updateMembership(departmentId1,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR1 = postApi.getPost(postId1, TestHelper.mockHttpServletRequest("ip4"));
         Assert.assertNotNull(postR1.getReferral());
 
-        testUserService.setAuthentication(userId1);
+        testUserService.setAuthentication(user1);
         List<String> emails1 = departmentUserApi.getUserRoles(departmentId1, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails1, BoardUtils.obfuscateEmail("member1@member1.com"),
@@ -470,7 +490,7 @@ public class AuthenticationApiIT extends AbstractIT {
                     .setPassword("password1"), TestHelper.mockDevice()),
             ExceptionCode.DUPLICATE_REGISTRATION);
 
-        Long userId2 = testUserService.authenticate().getId();
+        User user2 = testUserService.authenticate();
         DepartmentRepresentation departmentR2 = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department2"));
         Long departmentId2 = departmentR2.getId();
 
@@ -478,21 +498,26 @@ public class AuthenticationApiIT extends AbstractIT {
             .setName("board2"));
         Long boardId2 = boardR2.getId();
 
-        departmentUserApi.createMembers(departmentId2, Arrays.asList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member1")
-                .setSurname("member1")
-                .setEmail("member1@member1.com"))
-                .setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
-                .setMemberProgram("program")
-                .setMemberYear(2017),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member3")
-                .setSurname("member3")
-                .setEmail("member3@member3.com"))
-                .setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
-                .setMemberProgram("program")
-                .setMemberYear(2017)));
+        departmentUserApi.createMembers(departmentId2,
+            ImmutableList.of(
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("member1")
+                            .setSurname("member1")
+                            .setEmail("member1@member1.com"))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setMemberProgram("program")
+                    .setMemberYear(2017),
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("member3")
+                            .setSurname("member3")
+                            .setEmail("member3@member3.com"))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setMemberProgram("program")
+                    .setMemberYear(2017)));
 
         testNotificationService.record();
         PostRepresentation postR2 = postApi.postPost(boardId2,
@@ -507,10 +532,9 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department2 = resourceService.getById(departmentId2);
         Resource post2 = resourceService.getById(postId2);
-        User user2 = userService.getUser(userId2);
-        String post2AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post2, user2, Role.ADMINISTRATOR).getUuid();
-        String department2MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department2, member1, Role.MEMBER).getUuid();
-        String department2MemberRole3Uuid = userRoleService.findByResourceAndUserAndRole(department2, member3, Role.MEMBER).getUuid();
+        String post2AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post2, user2, Role.ADMINISTRATOR).getUuid();
+        String department2MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department2, member1, Role.MEMBER).getUuid();
+        String department2MemberRole3Uuid = userRoleService.getByResourceUserAndRole(department2, member3, Role.MEMBER).getUuid();
 
         String parentRedirect2 = serverUrl + "/redirect?resource=" + boardId2;
         String resourceRedirect2 = serverUrl + "/redirect?resource=" + postR2.getId();
@@ -558,14 +582,20 @@ public class AuthenticationApiIT extends AbstractIT {
             new LoginDTO().setUuid(department2MemberRole1Uuid)
                 .setEmail("member1@member1.com")
                 .setPassword("password1"), TestHelper.mockDevice());
-        testUserService.setAuthentication(member1.getId());
-        departmentUserApi.updateMembership(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member1);
+        departmentUserApi.updateMembership(departmentId2,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR2 = postApi.getPost(postId2, TestHelper.mockHttpServletRequest("ip1"));
         Assert.assertNotNull(postR2.getReferral());
@@ -574,24 +604,30 @@ public class AuthenticationApiIT extends AbstractIT {
             new LoginDTO().setUuid(department2MemberRole3Uuid)
                 .setEmail("member4@member4.com")
                 .setPassword("password4"), TestHelper.mockDevice());
-        testUserService.setAuthentication(member2.getId());
-        departmentUserApi.updateMembership(departmentId2, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member2);
+        departmentUserApi.updateMembership(departmentId2,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR2 = postApi.getPost(postId2, TestHelper.mockHttpServletRequest("ip1"));
         Assert.assertNotNull(postR2.getReferral());
 
-        testUserService.setAuthentication(userId2);
+        testUserService.setAuthentication(user2);
         List<String> emails2 = departmentUserApi.getUserRoles(departmentId2, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails2, BoardUtils.obfuscateEmail("member1@member1.com"), BoardUtils.obfuscateEmail("member4@member4.com"));
 
-        Long userId3 = testUserService.authenticate().getId();
+        User user3 = testUserService.authenticate();
         DepartmentRepresentation departmentR3 =
             departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department3"));
         Long departmentId3 = departmentR3.getId();
@@ -599,25 +635,31 @@ public class AuthenticationApiIT extends AbstractIT {
         BoardRepresentation boardR3 = boardApi.createBoard(departmentId3, new BoardDTO().setName("board3"));
         Long boardId3 = boardR3.getId();
 
-        departmentUserApi.createMembers(departmentId3, Arrays.asList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member5")
-                .setSurname("member5")
-                .setEmail("member5@member5.com"))
-                .setRole(Role.MEMBER)
+        departmentUserApi.createMembers(departmentId3, ImmutableList.of(
+            new MemberDTO().setUser(
+                new UserDTO()
+                    .setGivenName("member5")
+                    .setSurname("member5")
+                    .setEmail("member5@member5.com"))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(2017),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member6")
-                .setSurname("member6")
-                .setEmail("member6@member6.com"))
-                .setRole(Role.MEMBER)
+            new MemberDTO().setUser(
+                new UserDTO()
+                    .setGivenName("member6")
+                    .setSurname("member6")
+                    .setEmail("member6@member6.com"))
                 .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(2017),
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member7")
-                .setSurname("member7")
-                .setEmail("member7@member7.com")).setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.MASTER_STUDENT).setMemberProgram("program").setMemberYear(2017)));
+            new MemberDTO().setUser(
+                new UserDTO()
+                    .setGivenName("member7")
+                    .setSurname("member7")
+                    .setEmail("member7@member7.com"))
+                .setMemberCategory(MemberCategory.MASTER_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2017)));
 
         testNotificationService.record();
         PostRepresentation postR3 = postApi.postPost(boardId3,
@@ -636,11 +678,10 @@ public class AuthenticationApiIT extends AbstractIT {
 
         Resource department3 = resourceService.getById(departmentId3);
         Resource post3 = resourceService.getById(postId3);
-        User user3 = userService.getUser(userId3);
-        String post3AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post3, user3, Role.ADMINISTRATOR).getUuid();
-        String department3MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department3, member5, Role.MEMBER).getUuid();
-        String department3MemberRole2Uuid = userRoleService.findByResourceAndUserAndRole(department3, member6, Role.MEMBER).getUuid();
-        String department3MemberRole3Uuid = userRoleService.findByResourceAndUserAndRole(department3, member7, Role.MEMBER).getUuid();
+        String post3AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post3, user3, Role.ADMINISTRATOR).getUuid();
+        String department3MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department3, member5, Role.MEMBER).getUuid();
+        String department3MemberRole2Uuid = userRoleService.getByResourceUserAndRole(department3, member6, Role.MEMBER).getUuid();
+        String department3MemberRole3Uuid = userRoleService.getByResourceUserAndRole(department3, member7, Role.MEMBER).getUuid();
 
         String parentRedirect3 = serverUrl + "/redirect?resource=" + boardId3;
         String resourceRedirect3 = serverUrl + "/redirect?resource=" + postR3.getId();
@@ -702,14 +743,20 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setUuid(department3MemberRole1Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice());
-        testUserService.setAuthentication(member5.getId());
-        departmentUserApi.updateMembership(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member5);
+        departmentUserApi.updateMembership(departmentId3,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR3 = postApi.getPost(postId3, TestHelper.mockHttpServletRequest("ip5"));
         Assert.assertNotNull(postR3.getReferral());
@@ -719,14 +766,20 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setUuid(department3MemberRole2Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId2").setRedirectUri("redirectUri2"))
                 .setOauthData(new OAuthDataDTO().setCode("code2")), TestHelper.mockDevice());
-        testUserService.setAuthentication(member6.getId());
-        departmentUserApi.updateMembership(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member6);
+        departmentUserApi.updateMembership(departmentId3,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR3 = postApi.getPost(postId3, TestHelper.mockHttpServletRequest("ip6"));
         Assert.assertNotNull(postR3.getReferral());
@@ -737,25 +790,31 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId3").setRedirectUri("redirectUri3"))
                 .setOauthData(new OAuthDataDTO().setCode("code3")),
             TestHelper.mockDevice());
-        testUserService.setAuthentication(member1.getId());
-        departmentUserApi.updateMembership(departmentId3, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member1);
+        departmentUserApi.updateMembership(departmentId3,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR3 = postApi.getPost(postId3, TestHelper.mockHttpServletRequest("ip7"));
         Assert.assertNotNull(postR3.getReferral());
 
-        testUserService.setAuthentication(userId3);
+        testUserService.setAuthentication(user3);
         List<String> emails3 = departmentUserApi.getUserRoles(departmentId3, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails3, BoardUtils.obfuscateEmail("alastair@prism.hr"),
             BoardUtils.obfuscateEmail("jakub@prism.hr"), BoardUtils.obfuscateEmail("member1@member1.com"));
 
-        Long userId4 = testUserService.authenticate().getId();
+        User user4 = testUserService.authenticate();
         DepartmentRepresentation departmentR4 =
             departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department4"));
         Long departmentId4 = departmentR4.getId();
@@ -763,14 +822,17 @@ public class AuthenticationApiIT extends AbstractIT {
         BoardRepresentation boardR4 = boardApi.createBoard(departmentId4, new BoardDTO().setName("board4"));
         Long boardId4 = boardR4.getId();
 
-        departmentUserApi.createMembers(departmentId4, Collections.singletonList(
-            new UserRoleDTO().setUser(new UserDTO().setGivenName("member8")
-                .setSurname("member8")
-                .setEmail("member8@member8.com"))
-                .setRole(Role.MEMBER)
-                .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
-                .setMemberProgram("program")
-                .setMemberYear(2017)));
+        departmentUserApi.createMembers(departmentId4,
+            ImmutableList.of(
+                new MemberDTO()
+                    .setUser(
+                        new UserDTO()
+                            .setGivenName("member8")
+                            .setSurname("member8")
+                            .setEmail("member8@member8.com"))
+                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
+                    .setMemberProgram("program")
+                    .setMemberYear(2017)));
 
         testNotificationService.record();
         PostRepresentation postR4 = postApi.postPost(boardId4,
@@ -785,11 +847,10 @@ public class AuthenticationApiIT extends AbstractIT {
 
         User member8 = userRepository.findByEmail("member8@member8.com");
 
-        User user4 = userService.getUser(userId4);
         Resource department4 = resourceService.getById(departmentId4);
         Resource post4 = resourceService.getById(postId4);
-        String post4AdminRole1Uuid = userRoleService.findByResourceAndUserAndRole(post4, user4, Role.ADMINISTRATOR).getUuid();
-        String department4MemberRole1Uuid = userRoleService.findByResourceAndUserAndRole(department4, member8, Role.MEMBER).getUuid();
+        String post4AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post4, user4, Role.ADMINISTRATOR).getUuid();
+        String department4MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department4, member8, Role.MEMBER).getUuid();
 
         String parentRedirect4 = serverUrl + "/redirect?resource=" + boardId4;
         String resourceRedirect4 = serverUrl + "/redirect?resource=" + postR4.getId();
@@ -825,19 +886,25 @@ public class AuthenticationApiIT extends AbstractIT {
                 .setUuid(department4MemberRole1Uuid)
                 .setAuthorizationData(new OAuthAuthorizationDataDTO().setClientId("clientId").setRedirectUri("redirectUri"))
                 .setOauthData(new OAuthDataDTO().setCode("code")), TestHelper.mockDevice());
-        testUserService.setAuthentication(member5.getId());
-        departmentUserApi.updateMembership(departmentId4, new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE)
-            .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
-            .setLocationNationality(new LocationDTO().setName("United Kingdom")
-                .setDomicile("GBR")
-                .setGoogleId("googleId")
-                .setLatitude(BigDecimal.ONE)
-                .setLongitude(BigDecimal.ONE))));
+        testUserService.setAuthentication(member5);
+        departmentUserApi.updateMembership(departmentId4,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.TWENTYFIVE_TWENTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(BigDecimal.ONE)
+                                .setLongitude(BigDecimal.ONE))));
 
         postR4 = postApi.getPost(postId4, TestHelper.mockHttpServletRequest("ip5"));
         Assert.assertNotNull(postR4.getReferral());
 
-        testUserService.setAuthentication(userId4);
+        testUserService.setAuthentication(user4);
         List<String> emails4 = departmentUserApi.getUserRoles(departmentId4, null)
             .getMembers().stream().map(userRole -> userRole.getUser().getEmail()).collect(Collectors.toList());
         verifyContains(emails4, BoardUtils.obfuscateEmail("alastair@prism.hr"));
