@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
@@ -20,8 +19,6 @@ import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static freemarker.template.Configuration.VERSION_2_3_26;
 import static hr.prism.board.utils.JacksonUtils.getObjectMapper;
 
-@EnableWebMvc
-@Configuration
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
     private final boolean jacksonPretty;

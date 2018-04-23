@@ -4,7 +4,6 @@ import hr.prism.board.authentication.AuthenticationFilter;
 import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -14,7 +13,6 @@ import javax.inject.Inject;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-@Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Long sessionRefreshBeforeExpirationSeconds;

@@ -56,7 +56,13 @@ public class ActivityDAO {
     public void deleteActivities(Resource resource) {
         activityEventRepository.deleteByResource(resource);
         activityRoleRepository.deleteByResource(resource);
-        activityRepository.deleteByResource(resource);
+
+        List<Long> exclusions = activityRepository.findByResourceWithActivityUsers(resource);
+        if (exclusions.isEmpty()) {
+            activityRepository.deleteByResource(resource);
+        } else {
+            activityRepository.deleteByResource(resource, exclusions);
+        }
     }
 
     public void deleteActivities(UserRole userRole) {

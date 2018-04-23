@@ -62,16 +62,27 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     @Query(value =
         "delete from Activity activity " +
             "where activity.resource = :resource " +
-            "and activity.id not in (" +
-            "select activity.id " +
-            "from ActivityUser activityUser " +
-            "inner join activityUser.activity " +
-            "where activity.resource = :resource " +
-            "and activity.userRole is null " +
-            "and activity.resourceEvent is null) " +
             "and activity.userRole is null " +
             "and activity.resourceEvent is null")
     void deleteByResource(@Param("resource") Resource resource);
+
+    @Modifying
+    @Query(value =
+        "delete from Activity activity " +
+            "where activity.resource = :resource " +
+            "and activity.id not in (:exclusions) " +
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null")
+    void deleteByResource(@Param("resource") Resource resource, @Param("exclusions") Collection<Long> exclusions);
+
+    @Query(value =
+        "select activity.id " +
+            "from Activity activity " +
+            "inner join activity.activityUsers activityUser " +
+            "where activity.resource = :resource " +
+            "and activity.userRole is null " +
+            "and activity.resourceEvent is null")
+    List<Long> findByResourceWithActivityUsers(@Param("resource") Resource resource);
 
     @Modifying
     @Query(value =

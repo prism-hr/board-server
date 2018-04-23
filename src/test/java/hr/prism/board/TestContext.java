@@ -22,8 +22,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ActiveProfiles("test")
 @SpringBootTest(
     webEnvironment = RANDOM_PORT,
-    classes = {TestConfiguration.class, BoardApplication.class, DatabaseConfiguration.class,
-        SecurityConfiguration.class, WebMvcConfiguration.class, PusherConfiguration.class})
+    classes = {BoardApplication.class, DatabaseConfiguration.class, EmailConfiguration.class,
+        PusherConfiguration.class, WebMvcConfiguration.class, TestConfiguration.class, SecurityConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public @interface TestContext {
 
