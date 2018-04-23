@@ -4,9 +4,10 @@ import hr.prism.board.enums.AgeRange;
 import hr.prism.board.enums.DocumentRequestState;
 import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.Scope;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.List;
-import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class UserRepresentation {
@@ -199,18 +200,22 @@ public class UserRepresentation {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(email);
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        UserRepresentation that = (UserRepresentation) other;
+        return new EqualsBuilder()
+            .append(id, that.id)
+            .append(email, that.email)
+            .isEquals();
     }
 
     @Override
-    @SuppressWarnings("SimplifiableIfStatement")
-    public boolean equals(Object object) {
-        if (object == null || object.getClass() != getClass()) {
-            return false;
-        }
-
-        return Objects.equals(email, ((UserRepresentation) object).getEmail());
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(id)
+            .append(email)
+            .toHashCode();
     }
-
 }

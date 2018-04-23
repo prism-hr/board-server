@@ -1066,16 +1066,22 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForActivities(departmentUserId);
+        listenForActivities(departmentUser);
 
         User boardMember = testUserService.authenticate();
         departmentUserApi.createMembershipRequest(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.SIXTYFIVE_PLUS).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom")
-                    .setDomicile("GBR")
-                    .setGoogleId("googleId")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE)))
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.MALE)
+                        .setAgeRange(AgeRange.SIXTYFIVE_PLUS)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(ONE)
+                                .setLongitude(ONE)))
                 .setMemberCategory(UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(3)
@@ -1086,7 +1092,7 @@ public class DepartmentApiIT extends AbstractIT {
             new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         Resource department = resourceService.getById(departmentId);
-        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
+        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(new NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
@@ -1096,28 +1102,30 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        testUserService.setAuthentication(boardMemberId);
+        testUserService.setAuthentication(boardMember);
         ExceptionUtils.verifyException(
             BoardForbiddenException.class,
             () -> departmentUserApi.reviewMembershipRequest(departmentId, boardMemberId, "accepted"),
             ExceptionCode.FORBIDDEN_ACTION);
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         departmentUserApi.reviewMembershipRequest(departmentId, boardMemberId, "accepted");
 
-        verifyActivitiesEmpty(departmentUserId);
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER);
+        verifyActivitiesEmpty(departmentUser);
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, boardMember, Role.MEMBER);
         Assert.assertEquals(ACCEPTED, userRole.getState());
 
         testActivityService.stop();
         testNotificationService.stop();
 
-        testUserService.setAuthentication(boardMemberId);
+        testUserService.setAuthentication(boardMember);
 
         ExceptionUtils.verifyException(
             BoardException.class,
             () -> departmentUserApi.createMembershipRequest(departmentId,
-                new UserRoleDTO().setMemberCategory(UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
+                new MemberDTO()
+                    .setMemberCategory(UNDERGRADUATE_STUDENT)
+                    .setExpiryDate(LocalDate.now().plusYears(2))),
             ExceptionCode.DUPLICATE_PERMISSION);
     }
 
@@ -1134,27 +1142,33 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForActivities(departmentUserId);
+        listenForActivities(departmentUser);
 
         User boardMember = testUserService.authenticate();
-        departmentUserApi.createMembershipRequest(departmentId, new UserRoleDTO()
-            .setUser(new UserDTO().setGender(Gender.MALE).setAgeRange(AgeRange.FIFTY_SIXTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom")
-                    .setDomicile("GBR")
-                    .setGoogleId("googleId")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE)))
-            .setMemberCategory(UNDERGRADUATE_STUDENT)
-            .setMemberProgram("program")
-            .setMemberYear(2)
-            .setExpiryDate(LocalDate.now().plusYears(2)));
+        departmentUserApi.createMembershipRequest(departmentId,
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.MALE)
+                        .setAgeRange(AgeRange.FIFTY_SIXTYFOUR)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(ONE)
+                                .setLongitude(ONE)))
+                .setMemberCategory(UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2)
+                .setExpiryDate(LocalDate.now().plusYears(2)));
 
         Long boardMemberId = boardMember.getId();
         testActivityService.verify(departmentUserId,
             new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         Resource department = resourceService.getById(departmentId);
-        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
+        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(new NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
@@ -1164,22 +1178,24 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         departmentUserApi.reviewMembershipRequest(departmentId, boardMemberId, "rejected");
 
-        verifyActivitiesEmpty(departmentUserId);
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER);
+        verifyActivitiesEmpty(departmentUser);
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, boardMember, Role.MEMBER);
         Assert.assertEquals(State.REJECTED, userRole.getState());
 
         testActivityService.stop();
         testNotificationService.stop();
 
-        testUserService.setAuthentication(boardMemberId);
+        testUserService.setAuthentication(boardMember);
 
         ExceptionUtils.verifyException(
             BoardForbiddenException.class,
             () -> departmentUserApi.createMembershipRequest(departmentId,
-                new UserRoleDTO().setMemberCategory(UNDERGRADUATE_STUDENT).setExpiryDate(LocalDate.now().plusYears(2))),
+                new MemberDTO()
+                    .setMemberCategory(UNDERGRADUATE_STUDENT)
+                    .setExpiryDate(LocalDate.now().plusYears(2))),
             ExceptionCode.FORBIDDEN_PERMISSION);
     }
 
@@ -1195,16 +1211,21 @@ public class DepartmentApiIT extends AbstractIT {
         testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
-        listenForActivities(departmentUserId);
+        listenForActivities(departmentUser);
 
         User boardMember = testUserService.authenticate();
         departmentUserApi.createMembershipRequest(departmentId,
-            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.FIFTY_SIXTYFOUR).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom")
-                    .setDomicile("GBR")
-                    .setGoogleId("googleId")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE)))
+            new MemberDTO().setUser(
+                new UserDTO()
+                    .setGender(Gender.FEMALE)
+                    .setAgeRange(AgeRange.FIFTY_SIXTYFOUR)
+                    .setLocationNationality(
+                        new LocationDTO()
+                            .setName("London, United Kingdom")
+                            .setDomicile("GBR")
+                            .setGoogleId("googleId")
+                            .setLatitude(ONE)
+                            .setLongitude(ONE)))
                 .setMemberCategory(UNDERGRADUATE_STUDENT)
                 .setMemberProgram("program")
                 .setMemberYear(1)
@@ -1215,7 +1236,7 @@ public class DepartmentApiIT extends AbstractIT {
             new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         Resource department = resourceService.getById(departmentId);
-        String departmentAdminRoleUuid = userRoleService.findByResourceAndUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
+        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(new NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
@@ -1225,20 +1246,20 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
 
-        UserRole userRole = userRoleService.findByResourceAndUserAndRole(department, boardMember, Role.MEMBER);
+        UserRole userRole = userRoleService.getByResourceUserAndRole(department, boardMember, Role.MEMBER);
         Long activityId = activityService.getByUserRoleAndActivity(userRole, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY).getId();
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         userActivityApi.dismissActivity(activityId);
 
-        verifyActivitiesEmpty(departmentUserId);
+        verifyActivitiesEmpty(departmentUser);
         testActivityService.stop();
         testNotificationService.stop();
     }
 
     @Test
     public void shouldSupportDepartmentDashboard() {
-        Long departmentUserId = testUserService.authenticate().getId();
+        User departmentUser = testUserService.authenticate();
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
 
         Long departmentId1 = departmentApi.createDepartment(universityId,
@@ -1281,9 +1302,8 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyPostStatistics, department2Dashboard1.getPostStatistics());
 
         UserRoleRepresentation member1 = departmentUserApi.createUserRoles(departmentId1,
-            new UserRoleDTO()
-                .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com"))
-                .setRole(Role.MEMBER));
+            new MemberDTO()
+                .setUser(new UserDTO().setGivenName("one").setSurname("one").setEmail("one@one.com")));
 
         DepartmentDashboardRepresentation department1Dashboard2 = departmentApi.getDepartmentDashboard(departmentId1);
         Assert.assertEquals(
@@ -1291,7 +1311,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setCountLive(1L)
                 .setCountThisYear(1L)
                 .setCountAllTime(1L)
-                .setMostRecent(member1.getCreatedTimestamp()),
+                .setMostRecent(userService.getById(member1.getUser().getId()).getCreatedTimestamp()),
             department1Dashboard2.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department1Dashboard2.getPostStatistics());
 
@@ -1300,9 +1320,8 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyPostStatistics, department2Dashboard2.getPostStatistics());
 
         UserRoleRepresentation member2 = departmentUserApi.createUserRoles(departmentId1,
-            new UserRoleDTO()
-                .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com"))
-                .setRole(Role.MEMBER));
+            new MemberDTO()
+                .setUser(new UserDTO().setGivenName("two").setSurname("two").setEmail("two@two.com")));
 
         DepartmentDashboardRepresentation department1Dashboard3 = departmentApi.getDepartmentDashboard(departmentId1);
         Assert.assertEquals(
@@ -1310,7 +1329,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setCountLive(2L)
                 .setCountThisYear(2L)
                 .setCountAllTime(2L)
-                .setMostRecent(member2.getCreatedTimestamp()),
+                .setMostRecent(userService.getById(member2.getUser().getId()).getCreatedTimestamp()),
             department1Dashboard3.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department1Dashboard3.getPostStatistics());
 
@@ -1320,33 +1339,59 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long memberId3 = testUserService.authenticate().getId();
         departmentUserApi.createMembershipRequest(departmentId1,
-            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom")
-                    .setDomicile("GBR")
-                    .setGoogleId("googleId")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE)))
-                .setMemberCategory(UNDERGRADUATE_STUDENT).setMemberProgram("program").setMemberYear(2015));
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.THIRTY_THIRTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(ONE)
+                                .setLongitude(ONE)))
+                .setMemberCategory(UNDERGRADUATE_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2015));
 
         Long memberId4 = testUserService.authenticate().getId();
         departmentUserApi.createMembershipRequest(departmentId1,
-            new UserRoleDTO().setUser(new UserDTO().setGender(Gender.FEMALE).setAgeRange(AgeRange.THIRTY_THIRTYNINE).setLocationNationality(
-                new LocationDTO().setName("London, United Kingdom")
-                    .setDomicile("GBR")
-                    .setGoogleId("googleId")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE)))
-                .setMemberCategory(MASTER_STUDENT).setMemberProgram("program").setMemberYear(2016));
+            new MemberDTO()
+                .setUser(
+                    new UserDTO()
+                        .setGender(Gender.FEMALE)
+                        .setAgeRange(AgeRange.THIRTY_THIRTYNINE)
+                        .setLocationNationality(
+                            new LocationDTO()
+                                .setName("London, United Kingdom")
+                                .setDomicile("GBR")
+                                .setGoogleId("googleId")
+                                .setLatitude(ONE)
+                                .setLongitude(ONE)))
+                .setMemberCategory(MASTER_STUDENT)
+                .setMemberProgram("program")
+                .setMemberYear(2016));
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         UserRolesRepresentation userRoles = departmentUserApi.getUserRoles(departmentId1, null);
-        LocalDateTime member3CreatedTimestamp = userRoles.getMemberRequests().stream()
-            .filter(userRole -> userRole.getUser().getId().equals(memberId3))
-            .findFirst().get().getCreatedTimestamp();
+        LocalDateTime member3CreatedTimestamp =
+            userService.getById(
+                userRoles.getMemberRequests()
+                    .stream()
+                    .filter(userRole -> userRole.getUser().getId().equals(memberId3))
+                    .findFirst()
+                    .orElseThrow(Error::new)
+                    .getUser().getId()).getCreatedTimestamp();
 
-        LocalDateTime member4CreatedTimestamp = userRoles.getMemberRequests().stream()
-            .filter(userRole -> userRole.getUser().getId().equals(memberId4))
-            .findFirst().get().getCreatedTimestamp();
+        LocalDateTime member4CreatedTimestamp =
+            userService.getById(
+                userRoles.getMemberRequests()
+                    .stream()
+                    .filter(userRole -> userRole.getUser().getId().equals(memberId4))
+                    .findFirst()
+                    .orElseThrow(Error::new)
+                    .getUser().getId()).getCreatedTimestamp();
 
         DepartmentDashboardRepresentation department1Dashboard4 = departmentApi.getDepartmentDashboard(departmentId1);
         Assert.assertEquals(
@@ -1362,7 +1407,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyMemberStatistics, department2Dashboard4.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department2Dashboard4.getPostStatistics());
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         departmentUserApi.reviewMembershipRequest(departmentId1, memberId3, "accepted");
         departmentUserApi.reviewMembershipRequest(departmentId1, memberId4, "rejected");
 
@@ -1387,7 +1432,7 @@ public class DepartmentApiIT extends AbstractIT {
                 .setPostCategories(singletonList("Employment")));
         Long postId = post.getId();
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         DepartmentDashboardRepresentation department1Dashboard6 = departmentApi.getDepartmentDashboard(departmentId1);
         Assert.assertEquals(
             new StatisticsRepresentation<>()
@@ -1421,7 +1466,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(emptyMemberStatistics, department2Dashboard6.getMemberStatistics());
         Assert.assertEquals(emptyPostStatistics, department2Dashboard6.getPostStatistics());
 
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
         postApi.executeActionOnPost(postId, "accept", new PostPatchDTO());
         postService.publishAndRetirePosts(LocalDateTime.now());
 
@@ -1500,8 +1545,8 @@ public class DepartmentApiIT extends AbstractIT {
         Long universityId = universityService.getOrCreateUniversity("University College London", "ucl").getId();
         Long departmentId = departmentApi.createDepartment(universityId, new DepartmentDTO().setName("department").setSummary("department summary")).getId();
 
-        List<UserRoleRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
-        verifyContains(users, new UserRoleRepresentation().setUser(new UserRepresentation().setEmail(user.getEmailDisplay())).setRole(ADMINISTRATOR).setState(ACCEPTED));
+        List<StaffRepresentation> users = departmentUserApi.getUserRoles(departmentId, null).getStaff();
+        verifyContains(users, new StaffRepresentation().setUser(new UserRepresentation().setEmail(user.getEmailDisplay())));
 
         // add ADMINISTRATOR role
         UserDTO newUser = new UserDTO().setEmail("board@mail.com").setGivenName("Sample").setSurname("User");

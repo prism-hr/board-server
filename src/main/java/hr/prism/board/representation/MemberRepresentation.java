@@ -2,6 +2,8 @@ package hr.prism.board.representation;
 
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.time.LocalDate;
 
@@ -88,6 +90,38 @@ public class MemberRepresentation extends UserRoleRepresentation<MemberRepresent
     public MemberRepresentation setViewed(boolean viewed) {
         this.viewed = viewed;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .appendSuper(super.hashCode())
+            .append(email)
+            .append(memberCategory)
+            .append(memberProgram)
+            .append(memberYear)
+            .append(state)
+            .append(expiryDate)
+            .append(viewed)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        MemberRepresentation that = (MemberRepresentation) other;
+        return new EqualsBuilder()
+            .appendSuper(super.equals(other))
+            .append(viewed, that.viewed)
+            .append(email, that.email)
+            .append(memberCategory, that.memberCategory)
+            .append(memberProgram, that.memberProgram)
+            .append(memberYear, that.memberYear)
+            .append(state, that.state)
+            .append(expiryDate, that.expiryDate)
+            .isEquals();
     }
 
 }
