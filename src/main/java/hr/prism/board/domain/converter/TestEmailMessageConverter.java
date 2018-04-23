@@ -8,7 +8,7 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.io.IOException;
 
-import static hr.prism.board.exception.ExceptionCode.PROBLEM;
+import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static hr.prism.board.utils.ObjectMapperUtils.getObjectMapper;
 
 @SuppressWarnings("unused")
@@ -20,7 +20,7 @@ public class TestEmailMessageConverter implements AttributeConverter<TestEmailMe
         try {
             return attribute == null ? null : getObjectMapper().writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
-            throw new BoardException(PROBLEM, "Could not serialize test email", e);
+            throw new BoardException(UNKNOWN, "Could not serialize test email", e);
         }
     }
 
@@ -29,7 +29,7 @@ public class TestEmailMessageConverter implements AttributeConverter<TestEmailMe
         try {
             return dbData == null ? null : getObjectMapper().readValue(dbData, TestEmailMessageRepresentation.class);
         } catch (IOException e) {
-            throw new BoardException(PROBLEM, "Could not deserialize test email", e);
+            throw new BoardException(UNKNOWN, "Could not deserialize test email", e);
         }
     }
 

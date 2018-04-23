@@ -1,9 +1,11 @@
 package hr.prism.board.representation;
 
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.AgeRange;
+import hr.prism.board.enums.Gender;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.ResourceEvent;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class ResourceEventRepresentation {
 
@@ -37,11 +39,7 @@ public class ResourceEventRepresentation {
 
     private LocalDateTime createdTimestamp;
 
-    private ResourceEventMatch match;
-
     private boolean viewed;
-
-    private List<ResourceEventRepresentation> history;
 
     public Long getId() {
         return id;
@@ -70,10 +68,12 @@ public class ResourceEventRepresentation {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public String getIpAddress() {
         return ipAddress;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceEventRepresentation setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
         return this;
@@ -142,6 +142,7 @@ public class ResourceEventRepresentation {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public DocumentRepresentation getDocumentResume() {
         return documentResume;
     }
@@ -160,15 +161,18 @@ public class ResourceEventRepresentation {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public String getCoveringNote() {
         return coveringNote;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceEventRepresentation setCoveringNote(String coveringNote) {
         this.coveringNote = coveringNote;
         return this;
     }
 
+    @SuppressWarnings("unused")
     public LocalDateTime getCreatedTimestamp() {
         return createdTimestamp;
     }
@@ -178,30 +182,12 @@ public class ResourceEventRepresentation {
         return this;
     }
 
-    public ResourceEventMatch getMatch() {
-        return match;
-    }
-
-    public ResourceEventRepresentation setMatch(ResourceEventMatch match) {
-        this.match = match;
-        return this;
-    }
-
     public boolean isViewed() {
         return viewed;
     }
 
     public ResourceEventRepresentation setViewed(boolean viewed) {
         this.viewed = viewed;
-        return this;
-    }
-
-    public List<ResourceEventRepresentation> getHistory() {
-        return history;
-    }
-
-    public ResourceEventRepresentation setHistory(List<ResourceEventRepresentation> history) {
-        this.history = history;
         return this;
     }
 

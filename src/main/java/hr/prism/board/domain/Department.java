@@ -1,7 +1,7 @@
 package hr.prism.board.domain;
 
 import com.stripe.model.Customer;
-import hr.prism.board.value.DepartmentSearch;
+import hr.prism.board.value.ResourceSearch;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -34,7 +34,9 @@ import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
                 "FROM resource " +
                 "LEFT JOIN document AS document_logo " +
                 "ON resource.document_logo_id = document_logo.id " +
-                "WHERE resource.parent_id = :universityId AND resource.scope = :scope AND resource.state = :state " +
+                "WHERE resource.parent_id = :universityId " +
+                "AND resource.scope = 'DEPARTMENT' " +
+                "AND resource.state = 'ACCEPTED' " +
                 "HAVING similarityHard = 1 OR similaritySoft > 0 " +
                 "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
                 "LIMIT 10",
@@ -42,7 +44,7 @@ import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
     @NamedNativeQuery(
         name = "programSearch",
         query =
-            "SELECT user_role.member_program, as program " +
+            "SELECT user_role.member_program as program, " +
                 "IF(user_role.member_program LIKE :searchTermHard, 1, 0) AS similarityHard, " +
                 "MATCH (user_role.member_program) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
                 "FROM user_role " +
@@ -56,7 +58,7 @@ import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
     @SqlResultSetMapping(
         name = "departmentSearch",
         classes = @ConstructorResult(
-            targetClass = DepartmentSearch.class,
+            targetClass = ResourceSearch.class,
             columns = {
                 @ColumnResult(name = "id", type = Long.class),
                 @ColumnResult(name = "name", type = String.class),
@@ -68,6 +70,7 @@ import static hr.prism.board.enums.Scope.Value.DEPARTMENT;
         columns = @ColumnResult(
             name = "program",
             type = String.class))})
+@SuppressWarnings("SqlResolve")
 public class Department extends Resource {
 
     @Column(name = "notified_count")
@@ -108,6 +111,7 @@ public class Department extends Resource {
         return memberToBeUploadedCount;
     }
 
+    @SuppressWarnings("unused")
     public void setMemberToBeUploadedCount(Long memberToBeUploadedCount) {
         this.memberToBeUploadedCount = memberToBeUploadedCount;
     }
@@ -120,6 +124,7 @@ public class Department extends Resource {
         this.lastMemberTimestamp = lastMemberTimestamp;
     }
 
+    @SuppressWarnings("unused")
     public LocalDateTime getLastTaskCreationTimestamp() {
         return lastTaskCreationTimestamp;
     }

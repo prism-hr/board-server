@@ -14,13 +14,14 @@ import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.value.DepartmentSearch;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceSearch;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import static hr.prism.board.enums.Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY;
 import static hr.prism.board.enums.MemberCategory.MEMBER_CATEGORY_STRINGS;
 import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION;
-import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
+import static hr.prism.board.enums.ResourceTask.RESOURCE_TASKS;
 import static hr.prism.board.enums.ResourceTask.UPDATE_MEMBER;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
@@ -90,12 +91,11 @@ public class DepartmentService {
 
     private final EntityManager entityManager;
 
+    @Inject
     public DepartmentService(@Value("${department.draft.expiry.seconds}") Long departmentDraftExpirySeconds,
                              @Value("${department.pending.expiry.seconds}") Long departmentPendingExpirySeconds,
-                             @Value("${department.pending.notification.interval1.seconds}")
-                                 Long departmentPendingNotificationInterval1Seconds,
-                             @Value("${department.pending.notification.interval2.seconds}")
-                                 Long departmentPendingNotificationInterval2Seconds,
+                             @Value("${department.pending.notification.interval1.seconds}") Long departmentPendingNotificationInterval1Seconds,
+                             @Value("${department.pending.notification.interval2.seconds}") Long departmentPendingNotificationInterval2Seconds,
                              DepartmentRepository departmentRepository, DepartmentDAO departmentDAO,
                              UserService userService, DocumentService documentService, ResourceService resourceService,
                              ResourcePatchService<Department> resourcePatchService, UserRoleService userRoleService,
@@ -123,13 +123,13 @@ public class DepartmentService {
         this.entityManager = entityManager;
     }
 
-    public Department getDepartment(Long id) {
+    public Department getById(Long id) {
         User user = userService.getUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         return verifyCanView(user, department);
     }
 
-    public Department getDepartment(String handle) {
+    public Department getById(String handle) {
         User user = userService.getUser();
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, handle);
         return verifyCanView(user, department);
@@ -203,7 +203,7 @@ public class DepartmentService {
 
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());
-        resourceTaskService.createForNewResource(departmentId, user.getId(), DEPARTMENT_TASKS);
+        resourceTaskService.createForNewResource(departmentId, user.getId(), RESOURCE_TASKS);
 
         entityManager.refresh(department);
         return (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
@@ -228,7 +228,7 @@ public class DepartmentService {
         });
     }
 
-    public List<DepartmentSearch> findDepartment(Long universityId, String searchTerm) {
+    public List<ResourceSearch> findDepartment(Long universityId, String searchTerm) {
         return departmentDAO.findDepartments(universityId, searchTerm);
     }
 
@@ -277,13 +277,13 @@ public class DepartmentService {
             PENDING, 1, 2, baseline1, baseline2);
     }
 
-    public void sendSubscribeNotification(Long departmentId) {
-        Department department = (Department) resourceService.getById(departmentId);
+    public void sendSubscribeNotification(Long id) {
+        Department department = (Department) resourceService.getById(id);
         hr.prism.board.domain.Activity subscribeActivity = activityService.getByResourceActivityAndRole(
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (subscribeActivity == null) {
             eventProducer.produce(
-                new ActivityEvent(this, departmentId, false,
+                new ActivityEvent(this, id,
                     singletonList(
                         new hr.prism.board.workflow.Activity()
                             .setScope(DEPARTMENT)
@@ -292,7 +292,7 @@ public class DepartmentService {
         }
 
         eventProducer.produce(
-            new NotificationEvent(this, departmentId,
+            new NotificationEvent(this, id,
                 singletonList(
                     new hr.prism.board.workflow.Notification()
                         .setScope(DEPARTMENT)

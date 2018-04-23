@@ -567,7 +567,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         LocalDateTime baseline = scheduledService.getBaseline();
         LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
-        Department department1 = departmentService.getDepartment(departmentId);
+        Department department1 = departmentService.getById(departmentId);
         department1.setCreatedTimestamp(baseline1);
         department1.setLastMemberTimestamp(baseline1);
         department1.setLastTaskCreationTimestamp(baseline.minusYears(1));
@@ -1758,7 +1758,7 @@ public class DepartmentApiIT extends AbstractIT {
         verifyContains(postNames, "Database Engineer");
 
         testUserService.unauthenticate();
-        Long boardId = boardService.getBoard("ed/cs/opportunities").getId();
+        Long boardId = boardService.getById("ed/cs/opportunities").getId();
 
         postRs = postApi.getPosts(boardId, true, null, null, null);
         Assert.assertEquals(3, postRs.size());
@@ -1900,7 +1900,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(Optional.ofNullable(departmentDTO.getMemberCategories())
             .orElse(Stream.of(MemberCategory.values()).collect(toList())), departmentR.getMemberCategories());
 
-        Department department = departmentService.getDepartment(departmentR.getId());
+        Department department = departmentService.getById(departmentR.getId());
         University university = universityService.getUniversity(departmentR.getUniversity().getId());
 
         List<ResourceRelation> parents = resourceRelationRepository.findByResource2(department);
@@ -1911,7 +1911,7 @@ public class DepartmentApiIT extends AbstractIT {
 
     private void verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        Department department = departmentService.getDepartment(departmentId);
+        Department department = departmentService.getById(departmentId);
         DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId, departmentDTO);
 
         Optional<String> nameOptional = departmentDTO.getName();

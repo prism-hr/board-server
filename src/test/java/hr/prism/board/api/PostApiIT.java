@@ -374,7 +374,7 @@ public class PostApiIT extends AbstractIT {
             Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT, MemberCategory.RESEARCH_STUDENT))));
 
         User boardUser = testUserService.authenticate();
-        Board board = boardService.getBoard(boardId);
+        Board board = boardService.getById(boardId);
         userRoleService.createOrUpdateUserRole(board, boardUser, Role.ADMINISTRATOR);
 
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
@@ -664,7 +664,7 @@ public class PostApiIT extends AbstractIT {
 
         // Check that the post stays in pending state when the update job runs
         verifyPublishAndRetirePost(postId, State.PENDING);
-        Post localPost0 = postService.getPost(postId);
+        Post localPost0 = postService.getById(postId);
         localPost0.setLiveTimestamp(liveTimestamp);
         localPost0.setDeadTimestamp(deadTimestamp);
         resourceRepository.updateSilently(localPost0);
@@ -887,7 +887,7 @@ public class PostApiIT extends AbstractIT {
                     .put("recipientUuid", departmentMember2Uuid)
                     .build()));
 
-        Post localPost1 = postService.getPost(postId);
+        Post localPost1 = postService.getById(postId);
         localPost1.setDeadTimestamp(liveTimestamp.minusSeconds(1));
         resourceRepository.updateSilently(localPost1);
 
@@ -925,7 +925,7 @@ public class PostApiIT extends AbstractIT {
         verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeActionOnPost(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
         verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 
-        Post localPost2 = postService.getPost(postId);
+        Post localPost2 = postService.getById(postId);
         localPost2.setDeadTimestamp(null);
         resourceRepository.updateSilently(localPost2);
 
@@ -1462,10 +1462,10 @@ public class PostApiIT extends AbstractIT {
         assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
         assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
 
-        Post post = postService.getPost(postR.getId());
+        Post post = postService.getById(postR.getId());
 
-        Board board = boardService.getBoard(postR.getBoard().getId());
-        Department department = departmentService.getDepartment(postR.getBoard().getDepartment().getId());
+        Board board = boardService.getById(postR.getBoard().getId());
+        Department department = departmentService.getById(postR.getBoard().getDepartment().getId());
         University university = universityService.getUniversity(postR.getBoard().getDepartment().getUniversity().getId());
 
         List<ResourceRelation> parents = resourceRelationRepository.findByResource2(post);
@@ -1476,7 +1476,7 @@ public class PostApiIT extends AbstractIT {
 
     private PostRepresentation verifyPatchPost(User user, Long postId, PostPatchDTO postDTO, PostOperation operation, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        Post post = postService.getPost(postId);
+        Post post = postService.getById(postId);
         PostRepresentation postR = operation.execute();
 
         Optional<String> nameOptional = postDTO.getName();
@@ -1572,7 +1572,7 @@ public class PostApiIT extends AbstractIT {
         LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
         PostRepresentation postR = verifyPostPost(boardId, postDTO);
 
-        Post post = postService.getPost(postR.getId());
+        Post post = postService.getById(postR.getId());
         post.setState(state);
         post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
         resourceRepository.updateSilently(post);

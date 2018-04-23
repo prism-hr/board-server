@@ -42,7 +42,7 @@ public class IndexApi {
     public String getDepartmentIndex(@PathVariable String universityHandle, @PathVariable String departmentHandle,
                                      Model model) {
         fillGenericModel(model);
-        Department department = departmentService.getDepartment(universityHandle + "/" + departmentHandle);
+        Department department = departmentService.getById(universityHandle + "/" + departmentHandle);
         if (department != null) {
             model.addAttribute("title", department.getName());
             model.addAttribute("description", department.getSummary());
@@ -58,7 +58,7 @@ public class IndexApi {
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}/{postId}", method = GET)
     public String getPostIndex(@PathVariable Long postId, Model model) {
         fillGenericModel(model);
-        Post post = postService.getPost(postId);
+        Post post = postService.getById(postId);
         if (post != null) {
             Board board = (Board) post.getParent();
             model.addAttribute("title", post.getName());

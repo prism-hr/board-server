@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.dao.OrganizationDAO;
+import hr.prism.board.domain.Organization;
 import hr.prism.board.dto.OrganizationDTO;
 import hr.prism.board.repository.OrganizationRepository;
 import hr.prism.board.value.OrganizationSearch;
@@ -25,20 +26,20 @@ public class OrganizationService {
         this.organizationDAO = organizationDAO;
     }
 
-    public hr.prism.board.domain.Organization getOrCreateOrganization(OrganizationDTO organizationDTO) {
+    public Organization getOrCreateOrganization(OrganizationDTO organizationDTO) {
         Long id = organizationDTO.getId();
         if (id != null) {
             return organizationRepository.findOne(id);
         }
 
         String name = organizationDTO.getName();
-        hr.prism.board.domain.Organization organization = organizationRepository.findByName(name);
+        Organization organization = organizationRepository.findByName(name);
         if (organization != null) {
             return organization;
         }
 
         return organizationRepository.save(
-            new hr.prism.board.domain.Organization()
+            new Organization()
                 .setName(name)
                 .setLogo(organizationDTO.getLogo()));
     }

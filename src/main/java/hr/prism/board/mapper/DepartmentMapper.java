@@ -58,25 +58,15 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setMemberCategories(fromStrings(resourceService.getCategories(department, MEMBER)));
     }
 
-    public DepartmentRepresentation apply(DepartmentSearch department) {
+    public DepartmentRepresentation apply(ResourceSearch department) {
         if (department == null) {
             return null;
-        }
-
-        DocumentRepresentation documentLogo = null;
-        String documentImageCloudinaryId = department.getDocumentLogoCloudinaryId();
-        if (documentImageCloudinaryId != null) {
-            documentLogo =
-                new DocumentRepresentation()
-                    .setCloudinaryId(documentImageCloudinaryId)
-                    .setCloudinaryUrl(department.getDocumentLogoCloudinaryUrl())
-                    .setFileName(department.getDocumentLogoFileName());
         }
 
         return new DepartmentRepresentation()
             .setId(department.getId())
             .setName(department.getName())
-            .setDocumentLogo(documentLogo);
+            .setDocumentLogo(documentMapper.apply(department));
     }
 
     public DepartmentDashboardRepresentation apply(DepartmentDashboard departmentDashboard) {

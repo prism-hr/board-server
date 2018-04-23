@@ -17,7 +17,7 @@ public class ResourceMapper {
             .setActions(resource.getActions());
     }
 
-    public String getHandle(Resource resource, Resource parent) {
+    String getHandle(Resource resource, Resource parent) {
         return resource.getHandle().replaceFirst(parent.getHandle() + "/", "");
     }
 

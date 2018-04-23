@@ -39,13 +39,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Service
 public class NotificationService {
 
-    private static Logger LOGGER = getLogger(NotificationService.class);
+    private static final Logger LOGGER = getLogger(NotificationService.class);
 
-    private Map<Notification, String> subjects = new TreeMap<>();
+    private final Map<Notification, String> subjects = new TreeMap<>();
 
-    private Map<Notification, String> contents = new TreeMap<>();
+    private final Map<Notification, String> contents = new TreeMap<>();
 
-    private Map<Notification, Map<String, NotificationProperty>> properties = new TreeMap<>();
+    private final Map<Notification, Map<String, NotificationProperty>> properties = new TreeMap<>();
 
     private final boolean mailOn;
 
@@ -146,7 +146,6 @@ public class NotificationService {
                 throw new BoardException(UNDELIVERABLE_NOTIFICATION, "Could not deliver notification: " + notification);
             }
         } else {
-            // Local/Test contexts
             LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail)
                 + "\n\n" + "Subject: " + subject + "\nContent:\n\n" + makePlainTextVersion(content) + "\n");
         }

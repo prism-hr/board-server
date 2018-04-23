@@ -83,6 +83,7 @@ public class ResourceDAO {
             "AND user_role.state IN (:userRoleStates) " +
             "AND (user_role.expiry_date IS NULL OR user_role.expiry_date >= :baseline)";
 
+    @SuppressWarnings("SqlResolve")
     private static final String ARCHIVE_RESOURCE =
         "SELECT DISTINCT resource.quarter " +
             "FROM resource " +
@@ -150,6 +151,7 @@ public class ResourceDAO {
         return getResources(filter, resourceActionIndex);
     }
 
+    @SuppressWarnings({"SqlResolve", "unchecked"})
     public List<String> getResourceArchiveQuarters(User user, Scope scope, Long parentId) {
         List<String> filterStatements = new ArrayList<>();
         Map<String, Object> filterParameters = new HashMap<>();
@@ -172,12 +174,10 @@ public class ResourceDAO {
 
         Query query = entityManager.createNativeQuery(statement);
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-
-
-        //noinspection unchecked
         return (List<String>) query.getResultList();
     }
 
+    @SuppressWarnings("JpaQlInspection")
     public List<ResourceOperation> getResourceOperations(Resource resource) {
         return entityManager.createQuery(
             "select resourceOperation " +
@@ -190,6 +190,7 @@ public class ResourceDAO {
             .getResultList();
     }
 
+    @SuppressWarnings("JpaQlInspection")
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement =
             "select resource.id " +
@@ -221,6 +222,7 @@ public class ResourceDAO {
         }
     }
 
+    @SuppressWarnings("JpaQlInspection")
     public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
         Query query = entityManager.createQuery(
             "select resource.id " +

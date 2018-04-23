@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
@@ -55,10 +56,11 @@ public class UserRoleDAO {
         String search = UUID.randomUUID().toString();
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
-            userSearchRepository.insertBySearch(search, LocalDateTime.now(), searchTerm, userIds);
+            userSearchRepository.insertBySearch(search, LocalDateTime.now(), makeSoundex(searchTerm), userIds);
             entityManager.flush();
         }
 
+        @SuppressWarnings("JpaQlInspection")
         String statement =
             "select distinct userRole " +
                 "from UserRole userRole " +
@@ -102,6 +104,7 @@ public class UserRoleDAO {
         }
     }
 
+    @SuppressWarnings("JpaQueryApiInspection")
     public Statistics getMemberStatistics(Long departmentId) {
         return (Statistics) entityManager.createNamedQuery("memberStatistics")
             .setParameter("departmentId", departmentId)

@@ -55,12 +55,12 @@ public class BoardApi {
 
     @RequestMapping(value = "/api/boards/{boardId}", method = GET)
     public BoardRepresentation getBoard(@PathVariable Long boardId) {
-        return boardMapper.apply(boardService.getBoard(boardId));
+        return boardMapper.apply(boardService.getById(boardId));
     }
 
     @RequestMapping(value = "/api/boards", method = GET, params = "handle")
     public BoardRepresentation getBoardByHandle(@RequestParam String handle) {
-        return boardMapper.apply(boardService.getBoard(handle));
+        return boardMapper.apply(boardService.getById(handle));
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/operations", method = GET)

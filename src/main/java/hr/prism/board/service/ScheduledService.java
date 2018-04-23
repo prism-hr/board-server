@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import hr.prism.board.enums.ResourceTask;
 import org.apache.commons.lang3.tuple.Pair;
@@ -65,6 +66,7 @@ public class ScheduledService {
         }
     }
 
+    @VisibleForTesting
     public void notifyDepartmentTasks(LocalDateTime baseline) {
         ArrayListMultimap<Pair<Long, Integer>, ResourceTask> resourceTasks =
             resourceTaskService.getResourceTasks(baseline);
@@ -72,17 +74,20 @@ public class ScheduledService {
             resourceTaskService.sendNotification(resourceId, resourceTasks.get(resourceId)));
     }
 
+    @VisibleForTesting
     public void updateDepartmentSubscriptions(LocalDateTime baseline) {
         departmentService.updateSubscriptions(baseline);
         departmentService.findAllIdsForSubscribeNotification(baseline)
             .forEach(departmentService::sendSubscribeNotification);
     }
 
+    @VisibleForTesting
     public void updateDepartmentTasks(LocalDateTime baseline) {
         departmentService.findAllIdsForTaskUpdates(baseline)
             .forEach(departmentId -> departmentService.updateTasks(departmentId, baseline));
     }
 
+    @VisibleForTesting
     public LocalDateTime getBaseline() {
         return LocalDateTime.now();
     }

@@ -6,7 +6,6 @@ import hr.prism.board.domain.UserNotificationSuppression;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.UserNotificationSuppressionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +17,7 @@ import java.util.List;
 
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
-import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_RESOURCE;
-import static hr.prism.board.exception.ExceptionCode.UNSUPPRESSABLE_RESOURCE;
+import static hr.prism.board.exception.ExceptionCode.*;
 
 @Service
 @Transactional
@@ -58,7 +56,7 @@ public class UserNotificationSuppressionService {
         }
 
         if (user == null) {
-            throw new BoardForbiddenException(ExceptionCode.UNKNOWN_USER, "User cannot be found");
+            throw new BoardForbiddenException(UNKNOWN_USER, "User cannot be found");
         }
 
         Resource resource = resourceService.getById(resourceId);

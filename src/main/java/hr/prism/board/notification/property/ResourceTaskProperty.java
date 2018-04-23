@@ -36,7 +36,7 @@ public class ResourceTaskProperty implements NotificationProperty {
 
     public String getValue(NotificationRequest notificationRequest) {
         Resource resource = notificationRequest.getResource();
-        List<ResourceTask> tasks = resourceTaskService.getTasks(resource);
+        List<ResourceTask> tasks = resourceTaskService.getByResource(resource);
         if (tasks.isEmpty()) {
             throw new BoardNotificationException(EMPTY_RESOURCE_TASKS, "No tasks for resource " + resource.toString());
         }

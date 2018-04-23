@@ -19,6 +19,7 @@ public class UserDAO {
         this.entityManager = entityManager;
     }
 
+    @SuppressWarnings("JpaQueryApiInspection")
     public List<UserSearch> findUsers(String searchTerm) {
         return entityManager.createNamedQuery("userSearch", UserSearch.class)
             .setParameter("searchTerm", searchTerm + "%")

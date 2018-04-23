@@ -73,12 +73,12 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}", method = GET)
     public DepartmentRepresentation getDepartment(@PathVariable Long departmentId) {
-        return departmentMapper.apply(departmentService.getDepartment(departmentId));
+        return departmentMapper.apply(departmentService.getById(departmentId));
     }
 
     @RequestMapping(value = "/api/departments", method = GET, params = "handle")
     public DepartmentRepresentation getDepartmentByHandle(@RequestParam String handle) {
-        return departmentMapper.apply(departmentService.getDepartment(handle));
+        return departmentMapper.apply(departmentService.getById(handle));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/dashboard", method = GET)

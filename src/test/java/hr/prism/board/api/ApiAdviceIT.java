@@ -28,12 +28,12 @@ public class ApiAdviceIT {
 
     @Test
     public void shouldHandleGeneralException() throws Exception {
-        doRequest("generalException", MockMvcResultMatchers.status().isInternalServerError(), ExceptionCode.PROBLEM);
+        doRequest("generalException", MockMvcResultMatchers.status().isInternalServerError(), ExceptionCode.UNKNOWN);
     }
 
     @Test
     public void shouldHandleRuntimeException() throws Exception {
-        doRequest("runtimeException", MockMvcResultMatchers.status().isInternalServerError(), ExceptionCode.PROBLEM);
+        doRequest("runtimeException", MockMvcResultMatchers.status().isInternalServerError(), ExceptionCode.UNKNOWN);
     }
 
     @Test

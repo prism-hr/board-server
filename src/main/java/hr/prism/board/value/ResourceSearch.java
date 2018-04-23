@@ -1,6 +1,6 @@
 package hr.prism.board.value;
 
-public class DepartmentSearch {
+public class ResourceSearch {
 
     private final Long id;
 
@@ -12,8 +12,8 @@ public class DepartmentSearch {
 
     private final String documentLogoFileName;
 
-    public DepartmentSearch(Long id, String name, String documentLogoCloudinaryId, String documentLogoCloudinaryUrl,
-                            String documentLogoFileName) {
+    public ResourceSearch(Long id, String name, String documentLogoCloudinaryId, String documentLogoCloudinaryUrl,
+                          String documentLogoFileName) {
         this.id = id;
         this.name = name;
         this.documentLogoCloudinaryId = documentLogoCloudinaryId;

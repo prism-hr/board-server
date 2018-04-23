@@ -11,11 +11,13 @@ public enum ResourceTask {
     CREATE_POST("Got something to share - visit the new post section to create some content."),
     DEPLOY_BADGE("Time to spread the word - visit the badges section to get embed codes for your website.");
 
-    public static List<ResourceTask> DEPARTMENT_TASKS = ImmutableList.of(CREATE_MEMBER, CREATE_POST, DEPLOY_BADGE);
+    public static List<ResourceTask> RESOURCE_TASKS = ImmutableList.of(CREATE_MEMBER, CREATE_POST, DEPLOY_BADGE);
 
     public static List<ResourceTask> BADGE_TASKS = ImmutableList.of(DEPLOY_BADGE);
 
     public static List<ResourceTask> MEMBER_TASKS = ImmutableList.of(CREATE_MEMBER, UPDATE_MEMBER);
+
+    public static List<ResourceTask> POST_TASKS = ImmutableList.of(CREATE_POST);
 
     private String message;
 

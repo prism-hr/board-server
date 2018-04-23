@@ -1,19 +1,11 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.domain.User;
-import hr.prism.board.enums.ResourceEventMatch;
 import hr.prism.board.representation.ResourceEventRepresentation;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.function.Function;
-
-import static hr.prism.board.enums.ResourceEventMatch.DEFINITE;
-import static hr.prism.board.enums.ResourceEventMatch.PROBABLE;
-import static java.util.stream.Collectors.toList;
 
 @Component
 public class ResourceEventMapper implements Function<ResourceEvent, ResourceEventRepresentation> {
@@ -40,19 +32,12 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             return null;
         }
 
-        User user = resourceEvent.getUser();
         ResourceEventRepresentation representation =
             new ResourceEventRepresentation()
                 .setId(resourceEvent.getId())
                 .setEvent(resourceEvent.getEvent())
                 .setReferral(resourceEvent.getReferral())
-                .setMatch(getResourceEventMatch(user))
                 .setViewed(resourceEvent.isViewed());
-
-        List<ResourceEvent> history = resourceEvent.getHistory();
-        if (CollectionUtils.isNotEmpty(history)) {
-            representation.setHistory(history.stream().map(this::applyHistory).collect(toList()));
-        }
 
         representation.setGender(resourceEvent.getGender());
         representation.setAgeRange(resourceEvent.getAgeRange());
@@ -71,18 +56,6 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
 
         representation.setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
         return representation;
-    }
-
-    private ResourceEventRepresentation applyHistory(ResourceEvent resourceEvent) {
-        return new ResourceEventRepresentation()
-            .setId(resourceEvent.getId())
-            .setEvent(resourceEvent.getEvent())
-            .setCreatedTimestamp(resourceEvent.getCreatedTimestamp())
-            .setMatch(getResourceEventMatch(resourceEvent.getUser()));
-    }
-
-    private ResourceEventMatch getResourceEventMatch(User user) {
-        return user == null ? PROBABLE : DEFINITE;
     }
 
 }

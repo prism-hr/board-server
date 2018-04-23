@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static hr.prism.board.exception.ExceptionCode.PROBLEM;
+import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.*;
@@ -76,7 +76,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleBaseException(Exception exception, WebRequest request) {
-        return handleExceptionLoggingError(exception, PROBLEM, request);
+        return handleExceptionLoggingError(exception, UNKNOWN, request);
     }
 
     @Override

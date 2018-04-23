@@ -46,6 +46,8 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class DepartmentUserService {
@@ -177,8 +179,8 @@ public class DepartmentUserService {
 
         List<UserRole> staff = userRoleService.getUserRoles(department, STAFF_ROLES, ACCEPTED, searchTerm);
         List<UserRole> members = userRoleService.getUserRoles(department, MEMBER_ROLES, ACCEPTED, searchTerm);
-
         List<UserRole> memberRequests = userRoleService.getUserRoles(department, MEMBER_ROLES, PENDING, searchTerm);
+
         if (!memberRequests.isEmpty()) {
             Map<hr.prism.board.domain.Activity, UserRole> indexByActivities =
                 memberRequests.stream()
@@ -239,7 +241,8 @@ public class DepartmentUserService {
 
         User userDelete = userService.getById(userDeleteId);
         userRoleService.deleteUserRoles(department, userDelete, roleType);
-        activityService.sendActivities(department);
+        eventProducer.produce(
+            new ActivityEvent(this, id));
     }
 
     public void createOrUpdateUserRole(Long id, MemberDTO memberDTO) {
@@ -323,13 +326,15 @@ public class DepartmentUserService {
                         userRoleService.deleteUserRole(department, userCreateUpdate, role);
                     });
 
-                activityService.sendActivities(department);
+                eventProducer.produce(
+                    new ActivityEvent(this, id));
                 return notifyStaffUserIfNew(user, id, createdUserRoles);
             case MEMBER:
                 UserRole userRole = userRoleService.createOrUpdateUserRole(
                     department, userCreateUpdate, (MemberDTO) userRoleDTO, ACCEPTED);
                 resourceTaskService.completeTasks(department, MEMBER_TASKS);
-                activityService.sendActivities(department);
+                eventProducer.produce(
+                    new ActivityEvent(this, id));
                 return singletonList(userRole);
             default:
                 throw new IllegalStateException("Unexpected user role type: " + type);
@@ -400,7 +405,7 @@ public class DepartmentUserService {
             }
 
             eventProducer.produce(
-                new ActivityEvent(this, id, false,
+                new ActivityEvent(this, id,
                     singletonList(
                         new Activity()
                             .setUserId(userNotify.getId())

@@ -10,30 +10,20 @@ import java.util.List;
 
 @Repository
 @Transactional
-public class DepartmentDAO {
+public class UniversityDAO {
 
     private final EntityManager entityManager;
 
     @Inject
-    public DepartmentDAO(EntityManager entityManager) {
+    public UniversityDAO(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
     @SuppressWarnings("JpaQueryApiInspection")
-    public List<ResourceSearch> findDepartments(Long universityId, String searchTerm) {
+    public List<ResourceSearch> findUniversities(String searchTerm) {
         return entityManager.createNamedQuery("departmentSearch", ResourceSearch.class)
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
-            .setParameter("universityId", universityId)
-            .getResultList();
-    }
-
-    @SuppressWarnings("JpaQueryApiInspection")
-    public List<String> findDepartmentPrograms(Long departmentId, String searchTerm) {
-        return entityManager.createNamedQuery("programSearch", String.class)
-            .setParameter("searchTermHard", searchTerm + "%")
-            .setParameter("searchTermSoft", searchTerm)
-            .setParameter("departmentId", departmentId)
             .getResultList();
     }
 

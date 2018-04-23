@@ -15,6 +15,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 
@@ -48,6 +49,7 @@ public class DepartmentPaymentService {
 
     private final EntityManager entityManager;
 
+    @Inject
     public DepartmentPaymentService(DepartmentRepository departmentRepository, ActionService actionService,
                                     PaymentService paymentService, ResourceService resourceService,
                                     UserService userService, ActivityService activityService,
@@ -182,7 +184,7 @@ public class DepartmentPaymentService {
             department, SUBSCRIBE_DEPARTMENT_ACTIVITY, DEPARTMENT, ADMINISTRATOR);
         if (suspendActivity == null) {
             eventProducer.produce(
-                new ActivityEvent(this, departmentId, false,
+                new ActivityEvent(this, departmentId,
                     singletonList(
                         new hr.prism.board.workflow.Activity()
                             .setScope(DEPARTMENT)

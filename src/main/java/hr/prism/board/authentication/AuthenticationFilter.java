@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import static hr.prism.board.exception.ExceptionCode.PROBLEM;
+import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static java.lang.Long.parseLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -50,7 +50,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = authenticationService.decodeAccessToken(accessToken);
                 String subject = claims.getSubject();
                 if (subject == null) {
-                    throw new BoardForbiddenException(PROBLEM, "Malformed JWT");
+                    throw new BoardForbiddenException(UNKNOWN, "Malformed JWT");
                 }
 
                 Long userId = parseLong(claims.getSubject());

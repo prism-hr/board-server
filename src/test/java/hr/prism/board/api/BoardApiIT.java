@@ -169,7 +169,7 @@ public class BoardApiIT extends AbstractIT {
             new DepartmentPatchDTO()
                 .setHandle(Optional.of("new-department-updated")));
 
-        Department department = departmentService.getDepartment(departmentId);
+        Department department = departmentService.getById(departmentId);
         Assert.assertEquals("ucl/new-department-updated", department.getHandle());
 
         int index = 1;
@@ -328,9 +328,9 @@ public class BoardApiIT extends AbstractIT {
         Assert.assertEquals(expectedHandle, boardR.getHandle());
         Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
 
-        Board board = boardService.getBoard(boardR.getId());
+        Board board = boardService.getById(boardR.getId());
         DepartmentRepresentation departmentR = boardR.getDepartment();
-        Department department = departmentService.getDepartment(departmentR.getId());
+        Department department = departmentService.getById(departmentR.getId());
         University university = universityService.getUniversity(departmentR.getUniversity().getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
 
@@ -348,7 +348,7 @@ public class BoardApiIT extends AbstractIT {
 
     private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
         testUserService.setAuthentication(user.getId());
-        Board board = boardService.getBoard(boardId);
+        Board board = boardService.getById(boardId);
         BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
 
         Optional<String> nameOptional = boardDTO.getName();

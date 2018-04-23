@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class DepartmentBadgeService {
 
     private final FreeMarkerConfig freemarkerConfig;
 
+    @Inject
     public DepartmentBadgeService(@Value("${app.url}") String appUrl, PostService postService,
                                   ResourceService resourceService, ResourceTaskService resourceTaskService,
                                   FreeMarkerConfig freemarkerConfig) {

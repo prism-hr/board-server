@@ -13,7 +13,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
 
-import static hr.prism.board.exception.ExceptionCode.PROBLEM;
+import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 
 @EnableAsync
@@ -40,7 +40,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
                 message += " with parameters: " + Joiner.on(", ").join(params);
             }
 
-            throw new BoardException(PROBLEM, message, throwable);
+            throw new BoardException(UNKNOWN, message, throwable);
         };
     }
 

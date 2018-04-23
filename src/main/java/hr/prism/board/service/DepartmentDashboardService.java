@@ -68,7 +68,7 @@ public class DepartmentDashboardService {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
-        List<ResourceTask> tasks = resourceTaskService.getTasks(id);
+        List<ResourceTask> tasks = resourceTaskService.getByResourceId(id);
         List<Board> boards = boardService.getBoards(id, true, ACCEPTED, null, null);
         Statistics memberStatistics = userRoleService.getMemberStatistics(id);
         List<OrganizationStatistics> organizationStatistics = organizationService.getOrganizationStatistics(id);

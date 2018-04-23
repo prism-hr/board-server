@@ -1,45 +1,33 @@
 package hr.prism.board.service;
 
+import hr.prism.board.dao.UniversityDAO;
 import hr.prism.board.domain.University;
-import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.UniversityRepository;
-import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.representation.UniversityRepresentation;
+import hr.prism.board.value.ResourceSearch;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @Transactional
-@SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class UniversityService {
 
-    @SuppressWarnings("SqlResolve")
-    private static final String SIMILAR_UNIVERSITY =
-        "SELECT resource.id, resource.name, document_logo.cloudinary_id, document_logo.cloudinary_url, document_logo.file_name, " +
-            "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "MATCH (resource.name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
-            "FROM resource " +
-            "LEFT JOIN document AS document_logo " +
-            "ON resource.document_logo_id = document_logo.id " +
-            "WHERE resource.scope = :scope AND resource.state = :state " +
-            "HAVING similarityHard = 1 OR similaritySoft > 0 " +
-            "ORDER BY similarityHard DESC, similaritySoft DESC, resource.name " +
-            "LIMIT 10";
+    private final UniversityRepository universityRepository;
+
+    private final UniversityDAO universityDAO;
+
+    private final ResourceService resourceService;
 
     @Inject
-    private UniversityRepository universityRepository;
-
-    @Inject
-    private ResourceService resourceService;
-
-    @Inject
-    private EntityManager entityManager;
+    public UniversityService(UniversityRepository universityRepository, UniversityDAO universityDAO,
+                             ResourceService resourceService) {
+        this.universityRepository = universityRepository;
+        this.universityDAO = universityDAO;
+        this.resourceService = resourceService;
+    }
 
     public University getUniversity(Long id) {
         return (University) resourceService.getById(id);
@@ -63,30 +51,8 @@ public class UniversityService {
         return university;
     }
 
-    @SuppressWarnings("unchecked")
-    public List<UniversityRepresentation> findBySimilarName(String searchTerm) {
-        List<Object[]> rows = entityManager.createNativeQuery(SIMILAR_UNIVERSITY)
-            .setParameter("searchTermHard", searchTerm + "%")
-            .setParameter("searchTermSoft", searchTerm)
-            .setParameter("scope", Scope.UNIVERSITY.name())
-            .setParameter("state", State.ACCEPTED.name())
-            .getResultList();
-
-        List<UniversityRepresentation> universityRepresentations = new ArrayList<>();
-        for (Object[] row : rows) {
-            UniversityRepresentation universityRepresentation =
-                new UniversityRepresentation().setId(Long.parseLong(row[0].toString())).setName(row[1].toString());
-            Object cloudinaryId = row[2];
-            if (cloudinaryId != null) {
-                DocumentRepresentation documentLogoRepresentation =
-                    new DocumentRepresentation().setCloudinaryId(cloudinaryId.toString()).setCloudinaryUrl(row[3].toString()).setFileName(row[4].toString());
-                universityRepresentation.setDocumentLogo(documentLogoRepresentation);
-            }
-
-            universityRepresentations.add(universityRepresentation);
-        }
-
-        return universityRepresentations;
+    public List<ResourceSearch> findUniversities(String searchTerm) {
+        return universityDAO.findUniversities(searchTerm);
     }
 
 }

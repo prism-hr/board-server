@@ -41,6 +41,8 @@ public class ActionService {
 
     private final ResourceService resourceService;
 
+    private final ActivityService activityService;
+
     private final EventProducer eventProducer;
 
     private final ObjectMapper objectMapper;
@@ -48,9 +50,10 @@ public class ActionService {
     private final ApplicationContext applicationContext;
 
     @Inject
-    public ActionService(ResourceService resourceService, EventProducer eventProducer, ObjectMapper objectMapper,
-                         ApplicationContext applicationContext) {
+    public ActionService(ResourceService resourceService, ActivityService activityService, EventProducer eventProducer,
+                         ObjectMapper objectMapper, ApplicationContext applicationContext) {
         this.resourceService = resourceService;
+        this.activityService = activityService;
         this.eventProducer = eventProducer;
         this.objectMapper = objectMapper;
         this.applicationContext = applicationContext;
@@ -79,8 +82,7 @@ public class ActionService {
                         resourceService.createResourceOperation(newResource, action, user);
                     }
 
-                    Long newResourceId = newResource.getId();
-                    sendNotifications(action, actionRepresentation, newResourceId);
+                    sendNotifications(newResource, action, actionRepresentation);
                     return newResource;
                 }
             }
@@ -119,21 +121,24 @@ public class ActionService {
             newState =
                 applicationContext.getBean(interceptorClass).intercept(user, newResource, action, newState);
         }
+
         return newState;
     }
 
-    private void sendNotifications(Action action, ActionRepresentation actionRepresentation, Long newResourceId) {
+    private void sendNotifications(Resource resource, Action action, ActionRepresentation actionRepresentation) {
+        Long resourceId = resource.getId();
         List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
         if (activities != null) {
+            activityService.deleteActivities(resource);
             eventProducer.produce(
-                new ActivityEvent(this, newResourceId, true, activities));
+                new ActivityEvent(this, resourceId, activities));
         }
 
         List<Notification> notifications =
             deserializeUpdates(actionRepresentation.getNotification(), Notification.class);
         if (notifications != null) {
             eventProducer.produce(
-                new NotificationEvent(this, newResourceId, action, notifications));
+                new NotificationEvent(this, resourceId, action, notifications));
         }
     }
 

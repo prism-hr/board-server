@@ -66,7 +66,7 @@ public class PostApi {
 
     @RequestMapping(value = "/api/posts/{postId}", method = GET)
     public PostRepresentation getPost(@PathVariable Long postId, HttpServletRequest request) {
-        return postMapper.apply(postService.getPost(postId, getClientIpAddress(request), true));
+        return postMapper.apply(postService.getById(postId, getClientIpAddress(request), true));
     }
 
     @RequestMapping(value = "/api/posts/{postId}/operations", method = GET)

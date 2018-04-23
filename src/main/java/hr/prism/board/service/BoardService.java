@@ -51,13 +51,13 @@ public class BoardService {
         this.userService = userService;
     }
 
-    public Board getBoard(Long id) {
+    public Board getById(Long id) {
         User user = userService.getUser();
         Board board = (Board) resourceService.getResource(user, BOARD, id);
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
-    public Board getBoard(String handle) {
+    public Board getById(String handle) {
         User user = userService.getUser();
         Board board = (Board) resourceService.getResource(user, BOARD, handle);
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);

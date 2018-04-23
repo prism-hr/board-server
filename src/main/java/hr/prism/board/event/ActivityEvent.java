@@ -13,18 +13,20 @@ public class ActivityEvent extends ApplicationEvent {
 
     private Long resourceId;
 
-    private boolean stateChange;
-
     private Class<? extends BoardEntity> entityClass;
 
     private Long entityId;
 
     private List<Activity> activities;
 
-    public ActivityEvent(Object source, Long resourceId, boolean stateChange, List<Activity> activities) {
+    public ActivityEvent(Object source, Long resourceId) {
         super(source);
         this.resourceId = resourceId;
-        this.stateChange = stateChange;
+    }
+
+    public ActivityEvent(Object source, Long resourceId, List<Activity> activities) {
+        super(source);
+        this.resourceId = resourceId;
         this.activities = activities;
     }
 
@@ -48,10 +50,6 @@ public class ActivityEvent extends ApplicationEvent {
         return resourceId;
     }
 
-    public boolean isStateChange() {
-        return stateChange;
-    }
-
     public Class<? extends BoardEntity> getEntityClass() {
         return entityClass;
     }
@@ -70,6 +68,7 @@ public class ActivityEvent extends ApplicationEvent {
     }
 
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object other) {
         return reflectionEquals(this, other);
     }

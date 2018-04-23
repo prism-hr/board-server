@@ -9,6 +9,7 @@ import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.dto.ResetPasswordDTO;
 import hr.prism.board.dto.SigninDTO;
 import hr.prism.board.enums.OauthProvider;
+import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
@@ -259,7 +260,8 @@ public class AuthenticationService {
                 userService.deleteUser(invitee);
             }
 
-            activityService.sendActivities(resource);
+            eventProducer.produce(
+                new ActivityEvent(this, resource.getId()));
         }
     }
 

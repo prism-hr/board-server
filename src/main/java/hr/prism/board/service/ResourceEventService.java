@@ -13,7 +13,6 @@ import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.ResourceEventRepository;
-import hr.prism.board.repository.ResourceEventSearchRepository;
 import hr.prism.board.value.ResourceEventSummary;
 import hr.prism.board.workflow.Notification;
 import hr.prism.board.workflow.Notification.Attachment;
@@ -22,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +46,6 @@ public class ResourceEventService {
 
     private final ResourceEventRepository resourceEventRepository;
 
-    private final ResourceEventSearchRepository resourceEventSearchRepository;
-
     private final DocumentService documentService;
 
     private final UserService userService;
@@ -62,13 +57,10 @@ public class ResourceEventService {
     private final EventProducer eventProducer;
 
     @Inject
-    public ResourceEventService(ResourceEventRepository resourceEventRepository,
-                                ResourceEventSearchRepository resourceEventSearchRepository,
-                                DocumentService documentService, UserService userService,
-                                UserRoleService userRoleService, EntityManager entityManager,
+    public ResourceEventService(ResourceEventRepository resourceEventRepository, DocumentService documentService,
+                                UserService userService, UserRoleService userRoleService, EntityManager entityManager,
                                 EventProducer eventProducer) {
         this.resourceEventRepository = resourceEventRepository;
-        this.resourceEventSearchRepository = resourceEventSearchRepository;
         this.documentService = documentService;
         this.userService = userService;
         this.userRoleService = userRoleService;
@@ -210,18 +202,6 @@ public class ResourceEventService {
 
         updateResourceEventSummary((Post) resourceEvent.getResource());
         return resourceEvent;
-    }
-
-    public List<ResourceEvent> findByIpAddresses(Collection<String> ipAddresses) {
-        return resourceEventRepository.findByEventAndIpAddresses(VIEW, ipAddresses);
-    }
-
-    public void createSearchResults(String search, String searchTerm, Collection<Long> userIds) {
-        resourceEventSearchRepository.insertBySearch(search, LocalDateTime.now(), makeSoundex(searchTerm), userIds);
-    }
-
-    public void deleteSearchResults(String search) {
-        resourceEventSearchRepository.deleteBySearch(search);
     }
 
     private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {

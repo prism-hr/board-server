@@ -6,7 +6,6 @@ import hr.prism.board.enums.MemberCategory;
 
 import javax.persistence.*;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -82,9 +81,6 @@ public class ResourceEvent extends BoardEntity {
 
     @Transient
     private boolean viewed;
-
-    @Transient
-    private List<ResourceEvent> history;
 
     public Resource getResource() {
         return resource;
@@ -249,15 +245,6 @@ public class ResourceEvent extends BoardEntity {
 
     public ResourceEvent setViewed(boolean viewed) {
         this.viewed = viewed;
-        return this;
-    }
-
-    public List<ResourceEvent> getHistory() {
-        return history;
-    }
-
-    public ResourceEvent setHistory(List<ResourceEvent> history) {
-        this.history = history;
         return this;
     }
 
