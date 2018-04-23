@@ -33,6 +33,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static hr.prism.board.enums.State.ACCEPTED;
+import static java.util.Collections.singletonList;
+
 @TestContext
 @RunWith(SpringRunner.class)
 public class BoardApiIT extends AbstractIT {
@@ -43,9 +46,9 @@ public class BoardApiIT extends AbstractIT {
 
     static {
         DEPARTMENT_ADMIN_ACTIONS.putAll(State.DRAFT, Arrays.asList(Action.VIEW, Action.EDIT, Action.ACCEPT, Action.REJECT));
-        DEPARTMENT_ADMIN_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.EXTEND, Action.REJECT));
+        DEPARTMENT_ADMIN_ACTIONS.putAll(ACCEPTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.EXTEND, Action.REJECT));
         DEPARTMENT_ADMIN_ACTIONS.putAll(State.REJECTED, Arrays.asList(Action.VIEW, Action.EDIT, Action.RESTORE));
-        PUBLIC_ACTIONS.putAll(State.ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
+        PUBLIC_ACTIONS.putAll(ACCEPTED, Arrays.asList(Action.VIEW, Action.EXTEND));
     }
 
     @Test
@@ -71,12 +74,12 @@ public class BoardApiIT extends AbstractIT {
         BoardRepresentation boardR21 = verifyPostBoard(departmentId2, boardDTO21, "board21");
         unprivilegedUsers.put("board21", makeUnprivilegedUsers(boardR21.getId(), 210,
             TestHelper.smallSamplePost()
-                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
+                .setMemberCategories(singletonList(MemberCategory.UNDERGRADUATE_STUDENT))));
 
         List<String> boardNames = Arrays.asList("board11", "board110", "board21", "board210");
         LinkedHashMultimap<Long, String> departmentBoardNames = LinkedHashMultimap.create();
-        departmentBoardNames.putAll(boardR11.getDepartment().getId(), Collections.singletonList("board11"));
-        departmentBoardNames.putAll(boardR21.getDepartment().getId(), Collections.singletonList("board21"));
+        departmentBoardNames.putAll(boardR11.getDepartment().getId(), singletonList("board11"));
+        departmentBoardNames.putAll(boardR21.getDepartment().getId(), singletonList("board21"));
 
         testUserService.unauthenticate();
         verifyUnprivilegedBoardUser(boardNames, departmentBoardNames);
@@ -84,9 +87,9 @@ public class BoardApiIT extends AbstractIT {
         for (String boardName : unprivilegedUsers.keySet()) {
             Map<Scope, User> unprivilegedUserMap = unprivilegedUsers.get(boardName);
             for (Scope scope : unprivilegedUserMap.keySet()) {
-                testUserService.setAuthentication(unprivilegedUserMap.get(scope).getId());
+                testUserService.setAuthentication(unprivilegedUserMap.get(scope));
                 if (scope == Scope.DEPARTMENT) {
-                    verifyPrivilegedBoardUser(boardNames, Collections.singletonList(boardName + "0"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
+                    verifyPrivilegedBoardUser(boardNames, singletonList(boardName + "0"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(ACCEPTED));
                 } else if (scope == Scope.BOARD) {
                     Assert.fail();
                 } else {
@@ -95,11 +98,11 @@ public class BoardApiIT extends AbstractIT {
             }
         }
 
-        testUserService.setAuthentication(user11.getId());
-        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board11"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
+        testUserService.setAuthentication(user11);
+        verifyPrivilegedBoardUser(boardNames, singletonList("board11"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(ACCEPTED));
 
-        testUserService.setAuthentication(user21.getId());
-        verifyPrivilegedBoardUser(boardNames, Collections.singletonList("board21"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(State.ACCEPTED));
+        testUserService.setAuthentication(user21);
+        verifyPrivilegedBoardUser(boardNames, singletonList("board21"), departmentBoardNames, DEPARTMENT_ADMIN_ACTIONS.get(ACCEPTED));
     }
 
     @Test
@@ -204,9 +207,7 @@ public class BoardApiIT extends AbstractIT {
         // Create a board in the draft state
         testActivityService.record();
         testNotificationService.record();
-
-        Long departmentUserId = departmentUser.getId();
-        listenForActivities(departmentUserId);
+        listenForActivities(departmentUser);
 
         testActivityService.stop();
         testNotificationService.stop();
@@ -220,66 +221,62 @@ public class BoardApiIT extends AbstractIT {
             .put(Action.RESTORE, () -> boardApi.performActionOnBoard(boardId, "restore", new BoardPatchDTO()))
             .build();
 
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, ACCEPTED, operations);
 
         // Test that we do not audit viewing
         boardApi.getBoard(boardId);
 
         // Check that department user can reject the board
-        testUserService.setAuthentication(departmentUserId);
+        testUserService.setAuthentication(departmentUser);
 
         // Check that the department user can reject the board
-        verifyExecuteBoard(boardId, departmentUserId, "reject", "rejecting", State.REJECTED);
+        verifyExecuteBoard(boardId, departmentUser, "reject", "rejecting", State.REJECTED);
         verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.REJECTED, operations);
         Assertions.assertThat(userActivityApi.getActivities()).isEmpty();
 
         // Check that the department user can restore the board to accepted
-        verifyExecuteBoard(boardId, departmentUserId, "restore", "restoring", State.ACCEPTED);
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        verifyExecuteBoard(boardId, departmentUser, "restore", "restoring", ACCEPTED);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, ACCEPTED, operations);
         Assertions.assertThat(userActivityApi.getActivities()).isEmpty();
 
         // Create post
         User postUser = testUserService.authenticate();
         postApi.postPost(boardId,
-            TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
+            TestHelper.smallSamplePost().setMemberCategories(singletonList(MemberCategory.UNDERGRADUATE_STUDENT)));
         unprivilegedUsers.add(postUser);
 
         // Check that we can make changes and leave nullable values null
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 2"))
-                .setHandle(Optional.of("board-2")),
-            State.ACCEPTED);
+                .setHandle(Optional.of("board-2")));
 
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, ACCEPTED, operations);
 
         // Check that we can make further changes and set default / nullable values
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 3"))
                 .setHandle(Optional.of("board-3"))
-                .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))),
-            State.ACCEPTED);
+                .setPostCategories(Optional.of(Arrays.asList("m1", "m2"))));
 
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, ACCEPTED, operations);
 
         // Check that we can make further changes and change default / nullable values
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
                 .setName(Optional.of("board 4"))
                 .setHandle(Optional.of("board-4"))
-                .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))),
-            State.ACCEPTED);
+                .setPostCategories(Optional.of(Arrays.asList("m2", "m1"))));
 
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, ACCEPTED, operations);
 
         // Check that we can clear nullable values
         verifyPatchBoard(departmentUser, boardId,
             new BoardPatchDTO()
-                .setPostCategories(Optional.empty()),
-            State.ACCEPTED);
+                .setPostCategories(Optional.empty()));
 
-        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, State.ACCEPTED, operations);
+        verifyBoardActions(departmentUser, unprivilegedUsers, boardId, ACCEPTED, operations);
         List<ResourceOperationRepresentation> resourceOperationRs = boardApi.getBoardOperations(boardId);
         Assert.assertEquals(7, resourceOperationRs.size());
 
@@ -340,14 +337,14 @@ public class BoardApiIT extends AbstractIT {
         return boardR;
     }
 
-    private void verifyExecuteBoard(Long boardId, Long departmentUserId, String action, String comment, State expectedState) {
-        testUserService.setAuthentication(departmentUserId);
+    private void verifyExecuteBoard(Long boardId, User departmentUser, String action, String comment, State expectedState) {
+        testUserService.setAuthentication(departmentUser);
         BoardRepresentation boardR = boardApi.performActionOnBoard(boardId, action, new BoardPatchDTO().setComment(comment));
         Assert.assertEquals(expectedState, boardR.getState());
     }
 
-    private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO, State expectedState) {
-        testUserService.setAuthentication(user.getId());
+    private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO) {
+        testUserService.setAuthentication(user);
         Board board = boardService.getById(boardId);
         BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
 
@@ -361,7 +358,7 @@ public class BoardApiIT extends AbstractIT {
         Assert.assertEquals(postCategoriesOptional == null ? resourceService.getCategories(board, CategoryType.POST) : postCategoriesOptional.orElse(new ArrayList<>()),
             boardR.getPostCategories());
 
-        Assert.assertEquals(expectedState, boardR.getState());
+        Assert.assertEquals(ACCEPTED, boardR.getState());
     }
 
     private void verifyBoardActions(User departmentAdmin, Collection<User> unprivilegedUsers, Long boardId, State state, Map<Action, Runnable> operations) {
@@ -380,7 +377,7 @@ public class BoardApiIT extends AbstractIT {
     }
 
     private void verifyUnprivilegedBoardUser(List<String> boardNames, LinkedHashMultimap<Long, String> boardNamesByDepartment) {
-        List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
+        List<Action> publicActions = Lists.newArrayList(PUBLIC_ACTIONS.get(ACCEPTED));
 
         TestHelper.verifyResources(
             boardApi.getBoards(null, null, null, null, null)
@@ -417,7 +414,7 @@ public class BoardApiIT extends AbstractIT {
 
     private void verifyPrivilegedBoardUser(List<String> boardNames, List<String> adminBoardNames, LinkedHashMultimap<Long, String> boardNamesByDepartment, Set<Action> adminActions) {
         List<Action> adminActionList = Lists.newArrayList(adminActions);
-        List<Action> publicActionList = Lists.newArrayList(PUBLIC_ACTIONS.get(State.ACCEPTED));
+        List<Action> publicActionList = Lists.newArrayList(PUBLIC_ACTIONS.get(ACCEPTED));
 
         TestHelper.verifyResources(
             boardApi.getBoards(null, null, null, null, null)
