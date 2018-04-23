@@ -4,29 +4,23 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.exception.ExceptionCode;
-import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@Service
-@Transactional
-public class ResourcePatchService<T extends Resource> extends PatchService<T> {
+public abstract class ResourcePatchService<T extends Resource> extends PatchService<T> {
 
     private final ResourceService resourceService;
 
-    @Inject
-    public ResourcePatchService(LocationService locationService, DocumentService documentService,
+    ResourcePatchService(LocationService locationService, DocumentService documentService,
                                 ResourceService resourceService) {
         super(locationService, documentService);
         this.resourceService = resourceService;
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchName(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
+    void patchName(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getName();
             if (newValueOptional.isPresent()) {
@@ -46,7 +40,7 @@ public class ResourcePatchService<T extends Resource> extends PatchService<T> {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchHandle(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
+    void patchHandle(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
             if (newValueOptional.isPresent()) {
@@ -70,13 +64,13 @@ public class ResourcePatchService<T extends Resource> extends PatchService<T> {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchLocation(T resource, Optional<LocationDTO> newValueOptional) {
+    void patchLocation(T resource, Optional<LocationDTO> newValueOptional) {
         super.patchLocation(resource, "location",
             resource::getLocation, resource::setLocation, newValueOptional);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public void patchCategories(T resource, CategoryType categoryType,
+    void patchCategories(T resource, CategoryType categoryType,
                                 Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
             List<String> oldValues = resourceService.getCategories(resource, categoryType);

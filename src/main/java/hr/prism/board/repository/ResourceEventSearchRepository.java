@@ -24,10 +24,13 @@ public interface ResourceEventSearchRepository extends SearchRepository<Resource
             "MATCH(resource_event.index_data) AGAINST(:searchTerm IN BOOLEAN MODE) AS similarity " +
             "FROM resource_event " +
             "WHERE resource_event.user_id IN (:userIds) " +
+            "AND resource_event.event IN (:events) " +
             "HAVING similarity > 0 " +
             "ORDER BY similarity DESC, resource_event.id DESC) AS resource_event_search_result",
         nativeQuery = true)
+    @SuppressWarnings("SqlResolve")
     void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime,
-                        @Param("searchTerm") String searchTerm, @Param("userIds") Collection<Long> userIds);
+                        @Param("searchTerm") String searchTerm, @Param("userIds") Collection<Long> userIds,
+                        @Param("events") Collection<String> events);
 
 }

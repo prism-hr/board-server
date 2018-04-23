@@ -9,7 +9,7 @@ import javax.persistence.Converter;
 import java.io.IOException;
 
 import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
-import static hr.prism.board.utils.ObjectMapperUtils.getObjectMapper;
+import static hr.prism.board.utils.JacksonUtils.getObjectMapper;
 
 @SuppressWarnings("unused")
 @Converter(autoApply = true)

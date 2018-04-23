@@ -37,17 +37,17 @@ public class BoardService {
 
     private final ResourceService resourceService;
 
-    private final ResourcePatchService<Board> resourcePatchService;
+    private final BoardPatchService boardPatchService;
 
     private final UserService userService;
 
     @Inject
     public BoardService(BoardRepository boardRepository, ActionService actionService, ResourceService resourceService,
-                        ResourcePatchService<Board> resourcePatchService, UserService userService) {
+                        BoardPatchService boardPatchService, UserService userService) {
         this.boardRepository = boardRepository;
         this.actionService = actionService;
         this.resourceService = resourceService;
-        this.resourcePatchService = resourcePatchService;
+        this.boardPatchService = boardPatchService;
         this.userService = userService;
     }
 
@@ -120,9 +120,9 @@ public class BoardService {
 
     private void updateBoard(Board board, BoardPatchDTO boardDTO) {
         board.setChangeList(new ChangeListRepresentation());
-        resourcePatchService.patchName(board, boardDTO.getName(), DUPLICATE_BOARD);
-        resourcePatchService.patchHandle(board, boardDTO.getHandle(), DUPLICATE_BOARD_HANDLE);
-        resourcePatchService.patchCategories(board, POST, boardDTO.getPostCategories());
+        boardPatchService.patchName(board, boardDTO.getName(), DUPLICATE_BOARD);
+        boardPatchService.patchHandle(board, boardDTO.getHandle(), DUPLICATE_BOARD_HANDLE);
+        boardPatchService.patchPostCategories(board, boardDTO.getPostCategories());
         resourceService.setIndexDataAndQuarter(board);
     }
 

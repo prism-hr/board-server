@@ -1980,10 +1980,10 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertEquals(departmentIdString, documentLogoR.getFileName());
     }
 
-    private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, MemberCategory expectedMemberCategory, UserRoleRepresentation actual) {
+    private void verifyMember(String expectedEmail, LocalDate expectedExpiryDate, MemberCategory expectedMemberCategory, MemberRepresentation actual) {
         Assert.assertEquals(BoardUtils.obfuscateEmail(expectedEmail), actual.getUser().getEmail());
-        Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
         Assert.assertEquals(expectedMemberCategory, actual.getMemberCategory());
+        Assert.assertEquals(expectedExpiryDate, actual.getExpiryDate());
     }
 
     private void verifyNewDepartmentBoards(Long departmentId) {

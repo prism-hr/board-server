@@ -18,10 +18,12 @@ public enum State {
     ARCHIVED,
     PREVIOUS;
 
-    public static final List<State> ACTIVE_USER_ROLE_STATES = ImmutableList.of(PENDING, ACCEPTED);
+    public static final List<State> PENDING_STATES = ImmutableList.of(PENDING, EXPIRED);
+
+    public static final List<State> ACCEPTED_STATES = ImmutableList.of(PENDING, ACCEPTED);
 
     public static final List<String> ACTIVE_USER_ROLE_STATE_STRINGS =
-        ACTIVE_USER_ROLE_STATES.stream().map(State::name).collect(toList());
+        ACCEPTED_STATES.stream().map(State::name).collect(toList());
 
     public static final List<State> RESOURCE_STATES_TO_ARCHIVE_FROM =
         ImmutableList.of(DRAFT, SUSPENDED, EXPIRED, REJECTED, WITHDRAWN);

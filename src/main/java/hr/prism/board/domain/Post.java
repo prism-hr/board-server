@@ -84,6 +84,7 @@ import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
             @ColumnResult(name = "responseCountThisYear", type = Long.class),
             @ColumnResult(name = "responseCountAllTime", type = Long.class),
             @ColumnResult(name = "mostRecentResponse", type = LocalDateTime.class)}))
+@SuppressWarnings("SqlResolve")
 public class Post extends Resource {
 
     @Column(name = "description")

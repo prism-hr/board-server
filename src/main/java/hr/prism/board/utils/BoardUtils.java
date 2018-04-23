@@ -14,9 +14,9 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 public class BoardUtils {
@@ -120,7 +120,7 @@ public class BoardUtils {
                     throw new Error("Could not encode string: " + str, e);
                 }
             })
-            .collect(Collectors.joining(" "));
+            .collect(joining(" "));
     }
 
     public static String emptyToNull(String string) {

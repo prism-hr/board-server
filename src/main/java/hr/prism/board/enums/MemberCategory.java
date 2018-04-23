@@ -1,7 +1,6 @@
 package hr.prism.board.enums;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
@@ -24,18 +23,6 @@ public enum MemberCategory {
         }
 
         return categories.stream().map(MemberCategory::name).collect(toList());
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static Optional<List<String>> toStrings(Optional<List<MemberCategory>> categories) {
-        if (categories == null) {
-            // Do not change this Optional.empty()
-            return null;
-        } else if (categories.isPresent()) {
-            return Optional.of(toStrings(categories.get()));
-        }
-
-        return Optional.empty();
     }
 
     public static List<MemberCategory> fromStrings(List<String> categories) {

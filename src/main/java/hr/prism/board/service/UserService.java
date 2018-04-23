@@ -29,7 +29,7 @@ import java.util.Optional;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.DocumentRequestState.DISPLAY_FIRST;
 import static hr.prism.board.enums.PasswordHash.SHA256;
-import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATES;
+import static hr.prism.board.enums.State.ACCEPTED_STATES;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.isPresent;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
@@ -124,18 +124,18 @@ public class UserService {
     }
 
     public List<Long> getByResourceAndUserIds(Resource resource, List<Long> userIds) {
-        return userRepository.findByResourceAndUserIds(resource, userIds, ACTIVE_USER_ROLE_STATES);
+        return userRepository.findByResourceAndUserIds(resource, userIds, ACCEPTED_STATES);
     }
 
     public List<UserNotification> getByResourceAndEnclosingRole(Resource resource, Scope enclosingScope, Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRole(
-            resource, enclosingScope, role, ACTIVE_USER_ROLE_STATES, LocalDate.now());
+            resource, enclosingScope, role, ACCEPTED_STATES, LocalDate.now());
     }
 
     public List<UserNotification> getByResourceAndEnclosingRoleCategorized(Resource resource, Scope enclosingScope,
                                                                            Role role) {
         return userRepository.findByResourceAndEnclosingScopeAndRoleAndCategory(
-            resource, enclosingScope, role, ACTIVE_USER_ROLE_STATES, MEMBER, LocalDate.now());
+            resource, enclosingScope, role, ACCEPTED_STATES, MEMBER, LocalDate.now());
     }
 
 

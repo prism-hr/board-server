@@ -73,7 +73,7 @@ public class DepartmentService {
 
     private final ResourceService resourceService;
 
-    private final ResourcePatchService<Department> resourcePatchService;
+    private final DepartmentPatchService resourcePatchService;
 
     private final UserRoleService userRoleService;
 
@@ -98,7 +98,7 @@ public class DepartmentService {
                              @Value("${department.pending.notification.interval2.seconds}") Long departmentPendingNotificationInterval2Seconds,
                              DepartmentRepository departmentRepository, DepartmentDAO departmentDAO,
                              UserService userService, DocumentService documentService, ResourceService resourceService,
-                             ResourcePatchService<Department> resourcePatchService, UserRoleService userRoleService,
+                             DepartmentPatchService departmentPatchService, UserRoleService userRoleService,
                              ActionService actionService, ActivityService activityService,
                              UniversityService universityService, BoardService boardService,
                              ResourceTaskService resourceTaskService, EventProducer eventProducer,
@@ -112,7 +112,7 @@ public class DepartmentService {
         this.userService = userService;
         this.documentService = documentService;
         this.resourceService = resourceService;
-        this.resourcePatchService = resourcePatchService;
+        this.resourcePatchService = departmentPatchService;
         this.userRoleService = userRoleService;
         this.actionService = actionService;
         this.activityService = activityService;
@@ -214,15 +214,14 @@ public class DepartmentService {
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.setChangeList(new ChangeListRepresentation());
-            resourcePatchService.patchName(department,
-                departmentDTO.getName(), DUPLICATE_DEPARTMENT);
+            resourcePatchService.patchName(department, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
             resourcePatchService.patchProperty(department, "summary",
                 department::getSummary, department::setSummary, departmentDTO.getSummary());
             resourcePatchService.patchHandle(department, departmentDTO.getHandle(), DUPLICATE_DEPARTMENT_HANDLE);
             resourcePatchService.patchDocument(department, "documentLogo",
                 department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
-            resourcePatchService.patchCategories(department,
-                CategoryType.MEMBER, toStrings(departmentDTO.getMemberCategories()));
+            resourcePatchService.patchMemberCategories(department, departmentDTO.getMemberCategories());
+
             resourceService.setIndexDataAndQuarter(department);
             return department;
         });

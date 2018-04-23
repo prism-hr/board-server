@@ -1715,7 +1715,7 @@ public class PostApiIT extends AbstractIT {
 
     private void verifyPostReferral(String referral, TestHelper.MockHttpServletResponse response, String expectedLocation) {
         try {
-            postResponseApi.getPostReferral(referral, response);
+            postResponseApi.consumePostReferral(referral, response);
         } catch (IOException e) {
             e.printStackTrace();
         }

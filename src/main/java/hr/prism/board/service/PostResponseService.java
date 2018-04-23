@@ -63,7 +63,7 @@ public class PostResponseService {
         Post post = (Post) resourceService.getById(id);
         User user = userService.getUserSecured();
         actionService.executeAction(user, post, EDIT, () -> post);
-        return postResponseDAO.getPostResponses(post, searchTerm);
+        return postResponseDAO.getPostResponses(user, post, searchTerm);
     }
 
     public String consumePostReferral(String referral) {

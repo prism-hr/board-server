@@ -355,8 +355,8 @@ public class DepartmentUserService {
     }
 
     private void checkValidMemberCategory(Department department, MemberCategory memberCategory) {
-        List<ResourceCategory> referenceCategories = department.getCategories(CategoryType.MEMBER);
-        if (referenceCategories.isEmpty()) {
+        List<ResourceCategory> memberCategories = department.getCategories(CategoryType.MEMBER);
+        if (memberCategories.isEmpty()) {
             if (memberCategory == null) {
                 return;
             }
@@ -368,7 +368,7 @@ public class DepartmentUserService {
             throw new BoardException(MISSING_USER_ROLE_MEMBER_CATEGORIES, "Categories must be specified");
         }
 
-        if (referenceCategories
+        if (memberCategories
             .stream()
             .map(ResourceCategory::getName)
             .noneMatch(name -> name.equals(memberCategory.name()))) {

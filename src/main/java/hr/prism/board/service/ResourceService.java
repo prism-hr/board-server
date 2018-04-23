@@ -147,7 +147,7 @@ public class ResourceService {
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
         return resourceRepository.findByScopeAndUserAndRolesOrCategory(
-            scope, user, STAFF_ROLES, MEMBER, ACTIVE_USER_ROLE_STATES);
+            scope, user, STAFF_ROLES, MEMBER, ACCEPTED_STATES);
     }
 
     public void setIndexDataAndQuarter(Resource resource, String... parts) {
