@@ -17,4 +17,4 @@ ALTER TABLE resource_event
   ADD COLUMN index_data TEXT,
   ADD INDEX (location_nationality_id),
   ADD FULLTEXT INDEX (index_data),
-  ADD FOREIGN KEY (location_nationality_id) REFERENCES defaultLocation (id);
+  ADD FOREIGN KEY (location_nationality_id) REFERENCES location (id);

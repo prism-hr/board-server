@@ -7,21 +7,20 @@ CREATE TABLE organization (
   updated_timestamp DATETIME(3),
   PRIMARY KEY (id),
   UNIQUE INDEX (name),
-  INDEX (createor_id),
+  INDEX (creator_id),
   INDEX (created_timestamp),
-  INDEX (updated_timestamp),
-)
+  INDEX (updated_timestamp))
   COLLATE = utf8_general_ci
   ENGINE = innodb;
 
-INSERT INTO referral_code (name, logo, creator_id, created_timestamp)
+INSERT INTO organization (name, logo, creator_id, created_timestamp)
   SELECT organization_name, organization_logo, creator_id, MIN(created_timestamp)
   FROM resource
   WHERE scope = 'POST'
   GROUP BY organization_name;
 
 ALTER TABLE resource
-  ADD COLUMN organization_id BIGINT AFTER handle,
+  ADD COLUMN organization_id BIGINT UNSIGNED AFTER handle,
   ADD INDEX (organization_id),
   ADD FOREIGN KEY (organization_id) REFERENCES organization (id);
 
@@ -36,11 +35,11 @@ ALTER TABLE resource
 
 ALTER TABLE user
   ADD COLUMN default_organization_id BIGINT UNSIGNED AFTER website_resume,
-  ADD COLUMN default_location_id BIGINT UNSIGNED AFTER default_organization_id
+  ADD COLUMN default_location_id BIGINT UNSIGNED AFTER default_organization_id,
   ADD INDEX (default_organization_id),
   ADD INDEX (default_location_id),
   ADD FOREIGN KEY (default_organization_id) REFERENCES organization (id),
-  ADD FOREIGN KEY (default_location_id) REFERENCES defaultLocation (id);
+  ADD FOREIGN KEY (default_location_id) REFERENCES location (id);
 
 UPDATE user
   INNER JOIN (

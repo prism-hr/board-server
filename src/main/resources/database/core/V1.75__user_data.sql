@@ -6,7 +6,7 @@ ALTER TABLE user
   ADD COLUMN location_nationality_id BIGINT UNSIGNED
   AFTER age_range,
   ADD INDEX (location_nationality_id),
-  ADD FOREIGN KEY (location_nationality_id) REFERENCES defaultLocation (id);
+  ADD FOREIGN KEY (location_nationality_id) REFERENCES location (id);
 
 ALTER TABLE user_role
   ADD COLUMN member_category VARCHAR(30)
