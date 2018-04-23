@@ -42,82 +42,68 @@ import static org.mockito.Mockito.*;
 @Configuration
 public class TestConfiguration {
 
-    private final boolean pusherOn;
+    @Value("${pusher.on}")
+    private boolean pusherOn;
 
-    private final boolean mailOn;
+    @Value("${mail.on}")
+    private boolean mailOn;
 
-    private final boolean schedulerOn;
+    @Value("${scheduler.on}")
+    private boolean schedulerOn;
 
-    private final String senderEmail;
-
-    private final ActivityRepository activityRepository;
-
-    private final ActivityDAO activityDAO;
-
-    private final ActivityRoleRepository activityRoleRepository;
-
-    private final ActivityUserRepository activityUserRepository;
-
-    private final ActivityEventRepository activityEventRepository;
-
-    private final UserService userService;
-
-    private final TestEmailService testEmailService;
-
-    private final PostService postService;
-
-    private final ActivityService activityService;
-
-    private final ResourceTaskService resourceTaskService;
-
-    private final DepartmentService departmentService;
-
-    private final ActivityMapper activityMapper;
-
-    private final Pusher pusher;
-
-    private final SendGrid sendGrid;
-
-    private final ObjectMapper objectMapper;
-
-    private final EntityManager entityManager;
-
-    private final ApplicationContext applicationContext;
+    @Value("${system.email}")
+    private String senderEmail;
 
     @Inject
-    public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, @Value("${mail.on}") boolean mailOn,
-                             @Value("${scheduler.on}") boolean schedulerOn,
-                             @Value("${system.email}") String senderEmail, ActivityRepository activityRepository,
-                             ActivityDAO activityDAO, ActivityRoleRepository activityRoleRepository,
-                             ActivityUserRepository activityUserRepository,
-                             ActivityEventRepository activityEventRepository, UserService userService,
-                             TestEmailService testEmailService, ActivityService activityService,
-                             PostService postService, ResourceTaskService resourceTaskService,
-                             DepartmentService departmentService, ActivityMapper activityMapper, Pusher pusher,
-                             SendGrid sendGrid, ObjectMapper objectMapper, EntityManager entityManager,
-                             ApplicationContext applicationContext) {
-        this.pusherOn = pusherOn;
-        this.mailOn = mailOn;
-        this.schedulerOn = schedulerOn;
-        this.senderEmail = senderEmail;
-        this.activityRepository = activityRepository;
-        this.activityDAO = activityDAO;
-        this.activityRoleRepository = activityRoleRepository;
-        this.activityUserRepository = activityUserRepository;
-        this.activityEventRepository = activityEventRepository;
-        this.userService = userService;
-        this.testEmailService = testEmailService;
-        this.activityService = activityService;
-        this.postService = postService;
-        this.resourceTaskService = resourceTaskService;
-        this.departmentService = departmentService;
-        this.activityMapper = activityMapper;
-        this.pusher = pusher;
-        this.sendGrid = sendGrid;
-        this.objectMapper = objectMapper;
-        this.entityManager = entityManager;
-        this.applicationContext = applicationContext;
-    }
+    private ActivityRepository activityRepository;
+
+    @Inject
+    private ActivityDAO activityDAO;
+
+    @Inject
+    private ActivityRoleRepository activityRoleRepository;
+
+    @Inject
+    private ActivityUserRepository activityUserRepository;
+
+    @Inject
+    private ActivityEventRepository activityEventRepository;
+
+    @Inject
+    private UserService userService;
+
+    @Inject
+    private TestEmailService testEmailService;
+
+    @Inject
+    private PostService postService;
+
+    @Inject
+    private ActivityService activityService;
+
+    @Inject
+    private ResourceTaskService resourceTaskService;
+
+    @Inject
+    private DepartmentService departmentService;
+
+    @Inject
+    private ActivityMapper activityMapper;
+
+    @Inject
+    private Pusher pusher;
+
+    @Inject
+    private SendGrid sendGrid;
+
+    @Inject
+    private ObjectMapper objectMapper;
+
+    @Inject
+    private EntityManager entityManager;
+
+    @Inject
+    private ApplicationContext applicationContext;
 
     @Bean
     @Primary

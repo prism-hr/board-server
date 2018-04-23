@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER;
 import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER_ROLE;
 import static hr.prism.board.utils.BoardUtils.emptyToNull;
@@ -78,10 +79,11 @@ public class UserRoleService {
                 .setResource(resource)
                 .setUser(user)
                 .setRole(role)
-                .setCreated(true);
+                .setState(ACCEPTED);
 
         userRole.setCreatorId(resource.getCreatorId());
-        return userRoleRepository.save(userRole);
+        return userRoleRepository.save(userRole)
+            .setCreated(true);
     }
 
     @SuppressWarnings("UnusedReturnValue")

@@ -63,7 +63,6 @@ public class AuthenticationApi {
     @RequestMapping(value = "/api/auth/invitee/{invitationUuid}", method = GET)
     public UserRepresentation getInvitee(@PathVariable String invitationUuid) {
         User invitee = authenticationService.getInvitee(invitationUuid);
-        invitee.setRevealEmail(true);
         return userMapper.apply(invitee);
     }
 

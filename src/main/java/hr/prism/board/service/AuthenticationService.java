@@ -218,7 +218,8 @@ public class AuthenticationService {
     }
 
     public User getInvitee(String uuid) {
-        return userService.getByUserRoleUuid(uuid);
+        return userService.getByUserRoleUuid(uuid)
+            .setRevealEmail(true);
     }
 
     public String makeAccessToken(Long userId, boolean specifyExpirationDate) {

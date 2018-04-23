@@ -348,6 +348,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return defaultLocation;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setDefaultLocation(Location defaultLocation) {
         this.defaultLocation = defaultLocation;
         return this;
@@ -377,6 +378,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return departmentAdministrator;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setDepartmentAdministrator(boolean departmentAdministrator) {
         this.departmentAdministrator = departmentAdministrator;
         return this;
@@ -386,6 +388,7 @@ public class User extends BoardEntity implements Comparable<User> {
         return postCreator;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public User setPostCreator(boolean postCreator) {
         this.postCreator = postCreator;
         return this;

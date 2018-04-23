@@ -54,7 +54,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 Long userId = parseLong(claims.getSubject());
-                User user = userService.getById(userId);
+                User user = userService.getById(userId)
+                    .setRevealEmail(true);
 
                 SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(user));
                 LocalDateTime expiration = LocalDateTime.ofInstant(
