@@ -191,7 +191,7 @@ public class ResourceDAO {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
+    public void checkUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement =
             "select resource.id " +
                 "from Resource resource " +
@@ -223,7 +223,7 @@ public class ResourceDAO {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
+    public void checkUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
         Query query = entityManager.createQuery(
             "select resource.id " +
                 "from Resource resource " +

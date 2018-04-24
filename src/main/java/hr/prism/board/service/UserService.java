@@ -49,20 +49,20 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    private final UserPatchService userPatchService;
-
     private final UserDAO userDAO;
+
+    private final UserPatchService userPatchService;
 
     private final LocationService locationService;
 
     @Inject
     public UserService(@Value("${password.reset.timeout.seconds}") Long passwordResetTimeoutSeconds,
-                       UserRepository userRepository, UserPatchService userPatchService, UserDAO userDAO,
+                       UserRepository userRepository, UserDAO userDAO, UserPatchService userPatchService,
                        LocationService locationService) {
         this.passwordResetTimeoutSeconds = passwordResetTimeoutSeconds;
         this.userRepository = userRepository;
-        this.userPatchService = userPatchService;
         this.userDAO = userDAO;
+        this.userPatchService = userPatchService;
         this.locationService = locationService;
     }
 

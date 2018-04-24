@@ -3,7 +3,7 @@ package hr.prism.board.api;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-import hr.prism.board.TestContext;
+import hr.prism.board.ApiTestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.definition.LocationDefinition;
 import hr.prism.board.domain.*;
@@ -42,7 +42,7 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 
-@TestContext
+@ApiTestContext
 @SuppressWarnings("unused")
 @RunWith(SpringRunner.class)
 public class PostApiIT extends AbstractIT {

@@ -138,11 +138,11 @@ public class ResourceService {
     }
 
     public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
-        resourceDAO.validateUniqueName(scope, id, parent, name, exceptionCode);
+        resourceDAO.checkUniqueName(scope, id, parent, name, exceptionCode);
     }
 
     public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
-        resourceDAO.validateUniqueHandle(resource, handle, exceptionCode);
+        resourceDAO.checkUniqueHandle(resource, handle, exceptionCode);
     }
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {

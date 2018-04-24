@@ -1,6 +1,6 @@
 package hr.prism.board.api;
 
-import hr.prism.board.TestContext;
+import hr.prism.board.ApiTestContext;
 import hr.prism.board.enums.*;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-@TestContext
+@ApiTestContext
 @RunWith(SpringRunner.class)
 @SuppressWarnings("unchecked")
 public class DefinitionApiIT {

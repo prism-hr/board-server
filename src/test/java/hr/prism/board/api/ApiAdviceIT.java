@@ -2,7 +2,7 @@ package hr.prism.board.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hr.prism.board.TestContext;
+import hr.prism.board.ApiTestContext;
 import hr.prism.board.exception.ExceptionCode;
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import javax.inject.Inject;
 import java.util.Map;
 
-@TestContext
+@ApiTestContext
 @RunWith(SpringRunner.class)
 public class ApiAdviceIT {
 

@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
-import hr.prism.board.TestContext;
+import hr.prism.board.ApiTestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
@@ -55,7 +55,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.ObjectUtils.compare;
 
-@TestContext
+@ApiTestContext
 @RunWith(SpringRunner.class)
 public class DepartmentApiIT extends AbstractIT {
 

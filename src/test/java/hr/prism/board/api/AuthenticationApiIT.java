@@ -2,7 +2,7 @@ package hr.prism.board.api;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.TestContext;
+import hr.prism.board.ApiTestContext;
 import hr.prism.board.TestHelper;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@TestContext
+@ApiTestContext
 @RunWith(SpringRunner.class)
 public class AuthenticationApiIT extends AbstractIT {
 

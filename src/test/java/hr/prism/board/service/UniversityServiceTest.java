@@ -48,7 +48,7 @@ public class UniversityServiceTest {
     }
 
     @Test
-    public void getByIdWithExistenceCheck_exceptionWhenDoesNotExist() {
+    public void getByIdWithExistenceCheck_failureWhenDoesNotExist() {
         assertThatThrownBy(() -> universityService.getByIdWithExistenceCheck(1L))
             .isExactlyInstanceOf(BoardNotFoundException.class)
             .hasMessage("MISSING_RESOURCE: UNIVERSITY ID: 1 does not exist");

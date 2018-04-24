@@ -54,10 +54,12 @@ public class ResourceServiceTest {
     public void tearDown() {
         verifyNoMoreInteractions(resourceRepository, resourceDAO, resourceRelationRepository,
             resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
+        reset(resourceRepository, resourceDAO, resourceRelationRepository,
+            resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
     }
 
     @Test
-    public void getById() {
+    public void getById_success() {
         resourceService.getById(1L);
         verify(resourceRepository, times(1)).findOne(1L);
     }

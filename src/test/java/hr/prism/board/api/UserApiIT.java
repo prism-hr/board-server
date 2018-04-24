@@ -1,6 +1,6 @@
 package hr.prism.board.api;
 
-import hr.prism.board.TestContext;
+import hr.prism.board.ApiTestContext;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.MemberCategory;
@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-@TestContext
+@ApiTestContext
 @RunWith(SpringRunner.class)
 public class UserApiIT extends AbstractIT {
 
