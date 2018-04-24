@@ -84,13 +84,13 @@ public class BoardService {
         Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, EXTEND, () -> {
             String name = StringUtils.normalizeSpace(boardDTO.getName());
-            resourceService.validateUniqueName(BOARD, null, department, name, DUPLICATE_BOARD);
+            resourceService.checkUniqueName(BOARD, null, department, name, DUPLICATE_BOARD);
 
             Board board = new Board();
             board.setName(name);
 
             board.setHandle(
-                resourceService.createHandle(department, name, boardRepository::findHandleLikeSuggestedHandle));
+                resourceService.createHandle(department, BOARD, name));
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, POST, boardDTO.getPostCategories());

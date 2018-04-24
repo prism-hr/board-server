@@ -25,18 +25,18 @@ public class ResourceDAOIT {
     private ResourceDAO resourceDAO;
 
     @Test
-    public void checkUniqueName_successWhenDepartment() {
+    public void checkUniqueName_successWhenCreateDepartment() {
         University university = new University();
         university.setId(1L);
-        resourceDAO.checkUniqueName(DEPARTMENT, 1L, university, "new department", DUPLICATE_DEPARTMENT);
+        resourceDAO.checkUniqueName(DEPARTMENT, null, university, "new department", DUPLICATE_DEPARTMENT);
     }
 
     @Test
-    public void checkUniqueName_failureWhenDepartmentAlreadyExists() {
+    public void checkUniqueName_failureWhenCreateDepartmentAlreadyExists() {
         University university = new University();
         university.setId(1L);
         Assertions.assertThatThrownBy(() ->
-            resourceDAO.checkUniqueName(DEPARTMENT, 1L, university, "department", DUPLICATE_DEPARTMENT))
+            resourceDAO.checkUniqueName(DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasMessage("DUPLICATE_DEPARTMENT: DEPARTMENT with name department exists already")
             .hasFieldOrPropertyWithValue("id", 2L);

@@ -2,10 +2,11 @@ package hr.prism.board.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hr.prism.board.authentication.AuthenticationToken;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 import static javax.persistence.GenerationType.IDENTITY;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
@@ -77,13 +78,20 @@ public abstract class BoardEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return new HashCodeBuilder(17, 37)
+            .append(id)
+            .toHashCode();
     }
 
     @Override
-    public boolean equals(Object object) {
-        return !(object == null || getClass() != object.getClass())
-            && Objects.equals(id, ((BoardEntity) object).getId());
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        BoardEntity that = (BoardEntity) other;
+        return new EqualsBuilder()
+            .append(id, that.id)
+            .isEquals();
     }
 
     private Long getUserId() {

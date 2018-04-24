@@ -27,7 +27,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
                 String newValue = newValueOptional.get();
                 if (!Objects.equals(oldValue, newValue)) {
                     if (unique != null) {
-                        resourceService.validateUniqueName(
+                        resourceService.checkUniqueName(
                             resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
                     }
 
@@ -51,7 +51,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
                 }
 
                 if (unique != null) {
-                    resourceService.validateUniqueHandle(resource, newValue, unique);
+                    resourceService.checkUniqueHandle(resource, newValue, unique);
                 }
 
                 if (!Objects.equals(oldValue, newValue)) {

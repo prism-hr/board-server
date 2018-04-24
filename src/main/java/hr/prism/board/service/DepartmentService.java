@@ -43,6 +43,8 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class DepartmentService {
@@ -160,7 +162,7 @@ public class DepartmentService {
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
         User user = userService.getUserSecured();
         University university = universityService.getByIdWithExistenceCheck(universityId);
-        resourceService.validateUniqueName(
+        resourceService.checkUniqueName(
             DEPARTMENT, null, university, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
         String name = normalizeSpace(departmentDTO.getName());
 
@@ -175,8 +177,7 @@ public class DepartmentService {
             department.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
         }
 
-        department.setHandle(resourceService.createHandle(university, name,
-            departmentRepository::findHandleByLikeSuggestedHandle));
+        department.setHandle(resourceService.createHandle(university, DEPARTMENT, name));
         department = departmentRepository.save(department);
         resourceService.updateState(department, DRAFT);
 

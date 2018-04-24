@@ -38,14 +38,6 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
                                                   @Param("baseline2") LocalDateTime baseline2);
 
     @Query(value =
-        "select department.handle " +
-            "from Department department " +
-            "where department.handle like concat('%', :suggestedHandle) " +
-            "or department.handle like concat('%', :suggestedHandle, '-%') " +
-            "order by department.handle desc")
-    List<String> findHandleByLikeSuggestedHandle(@Param("suggestedHandle") String suggestedHandle);
-
-    @Query(value =
         "select department.id " +
             "from Department department " +
             "where department.state = :state " +

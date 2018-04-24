@@ -22,6 +22,16 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     Resource findByHandle(String handle);
 
     @Query(value =
+        "select resource.handle " +
+            "from Resource resource " +
+            "where resource.scope = :scope " +
+            "and (resource.handle like concat('%', :suggestedHandle) " +
+            "or resource.handle like concat('%', :suggestedHandle, '-%')) " +
+            "order by resource.handle desc")
+    List<String> findHandleLikeSuggestedHandle(@Param("scope") Scope scope,
+                                               @Param("suggestedHandle") String suggestedHandle);
+
+    @Query(value =
         "select resourceRelation.resource1 " +
             "from ResourceRelation resourceRelation " +
             "inner join resourceRelation.resource1 resource1 " +

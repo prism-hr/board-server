@@ -1,6 +1,9 @@
 package hr.prism.board.service;
 
 import hr.prism.board.dao.DepartmentDAO;
+import hr.prism.board.domain.Document;
+import hr.prism.board.domain.University;
+import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.repository.DepartmentRepository;
 import org.junit.After;
@@ -12,8 +15,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.persistence.EntityManager;
 
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DepartmentServiceTest {
@@ -84,8 +88,27 @@ public class DepartmentServiceTest {
     }
 
     @Test
-    public void createDepartment_success() {
+    public void createDepartment_successWithDefaults() {
+        University university = new University();
+        university.setId(1L);
 
+        Document documentLogo = new Document();
+        documentLogo.setId(1L);
+        university.setDocumentLogo(documentLogo);
+
+        when(universityService.getByIdWithExistenceCheck(1L)).thenReturn(university);
+
+        DepartmentDTO department =
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("summary");
+        departmentService.createDepartment(1L, department);
+
+        verify(universityService, times(1)).getByIdWithExistenceCheck(1L);
+        verify(resourceService, times(1)).checkUniqueName(
+            DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT);
+        verify(resourceService, times(1))
+            .createHandle(university, DEPARTMENT, "department");
     }
 
 }

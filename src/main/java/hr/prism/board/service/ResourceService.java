@@ -137,11 +137,11 @@ public class ResourceService {
             RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
     }
 
-    public void validateUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
+    public void checkUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         resourceDAO.checkUniqueName(scope, id, parent, name, exceptionCode);
     }
 
-    public void validateUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
+    public void checkUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
         resourceDAO.checkUniqueHandle(resource, handle, exceptionCode);
     }
 
@@ -261,7 +261,7 @@ public class ResourceService {
         resourceRepository.save(resource);
     }
 
-    public String createHandle(Resource parent, String name, SimilarHandleFinder similarHandleFinder) {
+    public String createHandle(Resource parent, Scope scope, String name) {
         String handle;
         if (parent == null) {
             handle = suggestHandle(name);
@@ -269,7 +269,7 @@ public class ResourceService {
             handle = parent.getHandle() + "/" + suggestHandle(name);
         }
 
-        List<String> similarHandles = similarHandleFinder.find(handle);
+        List<String> similarHandles = resourceRepository.findHandleLikeSuggestedHandle(scope, handle);
         return confirmHandle(handle, similarHandles);
     }
 
@@ -290,10 +290,6 @@ public class ResourceService {
 
     private void deleteResourceCategories(Resource resource, CategoryType type) {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
-    }
-
-    public interface SimilarHandleFinder {
-        List<String> find(String handle);
     }
 
 }

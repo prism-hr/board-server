@@ -11,20 +11,23 @@ import static org.junit.Assert.assertEquals;
 public class ResourceUtilsTest {
 
     @Test
-    public void shouldSuggestHandleForVeryShortText() {
+    public void suggestHandle_successWhenSmallContiguousText() {
         assertEquals("iamtiny", suggestHandle("IAmTiny"));
     }
 
     @Test
-    public void shouldSuggestHandleForVeryLongText() {
+    public void suggestHandle_successWhenLargeContiguousText() {
         assertEquals("iamaveryverylongpieceofte", suggestHandle("IAmAVeryVeryLongPieceOfText"));
     }
 
     @Test
-    public void shouldSuggestHandleForTextWithSpaces() {
+    public void suggestHandle_successWhenSmallSpacedText() {
         assertEquals("i-am-a-piece", suggestHandle("I am a piece"));
+    }
+
+    @Test
+    public void suggestHandle_successWhenLargeSpacedText() {
         assertEquals("i-am-a-piece-of-text-with", suggestHandle("I am a piece of text with spaces"));
-        assertEquals("i-am-another-piece-of", suggestHandle("I am another piece of text with spaces"));
     }
 
 }
