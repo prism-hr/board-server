@@ -323,7 +323,7 @@ public class BoardApiIT extends AbstractIT {
         Board board = boardService.getById(boardR.getId());
         DepartmentRepresentation departmentR = boardR.getDepartment();
         Department department = departmentService.getById(departmentR.getId());
-        University university = universityService.getUniversity(departmentR.getUniversity().getId());
+        University university = universityService.getByIdWithExistenceCheck(departmentR.getUniversity().getId());
         Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
 
         List<ResourceRelation> parents = resourceRelationRepository.findByResource2(board);

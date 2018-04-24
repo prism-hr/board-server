@@ -159,7 +159,7 @@ public class DepartmentService {
 
     public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
         User user = userService.getUserSecured();
-        University university = universityService.getUniversity(universityId);
+        University university = universityService.getByIdWithExistenceCheck(universityId);
         resourceService.validateUniqueName(
             DEPARTMENT, null, university, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
         String name = normalizeSpace(departmentDTO.getName());

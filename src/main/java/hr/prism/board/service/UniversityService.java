@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import hr.prism.board.dao.UniversityDAO;
 import hr.prism.board.domain.University;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.repository.UniversityRepository;
 import hr.prism.board.value.ResourceSearch;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
+
+import static hr.prism.board.enums.Scope.UNIVERSITY;
+import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 
 @Service
 @Transactional
@@ -29,8 +33,13 @@ public class UniversityService {
         this.resourceService = resourceService;
     }
 
-    public University getUniversity(Long id) {
-        return (University) resourceService.getById(id);
+    public University getByIdWithExistenceCheck(Long id) {
+        University university = (University) resourceService.getById(id);
+        if (university == null) {
+            throw new BoardNotFoundException(MISSING_RESOURCE, UNIVERSITY, id);
+        }
+
+        return university;
     }
 
     @SuppressWarnings("SameParameterValue")

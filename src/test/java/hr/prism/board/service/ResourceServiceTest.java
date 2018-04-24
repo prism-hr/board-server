@@ -1,30 +1,65 @@
 package hr.prism.board.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hr.prism.board.dao.ResourceDAO;
+import hr.prism.board.repository.ResourceCategoryRepository;
+import hr.prism.board.repository.ResourceOperationRepository;
+import hr.prism.board.repository.ResourceRelationRepository;
+import hr.prism.board.repository.ResourceRepository;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static hr.prism.board.utils.ResourceUtils.suggestHandle;
-import static org.junit.Assert.assertEquals;
+import javax.persistence.EntityManager;
+
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceServiceTest {
 
-    @Test
-    public void shouldSuggestHandleForVeryShortText() {
-        assertEquals("iamtiny", suggestHandle("IAmTiny"));
+    @Mock
+    private ResourceRepository resourceRepository;
+
+    @Mock
+    private ResourceDAO resourceDAO;
+
+    @Mock
+    private ResourceRelationRepository resourceRelationRepository;
+
+    @Mock
+    private ResourceCategoryRepository resourceCategoryRepository;
+
+    @Mock
+    private ResourceOperationRepository resourceOperationRepository;
+
+    @Mock
+    private EntityManager entityManager;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    private ResourceService resourceService;
+
+    @Before
+    public void setUp() {
+        resourceService = new ResourceService(1L, resourceRepository, resourceDAO,
+            resourceRelationRepository, resourceCategoryRepository, resourceOperationRepository, entityManager,
+            objectMapper);
+    }
+
+    @After
+    public void tearDown() {
+        verifyNoMoreInteractions(resourceRepository, resourceDAO, resourceRelationRepository,
+            resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
     }
 
     @Test
-    public void shouldSuggestHandleForVeryLongText() {
-        assertEquals("iamaveryverylongpieceofte", suggestHandle("IAmAVeryVeryLongPieceOfText"));
-    }
-
-    @Test
-    public void shouldSuggestHandleForTextWithSpaces() {
-        assertEquals("i-am-a-piece", suggestHandle("I am a piece"));
-        assertEquals("i-am-a-piece-of-text-with", suggestHandle("I am a piece of text with spaces"));
-        assertEquals("i-am-another-piece-of", suggestHandle("I am another piece of text with spaces"));
+    public void getById() {
+        resourceService.getById(1L);
+        verify(resourceRepository, times(1)).findOne(1L);
     }
 
 }

@@ -1949,7 +1949,7 @@ public class DepartmentApiIT extends AbstractIT {
             .orElse(Stream.of(MemberCategory.values()).collect(toList())), departmentR.getMemberCategories());
 
         Department department = departmentService.getById(departmentR.getId());
-        University university = universityService.getUniversity(departmentR.getUniversity().getId());
+        University university = universityService.getByIdWithExistenceCheck(departmentR.getUniversity().getId());
 
         List<ResourceRelation> parents = resourceRelationRepository.findByResource2(department);
         Assert.assertThat(parents.stream()
