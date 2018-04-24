@@ -198,17 +198,17 @@ public class ResourceService {
         // Delete the old records
         deleteResourceCategories(resource, type);
         Set<ResourceCategory> oldCategories = resource.getCategories();
-        oldCategories.removeIf(next -> next.getType() == type);
+        oldCategories.removeIf(oldCategory -> oldCategory.getType() == type);
 
         if (categories != null) {
             // Write the new records
-            categories.forEach(category ->
+            categories.forEach(name ->
                 oldCategories.add(
                     createResourceCategory(
                         new ResourceCategory()
                             .setResource(resource)
-                            .setName(category)
-                            .setType(type))));
+                            .setType(type)
+                            .setName(name))));
         }
     }
 

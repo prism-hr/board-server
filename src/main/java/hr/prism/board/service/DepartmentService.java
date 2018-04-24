@@ -43,8 +43,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
-import hr.prism.board.event.ActivityEvent;
-
 @Service
 @Transactional
 public class DepartmentService {

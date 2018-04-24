@@ -3,6 +3,8 @@ package hr.prism.board.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.ResourceDAO;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.domain.University;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
@@ -16,10 +18,17 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.persistence.EntityManager;
+import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.enums.State.PREVIOUS;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
 import static java.util.Collections.emptyList;
+import static org.apache.commons.lang3.StringUtils.right;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -124,6 +133,57 @@ public class ResourceServiceTest {
 
         verify(resourceRepository, times(1))
             .findHandleLikeSuggestedHandle(DEPARTMENT, "university/department");
+    }
+
+    @Test
+    public void updateState_successWhenCreateDepartment() {
+        LocalDateTime baseline = LocalDateTime.now().minusSeconds(1L);
+
+        Department department = new Department();
+        resourceService.updateState(department, DRAFT);
+
+        assertEquals(DRAFT, department.getState());
+        assertEquals(DRAFT, department.getPreviousState());
+        assertThat(department.getStateChangeTimestamp()).isGreaterThan(baseline);
+
+        verify(entityManager, times(1)).flush();
+    }
+
+    @Test
+    public void updateState_failureWhenCreateDepartmentAndPrevious() {
+        assertThatThrownBy(() -> resourceService.updateState(new Department(), PREVIOUS))
+            .isExactlyInstanceOf(IllegalStateException.class)
+            .hasMessage("Previous state is anonymous - cannot be assigned to a resource");
+    }
+
+    @Test
+    public void updateCategories_successWhenCreateDepartmentAndMember() {
+        when(resourceCategoryRepository.save(any(ResourceCategory.class))).thenAnswer(invocation -> {
+            ResourceCategory resourceCategory = (ResourceCategory) invocation.getArguments()[0];
+            String name = resourceCategory.getName();
+            resourceCategory.setId(Long.parseLong(right(name, 1)));
+            return resourceCategory;
+        });
+
+        Department department = new Department();
+        department.setId(1L);
+
+        ResourceCategory category1 = new ResourceCategory();
+        category1.setResource(department);
+        category1.setType(MEMBER);
+        category1.setName("category1");
+
+        ResourceCategory category2 = new ResourceCategory();
+        category2.setResource(department);
+        category2.setType(MEMBER);
+        category2.setName("category2");
+
+        resourceService.updateCategories(department, MEMBER, ImmutableList.of("category1", "category2"));
+        assertThat(department.getCategories(MEMBER)).containsExactly(category1, category2);
+
+        verify(resourceCategoryRepository, times(1)).deleteByResourceAndType(department, MEMBER);
+        verify(resourceCategoryRepository, times(1)).save(category1);
+        verify(resourceCategoryRepository, times(1)).save(category2);
     }
 
 }
