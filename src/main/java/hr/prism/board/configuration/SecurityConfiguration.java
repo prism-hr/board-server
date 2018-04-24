@@ -14,7 +14,6 @@ import javax.inject.Inject;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-@Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Long sessionRefreshBeforeExpirationSeconds;

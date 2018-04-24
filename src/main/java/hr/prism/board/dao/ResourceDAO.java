@@ -190,7 +190,7 @@ public class ResourceDAO {
             .getResultList();
     }
 
-    @SuppressWarnings("JpaQlInspection")
+    @SuppressWarnings({"unchecked", "JpaQlInspection"})
     public void checkUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
         String statement =
             "select resource.id " +
@@ -209,16 +209,15 @@ public class ResourceDAO {
             constraints.put("parent", parent);
         }
 
-        Query query = entityManager.createQuery(statement)
+        Query query = entityManager.createQuery(statement, Long.class)
             .setParameter("scope", scope)
             .setParameter("name", name);
         constraints.keySet().forEach(key -> query.setParameter(key, constraints.get(key)));
 
-        @SuppressWarnings("unchecked")
-        List<Long> resourceIds = query.getResultList();
+        List<Long> resourceIds = (List<Long>) query.getResultList();
         if (!resourceIds.isEmpty()) {
             throw new BoardDuplicateException(exceptionCode,
-                scope.name() + " with name " + name + " exists already", resourceIds.get(0));
+                scope + " with name " + name + " exists already", resourceIds.get(0));
         }
     }
 

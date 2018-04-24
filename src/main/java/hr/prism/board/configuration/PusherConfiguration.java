@@ -4,8 +4,6 @@ import com.google.gson.*;
 import com.pusher.rest.Pusher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import javax.inject.Inject;
 import java.lang.reflect.Type;
@@ -13,8 +11,6 @@ import java.time.LocalDateTime;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-@Configuration
-@Profile({"local", "uat", "prod"})
 public class PusherConfiguration {
 
     private final String pusherApp;

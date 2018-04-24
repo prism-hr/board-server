@@ -18,7 +18,6 @@ import java.util.TimeZone;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Configuration
 @EnableJpaRepositories(basePackages = "hr.prism.board.repository")
 public class DatabaseConfiguration {
 

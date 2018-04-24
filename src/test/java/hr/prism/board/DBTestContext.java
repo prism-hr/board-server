@@ -1,6 +1,7 @@
 package hr.prism.board;
 
 import hr.prism.board.configuration.DatabaseConfiguration;
+import hr.prism.board.configuration.FreeMarkerConfiguration;
 import hr.prism.board.configuration.JacksonConfiguration;
 import hr.prism.board.configuration.TestConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,8 +23,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ActiveProfiles("test")
 @SpringBootTest(
     webEnvironment = NONE,
-    classes = {
-        BoardApplication.class, DatabaseConfiguration.class, JacksonConfiguration.class, TestConfiguration.class})
+    classes = {BoardApplication.class, DatabaseConfiguration.class, FreeMarkerConfiguration.class,
+        JacksonConfiguration.class, TestConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public @interface DBTestContext {
 
