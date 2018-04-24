@@ -109,7 +109,6 @@ public class ActivityEventConsumer {
         Resource resource = resourceService.getById(activityEvent.getResourceId());
         List<hr.prism.board.workflow.Activity> activities = activityEvent.getActivities();
         if (isEmpty(activities)) {
-            activityService.sendActivities(resource);
             return resource;
         }
 

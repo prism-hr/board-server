@@ -49,7 +49,7 @@ public class ScheduledService {
     public void processResources() {
         if (isTrue(schedulerOn)) {
             // Publish / retire posts
-            LocalDateTime baseline = getBaseline();
+            LocalDateTime baseline = LocalDateTime.now();
             postService.publishAndRetirePosts(baseline);
 
             // Notify department tasks
@@ -85,11 +85,6 @@ public class ScheduledService {
     public void updateDepartmentTasks(LocalDateTime baseline) {
         departmentService.findAllIdsForTaskUpdates(baseline)
             .forEach(departmentId -> departmentService.updateTasks(departmentId, baseline));
-    }
-
-    @VisibleForTesting
-    public LocalDateTime getBaseline() {
-        return LocalDateTime.now();
     }
 
 }

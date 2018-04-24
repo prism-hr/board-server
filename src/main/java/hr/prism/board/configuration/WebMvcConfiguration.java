@@ -19,6 +19,7 @@ import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static freemarker.template.Configuration.VERSION_2_3_26;
 import static hr.prism.board.utils.JacksonUtils.getObjectMapper;
 
+@Configuration
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
     private final boolean jacksonPretty;

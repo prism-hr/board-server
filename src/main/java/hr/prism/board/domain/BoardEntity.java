@@ -11,7 +11,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @MappedSuperclass
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"id", "creatorId", "createdTimestamp", "updatedTimestamp"})
+@JsonIgnoreProperties({"id", "creatorId", "createdTimestamp", "updatedTimestamp"})
 public abstract class BoardEntity {
 
     @Id
@@ -72,8 +72,7 @@ public abstract class BoardEntity {
 
     @PreUpdate
     public void onUpdate() {
-        LocalDateTime baseline = LocalDateTime.now();
-        this.updatedTimestamp = baseline;
+        this.updatedTimestamp = LocalDateTime.now();
     }
 
     @Override

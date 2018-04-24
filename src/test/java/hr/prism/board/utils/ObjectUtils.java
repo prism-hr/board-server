@@ -1,4 +1,4 @@
-package hr.prism.board.util;
+package hr.prism.board.utils;
 
 import java.util.LinkedHashMap;
 

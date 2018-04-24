@@ -1,11 +1,9 @@
 package hr.prism.board.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.util.Objects;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class OAuthDataDTO {
 
     @NotEmpty
@@ -21,15 +19,21 @@ public class OAuthDataDTO {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(code);
-    }
-
-    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
-        return Objects.equals(code, ((OAuthDataDTO) other).code);
+
+        OAuthDataDTO that = (OAuthDataDTO) other;
+        return new EqualsBuilder()
+            .append(code, that.code)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(code)
+            .toHashCode();
     }
 
 }

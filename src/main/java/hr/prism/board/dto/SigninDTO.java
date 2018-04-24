@@ -1,12 +1,9 @@
 package hr.prism.board.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class SigninDTO extends AuthenticateDTO<SigninDTO> {
 
     @Valid

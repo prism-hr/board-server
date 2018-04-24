@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.fasterxml.jackson.core.JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 
 public class JacksonUtils {
@@ -23,6 +24,7 @@ public class JacksonUtils {
         objectMapper.setSerializationInclusion(NON_NULL);
         objectMapper.enable(WRITE_BIGDECIMAL_AS_PLAIN);
         objectMapper.disable(WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.disable(FAIL_ON_UNKNOWN_PROPERTIES);
         return objectMapper;
     }
 

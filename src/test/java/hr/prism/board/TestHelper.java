@@ -11,7 +11,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.representation.*;
-import hr.prism.board.util.ObjectUtils;
+import hr.prism.board.utils.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Assert;
 import org.mockito.Mockito;

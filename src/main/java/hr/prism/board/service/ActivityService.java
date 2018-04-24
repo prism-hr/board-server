@@ -250,10 +250,10 @@ public class ActivityService {
             return pusher.authenticate(pusherAuthentication.getSocketId(), channel,
                 new PresenceUser(userId,
                     ImmutableMap.of("name", user.getFullName(), "email", user.getEmailDisplay())));
-        } else {
-            throw new BoardForbiddenException(UNAUTHENTICATED_USER,
-                "User ID: " + userId + " does not have permission to connect to channel: " + channel);
         }
+
+        throw new BoardForbiddenException(UNAUTHENTICATED_USER,
+            "User ID: " + userId + " does not have permission to connect to channel: " + channel);
     }
 
     public void updateActivities() throws IOException {

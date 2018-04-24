@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pusher.rest.Pusher;
 import com.sendgrid.SendGrid;
 import com.stripe.model.Customer;
+import com.stripe.model.InvoiceCollection;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
 import hr.prism.board.dao.ActivityDAO;
@@ -31,79 +32,38 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
 import static hr.prism.board.enums.OauthProvider.FACEBOOK;
 import static hr.prism.board.enums.OauthProvider.LINKEDIN;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @Configuration
 public class TestConfiguration {
 
-    @Value("${pusher.on}")
-    private boolean pusherOn;
+    private final ActivityService activityService;
 
-    @Value("${mail.on}")
-    private boolean mailOn;
+    private final NotificationService notificationService;
 
-    @Value("${scheduler.on}")
-    private boolean schedulerOn;
+    private final ApplicationContext applicationContext;
 
-    @Value("${system.email}")
-    private String senderEmail;
+    public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, @Value("${mail.on}") boolean mailOn,
+                             @Value("${system.email}") String senderEmail, ActivityRepository activityRepository,
+                             ActivityDAO activityDAO, ActivityRoleRepository activityRoleRepository,
+                             ActivityUserRepository activityUserRepository,
+                             ActivityEventRepository activityEventRepository, UserService userService,
+                             ActivityMapper activityMapper, TestEmailService testEmailService, Pusher pusher,
+                             SendGrid sendGrid, ObjectMapper objectMapper, EntityManager entityManager,
+                             ApplicationContext applicationContext) {
+        this.activityService = new TestActivityService(pusherOn, activityRepository, activityDAO,
+            activityRoleRepository, activityUserRepository, activityEventRepository, userService,
+            activityMapper, pusher, objectMapper, entityManager);
 
-    @Inject
-    private ActivityRepository activityRepository;
+        this.notificationService = new TestNotificationService(mailOn, senderEmail, testEmailService, sendGrid,
+            applicationContext);
 
-    @Inject
-    private ActivityDAO activityDAO;
-
-    @Inject
-    private ActivityRoleRepository activityRoleRepository;
-
-    @Inject
-    private ActivityUserRepository activityUserRepository;
-
-    @Inject
-    private ActivityEventRepository activityEventRepository;
-
-    @Inject
-    private UserService userService;
-
-    @Inject
-    private TestEmailService testEmailService;
-
-    @Inject
-    private PostService postService;
-
-    @Inject
-    private ActivityService activityService;
-
-    @Inject
-    private ResourceTaskService resourceTaskService;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private ActivityMapper activityMapper;
-
-    @Inject
-    private Pusher pusher;
-
-    @Inject
-    private SendGrid sendGrid;
-
-    @Inject
-    private ObjectMapper objectMapper;
-
-    @Inject
-    private EntityManager entityManager;
-
-    @Inject
-    private ApplicationContext applicationContext;
+        this.applicationContext = applicationContext;
+    }
 
     @Bean
     @Primary
@@ -189,38 +149,47 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public TestNotificationService notificationService() {
-        return new TestNotificationService(mailOn, senderEmail, testEmailService, sendGrid, applicationContext);
+    public ActivityService activityService() {
+        return this.activityService;
     }
 
     @Bean
     @Primary
-    public TestActivityService activityService() {
-        return new TestActivityService(pusherOn, activityRepository, activityDAO, activityRoleRepository,
-            activityUserRepository, activityEventRepository, userService, activityMapper, pusher, objectMapper,
-            entityManager);
+    public NotificationService notificationService() {
+        return this.notificationService;
     }
 
-    @Bean
-    @Primary
-    public TestScheduledService scheduledService() {
-        return new TestScheduledService(schedulerOn, activityService, postService, resourceTaskService,
-            departmentService);
-    }
+//    @Bean
+//    @Primary
+//    public SendGrid sendGrid() {
+//        return mock(SendGrid.class);
+//    }
+//
+//    @Bean
+//    @Primary
+//    public Pusher pusher() {
+//        return mock(Pusher.class);
+//    }
 
     @Bean
     @Primary
     public PaymentService paymentService() {
+        PaymentService paymentService = mock(PaymentService.class);
         Customer customer = new Customer();
         customer.setId("id");
 
-        PaymentService paymentService = mock(PaymentService.class);
         when(paymentService.getCustomer(anyString())).thenReturn(customer);
         when(paymentService.createCustomer(anyString())).thenReturn(customer);
         when(paymentService.createSubscription(anyString())).thenReturn(customer);
         when(paymentService.appendSource(anyString(), anyString())).thenReturn(customer);
         when(paymentService.setSourceAsDefault(anyString(), anyString())).thenReturn(customer);
+        when(paymentService.deleteSource(anyString(), anyString())).thenReturn(customer);
         when(paymentService.cancelSubscription(anyString())).thenReturn(customer);
+        when(paymentService.reactivateSubscription(anyString())).thenReturn(customer);
+
+        InvoiceCollection invoiceCollection = new InvoiceCollection();
+        when(paymentService.getInvoices(anyString())).thenReturn(invoiceCollection);
+
         return paymentService;
     }
 
@@ -229,10 +198,12 @@ public class TestConfiguration {
     public ApplicationEventPublisher applicationEventPublisher() {
         ApplicationEventPublisher applicationEventPublisher = mock(ApplicationEventPublisher.class);
 
-        ActivityEventConsumer activityEventConsumer = applicationContext.getBean(ActivityEventConsumer.class);
+        ActivityEventConsumer activityEventConsumer =
+            applicationContext.getBean(ActivityEventConsumer.class);
         NotificationEventConsumer notificationEventConsumer =
             applicationContext.getBean(NotificationEventConsumer.class);
-        DepartmentMemberEventConsumer departmentMemberEventConsumer = applicationContext.getBean(DepartmentMemberEventConsumer.class);
+        DepartmentMemberEventConsumer departmentMemberEventConsumer =
+            applicationContext.getBean(DepartmentMemberEventConsumer.class);
 
         doAnswer(invocation -> {
             ApplicationEvent event = (ApplicationEvent) invocation.getArguments()[0];

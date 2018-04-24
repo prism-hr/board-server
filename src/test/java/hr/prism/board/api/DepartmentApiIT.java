@@ -20,7 +20,7 @@ import hr.prism.board.service.DepartmentPaymentService;
 import hr.prism.board.service.ScheduledService;
 import hr.prism.board.service.TestActivityService;
 import hr.prism.board.service.TestNotificationService.NotificationInstance;
-import hr.prism.board.util.ObjectUtils;
+import hr.prism.board.utils.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matchers;
@@ -565,7 +565,7 @@ public class DepartmentApiIT extends AbstractIT {
         Assert.assertTrue(dashboard4.getTasks().get(1).getCompleted());
         Assert.assertTrue(dashboard4.getTasks().get(2).getCompleted());
 
-        LocalDateTime baseline = scheduledService.getBaseline();
+        LocalDateTime baseline = LocalDateTime.of(2017, 9, 1, 9, 0, 0);
         LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
         Department department1 = departmentService.getById(departmentId);
         department1.setCreatedTimestamp(baseline1);
@@ -573,7 +573,7 @@ public class DepartmentApiIT extends AbstractIT {
         department1.setLastTaskCreationTimestamp(baseline.minusYears(1));
         resourceRepository.save(department1);
 
-        scheduledService.updateDepartmentTasks(scheduledService.getBaseline());
+        scheduledService.updateDepartmentTasks(baseline);
         resourceTaskRepository.updateCreatedTimestampByResourceId(departmentId,
             resourceTaskCreatedTimestamp.minusSeconds(resourceTaskNotificationInterval1Seconds + 1));
         scheduledService.notifyDepartmentTasks(LocalDateTime.now());

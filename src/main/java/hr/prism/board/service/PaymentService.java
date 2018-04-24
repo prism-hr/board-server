@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.stripe.Stripe;
 import com.stripe.model.*;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +22,12 @@ public class PaymentService {
     public Customer getCustomer(String customerId) {
         return performStripeOperation(() ->
                 Customer.retrieve(customerId),
-            PAYMENT_INTEGRATION_ERROR,
             "Could not get customer: " + customerId);
     }
 
     public Customer createCustomer(String source) {
         return performStripeOperation(() ->
                 Customer.create(ImmutableMap.of("source", source)),
-            PAYMENT_INTEGRATION_ERROR,
             "Could not create customer with source: " + source);
     }
 
@@ -44,7 +41,6 @@ public class PaymentService {
                                 "plan", "department"))));
                 return Customer.retrieve(customerId);
             },
-            PAYMENT_INTEGRATION_ERROR,
             "Could not create subscription for customer with ID: " + customerId);
     }
 
@@ -54,7 +50,6 @@ public class PaymentService {
                 customer.getSources().create(ImmutableMap.of("source", source));
                 return Customer.retrieve(customerId);
             },
-            PAYMENT_INTEGRATION_ERROR,
             "Could not update customer: " + customerId + " with source: " + source);
     }
 
@@ -64,7 +59,6 @@ public class PaymentService {
                 customer.update(ImmutableMap.of("default_source", source));
                 return Customer.retrieve(customerId);
             },
-            PAYMENT_INTEGRATION_ERROR,
             "Could not not set default source: " + source + " for customer: " + customerId);
     }
 
@@ -74,7 +68,6 @@ public class PaymentService {
                 customer.getSources().retrieve(source).delete();
                 return Customer.retrieve(customerId);
             },
-            PAYMENT_INTEGRATION_ERROR,
             "Could not remove source: " + source + " from customer: " + customerId);
     }
 
@@ -87,14 +80,12 @@ public class PaymentService {
                     performStripeOperation(() ->
                             Subscription.retrieve(subscriptionId).cancel(
                                 ImmutableMap.of("at_period_end", true)),
-                        PAYMENT_INTEGRATION_ERROR,
                         "Could not cancel subscription: " +
                             subscriptionId + " for customer: " + customerId);
                 });
 
                 return Customer.retrieve(customerId);
             },
-            PAYMENT_INTEGRATION_ERROR,
             "Could not cancel subscription for customer: " + customerId);
     }
 
@@ -112,30 +103,26 @@ public class PaymentService {
                                             "id", subscription.getSubscriptionItems().getData().get(0).getId(),
                                             "plan", "department")),
                                     "cancel_at_period_end", false)),
-                        PAYMENT_INTEGRATION_ERROR,
                         "Could not reactivate subscription: " +
                             subscriptionId + " for customer: " + customerId);
                 });
 
                 return Customer.retrieve(customerId);
             },
-            PAYMENT_INTEGRATION_ERROR,
             "Could not reactivate subscription for customer: " + customerId);
     }
 
     public InvoiceCollection getInvoices(String customerId) {
         return performStripeOperation(() ->
                 Invoice.list(ImmutableMap.of("customer", customerId)),
-            PAYMENT_INTEGRATION_ERROR,
             "Could not get invoices for customer: " + customerId);
     }
 
-    private <T> T performStripeOperation(StripeOperation<T> operation, ExceptionCode exceptionCode,
-                                         String exceptionMessage) {
+    private <T> T performStripeOperation(StripeOperation<T> operation, String exceptionMessage) {
         try {
             return operation.operate();
         } catch (Exception e) {
-            throw new BoardException(exceptionCode, exceptionMessage, e);
+            throw new BoardException(PAYMENT_INTEGRATION_ERROR, exceptionMessage, e);
         }
     }
 

@@ -8,7 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"includePublicResources", "orderStatement"})
+@JsonIgnoreProperties({"includePublicResources", "orderStatement"})
 public class ResourceFilter {
 
     @ResourceFilterProperty(
