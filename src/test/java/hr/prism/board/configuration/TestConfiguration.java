@@ -1,13 +1,11 @@
 package hr.prism.board.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pusher.rest.Pusher;
 import com.sendgrid.SendGrid;
 import com.stripe.model.Customer;
 import com.stripe.model.InvoiceCollection;
 import hr.prism.board.authentication.adapter.FacebookAdapter;
 import hr.prism.board.authentication.adapter.LinkedinAdapter;
-import hr.prism.board.dao.ActivityDAO;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.OAuthAuthorizationDataDTO;
 import hr.prism.board.dto.OAuthDataDTO;
@@ -18,13 +16,7 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.event.consumer.ActivityEventConsumer;
 import hr.prism.board.event.consumer.DepartmentMemberEventConsumer;
 import hr.prism.board.event.consumer.NotificationEventConsumer;
-import hr.prism.board.mapper.ActivityMapper;
-import hr.prism.board.repository.ActivityEventRepository;
-import hr.prism.board.repository.ActivityRepository;
-import hr.prism.board.repository.ActivityRoleRepository;
-import hr.prism.board.repository.ActivityUserRepository;
-import hr.prism.board.service.*;
-import org.springframework.beans.factory.annotation.Value;
+import hr.prism.board.service.PaymentService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,7 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import javax.persistence.EntityManager;
+import javax.inject.Inject;
 
 import static hr.prism.board.enums.OauthProvider.FACEBOOK;
 import static hr.prism.board.enums.OauthProvider.LINKEDIN;
@@ -41,27 +33,10 @@ import static org.mockito.Mockito.*;
 @Configuration
 public class TestConfiguration {
 
-    private final ActivityService activityService;
-
-    private final NotificationService notificationService;
-
     private final ApplicationContext applicationContext;
 
-    public TestConfiguration(@Value("${pusher.on}") boolean pusherOn, @Value("${mail.on}") boolean mailOn,
-                             @Value("${system.email}") String senderEmail, ActivityRepository activityRepository,
-                             ActivityDAO activityDAO, ActivityRoleRepository activityRoleRepository,
-                             ActivityUserRepository activityUserRepository,
-                             ActivityEventRepository activityEventRepository, UserService userService,
-                             ActivityMapper activityMapper, TestEmailService testEmailService, Pusher pusher,
-                             SendGrid sendGrid, ObjectMapper objectMapper, EntityManager entityManager,
-                             ApplicationContext applicationContext) {
-        this.activityService = new TestActivityService(pusherOn, activityRepository, activityDAO,
-            activityRoleRepository, activityUserRepository, activityEventRepository, userService,
-            activityMapper, pusher, objectMapper, entityManager);
-
-        this.notificationService = new TestNotificationService(mailOn, senderEmail, testEmailService, sendGrid,
-            applicationContext);
-
+    @Inject
+    public TestConfiguration(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
@@ -149,27 +124,15 @@ public class TestConfiguration {
 
     @Bean
     @Primary
-    public ActivityService activityService() {
-        return this.activityService;
+    public SendGrid sendGrid() {
+        return mock(SendGrid.class);
     }
 
     @Bean
     @Primary
-    public NotificationService notificationService() {
-        return this.notificationService;
+    public Pusher pusher() {
+        return mock(Pusher.class);
     }
-
-//    @Bean
-//    @Primary
-//    public SendGrid sendGrid() {
-//        return mock(SendGrid.class);
-//    }
-//
-//    @Bean
-//    @Primary
-//    public Pusher pusher() {
-//        return mock(Pusher.class);
-//    }
 
     @Bean
     @Primary

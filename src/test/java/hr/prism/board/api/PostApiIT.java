@@ -16,9 +16,9 @@ import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.TestActivityService.ActivityInstance;
-import hr.prism.board.service.TestNotificationService;
-import hr.prism.board.utils.ObjectUtils;
+import hr.prism.board.service.TestNotificationService.NotificationInstance;
 import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.utils.ObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matchers;
@@ -386,9 +386,6 @@ public class PostApiIT extends AbstractIT {
         List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
 
         // Create post
-        testActivityService.record();
-        testNotificationService.record();
-
         Long departmentUserId = departmentUser.getId();
         listenForActivities(departmentUser);
 
@@ -418,7 +415,7 @@ public class PostApiIT extends AbstractIT {
         String postAdminRoleUuid = userRoleService.getByResourceUserAndRole(postResource, postUser, Role.ADMINISTRATOR).getUuid();
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
+            new NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", departmentUserGivenName)
                     .put("department", departmentName)
@@ -426,7 +423,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", departmentAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, boardUser,
+            new NotificationInstance(Notification.NEW_POST_PARENT_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", boardUserGivenName)
                     .put("department", departmentName)
@@ -434,7 +431,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", boardAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.NEW_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.NEW_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -444,14 +441,8 @@ public class PostApiIT extends AbstractIT {
                     .put("invitationUuid", postAdminRoleUuid)
                     .build()));
 
-        testActivityService.stop();
-        testNotificationService.stop();
-
         // Create unprivileged users
         Collection<User> unprivilegedUsers = makeUnprivilegedUsers(boardId, 2, TestHelper.samplePost()).values();
-
-        testActivityService.record();
-        testNotificationService.record();
 
         // Clear activity streams for the admin users
         for (User user : new User[]{departmentUser, boardUser}) {
@@ -535,7 +526,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(boardUserId);
         testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
+        testNotificationService.verify(new NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", postUserGivenName)
                 .put("department", departmentName).put("board", boardName)
@@ -571,7 +562,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(postUserId);
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, departmentUser,
+            new NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, departmentUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", departmentUserGivenName)
                     .put("post", postName)
@@ -580,7 +571,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", departmentAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, boardUser,
+            new NotificationInstance(Notification.CORRECT_POST_NOTIFICATION, boardUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", boardUserGivenName)
                     .put("post", postName)
@@ -607,7 +598,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.PUBLISH_POST_ACTIVITY));
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -617,7 +608,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", postAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -637,7 +628,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.SUSPEND_POST_ACTIVITY));
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.SUSPEND_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -664,7 +655,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(postUserId, new ActivityInstance(postId, Activity.ACCEPT_POST_ACTIVITY));
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.ACCEPT_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -776,7 +767,7 @@ public class PostApiIT extends AbstractIT {
         UserRole departmentMemberRole2 = userRoleService.getByResourceUserAndRole(departmentResource, departmentMember2, Role.MEMBER);
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -785,7 +776,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", postAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
+            new NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", "student1")
                     .put("department", departmentName)
@@ -798,7 +789,7 @@ public class PostApiIT extends AbstractIT {
                     .put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
+            new NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", "student2")
                     .put("department", departmentName)
@@ -828,7 +819,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentMember4Id);
         testActivityService.verify(departmentMember5Id);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.REJECT_POST_NOTIFICATION, postUser,
+        testNotificationService.verify(new NotificationInstance(Notification.REJECT_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", postUserGivenName)
                 .put("department", departmentName)
@@ -858,7 +849,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentMember5Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.RESTORE_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -867,7 +858,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", postAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+            new NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -876,7 +867,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", postAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
+            new NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", "student1")
                     .put("department", departmentName)
@@ -889,7 +880,7 @@ public class PostApiIT extends AbstractIT {
                     .put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
+            new NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", "student2")
                     .put("department", departmentName)
@@ -918,7 +909,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentMember4Id);
         testActivityService.verify(departmentMember5Id);
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.RETIRE_POST_NOTIFICATION, postUser,
+        testNotificationService.verify(new NotificationInstance(Notification.RETIRE_POST_NOTIFICATION, postUser,
             ImmutableMap.<String, String>builder()
                 .put("recipient", postUserGivenName)
                 .put("department", departmentName)
@@ -956,7 +947,7 @@ public class PostApiIT extends AbstractIT {
         testActivityService.verify(departmentMember4Id);
         testActivityService.verify(departmentMember5Id, new ActivityInstance(postId, Activity.PUBLISH_POST_MEMBER_ACTIVITY));
 
-        testNotificationService.verify(new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
+        testNotificationService.verify(new NotificationInstance(Notification.PUBLISH_POST_NOTIFICATION, postUser,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", postUserGivenName)
                     .put("department", departmentName)
@@ -965,7 +956,7 @@ public class PostApiIT extends AbstractIT {
                     .put("resourceRedirect", resourceRedirect)
                     .put("invitationUuid", postAdminRoleUuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
+            new NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember1,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", "student1")
                     .put("department", departmentName)
@@ -978,7 +969,7 @@ public class PostApiIT extends AbstractIT {
                     .put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember1Uuid)
                     .build()),
-            new TestNotificationService.NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
+            new NotificationInstance(Notification.PUBLISH_POST_MEMBER_NOTIFICATION, departmentMember2,
                 ImmutableMap.<String, String>builder()
                     .put("recipient", "student2")
                     .put("department", departmentName)
@@ -991,8 +982,6 @@ public class PostApiIT extends AbstractIT {
                     .put("parentRedirect", parentRedirect)
                     .put("recipientUuid", departmentMember2Uuid)
                     .build()));
-        testActivityService.stop();
-        testNotificationService.stop();
 
         testUserService.setAuthentication(postUser);
         List<ResourceOperationRepresentation> resourceOperationRs = postApi.getPostOperations(postId);
@@ -1283,9 +1272,6 @@ public class PostApiIT extends AbstractIT {
         testUserService.setAuthentication(postUser);
         List<ActivityRepresentation> activities = activityService.getActivities(postUserId);
         activities.forEach(activity -> userActivityApi.dismissActivity(activity.getId()));
-
-        testActivityService.record();
-        testNotificationService.record();
         listenForActivities(postUser);
 
         testUserService.setAuthentication(memberUser1);
@@ -1316,7 +1302,7 @@ public class PostApiIT extends AbstractIT {
         postEmailUser.setEmail(postUserEmail);
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
+            new NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser1.getFullName())
                     .put("coveringNote", "note1").put("profile", "website1").build(),
                 makeTestAttachments("attachments1.pdf")));
@@ -1357,7 +1343,7 @@ public class PostApiIT extends AbstractIT {
 
         postEmailUser.setEmail("other@other.com");
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
+            new NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser2.getFullName())
                     .put("coveringNote", "note2").put("profile", "website2").build(),
                 makeTestAttachments("attachments2.pdf")));
@@ -1414,7 +1400,7 @@ public class PostApiIT extends AbstractIT {
             new ResourceEventDTO().setDocumentResume(documentDTO3).setWebsiteResume("website3").setCoveringNote("note3"));
 
         testNotificationService.verify(
-            new TestNotificationService.NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
+            new NotificationInstance(Notification.RESPOND_POST_NOTIFICATION, postEmailUser,
                 ImmutableMap.<String, String>builder().put("recipient", "Author").put("post", "post").put("candidate", memberUser3.getFullName())
                     .put("coveringNote", "note3").put("profile", "website3").build(),
                 makeTestAttachments("attachments3.pdf")));
@@ -1422,9 +1408,6 @@ public class PostApiIT extends AbstractIT {
             new ActivityInstance(postId, memberUser3Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new ActivityInstance(postId, memberUser2Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY),
             new ActivityInstance(postId, memberUser1Id, ResourceEvent.RESPONSE, Activity.RESPOND_POST_ACTIVITY));
-
-        testActivityService.stop();
-        testNotificationService.stop();
 
         testUserService.setAuthentication(postUser);
         responses = postResponseApi.getPostResponses(postId, null);

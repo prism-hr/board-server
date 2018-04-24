@@ -107,12 +107,6 @@ public abstract class AbstractIT {
     TestUserService testUserService;
 
     @Inject
-    TestActivityService testActivityService;
-
-    @Inject
-    TestNotificationService testNotificationService;
-
-    @Inject
     ResourceEventService resourceEventService;
 
     @Inject
@@ -129,6 +123,12 @@ public abstract class AbstractIT {
 
     @Inject
     UniversityRepository universityRepository;
+
+    @Inject
+    TestActivityService testActivityService;
+
+    @Inject
+    TestNotificationService testNotificationService;
 
     @Inject
     MockMvc mockMvc;

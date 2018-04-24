@@ -1,83 +1,32 @@
 package hr.prism.board.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Iterables;
-import com.pusher.rest.Pusher;
-import hr.prism.board.dao.ActivityDAO;
 import hr.prism.board.enums.Activity;
 import hr.prism.board.enums.ResourceEvent;
 import hr.prism.board.enums.Role;
-import hr.prism.board.mapper.ActivityMapper;
-import hr.prism.board.repository.ActivityEventRepository;
-import hr.prism.board.repository.ActivityRepository;
-import hr.prism.board.repository.ActivityRoleRepository;
-import hr.prism.board.repository.ActivityUserRepository;
-import hr.prism.board.representation.ActivityRepresentation;
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-public class TestActivityService extends ActivityService {
+import static org.junit.Assert.fail;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
+@Service
+public class TestActivityService {
 
-    private boolean recording = false;
-
-    private ArrayListMultimap<Long, List<ActivityRepresentation>> sentActivities = ArrayListMultimap.create();
-
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    public TestActivityService(boolean pusherOn, ActivityRepository activityRepository, ActivityDAO activityDAO,
-                               ActivityRoleRepository activityRoleRepository,
-                               ActivityUserRepository activityUserRepository,
-                               ActivityEventRepository activityEventRepository, UserService userService,
-                               ActivityMapper activityMapper, Pusher pusher, ObjectMapper objectMapper,
-                               EntityManager entityManager) {
-        super(pusherOn, activityRepository, activityDAO, activityRoleRepository, activityUserRepository,
-            activityEventRepository, userService, activityMapper, pusher, objectMapper, entityManager);
-    }
-
-    public void record() {
-        this.recording = true;
-        this.sentActivities.clear();
-        userIds.clear();
-    }
-
-    public void stop() {
-        this.recording = false;
-    }
-
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "unused"})
     public void verify(Long userId, ActivityInstance... expectedActivityInstances) {
-        List<List<ActivityRepresentation>> removed = sentActivities.removeAll(userId);
-        List<ActivityRepresentation> activityRepresentations = Iterables.getLast(removed);
-        LOGGER.info("Checking activities for user: " + userId + " - " +
-            activityRepresentations.stream().map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
-
-        Set<ActivityInstance> actualActivityInstances = activityRepresentations
-            .stream().map(ActivityInstance::fromActivityRepresentation).collect(Collectors.toSet());
-
-        Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
-        for (ActivityInstance expectedActivityInstance : expectedActivityInstances) {
-            Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
-        }
-    }
-
-    @Override
-    public void sendActivities(Long userId, List<ActivityRepresentation> activities) {
-        if (recording) {
-            LOGGER.info("updating activities for user: " + userId + " - " + activities.stream()
-                .map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
-            sentActivities.put(userId, activities);
-        }
-
-        super.sendActivities(userId, activities);
+        fail("Replace this shit with proper assertions against the pusher mock");
+//        List<List<ActivityRepresentation>> removed = sentActivities.removeAll(userId);
+//        List<ActivityRepresentation> activityRepresentations = Iterables.getLast(removed);
+//        LOGGER.info("Checking activities for user: " + userId + " - " +
+//            activityRepresentations.stream().map(ActivityRepresentation::getId).map(Objects::toString).collect(Collectors.joining(", ")));
+//
+//        Set<ActivityInstance> actualActivityInstances = activityRepresentations
+//            .stream().map(ActivityInstance::fromActivityRepresentation).collect(Collectors.toSet());
+//
+//        Assert.assertEquals(expectedActivityInstances.length, actualActivityInstances.size());
+//        for (ActivityInstance expectedActivityInstance : expectedActivityInstances) {
+//            Assert.assertTrue(actualActivityInstances.contains(expectedActivityInstance));
+//        }
     }
 
     public static class ActivityInstance {
@@ -97,6 +46,7 @@ public class TestActivityService extends ActivityService {
             this.activity = activity;
         }
 
+        @SuppressWarnings("WeakerAccess")
         public ActivityInstance(Long resourceId, Long userId, Role role, Activity activity) {
             this.resourceId = resourceId;
             this.userId = userId;
@@ -109,20 +59,6 @@ public class TestActivityService extends ActivityService {
             this.userId = userId;
             this.resourceEvent = resourceEvent;
             this.activity = activity;
-        }
-
-        static ActivityInstance fromActivityRepresentation(ActivityRepresentation activityRepresentation) {
-            Long userId = activityRepresentation.getUserId();
-            Role role = activityRepresentation.getRole();
-            if (userId == null && role == null) {
-                return new ActivityInstance(activityRepresentation.getResourceId(), activityRepresentation.getActivity());
-            } else if (role == null) {
-                return new ActivityInstance(activityRepresentation.getResourceId(),
-                    userId, activityRepresentation.getEvent(), activityRepresentation.getActivity());
-            }
-
-            return new ActivityInstance(
-                activityRepresentation.getResourceId(), userId, role, activityRepresentation.getActivity());
         }
 
         Long getResourceId() {

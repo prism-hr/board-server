@@ -18,7 +18,7 @@ import hr.prism.board.repository.ResourceTaskRepository;
 import hr.prism.board.representation.*;
 import hr.prism.board.service.DepartmentPaymentService;
 import hr.prism.board.service.ScheduledService;
-import hr.prism.board.service.TestActivityService;
+import hr.prism.board.service.TestActivityService.ActivityInstance;
 import hr.prism.board.service.TestNotificationService.NotificationInstance;
 import hr.prism.board.utils.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -359,7 +359,6 @@ public class DepartmentApiIT extends AbstractIT {
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 
-        testNotificationService.record();
         testUserService.setAuthentication(departmentUser);
         Long departmentUser2Id =
             departmentUserApi.createUserRoles(departmentId,
@@ -386,7 +385,6 @@ public class DepartmentApiIT extends AbstractIT {
 
         verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
         testNotificationService.verify();
-        testNotificationService.stop();
 
         testUserService.setAuthentication(departmentUser);
         List<ResourceOperationRepresentation> resourceOperationRs = departmentApi.getDepartmentOperations(departmentId);
@@ -439,8 +437,6 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = verifyPostDepartment(universityId, departmentDTO, "department");
         Long departmentId = departmentR.getId();
 
-        testActivityService.record();
-        testNotificationService.record();
         listenForActivities(departmentUser);
 
         LocalDateTime resourceTaskCreatedTimestamp =
@@ -454,7 +450,7 @@ public class DepartmentApiIT extends AbstractIT {
         scheduledService.notifyDepartmentTasks(LocalDateTime.now());
 
         testActivityService.verify(departmentUserId,
-            new TestActivityService.ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
+            new ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
 
         Department department0 = (Department) resourceService.getById(departmentId);
         String departmentAdminRole1Uuid = userRoleService.getByResourceUserAndRole(department0, departmentUser, ADMINISTRATOR).getUuid();
@@ -579,7 +575,7 @@ public class DepartmentApiIT extends AbstractIT {
         scheduledService.notifyDepartmentTasks(LocalDateTime.now());
 
         testActivityService.verify(departmentUserId,
-            new TestActivityService.ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
+            new ActivityInstance(departmentId, Activity.UPDATE_TASK_ACTIVITY));
 
         String resourceUpdateTask =
             "<ul><li>New students arriving - visit the user management area to update your student list.</li></ul>";
@@ -591,9 +587,6 @@ public class DepartmentApiIT extends AbstractIT {
                     .put("resourceTaskRedirect", resourceTaskRedirect)
                     .put("invitationUuid", departmentAdminRole1Uuid)
                     .build()));
-
-        testActivityService.stop();
-        testNotificationService.stop();
     }
 
     @Test
@@ -625,8 +618,6 @@ public class DepartmentApiIT extends AbstractIT {
         Assertions.assertThat(departmentR.getActions().stream().map(ActionRepresentation::getAction).collect(toList()))
             .containsExactlyInAnyOrder(VIEW, EDIT, EXTEND, SUBSCRIBE);
 
-        testActivityService.record();
-        testNotificationService.record();
         listenForActivities(departmentUser);
 
         String recipient = departmentUser.getGivenName();
@@ -642,7 +633,7 @@ public class DepartmentApiIT extends AbstractIT {
         scheduledService.updateDepartmentSubscriptions(baseline);
         scheduledService.updateDepartmentSubscriptions(baseline);
 
-        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY));
+        testActivityService.verify(departmentUserId, new ActivityInstance(departmentId, Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY));
         userActivityApi.dismissActivity(userActivityApi.getActivities().iterator().next().getId());
         testNotificationService.verify(new NotificationInstance(SUBSCRIBE_DEPARTMENT_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
@@ -700,9 +691,6 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("accountRedirect", accountRedirect)
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
-
-        testNotificationService.record();
-        testActivityService.stop();
 
         JsonNode customer = departmentPaymentApi.addPaymentSourceAndSubscription(departmentId, "source");
         Assert.assertNotNull(customer);
@@ -834,9 +822,6 @@ public class DepartmentApiIT extends AbstractIT {
         departmentPaymentApi.addPaymentSourceAndSubscription(departmentId, "source");
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(ACCEPTED, departmentR.getState());
-
-        testActivityService.record();
-        testNotificationService.record();
         listenForActivities(departmentUser);
 
         String recipient = departmentUser.getGivenName();
@@ -848,7 +833,7 @@ public class DepartmentApiIT extends AbstractIT {
         departmentR = departmentApi.getDepartment(departmentId);
         Assert.assertEquals(ACCEPTED, departmentR.getState());
 
-        testActivityService.verify(departmentUserId, new TestActivityService.ActivityInstance(departmentId, Activity.SUSPEND_DEPARTMENT_ACTIVITY));
+        testActivityService.verify(departmentUserId, new ActivityInstance(departmentId, Activity.SUSPEND_DEPARTMENT_ACTIVITY));
         userActivityApi.dismissActivity(userActivityApi.getActivities().iterator().next().getId());
         testNotificationService.verify(new NotificationInstance(Notification.SUSPEND_DEPARTMENT_NOTIFICATION, departmentUser,
             ImmutableMap.<String, String>builder()
@@ -871,9 +856,6 @@ public class DepartmentApiIT extends AbstractIT {
                 .put("accountRedirect", accountRedirect)
                 .put("invitationUuid", departmentAdminRoleUuid)
                 .build()));
-
-        testActivityService.stop();
-        testNotificationService.stop();
 
         departmentPaymentApi.addPaymentSourceAndSubscription(departmentId, "source2");
         departmentR = departmentApi.getDepartment(departmentId);
@@ -1062,9 +1044,6 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentRepresentation departmentR = departmentApi.createDepartment(universityId, departmentDTO);
         Long departmentId = departmentR.getId();
 
-        testActivityService.record();
-        testNotificationService.record();
-
         Long departmentUserId = departmentUser.getId();
         listenForActivities(departmentUser);
 
@@ -1089,7 +1068,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long boardMemberId = boardMember.getId();
         testActivityService.verify(departmentUserId,
-            new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+            new ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         Resource department = resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
@@ -1115,9 +1094,6 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = userRoleService.getByResourceUserAndRole(department, boardMember, Role.MEMBER);
         Assert.assertEquals(ACCEPTED, userRole.getState());
 
-        testActivityService.stop();
-        testNotificationService.stop();
-
         testUserService.setAuthentication(boardMember);
 
         ExceptionUtils.verifyException(
@@ -1137,9 +1113,6 @@ public class DepartmentApiIT extends AbstractIT {
 
         DepartmentRepresentation departmentR = departmentApi.createDepartment(universityId, departmentDTO);
         Long departmentId = departmentR.getId();
-
-        testActivityService.record();
-        testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
         listenForActivities(departmentUser);
@@ -1165,7 +1138,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long boardMemberId = boardMember.getId();
         testActivityService.verify(departmentUserId,
-            new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+            new ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         Resource department = resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
@@ -1185,9 +1158,6 @@ public class DepartmentApiIT extends AbstractIT {
         UserRole userRole = userRoleService.getByResourceUserAndRole(department, boardMember, Role.MEMBER);
         Assert.assertEquals(State.REJECTED, userRole.getState());
 
-        testActivityService.stop();
-        testNotificationService.stop();
-
         testUserService.setAuthentication(boardMember);
 
         ExceptionUtils.verifyException(
@@ -1206,9 +1176,6 @@ public class DepartmentApiIT extends AbstractIT {
         DepartmentDTO departmentDTO = new DepartmentDTO().setName("department1").setSummary("department summary");
         DepartmentRepresentation departmentR = departmentApi.createDepartment(universityId, departmentDTO);
         Long departmentId = departmentR.getId();
-
-        testActivityService.record();
-        testNotificationService.record();
 
         Long departmentUserId = departmentUser.getId();
         listenForActivities(departmentUser);
@@ -1233,7 +1200,7 @@ public class DepartmentApiIT extends AbstractIT {
 
         Long boardMemberId = boardMember.getId();
         testActivityService.verify(departmentUserId,
-            new TestActivityService.ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
+            new ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 
         Resource department = resourceService.getById(departmentId);
         String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
@@ -1253,8 +1220,6 @@ public class DepartmentApiIT extends AbstractIT {
         userActivityApi.dismissActivity(activityId);
 
         verifyActivitiesEmpty(departmentUser);
-        testActivityService.stop();
-        testNotificationService.stop();
     }
 
     @Test

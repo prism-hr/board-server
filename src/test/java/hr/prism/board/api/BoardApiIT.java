@@ -205,12 +205,7 @@ public class BoardApiIT extends AbstractIT {
         verifyPostBoard(departmentId, TestHelper.smallSampleBoard(), "board");
 
         // Create a board in the draft state
-        testActivityService.record();
-        testNotificationService.record();
         listenForActivities(departmentUser);
-
-        testActivityService.stop();
-        testNotificationService.stop();
         Long boardId = boardApi.getBoards(departmentId, null, null, null, null).get(0).getId();
 
         // Create unprivileged users
