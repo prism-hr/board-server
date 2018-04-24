@@ -447,7 +447,7 @@ public class PostService {
     }
 
     private void retirePosts(List<Long> postIds, LocalDateTime baseline) {
-        if (postIds.isEmpty()) {
+        if (!postIds.isEmpty()) {
             actionService.executeAnonymously(postIds, RETIRE, EXPIRED, baseline);
 
             postIds.forEach(postId ->
@@ -468,7 +468,7 @@ public class PostService {
     }
 
     private void publishPosts(List<Long> postIds, LocalDateTime baseline) {
-        if (postIds.isEmpty()) {
+        if (!postIds.isEmpty()) {
             actionService.executeAnonymously(postIds, PUBLISH, ACCEPTED, baseline);
 
             postIds.forEach(postId ->
