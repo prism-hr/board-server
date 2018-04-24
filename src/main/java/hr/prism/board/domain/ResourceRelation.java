@@ -1,5 +1,8 @@
 package hr.prism.board.domain;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.*;
 
 @Entity
@@ -31,6 +34,26 @@ public class ResourceRelation extends BoardEntity {
     public ResourceRelation setResource2(Resource resource2) {
         this.resource2 = resource2;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(resource1)
+            .append(resource2)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        ResourceRelation that = (ResourceRelation) other;
+        return new EqualsBuilder()
+            .append(resource1, that.resource1)
+            .append(resource2, that.resource2)
+            .isEquals();
     }
 
 }

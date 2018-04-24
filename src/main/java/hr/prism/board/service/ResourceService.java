@@ -184,9 +184,9 @@ public class ResourceService {
             resource1.getParents()
                 .stream()
                 .map(ResourceRelation::getResource1)
-                .forEach(parentResource -> commitResourceRelation(parentResource, resource2));
+                .forEach(parentResource -> saveResourceRelation(parentResource, resource2));
 
-            commitResourceRelation(resource2, resource2);
+            saveResourceRelation(resource2, resource2);
             return;
         }
 
@@ -273,7 +273,7 @@ public class ResourceService {
         return confirmHandle(handle, similarHandles);
     }
 
-    private void commitResourceRelation(Resource resource1, Resource resource2) {
+    private void saveResourceRelation(Resource resource1, Resource resource2) {
         ResourceRelation resourceRelation =
             new ResourceRelation()
                 .setResource1(resource1)

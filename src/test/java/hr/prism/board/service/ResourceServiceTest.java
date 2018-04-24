@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceCategory;
+import hr.prism.board.domain.ResourceRelation;
 import hr.prism.board.domain.University;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.Scope.UNIVERSITY;
 import static hr.prism.board.enums.State.DRAFT;
 import static hr.prism.board.enums.State.PREVIOUS;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
@@ -184,6 +186,45 @@ public class ResourceServiceTest {
         verify(resourceCategoryRepository, times(1)).deleteByResourceAndType(department, MEMBER);
         verify(resourceCategoryRepository, times(1)).save(category1);
         verify(resourceCategoryRepository, times(1)).save(category2);
+    }
+
+    @Test
+    public void createResourceRelation_successWhenCreateDepartment() {
+        University university = new University();
+        university.setScope(UNIVERSITY);
+        university.setId(1L);
+
+        ResourceRelation universityRelation = new ResourceRelation();
+        universityRelation.setResource1(university);
+        universityRelation.setResource2(university);
+
+        university.getParents().add(universityRelation);
+        university.getChildren().add(universityRelation);
+
+        Department department = new Department();
+        department.setScope(DEPARTMENT);
+        department.setId(2L);
+
+        resourceService.createResourceRelation(university, department);
+        assertEquals(university, department.getParent());
+
+        ResourceRelation universityDepartmentRelation = new ResourceRelation();
+        universityDepartmentRelation.setResource1(university);
+        universityDepartmentRelation.setResource2(department);
+
+        ResourceRelation departmentRelation = new ResourceRelation();
+        departmentRelation.setResource1(department);
+        departmentRelation.setResource2(department);
+
+        assertThat(department.getParents()).containsExactlyInAnyOrder(universityDepartmentRelation, departmentRelation);
+        assertThat(department.getChildren()).containsExactly(departmentRelation);
+
+        verify(entityManager, times(1)).flush();
+        verify(entityManager, times(1)).refresh(university);
+        verify(entityManager, times(1)).refresh(department);
+
+        verify(resourceRelationRepository, times(1)).save(universityDepartmentRelation);
+        verify(resourceRelationRepository, times(1)).save(departmentRelation);
     }
 
 }
