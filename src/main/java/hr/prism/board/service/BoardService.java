@@ -1,9 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceOperation;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
@@ -26,6 +23,7 @@ import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD_HANDLE;
 import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
 @Service
 @Transactional
@@ -81,9 +79,9 @@ public class BoardService {
 
     public Board createBoard(Long departmentId, BoardDTO boardDTO) {
         User user = userService.getUserSecured();
-        Resource department = resourceService.getResource(user, DEPARTMENT, departmentId);
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, EXTEND, () -> {
-            String name = StringUtils.normalizeSpace(boardDTO.getName());
+            String name = normalizeSpace(boardDTO.getName());
             resourceService.checkUniqueName(BOARD, null, department, name, DUPLICATE_BOARD);
 
             Board board = new Board();

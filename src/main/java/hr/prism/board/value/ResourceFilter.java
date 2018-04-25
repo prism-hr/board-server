@@ -2,6 +2,8 @@ package hr.prism.board.value;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hr.prism.board.enums.Scope;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -79,6 +81,7 @@ public class ResourceFilter {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public Long getParentId() {
         return parentId;
     }
@@ -97,6 +100,7 @@ public class ResourceFilter {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public String getNegatedState() {
         return negatedState;
     }
@@ -140,6 +144,42 @@ public class ResourceFilter {
     public hr.prism.board.value.ResourceFilter setOrderStatement(String orderStatement) {
         this.orderStatement = orderStatement;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(scope)
+            .append(id)
+            .append(handle)
+            .append(parentId)
+            .append(state)
+            .append(negatedState)
+            .append(quarter)
+            .append(searchTerm)
+            .append(includePublicResources)
+            .append(orderStatement)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        ResourceFilter that = (ResourceFilter) other;
+        return new EqualsBuilder()
+            .append(scope, that.scope)
+            .append(id, that.id)
+            .append(handle, that.handle)
+            .append(parentId, that.parentId)
+            .append(state, that.state)
+            .append(negatedState, that.negatedState)
+            .append(quarter, that.quarter)
+            .append(searchTerm, that.searchTerm)
+            .append(includePublicResources, that.includePublicResources)
+            .append(orderStatement, that.orderStatement)
+            .isEquals();
     }
 
     @Target(ElementType.FIELD)

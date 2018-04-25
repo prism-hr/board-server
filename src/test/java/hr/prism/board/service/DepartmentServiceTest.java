@@ -104,7 +104,7 @@ public class DepartmentServiceTest {
     }
 
     @Test
-    public void createDepartment_successWithDefaults() {
+    public void createDepartment_successWithDefaultData() {
         LocalDateTime baseline = LocalDateTime.now().minusSeconds(1);
 
         User user = new User();

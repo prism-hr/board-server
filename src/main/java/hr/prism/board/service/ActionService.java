@@ -65,7 +65,7 @@ public class ActionService {
         }
 
         List<ActionRepresentation> actions = resource.getActions();
-        if (actions != null) {
+        if (isNotEmpty(actions)) {
             for (ActionRepresentation actionRepresentation : actions) {
                 if (actionRepresentation.getAction() == action) {
                     Resource newResource = execution.execute();
@@ -88,13 +88,9 @@ public class ActionService {
             }
         }
 
-        if (user == null) {
-            LOGGER.info("Public user cannot " + action.name().toLowerCase() + " " + resource.toString());
-            throw new BoardForbiddenException(FORBIDDEN_ACTION, "User not authorized");
-        }
-
-        LOGGER.info(user.toString() + " cannot " + action.name().toLowerCase() + " " + resource.toString());
-        throw new BoardForbiddenException(FORBIDDEN_ACTION, "User cannot perform action");
+        String userString = user == null ? "Anonymous" : user.toString();
+        LOGGER.info(userString + " cannot " + action.name().toLowerCase() + " " + resource.toString());
+        throw new BoardForbiddenException(FORBIDDEN_ACTION, "Action cannot be performed");
     }
 
     public void executeAnonymously(List<Long> resourceIds, Action action, State state, LocalDateTime baseline) {
@@ -106,20 +102,18 @@ public class ActionService {
         return actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action::equals);
     }
 
-    private State getNewState(User user, Action action, ActionRepresentation actionRepresentation,
-                              Resource newResource, State state) {
+    private State getNewState(User user, Action action, ActionRepresentation actionRepresentation, Resource resource,
+                              State state) {
         State newState = actionRepresentation.getState();
         if (newState == null) {
             newState = state;
         } else if (newState == PREVIOUS) {
-            newState = newResource.getPreviousState();
+            newState = resource.getPreviousState();
         }
 
-        Class<? extends StateChangeInterceptor> interceptorClass =
-            newResource.getScope().stateChangeInterceptorClass;
+        Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
         if (interceptorClass != null) {
-            newState =
-                applicationContext.getBean(interceptorClass).intercept(user, newResource, action, newState);
+            newState = applicationContext.getBean(interceptorClass).intercept(user, resource, action, newState);
         }
 
         return newState;
@@ -128,7 +122,7 @@ public class ActionService {
     private void sendNotifications(Resource resource, Action action, ActionRepresentation actionRepresentation) {
         Long resourceId = resource.getId();
         List<Activity> activities = deserializeUpdates(actionRepresentation.getActivity(), Activity.class);
-        if (activities != null) {
+        if (isNotEmpty(activities)) {
             activityService.deleteActivities(resource);
             eventProducer.produce(
                 new ActivityEvent(this, resourceId, activities));
@@ -136,7 +130,7 @@ public class ActionService {
 
         List<Notification> notifications =
             deserializeUpdates(actionRepresentation.getNotification(), Notification.class);
-        if (notifications != null) {
+        if (isNotEmpty(notifications)) {
             eventProducer.produce(
                 new NotificationEvent(this, resourceId, action, notifications));
         }

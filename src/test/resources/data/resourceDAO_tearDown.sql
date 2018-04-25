@@ -1,5 +1,10 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE TABLE resource;
+TRUNCATE TABLE resource_relation;
+TRUNCATE TABLE user;
+TRUNCATE TABLE user_role;
+TRUNCATE TABLE resource_category;
+TRUNCATE TABLE document;
 
 SET FOREIGN_KEY_CHECKS = 1;
