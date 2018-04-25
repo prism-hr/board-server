@@ -32,7 +32,7 @@ import static hr.prism.board.enums.Activity.SUBSCRIBE_DEPARTMENT_ACTIVITY;
 import static hr.prism.board.enums.MemberCategory.MEMBER_CATEGORY_STRINGS;
 import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.Notification.SUBSCRIBE_DEPARTMENT_NOTIFICATION;
-import static hr.prism.board.enums.ResourceTask.RESOURCE_TASKS;
+import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.ResourceTask.UPDATE_MEMBER;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
@@ -187,6 +187,7 @@ public class DepartmentService {
             memberCategoryStrings = toStrings(departmentDTO.getMemberCategories());
         }
 
+        // Create the resource metadata
         resourceService.updateCategories(department, CategoryType.MEMBER, memberCategoryStrings);
         resourceService.createResourceRelation(university, department);
         resourceService.setIndexDataAndQuarter(department);
@@ -194,18 +195,16 @@ public class DepartmentService {
         userRoleService.createUserRole(department, user, ADMINISTRATOR);
 
         // Create the initial boards
-        Long departmentId = department.getId();
-        boardService.createBoard(departmentId,
-            new BoardDTO().setName(CAREER_NAME).setPostCategories(CAREER_CATEGORIES));
-        boardService.createBoard(departmentId,
-            new BoardDTO().setName(RESEARCH_NAME).setPostCategories(RESEARCH_CATEGORIES));
+        Long id = department.getId();
+        boardService.createBoard(id, new BoardDTO().setName(CAREER_NAME).setPostCategories(CAREER_CATEGORIES));
+        boardService.createBoard(id, new BoardDTO().setName(RESEARCH_NAME).setPostCategories(RESEARCH_CATEGORIES));
 
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());
-        resourceTaskService.createForNewResource(departmentId, user.getId(), RESOURCE_TASKS);
+        resourceTaskService.createForNewResource(id, user.getId(), DEPARTMENT_TASKS);
 
         entityManager.refresh(department);
-        return (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
+        return (Department) resourceService.getResource(user, DEPARTMENT, id);
     }
 
     public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {

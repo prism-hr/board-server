@@ -25,7 +25,7 @@ import static hr.prism.board.enums.Activity.CREATE_TASK_ACTIVITY;
 import static hr.prism.board.enums.Activity.UPDATE_TASK_ACTIVITY;
 import static hr.prism.board.enums.Notification.CREATE_TASK_NOTIFICATION;
 import static hr.prism.board.enums.Notification.UPDATE_TASK_NOTIFICATION;
-import static hr.prism.board.enums.ResourceTask.RESOURCE_TASKS;
+import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static java.util.Collections.singletonList;
@@ -125,7 +125,7 @@ public class ResourceTaskService {
 
         hr.prism.board.enums.Activity activity = CREATE_TASK_ACTIVITY;
         Notification notification = CREATE_TASK_NOTIFICATION;
-        if (tasks.stream().noneMatch(RESOURCE_TASKS::contains)) {
+        if (tasks.stream().noneMatch(DEPARTMENT_TASKS::contains)) {
             activity = UPDATE_TASK_ACTIVITY;
             notification = UPDATE_TASK_NOTIFICATION;
         }

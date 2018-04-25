@@ -3,10 +3,7 @@ package hr.prism.board.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.ResourceDAO;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.ResourceCategory;
-import hr.prism.board.domain.ResourceRelation;
-import hr.prism.board.domain.University;
+import hr.prism.board.domain.*;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
@@ -15,12 +12,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.Action.EXTEND;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.Scope.UNIVERSITY;
@@ -216,6 +215,7 @@ public class ResourceServiceTest {
         departmentRelation.setResource1(department);
         departmentRelation.setResource2(department);
 
+        assertEquals(university, department.getParent());
         assertThat(department.getParents()).containsExactlyInAnyOrder(universityDepartmentRelation, departmentRelation);
         assertThat(department.getChildren()).containsExactly(departmentRelation);
 
@@ -225,6 +225,67 @@ public class ResourceServiceTest {
 
         verify(resourceRelationRepository, times(1)).save(universityDepartmentRelation);
         verify(resourceRelationRepository, times(1)).save(departmentRelation);
+    }
+
+    @Test
+    public void setIndexDataAndQuarter_successWhenCreateDepartment() {
+        University university = new University();
+        university.setName("university");
+        university.setIndexData("U516");
+
+        Department department = new Department();
+        department.setParent(university);
+        department.setName("department");
+        department.setSummary("department summary");
+        department.setCreatedTimestamp(LocalDateTime.of(2018, 4, 20, 9, 0, 0));
+
+        resourceService.setIndexDataAndQuarter(department);
+        assertEquals("U516 D163 D163 S560", department.getIndexData());
+        assertEquals("20182", department.getQuarter());
+    }
+
+    @Test
+    public void createResourceOperation_successWhenCreateDepartment() {
+        Department department = new Department();
+        department.setId(1L);
+
+        User user = new User();
+        user.setId(1L);
+
+        when(resourceOperationRepository.save(any(ResourceOperation.class)))
+            .thenAnswer(invocation -> {
+                ResourceOperation operation = (ResourceOperation) invocation.getArguments()[0];
+                operation.setId(1L);
+                return operation;
+            });
+
+        resourceService.createResourceOperation(department, EXTEND, user);
+
+        ResourceOperation operation = new ResourceOperation();
+        operation.setId(1L);
+
+        assertThat(department.getOperations()).containsExactly(operation);
+
+        verify(resourceOperationRepository, times(1))
+            .save(argThat(
+                new ArgumentMatcher<ResourceOperation>() {
+
+                    @Override
+                    public boolean matches(Object argument) {
+                        ResourceOperation operation = (ResourceOperation) argument;
+                        return department.equals(operation.getResource())
+                            && EXTEND == operation.getAction()
+                            && user.equals(operation.getUser());
+                    }
+
+                }));
+
+        verify(resourceRepository, times(1)).save(department);
+    }
+
+    @Test
+    public void getResource_successWhenCreateDepartment() {
+
     }
 
 }
