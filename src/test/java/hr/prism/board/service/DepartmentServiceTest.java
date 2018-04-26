@@ -1,5 +1,6 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.DepartmentDAO;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Document;
@@ -7,6 +8,7 @@ import hr.prism.board.domain.University;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.repository.DepartmentRepository;
 import org.junit.After;
@@ -23,7 +25,7 @@ import java.time.LocalDateTime;
 
 import static hr.prism.board.enums.Action.EXTEND;
 import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.enums.MemberCategory.MEMBER_CATEGORY_STRINGS;
+import static hr.prism.board.enums.MemberCategory.*;
 import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
@@ -153,6 +155,83 @@ public class DepartmentServiceTest {
 
         verify(resourceService, times(1))
             .updateCategories(department, MEMBER, MEMBER_CATEGORY_STRINGS);
+        verify(resourceService, times(1)).createResourceRelation(university, department);
+        verify(resourceService, times(1)).setIndexDataAndQuarter(department);
+        verify(resourceService, times(1)).createResourceOperation(department, EXTEND, user);
+        verify(userRoleService, times(1)).createUserRole(department, user, ADMINISTRATOR);
+
+        verify(boardService, times(1))
+            .createBoard(eq(2L), argThat(boardNameMatcher("Career Opportunities")));
+        verify(boardService, times(1))
+            .createBoard(eq(2L), argThat(boardNameMatcher("Research Opportunities")));
+
+        verify(resourceTaskService, times(1))
+            .createForNewResource(2L, 1L, DEPARTMENT_TASKS);
+
+        verify(entityManager, times(1)).refresh(department);
+        verify(resourceService, times(1)).getResource(user, DEPARTMENT, 2L);
+    }
+
+    @Test
+    public void createDepartment_successWithCustomData() {
+        LocalDateTime baseline = LocalDateTime.now().minusSeconds(1);
+
+        User user = new User();
+        user.setId(1L);
+
+        when(userService.getUserSecured()).thenReturn(user);
+
+        University university = new University();
+        university.setId(1L);
+
+        when(universityService.getByIdWithExistenceCheck(1L)).thenReturn(university);
+
+        when(resourceService.createHandle(university, DEPARTMENT, "department"))
+            .thenReturn("university/department");
+
+        ArgumentCaptor<Department> departmentCaptor = ArgumentCaptor.forClass(Department.class);
+        when(departmentRepository.save(departmentCaptor.capture())).thenAnswer(invocation -> {
+            Department department = (Department) invocation.getArguments()[0];
+            department.setId(2L);
+            return department;
+        });
+
+        DocumentDTO documentDTO =
+            new DocumentDTO()
+                .setCloudinaryId("cloudinaryId")
+                .setCloudinaryUrl("cloudinaryUrl")
+                .setFileName("fileName");
+
+        departmentService.createDepartment(1L,
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("summary")
+                .setDocumentLogo(
+                    new DocumentDTO()
+                        .setCloudinaryId("cloudinaryId")
+                        .setCloudinaryUrl("cloudinaryUrl")
+                        .setFileName("fileName"))
+                .setMemberCategories(ImmutableList.of(MASTER_STUDENT, RESEARCH_STUDENT)));
+
+        Department department = departmentCaptor.getValue();
+        assertEquals("department", department.getName());
+        assertEquals("summary", department.getSummary());
+        assertEquals("university/department", department.getHandle());
+        assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
+
+        verify(userService, times(1)).getUserSecured();
+        verify(universityService, times(1)).getByIdWithExistenceCheck(1L);
+        verify(resourceService, times(1)).checkUniqueName(
+            DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT);
+        verify(documentService, times(1)).getOrCreateDocument(documentDTO);
+
+        verify(resourceService, times(1))
+            .createHandle(university, DEPARTMENT, "department");
+        verify(departmentRepository, times(1)).save(any(Department.class));
+        verify(resourceService, times(1)).updateState(department, DRAFT);
+
+        verify(resourceService, times(1))
+            .updateCategories(department, MEMBER, ImmutableList.of("MASTER_STUDENT", "RESEARCH_STUDENT"));
         verify(resourceService, times(1)).createResourceRelation(university, department);
         verify(resourceService, times(1)).setIndexDataAndQuarter(department);
         verify(resourceService, times(1)).createResourceOperation(department, EXTEND, user);

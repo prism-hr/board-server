@@ -82,9 +82,6 @@ public abstract class PatchService<T extends BoardEntity> {
                                DocumentDTO newValue) {
         patchProperty(entity, property, setter, oldValue,
             newValue == null ? null : documentService.getOrCreateDocument(newValue));
-        if (oldValue != null) {
-            documentService.deleteDocument(oldValue);
-        }
     }
 
     public interface Getter<U> {

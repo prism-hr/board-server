@@ -33,8 +33,4 @@ public class DocumentService {
         return documentRepository.findOne(documentDTO.getId());
     }
 
-    public void deleteDocument(Document document) {
-        documentRepository.delete(document);
-    }
-
 }
