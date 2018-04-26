@@ -27,6 +27,7 @@ public interface ResourceTaskRepository extends JpaRepository<ResourceTask, Long
             "where resourceTask.resource = :resource " +
             "and resourceTask.completed is null " +
             "order by resourceTask.id")
+    @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
     List<hr.prism.board.enums.ResourceTask> findByResource(@Param("resource") Resource resource);
 
     @Query(value =
@@ -65,6 +66,7 @@ public interface ResourceTaskRepository extends JpaRepository<ResourceTask, Long
             "resource_task.notified_count + 1) " +
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
+    @SuppressWarnings("SqlResolve")
     void updateNotifiedCountByResourceId(@Param("resourceId") Long resourceId);
 
     @Modifying
@@ -73,6 +75,7 @@ public interface ResourceTaskRepository extends JpaRepository<ResourceTask, Long
             "SET resource_task.created_timestamp = :createdTimestamp " +
             "WHERE resource_task.resource_id = :resourceId",
         nativeQuery = true)
+    @SuppressWarnings("SqlResolve")
     void updateCreatedTimestampByResourceId(@Param("resourceId") Long resourceId,
                                             @Param("createdTimestamp") LocalDateTime createdTimestamp);
 

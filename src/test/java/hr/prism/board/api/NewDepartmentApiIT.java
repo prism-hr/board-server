@@ -6,6 +6,7 @@ import hr.prism.board.ApiTestContext;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
@@ -24,6 +25,7 @@ import static hr.prism.board.enums.State.DRAFT;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,10 +41,14 @@ public class NewDepartmentApiIT {
     private MockMvc mockMvc;
 
     @Inject
+    private ObjectMapper objectMapper;
+
     private ApiTestHelper apiTestHelper;
 
-    @Inject
-    private ObjectMapper objectMapper;
+    @Before
+    public void setUp() {
+        apiTestHelper = new ApiTestHelper(mockMvc, objectMapper);
+    }
 
     @Test
     public void createDepartment_success() throws Exception {
@@ -63,7 +69,7 @@ public class NewDepartmentApiIT {
                     .andReturn().getResponse().getContentAsString(),
                 DepartmentRepresentation.class);
 
-        assertEquals(2L, response.getId().longValue());
+        assertNotNull(response.getId());
         assertEquals(DEPARTMENT, response.getScope());
         assertEquals("department", response.getName());
         assertEquals("department summary", response.getSummary());
@@ -72,6 +78,7 @@ public class NewDepartmentApiIT {
         assertEquals(1L, response.getUniversity().getId().longValue());
         assertEquals(UNIVERSITY, response.getUniversity().getScope());
         assertEquals("university", response.getUniversity().getName());
+        assertEquals("university", response.getUniversity().getHandle());
 
         assertEquals(1L, response.getUniversity().getDocumentLogo().getId().longValue());
         assertEquals("cloudinary id", response.getUniversity().getDocumentLogo().getCloudinaryId());

@@ -1,17 +1,14 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
-TRUNCATE TABLE resource_category;
-TRUNCATE TABLE resource;
+DELETE FROM resource_category;
+DELETE FROM resource;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
-INSERT INTO resource (scope, name, created_timestamp)
-VALUES ('DEPARTMENT', 'department', NOW());
-
-SET @resourceId = (
-  SELECT LAST_INSERT_ID());
+INSERT INTO resource (id, scope, name, created_timestamp)
+VALUES (1, 'DEPARTMENT', 'department', NOW());
 
 INSERT INTO resource_category(resource_id, type, name, created_timestamp)
-VALUES(@resourceId, 'MEMBER', 'category1', NOW()),
-  (@resourceId, 'MEMBER', 'category2', NOW()),
-  (@resourceId, 'POST', 'category3', NOW());
+VALUES(1, 'MEMBER', 'category1', NOW()),
+  (1, 'MEMBER', 'category2', NOW()),
+  (1, 'POST', 'category3', NOW());

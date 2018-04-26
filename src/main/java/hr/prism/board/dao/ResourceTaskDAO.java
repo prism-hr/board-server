@@ -16,7 +16,6 @@ import static java.util.stream.Collectors.joining;
 @Transactional
 public class ResourceTaskDAO {
 
-    @SuppressWarnings("SqlResolve")
     private static final String INSERT_RESOURCE_TASK =
         "INSERT INTO resource_task (resource_id, task, creator_id, created_timestamp, updated_timestamp) VALUES ";
 
