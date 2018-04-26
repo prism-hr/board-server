@@ -9,7 +9,6 @@ import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.repository.DepartmentRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.persistence.EntityManager;
-
 import java.time.LocalDateTime;
 
 import static hr.prism.board.enums.Action.EXTEND;

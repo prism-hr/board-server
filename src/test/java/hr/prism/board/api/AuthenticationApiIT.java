@@ -902,7 +902,7 @@ public class AuthenticationApiIT extends AbstractIT {
         Assert.assertNotNull(loginAccessToken);
         Assert.assertEquals(userId,
             new Long(Long.parseLong(Jwts.parser()
-                .setSigningKey(authenticationService.getJwsSecret())
+                .setSigningKey("broken")
                 .parseClaimsJws(loginAccessToken)
                 .getBody()
                 .getSubject())));

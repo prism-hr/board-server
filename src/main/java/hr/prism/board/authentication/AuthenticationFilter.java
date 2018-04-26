@@ -22,6 +22,7 @@ import java.time.ZoneId;
 import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static java.lang.Long.parseLong;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 public class AuthenticationFilter extends OncePerRequestFilter {
 
@@ -57,7 +58,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 User user = userService.getById(userId)
                     .setRevealEmail(true);
 
-                SecurityContextHolder.getContext().setAuthentication(new AuthenticationToken(user));
+                getContext().setAuthentication(new AuthenticationToken(user));
                 LocalDateTime expiration = LocalDateTime.ofInstant(
                     claims.getExpiration().toInstant(), ZoneId.systemDefault());
 

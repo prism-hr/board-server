@@ -18,8 +18,10 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +54,7 @@ public class ResourceDAOIT {
     }
 
     @Test
-    public void checkUniqueName_failureWhenCreateDepartmentAlreadyExists() {
+    public void checkUniqueName_failureWhenCreateDepartmentDuplicate() {
         University university = new University();
         university.setId(1L);
         Assertions.assertThatThrownBy(() ->
@@ -63,7 +65,25 @@ public class ResourceDAOIT {
     }
 
     @Test
-    public void getResource_successWhenCreateDepartment() {
+    public void checkUniqueName_successWhenCreateBoard() {
+        University university = new University();
+        university.setId(1L);
+        resourceDAO.checkUniqueName(DEPARTMENT, null, university, "new board", DUPLICATE_DEPARTMENT);
+    }
+
+    @Test
+    public void checkUniqueName_failureWhenCreateBoardDuplicate() {
+        Department department = new Department();
+        department.setId(2L);
+        Assertions.assertThatThrownBy(() ->
+            resourceDAO.checkUniqueName(BOARD, null, department, "board", DUPLICATE_BOARD))
+            .isExactlyInstanceOf(BoardDuplicateException.class)
+            .hasMessage("DUPLICATE_BOARD: BOARD with name board exists already")
+            .hasFieldOrPropertyWithValue("id", 3L);
+    }
+
+    @Test
+    public void getResource_successWhenDepartmentDraftAdministrator() {
         User user = userRepository.findOne(1L);
         List<Resource> resources = resourceDAO.getResources(user,
             new ResourceFilter()

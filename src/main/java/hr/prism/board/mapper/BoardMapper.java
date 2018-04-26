@@ -37,7 +37,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
         Department department = (Department) board.getParent();
         return resourceMapper.apply(board, BoardRepresentation.class)
             .setHandle(resourceMapper.getHandle(board, department))
-            .setDepartment(departmentMapper.applySmall((Department) board.getParent()))
+            .setDepartment(departmentMapper.applySmall(department))
             .setPostCategories(resourceService.getCategories(board, POST));
     }
 

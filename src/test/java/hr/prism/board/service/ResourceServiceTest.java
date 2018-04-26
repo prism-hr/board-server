@@ -401,7 +401,7 @@ public class ResourceServiceTest {
 
 
     @Test
-    public void setIndexDataAndQuarter_successWhenCreateDepartment() {
+    public void setIndexDataAndQuarter_successWhenDepartment() {
         University university = new University();
         university.setName("university");
         university.setIndexData("U516");
@@ -418,7 +418,25 @@ public class ResourceServiceTest {
     }
 
     @Test
-    public void createResourceOperation_successWhenCreateDepartment() {
+    public void setIndexDataAndQuarter_successWhenBoard() {
+        Department department = new Department();
+        department.setName("department");
+        department.setSummary("department summary");
+        department.setIndexData("U516 D163 D163 S560");
+
+        Board board = new Board();
+        board.setParent(department);
+        board.setName("board");
+        board.setSummary("board summary");
+        board.setCreatedTimestamp(LocalDateTime.of(2018, 4, 20, 9, 0, 0));
+
+        resourceService.setIndexDataAndQuarter(board);
+        assertEquals("U516 D163 D163 S560 B630 B630 S560", board.getIndexData());
+        assertEquals("20182", board.getQuarter());
+    }
+
+    @Test
+    public void createResourceOperation_successWhenDepartment() {
         Department department = new Department();
         department.setId(1L);
 
@@ -457,6 +475,45 @@ public class ResourceServiceTest {
     }
 
     @Test
+    public void createResourceOperation_successWhenBoard() {
+        Board board = new Board();
+        board.setId(1L);
+
+        User user = new User();
+        user.setId(1L);
+
+        when(resourceOperationRepository.save(any(ResourceOperation.class)))
+            .thenAnswer(invocation -> {
+                ResourceOperation operation = (ResourceOperation) invocation.getArguments()[0];
+                operation.setId(1L);
+                return operation;
+            });
+
+        resourceService.createResourceOperation(board, EXTEND, user);
+
+        ResourceOperation operation = new ResourceOperation();
+        operation.setId(1L);
+
+        assertThat(board.getOperations()).containsExactly(operation);
+
+        verify(resourceOperationRepository, times(1))
+            .save(argThat(
+                new ArgumentMatcher<ResourceOperation>() {
+
+                    @Override
+                    public boolean matches(Object argument) {
+                        ResourceOperation operation = (ResourceOperation) argument;
+                        return board.equals(operation.getResource())
+                            && EXTEND == operation.getAction()
+                            && user.equals(operation.getUser());
+                    }
+
+                }));
+
+        verify(resourceRepository, times(1)).save(board);
+    }
+
+    @Test
     public void getResource_successWhenDepartment() {
         User user = new User();
         user.setId(1L);
@@ -467,7 +524,7 @@ public class ResourceServiceTest {
                 .setId(1L)
                 .setIncludePublicResources(true);
 
-        when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Resource()));
+        when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Department()));
 
         assertNotNull(resourceService.getResource(user, DEPARTMENT, 1L));
 
@@ -486,9 +543,47 @@ public class ResourceServiceTest {
                 .setIncludePublicResources(true);
 
         when(resourceDAO.getResources(user, filter)).thenReturn(emptyList());
-        when(resourceRepository.findOne(1L)).thenReturn(new Resource());
+        when(resourceRepository.findOne(1L)).thenReturn(new Department());
 
         assertNotNull(resourceService.getResource(user, DEPARTMENT, 1L));
+
+        verify(resourceDAO, times(1)).getResources(user, filter);
+        verify(resourceRepository, times(1)).findOne(1L);
+    }
+
+    @Test
+    public void getResource_successWhenBoard() {
+        User user = new User();
+        user.setId(1L);
+
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(BOARD)
+                .setId(1L)
+                .setIncludePublicResources(true);
+
+        when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Board()));
+
+        assertNotNull(resourceService.getResource(user, BOARD, 1L));
+
+        verify(resourceDAO, times(1)).getResources(user, filter);
+    }
+
+    @Test
+    public void getResource_successWhenBoardWithNoActions() {
+        User user = new User();
+        user.setId(1L);
+
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(BOARD)
+                .setId(1L)
+                .setIncludePublicResources(true);
+
+        when(resourceDAO.getResources(user, filter)).thenReturn(emptyList());
+        when(resourceRepository.findOne(1L)).thenReturn(new Board());
+
+        assertNotNull(resourceService.getResource(user, BOARD, 1L));
 
         verify(resourceDAO, times(1)).getResources(user, filter);
         verify(resourceRepository, times(1)).findOne(1L);

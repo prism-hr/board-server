@@ -15,14 +15,11 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.workflow.Notification;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -37,21 +34,20 @@ import static hr.prism.board.enums.Notification.RESET_PASSWORD_NOTIFICATION;
 import static hr.prism.board.enums.PasswordHash.SHA256;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.randomAlphanumericString;
+import static io.jsonwebtoken.Jwts.builder;
+import static io.jsonwebtoken.Jwts.parser;
 import static io.jsonwebtoken.SignatureAlgorithm.HS512;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Service
 @Transactional
 public class AuthenticationService {
 
-    private static Logger LOGGER = getLogger(AuthenticationService.class);
-
-    private String jwsSecret;
+    private final String jwsSecret;
 
     private final Long sessionDurationSeconds;
 
@@ -71,7 +67,9 @@ public class AuthenticationService {
     public AuthenticationService(@Value("${session.duration.seconds}") Long sessionDurationSeconds,
                                  UserService userService, UserRoleService userRoleService,
                                  ActivityService activityService, EventProducer eventProducer,
-                                 EntityManager entityManager, ApplicationContext applicationContext) {
+                                 EntityManager entityManager, ApplicationContext applicationContext)
+        throws IOException {
+        this.jwsSecret = getJwsSecret();
         this.sessionDurationSeconds = sessionDurationSeconds;
         this.userService = userService;
         this.userRoleService = userRoleService;
@@ -81,31 +79,6 @@ public class AuthenticationService {
         this.applicationContext = applicationContext;
     }
 
-    @PostConstruct
-    @SuppressWarnings("unused")
-    public void postConstruct() {
-        try {
-            String userHome = System.getProperty("user.home");
-            File secretFile = new File(userHome + "/jws.secret");
-            if (secretFile.exists()) {
-                jwsSecret = IOUtils.toString(secretFile.toURI(), UTF_8);
-            } else {
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"))) {
-                    jwsSecret = randomAlphanumericString(256);
-                    writer.write(jwsSecret);
-                } catch (IOException e) {
-                    LOGGER.error("Unable to write jws secret", e);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Unable to read jws secret", e);
-        }
-    }
-
-    public String getJwsSecret() {
-        return jwsSecret;
-    }
-
     public User login(LoginDTO loginDTO) throws BoardForbiddenException {
         String email = loginDTO.getEmail();
         User user = userService.getByEmail(loginDTO.getEmail());
@@ -113,16 +86,16 @@ public class AuthenticationService {
             throw new BoardForbiddenException(UNKNOWN_USER, "User: " + email + " cannot be found");
         }
 
-        if (user.passwordMatches(loginDTO.getPassword())) {
-            String uuid = loginDTO.getUuid();
-            if (uuid != null) {
-                processInvitation(user, uuid);
-            }
-
-            return user;
+        if (!user.passwordMatches(loginDTO.getPassword())) {
+            throw new BoardForbiddenException(UNAUTHENTICATED_USER, "Incorrect password for user: " + email);
         }
 
-        throw new BoardForbiddenException(UNAUTHENTICATED_USER, "Incorrect password for user: " + email);
+        String uuid = loginDTO.getUuid();
+        if (uuid != null) {
+            processInvitation(user, uuid);
+        }
+
+        return user;
     }
 
     public User signin(OauthProvider provider, SigninDTO signinDTO) {
@@ -223,16 +196,16 @@ public class AuthenticationService {
     }
 
     public String makeAccessToken(Long userId, boolean specifyExpirationDate) {
-        return Jwts.builder()
+        return builder()
             .setSubject(userId.toString())
             .setExpiration(
                 specifyExpirationDate ? new Date(currentTimeMillis() + sessionDurationSeconds * 1000) : null)
-            .signWith(HS512, getJwsSecret())
+            .signWith(HS512, jwsSecret)
             .compact();
     }
 
     public Claims decodeAccessToken(String accessToken) {
-        return Jwts.parser()
+        return parser()
             .setSigningKey(jwsSecret)
             .parseClaimsJws(accessToken)
             .getBody();
@@ -263,6 +236,20 @@ public class AuthenticationService {
 
             eventProducer.produce(
                 new ActivityEvent(this, resource.getId()));
+        }
+    }
+
+    private String getJwsSecret() throws IOException {
+        String userHome = System.getProperty("user.home");
+        File secretFile = new File(userHome + "/jws.secret");
+        if (secretFile.exists()) {
+            return IOUtils.toString(secretFile.toURI(), UTF_8);
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userHome + "/jws.secret"))) {
+            String jwsSecret = randomAlphanumericString(256);
+            writer.write(jwsSecret);
+            return jwsSecret;
         }
     }
 

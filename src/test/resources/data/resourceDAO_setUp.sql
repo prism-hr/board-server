@@ -21,15 +21,18 @@ VALUES('UNIVERSITY', 'university', @documentLogoId, 'ACCEPTED', NOW());
 SET @universityId = (
   SELECT LAST_INSERT_ID());
 
-INSERT INTO resource(parent_id, scope, name, document_logo_id, state, created_timestamp)
-VALUES(@universityId, 'DEPARTMENT', 'department', @documentLogoId, 'DRAFT', NOW());
-
 UPDATE resource
 SET parent_id = @universityId
 WHERE id = @universityId;
 
+INSERT INTO resource(parent_id, scope, name, document_logo_id, state, created_timestamp)
+VALUES(@universityId, 'DEPARTMENT', 'department', @documentLogoId, 'DRAFT', NOW());
+
 SET @departmentId = (
   SELECT LAST_INSERT_ID());
+
+INSERT INTO resource(parent_id, scope, name, state, created_timestamp)
+VALUES(@departmentId, 'BOARD', 'board', 'ACCEPTED', NOW());
 
 INSERT INTO user(uuid, given_name, surname, email, email_display, created_timestamp)
 VALUES (UUID(), 'alastair', 'knowles', 'alastair@prism.hr', 'alastair@prism.hr', NOW());

@@ -11,10 +11,13 @@ import java.util.function.Function;
 @Component
 public class UniversityMapper implements Function<University, UniversityRepresentation> {
 
+    private final ResourceMapper resourceMapper;
+
     private final DocumentMapper documentMapper;
 
     @Inject
-    public UniversityMapper(DocumentMapper documentMapper) {
+    public UniversityMapper(ResourceMapper resourceMapper, DocumentMapper documentMapper) {
+        this.resourceMapper = resourceMapper;
         this.documentMapper = documentMapper;
     }
 
@@ -24,9 +27,7 @@ public class UniversityMapper implements Function<University, UniversityRepresen
             return null;
         }
 
-        return new UniversityRepresentation()
-            .setId(university.getId())
-            .setName(university.getName())
+        return resourceMapper.applySmall(university, UniversityRepresentation.class)
             .setHomepage(university.getHomepage())
             .setDocumentLogo(documentMapper.apply(university.getDocumentLogo()))
             .setHandle(university.getHandle());
