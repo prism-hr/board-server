@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import static org.apache.commons.lang3.ObjectUtils.compare;
 
 @JsonIgnoreProperties({"suppressedInOwnerState", "activity", "notification"})
 public class ActionRepresentation implements Comparable<ActionRepresentation> {
@@ -76,9 +79,27 @@ public class ActionRepresentation implements Comparable<ActionRepresentation> {
     }
 
     @Override
-    public int compareTo(ActionRepresentation o) {
-        int compare = ObjectUtils.compare(action, o.getAction());
-        return compare == 0 ? ObjectUtils.compare(scope, o.getScope()) : compare;
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(action)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        ActionRepresentation that = (ActionRepresentation) other;
+        return new EqualsBuilder()
+            .append(action, that.action)
+            .isEquals();
+    }
+
+    @Override
+    @SuppressWarnings("NullableProblems")
+    public int compareTo(ActionRepresentation other) {
+        return compare(action, other.getAction());
     }
 
 }

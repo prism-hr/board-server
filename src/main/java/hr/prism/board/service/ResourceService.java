@@ -256,8 +256,7 @@ public class ResourceService {
             resourceOperation.setComment(resource.getComment());
         }
 
-        resourceOperation = resourceOperationRepository.save(resourceOperation);
-        resource.getOperations().add(resourceOperation);
+        resourceOperationRepository.save(resourceOperation);
         resourceRepository.save(resource);
     }
 
