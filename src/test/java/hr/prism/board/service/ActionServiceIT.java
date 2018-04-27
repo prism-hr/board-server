@@ -1,7 +1,6 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.DBTestContext;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
@@ -19,7 +18,6 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
