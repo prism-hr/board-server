@@ -20,14 +20,16 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.State.ACCEPTED;
-import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.enums.Role.MEMBER;
+import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
@@ -41,6 +43,9 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 public class ActionServiceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionServiceIT.class);
+
+    private static final List<State> ASSIGNABLE_STATES =
+        Stream.of(State.values()).filter(state -> !state.equals(PREVIOUS)).collect(toList());
 
     @Inject
     private UserService userService;
@@ -57,9 +62,12 @@ public class ActionServiceIT {
     @Inject
     private ActionService actionService;
 
+    @Inject
+    private UserRoleService userRoleService;
+
     @Test
     public void executeAction_departmentAdministratorActionsOnDepartment() {
-        User user = setUpUser("department", "department", "department@prism.hr");
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
         Department department = setupDepartment(user);
 
         Expectations expectations =
@@ -68,16 +76,51 @@ public class ActionServiceIT {
                     new ActionRepresentation().setAction(VIEW).setState(DRAFT),
                     new ActionRepresentation().setAction(EDIT).setState(DRAFT),
                     new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED),
+                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING),
+                    new ActionRepresentation().setAction(EDIT).setState(PENDING),
+                    new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED),
+                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED),
+                    new ActionRepresentation().setAction(EDIT).setState(ACCEPTED),
+                    new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED),
+                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED),
+                    new ActionRepresentation().setAction(UNSUBSCRIBE).setState(ACCEPTED))
+                .expect(REJECTED,
+                    new ActionRepresentation().setAction(VIEW).setState(REJECTED),
+                    new ActionRepresentation().setAction(EDIT).setState(REJECTED),
                     new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED));
 
-        verify(user, department, expectations);
+        verify(user, user, department, expectations);
+    }
+
+    @Test
+    public void executeAction_departmentMemberActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user);
+
+        User member = setUpUser("member", "member", "member@prism.hr");
+        userRoleService.createUserRole(department, member, MEMBER);
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, member, department, expectations);
     }
 
     private Department setupDepartment(User user) {
         getContext().setAuthentication(new AuthenticationToken(user));
         return departmentService.createDepartment(1L,
             new DepartmentDTO()
-                .setName("department")
+                .setName("administrator")
                 .setSummary("department summary"));
     }
 
@@ -102,42 +145,70 @@ public class ActionServiceIT {
                 .setPassword("password"));
     }
 
-    private void verify(User user, Resource resource, Expectations expectations) {
-        Stream.of(State.values()).forEach(state -> {
+    private void verify(User admin, User user, Resource resource, Expectations expectations) {
+        Resource extendResource = null;
+        for (State state : ASSIGNABLE_STATES) {
             resourceService.updateState(resource, state);
-            Stream.of(Action.values()).forEach(action -> {
-                LOGGER.info("Executing " + action + " on " + resource.getScope() + " in " + state);
-                Resource testResource = testResource(user, resource, action);
+            Resource testResource = resourceService.getResource(user, resource.getScope(), resource.getId());
+
+            for (Action action : Action.values()) {
+                LOGGER.info("Executing " + action + " on " + testResource.getScope() + " in " + state);
+                Resource mockResource;
+                if (action == EXTEND) {
+                    extendResource = extendResource == null ?
+                        extendResource(admin, user, testResource) : extendResource;
+                    mockResource = extendResource;
+                } else {
+                    mockResource = testResource;
+                }
 
                 ActionRepresentation expected = expectations.expected(state, action);
                 if (expected == null) {
-                    assertThatThrownBy(() -> actionService.executeAction(user, resource, action, () -> testResource))
-                        .isExactlyInstanceOf(BoardForbiddenException.class)
-                        .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+                    verifyForbidden(user, testResource, action, mockResource);
                 } else {
-                    Resource newResource = actionService.executeAction(user, resource, action, () -> testResource);
-                    assertEquals(expected.getState(), newResource.getState());
+                    verifyPermitted(user, testResource, action, mockResource, expected);
                 }
-            });
-        });
+            }
+        }
 
         expectations.verify();
     }
 
-    private Resource testResource(User user, Resource resource, Action action) {
-        if (action == EXTEND) {
-            Scope scope = resource.getScope();
+    private Resource extendResource(User admin, User user, Resource resource) {
+        Scope scope = resource.getScope();
+        try {
+            Resource extendResource;
             switch (resource.getScope()) {
                 case DEPARTMENT:
-                    return setupBoard(user, resource.getId());
+                    extendResource = setupBoard(admin, resource.getId());
+                    break;
                 case BOARD:
-                    return resource;
+                    extendResource = resource;
+                    break;
                 default:
                     throw new Error("Cannot extend: " + scope);
             }
-        }
 
-        return resource;
+            getContext().setAuthentication(new AuthenticationToken(user));
+            return extendResource;
+        } catch (BoardForbiddenException e) {
+            Scope childScope = Scope.values()[scope.ordinal() + 1];
+            LOGGER.info("Mocking create " + childScope + " for " + scope + " in " + resource.getState());
+            return new Resource();
+        }
+    }
+
+    private void verifyForbidden(User user, Resource testResource, Action action, Resource mockResource) {
+        assertThatThrownBy(
+            () -> actionService.executeAction(user, testResource, action, () -> mockResource))
+            .isExactlyInstanceOf(BoardForbiddenException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+    }
+
+    private void verifyPermitted(User user, Resource testResource, Action action, Resource mockResource,
+                                 ActionRepresentation expected) {
+        Resource newResource = actionService.executeAction(user, testResource, action, () -> mockResource);
+        assertEquals(expected.getState(), newResource.getState());
     }
 
     private static class Expectations {
@@ -158,7 +229,11 @@ public class ActionServiceIT {
                     .findFirst()
                     .orElse(null);
 
-            expectations.remove(state, action);
+            if (expected == null) {
+                return null;
+            }
+
+            expectations.remove(state, expected);
             return expected;
         }
 
