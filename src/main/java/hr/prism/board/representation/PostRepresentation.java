@@ -4,8 +4,8 @@ import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.MemberCategory;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PostRepresentation extends ResourceRepresentation<PostRepresentation> {
 
@@ -19,7 +19,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
 
     private ExistingRelation existingRelation;
 
-    private LinkedHashMap<String, Object> existingRelationExplanation;
+    private Map<String, Object> existingRelationExplanation;
 
     private List<String> postCategories;
 
@@ -100,12 +100,11 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
-    public LinkedHashMap<String, Object> getExistingRelationExplanation() {
+    public Map<String, Object> getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
 
-    public PostRepresentation setExistingRelationExplanation(
-        LinkedHashMap<String, Object> existingRelationExplanation) {
+    public PostRepresentation setExistingRelationExplanation(Map<String, Object> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }
@@ -141,6 +140,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return applyDocument;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public PostRepresentation setApplyDocument(DocumentRepresentation applyDocument) {
         this.applyDocument = applyDocument;
         return this;
@@ -150,6 +150,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return applyEmail;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public PostRepresentation setApplyEmail(String applyEmail) {
         this.applyEmail = applyEmail;
         return this;
@@ -209,6 +210,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
+    @SuppressWarnings("unused")
     public LocalDateTime getLastViewTimestamp() {
         return lastViewTimestamp;
     }
@@ -218,6 +220,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
+    @SuppressWarnings("unused")
     public LocalDateTime getLastReferralTimestamp() {
         return lastReferralTimestamp;
     }
@@ -227,6 +230,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
+    @SuppressWarnings("unused")
     public LocalDateTime getLastResponseTimestamp() {
         return lastResponseTimestamp;
     }
@@ -236,6 +240,7 @@ public class PostRepresentation extends ResourceRepresentation<PostRepresentatio
         return this;
     }
 
+    @SuppressWarnings("unused")
     public DemographicDataStatusRepresentation getResponseReadiness() {
         return responseReadiness;
     }

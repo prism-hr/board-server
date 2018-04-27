@@ -1,12 +1,12 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DBTestContext;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.dto.RegisterDTO;
+import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
@@ -20,15 +20,20 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.ExistingRelation.STUDENT;
+import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
+import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
-import static java.util.Collections.singletonList;
+import static java.math.BigDecimal.ONE;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +61,9 @@ public class ActionServiceIT {
 
     @Inject
     private BoardService boardService;
+
+    @Inject
+    private PostService postService;
 
     @Inject
     private ResourceService resourceService;
@@ -154,6 +162,72 @@ public class ActionServiceIT {
         verify(user, null, department, expectations);
     }
 
+    @Test
+    public void executeAction_otherDepartmentAdministratorActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+
+        User otherUser = setUpUser("other", "other", "other@prism.hr");
+        setupDepartment(otherUser, "other");
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, otherUser, department, expectations);
+    }
+
+    @Test
+    public void executeAction_otherDepartmentAuthorActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+
+        User otherUser = setUpUser("other", "other", "other@prism.hr");
+        Department otherDepartment = setupDepartment(otherUser, "other");
+
+        User otherAuthor = setUpUser("other-author", "other-author", "other-author@prism.hr");
+        userRoleService.createUserRole(otherDepartment, otherAuthor, AUTHOR);
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, otherAuthor, department, expectations);
+    }
+
+    @Test
+    public void executeAction_otherDepartmentMemberActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+
+        User otherUser = setUpUser("other", "other", "other@prism.hr");
+        Department otherDepartment = setupDepartment(otherUser, "other");
+
+        User otherMember = setUpUser("other-member", "other-member", "other-member@prism.hr");
+        userRoleService.createUserRole(otherDepartment, otherMember, AUTHOR);
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, otherMember, department, expectations);
+    }
+
     private Department setupDepartment(User user, String name) {
         getContext().setAuthentication(new AuthenticationToken(user));
         return departmentService.createDepartment(1L,
@@ -162,16 +236,36 @@ public class ActionServiceIT {
                 .setSummary(name + " summary"));
     }
 
-    private Board setupBoard(User user, Long departmentId) {
+    private Board setupBoard(User user, Long departmentId, String name) {
         getContext().setAuthentication(new AuthenticationToken(user));
         return boardService.createBoard(departmentId,
             new BoardDTO()
-                .setName("board")
-                .setPostCategories(singletonList("category")));
+                .setName(name)
+                .setPostCategories(ImmutableList.of("Employment", "Internship")));
     }
 
-    private Post setupPost(User user, Long boardId) {
-        return null;
+    private Post setupPost(User user, Long boardId, String name) {
+        getContext().setAuthentication(new AuthenticationToken(user));
+        return postService.createPost(boardId,
+            new PostDTO()
+                .setName(name)
+                .setSummary(name + " summary")
+                .setOrganization(
+                    new OrganizationDTO()
+                        .setName("organization"))
+                .setLocation(new LocationDTO()
+                    .setName("london")
+                    .setDomicile("uk")
+                    .setGoogleId("google")
+                    .setLatitude(ONE)
+                    .setLongitude(ONE))
+                .setApplyWebsite("http://www.google.co.uk")
+                .setPostCategories(ImmutableList.of("Employment", "Internship"))
+                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))
+                .setExistingRelation(STUDENT)
+                .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
+                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS)));
     }
 
     private User setUpUser(String givenName, String surname, String email) {
@@ -211,14 +305,14 @@ public class ActionServiceIT {
         expectations.verify();
     }
 
-    private Resource extendResource(User admin, Resource resource) {
+    private Resource extendResource(User user, Resource resource) {
         Scope scope = resource.getScope();
         try {
             switch (resource.getScope()) {
                 case DEPARTMENT:
-                    return setupBoard(admin, resource.getId());
+                    return setupBoard(user, resource.getId(), "extend");
                 case BOARD:
-                    return resource;
+                    return setupPost(user, resource.getId(), "extend");
                 default:
                     throw new Error("Cannot extend: " + scope);
             }

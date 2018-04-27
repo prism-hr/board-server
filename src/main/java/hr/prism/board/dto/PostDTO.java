@@ -8,8 +8,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PostDTO extends ResourceDTO<PostDTO> {
 
@@ -28,7 +28,7 @@ public class PostDTO extends ResourceDTO<PostDTO> {
 
     private ExistingRelation existingRelation;
 
-    private LinkedHashMap<String, Object> existingRelationExplanation;
+    private Map<String, Object> existingRelationExplanation;
 
     private List<String> postCategories;
 
@@ -91,11 +91,11 @@ public class PostDTO extends ResourceDTO<PostDTO> {
         return this;
     }
 
-    public LinkedHashMap<String, Object> getExistingRelationExplanation() {
+    public Map<String, Object> getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
 
-    public PostDTO setExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
+    public PostDTO setExistingRelationExplanation(Map<String, Object> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }

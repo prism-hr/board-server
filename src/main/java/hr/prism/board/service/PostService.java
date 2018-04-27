@@ -60,6 +60,8 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class PostService {
@@ -270,7 +272,7 @@ public class PostService {
         publishPosts(postToPublishIds, baseline);
     }
 
-    public LinkedHashMap<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
+    public Map<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
         if (existingRelationExplanation == null) {
             return null;
         }
@@ -423,8 +425,7 @@ public class PostService {
             String oldValue = post.getExistingRelationExplanation();
             if (!Objects.equals(oldValue, newValue)) {
                 post.setExistingRelationExplanation(newValue);
-                LinkedHashMap<String, Object> oldValueMap =
-                    oldValue == null ? null : mapExistingRelationExplanation(oldValue);
+                Map<String, Object> oldValueMap = oldValue == null ? null : mapExistingRelationExplanation(oldValue);
                 post.getChangeList().put("existingRelationExplanation", oldValueMap, newValueMap);
             }
         }
@@ -496,7 +497,7 @@ public class PostService {
         }
     }
 
-    private String mapExistingRelationExplanation(LinkedHashMap<String, Object> existingRelationExplanation) {
+    private String mapExistingRelationExplanation(Map<String, Object> existingRelationExplanation) {
         if (existingRelationExplanation == null) {
             return null;
         }
