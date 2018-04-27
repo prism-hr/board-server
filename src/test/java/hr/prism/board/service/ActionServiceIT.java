@@ -1,9 +1,11 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.DBTestContext;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
+import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.RegisterDTO;
 import hr.prism.board.enums.Action;
@@ -17,12 +19,14 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.enums.State.DRAFT;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +45,9 @@ public class ActionServiceIT {
 
     @Inject
     private DepartmentService departmentService;
+
+    @Inject
+    private BoardService boardService;
 
     @Inject
     private ResourceService resourceService;
@@ -73,7 +80,11 @@ public class ActionServiceIT {
     }
 
     private Board setupBoard(User user, Long departmentId) {
-
+        getContext().setAuthentication(new AuthenticationToken(user));
+        return boardService.createBoard(departmentId,
+            new BoardDTO()
+                .setName("board")
+                .setPostCategories(singletonList("category")));
     }
 
     private Post setupPost(User user, Long boardId) {
@@ -93,18 +104,16 @@ public class ActionServiceIT {
         Stream.of(State.values()).forEach(state -> {
             resourceService.updateState(resource, state);
             Stream.of(Action.values()).forEach(action -> {
-                Scope scope = action == EXTEND ?
-                    Scope.values()[resource.getScope().ordinal() + 1] : resource.getScope();
+                Resource testResource = testResource(user, resource, action);
 
                 ActionRepresentation expected = expectations.expected(state, action);
                 if (expected == null) {
-                    assertThatThrownBy(() ->
-                        actionService.executeAction(user, resource, action, () -> testResource(scope)))
+                    assertThatThrownBy(() -> actionService.executeAction(user, resource, action, () -> testResource))
                         .isExactlyInstanceOf(BoardForbiddenException.class)
                         .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
                 } else {
                     Resource newResource =
-                        actionService.executeAction(user, resource, action, () -> testResource(scope));
+                        actionService.executeAction(user, resource, action, () -> testResource);
                     assertEquals(expected.getState(), newResource.getState());
                 }
             });
@@ -113,16 +122,16 @@ public class ActionServiceIT {
         expectations.verify();
     }
 
-    private Resource testResource(Resource resource, Action action) {
+    private Resource testResource(User user, Resource resource, Action action) {
         if (action == EXTEND) {
             Scope scope = resource.getScope();
             switch (resource.getScope()) {
                 case DEPARTMENT:
-                    return resource;
+                    return setupBoard(user, resource.getId());
                 case BOARD:
                     return resource;
                 default:
-                    throw new Error("Cannot extend: " + scope):
+                    throw new Error("Cannot extend: " + scope);
             }
         }
 
