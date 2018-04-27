@@ -68,7 +68,7 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAdministratorActionsOnDepartment() {
         User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
-        Department department = setupDepartment(user);
+        Department department = setupDepartment(user, "department");
 
         Expectations expectations =
             new Expectations()
@@ -99,7 +99,7 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentMemberActionsOnDepartment() {
         User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
-        Department department = setupDepartment(user);
+        Department department = setupDepartment(user, "department");
 
         User member = setUpUser("member", "member", "member@prism.hr");
         userRoleService.createUserRole(department, member, MEMBER);
@@ -116,12 +116,29 @@ public class ActionServiceIT {
         verify(user, member, department, expectations);
     }
 
-    private Department setupDepartment(User user) {
+    @Test
+    public void executeAction_publicActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, null, department, expectations);
+    }
+
+    private Department setupDepartment(User user, String name) {
         getContext().setAuthentication(new AuthenticationToken(user));
         return departmentService.createDepartment(1L,
             new DepartmentDTO()
-                .setName("administrator")
-                .setSummary("department summary"));
+                .setName(name)
+                .setSummary(name + " summary"));
     }
 
     private Board setupBoard(User user, Long departmentId) {
@@ -155,8 +172,7 @@ public class ActionServiceIT {
                 LOGGER.info("Executing " + action + " on " + testResource.getScope() + " in " + state);
                 Resource mockResource;
                 if (action == EXTEND) {
-                    extendResource = extendResource == null ?
-                        extendResource(admin, user, testResource) : extendResource;
+                    extendResource = extendResource == null ? extendResource(admin, testResource) : extendResource;
                     mockResource = extendResource;
                 } else {
                     mockResource = testResource;
@@ -174,23 +190,17 @@ public class ActionServiceIT {
         expectations.verify();
     }
 
-    private Resource extendResource(User admin, User user, Resource resource) {
+    private Resource extendResource(User admin, Resource resource) {
         Scope scope = resource.getScope();
         try {
-            Resource extendResource;
             switch (resource.getScope()) {
                 case DEPARTMENT:
-                    extendResource = setupBoard(admin, resource.getId());
-                    break;
+                    return setupBoard(admin, resource.getId());
                 case BOARD:
-                    extendResource = resource;
-                    break;
+                    return resource;
                 default:
                     throw new Error("Cannot extend: " + scope);
             }
-
-            getContext().setAuthentication(new AuthenticationToken(user));
-            return extendResource;
         } catch (BoardForbiddenException e) {
             Scope childScope = Scope.values()[scope.ordinal() + 1];
             LOGGER.info("Mocking create " + childScope + " for " + scope + " in " + resource.getState());
