@@ -115,8 +115,7 @@ public class ActionServiceIT {
                         .isExactlyInstanceOf(BoardForbiddenException.class)
                         .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
                 } else {
-                    Resource newResource =
-                        actionService.executeAction(user, resource, action, () -> testResource);
+                    Resource newResource = actionService.executeAction(user, resource, action, () -> testResource);
                     assertEquals(expected.getState(), newResource.getState());
                 }
             });

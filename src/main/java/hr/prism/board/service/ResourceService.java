@@ -221,6 +221,7 @@ public class ResourceService {
             resource.setStateChangeTimestamp(LocalDateTime.now());
         }
 
+        resourceRepository.save(resource);
         entityManager.flush();
     }
 
