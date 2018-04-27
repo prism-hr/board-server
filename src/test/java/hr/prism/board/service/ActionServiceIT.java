@@ -146,6 +146,27 @@ public class ActionServiceIT {
     }
 
     @Test
+    public void executeAction_postAdministratorActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+        Board board = setupBoard(user, department.getId(), "board");
+
+        User postUser = setUpUser("post", "post", "post@prism.hr");
+        setupPost(postUser, board.getId(), "post");
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, postUser, department, expectations);
+    }
+
+    @Test
     public void executeAction_publicActionsOnDepartment() {
         User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
         Department department = setupDepartment(user, "department");
@@ -190,7 +211,7 @@ public class ActionServiceIT {
         User otherUser = setUpUser("other", "other", "other@prism.hr");
         Department otherDepartment = setupDepartment(otherUser, "other");
 
-        User otherAuthor = setUpUser("other-author", "other-author", "other-author@prism.hr");
+        User otherAuthor = setUpUser("author", "author", "author@prism.hr");
         userRoleService.createUserRole(otherDepartment, otherAuthor, AUTHOR);
 
         Expectations expectations =
@@ -213,7 +234,7 @@ public class ActionServiceIT {
         User otherUser = setUpUser("other", "other", "other@prism.hr");
         Department otherDepartment = setupDepartment(otherUser, "other");
 
-        User otherMember = setUpUser("other-member", "other-member", "other-member@prism.hr");
+        User otherMember = setUpUser("member", "member", "member@prism.hr");
         userRoleService.createUserRole(otherDepartment, otherMember, AUTHOR);
 
         Expectations expectations =
@@ -226,6 +247,30 @@ public class ActionServiceIT {
                     new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
 
         verify(user, otherMember, department, expectations);
+    }
+
+    @Test
+    public void executeAction_otherPostAdministratorActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+
+        User otherUser = setUpUser("other", "other", "other@prism.hr");
+        Department otherDepartment = setupDepartment(otherUser, "other");
+        Board otherBoard = setupBoard(otherUser, otherDepartment.getId(), "other");
+
+        User otherPostUser = setUpUser("post", "post", "post@prism.hr");
+        setupPost(otherPostUser, otherBoard.getId(), "other");
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, otherPostUser, department, expectations);
     }
 
     private Department setupDepartment(User user, String name) {
