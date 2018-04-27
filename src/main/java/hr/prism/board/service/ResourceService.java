@@ -25,7 +25,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.CategoryType.MEMBER;
@@ -195,20 +194,14 @@ public class ResourceService {
     }
 
     public void updateCategories(Resource resource, CategoryType type, List<String> categories) {
-        // Delete the old records
         deleteResourceCategories(resource, type);
-        Set<ResourceCategory> oldCategories = resource.getCategories();
-        oldCategories.removeIf(oldCategory -> oldCategory.getType() == type);
-
-        if (categories != null) {
-            // Write the new records
+        if (isNotEmpty(categories)) {
             categories.forEach(name ->
-                oldCategories.add(
-                    createResourceCategory(
-                        new ResourceCategory()
-                            .setResource(resource)
-                            .setType(type)
-                            .setName(name))));
+                createResourceCategory(
+                    new ResourceCategory()
+                        .setResource(resource)
+                        .setType(type)
+                        .setName(name)));
         }
     }
 
@@ -273,14 +266,10 @@ public class ResourceService {
     }
 
     private void saveResourceRelation(Resource resource1, Resource resource2) {
-        ResourceRelation resourceRelation =
+        resourceRelationRepository.save(
             new ResourceRelation()
                 .setResource1(resource1)
-                .setResource2(resource2);
-        resourceRelationRepository.save(resourceRelation);
-
-        resource1.getChildren().add(resourceRelation);
-        resource2.getParents().add(resourceRelation);
+                .setResource2(resource2));
     }
 
     private ResourceCategory createResourceCategory(ResourceCategory resourceCategory) {

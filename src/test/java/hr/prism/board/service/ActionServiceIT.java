@@ -14,6 +14,8 @@ import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.representation.ActionRepresentation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -37,6 +39,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 @Sql(scripts = "classpath:data/actionService_setUp.sql")
 @Sql(scripts = "classpath:data/actionService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class ActionServiceIT {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActionServiceIT.class);
 
     @Inject
     private UserService userService;
@@ -102,6 +106,7 @@ public class ActionServiceIT {
         Stream.of(State.values()).forEach(state -> {
             resourceService.updateState(resource, state);
             Stream.of(Action.values()).forEach(action -> {
+                LOGGER.info("Executing " + action + " on " + resource.getScope() + " in " + state);
                 Resource testResource = testResource(user, resource, action);
 
                 ActionRepresentation expected = expectations.expected(state, action);

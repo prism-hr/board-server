@@ -259,7 +259,6 @@ public class ResourceServiceTest {
         category2.setName("category2");
 
         resourceService.updateCategories(department, MEMBER, ImmutableList.of("category1", "category2"));
-        assertThat(department.getCategories(MEMBER)).containsExactly(category1, category2);
 
         verify(resourceCategoryRepository, times(1)).deleteByResourceAndType(department, MEMBER);
         verify(resourceCategoryRepository, times(1)).save(category1);
@@ -282,7 +281,6 @@ public class ResourceServiceTest {
         category2.setName("category2");
 
         resourceService.updateCategories(board, POST, ImmutableList.of("category1", "category2"));
-        assertThat(board.getCategories(POST)).containsExactly(category1, category2);
 
         verify(resourceCategoryRepository, times(1)).deleteByResourceAndType(board, POST);
         verify(resourceCategoryRepository, times(1)).save(category1);
@@ -317,11 +315,6 @@ public class ResourceServiceTest {
 
         resourceService.createResourceRelation(university, department);
         assertEquals(university, department.getParent());
-
-        assertThat(university.getChildren()).containsExactly(universityRelation, universityDepartmentRelation);
-
-        assertThat(department.getParents()).containsExactlyInAnyOrder(universityDepartmentRelation, departmentRelation);
-        assertThat(department.getChildren()).containsExactly(departmentRelation);
 
         verify(entityManager, times(1)).flush();
         verify(entityManager, times(1)).refresh(university);
@@ -381,14 +374,6 @@ public class ResourceServiceTest {
 
         resourceService.createResourceRelation(department, board);
         assertEquals(department, board.getParent());
-
-        assertThat(university.getChildren())
-            .containsExactlyInAnyOrder(universityRelation, universityDepartmentRelation, universityBoardRelation);
-        assertThat(department.getChildren()).containsExactly(departmentRelation, departmentBoardRelation);
-
-        assertThat(board.getParents())
-            .containsExactlyInAnyOrder(universityBoardRelation, departmentBoardRelation, boardRelation);
-        assertThat(board.getChildren()).containsExactly(boardRelation);
 
         verify(entityManager, times(1)).flush();
         verify(entityManager, times(1)).refresh(department);
@@ -455,8 +440,6 @@ public class ResourceServiceTest {
         ResourceOperation operation = new ResourceOperation();
         operation.setId(1L);
 
-        assertThat(department.getOperations()).containsExactly(operation);
-
         verify(resourceOperationRepository, times(1))
             .save(argThat(
                 new ArgumentMatcher<ResourceOperation>() {
@@ -493,8 +476,6 @@ public class ResourceServiceTest {
 
         ResourceOperation operation = new ResourceOperation();
         operation.setId(1L);
-
-        assertThat(board.getOperations()).containsExactly(operation);
 
         verify(resourceOperationRepository, times(1))
             .save(argThat(
