@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
@@ -94,6 +95,26 @@ public class ActionServiceIT {
                     new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED));
 
         verify(user, user, department, expectations);
+    }
+
+    @Test
+    public void executeAction_departmentAuthorActionsOnDepartment() {
+        User user = setUpUser("administrator", "administrator", "administrator@prism.hr");
+        Department department = setupDepartment(user, "department");
+
+        User author = setUpUser("author", "author", "author@prism.hr");
+        userRoleService.createUserRole(department, author, AUTHOR);
+
+        Expectations expectations =
+            new Expectations()
+                .expect(DRAFT,
+                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                .expect(PENDING,
+                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                .expect(ACCEPTED,
+                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+
+        verify(user, author, department, expectations);
     }
 
     @Test
@@ -170,19 +191,19 @@ public class ActionServiceIT {
 
             for (Action action : Action.values()) {
                 LOGGER.info("Executing " + action + " on " + testResource.getScope() + " in " + state);
-                Resource mockResource;
+                Resource executeResource;
                 if (action == EXTEND) {
                     extendResource = extendResource == null ? extendResource(admin, testResource) : extendResource;
-                    mockResource = extendResource;
+                    executeResource = extendResource;
                 } else {
-                    mockResource = testResource;
+                    executeResource = testResource;
                 }
 
                 ActionRepresentation expected = expectations.expected(state, action);
                 if (expected == null) {
-                    verifyForbidden(user, testResource, action, mockResource);
+                    verifyForbidden(user, testResource, action, executeResource);
                 } else {
-                    verifyPermitted(user, testResource, action, mockResource, expected);
+                    verifyPermitted(user, testResource, action, executeResource, expected);
                 }
             }
         }
@@ -208,16 +229,16 @@ public class ActionServiceIT {
         }
     }
 
-    private void verifyForbidden(User user, Resource testResource, Action action, Resource mockResource) {
+    private void verifyForbidden(User user, Resource testResource, Action action, Resource executeResource) {
         assertThatThrownBy(
-            () -> actionService.executeAction(user, testResource, action, () -> mockResource))
+            () -> actionService.executeAction(user, testResource, action, () -> executeResource))
             .isExactlyInstanceOf(BoardForbiddenException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
 
-    private void verifyPermitted(User user, Resource testResource, Action action, Resource mockResource,
+    private void verifyPermitted(User user, Resource testResource, Action action, Resource executeResource,
                                  ActionRepresentation expected) {
-        Resource newResource = actionService.executeAction(user, testResource, action, () -> mockResource);
+        Resource newResource = actionService.executeAction(user, testResource, action, () -> executeResource);
         assertEquals(expected.getState(), newResource.getState());
     }
 
@@ -239,11 +260,10 @@ public class ActionServiceIT {
                     .findFirst()
                     .orElse(null);
 
-            if (expected == null) {
-                return null;
+            if (expected != null) {
+                expectations.remove(state, expected);
             }
 
-            expectations.remove(state, expected);
             return expected;
         }
 
