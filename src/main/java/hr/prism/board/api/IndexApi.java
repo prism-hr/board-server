@@ -38,6 +38,12 @@ public class IndexApi {
         this.postService = postService;
     }
 
+    @RequestMapping(value = "/api/index/privacyPolicy", method = GET)
+    public String getPrivacyPolicy(Model model) {
+        fillGenericModel(model);
+        return "privacyPolicy";
+    }
+
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = GET)
     public String getDepartmentIndex(@PathVariable String universityHandle, @PathVariable String departmentHandle,
                                      Model model) {
