@@ -279,13 +279,15 @@ public class DepartmentUserService {
         MemberCategory memberCategory = userRole.getMemberCategory();
         String memberProgram = userRole.getMemberProgram();
         Integer memberYear = userRole.getMemberYear();
+        LocalDate expiryDate = userRole.getExpiryDate();
 
         responseReadiness
             .setMemberCategory(memberCategory)
             .setMemberProgram(memberProgram)
-            .setMemberYear(memberYear);
+            .setMemberYear(memberYear)
+            .setExpiryDate(expiryDate);
 
-        if (Stream.of(memberCategory, memberProgram, memberYear).anyMatch(Objects::isNull)) {
+        if (Stream.of(memberCategory, memberProgram, memberYear, expiryDate).anyMatch(Objects::isNull)) {
             // Member data incomplete
             return responseReadiness.setRequireMemberData(true);
         }

@@ -2,6 +2,8 @@ package hr.prism.board.value;
 
 import hr.prism.board.enums.MemberCategory;
 
+import java.time.LocalDate;
+
 public class DemographicDataStatus {
 
     private boolean requireUserData;
@@ -13,6 +15,8 @@ public class DemographicDataStatus {
     private String memberProgram;
 
     private Integer memberYear;
+
+    private LocalDate expiryDate;
 
     public boolean isRequireUserData() {
         return requireUserData;
@@ -56,6 +60,15 @@ public class DemographicDataStatus {
 
     public DemographicDataStatus setMemberYear(Integer memberYear) {
         this.memberYear = memberYear;
+        return this;
+    }
+
+    public LocalDate getExpiryDate() {
+        return expiryDate;
+    }
+
+    public DemographicDataStatus setExpiryDate(LocalDate expiryDate) {
+        this.expiryDate = expiryDate;
         return this;
     }
 

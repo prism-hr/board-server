@@ -102,13 +102,14 @@ public class NotificationService {
         }
     }
 
-    public Map<String, String> sendNotification(NotificationRequest request) {
+    public void sendNotification(NotificationRequest request) {
         User recipient = request.getRecipient();
         String recipientEmail = recipient.getEmail();
         Notification notification = request.getNotification();
 
-        Map<String, String> properties = this.properties.get(notification).entrySet().stream()
-            .collect(toMap(Map.Entry::getKey, entry -> entry.getValue().getValue(request)));
+        Map<String, String> properties = new HashMap<>();
+        this.properties.get(notification)
+            .forEach((key, value) -> properties.put(key, value.getValue(request)));
 
         StrSubstitutor parser = new StrSubstitutor(properties);
         String subject = parser.replace(this.subjects.get(notification));
@@ -149,8 +150,6 @@ public class NotificationService {
             LOGGER.info("Sending notification: " + makeLogHeader(notification, senderEmail, recipientEmail)
                 + "\n\n" + "Subject: " + subject + "\nContent:\n\n" + makePlainTextVersion(content) + "\n");
         }
-
-        return properties;
     }
 
     private List<String> indexTemplate(Notification notification, String template, Map<Notification, String> index) {

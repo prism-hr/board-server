@@ -112,7 +112,8 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             .setRequireMemberData(demographicDataStatus.isRequireMemberData())
             .setMemberCategory(demographicDataStatus.getMemberCategory())
             .setMemberProgram(demographicDataStatus.getMemberProgram())
-            .setMemberYear(demographicDataStatus.getMemberYear());
+            .setMemberYear(demographicDataStatus.getMemberYear())
+            .setExpiryDate(demographicDataStatus.getExpiryDate());
     }
 
 }

@@ -10,7 +10,9 @@ import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.representation.ActionRepresentation;
+import hr.prism.board.repository.ResourceRepository;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -20,9 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -35,7 +35,6 @@ import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.math.BigDecimal.ONE;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
@@ -52,6 +51,9 @@ public class ActionServiceIT {
 
     private static final List<State> ASSIGNABLE_STATES =
         Stream.of(State.values()).filter(state -> !state.equals(PREVIOUS)).collect(toList());
+
+    @Inject
+    private ResourceRepository resourceRepository;
 
     @Inject
     private UserService userService;
@@ -84,25 +86,25 @@ public class ActionServiceIT {
         Expectations expectations =
             new Expectations()
                 .expect(DRAFT,
-                    new ActionRepresentation().setAction(VIEW).setState(DRAFT),
-                    new ActionRepresentation().setAction(EDIT).setState(DRAFT),
-                    new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED),
-                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED))
+                    new Expectation(VIEW, DRAFT),
+                    new Expectation(EDIT, DRAFT),
+                    new Expectation(EXTEND, ACCEPTED),
+                    new Expectation(SUBSCRIBE, ACCEPTED))
                 .expect(PENDING,
-                    new ActionRepresentation().setAction(VIEW).setState(PENDING),
-                    new ActionRepresentation().setAction(EDIT).setState(PENDING),
-                    new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED),
-                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED))
+                    new Expectation(VIEW, PENDING),
+                    new Expectation(EDIT, PENDING),
+                    new Expectation(EXTEND, ACCEPTED),
+                    new Expectation(SUBSCRIBE, ACCEPTED))
                 .expect(ACCEPTED,
-                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED),
-                    new ActionRepresentation().setAction(EDIT).setState(ACCEPTED),
-                    new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED),
-                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED),
-                    new ActionRepresentation().setAction(UNSUBSCRIBE).setState(ACCEPTED))
+                    new Expectation(VIEW, ACCEPTED),
+                    new Expectation(EDIT, ACCEPTED),
+                    new Expectation(EXTEND, ACCEPTED),
+                    new Expectation(SUBSCRIBE, ACCEPTED),
+                    new Expectation(UNSUBSCRIBE, ACCEPTED))
                 .expect(REJECTED,
-                    new ActionRepresentation().setAction(VIEW).setState(REJECTED),
-                    new ActionRepresentation().setAction(EDIT).setState(REJECTED),
-                    new ActionRepresentation().setAction(SUBSCRIBE).setState(ACCEPTED));
+                    new Expectation(VIEW, REJECTED),
+                    new Expectation(EDIT, REJECTED),
+                    new Expectation(SUBSCRIBE, ACCEPTED));
 
         verify(departmentAdministrator, department, board, expectations);
     }
@@ -140,6 +142,8 @@ public class ActionServiceIT {
             setUpUser("other-post", "administrator", "other-post@padministrator.hr");
         setupPost(otherPostAdministrator, otherBoard.getId(), "other-post");
 
+        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+
         Scenarios scenarios =
             new Scenarios()
                 .scenario(departmentAuthor, "Department author")
@@ -149,16 +153,17 @@ public class ActionServiceIT {
                 .scenario(otherDepartmentAuthor, "Other department author")
                 .scenario(otherDepartmentMember, "Other department member")
                 .scenario(otherPostAdministrator, "Other post administrator")
+                .scenario(userWithoutRoles, "User without roles")
                 .scenario(null, "Public user");
 
         Expectations expectations =
             new Expectations()
                 .expect(DRAFT,
-                    new ActionRepresentation().setAction(VIEW).setState(DRAFT))
+                    new Expectation(VIEW, DRAFT))
                 .expect(PENDING,
-                    new ActionRepresentation().setAction(VIEW).setState(PENDING))
+                    new Expectation(VIEW, PENDING))
                 .expect(ACCEPTED,
-                    new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+                    new Expectation(VIEW, ACCEPTED));
 
         verify(scenarios, department, board, expectations);
     }
@@ -173,14 +178,14 @@ public class ActionServiceIT {
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
-                new ActionRepresentation().setAction(VIEW).setState(ACCEPTED),
-                new ActionRepresentation().setAction(EDIT).setState(ACCEPTED),
-                new ActionRepresentation().setAction(EXTEND).setState(PENDING),
-                new ActionRepresentation().setAction(REJECT).setState(REJECTED))
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(EXTEND, PENDING),
+                new Expectation(REJECT, REJECTED))
             .expect(REJECTED,
-                new ActionRepresentation().setAction(VIEW).setState(REJECTED),
-                new ActionRepresentation().setAction(EDIT).setState(REJECTED),
-                new ActionRepresentation().setAction(RESTORE).setState(ACCEPTED));
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(RESTORE, ACCEPTED));
 
         verify(departmentAdministrator, board, post, expectations);
     }
@@ -197,13 +202,13 @@ public class ActionServiceIT {
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
-                new ActionRepresentation().setAction(VIEW).setState(ACCEPTED),
-                new ActionRepresentation().setAction(EDIT).setState(ACCEPTED),
-                new ActionRepresentation().setAction(REJECT).setState(REJECTED))
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(REJECT, REJECTED))
             .expect(REJECTED,
-                new ActionRepresentation().setAction(VIEW).setState(REJECTED),
-                new ActionRepresentation().setAction(EDIT).setState(REJECTED),
-                new ActionRepresentation().setAction(RESTORE).setState(ACCEPTED));
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(RESTORE, ACCEPTED));
 
         verify(departmentAdministrator, board, post, expectations);
     }
@@ -221,8 +226,8 @@ public class ActionServiceIT {
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
-                new ActionRepresentation().setAction(VIEW).setState(ACCEPTED),
-                new ActionRepresentation().setAction(EXTEND).setState(PENDING));
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EXTEND, PENDING));
 
         verify(departmentAuthor, board, post, expectations);
     }
@@ -242,7 +247,7 @@ public class ActionServiceIT {
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
-                new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+                new Expectation(VIEW, ACCEPTED));
 
         verify(departmentAuthor, board, post, expectations);
     }
@@ -285,6 +290,8 @@ public class ActionServiceIT {
             "administrator", "other-department-post@administrator.hr");
         setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
+        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+
         Scenarios scenarios = new Scenarios()
             .scenario(departmentMember, "Department member")
             .scenario(postAdministrator, "Post administrator")
@@ -293,12 +300,13 @@ public class ActionServiceIT {
             .scenario(otherDepartmentMember, "Other department member")
             .scenario(otherBoardPostAdministrator, "Other board post administrator")
             .scenario(otherDepartmentAdministrator, "Other department post administrator")
+            .scenario(userWithoutRoles, "User without roles")
             .scenario(null, "Public user");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
-                new ActionRepresentation().setAction(VIEW).setState(ACCEPTED),
-                new ActionRepresentation().setAction(EXTEND).setState(DRAFT));
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EXTEND, DRAFT));
 
         verify(scenarios, board, post, expectations);
     }
@@ -343,6 +351,8 @@ public class ActionServiceIT {
             "administrator", "other-department-post@administrator.hr");
         setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
+        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+
         Scenarios scenarios = new Scenarios()
             .scenario(departmentMember, "Department member")
             .scenario(postAdministrator, "Post administrator")
@@ -351,13 +361,107 @@ public class ActionServiceIT {
             .scenario(otherDepartmentMember, "Other department member")
             .scenario(otherBoardPostAdministrator, "Other board post administrator")
             .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
+            .scenario(userWithoutRoles, "User without roles")
             .scenario(null, "Public user");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
-                new ActionRepresentation().setAction(VIEW).setState(ACCEPTED));
+                new Expectation(VIEW, ACCEPTED));
 
         verify(scenarios, board, post, expectations);
+    }
+
+    @Test
+    public void executeAction_departmentAdministratorActionsOnPost() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
+        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+
+        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(PURSUE, ACCEPTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(departmentAdministrator, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_departmentAdministratorActionsOnPostWhenDepartmentRejected() {
+
+    }
+
+    @Test
+    public void executeAction_departmentMemberActionsOnPost() {
+
+    }
+
+    @Test
+    public void executeAction_departmentMemberActionsOnPostWhenDepartmentRejected() {
+
+    }
+
+    @Test
+    public void executeAction_postAdministratorActionsOnPost() {
+
+    }
+
+    @Test
+    public void executeAction_postAdministratorActionsOnPostWhenDepartmentRejected() {
+
+    }
+
+    @Test
+    public void executeAction_unprivilegedActionsOnPost() {
+
+    }
+
+    @Test
+    public void executeAction_unprivilegedActionsOnPostWhenDepartmentRejected() {
+
     }
 
     private Department setupDepartment(User user, String name) {
@@ -396,8 +500,20 @@ public class ActionServiceIT {
                 .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))
                 .setExistingRelation(STUDENT)
                 .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
-                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS)));
+                .setLiveTimestamp(LocalDateTime.now())
+                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)));
+    }
+
+    private void setPostPending(Post post) {
+        post.setLiveTimestamp(LocalDateTime.now());
+        post.setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
+        resourceRepository.save(post);
+    }
+
+    private void setPostExpired(Post post) {
+        post.setLiveTimestamp(LocalDateTime.now().minusWeeks(1));
+        post.setDeadTimestamp(LocalDateTime.now());
+        resourceRepository.save(post);
     }
 
     private User setUpUser(String givenName, String surname, String email) {
@@ -420,17 +536,19 @@ public class ActionServiceIT {
     private void verify(User user, Resource resource, Resource extendResource, Expectations expectations) {
         for (State state : ASSIGNABLE_STATES) {
             resourceService.updateState(resource, state);
-            Resource testResource = resourceService.getResource(user, resource.getScope(), resource.getId());
+            Optional.ofNullable(expectations.getModifier(state))
+                .ifPresent((modifier) -> modifier.modify(resource));
 
+            Resource testResource = resourceService.getResource(user, resource.getScope(), resource.getId());
             for (Action action : Action.values()) {
                 LOGGER.info("Executing " + action + " on " + testResource.getScope() + " in " + state);
                 Resource executeResource = action == EXTEND ? extendResource : testResource;
 
-                ActionRepresentation expected = expectations.expected(state, action);
-                if (expected == null) {
+                Expectation expectation = expectations.expected(state, action);
+                if (expectation == null) {
                     verifyForbidden(user, testResource, action, executeResource);
                 } else {
-                    verifyPermitted(user, testResource, action, executeResource, expected);
+                    verifyPermitted(user, testResource, action, executeResource, expectation);
                 }
             }
         }
@@ -444,9 +562,15 @@ public class ActionServiceIT {
     }
 
     private void verifyPermitted(User user, Resource testResource, Action action, Resource executeResource,
-                                 ActionRepresentation expected) {
+                                 Expectation expectation) {
+        State expectedState = expectation.state;
+        State previousState = testResource.getPreviousState();
         Resource newResource = actionService.executeAction(user, testResource, action, () -> executeResource);
-        assertEquals(expected.getState(), newResource.getState());
+        if (expectedState == PREVIOUS) {
+            assertEquals(previousState, newResource.getState());
+        } else {
+            assertEquals(expectedState, newResource.getState());
+        }
     }
 
     private static class Scenarios {
@@ -462,37 +586,90 @@ public class ActionServiceIT {
             scenarios.forEach(consumer);
         }
 
-        private static class Scenario {
+    }
 
-            private User user;
+    private static class Scenario {
 
-            private String description;
+        private User user;
 
-            private Scenario(User user, String description) {
-                this.user = user;
-                this.description = description;
-            }
+        private String description;
+
+        private Scenario(User user, String description) {
+            this.user = user;
+            this.description = description;
         }
 
     }
 
     private static class Expectations {
 
-        private ArrayListMultimap<State, ActionRepresentation> expectations = ArrayListMultimap.create();
+        private ArrayListMultimap<State, Expectation> expectations = ArrayListMultimap.create();
 
-        private Expectations expect(State state, ActionRepresentation... actions) {
-            requireNonNull(actions, "actions cannot be null");
-            Stream.of(actions).forEach(action -> expectations.put(state, action));
+        private Map<State, ResourceModifier> modifiers = new HashMap<>();
+
+        private Expectations expect(State state, Expectation... expectations) {
+            Stream.of(expectations).forEach(action -> this.expectations.put(state, action));
             return this;
         }
 
-        private ActionRepresentation expected(State state, Action action) {
+        private Expectations expect(State state, ResourceModifier modifier, Expectation... expectations) {
+            Stream.of(expectations).forEach(action -> this.expectations.put(state, action));
+            modifiers.put(state, modifier);
+            return this;
+        }
+
+        private Expectation expected(State state, Action action) {
             return expectations.get(state)
                 .stream()
-                .filter(expectation -> expectation.equals(new ActionRepresentation().setAction(action)))
+                .filter(expectation -> expectation.equals(new Expectation(action)))
                 .findFirst()
                 .orElse(null);
         }
+
+        private ResourceModifier getModifier(State state) {
+            return modifiers.get(state);
+        }
+
+    }
+
+    private static class Expectation {
+
+        private Action action;
+
+        private State state;
+
+        private Expectation(Action action) {
+            this.action = action;
+        }
+
+        private Expectation(Action action, State state) {
+            this.action = action;
+            this.state = state;
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37)
+                .append(action)
+                .toHashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+
+            Expectation that = (Expectation) other;
+            return new EqualsBuilder()
+                .append(action, that.action)
+                .isEquals();
+        }
+
+    }
+
+    private interface ResourceModifier {
+
+        void modify(Resource resource);
 
     }
 
