@@ -70,7 +70,7 @@ public class ActionService {
                 if (actionRepresentation.getAction() == action) {
                     Resource newResource = execution.execute();
                     State state = newResource.getState();
-                    State newState = getNewState(user, action, actionRepresentation, newResource, state);
+                    State newState = getNewState(actionRepresentation, newResource, state);
 
                     boolean stateChanged = newState != state;
                     if (stateChanged) {
@@ -102,8 +102,7 @@ public class ActionService {
         return actions != null && actions.stream().map(ActionRepresentation::getAction).anyMatch(action::equals);
     }
 
-    private State getNewState(User user, Action action, ActionRepresentation actionRepresentation, Resource resource,
-                              State state) {
+    private State getNewState(ActionRepresentation actionRepresentation, Resource resource, State state) {
         State newState = actionRepresentation.getState();
         if (newState == null) {
             newState = state;
@@ -113,7 +112,7 @@ public class ActionService {
 
         Class<? extends StateChangeInterceptor> interceptorClass = resource.getScope().stateChangeInterceptorClass;
         if (interceptorClass != null) {
-            newState = applicationContext.getBean(interceptorClass).intercept(user, resource, action, newState);
+            newState = applicationContext.getBean(interceptorClass).intercept(resource, newState);
         }
 
         return newState;
