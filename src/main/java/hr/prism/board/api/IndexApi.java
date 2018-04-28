@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.inject.Inject;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+
 @Controller
 @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
 public class IndexApi {
@@ -35,6 +37,12 @@ public class IndexApi {
 
     @Value("${auth.facebook.clientId}")
     private String facebookClientId;
+
+    @RequestMapping(value = "/api/index/privacyPolicy", method = GET)
+    public String getPrivacyPolicy(Model model) {
+        fillGenericModel(model);
+        return "privacyPolicy";
+    }
 
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = RequestMethod.GET)
     public String getDepartment(@PathVariable String universityHandle, @PathVariable String departmentHandle, Model model) {
