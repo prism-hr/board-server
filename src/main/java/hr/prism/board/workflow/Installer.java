@@ -1,6 +1,5 @@
 package hr.prism.board.workflow;
 
-import hr.prism.board.utils.JacksonUtils;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -63,78 +62,50 @@ public class Installer {
             .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST)
             .inState(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
-            .prompting(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
             .notifying(POST, ADMINISTRATOR).with(NEW_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, BOARD).inState(ACCEPTED).transitioningTo(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED)
-            .creating(POST).inState(ACCEPTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED)
             .creating(POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, AUTHOR).can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED)
             .creating(POST).inState(ACCEPTED)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
-            .prompting(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(NEW_POST_PARENT_NOTIFICATION)
             .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
 
             // Board rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, BOARD).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, BOARD).inState(REJECTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, BOARD).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(ACCEPTED);
 
     private static final Workflow POST_WORKFLOW =
         new Workflow(getObjectMapper())
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(DRAFT)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(DRAFT).transitioningTo(ACCEPTED)
-            .prompting(POST, ADMINISTRATOR).with(ACCEPT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(DRAFT).transitioningTo(ACCEPTED)
             .prompting(POST, ADMINISTRATOR).with(ACCEPT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(DRAFT).transitioningTo(SUSPENDED)
             .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(DRAFT).transitioningTo(SUSPENDED)
-            .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
-            .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(DRAFT).transitioningTo(REJECTED)
             .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(DRAFT).transitioningTo(WITHDRAWN)
 
             // Post pending state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(PENDING)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(PENDING)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(PENDING)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(PENDING)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(PENDING).transitioningTo(SUSPENDED)
             .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(PENDING).transitioningTo(SUSPENDED)
-            .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
-            .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(PENDING).transitioningTo(REJECTED)
             .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(PENDING).transitioningTo(WITHDRAWN)
@@ -142,118 +113,76 @@ public class Installer {
             // Post accepted state
             .permitThatAnybody().can(VIEW, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(ACCEPTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(ACCEPTED).transitioningTo(SUSPENDED)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
             .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
-            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(ACCEPTED).transitioningTo(SUSPENDED)
-            .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
-            .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(ACCEPTED).transitioningTo(REJECTED)
             .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(ACCEPTED).transitioningTo(WITHDRAWN)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
             .permitThat(DEPARTMENT, MEMBER).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(PURSUE, POST).inState(ACCEPTED).andParentStateNot(REJECTED)
 
             // Post expired state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(EXPIRED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(EXPIRED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(EXPIRED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(EXPIRED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(EXPIRED).transitioningTo(SUSPENDED)
             .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(EXPIRED).transitioningTo(SUSPENDED)
-            .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
-            .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(EXPIRED).transitioningTo(REJECTED)
             .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(EXPIRED).transitioningTo(WITHDRAWN)
 
             // Post suspended state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(SUSPENDED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(SUSPENDED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(SUSPENDED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(SUSPENDED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(SUSPENDED).transitioningTo(ACCEPTED)
-            .prompting(POST, ADMINISTRATOR).with(ACCEPT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(SUSPENDED).transitioningTo(ACCEPTED)
             .prompting(POST, ADMINISTRATOR).with(ACCEPT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
             .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(REJECT, POST).inState(SUSPENDED).transitioningTo(REJECTED)
-            .prompting(POST, ADMINISTRATOR).with(REJECT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(REJECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(CORRECT, POST).inState(SUSPENDED).transitioningTo(DRAFT)
             .prompting(DEPARTMENT, ADMINISTRATOR).with(CORRECT_POST_ACTIVITY)
-            .prompting(BOARD, ADMINISTRATOR).with(CORRECT_POST_ACTIVITY)
             .notifying(DEPARTMENT, ADMINISTRATOR).with(CORRECT_POST_NOTIFICATION)
-            .notifying(BOARD, ADMINISTRATOR).with(CORRECT_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(SUSPENDED).transitioningTo(WITHDRAWN)
 
             // Post rejected state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(REJECTED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(REJECTED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(REJECTED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(ACCEPT, POST).inState(REJECTED).transitioningTo(ACCEPTED)
             .prompting(POST, ADMINISTRATOR).with(ACCEPT_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(ACCEPT, POST).inState(REJECTED).transitioningTo(ACCEPTED)
-            .prompting(POST, ADMINISTRATOR).with(ACCEPT_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(ACCEPT_POST_NOTIFICATION)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
-            .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(SUSPEND, POST).inState(REJECTED).transitioningTo(SUSPENDED)
             .prompting(POST, ADMINISTRATOR).with(SUSPEND_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(SUSPEND_POST_NOTIFICATION)
             .permitThat(POST, ADMINISTRATOR).can(WITHDRAW, POST).inState(REJECTED).transitioningTo(WITHDRAWN)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, POST).inState(REJECTED).transitioningTo(PREVIOUS)
             .prompting(POST, ADMINISTRATOR).with(RESTORE_POST_ACTIVITY)
             .notifying(POST, ADMINISTRATOR).with(RESTORE_POST_NOTIFICATION)
-            .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(REJECTED).transitioningTo(PREVIOUS)
-            .prompting(POST, ADMINISTRATOR).with(RESTORE_POST_ACTIVITY)
-            .notifying(POST, ADMINISTRATOR).with(RESTORE_POST_NOTIFICATION)
 
             // Post withdrawn state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(WITHDRAWN)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(WITHDRAWN)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(WITHDRAWN).transitioningTo(PREVIOUS)
 
             // Post archived state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(ARCHIVED)
-            .permitThat(BOARD, ADMINISTRATOR).can(VIEW, POST).inState(ARCHIVED)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(ARCHIVED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, POST).inState(ARCHIVED)
-            .permitThat(BOARD, ADMINISTRATOR).can(EDIT, POST).inState(ARCHIVED)
             .permitThat(POST, ADMINISTRATOR).can(EDIT, POST).inState(ARCHIVED)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS)
-            .permitThat(BOARD, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS)
             .permitThat(POST, ADMINISTRATOR).can(RESTORE, POST).inState(ARCHIVED).transitioningTo(PREVIOUS);
 
     private final EntityManager entityManager;
@@ -267,6 +196,7 @@ public class Installer {
     }
 
     @PostConstruct
+    @SuppressWarnings("SqlResolve")
     public void install() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LOGGER.info("Deleting old workflow definition");
@@ -280,6 +210,7 @@ public class Installer {
         });
     }
 
+    @SuppressWarnings("SqlResolve")
     private void install(Workflow workflow) {
         entityManager.createNativeQuery("INSERT INTO workflow(" +
             "resource1_scope, role, resource2_scope, resource2_state, action, resource3_scope, resource3_state, " +
