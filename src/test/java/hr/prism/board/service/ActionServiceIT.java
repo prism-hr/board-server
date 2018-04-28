@@ -328,8 +328,6 @@ public class ActionServiceIT {
             "other-board-post", "administrator", "other-board-post@administrator.hr");
         setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
-        resourceService.updateState(department, REJECTED);
-
         User departmentMember = setUpUser("department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
@@ -368,6 +366,7 @@ public class ActionServiceIT {
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
+        resourceService.updateState(department, REJECTED);
         verify(scenarios, board, post, expectations);
     }
 
@@ -430,38 +429,342 @@ public class ActionServiceIT {
     }
 
     @Test
-    public void executeAction_departmentAdministratorActionsOnPostWhenDepartmentRejected() {
+    public void executeAction_departmentAdministratorActionsOnPostWhenParentRejected() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
+        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
 
+        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        resourceService.updateState(department, REJECTED);
+        verify(departmentAdministrator, post, null, expectations);
+
+        resourceService.updateState(board, REJECTED);
+        verify(departmentAdministrator, post, null, expectations);
+
+        resourceService.updateState(department, ACCEPTED);
+        verify(departmentAdministrator, post, null, expectations);
     }
 
     @Test
     public void executeAction_departmentMemberActionsOnPost() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
+        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
 
+        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        userRoleService.createUserRole(department, departmentMember, MEMBER);
+
+        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(PURSUE, ACCEPTED));
+
+        verify(departmentMember, post, null, expectations);
     }
 
     @Test
     public void executeAction_departmentMemberActionsOnPostWhenDepartmentRejected() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
+        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
 
+        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        userRoleService.createUserRole(department, departmentMember, MEMBER);
+
+        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        resourceService.updateState(department, REJECTED);
+        verify(departmentMember, post, null, expectations);
+
+        resourceService.updateState(board, REJECTED);
+        verify(departmentMember, post, null, expectations);
+
+        resourceService.updateState(department, ACCEPTED);
+        verify(departmentMember, post, null, expectations);
     }
 
     @Test
     public void executeAction_postAdministratorActionsOnPost() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
+        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
 
+        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(PURSUE, ACCEPTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(CORRECT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(postAdministrator, post, null, expectations);
     }
 
     @Test
     public void executeAction_postAdministratorActionsOnPostWhenDepartmentRejected() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
+        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
 
+        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(CORRECT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        resourceService.updateState(department, REJECTED);
+        verify(postAdministrator, post, null, expectations);
+
+        resourceService.updateState(board, REJECTED);
+        verify(postAdministrator, post, null, expectations);
+
+        resourceService.updateState(department, ACCEPTED);
+        verify(postAdministrator, post, null, expectations);
     }
 
     @Test
     public void executeAction_unprivilegedActionsOnPost() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
 
+        Long departmentId = department.getId();
+        Board board = setupBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
+
+        Post post = setupPost(departmentAdministrator, board.getId(), "post");
+        User otherBoardPostAdministrator = setUpUser(
+            "other-board-post", "administrator", "other-board-post@administrator.hr");
+        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
+
+        User departmentAuthor = setUpUser("department", "author", "department@author.hr");
+        userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
+
+        User otherDepartmentAdministrator = setUpUser(
+            "other-department", "administrator", "other-department@administrator.hr");
+        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
+        Board otherDepartmentBoard =
+            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
+
+        User otherDepartmentAuthor =
+            setUpUser("other-department", "author", "other-department@author.hr");
+        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
+
+        User otherDepartmentMember =
+            setUpUser("other-department", "member", "other-department@member.hr");
+        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
+
+        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+            "administrator", "other-department-post@administrator.hr");
+        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
+
+        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+
+        Scenarios scenarios = new Scenarios()
+            .scenario(departmentAuthor, "Department author")
+            .scenario(otherDepartmentAdministrator, "Other department administrator")
+            .scenario(otherDepartmentAuthor, "Other department author")
+            .scenario(otherDepartmentMember, "Other department member")
+            .scenario(otherBoardPostAdministrator, "Other board post administrator")
+            .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
+            .scenario(userWithoutRoles, "User without roles")
+            .scenario(null, "Public user");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        verify(scenarios, post, null, expectations);
     }
 
     @Test
-    public void executeAction_unprivilegedActionsOnPostWhenDepartmentRejected() {
+    public void executeAction_unprivilegedActionsOnPostWhenParentRejected() {
+        User departmentAdministrator =
+            setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = setupDepartment(departmentAdministrator, "department");
 
+        Long departmentId = department.getId();
+        Board board = setupBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
+
+        Post post = setupPost(departmentAdministrator, board.getId(), "post");
+        User otherBoardPostAdministrator = setUpUser(
+            "other-board-post", "administrator", "other-board-post@administrator.hr");
+        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
+
+        User departmentAuthor = setUpUser("department", "author", "department@author.hr");
+        userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
+
+        User otherDepartmentAdministrator = setUpUser(
+            "other-department", "administrator", "other-department@administrator.hr");
+        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
+        Board otherDepartmentBoard =
+            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
+
+        User otherDepartmentAuthor =
+            setUpUser("other-department", "author", "other-department@author.hr");
+        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
+
+        User otherDepartmentMember =
+            setUpUser("other-department", "member", "other-department@member.hr");
+        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
+
+        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+            "administrator", "other-department-post@administrator.hr");
+        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
+
+        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+
+        Scenarios scenarios = new Scenarios()
+            .scenario(departmentAuthor, "Department author")
+            .scenario(otherDepartmentAdministrator, "Other department administrator")
+            .scenario(otherDepartmentAuthor, "Other department author")
+            .scenario(otherDepartmentMember, "Other department member")
+            .scenario(otherBoardPostAdministrator, "Other board post administrator")
+            .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
+            .scenario(userWithoutRoles, "User without roles")
+            .scenario(null, "Public user");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        resourceService.updateState(department, REJECTED);
+        verify(scenarios, post, null, expectations);
+
+        resourceService.updateState(board, REJECTED);
+        verify(scenarios, post, null, expectations);
+
+        resourceService.updateState(department, ACCEPTED);
+        verify(scenarios, post, null, expectations);
     }
 
     private Department setupDepartment(User user, String name) {

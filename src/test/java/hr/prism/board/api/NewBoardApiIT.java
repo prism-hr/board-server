@@ -129,29 +129,4 @@ public class NewBoardApiIT {
         assertEquals("UNAUTHENTICATED_USER", error.get("exceptionCode"));
     }
 
-    @Test
-    public void createBoard_failureWhenNotAuthorized() throws Exception {
-        String authorization = apiTestHelper.login("jakub@prism.hr", "password");
-
-        Map<String, Object> error =
-            objectMapper.readValue(
-                mockMvc.perform(
-                    post("/api/departments/2/boards")
-                        .contentType(APPLICATION_JSON_UTF8)
-                        .header("Authorization", authorization)
-                        .content(objectMapper.writeValueAsString(
-                            new BoardDTO()
-                                .setName("new board")
-                                .setPostCategories(ImmutableList.of("new category 1", "new category 2")))))
-                    .andExpect(status().isForbidden())
-                    .andReturn().getResponse().getContentAsString(),
-                new TypeReference<Map<String, Object>>() {
-                });
-
-        assertEquals("/api/departments/2/boards", error.get("uri"));
-        assertEquals(403, error.get("status"));
-        assertEquals("Forbidden", error.get("error"));
-        assertEquals("FORBIDDEN_ACTION", error.get("exceptionCode"));
-    }
-
 }
