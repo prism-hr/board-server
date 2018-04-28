@@ -61,8 +61,10 @@ public class IndexApi {
         return "index";
     }
 
+    @SuppressWarnings("unused")
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}/{boardHandle}/{postId}", method = GET)
-    public String getPostIndex(@PathVariable Long postId, Model model) {
+    public String getPostIndex(@PathVariable String universityHandle, @PathVariable String departmentHandle,
+                               @PathVariable String boardHandle, @PathVariable Long postId, Model model) {
         fillGenericModel(model);
         Post post = postService.getById(postId);
         if (post != null) {
