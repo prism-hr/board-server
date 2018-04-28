@@ -252,10 +252,17 @@ public class ActionServiceIT {
         User departmentAdministrator =
             setUpUser("department", "administrator", "department@administrator.hr");
         Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+
+        Long departmentId = department.getId();
+        Board board = setupBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
 
         User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
         Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        User otherBoardPostAdministrator = setUpUser(
+            "other-board-post", "administrator", "other-board-post@administrator.hr");
+        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
         User departmentMember = setUpUser("department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
@@ -263,7 +270,8 @@ public class ActionServiceIT {
         User otherDepartmentAdministrator = setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
         Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
-        Board otherBoard = setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
+        Board otherDepartmentBoard =
+            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
 
         User otherDepartmentAuthor =
             setUpUser("other-department", "author", "other-department@author.hr");
@@ -273,9 +281,9 @@ public class ActionServiceIT {
             setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherPostAdministrator =
-            setUpUser("other-post", "administrator", "other-post@administrator.hr");
-        setupPost(otherPostAdministrator, otherBoard.getId(), "other-post");
+        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+            "administrator", "other-department-post@administrator.hr");
+        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
         Scenarios scenarios = new Scenarios()
             .scenario(departmentMember, "Department member")
@@ -283,7 +291,8 @@ public class ActionServiceIT {
             .scenario(otherDepartmentAdministrator, "Other department administrator")
             .scenario(otherDepartmentAuthor, "Other department author")
             .scenario(otherDepartmentMember, "Other department member")
-            .scenario(otherPostAdministrator, "Other post administrator")
+            .scenario(otherBoardPostAdministrator, "Other board post administrator")
+            .scenario(otherDepartmentAdministrator, "Other department post administrator")
             .scenario(null, "Public user");
 
         Expectations expectations = new Expectations()
@@ -299,10 +308,17 @@ public class ActionServiceIT {
         User departmentAdministrator =
             setUpUser("department", "administrator", "department@administrator.hr");
         Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+
+        Long departmentId = department.getId();
+        Board board = setupBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
 
         User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
         Post post = setupPost(postAdministrator, board.getId(), "post");
+
+        User otherBoardPostAdministrator = setUpUser(
+            "other-board-post", "administrator", "other-board-post@administrator.hr");
+        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
         resourceService.updateState(department, REJECTED);
 
@@ -312,7 +328,8 @@ public class ActionServiceIT {
         User otherDepartmentAdministrator = setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
         Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
-        Board otherBoard = setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
+        Board otherDepartmentBoard =
+            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
 
         User otherDepartmentAuthor =
             setUpUser("other-department", "author", "other-department@author.hr");
@@ -322,9 +339,9 @@ public class ActionServiceIT {
             setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherPostAdministrator =
-            setUpUser("other-post", "administrator", "other-post@administrator.hr");
-        setupPost(otherPostAdministrator, otherBoard.getId(), "other-post");
+        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+            "administrator", "other-department-post@administrator.hr");
+        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
         Scenarios scenarios = new Scenarios()
             .scenario(departmentMember, "Department member")
@@ -332,7 +349,8 @@ public class ActionServiceIT {
             .scenario(otherDepartmentAdministrator, "Other department administrator")
             .scenario(otherDepartmentAuthor, "Other department author")
             .scenario(otherDepartmentMember, "Other department member")
-            .scenario(otherPostAdministrator, "Other post administrator")
+            .scenario(otherBoardPostAdministrator, "Other board post administrator")
+            .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
             .scenario(null, "Public user");
 
         Expectations expectations = new Expectations()
