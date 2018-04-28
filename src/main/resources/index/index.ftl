@@ -16,5 +16,5 @@
     <meta property="fb:app_id" content="${facebookAppId}">
 </head>
 <body>
-    </body>
+</body>
 </html>
