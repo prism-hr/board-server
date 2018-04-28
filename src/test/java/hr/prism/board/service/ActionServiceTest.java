@@ -8,7 +8,6 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.representation.ActionRepresentation;
 import org.junit.After;
 import org.junit.Before;
@@ -83,13 +82,6 @@ public class ActionServiceTest {
         verify(resourceService, times(1)).updateState(board, ACCEPTED);
         verify(resourceService, times(1)).getResource(user, BOARD, 2L);
         verify(resourceService, times(1)).createResourceOperation(board, EXTEND, user);
-    }
-
-    @Test
-    public void executeAction_failureWhenResourceNull() {
-        assertThatThrownBy(() -> actionService.executeAction(null, null, null, null))
-            .isExactlyInstanceOf(BoardNotFoundException.class)
-            .hasMessage("RESOURCE_NOT_FOUND: Requested resource does not exist");
     }
 
     @Test

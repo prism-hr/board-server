@@ -10,7 +10,6 @@ import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.interceptor.StateChangeInterceptor;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.workflow.Activity;
@@ -29,7 +28,6 @@ import java.util.List;
 
 import static hr.prism.board.enums.State.PREVIOUS;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
-import static hr.prism.board.exception.ExceptionCode.RESOURCE_NOT_FOUND;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -60,10 +58,6 @@ public class ActionService {
     }
 
     public Resource executeAction(User user, Resource resource, Action action, Execution execution) {
-        if (resource == null) {
-            throw new BoardNotFoundException(RESOURCE_NOT_FOUND);
-        }
-
         List<ActionRepresentation> actions = resource.getActions();
         if (isNotEmpty(actions)) {
             for (ActionRepresentation actionRepresentation : actions) {

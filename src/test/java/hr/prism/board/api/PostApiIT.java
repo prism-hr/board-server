@@ -1523,7 +1523,7 @@ public class PostApiIT extends AbstractIT {
 
         Board board = boardService.getById(postR.getBoard().getId());
         Department department = departmentService.getById(postR.getBoard().getDepartment().getId());
-        University university = universityService.getByIdWithExistenceCheck(postR.getBoard().getDepartment().getUniversity().getId());
+        University university = universityService.getById(postR.getBoard().getDepartment().getUniversity().getId());
 
         List<ResourceRelation> parents = resourceRelationRepository.findByResource2(post);
         assertThat(parents.stream().map(ResourceRelation::getResource1).collect(toList()),

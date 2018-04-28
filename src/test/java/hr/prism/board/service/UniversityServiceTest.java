@@ -41,15 +41,15 @@ public class UniversityServiceTest {
     }
 
     @Test
-    public void getByIdWithExistenceCheck_success() {
+    public void getById_success() {
         when(resourceService.getById(1L)).thenReturn(new University());
-        notNull(universityService.getByIdWithExistenceCheck(1L));
+        notNull(universityService.getById(1L));
         verify(resourceService, times(1)).getById(1L);
     }
 
     @Test
-    public void getByIdWithExistenceCheck_failureWhenDoesNotExist() {
-        assertThatThrownBy(() -> universityService.getByIdWithExistenceCheck(1L))
+    public void getById_failureWhenDoesNotExist() {
+        assertThatThrownBy(() -> universityService.getById(1L))
             .isExactlyInstanceOf(BoardNotFoundException.class)
             .hasMessage("MISSING_RESOURCE: UNIVERSITY ID: 1 does not exist");
         verify(resourceService, times(1)).getById(1L);

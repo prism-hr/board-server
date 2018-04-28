@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.MemberCategory.*;
@@ -158,28 +157,6 @@ public class NewDepartmentApiIT {
 
         assertThat(board1.getCreatedTimestamp()).isGreaterThan(baseline);
         assertThat(board1.getUpdatedTimestamp()).isGreaterThan(baseline);
-    }
-
-    @Test
-    public void createDepartment_failureWhenNotAuthenticated() throws Exception {
-        Map<String, Object> error =
-            objectMapper.readValue(
-                mockMvc.perform(
-                    post("/api/universities/1/departments")
-                        .contentType(APPLICATION_JSON_UTF8)
-                        .content(objectMapper.writeValueAsString(
-                            new DepartmentDTO()
-                                .setName("department")
-                                .setSummary("department summary"))))
-                    .andExpect(status().isUnauthorized())
-                    .andReturn().getResponse().getContentAsString(),
-                new TypeReference<Map<String, Object>>() {
-                });
-
-        assertEquals("/api/universities/1/departments", error.get("uri"));
-        assertEquals(401, error.get("status"));
-        assertEquals("Unauthorized", error.get("error"));
-        assertEquals("UNAUTHENTICATED_USER", error.get("exceptionCode"));
     }
 
 }

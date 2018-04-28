@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
+import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
@@ -212,6 +213,7 @@ public class ResourceServiceTest {
         assertEquals(DRAFT, department.getPreviousState());
         assertThat(department.getStateChangeTimestamp()).isGreaterThan(baseline);
 
+        verify(resourceRepository, times(1)).save(department);
         verify(entityManager, times(1)).flush();
     }
 
@@ -233,6 +235,7 @@ public class ResourceServiceTest {
         assertEquals(ACCEPTED, board.getPreviousState());
         assertThat(board.getStateChangeTimestamp()).isGreaterThan(baseline);
 
+        verify(resourceRepository, times(1)).save(board);
         verify(entityManager, times(1)).flush();
     }
 
@@ -533,6 +536,25 @@ public class ResourceServiceTest {
     }
 
     @Test
+    public void getResource_failureWhenDepartmentNotFound() {
+        User user = new User();
+        user.setId(1L);
+
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(DEPARTMENT)
+                .setId(1L)
+                .setIncludePublicResources(true);
+
+        assertThatThrownBy(() -> resourceService.getResource(user, DEPARTMENT, 1L))
+            .isExactlyInstanceOf(BoardNotFoundException.class)
+            .hasMessage("MISSING_RESOURCE: DEPARTMENT ID: 1 does not exist");
+
+        verify(resourceDAO, times(1)).getResources(user, filter);
+        verify(resourceRepository, times(1)).findOne(1L);
+    }
+
+    @Test
     public void getResource_successWhenBoard() {
         User user = new User();
         user.setId(1L);
@@ -565,6 +587,25 @@ public class ResourceServiceTest {
         when(resourceRepository.findOne(1L)).thenReturn(new Board());
 
         assertNotNull(resourceService.getResource(user, BOARD, 1L));
+
+        verify(resourceDAO, times(1)).getResources(user, filter);
+        verify(resourceRepository, times(1)).findOne(1L);
+    }
+
+    @Test
+    public void getResource_failureWhenBoardNotFound() {
+        User user = new User();
+        user.setId(1L);
+
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(BOARD)
+                .setId(1L)
+                .setIncludePublicResources(true);
+
+        assertThatThrownBy(() -> resourceService.getResource(user, BOARD, 1L))
+            .isExactlyInstanceOf(BoardNotFoundException.class)
+            .hasMessage("MISSING_RESOURCE: BOARD ID: 1 does not exist");
 
         verify(resourceDAO, times(1)).getResources(user, filter);
         verify(resourceRepository, times(1)).findOne(1L);

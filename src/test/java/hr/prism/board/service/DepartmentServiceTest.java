@@ -119,7 +119,7 @@ public class DepartmentServiceTest {
         documentLogo.setId(1L);
         university.setDocumentLogo(documentLogo);
 
-        when(universityService.getByIdWithExistenceCheck(1L)).thenReturn(university);
+        when(universityService.getById(1L)).thenReturn(university);
 
         when(resourceService.createHandle(university, DEPARTMENT, "department"))
             .thenReturn("university/department");
@@ -144,7 +144,7 @@ public class DepartmentServiceTest {
         assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
 
         verify(userService, times(1)).getUserSecured();
-        verify(universityService, times(1)).getByIdWithExistenceCheck(1L);
+        verify(universityService, times(1)).getById(1L);
         verify(resourceService, times(1)).checkUniqueName(
             DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT);
 
@@ -184,7 +184,7 @@ public class DepartmentServiceTest {
         University university = new University();
         university.setId(1L);
 
-        when(universityService.getByIdWithExistenceCheck(1L)).thenReturn(university);
+        when(universityService.getById(1L)).thenReturn(university);
 
         when(resourceService.createHandle(university, DEPARTMENT, "department"))
             .thenReturn("university/department");
@@ -220,7 +220,7 @@ public class DepartmentServiceTest {
         assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
 
         verify(userService, times(1)).getUserSecured();
-        verify(universityService, times(1)).getByIdWithExistenceCheck(1L);
+        verify(universityService, times(1)).getById(1L);
         verify(resourceService, times(1)).checkUniqueName(
             DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT);
         verify(documentService, times(1)).getOrCreateDocument(documentDTO);

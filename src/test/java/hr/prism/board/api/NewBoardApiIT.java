@@ -1,6 +1,5 @@
 package hr.prism.board.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApiTestContext;
@@ -16,7 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
@@ -89,8 +87,10 @@ public class NewBoardApiIT {
         assertEquals("university", board.getDepartment().getUniversity().getHandle());
 
         assertEquals(1L, board.getDepartment().getUniversity().getDocumentLogo().getId().longValue());
-        assertEquals("cloudinary id", board.getDepartment().getUniversity().getDocumentLogo().getCloudinaryId());
-        assertEquals("cloudinary url", board.getDepartment().getUniversity().getDocumentLogo().getCloudinaryUrl());
+        assertEquals("cloudinary id",
+            board.getDepartment().getUniversity().getDocumentLogo().getCloudinaryId());
+        assertEquals("cloudinary url",
+            board.getDepartment().getUniversity().getDocumentLogo().getCloudinaryUrl());
         assertEquals("file name", board.getDepartment().getUniversity().getDocumentLogo().getFileName());
 
         assertThat(board.getPostCategories()).containsExactly("new category 1", "new category 2");
@@ -105,28 +105,6 @@ public class NewBoardApiIT {
         assertEquals(ACCEPTED, board.getState());
         assertThat(board.getCreatedTimestamp()).isGreaterThan(baseline);
         assertThat(board.getUpdatedTimestamp()).isGreaterThan(baseline);
-    }
-
-    @Test
-    public void createBoard_failureWhenNotAuthenticated() throws Exception {
-        Map<String, Object> error =
-            objectMapper.readValue(
-                mockMvc.perform(
-                    post("/api/departments/2/boards")
-                        .contentType(APPLICATION_JSON_UTF8)
-                        .content(objectMapper.writeValueAsString(
-                            new BoardDTO()
-                                .setName("new board")
-                                .setPostCategories(ImmutableList.of("new category 1", "new category 2")))))
-                    .andExpect(status().isUnauthorized())
-                    .andReturn().getResponse().getContentAsString(),
-                new TypeReference<Map<String, Object>>() {
-                });
-
-        assertEquals("/api/departments/2/boards", error.get("uri"));
-        assertEquals(401, error.get("status"));
-        assertEquals("Unauthorized", error.get("error"));
-        assertEquals("UNAUTHENTICATED_USER", error.get("exceptionCode"));
     }
 
 }

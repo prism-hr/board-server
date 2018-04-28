@@ -10,6 +10,7 @@ import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.DepartmentMemberEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.value.DemographicDataStatus;
@@ -353,7 +354,7 @@ public class DepartmentUserService {
             throw new BoardForbiddenException(FORBIDDEN_PERMISSION, "Member request already rejected");
         }
 
-        throw new BoardException(DUPLICATE_PERMISSION, "Member request already submitted");
+        throw new BoardDuplicateException(DUPLICATE_PERMISSION, "Member request already submitted", userRole.getId());
     }
 
     private void checkValidMemberCategory(Department department, MemberCategory memberCategory) {

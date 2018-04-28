@@ -9,6 +9,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
@@ -30,11 +31,13 @@ import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.State.*;
+import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.ResourceUtils.confirmHandle;
 import static hr.prism.board.utils.ResourceUtils.suggestHandle;
 import static java.lang.Math.ceil;
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -89,7 +92,8 @@ public class ResourceService {
                 .setId(id)
                 .setIncludePublicResources(true));
 
-        return resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0);
+        return ofNullable(resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0))
+            .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, scope, id));
     }
 
     public Resource getResource(User user, Scope scope, String handle) {
@@ -99,7 +103,8 @@ public class ResourceService {
                 .setHandle(handle)
                 .setIncludePublicResources(true));
 
-        return resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0);
+        return ofNullable(resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0))
+            .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, scope, handle));
     }
 
     public List<Resource> getResources(User user, ResourceFilter filter) {

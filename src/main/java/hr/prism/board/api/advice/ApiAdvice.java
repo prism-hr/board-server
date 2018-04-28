@@ -26,8 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
+import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
+import static java.util.Collections.emptyMap;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.*;
 
@@ -52,14 +53,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(BoardDuplicateException.class)
     public ResponseEntity<Object> handleBoardDuplicateException(BoardDuplicateException exception, WebRequest request) {
-        Long id = exception.getId();
-        return handleExceptionLoggingInfo(exception, request, CONFLICT, id);
-    }
-
-    @ExceptionHandler(BoardNotModifiedException.class)
-    public ResponseEntity<Object> handleBoardNotModifiedException(BoardNotModifiedException exception,
-                                                                  WebRequest request) {
-        return handleExceptionLoggingInfo(exception, request, NOT_MODIFIED);
+        return handleExceptionLoggingInfo(exception, request, CONFLICT);
     }
 
     @ExceptionHandler(BoardNotFoundException.class)
@@ -117,16 +111,12 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<Object> handleExceptionLoggingInfo(BoardException exception, WebRequest request,
                                                               HttpStatus responseStatus) {
-        return handleExceptionLoggingInfo(exception, request, responseStatus, null);
-    }
-
-    private ResponseEntity<Object> handleExceptionLoggingInfo(BoardException exception, WebRequest request,
-                                                              HttpStatus responseStatus, Long id) {
         ExceptionCode exceptionCode = exception.getExceptionCode();
         String userName = getCurrentUsername();
         LOGGER.info(userName + ": " + responseStatus + " - " + exception.getMessage());
 
-        Map<String, Object> response = makeResponse(id, exceptionCode, responseStatus, (ServletWebRequest) request);
+        Map<String, Object> response =
+            makeResponse(exceptionCode, exception.getProperties(), responseStatus, (ServletWebRequest) request);
         return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
@@ -137,7 +127,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         LOGGER.error(userName + ": " + responseStatus + " - " + exception.getMessage(), exception);
 
         Map<String, Object> response =
-            makeResponse(null, exceptionCode, responseStatus, (ServletWebRequest) request);
+            makeResponse(exceptionCode, emptyMap(), responseStatus, (ServletWebRequest) request);
         return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
@@ -146,8 +136,8 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         return user == null ? "Anonymous" : user.toString();
     }
 
-    private Map<String, Object> makeResponse(Long id, ExceptionCode exceptionCode, HttpStatus responseStatus,
-                                             ServletWebRequest request) {
+    private Map<String, Object> makeResponse(ExceptionCode exceptionCode, Map<String, Object> properties,
+                                             HttpStatus responseStatus, ServletWebRequest request) {
         HttpServletRequest servletRequest = request.getRequest();
         String uri = Joiner.on("?").skipNulls().join(servletRequest.getRequestURI(), servletRequest.getQueryString());
         ImmutableMap.Builder<String, Object> responseBuilder = ImmutableMap.<String, Object>builder()
@@ -155,10 +145,8 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
             .put("status", responseStatus.value())
             .put("error", responseStatus.getReasonPhrase())
             .put("exceptionCode", exceptionCode);
-        if (id != null) {
-            responseBuilder.put("id", id);
-        }
 
+        properties.forEach(responseBuilder::put);
         return responseBuilder.build();
     }
 

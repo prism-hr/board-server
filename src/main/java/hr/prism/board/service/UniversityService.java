@@ -33,7 +33,7 @@ public class UniversityService {
         this.resourceService = resourceService;
     }
 
-    public University getByIdWithExistenceCheck(Long id) {
+    public University getById(Long id) {
         University university = (University) resourceService.getById(id);
         if (university == null) {
             throw new BoardNotFoundException(MISSING_RESOURCE, UNIVERSITY, id);
