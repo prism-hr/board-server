@@ -4,7 +4,6 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
 import hr.prism.board.mapper.OrganizationMapper;
 import hr.prism.board.mapper.PostMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
@@ -13,6 +12,7 @@ import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.OrganizationService;
 import hr.prism.board.service.PostService;
+import hr.prism.board.value.ResourceFilter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -55,13 +55,8 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts", method = GET)
-    public List<PostRepresentation> getPosts(@RequestParam(required = false) Long parentId,
-                                             @RequestParam(required = false) Boolean includePublic,
-                                             @RequestParam(required = false) State state,
-                                             @RequestParam(required = false) String quarter,
-                                             @RequestParam(required = false) String searchTerm) {
-        return postService.getPosts(parentId, includePublic, state, quarter, searchTerm)
-            .stream().map(postMapper).collect(toList());
+    public List<PostRepresentation> getPosts(@ModelAttribute ResourceFilter filter) {
+        return postService.getPosts(filter).stream().map(postMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/posts/{postId}", method = GET)

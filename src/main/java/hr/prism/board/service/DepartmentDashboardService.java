@@ -6,10 +6,7 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.User;
-import hr.prism.board.value.DepartmentDashboard;
-import hr.prism.board.value.OrganizationStatistics;
-import hr.prism.board.value.PostStatistics;
-import hr.prism.board.value.Statistics;
+import hr.prism.board.value.*;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +66,7 @@ public class DepartmentDashboardService {
         actionService.executeAction(user, department, EDIT, () -> department);
 
         List<ResourceTask> tasks = resourceTaskService.getByResourceId(id);
-        List<Board> boards = boardService.getBoards(id, true, ACCEPTED, null, null);
+        List<Board> boards = boardService.getBoards(new ResourceFilter().setParentId(id).setState(ACCEPTED));
         Statistics memberStatistics = userRoleService.getMemberStatistics(id);
         List<OrganizationStatistics> organizationStatistics = organizationService.getOrganizationStatistics(id);
         PostStatistics postStatistics = postService.getPostStatistics(id);

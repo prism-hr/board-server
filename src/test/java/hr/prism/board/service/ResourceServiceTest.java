@@ -505,8 +505,7 @@ public class ResourceServiceTest {
         ResourceFilter filter =
             new ResourceFilter()
                 .setScope(DEPARTMENT)
-                .setId(1L)
-                .setIncludePublicResources(true);
+                .setId(1L);
 
         when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Department()));
 
@@ -523,8 +522,7 @@ public class ResourceServiceTest {
         ResourceFilter filter =
             new ResourceFilter()
                 .setScope(DEPARTMENT)
-                .setId(1L)
-                .setIncludePublicResources(true);
+                .setId(1L);
 
         when(resourceDAO.getResources(user, filter)).thenReturn(emptyList());
         when(resourceRepository.findOne(1L)).thenReturn(new Department());
@@ -543,8 +541,7 @@ public class ResourceServiceTest {
         ResourceFilter filter =
             new ResourceFilter()
                 .setScope(DEPARTMENT)
-                .setId(1L)
-                .setIncludePublicResources(true);
+                .setId(1L);
 
         assertThatThrownBy(() -> resourceService.getResource(user, DEPARTMENT, 1L))
             .isExactlyInstanceOf(BoardNotFoundException.class)
@@ -562,8 +559,7 @@ public class ResourceServiceTest {
         ResourceFilter filter =
             new ResourceFilter()
                 .setScope(BOARD)
-                .setId(1L)
-                .setIncludePublicResources(true);
+                .setId(1L);
 
         when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Board()));
 
@@ -580,8 +576,7 @@ public class ResourceServiceTest {
         ResourceFilter filter =
             new ResourceFilter()
                 .setScope(BOARD)
-                .setId(1L)
-                .setIncludePublicResources(true);
+                .setId(1L);
 
         when(resourceDAO.getResources(user, filter)).thenReturn(emptyList());
         when(resourceRepository.findOne(1L)).thenReturn(new Board());
@@ -600,8 +595,7 @@ public class ResourceServiceTest {
         ResourceFilter filter =
             new ResourceFilter()
                 .setScope(BOARD)
-                .setId(1L)
-                .setIncludePublicResources(true);
+                .setId(1L);
 
         assertThatThrownBy(() -> resourceService.getResource(user, BOARD, 1L))
             .isExactlyInstanceOf(BoardNotFoundException.class)

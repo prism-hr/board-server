@@ -1,22 +1,9 @@
 package hr.prism.board.utils;
 
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.ResourceCategory;
-import hr.prism.board.enums.CategoryType;
-import hr.prism.board.enums.Scope;
-import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
-import hr.prism.board.value.ResourceFilter;
-
 import java.util.List;
 
-import static hr.prism.board.enums.State.ARCHIVED;
-import static hr.prism.board.exception.ExceptionCode.INVALID_RESOURCE_FILTER;
 import static java.lang.Integer.parseInt;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
-import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.*;
 
 public class ResourceUtils {
@@ -80,50 +67,6 @@ public class ResourceUtils {
         }
 
         return suggestedHandle;
-    }
-
-    public static ResourceFilter makeResourceFilter(Scope scope, Long parentId, Boolean includePublic, State state,
-                                                    String quarter, String searchTerm) {
-        String stateString = null;
-        String negatedStateString = ARCHIVED.name();
-        if (state != null) {
-            stateString = state.name();
-            if (state == ARCHIVED) {
-                negatedStateString = null;
-                if (quarter == null) {
-                    throw new BoardException(INVALID_RESOURCE_FILTER,
-                        "Cannot search archive without specifying quarter");
-                }
-            }
-        }
-
-        return new ResourceFilter()
-            .setScope(scope)
-            .setParentId(parentId)
-            .setState(stateString)
-            .setNegatedState(negatedStateString)
-            .setQuarter(quarter)
-            .setSearchTerm(searchTerm)
-            .setIncludePublicResources(includePublic);
-    }
-
-    public static void validateCategories(Resource reference, CategoryType type, List<String> categories,
-                                          ExceptionCode missing, ExceptionCode invalid, ExceptionCode corrupted) {
-        List<ResourceCategory> referenceCategories = reference.getCategories(type);
-        if (!referenceCategories.isEmpty()) {
-            if (isEmpty(categories)) {
-                throw new BoardException(missing, "Categories must be specified");
-            } else if (
-                !referenceCategories
-                    .stream()
-                    .map(ResourceCategory::getName)
-                    .collect(toList())
-                    .containsAll(categories)) {
-                throw new BoardException(invalid, "Valid categories must be specified - check parent categories");
-            }
-        } else if (isNotEmpty(categories)) {
-            throw new BoardException(corrupted, "Categories must not be specified");
-        }
     }
 
 }

@@ -13,6 +13,7 @@ import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.DepartmentBadgeService;
 import hr.prism.board.service.DepartmentDashboardService;
 import hr.prism.board.service.DepartmentService;
+import hr.prism.board.value.ResourceFilter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -65,9 +66,8 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments", method = GET)
-    public List<DepartmentRepresentation> getDepartments(@RequestParam(required = false) Boolean includePublic,
-                                                         @RequestParam(required = false) String searchTerm) {
-        return departmentService.getDepartments(includePublic, searchTerm)
+    public List<DepartmentRepresentation> getDepartments(@ModelAttribute ResourceFilter filter) {
+        return departmentService.getDepartments(filter)
             .stream().map(departmentMapper).collect(toList());
     }
 

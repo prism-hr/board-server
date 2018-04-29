@@ -1,7 +1,9 @@
 package hr.prism.board.value;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
+import hr.prism.board.enums.State;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -36,7 +38,7 @@ public class ResourceFilter {
     @ResourceFilterProperty(
         parameter = "state",
         statement = "resource.state = :state")
-    private String state;
+    private State state;
 
     @ResourceFilterProperty(
         parameter = "negatedState",
@@ -50,7 +52,7 @@ public class ResourceFilter {
 
     private String searchTerm;
 
-    private Boolean includePublicResources;
+    private Action action;
 
     private String orderStatement;
 
@@ -91,11 +93,11 @@ public class ResourceFilter {
         return this;
     }
 
-    public String getState() {
+    public State getState() {
         return state;
     }
 
-    public ResourceFilter setState(String state) {
+    public ResourceFilter setState(State state) {
         this.state = state;
         return this;
     }
@@ -128,12 +130,12 @@ public class ResourceFilter {
         return this;
     }
 
-    public Boolean getIncludePublicResources() {
-        return includePublicResources;
+    public Action getAction() {
+        return action;
     }
 
-    public hr.prism.board.value.ResourceFilter setIncludePublicResources(Boolean includePublicResources) {
-        this.includePublicResources = includePublicResources;
+    public ResourceFilter setAction(Action action) {
+        this.action = action;
         return this;
     }
 
@@ -157,7 +159,7 @@ public class ResourceFilter {
             .append(negatedState)
             .append(quarter)
             .append(searchTerm)
-            .append(includePublicResources)
+            .append(action)
             .append(orderStatement)
             .toHashCode();
     }
@@ -177,7 +179,7 @@ public class ResourceFilter {
             .append(negatedState, that.negatedState)
             .append(quarter, that.quarter)
             .append(searchTerm, that.searchTerm)
-            .append(includePublicResources, that.includePublicResources)
+            .append(action, that.action)
             .append(orderStatement, that.orderStatement)
             .isEquals();
     }

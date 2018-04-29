@@ -20,6 +20,7 @@ import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
+import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Service;
@@ -51,7 +52,6 @@ import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.hasUpdates;
 import static hr.prism.board.utils.BoardUtils.isPresent;
-import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static java.util.function.Function.identity;
@@ -146,13 +146,16 @@ public class PostService {
         return postRepository.findByName(name);
     }
 
-    public List<Post> getPosts(Long boardId, Boolean includePublicPosts, State state, String quarter,
-                               String searchTerm) {
+    public List<Post> getPosts(ResourceFilter filter) {
         User user = userService.getUser();
+        filter.setScope(POST);
+        filter.setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC");
+
+        State state = getFilterState(filter);
+        filter.setState(state);
+
         List<Post> posts =
-            resourceService.getResources(user,
-                makeResourceFilter(POST, boardId, includePublicPosts, state, quarter, searchTerm)
-                    .setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC"))
+            resourceService.getResources(user, filter)
                 .stream().map(resource -> (Post) resource).collect(Collectors.toList());
 
         if (posts.isEmpty()) {
@@ -299,7 +302,9 @@ public class PostService {
     }
 
     public List<Post> getPosts(Long boardId) {
-        return getPosts(boardId, true, null, null, null);
+        return getPosts(
+            new ResourceFilter()
+                .setParentId(boardId));
     }
 
     public PostStatistics getPostStatistics(Long departmentId) {
@@ -604,6 +609,16 @@ public class PostService {
                     "Valid categories must be specified - check parent categories");
             }
         }
+    }
+
+    private State getFilterState(ResourceFilter filter) {
+        State state = filter.getState();
+        String quarter = filter.getQuarter();
+        if (state == ARCHIVED && quarter == null) {
+            throw new BoardException(INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
+        }
+
+        return quarter == null ? state : ARCHIVED;
     }
 
 }

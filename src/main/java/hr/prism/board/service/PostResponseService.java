@@ -15,6 +15,7 @@ import java.util.List;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Action.PURSUE;
+import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_REFERRAL;
 import static hr.prism.board.exception.ExceptionCode.INVALID_REFERRAL;
@@ -60,8 +61,8 @@ public class PostResponseService {
     }
 
     public List<ResourceEvent> getPostResponses(Long id, String searchTerm) {
-        Post post = (Post) resourceService.getById(id);
         User user = userService.getUserSecured();
+        Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return postResponseDAO.getPostResponses(user, post, searchTerm);
     }
@@ -82,8 +83,8 @@ public class PostResponseService {
     }
 
     public ResourceEvent createPostResponse(Long id, ResourceEventDTO resourceEvent) {
-        Post post = (Post) resourceService.getById(id);
         User user = userService.getUserSecured();
+        Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, PURSUE, () -> {
             checkValidDemographicData(user, (Department) post.getParent().getParent());
             return post;
@@ -102,7 +103,7 @@ public class PostResponseService {
     }
 
     private ResourceEvent getPostResponse(User user, Long id, Long responseId) {
-        Post post = (Post) resourceService.getById(id);
+        Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         ResourceEvent resourceEvent = resourceEventService.getById(responseId);
         resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));

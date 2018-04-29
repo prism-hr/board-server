@@ -137,16 +137,12 @@ public class DepartmentService {
         return verifyCanView(user, department);
     }
 
-    public List<Department> getDepartments(Boolean includePublicDepartments, String searchTerm) {
+    public List<Department> getDepartments(ResourceFilter filter) {
         User user = userService.getUser();
-        List<Resource> resources =
-            resourceService.getResources(user,
-                new ResourceFilter()
-                    .setScope(DEPARTMENT)
-                    .setSearchTerm(searchTerm)
-                    .setIncludePublicResources(includePublicDepartments)
-                    .setOrderStatement("resource.name"));
+        filter.setScope(DEPARTMENT);
+        filter.setOrderStatement("resource.name");
 
+        List<Resource> resources = resourceService.getResources(user, filter);
         return resources.stream()
             .map(resource -> (Department) resource)
             .collect(toList());

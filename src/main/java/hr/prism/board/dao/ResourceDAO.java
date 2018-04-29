@@ -1,9 +1,10 @@
 package hr.prism.board.dao;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedHashMultimap;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.ResourceOperation;
+import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
@@ -12,7 +13,6 @@ import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceSearchRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.value.ResourceFilter;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
@@ -27,16 +27,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static hr.prism.board.enums.Role.PUBLIC;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
 import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Repository
@@ -140,7 +138,7 @@ public class ResourceDAO {
         List<Object[]> secureResources = getResources(SECURE_RESOURCE, secureFilterStatements, secureFilterParameters);
 
         Map<ResourceAction, ActionRepresentation> rowIndex =
-            mergePublicAndSecureResources(filter, publicResources, secureResources);
+            mergePublicAndSecureResources(publicResources, secureResources);
         if (rowIndex.isEmpty()) {
             return Collections.emptyList();
         }
@@ -236,13 +234,12 @@ public class ResourceDAO {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private List<Object[]> getResources(String statement, List<String> filterStatements,
                                         Map<String, Object> filterParameters) {
         Query query = entityManager.createNativeQuery(
             Joiner.on(" WHERE ").skipNulls().join(statement, Joiner.on(" AND ").join(filterStatements)));
         filterParameters.keySet().forEach(key -> query.setParameter(key, filterParameters.get(key)));
-
-        //noinspection unchecked
         return query.getResultList();
     }
 
@@ -283,21 +280,11 @@ public class ResourceDAO {
         }
     }
 
-    private Map<ResourceAction, ActionRepresentation> mergePublicAndSecureResources(ResourceFilter filter,
-                                                                                    List<Object[]> publicResults,
+    private Map<ResourceAction, ActionRepresentation> mergePublicAndSecureResources(List<Object[]> publicResults,
                                                                                     List<Object[]> secureResults) {
-        List<Object[]> rows = new ArrayList<>(secureResults);
-        if (BooleanUtils.isTrue(filter.getIncludePublicResources())) {
-            // Return public and secure results
-            rows.addAll(publicResults);
-        } else {
-            // Return secure results with public actions
-            HashMultimap<Object, Object[]> publicResultsById = HashMultimap.create();
-            publicResults.forEach(result -> publicResultsById.put(result[0], result));
-            for (Object[] secureResult : secureResults) {
-                rows.addAll(publicResultsById.get(secureResult[0]));
-            }
-        }
+        List<Object[]> rows = new ArrayList<>();
+        rows.addAll(publicResults);
+        rows.addAll(secureResults);
 
         // Remove duplicate mappings
         Map<ResourceAction, ActionRepresentation> rowIndex = new HashMap<>();
@@ -394,25 +381,26 @@ public class ResourceDAO {
         }
 
         // Merge the output
-        mergeResourcesWithActions(resources, resourceActionIndex);
+        mergeResourcesWithActions(filter, resources, resourceActionIndex);
         return resources;
     }
 
-    private void mergeResourcesWithActions(List<Resource> resources,
+    private void mergeResourcesWithActions(ResourceFilter filter, List<Resource> resources,
                                            LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
-        for (Resource resource : resources) {
-            // Find the states of the parents
-            List<State> parentStates = Collections.emptyList();
-            if (resource instanceof Post) {
-                Resource board = resource.getParent();
-                parentStates = asList(board.getState(), board.getParent().getState());
-            } else if (resource instanceof Board) {
-                parentStates = singletonList(resource.getParent().getState());
+        Action action = filter.getAction();
+        Iterator<Resource> iterator = resources.iterator();
+        while (iterator.hasNext()) {
+            Resource resource = iterator.next();
+            Set<ActionRepresentation> actions = resourceActionIndex.get(resource.getId());
+
+            // Apply action resource filter
+            if (action != null && !actions.contains(new ActionRepresentation().setAction(action))) {
+                iterator.remove();
             }
 
-            // Remove any actions that should be suppressed due to parent state
-            List<ActionRepresentation> actionRepresentations = newArrayList(resourceActionIndex.get(resource.getId()));
-            Iterator<ActionRepresentation> actionRepresentationIterator = actionRepresentations.iterator();
+            // Apply parent state action filter
+            List<State> parentStates = resource.getParentStates();
+            Iterator<ActionRepresentation> actionRepresentationIterator = actions.iterator();
             while (actionRepresentationIterator.hasNext()) {
                 ActionRepresentation actionRepresentation = actionRepresentationIterator.next();
                 State suppressedInOwnerState = actionRepresentation.getSuppressedInOwnerState();
@@ -421,8 +409,11 @@ public class ResourceDAO {
                 }
             }
 
-            actionRepresentations.sort(naturalOrder());
-            resource.setActions(actionRepresentations);
+            resource.setActions(
+                actions
+                    .stream()
+                    .sorted(naturalOrder())
+                    .collect(toList()));
         }
     }
 

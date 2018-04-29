@@ -11,15 +11,12 @@ import java.util.Set;
 @NamedNativeQuery(
     name = "searchOrganizations",
     query =
-        "SELECT resource.organization_name AS name, " +
-            "resource.organization_logo AS logo, " +
-            "IF(resource.organization_name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
-            "MATCH (resource.organization_name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
-            "FROM resource " +
-            "WHERE resource.scope = :scope " +
-            "GROUP BY resource.organization_name " +
+        "SELECT id, name, logo, " +
+            "IF(name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
+            "MATCH (name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
+            "FROM organization " +
             "HAVING similarityHard = 1 OR similaritySoft > 0 " +
-            "ORDER BY similarityHard DESC, similaritySoft DESC, resource.organization_name " +
+            "ORDER BY similarityHard DESC, similaritySoft DESC, name " +
             "LIMIT 10",
     resultSetMapping = "searchOrganizations")
 @SqlResultSetMapping(
@@ -30,6 +27,7 @@ import java.util.Set;
             @ColumnResult(name = "id", type = Long.class),
             @ColumnResult(name = "name", type = String.class),
             @ColumnResult(name = "logo", type = String.class)}))
+@SuppressWarnings("SqlResolve")
 public class Organization extends BoardEntity {
 
     @Column(name = "name", nullable = false, unique = true)
@@ -39,7 +37,7 @@ public class Organization extends BoardEntity {
     private String logo;
 
     @OneToMany(mappedBy = "organization")
-    Set<Post> posts = new HashSet<>();
+    private Set<Post> posts = new HashSet<>();
 
     public String getName() {
         return name;

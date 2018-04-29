@@ -4,12 +4,12 @@ import hr.prism.board.domain.Board;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
+import hr.prism.board.value.ResourceFilter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -44,13 +44,8 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/boards", method = GET)
-    public List<BoardRepresentation> getBoards(@RequestParam(required = false) Long parentId,
-                                               @RequestParam(required = false) Boolean includePublic,
-                                               @RequestParam(required = false) State state,
-                                               @RequestParam(required = false) String quarter,
-                                               @RequestParam(required = false) String searchTerm) {
-        return boardService.getBoards(parentId, includePublic, state, quarter, searchTerm)
-            .stream().map(boardMapper).collect(toList());
+    public List<BoardRepresentation> getBoards(@ModelAttribute ResourceFilter filter) {
+        return boardService.getBoards(filter).stream().map(boardMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}", method = GET)

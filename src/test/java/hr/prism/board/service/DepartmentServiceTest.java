@@ -11,6 +11,7 @@ import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.value.ResourceFilter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +23,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static hr.prism.board.enums.Action.EXTEND;
 import static hr.prism.board.enums.CategoryType.MEMBER;
@@ -31,6 +33,7 @@ import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.DRAFT;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
@@ -247,6 +250,56 @@ public class DepartmentServiceTest {
 
         verify(entityManager, times(1)).refresh(department);
         verify(resourceService, times(1)).getResource(user, DEPARTMENT, 2L);
+    }
+
+    @Test
+    public void getDepartments_success() {
+        User user = new User();
+        user.setId(1L);
+
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(DEPARTMENT)
+                .setSearchTerm("department")
+                .setOrderStatement("resource.name");
+
+        Department department = new Department();
+        department.setId(1L);
+
+        when(userService.getUser()).thenReturn(user);
+        when(resourceService.getResources(user, filter)).thenReturn(singletonList(department));
+
+        List<Department> departments = departmentService.getDepartments(
+            new ResourceFilter()
+                .setSearchTerm("department"));
+
+        assertThat(departments).containsExactly(department);
+
+        verify(userService, times(1)).getUser();
+        verify(resourceService, times(1)).getResources(user, filter);
+    }
+
+    @Test
+    public void getDepartments_successWhenUnauthenticated() {
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(DEPARTMENT)
+                .setSearchTerm("department")
+                .setOrderStatement("resource.name");
+
+        Department department = new Department();
+        department.setId(1L);
+
+        when(resourceService.getResources(null, filter)).thenReturn(singletonList(department));
+
+        List<Department> departments = departmentService.getDepartments(
+            new ResourceFilter()
+                .setSearchTerm("department"));
+
+        assertThat(departments).containsExactly(department);
+
+        verify(userService, times(1)).getUser();
+        verify(resourceService, times(1)).getResources(null, filter);
     }
 
     private static ArgumentMatcher<BoardDTO> boardNameMatcher(String name) {

@@ -88,8 +88,7 @@ public class ResourceDAOIT {
         List<Resource> resources = resourceDAO.getResources(user,
             new ResourceFilter()
                 .setScope(DEPARTMENT)
-                .setId(2L)
-                .setIncludePublicResources(true));
+                .setId(2L));
 
         assertThat(resources).hasSize(1);
 

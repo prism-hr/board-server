@@ -1,16 +1,13 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.ResourceOperation;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.utils.BoardUtils;
+import hr.prism.board.value.ResourceFilter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +20,6 @@ import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD_HANDLE;
-import static hr.prism.board.utils.ResourceUtils.makeResourceFilter;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
@@ -63,13 +59,15 @@ public class BoardService {
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
-    public List<Board> getBoards(Long departmentId, Boolean includePublicBoards, State state, String quarter,
-                                 String searchTerm) {
-        User currentUser = userService.getUser();
-        return resourceService.getResources(currentUser,
-            makeResourceFilter(BOARD,
-                departmentId, includePublicBoards, state, quarter, searchTerm).setOrderStatement("resource.name"))
-            .stream().map(resource -> (Board) resource).collect(toList());
+    public List<Board> getBoards(ResourceFilter filter) {
+        User user = userService.getUser();
+        filter.setScope(BOARD);
+        filter.setOrderStatement("resource.name");
+
+        List<Resource> resources = resourceService.getResources(user, filter);
+        return resources.stream()
+            .map(resource -> (Board) resource)
+            .collect(toList());
     }
 
     public List<ResourceOperation> getBoardOperations(Long id) {

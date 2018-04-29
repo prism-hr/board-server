@@ -89,8 +89,7 @@ public class ResourceService {
         List<Resource> resources = resourceDAO.getResources(user,
             new ResourceFilter()
                 .setScope(scope)
-                .setId(id)
-                .setIncludePublicResources(true));
+                .setId(id));
 
         return ofNullable(resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0))
             .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, scope, id));
@@ -100,8 +99,7 @@ public class ResourceService {
         List<Resource> resources = resourceDAO.getResources(user,
             new ResourceFilter()
                 .setScope(scope)
-                .setHandle(handle)
-                .setIncludePublicResources(true));
+                .setHandle(handle));
 
         return ofNullable(resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0))
             .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, scope, handle));

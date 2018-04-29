@@ -6,6 +6,7 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.repository.BoardRepository;
+import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
 import org.junit.Before;
@@ -15,11 +16,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.List;
+
 import static hr.prism.board.enums.Action.EXTEND;
 import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -94,6 +99,56 @@ public class BoardServiceTest {
             .updateCategories(board, POST, ImmutableList.of("category"));
         verify(resourceService, times(1)).createResourceRelation(department, board);
         verify(resourceService, times(1)).setIndexDataAndQuarter(board);
+    }
+
+    @Test
+    public void getBoards_success() {
+        User user = new User();
+        user.setId(1L);
+
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(BOARD)
+                .setSearchTerm("board")
+                .setOrderStatement("resource.name");
+
+        Board board = new Board();
+        board.setId(1L);
+
+        when(userService.getUser()).thenReturn(user);
+        when(resourceService.getResources(user, filter)).thenReturn(singletonList(board));
+
+        List<Board> boards = boardService.getBoards(
+            new ResourceFilter()
+                .setSearchTerm("board"));
+
+        assertThat(boards).containsExactly(board);
+
+        verify(userService, times(1)).getUser();
+        verify(resourceService, times(1)).getResources(user, filter);
+    }
+
+    @Test
+    public void getBoards_successWhenUnauthenticated() {
+        ResourceFilter filter =
+            new ResourceFilter()
+                .setScope(BOARD)
+                .setSearchTerm("board")
+                .setOrderStatement("resource.name");
+
+        Board board = new Board();
+        board.setId(1L);
+
+        when(resourceService.getResources(null, filter)).thenReturn(singletonList(board));
+
+        List<Board> boards = boardService.getBoards(
+            new ResourceFilter()
+                .setSearchTerm("board"));
+
+        assertThat(boards).containsExactly(board);
+
+        verify(userService, times(1)).getUser();
+        verify(resourceService, times(1)).getResources(null, filter);
     }
 
 }

@@ -9,9 +9,7 @@ import hr.prism.board.representation.ChangeListRepresentation;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.CategoryType.POST;
@@ -98,7 +96,7 @@ public class Resource extends BoardEntity {
 
     @Transient
     private String comment;
-    
+
     @Transient
     private boolean notificationSuppressedForUser;
 
@@ -222,10 +220,12 @@ public class Resource extends BoardEntity {
         return parents;
     }
 
+    @SuppressWarnings("unused")
     public Set<ResourceOperation> getOperations() {
         return operations;
     }
 
+    @SuppressWarnings("unused")
     public Set<ResourceSearch> getSearches() {
         return searches;
     }
@@ -270,6 +270,25 @@ public class Resource extends BoardEntity {
         return categories.stream()
             .filter(category -> category.getType() == type)
             .sorted(comparingLong(ResourceCategory::getId))
+            .collect(toList());
+    }
+
+    public List<State> getParentStates() {
+        Resource resource = this;
+        List<State> parentStates = new ArrayList<>();
+        while (true) {
+            Resource parent = resource.getParent();
+            if (parent == null || Objects.equals(resource, parent)) {
+                break;
+            }
+
+            parentStates.add(parent.getState());
+            resource = parent;
+        }
+
+        return parentStates
+            .stream()
+            .filter(Objects::nonNull)
             .collect(toList());
     }
 

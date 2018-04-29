@@ -16,8 +16,9 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     @Query(value =
         "select new hr.prism.board.value.OrganizationStatistics(organization.id, organization.name, " +
-            "organization.logo, count(post.id), max(post.createdTimestamp), coalesce(sum(post.viewCount), 0), " +
-            "coalesce(sum(post.referralCount), 0), coalesce(sum(post.responseCount), 0)) " +
+            "organization.logo, count(post.id), max(post.createdTimestamp) as mostRecentPost, " +
+            "coalesce(sum(post.viewCount), 0), coalesce(sum(post.referralCount), 0), " +
+            "coalesce(sum(post.responseCount), 0)) " +
             "from Organization organization " +
             "inner join organization.posts post " +
             "inner join post.parent board " +
