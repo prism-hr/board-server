@@ -1,16 +1,11 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DBTestContext;
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
-import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.repository.ResourceRepository;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
@@ -21,24 +16,18 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.ExistingRelation.STUDENT;
-import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
-import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
-import static java.math.BigDecimal.ONE;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DBTestContext
@@ -53,21 +42,6 @@ public class ActionServiceIT {
         Stream.of(State.values()).filter(state -> !state.equals(PREVIOUS)).collect(toList());
 
     @Inject
-    private ResourceRepository resourceRepository;
-
-    @Inject
-    private UserService userService;
-
-    @Inject
-    private DepartmentService departmentService;
-
-    @Inject
-    private BoardService boardService;
-
-    @Inject
-    private PostService postService;
-
-    @Inject
     private ResourceService resourceService;
 
     @Inject
@@ -76,12 +50,16 @@ public class ActionServiceIT {
     @Inject
     private UserRoleService userRoleService;
 
+    @Inject
+    private DataHelper dataHelper;
+
     @Test
     public void executeAction_departmentAdministratorActionsOnDepartment() {
         User departmentAdministrator =
-            setUpUser("administrator", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser(
+                "administrator", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
         Expectations expectations =
             new Expectations()
@@ -111,38 +89,43 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_unprivilegedActionsOnDepartment() {
-        User departmentAdministrator =
-            setUpUser("administrator", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = dataHelper.setUpUser(
+            "administrator", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User departmentAuthor = setUpUser("department", "author", "department@pauthor.hr");
+        User departmentAuthor = dataHelper.setUpUser(
+            "department", "author", "department@pauthor.hr");
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
-        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        User departmentMember = dataHelper.setUpUser(
+            "department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator = dataHelper.setUpUser(
+            "post", "administrator", "post@administrator.hr");
+        dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        User otherDepartmentAdministrator = setUpUser(
+        User otherDepartmentAdministrator = dataHelper.setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
-        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
-        Board otherBoard = setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
+        Department otherDepartment =
+            dataHelper.setUpDepartment(otherDepartmentAdministrator, 1L,"other-department");
+        Board otherBoard = dataHelper.setUpBoard(
+            otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
 
         User otherDepartmentAuthor =
-            setUpUser("other-department", "author", "other-department@pauthor.hr");
+            dataHelper.setUpUser("other-department", "author", "other-department@pauthor.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
 
         User otherDepartmentMember =
-            setUpUser("other-department", "member", "other-department@member.hr");
+            dataHelper.setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherPostAdministrator =
-            setUpUser("other-post", "administrator", "other-post@padministrator.hr");
-        setupPost(otherPostAdministrator, otherBoard.getId(), "other-post");
+        User otherPostAdministrator = dataHelper.setUpUser(
+            "other-post", "administrator", "other-post@padministrator.hr");
+        dataHelper.setUpPost(otherPostAdministrator, otherBoard.getId(), "other-post");
 
-        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+        User userWithoutRoles = dataHelper.setUpUser("without", "roles", "without@roles.hr");
 
         Scenarios scenarios =
             new Scenarios()
@@ -171,10 +154,10 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAdministratorActionsOnBoard() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
-        Post post = setupPost(departmentAdministrator, board.getId(), "post");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -193,10 +176,10 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAdministratorActionsOnBoardWhenDepartmentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
-        Post post = setupPost(departmentAdministrator, board.getId(), "post");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
         resourceService.updateState(department, REJECTED);
 
@@ -216,12 +199,13 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAuthorActionsOnBoard() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
-        Post post = setupPost(departmentAdministrator, board.getId(), "post");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        User departmentAuthor = setUpUser("department", "author", "department@author.hr");
+        User departmentAuthor =
+            dataHelper.setUpUser("department", "author", "department@author.hr");
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
         Expectations expectations = new Expectations()
@@ -235,14 +219,15 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAuthorActionsOnBoardWhenDepartmentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
-        Post post = setupPost(departmentAdministrator, board.getId(), "post");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
         resourceService.updateState(department, REJECTED);
 
-        User departmentAuthor = setUpUser("department", "author", "department@author.hr");
+        User departmentAuthor =
+            dataHelper.setUpUser("department", "author", "department@author.hr");
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
         Expectations expectations = new Expectations()
@@ -255,42 +240,46 @@ public class ActionServiceIT {
     @Test
     public void executeAction_unprivilegedActionsOnBoard() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
 
         Long departmentId = department.getId();
-        Board board = setupBoard(departmentAdministrator, departmentId, "board");
-        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = dataHelper.setUpBoard(departmentAdministrator, departmentId, "other-board");
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        User otherBoardPostAdministrator = setUpUser(
+        User otherBoardPostAdministrator = dataHelper.setUpUser(
             "other-board-post", "administrator", "other-board-post@administrator.hr");
-        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
+        dataHelper.setUpPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
-        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        User departmentMember =
+            dataHelper.setUpUser("department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        User otherDepartmentAdministrator = setUpUser(
+        User otherDepartmentAdministrator = dataHelper.setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
-        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
+        Department otherDepartment =
+            dataHelper.setUpDepartment(otherDepartmentAdministrator, 1L,"other-department");
         Board otherDepartmentBoard =
-            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
+            dataHelper.setUpBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
 
         User otherDepartmentAuthor =
-            setUpUser("other-department", "author", "other-department@author.hr");
+            dataHelper.setUpUser("other-department", "author", "other-department@author.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
 
         User otherDepartmentMember =
-            setUpUser("other-department", "member", "other-department@member.hr");
+            dataHelper.setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+        User otherDepartmentPostAdministrator = dataHelper.setUpUser("other-department-post",
             "administrator", "other-department-post@administrator.hr");
-        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
+        dataHelper.setUpPost(
+            otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
-        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+        User userWithoutRoles = dataHelper.setUpUser("without", "roles", "without@roles.hr");
 
         Scenarios scenarios = new Scenarios()
             .scenario(departmentMember, "Department member")
@@ -314,42 +303,46 @@ public class ActionServiceIT {
     @Test
     public void executeAction_unprivilegedActionsOnBoardWhenDepartmentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
 
         Long departmentId = department.getId();
-        Board board = setupBoard(departmentAdministrator, departmentId, "board");
-        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = dataHelper.setUpBoard(departmentAdministrator, departmentId, "other-board");
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        User otherBoardPostAdministrator = setUpUser(
+        User otherBoardPostAdministrator = dataHelper.setUpUser(
             "other-board-post", "administrator", "other-board-post@administrator.hr");
-        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
+        dataHelper.setUpPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
-        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        User departmentMember =
+            dataHelper.setUpUser("department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        User otherDepartmentAdministrator = setUpUser(
+        User otherDepartmentAdministrator = dataHelper.setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
-        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
-        Board otherDepartmentBoard =
-            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
+        Department otherDepartment =
+            dataHelper.setUpDepartment(otherDepartmentAdministrator, 1L,"other-department");
+        Board otherDepartmentBoard = dataHelper.setUpBoard(
+            otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
 
         User otherDepartmentAuthor =
-            setUpUser("other-department", "author", "other-department@author.hr");
+            dataHelper.setUpUser("other-department", "author", "other-department@author.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
 
         User otherDepartmentMember =
-            setUpUser("other-department", "member", "other-department@member.hr");
+            dataHelper.setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+        User otherDepartmentPostAdministrator = dataHelper.setUpUser("other-department-post",
             "administrator", "other-department-post@administrator.hr");
-        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
+        dataHelper.setUpPost(
+            otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
-        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+        User userWithoutRoles = dataHelper.setUpUser("without", "roles", "without@roles.hr");
 
         Scenarios scenarios = new Scenarios()
             .scenario(departmentMember, "Department member")
@@ -373,15 +366,16 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAdministratorActionsOnPost() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -431,15 +425,16 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentAdministratorActionsOnPostWhenParentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -495,15 +490,17 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentMemberActionsOnPost() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        User departmentMember =
+            dataHelper.setUpUser("department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -516,15 +513,17 @@ public class ActionServiceIT {
     @Test
     public void executeAction_departmentMemberActionsOnPostWhenDepartmentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User departmentMember = setUpUser("department", "member", "department@member.hr");
+        User departmentMember =
+            dataHelper.setUpUser("department", "member", "department@member.hr");
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -543,15 +542,16 @@ public class ActionServiceIT {
     @Test
     public void executeAction_postAdministratorActionsOnPost() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -595,15 +595,16 @@ public class ActionServiceIT {
     @Test
     public void executeAction_postAdministratorActionsOnPostWhenDepartmentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
-        Board board = setupBoard(departmentAdministrator, department.getId(), "board");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = setUpUser("post", "administrator", "post@administrator.hr");
-        Post post = setupPost(postAdministrator, board.getId(), "post");
+        User postAdministrator =
+            dataHelper.setUpUser("post", "administrator", "post@administrator.hr");
+        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -653,40 +654,43 @@ public class ActionServiceIT {
     @Test
     public void executeAction_unprivilegedActionsOnPost() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
 
         Long departmentId = department.getId();
-        Board board = setupBoard(departmentAdministrator, departmentId, "board");
-        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = dataHelper.setUpBoard(departmentAdministrator, departmentId, "other-board");
 
-        Post post = setupPost(departmentAdministrator, board.getId(), "post");
-        User otherBoardPostAdministrator = setUpUser(
+        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User otherBoardPostAdministrator = dataHelper.setUpUser(
             "other-board-post", "administrator", "other-board-post@administrator.hr");
-        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
+        dataHelper.setUpPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
-        User departmentAuthor = setUpUser("department", "author", "department@author.hr");
+        User departmentAuthor =
+            dataHelper.setUpUser("department", "author", "department@author.hr");
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
-        User otherDepartmentAdministrator = setUpUser(
+        User otherDepartmentAdministrator = dataHelper.setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
-        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
-        Board otherDepartmentBoard =
-            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
+        Department otherDepartment =
+            dataHelper.setUpDepartment(otherDepartmentAdministrator, 1L,"other-department");
+        Board otherDepartmentBoard = dataHelper.setUpBoard(
+            otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
 
         User otherDepartmentAuthor =
-            setUpUser("other-department", "author", "other-department@author.hr");
+            dataHelper.setUpUser("other-department", "author", "other-department@author.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
 
         User otherDepartmentMember =
-            setUpUser("other-department", "member", "other-department@member.hr");
+            dataHelper.setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+        User otherDepartmentPostAdministrator = dataHelper.setUpUser("other-department-post",
             "administrator", "other-department-post@administrator.hr");
-        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
+        dataHelper.setUpPost(
+            otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
-        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+        User userWithoutRoles = dataHelper.setUpUser("without", "roles", "without@roles.hr");
 
         Scenarios scenarios = new Scenarios()
             .scenario(departmentAuthor, "Department author")
@@ -708,40 +712,43 @@ public class ActionServiceIT {
     @Test
     public void executeAction_unprivilegedActionsOnPostWhenParentRejected() {
         User departmentAdministrator =
-            setUpUser("department", "administrator", "department@administrator.hr");
-        Department department = setupDepartment(departmentAdministrator, "department");
+            dataHelper.setUpUser("department", "administrator", "department@administrator.hr");
+        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
 
         Long departmentId = department.getId();
-        Board board = setupBoard(departmentAdministrator, departmentId, "board");
-        Board otherBoard = setupBoard(departmentAdministrator, departmentId, "other-board");
+        Board board = dataHelper.setUpBoard(departmentAdministrator, departmentId, "board");
+        Board otherBoard = dataHelper.setUpBoard(departmentAdministrator, departmentId, "other-board");
 
-        Post post = setupPost(departmentAdministrator, board.getId(), "post");
-        User otherBoardPostAdministrator = setUpUser(
+        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User otherBoardPostAdministrator = dataHelper.setUpUser(
             "other-board-post", "administrator", "other-board-post@administrator.hr");
-        setupPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
+        dataHelper.setUpPost(otherBoardPostAdministrator, otherBoard.getId(), "other-board-post");
 
-        User departmentAuthor = setUpUser("department", "author", "department@author.hr");
+        User departmentAuthor =
+            dataHelper.setUpUser("department", "author", "department@author.hr");
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
-        User otherDepartmentAdministrator = setUpUser(
+        User otherDepartmentAdministrator = dataHelper.setUpUser(
             "other-department", "administrator", "other-department@administrator.hr");
-        Department otherDepartment = setupDepartment(otherDepartmentAdministrator, "other-department");
-        Board otherDepartmentBoard =
-            setupBoard(otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
+        Department otherDepartment =
+            dataHelper.setUpDepartment(otherDepartmentAdministrator, 1L,"other-department");
+        Board otherDepartmentBoard = dataHelper.setUpBoard(
+            otherDepartmentAdministrator, otherDepartment.getId(), "other-department-board");
 
         User otherDepartmentAuthor =
-            setUpUser("other-department", "author", "other-department@author.hr");
+            dataHelper.setUpUser("other-department", "author", "other-department@author.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
 
         User otherDepartmentMember =
-            setUpUser("other-department", "member", "other-department@member.hr");
+            dataHelper.setUpUser("other-department", "member", "other-department@member.hr");
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
-        User otherDepartmentPostAdministrator = setUpUser("other-department-post",
+        User otherDepartmentPostAdministrator = dataHelper.setUpUser("other-department-post",
             "administrator", "other-department-post@administrator.hr");
-        setupPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
+        dataHelper.setUpPost(
+            otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), "other-department-post");
 
-        User userWithoutRoles = setUpUser("without", "roles", "without@roles.hr");
+        User userWithoutRoles = dataHelper.setUpUser("without", "roles", "without@roles.hr");
 
         Scenarios scenarios = new Scenarios()
             .scenario(departmentAuthor, "Department author")
@@ -767,67 +774,6 @@ public class ActionServiceIT {
         verify(scenarios, post, null, expectations);
     }
 
-    private Department setupDepartment(User user, String name) {
-        getContext().setAuthentication(new AuthenticationToken(user));
-        return departmentService.createDepartment(1L,
-            new DepartmentDTO()
-                .setName(name)
-                .setSummary(name + " summary"));
-    }
-
-    private Board setupBoard(User user, Long departmentId, String name) {
-        getContext().setAuthentication(new AuthenticationToken(user));
-        return boardService.createBoard(departmentId,
-            new BoardDTO()
-                .setName(name)
-                .setPostCategories(ImmutableList.of("Employment", "Internship")));
-    }
-
-    private Post setupPost(User user, Long boardId, String name) {
-        getContext().setAuthentication(new AuthenticationToken(user));
-        return postService.createPost(boardId,
-            new PostDTO()
-                .setName(name)
-                .setSummary(name + " summary")
-                .setOrganization(
-                    new OrganizationDTO()
-                        .setName("organization"))
-                .setLocation(new LocationDTO()
-                    .setName("london")
-                    .setDomicile("uk")
-                    .setGoogleId("google")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE))
-                .setApplyWebsite("http://www.google.co.uk")
-                .setPostCategories(ImmutableList.of("Employment", "Internship"))
-                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))
-                .setExistingRelation(STUDENT)
-                .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)));
-    }
-
-    private void setPostPending(Post post) {
-        post.setLiveTimestamp(LocalDateTime.now());
-        post.setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
-        resourceRepository.save(post);
-    }
-
-    private void setPostExpired(Post post) {
-        post.setLiveTimestamp(LocalDateTime.now().minusWeeks(1));
-        post.setDeadTimestamp(LocalDateTime.now());
-        resourceRepository.save(post);
-    }
-
-    private User setUpUser(String givenName, String surname, String email) {
-        return userService.createUser(
-            new RegisterDTO()
-                .setGivenName(givenName)
-                .setSurname(surname)
-                .setEmail(email)
-                .setPassword("password"));
-    }
-
     private void verify(Scenarios scenarios, Resource resource, Resource extendResource,
                         Expectations expectations) {
         scenarios.forEach(scenario -> {
@@ -849,7 +795,7 @@ public class ActionServiceIT {
 
                 Expectation expectation = expectations.expected(state, action);
                 if (expectation == null) {
-                    verifyForbidden(user, testResource, action, executeResource);
+                    verifyForbiden(user, testResource, action, executeResource);
                 } else {
                     verifyPermitted(user, testResource, action, executeResource, expectation);
                 }
@@ -857,7 +803,7 @@ public class ActionServiceIT {
         }
     }
 
-    private void verifyForbidden(User user, Resource testResource, Action action, Resource executeResource) {
+    private void verifyForbiden(User user, Resource testResource, Action action, Resource executeResource) {
         assertThatThrownBy(
             () -> actionService.executeAction(user, testResource, action, () -> executeResource))
             .isExactlyInstanceOf(BoardForbiddenException.class)
