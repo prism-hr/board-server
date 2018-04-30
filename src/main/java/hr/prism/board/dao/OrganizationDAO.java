@@ -8,8 +8,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.util.List;
 
-import static hr.prism.board.enums.Scope.POST;
-
 @Repository
 @Transactional
 public class OrganizationDAO {
@@ -21,12 +19,11 @@ public class OrganizationDAO {
         this.entityManager = entityManager;
     }
 
-
+    @SuppressWarnings("JpaQueryApiInspection")
     public List<OrganizationSearch> findOrganizations(String searchTerm) {
         return entityManager.createNamedQuery("searchOrganizations", OrganizationSearch.class)
             .setParameter("searchTermHard", searchTerm + "%")
             .setParameter("searchTermSoft", searchTerm)
-            .setParameter("scope", POST.name())
             .getResultList();
     }
 

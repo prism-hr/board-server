@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
+import hr.prism.board.enums.State;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,9 @@ import static hr.prism.board.enums.ExistingRelation.STUDENT;
 import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.State.ACCEPTED;
 import static java.math.BigDecimal.ONE;
+import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
@@ -36,6 +39,8 @@ public class DataHelper {
 
     private final PostService postService;
 
+    private final ResourceService resourceService;
+
     private final UserService userService;
 
     private final UserRoleService userRoleService;
@@ -43,12 +48,13 @@ public class DataHelper {
     @Inject
     public DataHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
                       DepartmentService departmentService, BoardService boardService, PostService postService,
-                      UserService userService, UserRoleService userRoleService) {
+                      ResourceService resourceService, UserService userService, UserRoleService userRoleService) {
         this.resourceRepository = resourceRepository;
         this.userRoleRepository = userRoleRepository;
         this.departmentService = departmentService;
         this.boardService = boardService;
         this.postService = postService;
+        this.resourceService = resourceService;
         this.userService = userService;
         this.userRoleService = userRoleService;
     }
@@ -116,15 +122,6 @@ public class DataHelper {
                 .setPassword("password"));
     }
 
-    User setUpUser(String givenName, String surname, String email) {
-        return userService.createUser(
-            new RegisterDTO()
-                .setGivenName(givenName)
-                .setSurname(surname)
-                .setEmail(email)
-                .setPassword("password"));
-    }
-
     Scenarios setUpUnprivilegedUsersForDepartment(Department department) {
         User departmentAuthor = setUpUser();
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
@@ -132,11 +129,18 @@ public class DataHelper {
         User departmentMember = setUpUser();
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
+        State state = department.getState();
+        department.setState(ACCEPTED);
+        resourceRepository.save(department);
+
         User departmentAdministrator = getDepartmentAdministrator(department);
         Board board = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
 
         User postAdministrator = setUpUser();
         setUpPost(postAdministrator, board.getId(), randomUUID().toString());
+
+        department.setState(state);
+        resourceRepository.save(department);
 
         User otherDepartmentAdministrator = setUpUser();
         Department otherDepartment =
@@ -162,6 +166,109 @@ public class DataHelper {
             .scenario(otherDepartmentAuthor, "Other department author")
             .scenario(otherDepartmentMember, "Other department member")
             .scenario(otherPostAdministrator, "Other post administrator")
+            .scenario(userWithoutRoles, "User without roles")
+            .scenario(null, "Public user");
+    }
+
+    Scenarios setUpUnprivilegedUsersForBoard(Board board) {
+        Department department = ofNullable((Department) board.getParent())
+            .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
+
+        State state = department.getState();
+        department.setState(ACCEPTED);
+        resourceRepository.save(department);
+
+        User departmentAdministrator = getDepartmentAdministrator(department);
+        Board otherBoard = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
+
+        User postAdministrator = setUpUser();
+        setUpPost(postAdministrator, board.getId(), randomUUID().toString());
+
+        User otherBoardPostAdministrator = setUpUser();
+        setUpPost(otherBoardPostAdministrator, otherBoard.getId(), randomUUID().toString());
+
+        department.setState(state);
+        resourceRepository.save(department);
+
+        User departmentMember = setUpUser();
+        userRoleService.createUserRole(department, departmentMember, MEMBER);
+
+        User otherDepartmentAdministrator = setUpUser();
+        Department otherDepartment =
+            setUpDepartment(otherDepartmentAdministrator, 1L, randomUUID().toString());
+        Board otherDepartmentBoard =
+            setUpBoard(otherDepartmentAdministrator, otherDepartment.getId(), randomUUID().toString());
+
+        User otherDepartmentAuthor = setUpUser();
+        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
+
+        User otherDepartmentMember = setUpUser();
+        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
+
+        User otherDepartmentPostAdministrator = setUpUser();
+        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), randomUUID().toString());
+
+        User userWithoutRoles = setUpUser();
+
+        return new Scenarios()
+            .scenario(departmentMember, "Department member")
+            .scenario(postAdministrator, "Post administrator")
+            .scenario(otherDepartmentAdministrator, "Other department administrator")
+            .scenario(otherDepartmentAuthor, "Other department author")
+            .scenario(otherDepartmentMember, "Other department member")
+            .scenario(otherBoardPostAdministrator, "Other board post administrator")
+            .scenario(otherDepartmentAdministrator, "Other department post administrator")
+            .scenario(userWithoutRoles, "User without roles")
+            .scenario(null, "Public user");
+    }
+
+    Scenarios setUpUnprivilegedUsersForPost(Post post) {
+        Board board = ofNullable((Board) post.getParent())
+            .orElseThrow(() -> new Error("Post ID: " + post.getId() + " has no board"));
+
+        Department department = ofNullable((Department) board.getParent())
+            .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
+
+        State state = department.getState();
+        department.setState(ACCEPTED);
+        resourceRepository.save(department);
+
+        User departmentAdministrator = getDepartmentAdministrator(department);
+        Board otherBoard = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
+
+        department.setState(state);
+        resourceRepository.save(department);
+
+        User otherBoardPostAdministrator = setUpUser();
+        setUpPost(otherBoardPostAdministrator, otherBoard.getId(), randomUUID().toString());
+
+        User departmentAuthor = setUpUser();
+        userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
+
+        User otherDepartmentAdministrator = setUpUser();
+        Department otherDepartment =
+            setUpDepartment(otherDepartmentAdministrator, 1L, randomUUID().toString());
+        Board otherDepartmentBoard = setUpBoard(
+            otherDepartmentAdministrator, otherDepartment.getId(), randomUUID().toString());
+
+        User otherDepartmentAuthor = setUpUser();
+        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
+
+        User otherDepartmentMember = setUpUser();
+        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
+
+        User otherDepartmentPostAdministrator = setUpUser();
+        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), randomUUID().toString());
+
+        User userWithoutRoles = setUpUser();
+
+        return new Scenarios()
+            .scenario(departmentAuthor, "Department author")
+            .scenario(otherDepartmentAdministrator, "Other department administrator")
+            .scenario(otherDepartmentAuthor, "Other department author")
+            .scenario(otherDepartmentMember, "Other department member")
+            .scenario(otherBoardPostAdministrator, "Other board post administrator")
+            .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
             .scenario(userWithoutRoles, "User without roles")
             .scenario(null, "Public user");
     }
@@ -199,6 +306,12 @@ public class DataHelper {
             this.user = user;
             this.description = description;
         }
+
+    }
+
+    interface ResourceModifier {
+
+        void modify(Resource resource);
 
     }
 

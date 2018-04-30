@@ -131,6 +131,12 @@ public class UserRoleService {
             updated = true;
         }
 
+        LocalDate expiryDate = memberDTO.getExpiryDate();
+        if (expiryDate != null || clearStudyData) {
+            userRole.setExpiryDate(expiryDate);
+            updated = true;
+        }
+
         if (updated) {
             userRole.setMemberDate(LocalDate.now());
         }
