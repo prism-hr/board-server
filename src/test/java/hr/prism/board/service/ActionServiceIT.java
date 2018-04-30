@@ -13,7 +13,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -32,6 +31,7 @@ import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DBTestContext
@@ -40,10 +40,12 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 @Sql(scripts = "classpath:data/actionService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class ActionServiceIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ActionServiceIT.class);
+    private static final Logger LOGGER = getLogger(ActionServiceIT.class);
 
     private static final List<State> ASSIGNABLE_STATES =
-        Stream.of(State.values()).filter(state -> !state.equals(PREVIOUS)).collect(toList());
+        Stream.of(State.values())
+            .filter(state -> !state.equals(PREVIOUS))
+            .collect(toList());
 
     @Inject
     private ResourceService resourceService;

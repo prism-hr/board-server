@@ -65,6 +65,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
             "SET handle = CONCAT(:newHandle, SUBSTRING(handle, LENGTH(:handle) + 1)) " +
             "WHERE handle LIKE CONCAT(:handle, '/%')",
         nativeQuery = true)
+    @SuppressWarnings("SqlResolve")
     void updateHandle(@Param("handle") String handle, @Param("newHandle") String newHandle);
 
     @Query(value =
@@ -74,20 +75,6 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
             "and resource.updatedTimestamp < :baseline")
     List<Long> findByStatesAndLessThanUpdatedTimestamp(@Param("states") List<State> states,
                                                        @Param("baseline") LocalDateTime baseline);
-
-    @Modifying
-    @Query(value =
-        "update Resource resource " +
-            "set resource.updatedTimestamp = :baseline " +
-            "where resource.id = :id")
-    void updateUpdatedTimestampById(@Param("id") Long id, @Param("baseline") LocalDateTime baseline);
-
-    @Modifying
-    @Query(value =
-        "update Resource resource " +
-            "set resource.stateChangeTimestamp = :baseline " +
-            "where resource.id = :id")
-    void updateStateChangeTimestampById(@Param("id") Long id, @Param("baseline") LocalDateTime baseline);
 
     @Modifying
     @Query(value =

@@ -17,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -33,6 +32,7 @@ import static hr.prism.board.enums.State.*;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
@@ -42,7 +42,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 @Sql(scripts = "classpath:data/departmentService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class DepartmentServiceIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentServiceIT.class);
+    private static final Logger LOGGER = getLogger(DepartmentServiceIT.class);
 
     @Inject
     private UserRepository userRepository;
@@ -63,19 +63,19 @@ public class DepartmentServiceIT {
 
     private User departmentAdministrator;
 
-    private List<Department> setUpDepartments;
+    private List<Department> departments;
 
     @Before
     public void setUp() {
         baseline = LocalDateTime.now();
         departmentAdministrator = userRepository.findOne(1L);
 
-        setUpDepartments = new ArrayList<>();
+        departments = new ArrayList<>();
         Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
             Department department =
                 dataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
             resourceService.updateState(department, state);
-            setUpDepartments.add(department);
+            departments.add(department);
         });
 
         getContext().setAuthentication(null);
@@ -193,7 +193,7 @@ public class DepartmentServiceIT {
                 List<Department> departments =
                     departmentService.getDepartments(new ResourceFilter())
                         .stream()
-                        .filter(setUpDepartments::contains)
+                        .filter(this.departments::contains)
                         .collect(toList());
 
                 assertThat(departments).hasSize(3);
@@ -220,7 +220,7 @@ public class DepartmentServiceIT {
                 List<Department> departments =
                     departmentService.getDepartments(new ResourceFilter().setState(REJECTED))
                         .stream()
-                        .filter(setUpDepartments::contains)
+                        .filter(this.departments::contains)
                         .collect(toList());
 
                 assertThat(departments).hasSize(0);
@@ -244,7 +244,7 @@ public class DepartmentServiceIT {
                 List<Department> departments =
                     departmentService.getDepartments(new ResourceFilter().setAction(EXTEND))
                         .stream()
-                        .filter(setUpDepartments::contains)
+                        .filter(this.departments::contains)
                         .collect(toList());
 
                 assertThat(departments).hasSize(0);
