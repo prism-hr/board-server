@@ -6,6 +6,7 @@ import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.service.DataHelper.Scenarios;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
@@ -16,8 +17,10 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
@@ -94,50 +97,7 @@ public class ActionServiceIT {
         Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L,"department");
         Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User departmentAuthor = dataHelper.setUpUser(
-            "department", "author", "department@pauthor.hr");
-        userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
-
-        User departmentMember = dataHelper.setUpUser(
-            "department", "member", "department@member.hr");
-        userRoleService.createUserRole(department, departmentMember, MEMBER);
-
-        User postAdministrator = dataHelper.setUpUser(
-            "post", "administrator", "post@administrator.hr");
-        dataHelper.setUpPost(postAdministrator, board.getId(), "post");
-
-        User otherDepartmentAdministrator = dataHelper.setUpUser(
-            "other-department", "administrator", "other-department@administrator.hr");
-        Department otherDepartment =
-            dataHelper.setUpDepartment(otherDepartmentAdministrator, 1L,"other-department");
-        Board otherBoard = dataHelper.setUpBoard(
-            otherDepartmentAdministrator, otherDepartment.getId(), "other-board");
-
-        User otherDepartmentAuthor =
-            dataHelper.setUpUser("other-department", "author", "other-department@pauthor.hr");
-        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
-
-        User otherDepartmentMember =
-            dataHelper.setUpUser("other-department", "member", "other-department@member.hr");
-        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
-
-        User otherPostAdministrator = dataHelper.setUpUser(
-            "other-post", "administrator", "other-post@padministrator.hr");
-        dataHelper.setUpPost(otherPostAdministrator, otherBoard.getId(), "other-post");
-
-        User userWithoutRoles = dataHelper.setUpUser("without", "roles", "without@roles.hr");
-
-        Scenarios scenarios =
-            new Scenarios()
-                .scenario(departmentAuthor, "Department author")
-                .scenario(departmentMember, "Department member")
-                .scenario(postAdministrator, "Post administrator")
-                .scenario(otherDepartmentAdministrator, "Other department administrator")
-                .scenario(otherDepartmentAuthor, "Other department author")
-                .scenario(otherDepartmentMember, "Other department member")
-                .scenario(otherPostAdministrator, "Other post administrator")
-                .scenario(userWithoutRoles, "User without roles")
-                .scenario(null, "Public user");
+        Scenarios scenarios = dataHelper.setUpUnprivilegedUsersForDepartment(department);
 
         Expectations expectations =
             new Expectations()
@@ -790,7 +750,8 @@ public class ActionServiceIT {
 
             Resource testResource = resourceService.getResource(user, resource.getScope(), resource.getId());
             for (Action action : Action.values()) {
-                LOGGER.info("Executing " + action + " on " + testResource.getScope() + " in " + state);
+                String userString = user == null ? "Anonymous" : user.toString();
+                LOGGER.info(action + " on " + testResource.getScope() + " in " + state + " as " + userString);
                 Resource executeResource = action == EXTEND ? extendResource : testResource;
 
                 Expectation expectation = expectations.expected(state, action);
@@ -820,34 +781,6 @@ public class ActionServiceIT {
         } else {
             assertEquals(expectedState, newResource.getState());
         }
-    }
-
-    private static class Scenarios {
-
-        private List<Scenario> scenarios = new ArrayList<>();
-
-        private Scenarios scenario(User user, String description) {
-            scenarios.add(new Scenario(user, description));
-            return this;
-        }
-
-        private void forEach(Consumer<Scenario> consumer) {
-            scenarios.forEach(consumer);
-        }
-
-    }
-
-    private static class Scenario {
-
-        private User user;
-
-        private String description;
-
-        private Scenario(User user, String description) {
-            this.user = user;
-            this.description = description;
-        }
-
     }
 
     private static class Expectations {

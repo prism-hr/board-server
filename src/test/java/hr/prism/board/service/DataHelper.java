@@ -3,27 +3,32 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.authentication.AuthenticationToken;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.repository.ResourceRepository;
+import hr.prism.board.repository.UserRoleRepository;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
 import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.enums.Role.*;
 import static java.math.BigDecimal.ONE;
+import static java.util.UUID.randomUUID;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @Component
 public class DataHelper {
 
     private final ResourceRepository resourceRepository;
+
+    private final UserRoleRepository userRoleRepository;
 
     private final DepartmentService departmentService;
 
@@ -33,16 +38,22 @@ public class DataHelper {
 
     private final UserService userService;
 
+    private final UserRoleService userRoleService;
+
     @Inject
-    public DataHelper(ResourceRepository resourceRepository, DepartmentService departmentService,
-                      BoardService boardService, PostService postService, UserService userService) {
+    public DataHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
+                      DepartmentService departmentService, BoardService boardService, PostService postService,
+                      UserService userService, UserRoleService userRoleService) {
         this.resourceRepository = resourceRepository;
+        this.userRoleRepository = userRoleRepository;
         this.departmentService = departmentService;
         this.boardService = boardService;
         this.postService = postService;
         this.userService = userService;
+        this.userRoleService = userRoleService;
     }
 
+    @SuppressWarnings("SameParameterValue")
     Department setUpDepartment(User user, Long universityId, String name) {
         getContext().setAuthentication(new AuthenticationToken(user));
         return departmentService.createDepartment(universityId,
@@ -95,6 +106,16 @@ public class DataHelper {
         resourceRepository.save(post);
     }
 
+    User setUpUser() {
+        String uuid = randomUUID().toString();
+        return userService.createUser(
+            new RegisterDTO()
+                .setGivenName(uuid)
+                .setSurname(uuid)
+                .setEmail(uuid + "@prism.hr")
+                .setPassword("password"));
+    }
+
     User setUpUser(String givenName, String surname, String email) {
         return userService.createUser(
             new RegisterDTO()
@@ -102,6 +123,83 @@ public class DataHelper {
                 .setSurname(surname)
                 .setEmail(email)
                 .setPassword("password"));
+    }
+
+    Scenarios setUpUnprivilegedUsersForDepartment(Department department) {
+        User departmentAuthor = setUpUser();
+        userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
+
+        User departmentMember = setUpUser();
+        userRoleService.createUserRole(department, departmentMember, MEMBER);
+
+        User departmentAdministrator = getDepartmentAdministrator(department);
+        Board board = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
+
+        User postAdministrator = setUpUser();
+        setUpPost(postAdministrator, board.getId(), randomUUID().toString());
+
+        User otherDepartmentAdministrator = setUpUser();
+        Department otherDepartment =
+            setUpDepartment(otherDepartmentAdministrator, 1L, randomUUID().toString());
+        Board otherBoard = setUpBoard(otherDepartmentAdministrator, otherDepartment.getId(), randomUUID().toString());
+
+        User otherDepartmentAuthor = setUpUser();
+        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
+
+        User otherDepartmentMember = setUpUser();
+        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
+
+        User otherPostAdministrator = setUpUser();
+        setUpPost(otherPostAdministrator, otherBoard.getId(), "other-post");
+
+        User userWithoutRoles = setUpUser();
+
+        return new Scenarios()
+            .scenario(departmentAuthor, "Department author")
+            .scenario(departmentMember, "Department member")
+            .scenario(postAdministrator, "Post administrator")
+            .scenario(otherDepartmentAdministrator, "Other department administrator")
+            .scenario(otherDepartmentAuthor, "Other department author")
+            .scenario(otherDepartmentMember, "Other department member")
+            .scenario(otherPostAdministrator, "Other post administrator")
+            .scenario(userWithoutRoles, "User without roles")
+            .scenario(null, "Public user");
+    }
+
+    private User getDepartmentAdministrator(Department department) {
+        return userRoleRepository.findByResourceAndRole(department, ADMINISTRATOR)
+            .stream()
+            .map(UserRole::getUser)
+            .findFirst()
+            .orElseThrow(() -> new Error(department + " has no administrator"));
+    }
+
+    static class Scenarios {
+
+        private List<Scenario> scenarios = new ArrayList<>();
+
+        Scenarios scenario(User user, String description) {
+            scenarios.add(new Scenario(user, description));
+            return this;
+        }
+
+        void forEach(Consumer<Scenario> consumer) {
+            scenarios.forEach(consumer);
+        }
+
+    }
+
+    static class Scenario {
+
+        User user;
+
+        String description;
+
+        private Scenario(User user, String description) {
+            this.user = user;
+            this.description = description;
+        }
+
     }
 
 }
