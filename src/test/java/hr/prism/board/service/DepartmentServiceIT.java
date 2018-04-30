@@ -6,7 +6,9 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceCategory;
 import hr.prism.board.domain.University;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.repository.UserRepository;
@@ -27,7 +29,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.MemberCategory.*;
 import static hr.prism.board.enums.State.*;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,21 +70,42 @@ public class DepartmentServiceIT {
     public void setUp() {
         baseline = LocalDateTime.now();
         departmentAdministrator = userRepository.findOne(1L);
+    }
 
-        departments = new ArrayList<>();
-        Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
-            Department department =
-                dataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
-            resourceService.updateState(department, state);
-            departments.add(department);
-        });
+    @Test
+    public void createDepartment_success() {
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        Department department = departmentService.createDepartment(1L,
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("department summary"));
 
-        getContext().setAuthentication(null);
+        verifyDepartment(
+            department,
+            "department",
+            "department summary",
+            DRAFT,
+            DRAFT,
+            "university/department",
+            MemberCategory.values(),
+            VIEW, EDIT, EXTEND, SUBSCRIBE);
+
+        Department persistedDepartment = departmentService.getById(department.getId());
+
+        verifyDepartment(
+            persistedDepartment,
+            "department",
+            "department summary",
+            DRAFT,
+            DRAFT,
+            "university/department",
+            MemberCategory.values(),
+            VIEW, EDIT, EXTEND, SUBSCRIBE);
     }
 
     @Test
     public void getDepartments_successWhenAdministrator() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter());
 
         assertThat(departments).hasSize(4);
@@ -95,7 +117,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndState() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setState(ACCEPTED));
 
         assertThat(departments).hasSize(1);
@@ -104,7 +126,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndAction() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setAction(EXTEND));
 
         assertThat(departments).hasSize(3);
@@ -116,7 +138,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("REJECTED"));
 
         assertThat(departments).hasSize(1);
@@ -125,7 +147,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermCaseInsensitiveMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("rejected"));
 
         assertThat(departments).hasSize(1);
@@ -134,7 +156,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermPartialMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("REJECT"));
 
         assertThat(departments).hasSize(1);
@@ -143,7 +165,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermPartialCaseInsensitiveMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("reject"));
 
         assertThat(departments).hasSize(1);
@@ -152,7 +174,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermTypoMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("RIJECT"));
 
         assertThat(departments).hasSize(1);
@@ -161,7 +183,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenAdministratorAndSearchTermNoMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("xyz"));
 
         assertThat(departments).hasSize(0);
@@ -169,7 +191,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermTypoCaseInsensitiveMatch() {
-        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
+        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("riject"));
 
         assertThat(departments).hasSize(1);
@@ -178,6 +200,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenUnprivilegedUser() {
+        setUpDepartments();
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
@@ -205,6 +228,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenUnprivilegedUserAndForbiddenState() {
+        setUpDepartments();
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
@@ -229,6 +253,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenUnprivilegedUserAndForbiddenAction() {
+        setUpDepartments();
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
@@ -251,19 +276,44 @@ public class DepartmentServiceIT {
             }));
     }
 
+    private void setUpDepartments() {
+        departments = new ArrayList<>();
+        Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
+            Department department =
+                dataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
+            resourceService.updateState(department, state);
+            departments.add(department);
+        });
+    }
+
     private void verifyDepartment(Department department, State expectedState, Action... expectedActions) {
+        verifyDepartment(
+            department,
+            "department " + expectedState,
+            "department " + expectedState + " summary",
+            expectedState,
+            DRAFT,
+            "university/department-" + expectedState.name().toLowerCase(),
+            MemberCategory.values(),
+            expectedActions);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyDepartment(Department department, String expectedName, String expectedSummary,
+                                  State expectedState, State expectedPreviousState, String expectedHandle,
+                                  MemberCategory[] expectedMemberCategories, Action... expectedActions) {
         University university = new University();
         university.setId(1L);
 
         assertNotNull(department.getId());
         assertEquals(university, department.getParent());
 
-        assertEquals("department " + expectedState, department.getName());
-        assertEquals("department " + expectedState + " summary", department.getSummary());
+        assertEquals(expectedName, department.getName());
+        assertEquals(expectedSummary, department.getSummary());
 
         assertEquals(expectedState, department.getState());
-        assertEquals(DRAFT, department.getPreviousState());
-        assertEquals("university/department-" + expectedState.name().toLowerCase(), department.getHandle());
+        assertEquals(expectedPreviousState, department.getPreviousState());
+        assertEquals(expectedHandle, department.getHandle());
 
         assertNull(department.getDocumentLogo());
         assertNull(department.getLocation());
@@ -274,7 +324,9 @@ public class DepartmentServiceIT {
                 .map(ResourceCategory::getName)
                 .collect(toList()))
             .containsExactly(
-                UNDERGRADUATE_STUDENT.name(), MASTER_STUDENT.name(), RESEARCH_STUDENT.name(), RESEARCH_STAFF.name());
+                Stream.of(expectedMemberCategories)
+                    .map(MemberCategory::name)
+                    .toArray(String[]::new));
 
         assertThat(
             department.getActions()
