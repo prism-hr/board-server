@@ -39,8 +39,6 @@ public class DataHelper {
 
     private final PostService postService;
 
-    private final ResourceService resourceService;
-
     private final UserService userService;
 
     private final UserRoleService userRoleService;
@@ -48,13 +46,12 @@ public class DataHelper {
     @Inject
     public DataHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
                       DepartmentService departmentService, BoardService boardService, PostService postService,
-                      ResourceService resourceService, UserService userService, UserRoleService userRoleService) {
+                      UserService userService, UserRoleService userRoleService) {
         this.resourceRepository = resourceRepository;
         this.userRoleRepository = userRoleRepository;
         this.departmentService = departmentService;
         this.boardService = boardService;
         this.postService = postService;
-        this.resourceService = resourceService;
         this.userService = userService;
         this.userRoleService = userRoleService;
     }
@@ -129,9 +126,7 @@ public class DataHelper {
         User departmentMember = setUpUser();
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        State state = department.getState();
-        department.setState(ACCEPTED);
-        resourceRepository.save(department);
+        State state = getStateThenSetState(department, ACCEPTED);
 
         User departmentAdministrator = getDepartmentAdministrator(department);
         Board board = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
@@ -139,8 +134,7 @@ public class DataHelper {
         User postAdministrator = setUpUser();
         setUpPost(postAdministrator, board.getId(), randomUUID().toString());
 
-        department.setState(state);
-        resourceRepository.save(department);
+        setState(department, state);
 
         User otherDepartmentAdministrator = setUpUser();
         Department otherDepartment =
@@ -174,21 +168,22 @@ public class DataHelper {
         Department department = ofNullable((Department) board.getParent())
             .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
 
-        State state = department.getState();
-        department.setState(ACCEPTED);
-        resourceRepository.save(department);
+        State departmentState = getStateThenSetState(department, ACCEPTED);
 
         User departmentAdministrator = getDepartmentAdministrator(department);
         Board otherBoard = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
 
-        User postAdministrator = setUpUser();
-        setUpPost(postAdministrator, board.getId(), randomUUID().toString());
-
         User otherBoardPostAdministrator = setUpUser();
         setUpPost(otherBoardPostAdministrator, otherBoard.getId(), randomUUID().toString());
 
-        department.setState(state);
-        resourceRepository.save(department);
+        setState(department, departmentState);
+
+        State boardState = getStateThenSetState(board, ACCEPTED);
+
+        User postAdministrator = setUpUser();
+        setUpPost(postAdministrator, board.getId(), randomUUID().toString());
+
+        setState(board, boardState);
 
         User departmentMember = setUpUser();
         userRoleService.createUserRole(department, departmentMember, MEMBER);
@@ -229,15 +224,12 @@ public class DataHelper {
         Department department = ofNullable((Department) board.getParent())
             .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
 
-        State state = department.getState();
-        department.setState(ACCEPTED);
-        resourceRepository.save(department);
+        State departmentState = getStateThenSetState(department, ACCEPTED);
 
         User departmentAdministrator = getDepartmentAdministrator(department);
         Board otherBoard = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
 
-        department.setState(state);
-        resourceRepository.save(department);
+        setState(department, departmentState);
 
         User otherBoardPostAdministrator = setUpUser();
         setUpPost(otherBoardPostAdministrator, otherBoard.getId(), randomUUID().toString());
@@ -279,6 +271,18 @@ public class DataHelper {
             .map(UserRole::getUser)
             .findFirst()
             .orElseThrow(() -> new Error(department + " has no administrator"));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private State getStateThenSetState(Resource resource, State newState) {
+        State state = resource.getState();
+        setState(resource, newState);
+        return state;
+    }
+
+    private void setState(Resource resource, State state) {
+        resource.setState(state);
+        resourceRepository.save(resource);
     }
 
     static class Scenarios {

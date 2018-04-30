@@ -61,16 +61,19 @@ public class DepartmentServiceIT {
 
     private LocalDateTime baseline;
 
+    private User departmentAdministrator;
+
     private List<Department> setUpDepartments;
 
     @Before
     public void setUp() {
         baseline = LocalDateTime.now();
-        User user = userRepository.findOne(1L);
+        departmentAdministrator = userRepository.findOne(1L);
 
         setUpDepartments = new ArrayList<>();
         Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
-            Department department = dataHelper.setUpDepartment(user, 1L, "department " + state);
+            Department department =
+                dataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
             resourceService.updateState(department, state);
             setUpDepartments.add(department);
         });
@@ -80,7 +83,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministrator() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter());
 
         assertThat(departments).hasSize(4);
@@ -92,7 +95,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndState() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setState(ACCEPTED));
 
         assertThat(departments).hasSize(1);
@@ -101,7 +104,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndAction() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setAction(EXTEND));
 
         assertThat(departments).hasSize(3);
@@ -113,7 +116,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("REJECTED"));
 
         assertThat(departments).hasSize(1);
@@ -122,7 +125,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermCaseInsensitiveMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("rejected"));
 
         assertThat(departments).hasSize(1);
@@ -131,7 +134,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermPartialMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("REJECT"));
 
         assertThat(departments).hasSize(1);
@@ -140,7 +143,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermPartialCaseInsensitiveMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("reject"));
 
         assertThat(departments).hasSize(1);
@@ -149,7 +152,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermTypoMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("RIJECT"));
 
         assertThat(departments).hasSize(1);
@@ -158,7 +161,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenAdministratorAndSearchTermNoMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("xyz"));
 
         assertThat(departments).hasSize(0);
@@ -166,7 +169,7 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndSearchTermTypoCaseInsensitiveMatch() {
-        authenticateAsDepartmentAdministrator();
+        getContext().setAuthentication(new AuthenticationToken(departmentAdministrator));
         List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("riject"));
 
         assertThat(departments).hasSize(1);
@@ -246,11 +249,6 @@ public class DepartmentServiceIT {
 
                 assertThat(departments).hasSize(0);
             }));
-    }
-
-    private void authenticateAsDepartmentAdministrator() {
-        User user = userRepository.findOne(1L);
-        getContext().setAuthentication(new AuthenticationToken(user));
     }
 
     private void verifyDepartment(Department department, State expectedState, Action... expectedActions) {
