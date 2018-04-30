@@ -16,18 +16,22 @@ public class WidgetOptionsDTO extends ResourceDTO {
 
     private Boolean preview = false;
 
+    @SuppressWarnings("unused")
     public BadgeType getBadgeType() {
         return badgeType;
     }
 
+    @SuppressWarnings("unused")
     public void setBadgeType(BadgeType badgeType) {
         this.badgeType = badgeType;
     }
 
+    @SuppressWarnings("unused")
     public BadgeListType getBadgeListType() {
         return badgeListType;
     }
 
+    @SuppressWarnings("unused")
     public void setBadgeListType(BadgeListType badgeListType) {
         this.badgeListType = badgeListType;
     }
@@ -36,6 +40,7 @@ public class WidgetOptionsDTO extends ResourceDTO {
         return postCount;
     }
 
+    @SuppressWarnings("unused")
     public void setPostCount(Integer postCount) {
         this.postCount = postCount;
     }
@@ -44,6 +49,7 @@ public class WidgetOptionsDTO extends ResourceDTO {
         return preview;
     }
 
+    @SuppressWarnings("unused")
     public void setPreview(Boolean preview) {
         this.preview = preview;
     }

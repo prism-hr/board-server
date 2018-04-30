@@ -110,6 +110,69 @@ public class DepartmentServiceIT {
         verifyDepartment(departments.get(2), PENDING, VIEW, EDIT, EXTEND, SUBSCRIBE);
     }
 
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("REJECTED"));
+
+        assertThat(departments).hasSize(1);
+        verifyDepartment(departments.get(0), REJECTED, VIEW, EDIT, SUBSCRIBE);
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermCaseInsensitiveMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("rejected"));
+
+        assertThat(departments).hasSize(1);
+        verifyDepartment(departments.get(0), REJECTED, VIEW, EDIT, SUBSCRIBE);
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermPartialMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("REJECT"));
+
+        assertThat(departments).hasSize(1);
+        verifyDepartment(departments.get(0), REJECTED, VIEW, EDIT, SUBSCRIBE);
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermPartialCaseInsensitiveMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("reject"));
+
+        assertThat(departments).hasSize(1);
+        verifyDepartment(departments.get(0), REJECTED, VIEW, EDIT, SUBSCRIBE);
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermTypoMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("RIJECT"));
+
+        assertThat(departments).hasSize(1);
+        verifyDepartment(departments.get(0), REJECTED, VIEW, EDIT, SUBSCRIBE);
+    }
+
+    @Test
+    public void getDepartments_failureWhenAdministratorAndSearchTermNoMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("xyz"));
+
+        assertThat(departments).hasSize(0);
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermTypoCaseInsensitiveMatch() {
+        authenticateAsDepartmentAdministrator();
+        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setSearchTerm("riject"));
+
+        assertThat(departments).hasSize(1);
+        verifyDepartment(departments.get(0), REJECTED, VIEW, EDIT, SUBSCRIBE);
+    }
+
     @Test
     public void getDepartments_successWhenUnprivilegedUser() {
         List<Scenarios> scenariosList =
@@ -126,9 +189,9 @@ public class DepartmentServiceIT {
                 getContext().setAuthentication(new AuthenticationToken(user));
                 List<Department> departments =
                     departmentService.getDepartments(new ResourceFilter())
-                    .stream()
-                    .filter(setUpDepartments::contains)
-                    .collect(toList());
+                        .stream()
+                        .filter(setUpDepartments::contains)
+                        .collect(toList());
 
                 assertThat(departments).hasSize(3);
                 verifyDepartment(departments.get(0), ACCEPTED, VIEW);
@@ -139,14 +202,50 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenUnprivilegedUserAndForbiddenState() {
-        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setState(REJECTED));
-        assertThat(departments).hasSize(0);
+        List<Scenarios> scenariosList =
+            departmentRepository.findAll()
+                .stream()
+                .map(dataHelper::setUpUnprivilegedUsersForDepartment)
+                .collect(toList());
+
+        scenariosList.forEach(scenarios ->
+            scenarios.forEach(scenario -> {
+                User user = scenario.user;
+                LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
+
+                getContext().setAuthentication(new AuthenticationToken(user));
+                List<Department> departments =
+                    departmentService.getDepartments(new ResourceFilter().setState(REJECTED))
+                        .stream()
+                        .filter(setUpDepartments::contains)
+                        .collect(toList());
+
+                assertThat(departments).hasSize(0);
+            }));
     }
 
     @Test
     public void getDepartments_failureWhenUnprivilegedUserAndForbiddenAction() {
-        List<Department> departments = departmentService.getDepartments(new ResourceFilter().setAction(EXTEND));
-        assertThat(departments).hasSize(0);
+        List<Scenarios> scenariosList =
+            departmentRepository.findAll()
+                .stream()
+                .map(dataHelper::setUpUnprivilegedUsersForDepartment)
+                .collect(toList());
+
+        scenariosList.forEach(scenarios ->
+            scenarios.forEach(scenario -> {
+                User user = scenario.user;
+                LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
+
+                getContext().setAuthentication(new AuthenticationToken(user));
+                List<Department> departments =
+                    departmentService.getDepartments(new ResourceFilter().setAction(EXTEND))
+                        .stream()
+                        .filter(setUpDepartments::contains)
+                        .collect(toList());
+
+                assertThat(departments).hasSize(0);
+            }));
     }
 
     private void authenticateAsDepartmentAdministrator() {
