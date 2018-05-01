@@ -3,13 +3,10 @@ package hr.prism.board.mapper;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
-
-import static hr.prism.board.enums.CategoryType.POST;
 
 @Component
 public class BoardMapper implements Function<Board, BoardRepresentation> {
@@ -18,14 +15,10 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
 
     private final ResourceMapper resourceMapper;
 
-    private final ResourceService resourceService;
-
     @Inject
-    public BoardMapper(DepartmentMapper departmentMapper, ResourceMapper resourceMapper,
-                       ResourceService resourceService) {
+    public BoardMapper(DepartmentMapper departmentMapper, ResourceMapper resourceMapper) {
         this.departmentMapper = departmentMapper;
         this.resourceMapper = resourceMapper;
-        this.resourceService = resourceService;
     }
 
     @Override
@@ -38,7 +31,7 @@ public class BoardMapper implements Function<Board, BoardRepresentation> {
         return resourceMapper.apply(board, BoardRepresentation.class)
             .setHandle(resourceMapper.getHandle(board, department))
             .setDepartment(departmentMapper.applySmall(department))
-            .setPostCategories(resourceService.getCategories(board, POST));
+            .setPostCategories(board.getPostCategoryStrings());
     }
 
     BoardRepresentation applySmall(Board board) {

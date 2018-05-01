@@ -204,8 +204,22 @@ public class Resource extends BoardEntity {
         return getCategories(MEMBER);
     }
 
+    public List<String> getMemberCategoryStrings() {
+        return getMemberCategories()
+            .stream()
+            .map(ResourceCategory::getName)
+            .collect(toList());
+    }
+
     public List<ResourceCategory> getPostCategories() {
         return getCategories(POST);
+    }
+
+    public List<String> getPostCategoryStrings() {
+        return getPostCategories()
+            .stream()
+            .map(ResourceCategory::getName)
+            .collect(toList());
     }
 
     public Set<UserRole> getUserRoles() {
@@ -266,10 +280,10 @@ public class Resource extends BoardEntity {
         this.notificationSuppressedForUser = notificationSuppressedForUser;
     }
 
-    public List<ResourceCategory> getCategories(CategoryType type) {
-        return categories.stream()
-            .filter(category -> category.getType() == type)
-            .sorted(comparingLong(ResourceCategory::getId))
+    public List<String> getCategoryStrings(CategoryType type) {
+        return getCategories(type)
+            .stream()
+            .map(ResourceCategory::getName)
             .collect(toList());
     }
 
@@ -299,6 +313,13 @@ public class Resource extends BoardEntity {
         }
 
         return Joiner.on(" ").skipNulls().join(scope.name().toLowerCase(), getId());
+    }
+
+    private List<ResourceCategory> getCategories(CategoryType type) {
+        return categories.stream()
+            .filter(category -> category.getType() == type)
+            .sorted(comparingLong(ResourceCategory::getId))
+            .collect(toList());
     }
 
 }

@@ -5,21 +5,16 @@ import hr.prism.board.domain.Post;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
-import hr.prism.board.service.ResourceService;
 import hr.prism.board.value.DemographicDataStatus;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.function.Function;
 
-import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.MemberCategory.fromStrings;
 
 @Component
 public class PostMapper implements Function<Post, PostRepresentation> {
-
-    private final ResourceService resourceService;
 
     private final PostService postService;
 
@@ -36,10 +31,9 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     private final ResourceEventMapper resourceEventMapper;
 
     @Inject
-    public PostMapper(ResourceService resourceService, PostService postService, LocationMapper locationMapper,
-                      OrganizationMapper organizationMapper, DocumentMapper documentMapper, BoardMapper boardMapper,
-                      ResourceMapper resourceMapper, ResourceEventMapper resourceEventMapper) {
-        this.resourceService = resourceService;
+    public PostMapper(PostService postService, LocationMapper locationMapper, OrganizationMapper organizationMapper,
+                      DocumentMapper documentMapper, BoardMapper boardMapper, ResourceMapper resourceMapper,
+                      ResourceEventMapper resourceEventMapper) {
         this.postService = postService;
         this.locationMapper = locationMapper;
         this.organizationMapper = organizationMapper;
@@ -64,8 +58,8 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 .setExistingRelation(post.getExistingRelation())
                 .setExistingRelationExplanation(
                     postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
-                .setPostCategories(resourceService.getCategories(post, POST))
-                .setMemberCategories(fromStrings(resourceService.getCategories(post, MEMBER)));
+                .setPostCategories(post.getPostCategoryStrings())
+                .setMemberCategories(fromStrings(post.getMemberCategoryStrings()));
 
         String applyEmail = post.getApplyEmail();
         if (post.isExposeApplyData()) {

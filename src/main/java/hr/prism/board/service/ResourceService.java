@@ -36,7 +36,6 @@ import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.ResourceUtils.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -113,11 +112,6 @@ public class ResourceService {
 
     public List<String> getResourceArchiveQuarters(User user, Scope scope, Long parentId) {
         return resourceDAO.getResourceArchiveQuarters(user, scope, parentId);
-    }
-
-    public List<String> getCategories(Resource resource, CategoryType categoryType) {
-        List<ResourceCategory> categories = resource.getCategories(categoryType);
-        return categories == null ? null : categories.stream().map(ResourceCategory::getName).collect(toList());
     }
 
     public ResourceOperation getLatestResourceOperation(Resource resource, Action action) {

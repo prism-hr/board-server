@@ -1,11 +1,17 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.StaffDTO;
 import hr.prism.board.dto.UserDTO;
 import hr.prism.board.dto.UserRoleDTO;
-import hr.prism.board.enums.*;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
+import hr.prism.board.enums.RoleType;
+import hr.prism.board.enums.State;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.DepartmentMemberEvent;
 import hr.prism.board.event.EventProducer;
@@ -46,8 +52,6 @@ import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-
-import hr.prism.board.event.ActivityEvent;
 
 @Service
 @Transactional
@@ -358,7 +362,7 @@ public class DepartmentUserService {
     }
 
     private void checkValidMemberCategory(Department department, MemberCategory memberCategory) {
-        List<ResourceCategory> memberCategories = department.getCategories(CategoryType.MEMBER);
+        List<String> memberCategories = department.getMemberCategoryStrings();
         if (memberCategories.isEmpty()) {
             if (memberCategory == null) {
                 return;
@@ -373,7 +377,6 @@ public class DepartmentUserService {
 
         if (memberCategories
             .stream()
-            .map(ResourceCategory::getName)
             .noneMatch(name -> name.equals(memberCategory.name()))) {
             throw new BoardException(
                 INVALID_USER_ROLE_MEMBER_CATEGORIES, "Valid categories must be specified - check parent categories");

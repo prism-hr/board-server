@@ -5,7 +5,6 @@ import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.domain.University;
 import hr.prism.board.representation.*;
-import hr.prism.board.service.ResourceService;
 import hr.prism.board.value.*;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +12,6 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Function;
 
-import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.MemberCategory.fromStrings;
 import static java.util.stream.Collectors.toList;
 
@@ -29,17 +26,13 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
 
     private final OrganizationMapper organizationMapper;
 
-    private final ResourceService resourceService;
-
     @Inject
     public DepartmentMapper(DocumentMapper documentMapper, ResourceMapper resourceMapper,
-                            UniversityMapper universityMapper, OrganizationMapper organizationMapper,
-                            ResourceService resourceService) {
+                            UniversityMapper universityMapper, OrganizationMapper organizationMapper) {
         this.documentMapper = documentMapper;
         this.resourceMapper = resourceMapper;
         this.universityMapper = universityMapper;
         this.organizationMapper = organizationMapper;
-        this.resourceService = resourceService;
     }
 
     @Override
@@ -55,7 +48,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(resourceMapper.getHandle(department, university))
             .setCustomerId(department.getCustomerId())
-            .setMemberCategories(fromStrings(resourceService.getCategories(department, MEMBER)));
+            .setMemberCategories(fromStrings(department.getMemberCategoryStrings()));
     }
 
     public DepartmentRepresentation apply(ResourceSearch department) {
@@ -116,7 +109,7 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
         return boards.stream().map(board ->
             resourceMapper.apply(board, BoardRepresentation.class)
                 .setHandle(resourceMapper.getHandle(board, department))
-                .setPostCategories(resourceService.getCategories(board, POST)))
+                .setPostCategories(board.getPostCategoryStrings()))
             .collect(toList());
     }
 

@@ -1,6 +1,9 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.University;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
@@ -8,7 +11,6 @@ import hr.prism.board.representation.ActionRepresentation;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.utils.ResourceUtils.getQuarter;
@@ -34,8 +36,8 @@ public class ServiceVerificationHelper {
         assertNull(department.getDocumentLogo());
         assertNull(department.getLocation());
 
-        verifyCategories(department.getMemberCategories(),
-            Stream.of(expectedMemberCategories).map(MemberCategory::name).toArray(String[]::new));
+        assertThat(department.getMemberCategoryStrings())
+            .containsExactly(Stream.of(expectedMemberCategories).map(MemberCategory::name).toArray(String[]::new));
         verifyActions(department, expectedActions);
 
         verifyIndexDataAndQuarter(department, expectedIndexData);
@@ -53,7 +55,7 @@ public class ServiceVerificationHelper {
         assertEquals(expectedPreviousState, board.getPreviousState());
         assertEquals(expectedHandle, board.getHandle());
 
-        verifyCategories(board.getPostCategories(), expectedPostCategories);
+        assertThat(board.getPostCategoryStrings()).containsExactly(expectedPostCategories);
         verifyActions(board, expectedActions);
 
         verifyIndexDataAndQuarter(board, expectedIndexData);
@@ -64,15 +66,6 @@ public class ServiceVerificationHelper {
         assertNotNull(resource.getId());
         assertEquals(expectedParentResource, resource.getParent());
         assertEquals(expectedName, resource.getName());
-    }
-
-    private void verifyCategories(List<ResourceCategory> categories, String[] expectedCategories) {
-        assertThat(
-            categories
-                .stream()
-                .map(ResourceCategory::getName)
-                .collect(toList()))
-            .containsExactly(expectedCategories);
     }
 
     private void verifyActions(Resource resource, Action[] expectedActions) {

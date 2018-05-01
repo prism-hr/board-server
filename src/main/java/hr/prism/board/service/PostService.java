@@ -372,18 +372,19 @@ public class PostService {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchPostCategories(Post post, Optional<List<String>> categories) {
         if (categories != null) {
-            List<String> oldCategories = resourceService.getCategories(post, CategoryType.POST);
+            List<String> oldCategories = post.getPostCategoryStrings();
+
             if (categories.isPresent()) {
                 List<String> newCategories = categories.get();
                 if (!Objects.equals(oldCategories, newCategories)) {
                     updatePostCategories(post, newCategories);
                     post.getChangeList().put("postCategories",
-                        oldCategories, resourceService.getCategories(post, CategoryType.POST));
+                        oldCategories, post.getPostCategoryStrings());
                 }
-            } else if (oldCategories != null) {
+            } else if (isNotEmpty(oldCategories)) {
                 updatePostCategories(post, null);
                 post.getChangeList().put("postCategories",
-                    oldCategories, resourceService.getCategories(post, CategoryType.POST));
+                    oldCategories, post.getPostCategoryStrings());
             }
         }
     }
@@ -391,7 +392,7 @@ public class PostService {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchMemberCategories(Post post, Optional<List<MemberCategory>> categories) {
         if (categories != null) {
-            List<String> oldCategories = resourceService.getCategories(post, MEMBER);
+            List<String> oldCategories = post.getMemberCategoryStrings();
             if (categories.isPresent()) {
                 List<String> newCategories =
                     categories.get()
@@ -402,12 +403,12 @@ public class PostService {
                 if (!Objects.equals(oldCategories, newCategories)) {
                     updateMemberCategories(post, newCategories);
                     post.getChangeList().put("memberCategories",
-                        oldCategories, resourceService.getCategories(post, MEMBER));
+                        oldCategories, post.getMemberCategoryStrings());
                 }
             } else if (oldCategories != null) {
                 updatePostCategories(post, null);
                 post.getChangeList().put("memberCategories",
-                    oldCategories, resourceService.getCategories(post, MEMBER));
+                    oldCategories, post.getMemberCategoryStrings());
             }
         }
     }
@@ -433,7 +434,7 @@ public class PostService {
 
     private void updatePostCategories(Post post, List<String> categories) {
         Board board = (Board) post.getParent();
-        List<String> postCategories = resourceService.getCategories(board, CategoryType.POST);
+        List<String> postCategories = board.getPostCategoryStrings();
         checkCategories(categories, postCategories,
             CORRUPTED_POST_POST_CATEGORIES, MISSING_POST_POST_CATEGORIES, INVALID_POST_POST_CATEGORIES);
         resourceService.updateCategories(post, CategoryType.POST, categories);
@@ -441,7 +442,7 @@ public class PostService {
 
     private void updateMemberCategories(Post post, List<String> categories) {
         Department department = (Department) post.getParent().getParent();
-        List<String> memberCategories = resourceService.getCategories(department, MEMBER);
+        List<String> memberCategories = department.getMemberCategoryStrings();
         checkCategories(categories, memberCategories,
             CORRUPTED_POST_MEMBER_CATEGORIES, MISSING_POST_MEMBER_CATEGORIES, INVALID_POST_MEMBER_CATEGORIES);
         resourceService.updateCategories(post, MEMBER, categories);

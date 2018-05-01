@@ -73,7 +73,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
     void patchCategories(T resource, CategoryType categoryType,
                                 Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
-            List<String> oldValues = resourceService.getCategories(resource, categoryType);
+            List<String> oldValues = resource.getCategoryStrings(categoryType);
             List<String> newValues = newValuesOptional.orElse(null);
             if (!Objects.equals(oldValues, newValues)) {
                 patchCategories(resource, categoryType, oldValues, newValues);
