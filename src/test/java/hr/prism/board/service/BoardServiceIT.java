@@ -2,18 +2,17 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
-import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
-import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ServiceDataHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.workflow.Execution;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,10 +32,8 @@ import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.enums.State.REJECTED;
-import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -68,7 +65,7 @@ public class BoardServiceIT {
     private ServiceVerificationHelper serviceVerificationHelper;
 
     @SpyBean
-    private ResourceDAO resourceDAO;
+    private ActionService actionService;
 
     @SpyBean
     private ResourceService resourceService;
@@ -109,12 +106,12 @@ public class BoardServiceIT {
             boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(department2.getId()));
 
         userRoleService.createUserRole(department2, department2Administrator, ADMINISTRATOR);
-        reset(resourceDAO, resourceService);
+        reset(actionService, resourceService);
     }
 
     @After
     public void tearDown() {
-        reset(resourceDAO, resourceService);
+        reset(actionService, resourceService);
     }
 
     @Test
@@ -139,14 +136,6 @@ public class BoardServiceIT {
 
         verifyInvocations(createdBoard);
         verifyResourceOperation(createdBoard);
-    }
-
-    @Test
-    public void createBoard_failureWhenNotPermitted() {
-        assertThatThrownBy(() ->
-            boardService.createBoard(department2Administrator, department.getId(), new BoardDTO()))
-            .isExactlyInstanceOf(BoardForbiddenException.class)
-            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
 
     @Test
@@ -325,7 +314,9 @@ public class BoardServiceIT {
     }
 
     private void verifyInvocations(Board board) {
-        verify(resourceDAO, times(1))
+        verify(actionService, times(1))
+            .executeAction(eq(departmentAdministrator), eq(department), eq(EXTEND), any(Execution.class));
+        verify(resourceService, times(1))
             .checkUniqueName(BOARD, null, department, "board");
         verify(resourceService, times(1))
             .createHandle(board.getParent(), BOARD, board.getName());

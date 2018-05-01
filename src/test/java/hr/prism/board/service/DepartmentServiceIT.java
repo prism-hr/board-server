@@ -1,17 +1,13 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DbTestContext;
-import hr.prism.board.dao.ResourceDAO;
-import hr.prism.board.dao.ResourceTaskDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
-import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.UserRepository;
@@ -38,12 +34,9 @@ import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
-import static hr.prism.board.enums.Scope.UNIVERSITY;
 import static hr.prism.board.enums.State.*;
-import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -66,9 +59,6 @@ public class DepartmentServiceIT {
     private DocumentRepository documentRepository;
 
     @Inject
-    private UniversityService universityService;
-
-    @Inject
     private DepartmentService departmentService;
 
     @Inject
@@ -81,13 +71,13 @@ public class DepartmentServiceIT {
     private ServiceVerificationHelper serviceVerificationHelper;
 
     @SpyBean
-    private ResourceDAO resourceDAO;
-
-    @SpyBean
-    private ResourceTaskDAO resourceTaskDAO;
+    private UniversityService universityService;
 
     @SpyBean
     private ResourceService resourceService;
+
+    @SpyBean
+    private ResourceTaskService resourceTaskService;
 
     @SpyBean
     private UserRoleService userRoleService;
@@ -117,12 +107,12 @@ public class DepartmentServiceIT {
             departments.add(department);
         });
 
-        reset(resourceService, resourceDAO, resourceTaskDAO);
+        reset(universityService, resourceService, resourceTaskService, userRoleService);
     }
 
     @After
     public void tearDown() {
-        reset(resourceService, resourceDAO, resourceTaskDAO);
+        reset(universityService, resourceService, resourceTaskService, userRoleService);
     }
 
     @Test
@@ -190,16 +180,6 @@ public class DepartmentServiceIT {
         verifyInvocations(createdDepartment);
         verifyResourceOperation(createdDepartment);
         verifyDefaultBoards(createdDepartment);
-    }
-
-    @Test
-    public void createDepartment_failureWhenUniversityDoesNotExist() {
-        assertThatThrownBy(
-            () -> departmentService.createDepartment(departmentAdministrator, 0L, new DepartmentDTO()))
-            .isExactlyInstanceOf(BoardNotFoundException.class)
-            .hasFieldOrPropertyWithValue("exceptionCode", MISSING_RESOURCE)
-            .hasFieldOrPropertyWithValue("properties",
-                ImmutableMap.of("scope", UNIVERSITY, "id", 0L));
     }
 
     @Test
@@ -409,14 +389,15 @@ public class DepartmentServiceIT {
     }
 
     private void verifyInvocations(Department department) {
-        verify(resourceDAO, times(1))
+        verify(universityService, times(1)).getById(1L);
+        verify(resourceService, times(1))
             .checkUniqueName(DEPARTMENT, null, university, "department");
         verify(resourceService, times(1))
             .createHandle(department.getParent(), DEPARTMENT, department.getName());
         verify(resourceService, times(1))
             .createResourceOperation(department, EXTEND, departmentAdministrator);
-        verify(resourceTaskDAO, times(1))
-            .insertResourceTasks(department.getId(), departmentAdministrator.getId(), DEPARTMENT_TASKS);
+        verify(resourceTaskService, times(1))
+            .createForNewResource(department.getId(), departmentAdministrator.getId(), DEPARTMENT_TASKS);
         verify(userRoleService, times(1))
             .createUserRole(department, departmentAdministrator, ADMINISTRATOR);
     }

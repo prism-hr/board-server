@@ -12,6 +12,7 @@ import java.util.List;
 
 import static hr.prism.board.enums.Scope.UNIVERSITY;
 import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
+import static java.util.Optional.ofNullable;
 
 @Service
 @Transactional
@@ -28,12 +29,8 @@ public class UniversityService {
     }
 
     public University getById(Long id) {
-        University university = (University) resourceService.getById(id);
-        if (university == null) {
-            throw new BoardNotFoundException(MISSING_RESOURCE, UNIVERSITY, id);
-        }
-
-        return university;
+        return ofNullable((University) resourceService.getById(id))
+            .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, UNIVERSITY, id));
     }
 
     public List<ResourceSearch> findUniversities(String searchTerm) {
