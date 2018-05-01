@@ -31,6 +31,7 @@ import static hr.prism.board.enums.Role.PUBLIC;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
 import static hr.prism.board.enums.State.ARCHIVED;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
@@ -189,7 +190,7 @@ public class ResourceDAO {
     }
 
     @SuppressWarnings({"unchecked", "JpaQlInspection"})
-    public void checkUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
+    public void checkUniqueName(Scope scope, Long id, Resource parent, String name) {
         String statement =
             "select resource.id " +
                 "from Resource resource " +
@@ -214,7 +215,7 @@ public class ResourceDAO {
 
         List<Long> resourceIds = (List<Long>) query.getResultList();
         if (!resourceIds.isEmpty()) {
-            throw new BoardDuplicateException(exceptionCode,
+            throw new BoardDuplicateException(DUPLICATE_RESOURCE,
                 scope + " with name " + name + " exists already", resourceIds.get(0));
         }
     }

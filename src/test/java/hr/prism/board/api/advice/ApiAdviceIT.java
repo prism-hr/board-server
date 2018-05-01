@@ -53,7 +53,7 @@ public class ApiAdviceIT {
 
     @Test
     public void handleBoardDuplicateException() throws Exception {
-        doRequest("boardDuplicateException", CONFLICT, DUPLICATE_DEPARTMENT, singletonMap("id", "1"));
+        doRequest("boardDuplicateException", CONFLICT, DUPLICATE_RESOURCE, singletonMap("id", "1"));
     }
 
     @Test

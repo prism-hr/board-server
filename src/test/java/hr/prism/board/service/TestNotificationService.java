@@ -15,7 +15,7 @@ import static org.junit.Assert.fail;
 public class TestNotificationService {
 
     public void verify(NotificationInstance... expectedNotificationInstances) {
-        fail("Replace this shit with proper assertions against the pusher mock");
+        fail("Replace this shit with proper assertions against the sendgrid mock");
 //        Assert.assertEquals(expectedNotificationInstances.length, instances.size());
 //        for (NotificationInstance expectedNotificationInstance : expectedNotificationInstances) {
 //            NotificationInstance actualNotificationInstance = instances.remove(0);

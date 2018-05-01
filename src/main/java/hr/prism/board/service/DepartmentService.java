@@ -37,8 +37,6 @@ import static hr.prism.board.enums.ResourceTask.UPDATE_MEMBER;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
@@ -154,8 +152,7 @@ public class DepartmentService {
 
     public Department createDepartment(User user, Long universityId, DepartmentDTO departmentDTO) {
         University university = universityService.getById(universityId);
-        resourceService.checkUniqueName(
-            DEPARTMENT, null, university, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
+        resourceService.checkUniqueName(DEPARTMENT, null, university, departmentDTO.getName());
         String name = normalizeSpace(departmentDTO.getName());
 
         Department department = new Department();
@@ -213,10 +210,10 @@ public class DepartmentService {
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.setChangeList(new ChangeListRepresentation());
-            resourcePatchService.patchName(department, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
+            resourcePatchService.patchName(department, departmentDTO.getName());
             resourcePatchService.patchProperty(department, "summary",
                 department::getSummary, department::setSummary, departmentDTO.getSummary());
-            resourcePatchService.patchHandle(department, departmentDTO.getHandle(), DUPLICATE_DEPARTMENT_HANDLE);
+            resourcePatchService.patchHandle(department, departmentDTO.getHandle());
             resourcePatchService.patchDocument(department, "documentLogo",
                 department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
             resourcePatchService.patchMemberCategories(department, departmentDTO.getMemberCategories());

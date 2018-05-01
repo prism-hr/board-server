@@ -136,7 +136,7 @@
 //        Assert.assertEquals("f", documentR.getFileName());
 //
 //        verifyNewDepartmentBoards(departmentId);
-//        ExceptionUtils.verifyDuplicateException(() -> departmentApi.createDepartment(universityId, department), ExceptionCode.DUPLICATE_DEPARTMENT, departmentId, null);
+//        ExceptionUtils.verifyDuplicateException(() -> departmentApi.createDepartment(universityId, department), ExceptionCode.DUPLICATE_RESOURCE, departmentId, null);
 //    }
 //
 //    @Test
@@ -270,7 +270,7 @@
 //            () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
 //                new DepartmentPatchDTO()
 //                    .setName(Optional.of(departmentRs.getValue().getName()))),
-//            ExceptionCode.DUPLICATE_DEPARTMENT, departmentRs.getValue().getId());
+//            ExceptionCode.DUPLICATE_RESOURCE, departmentRs.getValue().getId());
 //    }
 //
 //    @Test
@@ -281,7 +281,7 @@
 //            () -> departmentApi.updateDepartment(departmentRs.getKey().getId(),
 //                new DepartmentPatchDTO()
 //                    .setHandle(Optional.of(departmentRs.getValue().getHandle()))),
-//            ExceptionCode.DUPLICATE_DEPARTMENT_HANDLE);
+//            ExceptionCode.DUPLICATE_RESOURCE_HANDLE);
 //    }
 //
 //    @Test

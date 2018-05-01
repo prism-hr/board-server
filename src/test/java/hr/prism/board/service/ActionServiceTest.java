@@ -2,8 +2,6 @@ package hr.prism.board.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.event.EventProducer;
@@ -17,14 +15,14 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
-import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.Scope.BOARD;
+import static hr.prism.board.enums.Action.EDIT;
+import static hr.prism.board.enums.Action.VIEW;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
-import static hr.prism.board.enums.State.ACCEPTED;
-import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ActionServiceTest {
@@ -59,32 +57,6 @@ public class ActionServiceTest {
     }
 
     @Test
-    public void executeAction_successWhenCreateBoard() {
-        User user = new User();
-        user.setGivenName("alastair");
-        user.setSurname("knowles");
-        user.setEmail("alastair@prism.hr");
-
-        Department department = new Department();
-        department.setScope(DEPARTMENT);
-        department.setId(1L);
-        department.setState(DRAFT);
-        department.setActions(ImmutableList.of(new ActionRepresentation().setAction(EXTEND).setState(ACCEPTED)));
-
-        Board board = new Board();
-        board.setScope(BOARD);
-        board.setId(2L);
-
-        when(resourceService.getResource(user, BOARD, 2L)).thenReturn(board);
-
-        actionService.executeAction(user, department, EXTEND, () -> board);
-
-        verify(resourceService, times(1)).updateState(board, ACCEPTED);
-        verify(resourceService, times(1)).getResource(user, BOARD, 2L);
-        verify(resourceService, times(1)).createResourceOperation(board, EXTEND, user);
-    }
-
-    @Test
     public void executeAction_failureWhenActionsNull() {
         User user = new User();
         user.setGivenName("alastair");
@@ -97,7 +69,7 @@ public class ActionServiceTest {
 
         assertThatThrownBy(() -> actionService.executeAction(user, resource, VIEW, null))
             .isExactlyInstanceOf(BoardForbiddenException.class)
-            .hasMessage("FORBIDDEN_ACTION: Action cannot be performed");
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
 
     @Test
@@ -114,7 +86,7 @@ public class ActionServiceTest {
 
         assertThatThrownBy(() -> actionService.executeAction(user, resource, VIEW, null))
             .isExactlyInstanceOf(BoardForbiddenException.class)
-            .hasMessage("FORBIDDEN_ACTION: Action cannot be performed");
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
 
     @Test
@@ -131,7 +103,7 @@ public class ActionServiceTest {
 
         assertThatThrownBy(() -> actionService.executeAction(user, resource, EDIT, null))
             .isExactlyInstanceOf(BoardForbiddenException.class)
-            .hasMessage("FORBIDDEN_ACTION: Action cannot be performed");
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
 
 }

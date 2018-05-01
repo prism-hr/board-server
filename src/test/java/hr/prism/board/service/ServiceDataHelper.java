@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
-import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
-import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.enums.MemberCategory.fromStrings;
 import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static java.math.BigDecimal.ONE;
@@ -70,6 +69,9 @@ public class ServiceDataHelper {
     }
 
     Post setUpPost(User user, Long boardId, String name) {
+        Board board = boardService.getById(user, boardId);
+        Department department = departmentService.getById(user, board.getParent().getId());
+
         return postService.createPost(user, boardId,
             new PostDTO()
                 .setName(name)
@@ -84,8 +86,8 @@ public class ServiceDataHelper {
                     .setLatitude(ONE)
                     .setLongitude(ONE))
                 .setApplyWebsite("http://www.google.co.uk")
-                .setPostCategories(ImmutableList.of("Employment", "Internship"))
-                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))
+                .setPostCategories(board.getPostCategoryStrings())
+                .setMemberCategories(fromStrings(department.getMemberCategoryStrings()))
                 .setExistingRelation(STUDENT)
                 .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
                 .setLiveTimestamp(LocalDateTime.now())

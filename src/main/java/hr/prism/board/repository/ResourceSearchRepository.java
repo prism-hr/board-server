@@ -23,7 +23,7 @@ public interface ResourceSearchRepository extends SearchRepository<ResourceSearc
             "FROM resource " +
             "WHERE resource.id IN (:resourceIds) " +
             "HAVING SIMILARITY > 0 " +
-            "ORDER BY similarity DESC, resource.id DESC) AS resource_search_result",
+            "ORDER BY similarity DESC, resource.id) AS resource_search_result",
         nativeQuery = true)
     void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime,
                         @Param("searchTerm") String searchTerm, @Param("resourceIds") Collection<Long> resourceIds);

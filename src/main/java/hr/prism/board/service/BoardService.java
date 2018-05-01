@@ -18,8 +18,6 @@ import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD_HANDLE;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
@@ -47,14 +45,12 @@ public class BoardService {
         this.userService = userService;
     }
 
-    public Board getById(Long id) {
-        User user = userService.getUser();
+    public Board getById(User user, Long id) {
         Board board = (Board) resourceService.getResource(user, BOARD, id);
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
-    public Board getById(String handle) {
-        User user = userService.getUser();
+    public Board getByHandle(User user, String handle) {
         Board board = (Board) resourceService.getResource(user, BOARD, handle);
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
@@ -80,13 +76,12 @@ public class BoardService {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, EXTEND, () -> {
             String name = normalizeSpace(boardDTO.getName());
-            resourceService.checkUniqueName(BOARD, null, department, name, DUPLICATE_BOARD);
+            resourceService.checkUniqueName(BOARD, null, department, name);
 
             Board board = new Board();
             board.setName(name);
 
-            board.setHandle(
-                resourceService.createHandle(department, BOARD, name));
+            board.setHandle(resourceService.createHandle(department, BOARD, name));
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, POST, boardDTO.getPostCategories());
@@ -116,8 +111,8 @@ public class BoardService {
 
     private void updateBoard(Board board, BoardPatchDTO boardDTO) {
         board.setChangeList(new ChangeListRepresentation());
-        boardPatchService.patchName(board, boardDTO.getName(), DUPLICATE_BOARD);
-        boardPatchService.patchHandle(board, boardDTO.getHandle(), DUPLICATE_BOARD_HANDLE);
+        boardPatchService.patchName(board, boardDTO.getName());
+        boardPatchService.patchHandle(board, boardDTO.getHandle());
         boardPatchService.patchPostCategories(board, boardDTO.getPostCategories());
         resourceService.setIndexDataAndQuarter(board);
     }

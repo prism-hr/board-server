@@ -1,22 +1,28 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DbTestContext;
+import hr.prism.board.dao.ResourceDAO;
+import hr.prism.board.dao.ResourceTaskDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ServiceDataHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -29,9 +35,16 @@ import java.util.stream.Stream;
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.Scope.UNIVERSITY;
 import static hr.prism.board.enums.State.*;
+import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
@@ -62,13 +75,22 @@ public class DepartmentServiceIT {
     private BoardService boardService;
 
     @Inject
-    private ResourceService resourceService;
-
-    @Inject
     private ServiceDataHelper serviceDataHelper;
 
     @Inject
     private ServiceVerificationHelper serviceVerificationHelper;
+
+    @SpyBean
+    private ResourceDAO resourceDAO;
+
+    @SpyBean
+    private ResourceTaskDAO resourceTaskDAO;
+
+    @SpyBean
+    private ResourceService resourceService;
+
+    @SpyBean
+    private UserRoleService userRoleService;
 
     private LocalDateTime baseline;
 
@@ -86,78 +108,55 @@ public class DepartmentServiceIT {
         departmentAdministrator = userRepository.findOne(1L);
         university = universityService.getById(1L);
         documentLogo = documentRepository.findOne(1L);
+
+        departments = new ArrayList<>();
+        Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
+            Department department =
+                serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
+            resourceService.updateState(department, state);
+            departments.add(department);
+        });
+
+        reset(resourceService, resourceDAO, resourceTaskDAO);
+    }
+
+    @After
+    public void tearDown() {
+        reset(resourceService, resourceDAO, resourceTaskDAO);
     }
 
     @Test
     public void createDepartment_successWhenDefaultData() {
-        Department department = departmentService.createDepartment(departmentAdministrator, 1L,
+        Department createdDepartment = departmentService.createDepartment(departmentAdministrator, 1L,
             new DepartmentDTO()
                 .setName("department")
                 .setSummary("department summary"));
 
-        serviceVerificationHelper.verifyDepartment(
-            department,
-            university,
-            "department",
-            "department summary",
-            DRAFT,
-            DRAFT,
-            "university/department",
-            documentLogo,
-            MemberCategory.values(),
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-            "D163 D163 S560",
-            baseline);
+        Department selectedDepartment = departmentService.getById(departmentAdministrator, createdDepartment.getId());
 
-        Long departmentId = department.getId();
-        Department savedDepartment = departmentService.getById(departmentAdministrator, departmentId);
+        Stream.of(createdDepartment, selectedDepartment).forEach(department ->
+            serviceVerificationHelper.verifyDepartment(
+                department,
+                university,
+                "department",
+                "department summary",
+                DRAFT,
+                DRAFT,
+                "university/department",
+                documentLogo,
+                MemberCategory.values(),
+                new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+                "D163 D163 S560",
+                baseline));
 
-        serviceVerificationHelper.verifyDepartment(
-            savedDepartment,
-            university,
-            "department",
-            "department summary",
-            DRAFT,
-            DRAFT,
-            "university/department",
-            documentLogo,
-            MemberCategory.values(),
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-            "D163 D163 S560",
-            baseline);
-
-        List<Board> boards =
-            boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(departmentId));
-        assertThat(boards).hasSize(2);
-
-        serviceVerificationHelper.verifyBoard(
-            boards.get(0),
-            department,
-            "Career Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            "university/department/career-opportunities",
-            new String[]{"Employment", "Internship", "Volunteering"},
-            new Action[]{VIEW, EDIT, EXTEND, REJECT},
-            "D163 D163 S560 C660 O163",
-            baseline);
-
-        serviceVerificationHelper.verifyBoard(
-            boards.get(1),
-            department,
-            "Research Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            "university/department/research-opportunities",
-            new String[]{"MRes", "PhD", "Postdoc"},
-            new Action[]{VIEW, EDIT, EXTEND, REJECT},
-            "D163 D163 S560 R262 O163",
-            baseline);
+        verifyInvocations(createdDepartment);
+        verifyResourceOperation(createdDepartment);
+        verifyDefaultBoards(createdDepartment);
     }
 
     @Test
     public void createDepartment_successWhenCustomData() {
-        Department department = departmentService.createDepartment(departmentAdministrator, 1L,
+        Department createdDepartment = departmentService.createDepartment(departmentAdministrator, 1L,
             new DepartmentDTO()
                 .setName("department")
                 .setSummary("department summary")
@@ -168,44 +167,43 @@ public class DepartmentServiceIT {
                         .setFileName("new file name"))
                 .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
 
+        Department selectedDepartment = departmentService.getById(departmentAdministrator, createdDepartment.getId());
+
         Document expectedDocumentLogo = new Document();
         expectedDocumentLogo.setCloudinaryId("new cloudinary id");
 
-        serviceVerificationHelper.verifyDepartment(
-            department,
-            university,
-            "department",
-            "department summary",
-            DRAFT,
-            DRAFT,
-            "university/department",
-            expectedDocumentLogo,
-            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT},
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-            "D163 D163 S560",
-            baseline);
+        Stream.of(createdDepartment, selectedDepartment).forEach(department ->
+            serviceVerificationHelper.verifyDepartment(
+                createdDepartment,
+                university,
+                "department",
+                "department summary",
+                DRAFT,
+                DRAFT,
+                "university/department",
+                expectedDocumentLogo,
+                new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT},
+                new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+                "D163 D163 S560",
+                baseline));
 
-        Long departmentId = department.getId();
-        Department savedDepartment = departmentService.getById(departmentAdministrator, departmentId);
+        verifyInvocations(createdDepartment);
+        verifyResourceOperation(createdDepartment);
+        verifyDefaultBoards(createdDepartment);
+    }
 
-        serviceVerificationHelper.verifyDepartment(
-            savedDepartment,
-            university,
-            "department",
-            "department summary",
-            DRAFT,
-            DRAFT,
-            "university/department",
-            expectedDocumentLogo,
-            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT},
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-            "D163 D163 S560",
-            baseline);
+    @Test
+    public void createDepartment_failureWhenUniversityDoesNotExist() {
+        assertThatThrownBy(
+            () -> departmentService.createDepartment(departmentAdministrator, 0L, new DepartmentDTO()))
+            .isExactlyInstanceOf(BoardNotFoundException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", MISSING_RESOURCE)
+            .hasFieldOrPropertyWithValue("properties",
+                ImmutableMap.of("scope", UNIVERSITY, "id", 0L));
     }
 
     @Test
     public void getDepartments_successWhenAdministrator() {
-        setUpDepartments();
         List<Department> departments = departmentService.getDepartments(departmentAdministrator, new ResourceFilter());
         assertThat(departments).hasSize(4);
 
@@ -236,7 +234,6 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndState() {
-        setUpDepartments();
         List<Department> departments =
             departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setState(ACCEPTED));
         assertThat(departments).hasSize(1);
@@ -250,7 +247,6 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenAdministratorAndAction() {
-        setUpDepartments();
         List<Department> departments =
             departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setAction(EXTEND));
         assertThat(departments).hasSize(3);
@@ -276,8 +272,7 @@ public class DepartmentServiceIT {
 
 
     @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermMatch() {
-        setUpDepartments();
+    public void getDepartments_successWhenAdministratorAndSearchTerm() {
         List<Department> departments =
             departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("REJECTED"));
         assertThat(departments).hasSize(1);
@@ -290,10 +285,9 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermCaseInsensitiveMatch() {
-        setUpDepartments();
+    public void getDepartments_successWhenAdministratorAndSearchTermTypo() {
         List<Department> departments =
-            departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("rejected"));
+            departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("rIJECT"));
         assertThat(departments).hasSize(1);
 
         verifyDepartment(
@@ -304,64 +298,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermPartialMatch() {
-        setUpDepartments();
-        List<Department> departments =
-            departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("REJECT"));
-        assertThat(departments).hasSize(1);
-
-        verifyDepartment(
-            departments.get(0),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE},
-            "D163 R223 D163 R223 S560");
-    }
-
-    @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermPartialCaseInsensitiveMatch() {
-        setUpDepartments();
-        List<Department> departments =
-            departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("reject"));
-        assertThat(departments).hasSize(1);
-
-        verifyDepartment(
-            departments.get(0),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE},
-            "D163 R223 D163 R223 S560");
-    }
-
-    @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermTypoMatch() {
-        setUpDepartments();
-        List<Department> departments =
-            departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("RIJECT"));
-        assertThat(departments).hasSize(1);
-
-        verifyDepartment(
-            departments.get(0),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE},
-            "D163 R223 D163 R223 S560");
-    }
-
-    @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermTypoCaseInsensitiveMatch() {
-        setUpDepartments();
-        List<Department> departments =
-            departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("riject"));
-        assertThat(departments).hasSize(1);
-
-        verifyDepartment(
-            departments.get(0),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE},
-            "D163 R223 D163 R223 S560");
-    }
-
-    @Test
-    public void getDepartments_failureWhenAdministratorAndSearchTermNoMatch() {
-        setUpDepartments();
+    public void getDepartments_failureWhenAdministratorAndSearchTerm() {
         List<Department> departments =
             departmentService.getDepartments(departmentAdministrator, new ResourceFilter().setSearchTerm("xyz"));
         assertThat(departments).hasSize(0);
@@ -369,7 +306,6 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_successWhenUnprivilegedUser() {
-        setUpDepartments();
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
@@ -411,7 +347,6 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenUnprivilegedUserAndForbiddenState() {
-        setUpDepartments();
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
@@ -435,7 +370,6 @@ public class DepartmentServiceIT {
 
     @Test
     public void getDepartments_failureWhenUnprivilegedUserAndForbiddenAction() {
-        setUpDepartments();
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
@@ -457,16 +391,6 @@ public class DepartmentServiceIT {
             }));
     }
 
-    private void setUpDepartments() {
-        departments = new ArrayList<>();
-        Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
-            Department department =
-                serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
-            resourceService.updateState(department, state);
-            departments.add(department);
-        });
-    }
-
     private void verifyDepartment(Department department, State expectedState, Action[] expectedActions,
                                   String expectedIndexData) {
         serviceVerificationHelper.verifyDepartment(
@@ -481,6 +405,54 @@ public class DepartmentServiceIT {
             MemberCategory.values(),
             expectedActions,
             expectedIndexData,
+            baseline);
+    }
+
+    private void verifyInvocations(Department department) {
+        verify(resourceDAO, times(1))
+            .checkUniqueName(DEPARTMENT, null, university, "department");
+        verify(resourceService, times(1))
+            .createHandle(department.getParent(), DEPARTMENT, department.getName());
+        verify(resourceService, times(1))
+            .createResourceOperation(department, EXTEND, departmentAdministrator);
+        verify(resourceTaskDAO, times(1))
+            .insertResourceTasks(department.getId(), departmentAdministrator.getId(), DEPARTMENT_TASKS);
+        verify(userRoleService, times(1))
+            .createUserRole(department, departmentAdministrator, ADMINISTRATOR);
+    }
+
+    private void verifyResourceOperation(Department department) {
+        serviceVerificationHelper.verifyResourceOperations(department,
+            new ResourceOperation().setResource(department).setAction(EXTEND).setUser(departmentAdministrator));
+    }
+
+    private void verifyDefaultBoards(Department department) {
+        List<Board> boards =
+            boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(department.getId()));
+        assertThat(boards).hasSize(2);
+
+        serviceVerificationHelper.verifyBoard(
+            boards.get(0),
+            department,
+            "Career Opportunities",
+            ACCEPTED,
+            ACCEPTED,
+            "university/department/career-opportunities",
+            new String[]{"Employment", "Internship", "Volunteering"},
+            new Action[]{VIEW, EDIT, EXTEND, REJECT},
+            "D163 D163 S560 C660 O163",
+            baseline);
+
+        serviceVerificationHelper.verifyBoard(
+            boards.get(1),
+            department,
+            "Research Opportunities",
+            ACCEPTED,
+            ACCEPTED,
+            "university/department/research-opportunities",
+            new String[]{"MRes", "PhD", "Postdoc"},
+            new Action[]{VIEW, EDIT, EXTEND, REJECT},
+            "D163 D163 S560 R262 O163",
             baseline);
     }
 

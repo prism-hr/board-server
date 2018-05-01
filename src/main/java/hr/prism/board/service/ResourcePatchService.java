@@ -3,33 +3,32 @@ package hr.prism.board.service;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.enums.CategoryType;
-import hr.prism.board.exception.ExceptionCode;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE_HANDLE;
 
 public abstract class ResourcePatchService<T extends Resource> extends PatchService<T> {
 
     private final ResourceService resourceService;
 
     ResourcePatchService(LocationService locationService, DocumentService documentService,
-                                ResourceService resourceService) {
+                         ResourceService resourceService) {
         super(locationService, documentService);
         this.resourceService = resourceService;
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    void patchName(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
+    void patchName(T resource, Optional<String> newValueOptional) {
         if (newValueOptional != null) {
             String oldValue = resource.getName();
             if (newValueOptional.isPresent()) {
                 String newValue = newValueOptional.get();
                 if (!Objects.equals(oldValue, newValue)) {
-                    if (unique != null) {
-                        resourceService.checkUniqueName(
-                            resource.getScope(), resource.getId(), resource.getParent(), newValue, unique);
-                    }
+                    resourceService.checkUniqueName(
+                        resource.getScope(), resource.getId(), resource.getParent(), newValue);
 
                     patchProperty(resource, "name", resource::setName, oldValue, newValue);
                 }
@@ -40,7 +39,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    void patchHandle(T resource, Optional<String> newValueOptional, ExceptionCode unique) {
+    void patchHandle(T resource, Optional<String> newValueOptional) {
         if (newValueOptional != null) {
             String oldValue = resource.getHandle();
             if (newValueOptional.isPresent()) {
@@ -50,9 +49,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
                     newValue = parent.getHandle() + "/" + newValue;
                 }
 
-                if (unique != null) {
-                    resourceService.checkUniqueHandle(resource, newValue, unique);
-                }
+                resourceService.checkUniqueHandle(resource, newValue, DUPLICATE_RESOURCE_HANDLE);
 
                 if (!Objects.equals(oldValue, newValue)) {
                     patchHandle(resource, oldValue, newValue);
@@ -71,7 +68,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     void patchCategories(T resource, CategoryType categoryType,
-                                Optional<List<String>> newValuesOptional) {
+                         Optional<List<String>> newValuesOptional) {
         if (newValuesOptional != null) {
             List<String> oldValues = resource.getCategoryStrings(categoryType);
             List<String> newValues = newValuesOptional.orElse(null);

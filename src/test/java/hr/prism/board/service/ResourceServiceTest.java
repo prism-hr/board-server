@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.exception.BoardNotFoundException;
@@ -14,26 +15,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 
-import static hr.prism.board.enums.Action.EXTEND;
-import static hr.prism.board.enums.CategoryType.MEMBER;
-import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Scope.*;
-import static hr.prism.board.enums.State.*;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
+import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.enums.State.PREVIOUS;
+import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.lang3.StringUtils.right;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -82,28 +78,6 @@ public class ResourceServiceTest {
             resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
         reset(resourceRepository, resourceDAO, resourceRelationRepository,
             resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
-    }
-
-    @Test
-    public void getById_success() {
-        resourceService.getById(1L);
-        verify(resourceRepository, times(1)).findOne(1L);
-    }
-
-    @Test
-    public void checkNameUnique_successWhenCreateDepartment() {
-        resourceService.checkUniqueName(
-            DEPARTMENT, null, new University(), "department", DUPLICATE_DEPARTMENT);
-        verify(resourceDAO, times(1)).checkUniqueName(
-            DEPARTMENT, null, new University(), "department", DUPLICATE_DEPARTMENT);
-    }
-
-    @Test
-    public void checkNameUnique_successWhenCreateBoard() {
-        resourceService.checkUniqueName(
-            BOARD, null, new Department(), "board", DUPLICATE_BOARD);
-        verify(resourceDAO, times(1)).checkUniqueName(
-            BOARD, null, new Department(), "board", DUPLICATE_BOARD);
     }
 
     @Test
@@ -203,7 +177,7 @@ public class ResourceServiceTest {
     }
 
     @Test
-    public void updateState_successWhenDepartment() {
+    public void updateState_success() {
         LocalDateTime baseline = LocalDateTime.now().minusSeconds(1L);
 
         Department department = new Department();
@@ -218,80 +192,14 @@ public class ResourceServiceTest {
     }
 
     @Test
-    public void updateState_failureWhenDepartmentAndPrevious() {
+    public void updateState_failureWhenPrevious() {
         assertThatThrownBy(() -> resourceService.updateState(new Department(), PREVIOUS))
             .isExactlyInstanceOf(IllegalStateException.class)
             .hasMessage("Previous state is anonymous - cannot be assigned to a resource");
     }
 
     @Test
-    public void updateState_successWhenBoard() {
-        LocalDateTime baseline = LocalDateTime.now().minusSeconds(1L);
-
-        Board board = new Board();
-        resourceService.updateState(board, ACCEPTED);
-
-        assertEquals(ACCEPTED, board.getState());
-        assertEquals(ACCEPTED, board.getPreviousState());
-        assertThat(board.getStateChangeTimestamp()).isGreaterThan(baseline);
-
-        verify(resourceRepository, times(1)).save(board);
-        verify(entityManager, times(1)).flush();
-    }
-
-    @Test
-    public void updateState_failureWhenBoardAndPrevious() {
-        assertThatThrownBy(() -> resourceService.updateState(new Board(), PREVIOUS))
-            .isExactlyInstanceOf(IllegalStateException.class)
-            .hasMessage("Previous state is anonymous - cannot be assigned to a resource");
-    }
-
-    @Test
-    public void updateCategories_successWhenCreateDepartmentAndMember() {
-        Department department = new Department();
-        department.setId(1L);
-
-        ResourceCategory category1 = new ResourceCategory();
-        category1.setResource(department);
-        category1.setType(MEMBER);
-        category1.setName("category1");
-
-        ResourceCategory category2 = new ResourceCategory();
-        category2.setResource(department);
-        category2.setType(MEMBER);
-        category2.setName("category2");
-
-        resourceService.updateCategories(department, MEMBER, ImmutableList.of("category1", "category2"));
-
-        verify(resourceCategoryRepository, times(1)).deleteByResourceAndType(department, MEMBER);
-        verify(resourceCategoryRepository, times(1)).save(category1);
-        verify(resourceCategoryRepository, times(1)).save(category2);
-    }
-
-    @Test
-    public void updateCategories_successWhenCreateBoardAndPost() {
-        Board board = new Board();
-        board.setId(1L);
-
-        ResourceCategory category1 = new ResourceCategory();
-        category1.setResource(board);
-        category1.setType(POST);
-        category1.setName("category1");
-
-        ResourceCategory category2 = new ResourceCategory();
-        category2.setResource(board);
-        category2.setType(POST);
-        category2.setName("category2");
-
-        resourceService.updateCategories(board, POST, ImmutableList.of("category1", "category2"));
-
-        verify(resourceCategoryRepository, times(1)).deleteByResourceAndType(board, POST);
-        verify(resourceCategoryRepository, times(1)).save(category1);
-        verify(resourceCategoryRepository, times(1)).save(category2);
-    }
-
-    @Test
-    public void createResourceRelation_successWhenCreateDepartment() {
+    public void createResourceRelation_successWhenDepartment() {
         University university = new University();
         university.setScope(UNIVERSITY);
         university.setId(1L);
@@ -328,7 +236,7 @@ public class ResourceServiceTest {
     }
 
     @Test
-    public void createResourceRelation_successWhenCreateBoard() {
+    public void createResourceRelation_successWhenBoard() {
         University university = new University();
         university.setScope(UNIVERSITY);
         university.setId(1L);
@@ -387,154 +295,8 @@ public class ResourceServiceTest {
         verify(resourceRelationRepository, times(1)).save(boardRelation);
     }
 
-
     @Test
-    public void setIndexDataAndQuarter_successWhenDepartment() {
-        University university = new University();
-        university.setName("university");
-        university.setIndexData("U516");
-
-        Department department = new Department();
-        department.setParent(university);
-        department.setName("department");
-        department.setSummary("department summary");
-        department.setCreatedTimestamp(LocalDateTime.of(2018, 4, 20, 9, 0, 0));
-
-        resourceService.setIndexDataAndQuarter(department);
-        assertEquals("U516 D163 D163 S560", department.getIndexData());
-        assertEquals("20182", department.getQuarter());
-    }
-
-    @Test
-    public void setIndexDataAndQuarter_successWhenBoard() {
-        Department department = new Department();
-        department.setName("department");
-        department.setSummary("department summary");
-        department.setIndexData("U516 D163 D163 S560");
-
-        Board board = new Board();
-        board.setParent(department);
-        board.setName("board");
-        board.setSummary("board summary");
-        board.setCreatedTimestamp(LocalDateTime.of(2018, 4, 20, 9, 0, 0));
-
-        resourceService.setIndexDataAndQuarter(board);
-        assertEquals("U516 D163 D163 S560 B630 B630 S560", board.getIndexData());
-        assertEquals("20182", board.getQuarter());
-    }
-
-    @Test
-    public void createResourceOperation_successWhenDepartment() {
-        Department department = new Department();
-        department.setId(1L);
-
-        User user = new User();
-        user.setId(1L);
-
-        when(resourceOperationRepository.save(any(ResourceOperation.class)))
-            .thenAnswer(invocation -> {
-                ResourceOperation operation = (ResourceOperation) invocation.getArguments()[0];
-                operation.setId(1L);
-                return operation;
-            });
-
-        resourceService.createResourceOperation(department, EXTEND, user);
-
-        ResourceOperation operation = new ResourceOperation();
-        operation.setId(1L);
-
-        verify(resourceOperationRepository, times(1))
-            .save(argThat(
-                new ArgumentMatcher<ResourceOperation>() {
-
-                    @Override
-                    public boolean matches(Object argument) {
-                        ResourceOperation operation = (ResourceOperation) argument;
-                        return department.equals(operation.getResource())
-                            && EXTEND == operation.getAction()
-                            && user.equals(operation.getUser());
-                    }
-
-                }));
-
-        verify(resourceRepository, times(1)).save(department);
-    }
-
-    @Test
-    public void createResourceOperation_successWhenBoard() {
-        Board board = new Board();
-        board.setId(1L);
-
-        User user = new User();
-        user.setId(1L);
-
-        when(resourceOperationRepository.save(any(ResourceOperation.class)))
-            .thenAnswer(invocation -> {
-                ResourceOperation operation = (ResourceOperation) invocation.getArguments()[0];
-                operation.setId(1L);
-                return operation;
-            });
-
-        resourceService.createResourceOperation(board, EXTEND, user);
-
-        ResourceOperation operation = new ResourceOperation();
-        operation.setId(1L);
-
-        verify(resourceOperationRepository, times(1))
-            .save(argThat(
-                new ArgumentMatcher<ResourceOperation>() {
-
-                    @Override
-                    public boolean matches(Object argument) {
-                        ResourceOperation operation = (ResourceOperation) argument;
-                        return board.equals(operation.getResource())
-                            && EXTEND == operation.getAction()
-                            && user.equals(operation.getUser());
-                    }
-
-                }));
-
-        verify(resourceRepository, times(1)).save(board);
-    }
-
-    @Test
-    public void getResource_successWhenDepartment() {
-        User user = new User();
-        user.setId(1L);
-
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(DEPARTMENT)
-                .setId(1L);
-
-        when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Department()));
-
-        assertNotNull(resourceService.getResource(user, DEPARTMENT, 1L));
-
-        verify(resourceDAO, times(1)).getResources(user, filter);
-    }
-
-    @Test
-    public void getResource_successWhenDepartmentWithNoActions() {
-        User user = new User();
-        user.setId(1L);
-
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(DEPARTMENT)
-                .setId(1L);
-
-        when(resourceDAO.getResources(user, filter)).thenReturn(emptyList());
-        when(resourceRepository.findOne(1L)).thenReturn(new Department());
-
-        assertNotNull(resourceService.getResource(user, DEPARTMENT, 1L));
-
-        verify(resourceDAO, times(1)).getResources(user, filter);
-        verify(resourceRepository, times(1)).findOne(1L);
-    }
-
-    @Test
-    public void getResource_failureWhenDepartmentNotFound() {
+    public void getResource_failureWhenResourceNotFound() {
         User user = new User();
         user.setId(1L);
 
@@ -545,61 +307,9 @@ public class ResourceServiceTest {
 
         assertThatThrownBy(() -> resourceService.getResource(user, DEPARTMENT, 1L))
             .isExactlyInstanceOf(BoardNotFoundException.class)
-            .hasMessage("MISSING_RESOURCE: DEPARTMENT ID: 1 does not exist");
-
-        verify(resourceDAO, times(1)).getResources(user, filter);
-        verify(resourceRepository, times(1)).findOne(1L);
-    }
-
-    @Test
-    public void getResource_successWhenBoard() {
-        User user = new User();
-        user.setId(1L);
-
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(BOARD)
-                .setId(1L);
-
-        when(resourceDAO.getResources(user, filter)).thenReturn(ImmutableList.of(new Board()));
-
-        assertNotNull(resourceService.getResource(user, BOARD, 1L));
-
-        verify(resourceDAO, times(1)).getResources(user, filter);
-    }
-
-    @Test
-    public void getResource_successWhenBoardWithNoActions() {
-        User user = new User();
-        user.setId(1L);
-
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(BOARD)
-                .setId(1L);
-
-        when(resourceDAO.getResources(user, filter)).thenReturn(emptyList());
-        when(resourceRepository.findOne(1L)).thenReturn(new Board());
-
-        assertNotNull(resourceService.getResource(user, BOARD, 1L));
-
-        verify(resourceDAO, times(1)).getResources(user, filter);
-        verify(resourceRepository, times(1)).findOne(1L);
-    }
-
-    @Test
-    public void getResource_failureWhenBoardNotFound() {
-        User user = new User();
-        user.setId(1L);
-
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(BOARD)
-                .setId(1L);
-
-        assertThatThrownBy(() -> resourceService.getResource(user, BOARD, 1L))
-            .isExactlyInstanceOf(BoardNotFoundException.class)
-            .hasMessage("MISSING_RESOURCE: BOARD ID: 1 does not exist");
+            .hasFieldOrPropertyWithValue("exceptionCode", MISSING_RESOURCE)
+            .hasFieldOrPropertyWithValue("properties",
+                ImmutableMap.of("scope", DEPARTMENT, "id", 1L));
 
         verify(resourceDAO, times(1)).getResources(user, filter);
         verify(resourceRepository, times(1)).findOne(1L);

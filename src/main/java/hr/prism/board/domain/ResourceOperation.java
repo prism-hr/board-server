@@ -1,6 +1,8 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.Action;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.*;
 
@@ -62,6 +64,7 @@ public class ResourceOperation extends BoardEntity {
         return changeList;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceOperation setChangeList(String changeList) {
         this.changeList = changeList;
         return this;
@@ -74,6 +77,28 @@ public class ResourceOperation extends BoardEntity {
     public ResourceOperation setComment(String comment) {
         this.comment = comment;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        ResourceOperation that = (ResourceOperation) other;
+        return new EqualsBuilder()
+            .append(resource, that.resource)
+            .append(action, that.action)
+            .append(user, that.user)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(resource)
+            .append(action)
+            .append(user)
+            .toHashCode();
     }
 
 }

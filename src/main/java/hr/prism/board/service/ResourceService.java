@@ -131,8 +131,8 @@ public class ResourceService {
             RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
     }
 
-    public void checkUniqueName(Scope scope, Long id, Resource parent, String name, ExceptionCode exceptionCode) {
-        resourceDAO.checkUniqueName(scope, id, parent, name, exceptionCode);
+    public void checkUniqueName(Scope scope, Long id, Resource parent, String name) {
+        resourceDAO.checkUniqueName(scope, id, parent, name);
     }
 
     public void checkUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {

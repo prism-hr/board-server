@@ -32,7 +32,7 @@ public class TestApi {
 
     @RequestMapping(value = "/test/boardDuplicateException")
     public void throwBoardDuplicateException() {
-        throw new BoardDuplicateException(DUPLICATE_DEPARTMENT, "Department already exists", 1L);
+        throw new BoardDuplicateException(DUPLICATE_RESOURCE, "Department already exists", 1L);
     }
 
     @RequestMapping(value = "/test/boardException")

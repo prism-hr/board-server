@@ -14,8 +14,7 @@ import javax.inject.Inject;
 
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_BOARD;
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE;
 import static java.util.Collections.singletonMap;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
@@ -32,7 +31,7 @@ public class ResourceDAOIT {
     public void checkUniqueName_successWhenCreateDepartment() {
         University university = new University();
         university.setId(1L);
-        resourceDAO.checkUniqueName(DEPARTMENT, null, university, "new department", DUPLICATE_DEPARTMENT);
+        resourceDAO.checkUniqueName(DEPARTMENT, null, university, "new department");
     }
 
     @Test
@@ -40,9 +39,9 @@ public class ResourceDAOIT {
         University university = new University();
         university.setId(1L);
         Assertions.assertThatThrownBy(() ->
-            resourceDAO.checkUniqueName(DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT))
+            resourceDAO.checkUniqueName(DEPARTMENT, null, university, "department"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
-            .hasMessage("DUPLICATE_DEPARTMENT: DEPARTMENT with name department exists already")
+            .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 2L));
     }
 
@@ -50,7 +49,7 @@ public class ResourceDAOIT {
     public void checkUniqueName_successWhenCreateBoard() {
         University university = new University();
         university.setId(1L);
-        resourceDAO.checkUniqueName(DEPARTMENT, null, university, "new board", DUPLICATE_DEPARTMENT);
+        resourceDAO.checkUniqueName(DEPARTMENT, null, university, "new board");
     }
 
     @Test
@@ -58,9 +57,9 @@ public class ResourceDAOIT {
         Department department = new Department();
         department.setId(2L);
         Assertions.assertThatThrownBy(() ->
-            resourceDAO.checkUniqueName(BOARD, null, department, "board", DUPLICATE_BOARD))
+            resourceDAO.checkUniqueName(BOARD, null, department, "board"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
-            .hasMessage("DUPLICATE_BOARD: BOARD with name board exists already")
+            .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 3L));
     }
 

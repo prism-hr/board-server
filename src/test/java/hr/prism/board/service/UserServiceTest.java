@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
 import static io.jsonwebtoken.lang.Assert.isNull;
 import static io.jsonwebtoken.lang.Assert.notNull;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -76,7 +77,7 @@ public class UserServiceTest {
     public void getUserSecured_failureWhenNotAuthenticated() {
         assertThatThrownBy(() -> userService.getUserSecured())
             .isExactlyInstanceOf(BoardForbiddenException.class)
-            .hasMessage("UNAUTHENTICATED_USER: User cannot be authenticated");
+            .hasFieldOrPropertyWithValue("exceptionCode", UNAUTHENTICATED_USER);
     }
 
 }

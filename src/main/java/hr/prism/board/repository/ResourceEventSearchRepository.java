@@ -26,7 +26,7 @@ public interface ResourceEventSearchRepository extends SearchRepository<Resource
             "WHERE resource_event.user_id IN (:userIds) " +
             "AND resource_event.event IN (:events) " +
             "HAVING similarity > 0 " +
-            "ORDER BY similarity DESC, resource_event.id DESC) AS resource_event_search_result",
+            "ORDER BY similarity DESC, resource_event.id) AS resource_event_search_result",
         nativeQuery = true)
     @SuppressWarnings("SqlResolve")
     void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime,

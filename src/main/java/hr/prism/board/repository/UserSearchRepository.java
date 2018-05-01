@@ -23,7 +23,7 @@ public interface UserSearchRepository extends SearchRepository<UserSearch> {
             "FROM user " +
             "WHERE user.id IN (:userIds) " +
             "HAVING similarity > 0 " +
-            "ORDER BY similarity DESC, user.id DESC) AS user_search_result",
+            "ORDER BY similarity DESC, user.id) AS user_search_result",
         nativeQuery = true)
     void insertBySearch(@Param("search") String search, @Param("baseline") LocalDateTime localDateTime,
                         @Param("searchTerm") String searchTerm, @Param("userIds") Collection<Long> userIds);

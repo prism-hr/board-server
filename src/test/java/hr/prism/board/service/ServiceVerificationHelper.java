@@ -7,6 +7,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.representation.ActionRepresentation;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
@@ -17,6 +18,13 @@ import static org.junit.Assert.*;
 
 @Component
 public class ServiceVerificationHelper {
+
+    private final ResourceService resourceService;
+
+    @Inject
+    public ServiceVerificationHelper(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
 
     @SuppressWarnings("SameParameterValue")
     void verifyDepartment(Department department, University expectedUniversity, String expectedName,
@@ -58,6 +66,10 @@ public class ServiceVerificationHelper {
 
         verifyIndexDataAndQuarter(board, expectedIndexData);
         verifyTimestamps(board, baseline);
+    }
+
+    void verifyResourceOperations(Resource resource, ResourceOperation... resourceOperations) {
+        assertThat(resourceService.getResourceOperations(resource)).containsExactly(resourceOperations);
     }
 
     private void verifyIdentity(Resource resource, Resource expectedParentResource, String expectedName) {
