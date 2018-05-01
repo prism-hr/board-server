@@ -33,9 +33,7 @@ import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
-import static hr.prism.board.utils.ResourceUtils.confirmHandle;
-import static hr.prism.board.utils.ResourceUtils.suggestHandle;
-import static java.lang.Math.ceil;
+import static hr.prism.board.utils.ResourceUtils.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -163,8 +161,7 @@ public class ResourceService {
         }
 
         LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
-        resource.setQuarter(
-            Integer.toString(createdTimestamp.getYear()) + (int) ceil((double) createdTimestamp.getMonthValue() / 3));
+        resource.setQuarter(getQuarter(createdTimestamp));
     }
 
     public void updateHandle(Resource resource, String newHandle) {

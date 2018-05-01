@@ -43,6 +43,4 @@ public class DepartmentDTO extends ResourceDTO<DepartmentDTO> {
         return this;
     }
 
-
-
 }

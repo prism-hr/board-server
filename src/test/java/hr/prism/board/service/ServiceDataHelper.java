@@ -27,7 +27,7 @@ import static java.util.UUID.randomUUID;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @Component
-public class DataHelper {
+public class ServiceDataHelper {
 
     private final ResourceRepository resourceRepository;
 
@@ -44,9 +44,9 @@ public class DataHelper {
     private final UserRoleService userRoleService;
 
     @Inject
-    public DataHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
-                      DepartmentService departmentService, BoardService boardService, PostService postService,
-                      UserService userService, UserRoleService userRoleService) {
+    public ServiceDataHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
+                             DepartmentService departmentService, BoardService boardService, PostService postService,
+                             UserService userService, UserRoleService userRoleService) {
         this.resourceRepository = resourceRepository;
         this.userRoleRepository = userRoleRepository;
         this.departmentService = departmentService;
@@ -58,8 +58,7 @@ public class DataHelper {
 
     @SuppressWarnings("SameParameterValue")
     Department setUpDepartment(User user, Long universityId, String name) {
-        getContext().setAuthentication(new AuthenticationToken(user));
-        return departmentService.createDepartment(universityId,
+        return departmentService.createDepartment(user, universityId,
             new DepartmentDTO()
                 .setName(name)
                 .setSummary(name + " summary"));

@@ -1,6 +1,6 @@
 package hr.prism.board.repository;
 
-import hr.prism.board.DBTestContext;
+import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.ResourceCategory;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import static hr.prism.board.enums.CategoryType.POST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
-@DBTestContext
+@DbTestContext
 @RunWith(SpringRunner.class)
 @Sql("classpath:data/resourceCategoryRepository_setUp.sql")
 @Sql(value = "classpath:data/resourceCategoryRepository_tearDown.sql", executionPhase = AFTER_TEST_METHOD)

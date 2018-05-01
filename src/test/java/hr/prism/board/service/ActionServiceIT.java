@@ -1,13 +1,13 @@
 package hr.prism.board.service;
 
 import com.google.common.collect.ArrayListMultimap;
-import hr.prism.board.DBTestContext;
+import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.service.DataHelper.ResourceModifier;
-import hr.prism.board.service.DataHelper.Scenarios;
+import hr.prism.board.service.ServiceDataHelper.ResourceModifier;
+import hr.prism.board.service.ServiceDataHelper.Scenarios;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
-@DBTestContext
+@DbTestContext
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:data/actionService_setUp.sql")
 @Sql(scripts = "classpath:data/actionService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
@@ -57,13 +57,13 @@ public class ActionServiceIT {
     private UserRoleService userRoleService;
 
     @Inject
-    private DataHelper dataHelper;
+    private ServiceDataHelper serviceDataHelper;
 
     @Test
     public void executeAction_departmentAdministratorActionsOnDepartment() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
         Expectations expectations =
             new Expectations()
@@ -93,11 +93,11 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_unprivilegedActionsOnDepartment() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        Scenarios scenarios = dataHelper.setUpUnprivilegedUsersForDepartment(department);
+        Scenarios scenarios = serviceDataHelper.setUpUnprivilegedUsersForDepartment(department);
 
         Expectations expectations =
             new Expectations()
@@ -113,10 +113,10 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentAdministratorActionsOnBoard() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -134,10 +134,10 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentAdministratorActionsOnBoardWhenDepartmentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
         resourceService.updateState(department, REJECTED);
 
@@ -156,12 +156,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentAuthorActionsOnBoard() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        User departmentAuthor = dataHelper.setUpUser();
+        User departmentAuthor = serviceDataHelper.setUpUser();
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
         Expectations expectations = new Expectations()
@@ -174,14 +174,14 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentAuthorActionsOnBoardWhenDepartmentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
         resourceService.updateState(department, REJECTED);
 
-        User departmentAuthor = dataHelper.setUpUser();
+        User departmentAuthor = serviceDataHelper.setUpUser();
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
         Expectations expectations = new Expectations()
@@ -193,12 +193,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_unprivilegedActionsOnBoard() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        Scenarios scenarios = dataHelper.setUpUnprivilegedUsersForBoard(board);
+        Scenarios scenarios = serviceDataHelper.setUpUnprivilegedUsersForBoard(board);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -210,12 +210,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_unprivilegedActionsOnBoardWhenDepartmentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        Scenarios scenarios = dataHelper.setUpUnprivilegedUsersForBoard(board);
+        Scenarios scenarios = serviceDataHelper.setUpUnprivilegedUsersForBoard(board);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -227,15 +227,15 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentAdministratorActionsOnPost() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = dataHelper.setUpUser();
-        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
+        User postAdministrator = serviceDataHelper.setUpUser();
+        Post post = serviceDataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> serviceDataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceDataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -284,15 +284,15 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentAdministratorActionsOnPostWhenParentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = dataHelper.setUpUser();
-        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
+        User postAdministrator = serviceDataHelper.setUpUser();
+        Post post = serviceDataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> serviceDataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceDataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -347,12 +347,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentMemberActionsOnPost() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        User departmentMember = dataHelper.setUpUser();
+        User departmentMember = serviceDataHelper.setUpUser();
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
         Expectations expectations = new Expectations()
@@ -365,12 +365,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_departmentMemberActionsOnPostWhenDepartmentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        User departmentMember = dataHelper.setUpUser();
+        User departmentMember = serviceDataHelper.setUpUser();
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
         Expectations expectations = new Expectations()
@@ -389,15 +389,15 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_postAdministratorActionsOnPost() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = dataHelper.setUpUser();
-        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
+        User postAdministrator = serviceDataHelper.setUpUser();
+        Post post = serviceDataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> serviceDataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceDataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -440,15 +440,15 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_postAdministratorActionsOnPostWhenDepartmentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
 
-        User postAdministrator = dataHelper.setUpUser();
-        Post post = dataHelper.setUpPost(postAdministrator, board.getId(), "post");
+        User postAdministrator = serviceDataHelper.setUpUser();
+        Post post = serviceDataHelper.setUpPost(postAdministrator, board.getId(), "post");
 
-        ResourceModifier postPendingModifier = (resource) -> dataHelper.setPostPending((Post) resource);
-        ResourceModifier postExpiredModifier = (resource) -> dataHelper.setPostExpired((Post) resource);
+        ResourceModifier postPendingModifier = (resource) -> serviceDataHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceDataHelper.setPostExpired((Post) resource);
 
         Expectations expectations = new Expectations()
             .expect(DRAFT, postPendingModifier,
@@ -497,12 +497,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_unprivilegedActionsOnPost() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        Scenarios scenarios = dataHelper.setUpUnprivilegedUsersForPost(post);
+        Scenarios scenarios = serviceDataHelper.setUpUnprivilegedUsersForPost(post);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -513,12 +513,12 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_unprivilegedActionsOnPostWhenParentRejected() {
-        User departmentAdministrator = dataHelper.setUpUser();
-        Department department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        Board board = dataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
-        Post post = dataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
+        User departmentAdministrator = serviceDataHelper.setUpUser();
+        Department department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        Board board = serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "board");
+        Post post = serviceDataHelper.setUpPost(departmentAdministrator, board.getId(), "post");
 
-        Scenarios scenarios = dataHelper.setUpUnprivilegedUsersForPost(post);
+        Scenarios scenarios = serviceDataHelper.setUpUnprivilegedUsersForPost(post);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,

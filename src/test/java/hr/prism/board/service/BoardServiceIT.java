@@ -1,6 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.DBTestContext;
+import hr.prism.board.DbTestContext;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
@@ -24,7 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
-@DBTestContext
+@DbTestContext
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:data/boardService_setUp.sql")
 @Sql(scripts = "classpath:data/boardService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
@@ -45,7 +45,7 @@ public class BoardServiceIT {
     private UserRoleService userRoleService;
 
     @Inject
-    private DataHelper dataHelper;
+    private ServiceDataHelper serviceDataHelper;
 
     private User departmentAdministrator;
 
@@ -64,16 +64,16 @@ public class BoardServiceIT {
         departmentAdministrator = userRepository.findOne(1L);
         department2Administrator = userRepository.findOne(2L);
 
-        department = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        department2 = dataHelper.setUpDepartment(departmentAdministrator, 1L, "department2");
+        department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        department2 = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department2");
 
         Board departmentBoard =
-            dataHelper.setUpBoard(departmentAdministrator, department.getId(), "department-board");
+            serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "department-board");
         resourceService.updateState(departmentBoard, REJECTED);
         departmentBoards = boardService.getBoards(new ResourceFilter().setParentId(department.getId()));
 
         Board department2Board =
-            dataHelper.setUpBoard(departmentAdministrator, department2.getId(), "department2-board");
+            serviceDataHelper.setUpBoard(departmentAdministrator, department2.getId(), "department2-board");
         resourceService.updateState(department2Board, REJECTED);
         department2Boards = boardService.getBoards(new ResourceFilter().setParentId(department2.getId()));
 

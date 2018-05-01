@@ -1,6 +1,6 @@
 package hr.prism.board.dao;
 
-import hr.prism.board.DBTestContext;
+import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.ResourceTask;
 import hr.prism.board.repository.ResourceTaskRepository;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
-@DBTestContext
+@DbTestContext
 @RunWith(SpringRunner.class)
 @Sql("classpath:data/resourceTaskDAO_setUp.sql")
 @Sql(value = "classpath:data/resourceTaskDAO_tearDown.sql", executionPhase = AFTER_TEST_METHOD)

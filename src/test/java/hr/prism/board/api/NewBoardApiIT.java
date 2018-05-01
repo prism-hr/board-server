@@ -6,7 +6,6 @@ import hr.prism.board.ApiTestContext;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.BoardRepresentation;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
@@ -41,17 +40,12 @@ public class NewBoardApiIT {
     @Inject
     private ObjectMapper objectMapper;
 
-    private ApiTestHelper apiTestHelper;
-
-    @Before
-    public void setUp() {
-        apiTestHelper = new ApiTestHelper(mockMvc, objectMapper);
-    }
+    private ApiDataHelper apiDataHelper;
 
     @Test
     public void createBoard_success() throws Exception {
         LocalDateTime baseline = LocalDateTime.now().minusSeconds(1L);
-        String authorization = apiTestHelper.login("alastair@prism.hr", "password");
+        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
 
         BoardRepresentation board =
             objectMapper.readValue(

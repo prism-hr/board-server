@@ -1,8 +1,10 @@
 package hr.prism.board.utils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.Math.ceil;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -67,6 +69,10 @@ public class ResourceUtils {
         }
 
         return suggestedHandle;
+    }
+
+    public static String getQuarter(LocalDateTime createdTimestamp) {
+        return Integer.toString(createdTimestamp.getYear()) + (int) ceil((double) createdTimestamp.getMonthValue() / 3);
     }
 
 }

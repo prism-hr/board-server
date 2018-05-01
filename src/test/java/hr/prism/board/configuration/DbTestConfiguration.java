@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.inject.Inject;
@@ -30,13 +29,12 @@ import static hr.prism.board.enums.OauthProvider.FACEBOOK;
 import static hr.prism.board.enums.OauthProvider.LINKEDIN;
 import static org.mockito.Mockito.*;
 
-@Configuration
-public class TestConfiguration {
+public class DbTestConfiguration {
 
     private final ApplicationContext applicationContext;
 
     @Inject
-    public TestConfiguration(ApplicationContext applicationContext) {
+    public DbTestConfiguration(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 

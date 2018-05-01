@@ -134,7 +134,7 @@ public class DepartmentServiceTest {
             return department;
         });
 
-        departmentService.createDepartment(1L,
+        departmentService.createDepartment(user, 1L,
             new DepartmentDTO()
                 .setName("department")
                 .setSummary("summary"));
@@ -146,7 +146,6 @@ public class DepartmentServiceTest {
         assertEquals("university/department", department.getHandle());
         assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
 
-        verify(userService, times(1)).getUserSecured();
         verify(universityService, times(1)).getById(1L);
         verify(resourceService, times(1)).checkUniqueName(
             DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT);
@@ -205,7 +204,7 @@ public class DepartmentServiceTest {
                 .setCloudinaryUrl("cloudinaryUrl")
                 .setFileName("fileName");
 
-        departmentService.createDepartment(1L,
+        departmentService.createDepartment(user, 1L,
             new DepartmentDTO()
                 .setName("department")
                 .setSummary("summary")
@@ -222,7 +221,6 @@ public class DepartmentServiceTest {
         assertEquals("university/department", department.getHandle());
         assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
 
-        verify(userService, times(1)).getUserSecured();
         verify(universityService, times(1)).getById(1L);
         verify(resourceService, times(1)).checkUniqueName(
             DEPARTMENT, null, university, "department", DUPLICATE_DEPARTMENT);
@@ -269,37 +267,12 @@ public class DepartmentServiceTest {
         when(userService.getUser()).thenReturn(user);
         when(resourceService.getResources(user, filter)).thenReturn(singletonList(department));
 
-        List<Department> departments = departmentService.getDepartments(
-            new ResourceFilter()
-                .setSearchTerm("department"));
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter().setSearchTerm("department"));
 
         assertThat(departments).containsExactly(department);
 
-        verify(userService, times(1)).getUser();
         verify(resourceService, times(1)).getResources(user, filter);
-    }
-
-    @Test
-    public void getDepartments_successWhenUnauthenticated() {
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(DEPARTMENT)
-                .setSearchTerm("department")
-                .setOrderStatement("resource.name");
-
-        Department department = new Department();
-        department.setId(1L);
-
-        when(resourceService.getResources(null, filter)).thenReturn(singletonList(department));
-
-        List<Department> departments = departmentService.getDepartments(
-            new ResourceFilter()
-                .setSearchTerm("department"));
-
-        assertThat(departments).containsExactly(department);
-
-        verify(userService, times(1)).getUser();
-        verify(resourceService, times(1)).getResources(null, filter);
     }
 
     private static ArgumentMatcher<BoardDTO> boardNameMatcher(String name) {

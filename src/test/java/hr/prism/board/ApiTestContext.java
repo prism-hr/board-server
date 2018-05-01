@@ -23,7 +23,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @SpringBootTest(
     webEnvironment = RANDOM_PORT,
     classes = {BoardApplication.class, DatabaseConfiguration.class, FreeMarkerConfiguration.class,
-        JacksonConfiguration.class, SecurityConfiguration.class, WebMvcConfiguration.class, TestConfiguration.class})
+        JacksonConfiguration.class, SecurityConfiguration.class, WebMvcConfiguration.class, DbTestConfiguration.class,
+        ApiTestConfiguration.class})
 @TestPropertySource(value = {"classpath:application.properties", "classpath:test.properties"})
 public @interface ApiTestContext {
 

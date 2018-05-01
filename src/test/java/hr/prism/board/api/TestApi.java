@@ -4,6 +4,7 @@ import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.exception.BoardNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +48,11 @@ public class TestApi {
     @RequestMapping(value = "/test/boardNotFoundException")
     public void throwBoardNotFoundException() {
         throw new BoardNotFoundException(MISSING_RESOURCE, UNIVERSITY, 1L);
+    }
+
+    @RequestMapping(value = "/test/accessDeniedException")
+    public void throwAccessDeniedException() {
+        throw new AccessDeniedException("User cannot be authenticated");
     }
 
 }

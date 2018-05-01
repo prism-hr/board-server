@@ -67,6 +67,11 @@ public class ApiAdviceIT {
         doRequest("boardNotFoundException", NOT_FOUND, MISSING_RESOURCE, singletonMap("id", "1"));
     }
 
+    @Test
+    public void handleAccessDeniedException() throws Exception {
+        doRequest("accessDeniedException", UNAUTHORIZED, UNAUTHENTICATED_USER);
+    }
+
     private void doRequest(String path, HttpStatus status, ExceptionCode exceptionCode) throws Exception {
         doRequest(path, status, exceptionCode, emptyMap());
     }

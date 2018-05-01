@@ -1,6 +1,6 @@
 package hr.prism.board.repository;
 
-import hr.prism.board.DBTestContext;
+import hr.prism.board.DbTestContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
@@ -12,7 +12,7 @@ import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
-@DBTestContext
+@DbTestContext
 @RunWith(SpringRunner.class)
 @Sql("classpath:data/resourceRepository_setUp.sql")
 @Sql(value = "classpath:data/resourceRepository_tearDown.sql", executionPhase = AFTER_TEST_METHOD)

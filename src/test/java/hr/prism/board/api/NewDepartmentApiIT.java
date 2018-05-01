@@ -1,32 +1,28 @@
 package hr.prism.board.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.ApiTestContext;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.DepartmentDTO;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.BoardRepresentation;
-import hr.prism.board.representation.DepartmentRepresentation;
+import hr.prism.board.mapper.DepartmentMapper;
+import hr.prism.board.service.DepartmentService;
+import hr.prism.board.value.ResourceFilter;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.inject.Inject;
-import java.time.LocalDateTime;
-import java.util.List;
 
-import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.MemberCategory.*;
-import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.ACCEPTED;
-import static hr.prism.board.enums.State.DRAFT;
-import static java.util.stream.Collectors.toList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,118 +41,104 @@ public class NewDepartmentApiIT {
     @Inject
     private ObjectMapper objectMapper;
 
-    private ApiTestHelper apiTestHelper;
+    @Inject
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    private ApiDataHelper apiDataHelper;
+
+    @MockBean
+    private DepartmentService departmentService;
+
+    @MockBean
+    private DepartmentMapper departmentMapper;
+
+    private User user;
+
+    private DepartmentDTO departmentDTO;
+
+    private Department department;
+
+    private ResourceFilter resourceFilter;
 
     @Before
     public void setUp() {
-        apiTestHelper = new ApiTestHelper(mockMvc, objectMapper);
+        user = new User();
+        user.setId(1L);
+
+        department = new Department();
+        department.setId(2L);
+
+        resourceFilter =
+            new ResourceFilter()
+                .setSearchTerm("search")
+                .setState(ACCEPTED);
+
+        departmentDTO =
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("department summary");
+
+        when(departmentService.createDepartment(user, 1L, departmentDTO)).thenReturn(department);
+        when(departmentService.getDepartments(user, resourceFilter)).thenReturn(singletonList(department));
+        when(departmentService.getDepartments(null, null)).thenReturn(emptyList());
+    }
+
+    @After
+    public void tearDown() {
+        verifyNoMoreInteractions(departmentService, departmentMapper);
     }
 
     @Test
-    public void createDepartment_success() throws Exception {
-        LocalDateTime baseline = LocalDateTime.now().minusSeconds(1L);
-        String authorization = apiTestHelper.login("alastair@prism.hr", "password");
+    public void createDepartment_successWhenAuthenticated() throws Exception {
+        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
 
-        DepartmentRepresentation department =
-            objectMapper.readValue(
-                mockMvc.perform(
-                    post("/api/universities/1/departments")
-                        .contentType(APPLICATION_JSON_UTF8)
-                        .header("Authorization", authorization)
-                        .content(objectMapper.writeValueAsString(
-                            new DepartmentDTO()
-                                .setName("department")
-                                .setSummary("department summary"))))
-                    .andExpect(status().isOk())
-                    .andReturn().getResponse().getContentAsString(),
-                DepartmentRepresentation.class);
+        mockMvc.perform(
+            post("/api/universities/1/departments")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization)
+                .content(objectMapper.writeValueAsString(
+                    new DepartmentDTO()
+                        .setName("department")
+                        .setSummary("department summary"))))
+            .andExpect(status().isOk());
 
-        Long departmentId = department.getId();
-        assertNotNull(departmentId);
+        verify(departmentService, times(1)).createDepartment(user, 1L, departmentDTO);
+        verify(departmentMapper, times(1)).apply(department);
+    }
 
-        assertEquals(DEPARTMENT, department.getScope());
-        assertEquals("department", department.getName());
-        assertEquals("department summary", department.getSummary());
-        assertEquals("department", department.getHandle());
+    @Test
+    public void createDepartment_failureWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            post("/api/universities/1/departments")
+                .contentType(APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(
+                    new DepartmentDTO()
+                        .setName("department")
+                        .setSummary("department summary"))))
+            .andExpect(status().isUnauthorized());
+    }
 
-        assertEquals(1L, department.getUniversity().getId().longValue());
-        assertEquals(UNIVERSITY, department.getUniversity().getScope());
-        assertEquals("university", department.getUniversity().getName());
-        assertEquals("university", department.getUniversity().getHandle());
+    @Test
+    public void getDepartments_successWhenAuthenticated() throws Exception {
+        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
 
-        assertEquals(1L, department.getUniversity().getDocumentLogo().getId().longValue());
-        assertEquals("cloudinary id", department.getUniversity().getDocumentLogo().getCloudinaryId());
-        assertEquals("cloudinary url", department.getUniversity().getDocumentLogo().getCloudinaryUrl());
-        assertEquals("file name", department.getUniversity().getDocumentLogo().getFileName());
+        mockMvc.perform(
+            get("/api/departments?searchTerm=search&state=ACCEPTED")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
 
-        assertEquals(1L, department.getDocumentLogo().getId().longValue());
-        assertEquals("cloudinary id", department.getDocumentLogo().getCloudinaryId());
-        assertEquals("cloudinary url", department.getDocumentLogo().getCloudinaryUrl());
-        assertEquals("file name", department.getDocumentLogo().getFileName());
+        verify(departmentService, times(1)).getDepartments(user, resourceFilter);
+        verify(departmentMapper, times(1)).apply(department);
+    }
 
-        assertEquals(DRAFT, department.getState());
+    @Test
+    public void getDepartments_successWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/departments")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
 
-        assertThat(department.getMemberCategories()).containsExactly(
-            UNDERGRADUATE_STUDENT, MASTER_STUDENT, RESEARCH_STUDENT, RESEARCH_STAFF);
-
-        assertThat(
-            department.getActions()
-                .stream()
-                .map(ActionRepresentation::getAction)
-                .collect(toList()))
-            .containsExactly(VIEW, EDIT, EXTEND, SUBSCRIBE);
-
-        assertThat(department.getCreatedTimestamp()).isGreaterThan(baseline);
-        assertThat(department.getUpdatedTimestamp()).isGreaterThan(baseline);
-
-        List<BoardRepresentation> boards =
-            objectMapper.readValue(
-                mockMvc.perform(
-                    get("/api/boards?parentId=" + departmentId + " &includePublic=true")
-                        .contentType(APPLICATION_JSON_UTF8)
-                        .header("Authorization", authorization))
-                    .andExpect(status().isOk())
-                    .andReturn().getResponse().getContentAsString(),
-                new TypeReference<List<BoardRepresentation>>() {
-                });
-
-        assertThat(boards).hasSize(2);
-
-        BoardRepresentation board0 = boards.get(0);
-        assertNotNull(board0.getId());
-        assertEquals(BOARD, board0.getScope());
-        assertEquals("Career Opportunities", board0.getName());
-        assertEquals("career-opportunities", board0.getHandle());
-        assertEquals(ACCEPTED, board0.getState());
-        assertThat(board0.getPostCategories()).containsExactly("Employment", "Internship", "Volunteering");
-
-        assertThat(
-            board0.getActions()
-                .stream()
-                .map(ActionRepresentation::getAction)
-                .collect(toList()))
-            .containsExactly(VIEW, EDIT, EXTEND, REJECT);
-
-        assertThat(board0.getCreatedTimestamp()).isGreaterThan(baseline);
-        assertThat(board0.getUpdatedTimestamp()).isGreaterThan(baseline);
-
-        BoardRepresentation board1 = boards.get(1);
-        assertNotNull(board1.getId());
-        assertEquals(BOARD, board1.getScope());
-        assertEquals("Research Opportunities", board1.getName());
-        assertEquals("research-opportunities", board1.getHandle());
-        assertEquals(ACCEPTED, board1.getState());
-        assertThat(board1.getPostCategories()).containsExactly("MRes", "PhD", "Postdoc");
-
-        assertThat(
-            board1.getActions()
-                .stream()
-                .map(ActionRepresentation::getAction)
-                .collect(toList()))
-            .containsExactly(VIEW, EDIT, EXTEND, REJECT);
-
-        assertThat(board1.getCreatedTimestamp()).isGreaterThan(baseline);
-        assertThat(board1.getUpdatedTimestamp()).isGreaterThan(baseline);
+        verify(departmentService, times(1)).getDepartments(null, new ResourceFilter());
     }
 
 }

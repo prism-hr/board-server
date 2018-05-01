@@ -8,9 +8,11 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import org.slf4j.Logger;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.inject.Inject;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +26,7 @@ import static java.lang.Long.parseLong;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
+@Component
 public class AuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger LOGGER = getLogger(AuthenticationFilter.class);
@@ -34,8 +37,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
     private final UserService userService;
 
-    public AuthenticationFilter(Long sessionRefreshBeforeExpirationSeconds, AuthenticationService authenticationService,
-                                UserService userService) {
+    @Inject
+    public AuthenticationFilter(
+        @Value("${session.refreshBeforeExpiration.seconds}") Long sessionRefreshBeforeExpirationSeconds,
+        AuthenticationService authenticationService, UserService userService) {
         this.sessionRefreshBeforeExpirationSeconds = sessionRefreshBeforeExpirationSeconds;
         this.authenticationService = authenticationService;
         this.userService = userService;

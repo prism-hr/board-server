@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -66,6 +67,13 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleBoardException(BoardException exception, WebRequest request) {
         ExceptionCode exceptionCode = exception.getExceptionCode();
         return handleExceptionLoggingError(exception, exceptionCode, request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exception, WebRequest request) {
+        Map<String, Object> response =
+            makeResponse(UNAUTHENTICATED_USER, emptyMap(), UNAUTHORIZED, (ServletWebRequest) request);
+        return handleExceptionInternal(exception, response, new HttpHeaders(), UNAUTHORIZED, request);
     }
 
     @ExceptionHandler(Exception.class)

@@ -1,6 +1,6 @@
 package hr.prism.board.dao;
 
-import hr.prism.board.DBTestContext;
+import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.University;
 import hr.prism.board.exception.BoardDuplicateException;
@@ -19,7 +19,7 @@ import static hr.prism.board.exception.ExceptionCode.DUPLICATE_DEPARTMENT;
 import static java.util.Collections.singletonMap;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
-@DBTestContext
+@DbTestContext
 @RunWith(SpringRunner.class)
 @Sql("classpath:data/resourceDAO_setUp.sql")
 @Sql(value = "classpath:data/resourceDAO_tearDown.sql", executionPhase = AFTER_TEST_METHOD)

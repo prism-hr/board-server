@@ -11,17 +11,18 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class ApiTestHelper {
+public class ApiDataHelper {
 
     private final MockMvc mockMvc;
 
     private final ObjectMapper objectMapper;
 
-    public ApiTestHelper(MockMvc mockMvc, ObjectMapper objectMapper) {
+    public ApiDataHelper(MockMvc mockMvc, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
     }
 
+    @SuppressWarnings("SameParameterValue")
     String login(String email, String password) throws Exception {
         Map<String, String> response =
             objectMapper.readValue(

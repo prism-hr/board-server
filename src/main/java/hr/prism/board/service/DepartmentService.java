@@ -137,8 +137,7 @@ public class DepartmentService {
         return verifyCanView(user, department);
     }
 
-    public List<Department> getDepartments(ResourceFilter filter) {
-        User user = userService.getUser();
+    public List<Department> getDepartments(User user, ResourceFilter filter) {
         filter.setScope(DEPARTMENT);
         filter.setOrderStatement("resource.name");
 
@@ -155,8 +154,7 @@ public class DepartmentService {
         return resourceService.getResourceOperations(department);
     }
 
-    public Department createDepartment(Long universityId, DepartmentDTO departmentDTO) {
-        User user = userService.getUserSecured();
+    public Department createDepartment(User user, Long universityId, DepartmentDTO departmentDTO) {
         University university = universityService.getById(universityId);
         resourceService.checkUniqueName(
             DEPARTMENT, null, university, departmentDTO.getName(), DUPLICATE_DEPARTMENT);
