@@ -64,8 +64,6 @@ public class BoardServiceTest {
         User user = new User();
         user.setId(1L);
 
-        when(userService.getUserSecured()).thenReturn(user);
-
         Department department = new Department();
         department.setId(1L);
 
@@ -80,11 +78,10 @@ public class BoardServiceTest {
             return board;
         });
 
-        boardService.createBoard(1L,
+        boardService.createBoard(user, 1L,
             new BoardDTO().setName("board").setPostCategories(ImmutableList.of("category")));
 
         Board board = boardCaptor.getValue();
-        verify(userService, times(1)).getUserSecured();
         verify(resourceService, times(1)).getResource(user, DEPARTMENT, 1L);
 
         verify(actionService, times(1))
@@ -115,40 +112,13 @@ public class BoardServiceTest {
         Board board = new Board();
         board.setId(1L);
 
-        when(userService.getUser()).thenReturn(user);
         when(resourceService.getResources(user, filter)).thenReturn(singletonList(board));
 
-        List<Board> boards = boardService.getBoards(
-            new ResourceFilter()
-                .setSearchTerm("board"));
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("board"));
 
         assertThat(boards).containsExactly(board);
 
-        verify(userService, times(1)).getUser();
         verify(resourceService, times(1)).getResources(user, filter);
-    }
-
-    @Test
-    public void getBoards_successWhenUnauthenticated() {
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(BOARD)
-                .setSearchTerm("board")
-                .setOrderStatement("resource.name");
-
-        Board board = new Board();
-        board.setId(1L);
-
-        when(resourceService.getResources(null, filter)).thenReturn(singletonList(board));
-
-        List<Board> boards = boardService.getBoards(
-            new ResourceFilter()
-                .setSearchTerm("board"));
-
-        assertThat(boards).containsExactly(board);
-
-        verify(userService, times(1)).getUser();
-        verify(resourceService, times(1)).getResources(null, filter);
     }
 
 }

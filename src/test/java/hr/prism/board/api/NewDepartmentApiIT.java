@@ -64,6 +64,10 @@ public class NewDepartmentApiIT {
         user = new User();
         user.setId(1L);
 
+        departmentDTO =
+            new DepartmentDTO()
+                .setName("department");
+
         department = new Department();
         department.setId(2L);
 
@@ -72,14 +76,9 @@ public class NewDepartmentApiIT {
                 .setSearchTerm("search")
                 .setState(ACCEPTED);
 
-        departmentDTO =
-            new DepartmentDTO()
-                .setName("department")
-                .setSummary("department summary");
-
         when(departmentService.createDepartment(user, 1L, departmentDTO)).thenReturn(department);
         when(departmentService.getDepartments(user, resourceFilter)).thenReturn(singletonList(department));
-        when(departmentService.getDepartments(null, null)).thenReturn(emptyList());
+        when(departmentService.getDepartments(null, new ResourceFilter())).thenReturn(emptyList());
     }
 
     @After
@@ -95,10 +94,7 @@ public class NewDepartmentApiIT {
             post("/api/universities/1/departments")
                 .contentType(APPLICATION_JSON_UTF8)
                 .header("Authorization", authorization)
-                .content(objectMapper.writeValueAsString(
-                    new DepartmentDTO()
-                        .setName("department")
-                        .setSummary("department summary"))))
+                .content(objectMapper.writeValueAsString(departmentDTO)))
             .andExpect(status().isOk());
 
         verify(departmentService, times(1)).createDepartment(user, 1L, departmentDTO);
@@ -110,10 +106,7 @@ public class NewDepartmentApiIT {
         mockMvc.perform(
             post("/api/universities/1/departments")
                 .contentType(APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(
-                    new DepartmentDTO()
-                        .setName("department")
-                        .setSummary("department summary"))))
+                .content(objectMapper.writeValueAsString(departmentDTO)))
             .andExpect(status().isUnauthorized());
     }
 

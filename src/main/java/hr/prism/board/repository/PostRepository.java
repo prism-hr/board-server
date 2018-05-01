@@ -14,8 +14,6 @@ import java.util.List;
 @Transactional
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    List<Post> findByName(String name);
-
     @Query(value =
         "select post.id " +
             "from Post post " +

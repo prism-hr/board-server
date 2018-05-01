@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import hr.prism.board.domain.Board;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.BoardPatchDTO;
 import hr.prism.board.enums.Action;
@@ -10,6 +11,8 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.value.ResourceFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -37,15 +40,18 @@ public class BoardApi {
         this.resourceOperationMapper = resourceOperationMapper;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/boards", method = POST)
-    public BoardRepresentation createBoard(@PathVariable Long departmentId, @RequestBody @Valid BoardDTO boardDTO) {
-        Board board = boardService.createBoard(departmentId, boardDTO);
+    public BoardRepresentation createBoard(@AuthenticationPrincipal User user, @PathVariable Long departmentId,
+                                           @RequestBody @Valid BoardDTO boardDTO) {
+        Board board = boardService.createBoard(user, departmentId, boardDTO);
         return boardMapper.apply(board);
     }
 
     @RequestMapping(value = "/api/boards", method = GET)
-    public List<BoardRepresentation> getBoards(@ModelAttribute ResourceFilter filter) {
-        return boardService.getBoards(filter).stream().map(boardMapper).collect(toList());
+    public List<BoardRepresentation> getBoards(@AuthenticationPrincipal User user,
+                                               @ModelAttribute ResourceFilter filter) {
+        return boardService.getBoards(user, filter).stream().map(boardMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/boards/{boardId}", method = GET)

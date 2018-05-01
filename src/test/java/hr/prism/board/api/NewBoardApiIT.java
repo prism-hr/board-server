@@ -1,30 +1,31 @@
 package hr.prism.board.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.ApiTestContext;
+import hr.prism.board.domain.Board;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
-import hr.prism.board.representation.ActionRepresentation;
-import hr.prism.board.representation.BoardRepresentation;
+import hr.prism.board.mapper.BoardMapper;
+import hr.prism.board.service.BoardService;
+import hr.prism.board.value.ResourceFilter;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.inject.Inject;
-import java.time.LocalDateTime;
 
-import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.Scope.DEPARTMENT;
-import static hr.prism.board.enums.Scope.UNIVERSITY;
 import static hr.prism.board.enums.State.ACCEPTED;
-import static java.util.stream.Collectors.toList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,65 +41,97 @@ public class NewBoardApiIT {
     @Inject
     private ObjectMapper objectMapper;
 
+    @Inject
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private ApiDataHelper apiDataHelper;
 
+    @MockBean
+    private BoardService boardService;
+
+    @MockBean
+    private BoardMapper boardMapper;
+
+    private User user;
+
+    private BoardDTO boardDTO;
+
+    private Board board;
+
+    private ResourceFilter resourceFilter;
+
+    @Before
+    public void setUp() {
+        user = new User();
+        user.setId(1L);
+
+        boardDTO =
+            new BoardDTO()
+                .setName("board");
+
+        board = new Board();
+        board.setId(3L);
+
+        resourceFilter =
+            new ResourceFilter()
+                .setSearchTerm("search")
+                .setState(ACCEPTED);
+
+        when(boardService.createBoard(user, 2L, boardDTO)).thenReturn(board);
+        when(boardService.getBoards(user, resourceFilter)).thenReturn(singletonList(board));
+        when(boardService.getBoards(null, new ResourceFilter())).thenReturn(emptyList());
+    }
+
+    @After
+    public void tearDown() {
+        verifyNoMoreInteractions(boardService, boardMapper);
+    }
+
     @Test
-    public void createBoard_success() throws Exception {
-        LocalDateTime baseline = LocalDateTime.now().minusSeconds(1L);
+    public void createBoard_successWhenAuthenticated() throws Exception {
         String authorization = apiDataHelper.login("alastair@prism.hr", "password");
 
-        BoardRepresentation board =
-            objectMapper.readValue(
-                mockMvc.perform(
-                    post("/api/departments/2/boards")
-                        .contentType(APPLICATION_JSON_UTF8)
-                        .header("Authorization", authorization)
-                        .content(objectMapper.writeValueAsString(
-                            new BoardDTO()
-                                .setName("new board")
-                                .setPostCategories(ImmutableList.of("new category 1", "new category 2")))))
-                    .andExpect(status().isOk())
-                    .andReturn().getResponse().getContentAsString(),
-                BoardRepresentation.class);
+        mockMvc.perform(
+            post("/api/departments/2/boards")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization)
+                .content(objectMapper.writeValueAsString(boardDTO)))
+            .andExpect(status().isOk());
 
-        assertNotNull(board.getId());
-        assertEquals("new board", board.getName());
-        assertEquals("new-board", board.getHandle());
+        verify(boardService, times(1)).createBoard(user, 2L, boardDTO);
+        verify(boardMapper, times(1)).apply(board);
+    }
 
-        assertEquals(2, board.getDepartment().getId().longValue());
-        assertEquals(DEPARTMENT, board.getDepartment().getScope());
-        assertEquals("department", board.getDepartment().getName());
-        assertEquals("department", board.getDepartment().getHandle());
+    @Test
+    public void createBoard_failureWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            post("/api/departments/2/boards")
+                .contentType(APPLICATION_JSON_UTF8)
+                .content(objectMapper.writeValueAsString(boardDTO)))
+            .andExpect(status().isUnauthorized());
+    }
 
-        assertEquals(1L, board.getDepartment().getDocumentLogo().getId().longValue());
-        assertEquals("cloudinary id", board.getDepartment().getDocumentLogo().getCloudinaryId());
-        assertEquals("cloudinary url", board.getDepartment().getDocumentLogo().getCloudinaryUrl());
-        assertEquals("file name", board.getDepartment().getDocumentLogo().getFileName());
+    @Test
+    public void getBoards_successWhenAuthenticated() throws Exception {
+        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
 
-        assertEquals(1, board.getDepartment().getUniversity().getId().longValue());
-        assertEquals(UNIVERSITY, board.getDepartment().getUniversity().getScope());
-        assertEquals("university", board.getDepartment().getUniversity().getName());
-        assertEquals("university", board.getDepartment().getUniversity().getHandle());
+        mockMvc.perform(
+            get("/api/boards?searchTerm=search&state=ACCEPTED")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
 
-        assertEquals(1L, board.getDepartment().getUniversity().getDocumentLogo().getId().longValue());
-        assertEquals("cloudinary id",
-            board.getDepartment().getUniversity().getDocumentLogo().getCloudinaryId());
-        assertEquals("cloudinary url",
-            board.getDepartment().getUniversity().getDocumentLogo().getCloudinaryUrl());
-        assertEquals("file name", board.getDepartment().getUniversity().getDocumentLogo().getFileName());
+        verify(boardService, times(1)).getBoards(user, resourceFilter);
+        verify(boardMapper, times(1)).apply(board);
+    }
 
-        assertThat(board.getPostCategories()).containsExactly("new category 1", "new category 2");
+    @Test
+    public void getBoards_successWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/boards?searchTerm=search&state=ACCEPTED")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
 
-        assertThat(
-            board.getActions()
-                .stream()
-                .map(ActionRepresentation::getAction)
-                .collect(toList()))
-            .containsExactly(VIEW, EDIT, EXTEND, REJECT);
-
-        assertEquals(ACCEPTED, board.getState());
-        assertThat(board.getCreatedTimestamp()).isGreaterThan(baseline);
-        assertThat(board.getUpdatedTimestamp()).isGreaterThan(baseline);
+        verify(boardService, times(1)).getBoards(null, resourceFilter);
     }
 
 }

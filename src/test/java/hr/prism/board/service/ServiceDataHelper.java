@@ -2,7 +2,6 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.State;
@@ -24,7 +23,6 @@ import static hr.prism.board.enums.State.ACCEPTED;
 import static java.math.BigDecimal.ONE;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @Component
 public class ServiceDataHelper {
@@ -65,16 +63,14 @@ public class ServiceDataHelper {
     }
 
     Board setUpBoard(User user, Long departmentId, String name) {
-        getContext().setAuthentication(new AuthenticationToken(user));
-        return boardService.createBoard(departmentId,
+        return boardService.createBoard(user, departmentId,
             new BoardDTO()
                 .setName(name)
                 .setPostCategories(ImmutableList.of("Employment", "Internship")));
     }
 
     Post setUpPost(User user, Long boardId, String name) {
-        getContext().setAuthentication(new AuthenticationToken(user));
-        return postService.createPost(boardId,
+        return postService.createPost(user, boardId,
             new PostDTO()
                 .setName(name)
                 .setSummary(name + " summary")

@@ -113,8 +113,6 @@ public class DepartmentServiceTest {
         User user = new User();
         user.setId(1L);
 
-        when(userService.getUserSecured()).thenReturn(user);
-
         University university = new University();
         university.setId(1L);
 
@@ -163,9 +161,9 @@ public class DepartmentServiceTest {
         verify(userRoleService, times(1)).createUserRole(department, user, ADMINISTRATOR);
 
         verify(boardService, times(1))
-            .createBoard(eq(2L), argThat(boardNameMatcher("Career Opportunities")));
+            .createBoard(eq(user), eq(2L), argThat(boardNameMatcher("Career Opportunities")));
         verify(boardService, times(1))
-            .createBoard(eq(2L), argThat(boardNameMatcher("Research Opportunities")));
+            .createBoard(eq(user), eq(2L), argThat(boardNameMatcher("Research Opportunities")));
 
         verify(resourceTaskService, times(1))
             .createForNewResource(2L, 1L, DEPARTMENT_TASKS);
@@ -180,8 +178,6 @@ public class DepartmentServiceTest {
 
         User user = new User();
         user.setId(1L);
-
-        when(userService.getUserSecured()).thenReturn(user);
 
         University university = new University();
         university.setId(1L);
@@ -239,9 +235,9 @@ public class DepartmentServiceTest {
         verify(userRoleService, times(1)).createUserRole(department, user, ADMINISTRATOR);
 
         verify(boardService, times(1))
-            .createBoard(eq(2L), argThat(boardNameMatcher("Career Opportunities")));
+            .createBoard(eq(user), eq(2L), argThat(boardNameMatcher("Career Opportunities")));
         verify(boardService, times(1))
-            .createBoard(eq(2L), argThat(boardNameMatcher("Research Opportunities")));
+            .createBoard(eq(user), eq(2L), argThat(boardNameMatcher("Research Opportunities")));
 
         verify(resourceTaskService, times(1))
             .createForNewResource(2L, 1L, DEPARTMENT_TASKS);
@@ -264,7 +260,6 @@ public class DepartmentServiceTest {
         Department department = new Department();
         department.setId(1L);
 
-        when(userService.getUser()).thenReturn(user);
         when(resourceService.getResources(user, filter)).thenReturn(singletonList(department));
 
         List<Department> departments =

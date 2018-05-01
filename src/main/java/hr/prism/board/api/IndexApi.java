@@ -3,9 +3,11 @@ package hr.prism.board.api;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
+import hr.prism.board.domain.User;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.service.PostService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +32,8 @@ public class IndexApi {
     private final PostService postService;
 
     @Inject
-    public IndexApi(@Value("${app.url}") String appUrl, @Value("${auth.facebook.clientId}") String facebookClientId,
+    public IndexApi(@Value("${app.url}") String appUrl,
+                    @Value("${auth.facebook.clientId}") String facebookClientId,
                     DepartmentService departmentService, PostService postService) {
         this.appUrl = appUrl;
         this.facebookClientId = facebookClientId;
@@ -45,10 +48,10 @@ public class IndexApi {
     }
 
     @RequestMapping(value = "/api/index/{universityHandle}/{departmentHandle}", method = GET)
-    public String getDepartmentIndex(@PathVariable String universityHandle, @PathVariable String departmentHandle,
-                                     Model model) {
+    public String getDepartmentIndex(@AuthenticationPrincipal User user, @PathVariable String universityHandle,
+                                     @PathVariable String departmentHandle, Model model) {
         fillGenericModel(model);
-        Department department = departmentService.getById(universityHandle + "/" + departmentHandle);
+        Department department = departmentService.getByHandle(user,universityHandle + "/" + departmentHandle);
         if (department != null) {
             model.addAttribute("title", department.getName());
             model.addAttribute("description", department.getSummary());

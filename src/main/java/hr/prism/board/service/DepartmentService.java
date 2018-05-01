@@ -125,14 +125,12 @@ public class DepartmentService {
         this.entityManager = entityManager;
     }
 
-    public Department getById(Long id) {
-        User user = userService.getUser();
+    public Department getById(User user, Long id) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         return verifyCanView(user, department);
     }
 
-    public Department getById(String handle) {
-        User user = userService.getUser();
+    public Department getByHandle(User user, String handle) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, handle);
         return verifyCanView(user, department);
     }
@@ -192,8 +190,15 @@ public class DepartmentService {
 
         // Create the initial boards
         Long id = department.getId();
-        boardService.createBoard(id, new BoardDTO().setName(CAREER_NAME).setPostCategories(CAREER_CATEGORIES));
-        boardService.createBoard(id, new BoardDTO().setName(RESEARCH_NAME).setPostCategories(RESEARCH_CATEGORIES));
+        boardService.createBoard(user, id,
+            new BoardDTO()
+                .setName(CAREER_NAME)
+                .setPostCategories(CAREER_CATEGORIES));
+
+        boardService.createBoard(user, id,
+            new BoardDTO()
+                .setName(RESEARCH_NAME)
+                .setPostCategories(RESEARCH_CATEGORIES));
 
         // Create the initial tasks
         department.setLastTaskCreationTimestamp(LocalDateTime.now());

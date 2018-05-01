@@ -101,7 +101,7 @@ public class DepartmentServiceIT {
             baseline);
 
         Long departmentId = department.getId();
-        Department savedDepartment = departmentService.getById(departmentId);
+        Department savedDepartment = departmentService.getById(departmentAdministrator, departmentId);
 
         serviceVerificationHelper.verifyDepartment(
             savedDepartment,
@@ -116,7 +116,8 @@ public class DepartmentServiceIT {
             "D163 D163 S560",
             baseline);
 
-        List<Board> boards = boardService.getBoards(new ResourceFilter().setParentId(departmentId));
+        List<Board> boards =
+            boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(departmentId));
         assertThat(boards).hasSize(2);
 
         serviceVerificationHelper.verifyBoard(

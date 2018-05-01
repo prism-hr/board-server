@@ -25,8 +25,6 @@ public class DepartmentDashboardService {
 
     private static final Logger LOGGER = getLogger(DepartmentDashboardService.class);
 
-    private final UserService userService;
-
     private final ResourceService resourceService;
 
     private final ActionService actionService;
@@ -44,12 +42,10 @@ public class DepartmentDashboardService {
     private final OrganizationService organizationService;
 
     @Inject
-    public DepartmentDashboardService(UserService userService, ResourceService resourceService,
-                                      ActionService actionService, ResourceTaskService resourceTaskService,
-                                      BoardService boardService, UserRoleService userRoleService,
-                                      PostService postService, PaymentService paymentService,
-                                      OrganizationService organizationService) {
-        this.userService = userService;
+    public DepartmentDashboardService(ResourceService resourceService, ActionService actionService,
+                                      ResourceTaskService resourceTaskService, BoardService boardService,
+                                      UserRoleService userRoleService, PostService postService,
+                                      PaymentService paymentService, OrganizationService organizationService) {
         this.resourceService = resourceService;
         this.actionService = actionService;
         this.resourceTaskService = resourceTaskService;
@@ -60,13 +56,12 @@ public class DepartmentDashboardService {
         this.organizationService = organizationService;
     }
 
-    public DepartmentDashboard getDepartmentDashboard(Long id) {
-        User user = userService.getUserSecured();
+    public DepartmentDashboard getDepartmentDashboard(User user, Long id) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
         List<ResourceTask> tasks = resourceTaskService.getByResourceId(id);
-        List<Board> boards = boardService.getBoards(new ResourceFilter().setParentId(id).setState(ACCEPTED));
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setParentId(id).setState(ACCEPTED));
         Statistics memberStatistics = userRoleService.getMemberStatistics(id);
         List<OrganizationStatistics> organizationStatistics = organizationService.getOrganizationStatistics(id);
         PostStatistics postStatistics = postService.getPostStatistics(id);

@@ -1,6 +1,7 @@
 package hr.prism.board.api;
 
 import hr.prism.board.domain.Post;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
 import hr.prism.board.enums.Action;
@@ -13,6 +14,8 @@ import hr.prism.board.representation.ResourceOperationRepresentation;
 import hr.prism.board.service.OrganizationService;
 import hr.prism.board.service.PostService;
 import hr.prism.board.value.ResourceFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -48,9 +51,11 @@ public class PostApi {
         this.resourceOperationMapper = resourceOperationMapper;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/boards/{boardId}/posts", method = RequestMethod.POST)
-    public PostRepresentation postPost(@PathVariable Long boardId, @RequestBody @Valid PostDTO postDTO) {
-        Post post = postService.createPost(boardId, postDTO);
+    public PostRepresentation postPost(@AuthenticationPrincipal User user, @PathVariable Long boardId,
+                                       @RequestBody @Valid PostDTO postDTO) {
+        Post post = postService.createPost(user, boardId, postDTO);
         return postMapper.apply(post);
     }
 

@@ -380,7 +380,7 @@
 //            Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT, MemberCategory.RESEARCH_STUDENT))));
 //
 //        User boardUser = testUserService.authenticate();
-//        Board board = boardService.getById(boardId);
+//        Board board = boardService.getByHandle(boardId);
 //        userRoleService.createUserRole(board, boardUser, Role.ADMINISTRATOR);
 //
 //        List<User> adminUsers = Arrays.asList(departmentUser, boardUser);
@@ -407,9 +407,9 @@
 //        testActivityService.verify(departmentUserId, new ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
 //        testActivityService.verify(boardUserId, new ActivityInstance(postId, Activity.NEW_POST_PARENT_ACTIVITY));
 //
-//        Resource departmentResource = resourceService.getById(departmentId);
-//        Resource boardResource = resourceService.getById(boardId);
-//        Resource postResource = resourceService.getById(postId);
+//        Resource departmentResource = resourceService.getByHandle(departmentId);
+//        Resource boardResource = resourceService.getByHandle(boardId);
+//        Resource postResource = resourceService.getByHandle(postId);
 //        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(departmentResource, departmentUser, Role.ADMINISTRATOR).getUuid();
 //        String boardAdminRoleUuid = userRoleService.getByResourceUserAndRole(boardResource, boardUser, Role.ADMINISTRATOR).getUuid();
 //        String postAdminRoleUuid = userRoleService.getByResourceUserAndRole(postResource, postUser, Role.ADMINISTRATOR).getUuid();
@@ -669,7 +669,7 @@
 //
 //        // Check that the post stays in pending state when the update job runs
 //        verifyPublishAndRetirePost(postId, State.PENDING);
-//        Post localPost0 = postService.getById(postId);
+//        Post localPost0 = postService.getByHandle(postId);
 //        localPost0.setLiveTimestamp(liveTimestamp);
 //        localPost0.setDeadTimestamp(deadTimestamp);
 //        resourceRepository.save(localPost0);
@@ -709,7 +709,7 @@
 //                            .setEmail("student3@student3.com"))
 //                    .setMemberCategory(MemberCategory.MASTER_STUDENT)).getUser().getId();
 //
-//        testUserService.setAuthentication(userService.getById(departmentMember3Id));
+//        testUserService.setAuthentication(userService.getByHandle(departmentMember3Id));
 //        userNotificationSuppressionApi.postSuppressions();
 //
 //        // Should not be notified
@@ -737,18 +737,18 @@
 //                    .setMemberCategory(MemberCategory.UNDERGRADUATE_STUDENT)
 //                    .setExpiryDate(LocalDate.now().minusDays(1))).getUser().getId();
 //
-//        listenForActivities(userService.getById(departmentMember1Id));
-//        listenForActivities(userService.getById(departmentMember2Id));
-//        listenForActivities(userService.getById(departmentMember3Id));
-//        listenForActivities(userService.getById(departmentMember4Id));
-//        listenForActivities(userService.getById(departmentMember5Id));
+//        listenForActivities(userService.getByHandle(departmentMember1Id));
+//        listenForActivities(userService.getByHandle(departmentMember2Id));
+//        listenForActivities(userService.getByHandle(departmentMember3Id));
+//        listenForActivities(userService.getByHandle(departmentMember4Id));
+//        listenForActivities(userService.getByHandle(departmentMember5Id));
 //
 //        // Check that the post now moves to the accepted state when the update job runs
 //        verifyPublishAndRetirePost(postId, State.ACCEPTED);
 //        verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.ACCEPTED, operations);
 //
-//        User departmentMember1 = userService.getById(departmentMember1Id);
-//        User departmentMember2 = userService.getById(departmentMember2Id);
+//        User departmentMember1 = userService.getByHandle(departmentMember1Id);
+//        User departmentMember2 = userService.getByHandle(departmentMember2Id);
 //
 //        String departmentMember1Uuid = departmentMember1.getUuid();
 //        String departmentMember2Uuid = departmentMember2.getUuid();
@@ -892,7 +892,7 @@
 //                    .put("recipientUuid", departmentMember2Uuid)
 //                    .build()));
 //
-//        Post localPost1 = postService.getById(postId);
+//        Post localPost1 = postService.getByHandle(postId);
 //        localPost1.setDeadTimestamp(liveTimestamp.minusSeconds(1));
 //        resourceRepository.save(localPost1);
 //
@@ -930,7 +930,7 @@
 //        verifyPatchPost(postUser, postId, restoreFromWithdrawnDTO, () -> postApi.executeActionOnPost(postId, "restore", restoreFromWithdrawnDTO), State.EXPIRED);
 //        verifyPostActions(adminUsers, postUser, unprivilegedUsers, postId, State.EXPIRED, operations);
 //
-//        Post localPost2 = postService.getById(postId);
+//        Post localPost2 = postService.getByHandle(postId);
 //        localPost2.setDeadTimestamp(null);
 //        resourceRepository.save(localPost2);
 //
@@ -1519,11 +1519,11 @@
 //        assertEquals(postDTO.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getLiveTimestamp().truncatedTo(ChronoUnit.SECONDS));
 //        assertEquals(postDTO.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS), postR.getDeadTimestamp().truncatedTo(ChronoUnit.SECONDS));
 //
-//        Post post = postService.getById(postR.getId());
+//        Post post = postService.getByHandle(postR.getId());
 //
-//        Board board = boardService.getById(postR.getBoard().getId());
-//        Department department = departmentService.getById(postR.getBoard().getDepartment().getId());
-//        University university = universityService.getById(postR.getBoard().getDepartment().getUniversity().getId());
+//        Board board = boardService.getByHandle(postR.getBoard().getId());
+//        Department department = departmentService.getByHandle(postR.getBoard().getDepartment().getId());
+//        University university = universityService.getByHandle(postR.getBoard().getDepartment().getUniversity().getId());
 //
 //        List<ResourceRelation> parents = resourceRelationRepository.findByResource2(post);
 //        assertThat(parents.stream().map(ResourceRelation::getResource1).collect(toList()),
@@ -1533,7 +1533,7 @@
 //
 //    private PostRepresentation verifyPatchPost(User user, Long postId, PostPatchDTO postDTO, PostOperation operation, State expectedState) {
 //        testUserService.setAuthentication(user);
-//        Post post = postService.getById(postId);
+//        Post post = postService.getByHandle(postId);
 //        PostRepresentation postR = operation.execute();
 //
 //        Optional<String> nameOptional = postDTO.getName();
@@ -1629,7 +1629,7 @@
 //        LinkedHashMultimap<State, String> userStatePosts = userPosts.computeIfAbsent(boardId, k -> LinkedHashMultimap.create());
 //        PostRepresentation postR = verifyPostPost(boardId, postDTO);
 //
-//        Post post = postService.getById(postR.getId());
+//        Post post = postService.getByHandle(postR.getId());
 //        post.setState(state);
 //        post.setUpdatedTimestamp(baseline.minusSeconds(seconds));
 //        resourceRepository.save(post);

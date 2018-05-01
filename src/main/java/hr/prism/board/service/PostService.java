@@ -142,10 +142,6 @@ public class PostService {
         return post;
     }
 
-    public List<Post> getByName(String name) {
-        return postRepository.findByName(name);
-    }
-
     public List<Post> getPosts(ResourceFilter filter) {
         User user = userService.getUser();
         filter.setScope(POST);
@@ -178,8 +174,7 @@ public class PostService {
         return resourceService.getResourceArchiveQuarters(user, POST, parentId);
     }
 
-    public Post createPost(Long boardId, PostDTO postDTO) {
-        User user = userService.getUserSecured();
+    public Post createPost(User user, Long boardId, PostDTO postDTO) {
         Board board = (Board) resourceService.getResource(user, BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(user, board, EXTEND, () -> {
             Post post = new Post();

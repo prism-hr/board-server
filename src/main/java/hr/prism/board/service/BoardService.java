@@ -59,8 +59,7 @@ public class BoardService {
         return (Board) actionService.executeAction(user, board, VIEW, () -> board);
     }
 
-    public List<Board> getBoards(ResourceFilter filter) {
-        User user = userService.getUser();
+    public List<Board> getBoards(User user, ResourceFilter filter) {
         filter.setScope(BOARD);
         filter.setOrderStatement("resource.name");
 
@@ -77,8 +76,7 @@ public class BoardService {
         return resourceService.getResourceOperations(board);
     }
 
-    public Board createBoard(Long departmentId, BoardDTO boardDTO) {
-        User user = userService.getUserSecured();
+    public Board createBoard(User user, Long departmentId, BoardDTO boardDTO) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, EXTEND, () -> {
             String name = normalizeSpace(boardDTO.getName());

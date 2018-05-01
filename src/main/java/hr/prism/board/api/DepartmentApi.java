@@ -76,19 +76,24 @@ public class DepartmentApi {
         return departmentService.getDepartments(user, filter).stream().map(departmentMapper).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}", method = GET)
-    public DepartmentRepresentation getDepartment(@PathVariable Long departmentId) {
-        return departmentMapper.apply(departmentService.getById(departmentId));
+    public DepartmentRepresentation getDepartment(@AuthenticationPrincipal User user, @PathVariable Long departmentId) {
+        return departmentMapper.apply(departmentService.getById(user, departmentId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments", method = GET, params = "handle")
-    public DepartmentRepresentation getDepartmentByHandle(@RequestParam String handle) {
-        return departmentMapper.apply(departmentService.getById(handle));
+    public DepartmentRepresentation getDepartmentByHandle(@AuthenticationPrincipal User user,
+                                                          @RequestParam String handle) {
+        return departmentMapper.apply(departmentService.getByHandle(user, handle));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/dashboard", method = GET)
-    public DepartmentDashboardRepresentation getDepartmentDashboard(@PathVariable Long departmentId) {
-        return departmentMapper.apply(departmentDashboardService.getDepartmentDashboard(departmentId));
+    public DepartmentDashboardRepresentation getDepartmentDashboard(@AuthenticationPrincipal User user,
+                                                                    @PathVariable Long departmentId) {
+        return departmentMapper.apply(departmentDashboardService.getDepartmentDashboard(user, departmentId));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/operations", method = GET)

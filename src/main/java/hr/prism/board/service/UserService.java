@@ -68,7 +68,7 @@ public class UserService {
 
     public User getUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication == null ? null : ((AuthenticationToken) authentication).getUser();
+        return authentication instanceof AuthenticationToken ? ((AuthenticationToken) authentication).getUser() : null;
     }
 
     public User getUserSecured() {

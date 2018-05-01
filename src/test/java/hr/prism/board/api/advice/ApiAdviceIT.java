@@ -1,4 +1,4 @@
-package hr.prism.board.api;
+package hr.prism.board.api.advice;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +7,7 @@ import hr.prism.board.exception.ExceptionCode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -20,10 +21,13 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @ApiTestContext
 @RunWith(SpringRunner.class)
+@Sql("classpath:data/departmentApi_setUp.sql")
+@Sql(value = "classpath:data/departmentApi_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class ApiAdviceIT {
 
     @Inject

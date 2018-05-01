@@ -172,7 +172,7 @@
 //            new DepartmentPatchDTO()
 //                .setHandle(Optional.of("new-department-updated")));
 //
-//        Department department = departmentService.getById(departmentId);
+//        Department department = departmentService.getByHandle(departmentId);
 //        Assert.assertEquals("ucl/new-department-updated", department.getHandle());
 //
 //        int index = 1;
@@ -320,10 +320,10 @@
 //        Assert.assertEquals(expectedHandle, boardR.getHandle());
 //        Assert.assertEquals(Optional.ofNullable(boardDTO.getPostCategories()).orElse(new ArrayList<>()), boardR.getPostCategories());
 //
-//        Board board = boardService.getById(boardR.getId());
+//        Board board = boardService.getByHandle(boardR.getId());
 //        DepartmentRepresentation departmentR = boardR.getDepartment();
-//        Department department = departmentService.getById(departmentR.getId());
-//        University university = universityService.getById(departmentR.getUniversity().getId());
+//        Department department = departmentService.getByHandle(departmentR.getId());
+//        University university = universityService.getByHandle(departmentR.getUniversity().getId());
 //        Assert.assertEquals(Joiner.on("/").join(department.getHandle(), boardR.getHandle()), board.getHandle());
 //
 //        List<ResourceRelation> parents = resourceRelationRepository.findByResource2(board);
@@ -340,7 +340,7 @@
 //
 //    private void verifyPatchBoard(User user, Long boardId, BoardPatchDTO boardDTO) {
 //        testUserService.setAuthentication(user);
-//        Board board = boardService.getById(boardId);
+//        Board board = boardService.getByHandle(boardId);
 //        BoardRepresentation boardR = boardApi.updateBoard(boardId, boardDTO);
 //
 //        Optional<String> nameOptional = boardDTO.getName();
