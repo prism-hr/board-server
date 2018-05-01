@@ -1,9 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.University;
+import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
@@ -24,8 +21,9 @@ public class ServiceVerificationHelper {
     @SuppressWarnings("SameParameterValue")
     void verifyDepartment(Department department, University expectedUniversity, String expectedName,
                           String expectedSummary, State expectedState, State expectedPreviousState,
-                          String expectedHandle, MemberCategory[] expectedMemberCategories,
-                          Action[] expectedActions, String expectedIndexData, LocalDateTime baseline) {
+                          String expectedHandle, Document expectedDocumentLogo,
+                          MemberCategory[] expectedMemberCategories, Action[] expectedActions, String expectedIndexData,
+                          LocalDateTime baseline) {
         verifyIdentity(department, expectedUniversity, expectedName);
         assertEquals(expectedSummary, department.getSummary());
 
@@ -33,7 +31,7 @@ public class ServiceVerificationHelper {
         assertEquals(expectedPreviousState, department.getPreviousState());
         assertEquals(expectedHandle, department.getHandle());
 
-        assertNull(department.getDocumentLogo());
+        assertEquals(expectedDocumentLogo, department.getDocumentLogo());
         assertNull(department.getLocation());
 
         assertThat(department.getMemberCategoryStrings())

@@ -1,15 +1,15 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.University;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.DepartmentRepository;
+import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.UserRepository;
 import hr.prism.board.service.ServiceDataHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
+import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static hr.prism.board.enums.State.*;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +48,9 @@ public class DepartmentServiceIT {
 
     @Inject
     private DepartmentRepository departmentRepository;
+
+    @Inject
+    private DocumentRepository documentRepository;
 
     @Inject
     private UniversityService universityService;
@@ -71,6 +76,8 @@ public class DepartmentServiceIT {
 
     private University university;
 
+    private Document documentLogo;
+
     private List<Department> departments;
 
     @Before
@@ -78,10 +85,11 @@ public class DepartmentServiceIT {
         baseline = LocalDateTime.now();
         departmentAdministrator = userRepository.findOne(1L);
         university = universityService.getById(1L);
+        documentLogo = documentRepository.findOne(1L);
     }
 
     @Test
-    public void createDepartment_success() {
+    public void createDepartment_successWhenDefaultData() {
         Department department = departmentService.createDepartment(departmentAdministrator, 1L,
             new DepartmentDTO()
                 .setName("department")
@@ -95,6 +103,7 @@ public class DepartmentServiceIT {
             DRAFT,
             DRAFT,
             "university/department",
+            documentLogo,
             MemberCategory.values(),
             new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
             "D163 D163 S560",
@@ -111,6 +120,7 @@ public class DepartmentServiceIT {
             DRAFT,
             DRAFT,
             "university/department",
+            documentLogo,
             MemberCategory.values(),
             new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
             "D163 D163 S560",
@@ -142,6 +152,54 @@ public class DepartmentServiceIT {
             new String[]{"MRes", "PhD", "Postdoc"},
             new Action[]{VIEW, EDIT, EXTEND, REJECT},
             "D163 D163 S560 R262 O163",
+            baseline);
+    }
+
+    @Test
+    public void createDepartment_successWhenCustomData() {
+        Department department = departmentService.createDepartment(departmentAdministrator, 1L,
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("department summary")
+                .setDocumentLogo(
+                    new DocumentDTO()
+                        .setCloudinaryId("new cloudinary id")
+                        .setCloudinaryUrl("new cloudinary url")
+                        .setFileName("new file name"))
+                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
+
+        Document expectedDocumentLogo = new Document();
+        expectedDocumentLogo.setCloudinaryId("new cloudinary id");
+
+        serviceVerificationHelper.verifyDepartment(
+            department,
+            university,
+            "department",
+            "department summary",
+            DRAFT,
+            DRAFT,
+            "university/department",
+            expectedDocumentLogo,
+            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT},
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+            "D163 D163 S560",
+            baseline);
+
+        Long departmentId = department.getId();
+        Department savedDepartment = departmentService.getById(departmentAdministrator, departmentId);
+
+        serviceVerificationHelper.verifyDepartment(
+            savedDepartment,
+            university,
+            "department",
+            "department summary",
+            DRAFT,
+            DRAFT,
+            "university/department",
+            expectedDocumentLogo,
+            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT},
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+            "D163 D163 S560",
             baseline);
     }
 
@@ -419,6 +477,7 @@ public class DepartmentServiceIT {
             expectedState,
             DRAFT,
             "university/department-" + expectedState.name().toLowerCase(),
+            documentLogo,
             MemberCategory.values(),
             expectedActions,
             expectedIndexData,

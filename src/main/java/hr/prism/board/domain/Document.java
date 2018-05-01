@@ -1,6 +1,8 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.definition.DocumentDefinition;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,6 +43,24 @@ public class Document extends BoardEntity implements DocumentDefinition {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(cloudinaryId)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        Document document = (Document) other;
+        return new EqualsBuilder()
+            .append(cloudinaryId, document.cloudinaryId)
+            .isEquals();
     }
 
 }
