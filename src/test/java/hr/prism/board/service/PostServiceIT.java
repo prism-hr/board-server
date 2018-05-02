@@ -18,62 +18,17 @@ public class PostServiceIT {
     private ServiceHelper serviceHelper;
 
     @Test
-    public void createPost_successWhenUnprivileged() {
+    public void createPost_successWhenApplyWebsite() {
 
     }
 
     @Test
-    public void createPost_successWhenDepartmentAuthor() {
+    public void createPost_successWhenApplyDocument() {
 
     }
 
     @Test
-    public void createPost_failureWhenMissingApply() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenCorruptedApply() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenApplyWebsiteNotUrl() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenMissingPostCategories() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenForbiddenPostCategories() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenInvalidPostCategories() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenMissingMemberCategories() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenForbiddenMemberCategories() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenInvalidMemberCategories() {
-
-    }
-
-    @Test
-    public void createPost_failureWhenUnprivilegedAndMissingRelationExplanation() {
+    public void createPost_successWhenApplyEmail() {
 
     }
 

@@ -15,10 +15,9 @@ import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
-import hr.prism.board.validation.UrlValidator;
+import hr.prism.board.validation.PostValidator;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
@@ -34,7 +33,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Activity.*;
@@ -53,10 +51,10 @@ import static hr.prism.board.utils.BoardUtils.hasUpdates;
 import static hr.prism.board.utils.BoardUtils.isPresent;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import hr.prism.board.event.ActivityEvent;
@@ -91,7 +89,7 @@ public class PostService {
 
     private final ResourceTaskService resourceTaskService;
 
-    private final UrlValidator urlValidator;
+    private final PostValidator postValidator;
 
     private final EventProducer eventProducer;
 
@@ -105,7 +103,7 @@ public class PostService {
                        ResourceService resourceService, PostPatchService postPatchService,
                        UserRoleService userRoleService, UserService userService, ActionService actionService,
                        ResourceEventService resourceEventService, DepartmentUserService departmentUserService,
-                       ResourceTaskService resourceTaskService, UrlValidator urlValidator, EventProducer eventProducer,
+                       ResourceTaskService resourceTaskService, PostValidator postValidator, EventProducer eventProducer,
                        ObjectMapper objectMapper, EntityManager entityManager) {
         this.postRepository = postRepository;
         this.postDAO = postDAO;
@@ -120,7 +118,7 @@ public class PostService {
         this.resourceEventService = resourceEventService;
         this.departmentUserService = departmentUserService;
         this.resourceTaskService = resourceTaskService;
-        this.urlValidator = urlValidator;
+        this.postValidator = postValidator;
         this.eventProducer = eventProducer;
         this.objectMapper = objectMapper;
         this.entityManager = entityManager;
@@ -197,21 +195,7 @@ public class PostService {
             post.setExistingRelation(postDTO.getExistingRelation());
             post.setExistingRelationExplanation(
                 mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
-
-            String applyWebsite = postDTO.getApplyWebsite();
-            if (applyWebsite != null) {
-                urlValidator.checkPathIsUrl(applyWebsite);
-                post.setApplyWebsite(applyWebsite);
-            }
-
-            post.setApplyEmail(postDTO.getApplyEmail());
-
-            DocumentDTO applyDocument = postDTO.getApplyDocument();
-            if (applyDocument != null) {
-                post.setApplyDocument(documentService.getOrCreateDocument(applyDocument));
-            }
-
-            checkApply(post);
+            setPostApply(post, postDTO);
 
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
             LocalDateTime deadTimestamp = postDTO.getDeadTimestamp();
@@ -220,20 +204,17 @@ public class PostService {
             post = postRepository.save(post);
 
             resourceService.createResourceRelation(board, post);
-            updatePostCategories(post, postDTO.getPostCategories());
-            updateMemberCategories(post, toStrings(postDTO.getMemberCategories()));
+            setPostCategories(post, postDTO.getPostCategories());
+            setMemberCategories(post, toStrings(postDTO.getMemberCategories()));
             setIndexDataAndQuarter(post);
 
-            userRoleService.getOrCreateUserRole(post, user, ADMINISTRATOR);
+            userRoleService.createUserRole(post, user, ADMINISTRATOR);
             resourceTaskService.completeTasks(department, POST_TASKS);
             return post;
         });
 
+        postValidator.checkExistingRelation(createdPost);
         addPostResponseReadiness(createdPost, user);
-        if (createdPost.getState() == DRAFT && createdPost.getExistingRelation() == null) {
-            throw new BoardException(MISSING_POST_EXISTING_RELATION, "Existing relation explanation required");
-        }
-
         return createdPost;
     }
 
@@ -283,7 +264,7 @@ public class PostService {
                 });
         } catch (IOException e) {
             throw new BoardException(
-                CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, "Unable to deserialize existing relation explanation", e);
+                CORRUPTED_EXISTING_RELATION_EXPLANATION, "Unable to deserialize existing relation explanation", e);
         }
     }
 
@@ -321,7 +302,6 @@ public class PostService {
 
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (isPresent(applyWebsite)) {
-            urlValidator.checkPathIsUrl(applyWebsite.get());
             patchPostApply(post, applyWebsite, empty(), empty());
         }
 
@@ -360,6 +340,14 @@ public class PostService {
         }
     }
 
+    private void setPostApply(Post post, PostDTO postDTO) {
+        ofNullable(postDTO.getApplyWebsite()).ifPresent(post::setApplyWebsite);
+        ofNullable(postDTO.getApplyEmail()).ifPresent(post::setApplyEmail);
+        ofNullable(postDTO.getApplyDocument()).ifPresent(
+            applyDocumentDTO -> post.setApplyDocument(documentService.getOrCreateDocument(applyDocumentDTO)));
+        postValidator.checkApply(post);
+    }
+
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void patchPostApply(Post post, Optional<String> applyWebsite, Optional<DocumentDTO> applyDocument,
                                 Optional<String> applyEmail) {
@@ -369,6 +357,23 @@ public class PostService {
             post::getApplyDocument, post::setApplyDocument, applyDocument);
         postPatchService.patchProperty(post, "applyEmail",
             post::getApplyEmail, post::setApplyEmail, applyEmail);
+        postValidator.checkApply(post);
+    }
+
+    private void setPostCategories(Post post, List<String> categories) {
+        Board board = (Board) post.getParent();
+        List<String> postCategories = board.getPostCategoryStrings();
+        postValidator.checkCategories(categories, postCategories,
+            FORBIDDEN_POST_CATEGORIES, MISSING_POST_CATEGORIES, INVALID_POST_CATEGORIES);
+        resourceService.updateCategories(post, CategoryType.POST, categories);
+    }
+
+    private void setMemberCategories(Post post, List<String> categories) {
+        Department department = (Department) post.getParent().getParent();
+        List<String> memberCategories = department.getMemberCategoryStrings();
+        postValidator.checkCategories(categories, memberCategories,
+            FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
+        resourceService.updateCategories(post, MEMBER, categories);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -379,12 +384,12 @@ public class PostService {
             if (categories.isPresent()) {
                 List<String> newCategories = categories.get();
                 if (!Objects.equals(oldCategories, newCategories)) {
-                    updatePostCategories(post, newCategories);
+                    setPostCategories(post, newCategories);
                     post.getChangeList().put("postCategories",
                         oldCategories, post.getPostCategoryStrings());
                 }
             } else if (isNotEmpty(oldCategories)) {
-                updatePostCategories(post, null);
+                setPostCategories(post, null);
                 post.getChangeList().put("postCategories",
                     oldCategories, post.getPostCategoryStrings());
             }
@@ -403,12 +408,12 @@ public class PostService {
                         .collect(toList());
 
                 if (!Objects.equals(oldCategories, newCategories)) {
-                    updateMemberCategories(post, newCategories);
+                    setMemberCategories(post, newCategories);
                     post.getChangeList().put("memberCategories",
                         oldCategories, post.getMemberCategoryStrings());
                 }
             } else if (oldCategories != null) {
-                updatePostCategories(post, null);
+                setPostCategories(post, null);
                 post.getChangeList().put("memberCategories",
                     oldCategories, post.getMemberCategoryStrings());
             }
@@ -432,22 +437,6 @@ public class PostService {
                 post.getChangeList().put("existingRelationExplanation", oldValueMap, newValueMap);
             }
         }
-    }
-
-    private void updatePostCategories(Post post, List<String> categories) {
-        Board board = (Board) post.getParent();
-        List<String> postCategories = board.getPostCategoryStrings();
-        checkCategories(categories, postCategories,
-            CORRUPTED_POST_POST_CATEGORIES, MISSING_POST_POST_CATEGORIES, INVALID_POST_POST_CATEGORIES);
-        resourceService.updateCategories(post, CategoryType.POST, categories);
-    }
-
-    private void updateMemberCategories(Post post, List<String> categories) {
-        Department department = (Department) post.getParent().getParent();
-        List<String> memberCategories = department.getMemberCategoryStrings();
-        checkCategories(categories, memberCategories,
-            CORRUPTED_POST_MEMBER_CATEGORIES, MISSING_POST_MEMBER_CATEGORIES, INVALID_POST_MEMBER_CATEGORIES);
-        resourceService.updateCategories(post, MEMBER, categories);
     }
 
     private void retirePosts(List<Long> postIds, LocalDateTime baseline) {
@@ -509,7 +498,7 @@ public class PostService {
             return objectMapper.writeValueAsString(existingRelationExplanation);
         } catch (JsonProcessingException e) {
             throw new BoardException(
-                CORRUPTED_POST_EXISTING_RELATION_EXPLANATION, "Unable to serialize existing relation explanation", e);
+                CORRUPTED_EXISTING_RELATION_EXPLANATION, "Unable to serialize existing relation explanation", e);
         }
     }
 
@@ -556,38 +545,6 @@ public class PostService {
                 post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
                 post.setReferral(referrals.get(post));
                 post.setResponse(responses.get(post));
-            }
-        }
-    }
-
-    private void checkApply(Post post) {
-        long applyCount =
-            Stream.of(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail())
-                .filter(Objects::nonNull)
-                .count();
-
-        if (applyCount == 0) {
-            throw new BoardException(MISSING_POST_APPLY, "No apply mechanism specified");
-        } else if (applyCount > 1) {
-            throw new BoardException(CORRUPTED_POST_APPLY, "Multiple apply mechanisms specified");
-        }
-    }
-
-    private void checkCategories(List<String> categories, List<String> referenceCategories,
-                                 ExceptionCode exceptionCodeWhenCorrupted, ExceptionCode exceptionCodeWhenMissing,
-                                 ExceptionCode exceptionCodeWhenInvalid) {
-        if (referenceCategories.isEmpty()) {
-            if (isNotEmpty(categories)) {
-                throw new BoardException(exceptionCodeWhenCorrupted, "Categories must not be specified");
-            }
-        } else {
-            if (isEmpty(categories)) {
-                throw new BoardException(exceptionCodeWhenMissing, "Categories must be specified");
-            }
-
-            if (!referenceCategories.containsAll(categories)) {
-                throw new BoardException(exceptionCodeWhenInvalid,
-                    "Valid categories must be specified - check parent categories");
             }
         }
     }

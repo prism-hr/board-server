@@ -218,7 +218,7 @@
 //                .setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT))
 //                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
 //                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_APPLY);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_APPLY_OPTION);
 //    }
 //
 //    @Test
@@ -244,7 +244,7 @@
 //                .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
 //                .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
 //                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_POST_APPLY);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.CORRUPTED_APPLY_OPTION);
 //    }
 //
 //    @Test
@@ -269,7 +269,7 @@
 //            .setApplyDocument(new DocumentDTO().setCloudinaryId("c").setCloudinaryUrl("u").setFileName("f"))
 //            .setLiveTimestamp(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
 //            .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L).truncatedTo(ChronoUnit.SECONDS));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_POST_EXISTING_RELATION);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO), ExceptionCode.MISSING_EXISTING_RELATION);
 //    }
 //
 //    @Test
@@ -281,11 +281,11 @@
 //        Long boardId = boardApi.createBoard(departmentId, TestHelper.smallSampleBoard()).getId();
 //
 //        PostDTO postDTO0 = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.FORBIDDEN_POST_CATEGORIES);
 //
 //        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
 //        PostDTO postDTO1 = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.FORBIDDEN_MEMBER_CATEGORIES);
 //    }
 //
 //    @Test
@@ -297,10 +297,10 @@
 //        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
 //
 //        PostDTO postDTO0 = TestHelper.smallSamplePost().setMemberCategories(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.MISSING_POST_POST_CATEGORIES);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.MISSING_POST_CATEGORIES);
 //
 //        PostDTO postDTO1 = TestHelper.smallSamplePost().setPostCategories(Collections.singletonList("p1"));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.MISSING_POST_MEMBER_CATEGORIES);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.MISSING_MEMBER_CATEGORIES);
 //    }
 //
 //    @Test
@@ -312,11 +312,11 @@
 //        Long boardId = boardApi.createBoard(departmentId, TestHelper.sampleBoard()).getId();
 //
 //        PostDTO postDTO0 = TestHelper.samplePost().setPostCategories(Collections.singletonList("p4"));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.INVALID_POST_POST_CATEGORIES);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO0), ExceptionCode.INVALID_POST_CATEGORIES);
 //
 //        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.MASTER_STUDENT))));
 //        PostDTO postDTO1 = TestHelper.samplePost().setMemberCategories(Collections.singletonList(MemberCategory.RESEARCH_STUDENT));
-//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
+//        ExceptionUtils.verifyException(BoardException.class, () -> postApi.postPost(boardId, postDTO1), ExceptionCode.INVALID_MEMBER_CATEGORIES);
 //    }
 //
 //    @Test
@@ -332,24 +332,24 @@
 //        ExceptionUtils.verifyException(BoardException.class, () ->
 //                postApi.updatePost(postId, new PostPatchDTO()
 //                    .setPostCategories(Optional.empty())),
-//            ExceptionCode.MISSING_POST_POST_CATEGORIES);
+//            ExceptionCode.MISSING_POST_CATEGORIES);
 //
 //        ExceptionUtils.verifyException(BoardException.class, () ->
 //                postApi.updatePost(postId, new PostPatchDTO()
 //                    .setMemberCategories(Optional.empty())),
-//            ExceptionCode.MISSING_POST_MEMBER_CATEGORIES);
+//            ExceptionCode.MISSING_MEMBER_CATEGORIES);
 //
 //        ExceptionUtils.verifyException(BoardException.class, () ->
 //                postApi.updatePost(postId, new PostPatchDTO()
 //                    .setPostCategories(Optional.of(Collections.singletonList("p4")))),
-//            ExceptionCode.INVALID_POST_POST_CATEGORIES);
+//            ExceptionCode.INVALID_POST_CATEGORIES);
 //
 //        departmentApi.updateDepartment(departmentId,
 //            new DepartmentPatchDTO().setMemberCategories(Optional.of(Arrays.asList(MemberCategory.UNDERGRADUATE_STUDENT, MemberCategory.MASTER_STUDENT))));
 //        ExceptionUtils.verifyException(BoardException.class, () ->
 //                postApi.updatePost(postId, new PostPatchDTO()
 //                    .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.RESEARCH_STUDENT)))),
-//            ExceptionCode.INVALID_POST_MEMBER_CATEGORIES);
+//            ExceptionCode.INVALID_MEMBER_CATEGORIES);
 //
 //        departmentApi.updateDepartment(departmentId, new DepartmentPatchDTO().setMemberCategories(Optional.empty()));
 //        boardApi.updateBoard(boardId, new BoardPatchDTO().setPostCategories(Optional.empty()));
@@ -357,12 +357,12 @@
 //        ExceptionUtils.verifyException(BoardException.class, () ->
 //                postApi.updatePost(postId, new PostPatchDTO()
 //                    .setPostCategories(Optional.of(Collections.singletonList("p1")))),
-//            ExceptionCode.CORRUPTED_POST_POST_CATEGORIES);
+//            ExceptionCode.FORBIDDEN_POST_CATEGORIES);
 //
 //        ExceptionUtils.verifyException(BoardException.class, () ->
 //                postApi.updatePost(postId, new PostPatchDTO()
 //                    .setMemberCategories(Optional.of(Collections.singletonList(MemberCategory.UNDERGRADUATE_STUDENT)))),
-//            ExceptionCode.CORRUPTED_POST_MEMBER_CATEGORIES);
+//            ExceptionCode.FORBIDDEN_MEMBER_CATEGORIES);
 //    }
 //
 //    @Test

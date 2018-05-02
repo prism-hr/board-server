@@ -368,18 +368,18 @@ public class DepartmentUserService {
                 return;
             }
 
-            throw new BoardException(CORRUPTED_USER_ROLE_MEMBER_CATEGORIES, "Categories must not be specified");
+            throw new BoardException(FORBIDDEN_MEMBER_CATEGORIES, "Categories must not be specified");
         }
 
         if (memberCategory == null) {
-            throw new BoardException(MISSING_USER_ROLE_MEMBER_CATEGORIES, "Categories must be specified");
+            throw new BoardException(MISSING_MEMBER_CATEGORIES, "Categories must be specified");
         }
 
         if (memberCategories
             .stream()
             .noneMatch(name -> name.equals(memberCategory.name()))) {
             throw new BoardException(
-                INVALID_USER_ROLE_MEMBER_CATEGORIES, "Valid categories must be specified - check parent categories");
+                INVALID_MEMBER_CATEGORIES, "Valid categories must be specified - check parent categories");
         }
     }
 

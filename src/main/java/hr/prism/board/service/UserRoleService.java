@@ -82,18 +82,7 @@ public class UserRoleService {
                 .setState(ACCEPTED);
 
         userRole.setCreatorId(resource.getCreatorId());
-        return userRoleRepository.save(userRole)
-            .setCreated(true);
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    public UserRole getOrCreateUserRole(Resource resource, User userCreateUpdate, Role role) {
-        UserRole userRole = userRoleRepository.findByResourceAndUserAndRole(resource, userCreateUpdate, role);
-        if (userRole == null) {
-            return createUserRole(resource, userCreateUpdate, role);
-        }
-
-        return userRole;
+        return userRoleRepository.save(userRole).setCreated(true);
     }
 
     public UserRole createOrUpdateUserRole(Resource resource, User userCreateUpdate, MemberDTO memberDTO, State state) {
