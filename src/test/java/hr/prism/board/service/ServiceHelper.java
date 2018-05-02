@@ -270,8 +270,8 @@ public class ServiceHelper {
     }
 
     void verifyTimestamps(BoardEntity entity, LocalDateTime baseline) {
-        assertThat(entity.getCreatedTimestamp()).isGreaterThan(baseline);
-        assertThat(entity.getUpdatedTimestamp()).isGreaterThan(baseline);
+        assertThat(entity.getCreatedTimestamp()).isGreaterThanOrEqualTo(baseline);
+        assertThat(entity.getUpdatedTimestamp()).isGreaterThanOrEqualTo(baseline);
     }
 
     void verifyIdentity(Resource resource, Resource expectedParentResource, String expectedName) {

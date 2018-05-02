@@ -18,6 +18,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
+import hr.prism.board.validation.UrlValidator;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
@@ -29,8 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -92,6 +91,8 @@ public class PostService {
 
     private final ResourceTaskService resourceTaskService;
 
+    private final UrlValidator urlValidator;
+
     private final EventProducer eventProducer;
 
     private final ObjectMapper objectMapper;
@@ -104,8 +105,8 @@ public class PostService {
                        ResourceService resourceService, PostPatchService postPatchService,
                        UserRoleService userRoleService, UserService userService, ActionService actionService,
                        ResourceEventService resourceEventService, DepartmentUserService departmentUserService,
-                       ResourceTaskService resourceTaskService, EventProducer eventProducer, ObjectMapper objectMapper,
-                       EntityManager entityManager) {
+                       ResourceTaskService resourceTaskService, UrlValidator urlValidator, EventProducer eventProducer,
+                       ObjectMapper objectMapper, EntityManager entityManager) {
         this.postRepository = postRepository;
         this.postDAO = postDAO;
         this.documentService = documentService;
@@ -119,6 +120,7 @@ public class PostService {
         this.resourceEventService = resourceEventService;
         this.departmentUserService = departmentUserService;
         this.resourceTaskService = resourceTaskService;
+        this.urlValidator = urlValidator;
         this.eventProducer = eventProducer;
         this.objectMapper = objectMapper;
         this.entityManager = entityManager;
@@ -198,7 +200,7 @@ public class PostService {
 
             String applyWebsite = postDTO.getApplyWebsite();
             if (applyWebsite != null) {
-                checkApplyWebsiteAccessible(applyWebsite);
+                urlValidator.checkPathIsUrl(applyWebsite);
                 post.setApplyWebsite(applyWebsite);
             }
 
@@ -209,7 +211,7 @@ public class PostService {
                 post.setApplyDocument(documentService.getOrCreateDocument(applyDocument));
             }
 
-            checkPostApply(post);
+            checkApply(post);
 
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
             LocalDateTime deadTimestamp = postDTO.getDeadTimestamp();
@@ -319,7 +321,7 @@ public class PostService {
 
         Optional<String> applyWebsite = postDTO.getApplyWebsite();
         if (isPresent(applyWebsite)) {
-            checkApplyWebsiteAccessible(applyWebsite.get());
+            urlValidator.checkPathIsUrl(applyWebsite.get());
             patchPostApply(post, applyWebsite, empty(), empty());
         }
 
@@ -558,7 +560,7 @@ public class PostService {
         }
     }
 
-    private void checkPostApply(Post post) {
+    private void checkApply(Post post) {
         long applyCount =
             Stream.of(post.getApplyWebsite(), post.getApplyDocument(), post.getApplyEmail())
                 .filter(Objects::nonNull)
@@ -568,23 +570,6 @@ public class PostService {
             throw new BoardException(MISSING_POST_APPLY, "No apply mechanism specified");
         } else if (applyCount > 1) {
             throw new BoardException(CORRUPTED_POST_APPLY, "Multiple apply mechanisms specified");
-        }
-    }
-
-    private void checkApplyWebsiteAccessible(String applyWebsite) {
-        try {
-            URL url = new URL(applyWebsite);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.setInstanceFollowRedirects(true);
-            connection.connect();
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode < 200 || responseCode >= 400) {
-                throw new BoardException(INACCESSIBLE_POST_APPLY, "Cannot access apply website");
-            }
-        } catch (IOException e) {
-            throw new BoardException(INACCESSIBLE_POST_APPLY, "Cannot access apply website");
         }
     }
 

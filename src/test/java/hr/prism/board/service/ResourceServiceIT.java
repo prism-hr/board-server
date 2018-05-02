@@ -144,7 +144,7 @@ public class ResourceServiceIT {
         resourceService.updateState(department, ACCEPTED);
         assertEquals(DRAFT, department.getPreviousState());
         assertEquals(ACCEPTED, department.getState());
-        assertThat(department.getStateChangeTimestamp()).isGreaterThan(baseline);
+        assertThat(department.getStateChangeTimestamp()).isGreaterThanOrEqualTo(baseline);
     }
 
     @Test

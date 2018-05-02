@@ -114,7 +114,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void createBoard_successWhenPermitted() {
+    public void createBoard_success() {
         Board createdBoard = boardService.createBoard(departmentAdministrator, department.getId(),
             new BoardDTO().setName("board").setPostCategories(ImmutableList.of("category1", "category2")));
 

@@ -17,6 +17,7 @@ import hr.prism.board.event.consumer.ActivityEventConsumer;
 import hr.prism.board.event.consumer.DepartmentMemberEventConsumer;
 import hr.prism.board.event.consumer.NotificationEventConsumer;
 import hr.prism.board.service.PaymentService;
+import hr.prism.board.validation.UrlValidator;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -118,6 +119,12 @@ public class DbTestConfiguration {
                     .setOauthAccountId("linkedinId"));
 
         return linkedinAdapter;
+    }
+
+    @Bean
+    @Primary
+    public UrlValidator urlValidator() {
+        return mock(UrlValidator.class);
     }
 
     @Bean

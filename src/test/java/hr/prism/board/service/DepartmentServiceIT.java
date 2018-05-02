@@ -86,6 +86,9 @@ public class DepartmentServiceIT {
     @SpyBean
     private UserRoleService userRoleService;
 
+    @SpyBean
+    private DocumentService documentService;
+
     private LocalDateTime baseline;
 
     private User departmentAdministrator;
@@ -111,12 +114,12 @@ public class DepartmentServiceIT {
             departments.add(department);
         });
 
-        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService);
+        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
     }
 
     @After
     public void tearDown() {
-        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService);
+        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
     }
 
     @Test
@@ -150,15 +153,17 @@ public class DepartmentServiceIT {
 
     @Test
     public void createDepartment_successWhenCustomData() {
+        DocumentDTO documentLogoDTO =
+            new DocumentDTO()
+                .setCloudinaryId("new cloudinary id")
+                .setCloudinaryUrl("new cloudinary url")
+                .setFileName("new file name");
+
         Department createdDepartment = departmentService.createDepartment(departmentAdministrator, 1L,
             new DepartmentDTO()
                 .setName("department")
                 .setSummary("department summary")
-                .setDocumentLogo(
-                    new DocumentDTO()
-                        .setCloudinaryId("new cloudinary id")
-                        .setCloudinaryUrl("new cloudinary url")
-                        .setFileName("new file name"))
+                .setDocumentLogo(documentLogoDTO)
                 .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
 
         Department selectedDepartment = departmentService.getById(departmentAdministrator, createdDepartment.getId());
@@ -182,6 +187,7 @@ public class DepartmentServiceIT {
                 "D163 D163 S560",
                 baseline));
 
+        verify(documentService, times(1)).getOrCreateDocument(documentLogoDTO);
         verifyInvocations(createdDepartment, memberCategories);
         verifyDefaultBoards(createdDepartment);
     }
@@ -394,10 +400,10 @@ public class DepartmentServiceIT {
 
     @SuppressWarnings("SameParameterValue")
     private void verifyDepartment(Department department, University expectedUniversity, String expectedName,
-                          String expectedSummary, State expectedState, State expectedPreviousState,
-                          String expectedHandle, Document expectedDocumentLogo,
-                          MemberCategory[] expectedMemberCategories, Action[] expectedActions, String expectedIndexData,
-                          LocalDateTime baseline) {
+                                  String expectedSummary, State expectedState, State expectedPreviousState,
+                                  String expectedHandle, Document expectedDocumentLogo,
+                                  MemberCategory[] expectedMemberCategories, Action[] expectedActions, String expectedIndexData,
+                                  LocalDateTime baseline) {
         serviceHelper.verifyIdentity(department, expectedUniversity, expectedName);
         assertEquals(expectedSummary, department.getSummary());
 
@@ -413,7 +419,7 @@ public class DepartmentServiceIT {
         serviceHelper.verifyActions(department, expectedActions);
 
         serviceHelper.verifyIndexDataAndQuarter(department, expectedIndexData);
-        assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
+        assertThat(department.getLastTaskCreationTimestamp()).isGreaterThanOrEqualTo(baseline);
         serviceHelper.verifyTimestamps(department, baseline);
     }
 
