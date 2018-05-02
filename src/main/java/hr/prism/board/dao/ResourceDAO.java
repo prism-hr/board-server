@@ -27,8 +27,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static hr.prism.board.enums.Role.PUBLIC;
-import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
 import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE;
@@ -51,9 +49,10 @@ public class ResourceDAO {
             "INNER join workflow " +
             "ON resource.scope = workflow.resource2_scope " +
             "AND resource.state = workflow.resource2_state " +
+            "AND workflow.role = 'PUBLIC' " +
             "INNER JOIN resource_relation AS owner_relation " +
             "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope " +
+            "AND (resource.scope = 'DEPARTMENT' " +
             "OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id";
@@ -67,7 +66,7 @@ public class ResourceDAO {
             "AND resource.state = workflow.resource2_state " +
             "INNER JOIN resource_relation AS owner_relation " +
             "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope " +
+            "AND (resource.scope = 'DEPARTMENT' " +
             "OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
@@ -91,7 +90,7 @@ public class ResourceDAO {
             "AND resource.state = workflow.resource2_state " +
             "INNER JOIN resource_relation AS owner_relation " +
             "ON resource.id = owner_relation.resource2_id " +
-            "AND (resource.scope = :departmentScope " +
+            "AND (resource.scope = 'DEPARTMENT' " +
             "OR owner_relation.resource1_id <> owner_relation.resource2_id) " +
             "INNER JOIN resource as owner " +
             "ON owner_relation.resource1_id = owner.id " +
@@ -120,13 +119,33 @@ public class ResourceDAO {
         this.entityManager = entityManager;
     }
 
+    @SuppressWarnings("JpaQlInspection")
+    public Resource getById(Scope scope, Long id) {
+        EntityGraph entityGraph = getEntityGraph(scope);
+        return entityManager.createQuery(
+            "select resource " +
+                "from Resource resource " +
+                "where resource.id = :id", Resource.class)
+            .setParameter("id", id)
+            .setHint("javax.persistence.fetchgraph", entityGraph)
+            .getSingleResult();
+    }
+
+    @SuppressWarnings("JpaQlInspection")
+    public Resource getByHandle(Scope scope, String handle) {
+        EntityGraph entityGraph = getEntityGraph(scope);
+        return entityManager.createQuery(
+            "select resource " +
+                "from Resource resource " +
+                "where resource.handle = :handle", Resource.class)
+            .setParameter("handle", handle)
+            .setHint("javax.persistence.fetchgraph", entityGraph)
+            .getSingleResult();
+    }
+
     public List<Resource> getResources(User user, ResourceFilter filter) {
         List<String> publicFilterStatements = new ArrayList<>();
-        publicFilterStatements.add("workflow.role = :role ");
-
         Map<String, Object> publicFilterParameters = new HashMap<>();
-        publicFilterParameters.put("role", PUBLIC.name());
-        publicFilterParameters.put("departmentScope", DEPARTMENT.name());
 
         List<String> secureFilterStatements = new ArrayList<>();
         Map<String, Object> secureFilterParameters = new HashMap<>();
@@ -249,7 +268,6 @@ public class ResourceDAO {
         secureFilterStatements.add("user_role.user_id = :userId ");
 
         secureFilterParameters.put("userId", user == null ? "0" : user.getId().toString());
-        secureFilterParameters.put("departmentScope", DEPARTMENT.name());
         secureFilterParameters.put("userRoleStates", ACTIVE_USER_ROLE_STATE_STRINGS);
         secureFilterParameters.put("baseline", LocalDate.now());
     }
@@ -345,7 +363,7 @@ public class ResourceDAO {
                                         LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
         Scope scope = filter.getScope();
         Class<? extends Resource> resourceClass = scope.resourceClass;
-        EntityGraph entityGraph = entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
+        EntityGraph entityGraph = getEntityGraph(scope);
 
         String search = randomUUID().toString();
         String searchTerm = filter.getSearchTerm();
@@ -384,6 +402,10 @@ public class ResourceDAO {
         // Merge the output
         mergeResourcesWithActions(filter, resources, resourceActionIndex);
         return resources;
+    }
+
+    private EntityGraph getEntityGraph(Scope scope) {
+        return entityManager.getEntityGraph(scope.name().toLowerCase() + ".extended");
     }
 
     private void mergeResourcesWithActions(ResourceFilter filter, List<Resource> resources,

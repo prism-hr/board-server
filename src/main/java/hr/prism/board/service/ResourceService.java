@@ -84,21 +84,17 @@ public class ResourceService {
 
     public Resource getResource(User user, Scope scope, Long id) {
         List<Resource> resources = resourceDAO.getResources(user,
-            new ResourceFilter()
-                .setScope(scope)
-                .setId(id));
+            new ResourceFilter().setScope(scope).setId(id));
 
-        return ofNullable(resources.isEmpty() ? resourceRepository.findOne(id) : resources.get(0))
+        return ofNullable(resources.isEmpty() ? resourceDAO.getById(scope, id) : resources.get(0))
             .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, scope, id));
     }
 
     public Resource getResource(User user, Scope scope, String handle) {
         List<Resource> resources = resourceDAO.getResources(user,
-            new ResourceFilter()
-                .setScope(scope)
-                .setHandle(handle));
+            new ResourceFilter().setScope(scope).setHandle(handle));
 
-        return ofNullable(resources.isEmpty() ? resourceRepository.findByHandle(handle) : resources.get(0))
+        return ofNullable(resources.isEmpty() ? resourceDAO.getByHandle(scope, handle) : resources.get(0))
             .orElseThrow(() -> new BoardNotFoundException(MISSING_RESOURCE, scope, handle));
     }
 
@@ -249,13 +245,7 @@ public class ResourceService {
     }
 
     public String createHandle(Resource parent, Scope scope, String name) {
-        String handle;
-        if (parent == null) {
-            handle = suggestHandle(name);
-        } else {
-            handle = parent.getHandle() + "/" + suggestHandle(name);
-        }
-
+        String handle = parent.getHandle() + "/" + suggestHandle(name);
         List<String> similarHandles = resourceRepository.findHandleLikeSuggestedHandle(scope, handle);
         return confirmHandle(handle, similarHandles);
     }

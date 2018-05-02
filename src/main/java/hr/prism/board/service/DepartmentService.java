@@ -16,7 +16,6 @@ import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceSearch;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +38,7 @@ import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
 import hr.prism.board.event.ActivityEvent;
@@ -172,7 +172,7 @@ public class DepartmentService {
 
         List<String> memberCategoryStrings;
         List<MemberCategory> memberCategories = departmentDTO.getMemberCategories();
-        if (CollectionUtils.isEmpty(memberCategories)) {
+        if (isEmpty(memberCategories)) {
             memberCategoryStrings = MEMBER_CATEGORY_STRINGS;
         } else {
             memberCategoryStrings = toStrings(departmentDTO.getMemberCategories());

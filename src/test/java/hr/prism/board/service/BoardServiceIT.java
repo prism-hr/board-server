@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ACCEPTED;
@@ -121,6 +122,7 @@ public class BoardServiceIT {
 
         Board selectedBoard = boardService.getById(departmentAdministrator, createdBoard.getId());
 
+        String[] postCategories = new String[]{"category1", "category2"};
         Stream.of(createdBoard, selectedBoard).forEach(board ->
             serviceVerificationHelper.verifyBoard(
                 board,
@@ -129,12 +131,12 @@ public class BoardServiceIT {
                 ACCEPTED,
                 ACCEPTED,
                 "university/department/board",
-                new String[]{"category1", "category2"},
+                postCategories,
                 new Action[]{VIEW, EDIT, EXTEND, REJECT},
                 "D163 D163 S560 B630",
                 baseline));
 
-        verifyInvocations(createdBoard);
+        verifyInvocations(createdBoard, postCategories);
         verifyResourceOperation(createdBoard);
     }
 
@@ -313,13 +315,19 @@ public class BoardServiceIT {
             }));
     }
 
-    private void verifyInvocations(Board board) {
+    private void verifyInvocations(Board board, String[] postCategories) {
         verify(actionService, times(1))
             .executeAction(eq(departmentAdministrator), eq(department), eq(EXTEND), any(Execution.class));
+
         verify(resourceService, times(1))
             .checkUniqueName(BOARD, null, department, "board");
+
         verify(resourceService, times(1))
             .createHandle(board.getParent(), BOARD, board.getName());
+
+        verify(resourceService, times(1))
+            .updateCategories(board, POST, Stream.of(postCategories).collect(toList()));
+
         verify(resourceService, times(1))
             .createResourceOperation(board, EXTEND, departmentAdministrator);
     }

@@ -312,7 +312,7 @@ public class ResourceServiceTest {
                 ImmutableMap.of("scope", DEPARTMENT, "id", 1L));
 
         verify(resourceDAO, times(1)).getResources(user, filter);
-        verify(resourceRepository, times(1)).findOne(1L);
+        verify(resourceDAO, times(1)).getById(DEPARTMENT, 1L);
     }
 
 }

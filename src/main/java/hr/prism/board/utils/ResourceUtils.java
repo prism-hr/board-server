@@ -45,9 +45,10 @@ public class ResourceUtils {
         if (similarHandles.contains(suggestedHandle)) {
             int ordinal = 2;
             int suggestedHandleLength = suggestedHandle.length();
-            List<String> similarHandleSuffixes = similarHandles.stream()
-                .map(similarHandle -> similarHandle.substring(suggestedHandleLength))
-                .collect(toList());
+            List<String> similarHandleSuffixes =
+                similarHandles.stream()
+                    .map(similarHandle -> similarHandle.substring(suggestedHandleLength))
+                    .collect(toList());
 
             for (String similarHandleSuffix : similarHandleSuffixes) {
                 if (similarHandleSuffix.startsWith("-")) {

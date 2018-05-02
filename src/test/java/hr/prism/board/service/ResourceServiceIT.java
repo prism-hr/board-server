@@ -4,7 +4,7 @@ import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.University;
 import hr.prism.board.exception.BoardDuplicateException;
-import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
@@ -16,6 +16,8 @@ import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE;
 import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DbTestContext
@@ -27,19 +29,24 @@ public class ResourceServiceIT {
     @Inject
     private ResourceService resourceService;
 
+    private University university;
+
+    private Department department;
+
+    @Before
+    public void setUp() {
+        university = (University) resourceService.getById(1L);
+        department = (Department) resourceService.getById(2L);
+    }
+
     @Test
     public void checkUniqueName_successWhenCreateDepartment() {
-        University university = new University();
-        university.setId(1L);
         resourceService.checkUniqueName(DEPARTMENT, null, university, "new department");
     }
 
     @Test
     public void checkUniqueName_failureWhenCreateDepartmentDuplicate() {
-        University university = new University();
-        university.setId(1L);
-        Assertions.assertThatThrownBy(() ->
-            resourceService.checkUniqueName(DEPARTMENT, null, university, "department"))
+        assertThatThrownBy(() -> resourceService.checkUniqueName(DEPARTMENT, null, university, "department"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 2L));
@@ -47,8 +54,6 @@ public class ResourceServiceIT {
 
     @Test
     public void checkUniqueName_successWhenCreateBoard() {
-        University university = new University();
-        university.setId(1L);
         resourceService.checkUniqueName(DEPARTMENT, null, university, "new board");
     }
 
@@ -56,11 +61,34 @@ public class ResourceServiceIT {
     public void checkUniqueName_failureWhenCreateBoardDuplicate() {
         Department department = new Department();
         department.setId(2L);
-        Assertions.assertThatThrownBy(() ->
-            resourceService.checkUniqueName(BOARD, null, department, "board"))
+        assertThatThrownBy(() -> resourceService.checkUniqueName(BOARD, null, department, "board"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
-            .hasFieldOrPropertyWithValue("properties", singletonMap("id", 3L));
+            .hasFieldOrPropertyWithValue("properties", singletonMap("id", 4L));
+    }
+
+    @Test
+    public void createHandle_successWhenDepartment() {
+        String handle = resourceService.createHandle(university, DEPARTMENT, "department2");
+        assertEquals("university/department2", handle);
+    }
+
+    @Test
+    public void createHandle_successWhenDepartmentAndDuplicate() {
+        String handle = resourceService.createHandle(university, DEPARTMENT, "department");
+        assertEquals("university/department-3", handle);
+    }
+
+    @Test
+    public void createHandle_successWhenBoard() {
+        String handle = resourceService.createHandle(department, BOARD, "board2");
+        assertEquals("university/department/board2", handle);
+    }
+
+    @Test
+    public void createHandle_successWhenBoardAndDuplicate() {
+        String handle = resourceService.createHandle(department, BOARD, "board");
+        assertEquals("university/department/board-3", handle);
     }
 
 }

@@ -29,12 +29,13 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
-import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.MemberCategory.*;
 import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
+import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -124,6 +125,7 @@ public class DepartmentServiceIT {
 
         Department selectedDepartment = departmentService.getById(departmentAdministrator, createdDepartment.getId());
 
+        MemberCategory[] memberCategories = MemberCategory.values();
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
             serviceVerificationHelper.verifyDepartment(
                 department,
@@ -134,12 +136,12 @@ public class DepartmentServiceIT {
                 DRAFT,
                 "university/department",
                 documentLogo,
-                MemberCategory.values(),
+                memberCategories,
                 new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
                 "D163 D163 S560",
                 baseline));
 
-        verifyInvocations(createdDepartment);
+        verifyInvocations(createdDepartment, memberCategories);
         verifyResourceOperation(createdDepartment);
         verifyDefaultBoards(createdDepartment);
     }
@@ -162,6 +164,7 @@ public class DepartmentServiceIT {
         Document expectedDocumentLogo = new Document();
         expectedDocumentLogo.setCloudinaryId("new cloudinary id");
 
+        MemberCategory[] memberCategories = new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT};
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
             serviceVerificationHelper.verifyDepartment(
                 createdDepartment,
@@ -172,12 +175,12 @@ public class DepartmentServiceIT {
                 DRAFT,
                 "university/department",
                 expectedDocumentLogo,
-                new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT},
+                memberCategories,
                 new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
                 "D163 D163 S560",
                 baseline));
 
-        verifyInvocations(createdDepartment);
+        verifyInvocations(createdDepartment, memberCategories);
         verifyResourceOperation(createdDepartment);
         verifyDefaultBoards(createdDepartment);
     }
@@ -388,16 +391,24 @@ public class DepartmentServiceIT {
             baseline);
     }
 
-    private void verifyInvocations(Department department) {
+    private void verifyInvocations(Department department, MemberCategory[] memberCategories) {
         verify(universityService, times(1)).getById(1L);
+
         verify(resourceService, times(1))
             .checkUniqueName(DEPARTMENT, null, university, "department");
+
         verify(resourceService, times(1))
             .createHandle(department.getParent(), DEPARTMENT, department.getName());
+
+        verify(resourceService, times(1))
+            .updateCategories(department, MEMBER, toStrings(asList(memberCategories)));
+
         verify(resourceService, times(1))
             .createResourceOperation(department, EXTEND, departmentAdministrator);
+
         verify(resourceTaskService, times(1))
             .createForNewResource(department.getId(), departmentAdministrator.getId(), DEPARTMENT_TASKS);
+
         verify(userRoleService, times(1))
             .createUserRole(department, departmentAdministrator, ADMINISTRATOR);
     }
