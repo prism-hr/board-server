@@ -3,10 +3,7 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.dao.ResourceDAO;
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.ResourceOperation;
-import hr.prism.board.domain.University;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.repository.UserRepository;
@@ -15,13 +12,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
+import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EXTEND;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE;
 import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static java.util.Collections.singletonMap;
@@ -49,6 +50,11 @@ public class ResourceServiceIT {
     @Inject
     private ServiceHelper serviceHelper;
 
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
+
+    private LocalDateTime baseline;
+
     private User user;
 
     private University university;
@@ -57,6 +63,7 @@ public class ResourceServiceIT {
 
     @Before
     public void setUp() {
+        baseline = LocalDateTime.now();
         user = userRepository.findOne(1L);
         university = (University) resourceService.getById(1L);
         department = (Department) resourceService.getById(2L);
@@ -133,8 +140,82 @@ public class ResourceServiceIT {
     }
 
     @Test
+    public void updateState_success() {
+        resourceService.updateState(department, ACCEPTED);
+        assertEquals(DRAFT, department.getPreviousState());
+        assertEquals(ACCEPTED, department.getState());
+        assertThat(department.getStateChangeTimestamp()).isGreaterThan(baseline);
+    }
+
+    @Test
+    public void updateState_failureWhenPrevious() {
+        assertThatThrownBy(() -> resourceService.updateState(department, PREVIOUS))
+            .isExactlyInstanceOf(IllegalStateException.class)
+            .hasMessage("Previous state is anonymous - cannot be assigned to a resource");
+    }
+
+    @Test
+    public void createResourceRelation_success() {
+        createResourceRelation(1L, 2L);
+        createResourceRelation(2L, 4L);
+        createResourceRelation(4L, 6L);
+
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            University university = (University) resourceService.getById(1L);
+            Department department = (Department) resourceService.getById(2L);
+            Board board = (Board) resourceService.getById(4L);
+            Post post = (Post) resourceService.getById(6L);
+
+            assertThat(university.getParents()).containsExactly(
+                new ResourceRelation().setResource1(university).setResource2(university));
+
+            assertThat(department.getParents()).containsExactlyInAnyOrder(
+                new ResourceRelation().setResource1(university).setResource2(department),
+                new ResourceRelation().setResource1(department).setResource2(department));
+
+            assertThat(board.getParents()).containsExactlyInAnyOrder(
+                new ResourceRelation().setResource1(university).setResource2(board),
+                new ResourceRelation().setResource1(department).setResource2(board),
+                new ResourceRelation().setResource1(board).setResource2(board));
+
+            assertThat(post.getParents()).containsExactlyInAnyOrder(
+                new ResourceRelation().setResource1(university).setResource2(post),
+                new ResourceRelation().setResource1(department).setResource2(post),
+                new ResourceRelation().setResource1(board).setResource2(post),
+                new ResourceRelation().setResource1(post).setResource2(post));
+
+            assertThat(university.getChildren()).containsExactlyInAnyOrder(
+                new ResourceRelation().setResource1(university).setResource2(university),
+                new ResourceRelation().setResource1(university).setResource2(department),
+                new ResourceRelation().setResource1(university).setResource2(board),
+                new ResourceRelation().setResource1(university).setResource2(post));
+
+            assertThat(department.getChildren()).containsExactlyInAnyOrder(
+                new ResourceRelation().setResource1(department).setResource2(department),
+                new ResourceRelation().setResource1(department).setResource2(board),
+                new ResourceRelation().setResource1(department).setResource2(post));
+
+            assertThat(board.getChildren()).containsExactlyInAnyOrder(
+                new ResourceRelation().setResource1(board).setResource2(board),
+                new ResourceRelation().setResource1(board).setResource2(post));
+
+            assertThat(post.getChildren()).containsExactly(
+                new ResourceRelation().setResource1(post).setResource2(post));
+
+            Stream.of(department, board, post).forEach(resource -> {
+                resource.getParents().forEach(resourceRelation ->
+                    serviceHelper.verifyTimestamps(resourceRelation, baseline));
+
+                resource.getChildren().forEach(resourceRelation ->
+                    serviceHelper.verifyTimestamps(resourceRelation, baseline));
+            });
+
+            return null;
+        });
+    }
+
+    @Test
     public void createResourceOperation_success() {
-        LocalDateTime baseline = LocalDateTime.now();
         ResourceOperation resourceOperation = resourceService.createResourceOperation(department, EXTEND, user);
 
         assertNotNull(resourceOperation.getId());
@@ -144,6 +225,15 @@ public class ResourceServiceIT {
 
         serviceHelper.verifyTimestamps(resourceOperation, baseline);
         assertThat(resourceDAO.getResourceOperations(department)).containsExactly(resourceOperation);
+    }
+
+    private void createResourceRelation(Long resource1Id, Long resource2Id) {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            Resource resource1 = resourceService.getById(resource1Id);
+            Resource resource2 = resourceService.getById(resource2Id);
+            resourceService.createResourceRelation(resource1, resource2);
+            return null;
+        });
     }
 
 }

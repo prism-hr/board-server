@@ -429,6 +429,8 @@ public class DepartmentServiceIT {
         verify(resourceService, times(1))
             .updateCategories(department, MEMBER, toStrings(asList(memberCategories)));
 
+        verify(resourceService, times(1)).createResourceRelation(university, department);
+
         verify(resourceService, times(1))
             .createResourceOperation(department, EXTEND, departmentAdministrator);
 

@@ -134,7 +134,22 @@ public class BoardServiceIT {
                 "D163 D163 S560 B630",
                 baseline));
 
-        verifyInvocations(createdBoard, postCategories);
+        verify(actionService, times(1))
+            .executeAction(eq(departmentAdministrator), eq(department), eq(EXTEND), any(Execution.class));
+
+        verify(resourceService, times(1))
+            .checkUniqueName(BOARD, null, department, "board");
+
+        verify(resourceService, times(1))
+            .createHandle(createdBoard.getParent(), BOARD, createdBoard.getName());
+
+        verify(resourceService, times(1))
+            .updateCategories(createdBoard, POST, Stream.of(postCategories).collect(toList()));
+
+        verify(resourceService, times(1)).createResourceRelation(department, createdBoard);
+
+        verify(resourceService, times(1))
+            .createResourceOperation(createdBoard, EXTEND, departmentAdministrator);
     }
 
     @Test
@@ -327,23 +342,6 @@ public class BoardServiceIT {
 
         serviceHelper.verifyIndexDataAndQuarter(board, expectedIndexData);
         serviceHelper.verifyTimestamps(board, baseline);
-    }
-
-    private void verifyInvocations(Board board, String[] postCategories) {
-        verify(actionService, times(1))
-            .executeAction(eq(departmentAdministrator), eq(department), eq(EXTEND), any(Execution.class));
-
-        verify(resourceService, times(1))
-            .checkUniqueName(BOARD, null, department, "board");
-
-        verify(resourceService, times(1))
-            .createHandle(board.getParent(), BOARD, board.getName());
-
-        verify(resourceService, times(1))
-            .updateCategories(board, POST, Stream.of(postCategories).collect(toList()));
-
-        verify(resourceService, times(1))
-            .createResourceOperation(board, EXTEND, departmentAdministrator);
     }
 
     private void verifyAdministratorBoards(Department department, List<Board> boards) {

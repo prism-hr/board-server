@@ -15,6 +15,9 @@ UPDATE resource
 SET parent_id = id
 WHERE scope = 'UNIVERSITY';
 
+INSERT INTO resource_relation (resource1_id, resource2_id, created_timestamp)
+VALUES (1, 1, NOW());
+
 INSERT INTO resource (id, parent_id, scope, name, handle, state, created_timestamp)
 VALUES (2, 1, 'DEPARTMENT', 'department', 'university/department', 'DRAFT', NOW()),
   (3, 1, 'DEPARTMENT', 'department 2', 'university/department-2', 'DRAFT', NOW());
@@ -22,6 +25,9 @@ VALUES (2, 1, 'DEPARTMENT', 'department', 'university/department', 'DRAFT', NOW(
 INSERT INTO resource (id, parent_id, scope, name, handle, state, created_timestamp)
 VALUES (4, 2, 'BOARD', 'board', 'university/department/board', 'ACCEPTED', NOW()),
   (5, 2, 'BOARD', 'board 2', 'university/department/board-2', 'ACCEPTED', NOW());
+
+INSERT INTO resource (id, parent_id, scope, name, state, created_timestamp)
+VALUES (6, 4, 'POST', 'post', 'ACCEPTED', NOW());
 
 INSERT INTO user (id, uuid, given_name, surname, email, email_display, password, password_hash,
                   document_image_request_state, created_timestamp)
