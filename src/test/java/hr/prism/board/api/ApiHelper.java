@@ -11,13 +11,13 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class ApiDataHelper {
+public class ApiHelper {
 
     private final MockMvc mockMvc;
 
     private final ObjectMapper objectMapper;
 
-    public ApiDataHelper(MockMvc mockMvc, ObjectMapper objectMapper) {
+    public ApiHelper(MockMvc mockMvc, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
     }

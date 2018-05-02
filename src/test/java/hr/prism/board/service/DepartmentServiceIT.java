@@ -2,7 +2,11 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Document;
+import hr.prism.board.domain.University;
+import hr.prism.board.domain.User;
+import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
@@ -11,7 +15,7 @@ import hr.prism.board.enums.State;
 import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.UserRepository;
-import hr.prism.board.service.ServiceDataHelper.Scenarios;
+import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
 import org.junit.After;
 import org.junit.Before;
@@ -38,6 +42,8 @@ import static hr.prism.board.enums.State.*;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -63,16 +69,13 @@ public class DepartmentServiceIT {
     private DepartmentService departmentService;
 
     @Inject
-    private BoardService boardService;
-
-    @Inject
-    private ServiceDataHelper serviceDataHelper;
-
-    @Inject
-    private ServiceVerificationHelper serviceVerificationHelper;
+    private ServiceHelper serviceHelper;
 
     @SpyBean
     private UniversityService universityService;
+
+    @SpyBean
+    private BoardService boardService;
 
     @SpyBean
     private ResourceService resourceService;
@@ -103,17 +106,17 @@ public class DepartmentServiceIT {
         departments = new ArrayList<>();
         Stream.of(DRAFT, PENDING, ACCEPTED, REJECTED).forEach(state -> {
             Department department =
-                serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
+                serviceHelper.setUpDepartment(departmentAdministrator, 1L, "department " + state);
             resourceService.updateState(department, state);
             departments.add(department);
         });
 
-        reset(universityService, resourceService, resourceTaskService, userRoleService);
+        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService);
     }
 
     @After
     public void tearDown() {
-        reset(universityService, resourceService, resourceTaskService, userRoleService);
+        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService);
     }
 
     @Test
@@ -127,7 +130,7 @@ public class DepartmentServiceIT {
 
         MemberCategory[] memberCategories = MemberCategory.values();
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-            serviceVerificationHelper.verifyDepartment(
+            verifyDepartment(
                 department,
                 university,
                 "department",
@@ -142,7 +145,6 @@ public class DepartmentServiceIT {
                 baseline));
 
         verifyInvocations(createdDepartment, memberCategories);
-        verifyResourceOperation(createdDepartment);
         verifyDefaultBoards(createdDepartment);
     }
 
@@ -166,7 +168,7 @@ public class DepartmentServiceIT {
 
         MemberCategory[] memberCategories = new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT};
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-            serviceVerificationHelper.verifyDepartment(
+            verifyDepartment(
                 createdDepartment,
                 university,
                 "department",
@@ -181,7 +183,6 @@ public class DepartmentServiceIT {
                 baseline));
 
         verifyInvocations(createdDepartment, memberCategories);
-        verifyResourceOperation(createdDepartment);
         verifyDefaultBoards(createdDepartment);
     }
 
@@ -292,7 +293,7 @@ public class DepartmentServiceIT {
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
-                .map(serviceDataHelper::setUpUnprivilegedUsersForDepartment)
+                .map(serviceHelper::setUpUnprivilegedUsersForDepartment)
                 .collect(toList());
 
         scenariosList.forEach(scenarios ->
@@ -333,7 +334,7 @@ public class DepartmentServiceIT {
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
-                .map(serviceDataHelper::setUpUnprivilegedUsersForDepartment)
+                .map(serviceHelper::setUpUnprivilegedUsersForDepartment)
                 .collect(toList());
 
         scenariosList.forEach(scenarios ->
@@ -356,7 +357,7 @@ public class DepartmentServiceIT {
         List<Scenarios> scenariosList =
             departmentRepository.findAll()
                 .stream()
-                .map(serviceDataHelper::setUpUnprivilegedUsersForDepartment)
+                .map(serviceHelper::setUpUnprivilegedUsersForDepartment)
                 .collect(toList());
 
         scenariosList.forEach(scenarios ->
@@ -376,7 +377,7 @@ public class DepartmentServiceIT {
 
     private void verifyDepartment(Department department, State expectedState, Action[] expectedActions,
                                   String expectedIndexData) {
-        serviceVerificationHelper.verifyDepartment(
+        verifyDepartment(
             department,
             university,
             "department " + expectedState,
@@ -389,6 +390,31 @@ public class DepartmentServiceIT {
             expectedActions,
             expectedIndexData,
             baseline);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyDepartment(Department department, University expectedUniversity, String expectedName,
+                          String expectedSummary, State expectedState, State expectedPreviousState,
+                          String expectedHandle, Document expectedDocumentLogo,
+                          MemberCategory[] expectedMemberCategories, Action[] expectedActions, String expectedIndexData,
+                          LocalDateTime baseline) {
+        serviceHelper.verifyIdentity(department, expectedUniversity, expectedName);
+        assertEquals(expectedSummary, department.getSummary());
+
+        assertEquals(expectedState, department.getState());
+        assertEquals(expectedPreviousState, department.getPreviousState());
+        assertEquals(expectedHandle, department.getHandle());
+
+        assertEquals(expectedDocumentLogo, department.getDocumentLogo());
+        assertNull(department.getLocation());
+
+        assertThat(department.getMemberCategoryStrings())
+            .containsExactly(Stream.of(expectedMemberCategories).map(MemberCategory::name).toArray(String[]::new));
+        serviceHelper.verifyActions(department, expectedActions);
+
+        serviceHelper.verifyIndexDataAndQuarter(department, expectedIndexData);
+        assertThat(department.getLastTaskCreationTimestamp()).isGreaterThan(baseline);
+        serviceHelper.verifyTimestamps(department, baseline);
     }
 
     private void verifyInvocations(Department department, MemberCategory[] memberCategories) {
@@ -413,39 +439,17 @@ public class DepartmentServiceIT {
             .createUserRole(department, departmentAdministrator, ADMINISTRATOR);
     }
 
-    private void verifyResourceOperation(Department department) {
-        serviceVerificationHelper.verifyResourceOperations(department,
-            new ResourceOperation().setResource(department).setAction(EXTEND).setUser(departmentAdministrator));
-    }
-
     private void verifyDefaultBoards(Department department) {
-        List<Board> boards =
-            boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(department.getId()));
-        assertThat(boards).hasSize(2);
+        Long departmentId = department.getId();
+        verify(boardService).createBoard(departmentAdministrator, departmentId,
+            new BoardDTO()
+                .setName("Career Opportunities")
+                .setPostCategories(ImmutableList.of("Employment", "Internship", "Volunteering")));
 
-        serviceVerificationHelper.verifyBoard(
-            boards.get(0),
-            department,
-            "Career Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            "university/department/career-opportunities",
-            new String[]{"Employment", "Internship", "Volunteering"},
-            new Action[]{VIEW, EDIT, EXTEND, REJECT},
-            "D163 D163 S560 C660 O163",
-            baseline);
-
-        serviceVerificationHelper.verifyBoard(
-            boards.get(1),
-            department,
-            "Research Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            "university/department/research-opportunities",
-            new String[]{"MRes", "PhD", "Postdoc"},
-            new Action[]{VIEW, EDIT, EXTEND, REJECT},
-            "D163 D163 S560 R262 O163",
-            baseline);
+        verify(boardService).createBoard(departmentAdministrator, departmentId,
+            new BoardDTO()
+                .setName("Research Opportunities")
+                .setPostCategories(ImmutableList.of("MRes", "PhD", "Postdoc")));
     }
 
 }

@@ -4,9 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
+import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRoleRepository;
+import hr.prism.board.representation.ActionRepresentation;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -19,12 +21,17 @@ import static hr.prism.board.enums.ExistingRelation.STUDENT;
 import static hr.prism.board.enums.MemberCategory.fromStrings;
 import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.State.ACCEPTED;
+import static hr.prism.board.utils.ResourceUtils.getQuarter;
 import static java.math.BigDecimal.ONE;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @Component
-public class ServiceDataHelper {
+public class ServiceHelper {
 
     private final ResourceRepository resourceRepository;
 
@@ -41,9 +48,9 @@ public class ServiceDataHelper {
     private final UserRoleService userRoleService;
 
     @Inject
-    public ServiceDataHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
-                             DepartmentService departmentService, BoardService boardService, PostService postService,
-                             UserService userService, UserRoleService userRoleService) {
+    public ServiceHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
+                         DepartmentService departmentService, BoardService boardService, PostService postService,
+                         UserService userService, UserRoleService userRoleService) {
         this.resourceRepository = resourceRepository;
         this.userRoleRepository = userRoleRepository;
         this.departmentService = departmentService;
@@ -260,6 +267,31 @@ public class ServiceDataHelper {
             .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
             .scenario(userWithoutRoles, "User without roles")
             .scenario(null, "Public user");
+    }
+
+    void verifyTimestamps(BoardEntity entity, LocalDateTime baseline) {
+        assertThat(entity.getCreatedTimestamp()).isGreaterThan(baseline);
+        assertThat(entity.getUpdatedTimestamp()).isGreaterThan(baseline);
+    }
+
+    void verifyIdentity(Resource resource, Resource expectedParentResource, String expectedName) {
+        assertNotNull(resource.getId());
+        assertEquals(expectedParentResource, resource.getParent());
+        assertEquals(expectedName, resource.getName());
+    }
+
+    void verifyActions(Resource resource, Action[] expectedActions) {
+        assertThat(
+            resource.getActions()
+                .stream()
+                .map(ActionRepresentation::getAction)
+                .collect(toList()))
+            .containsExactly(expectedActions);
+    }
+
+    void verifyIndexDataAndQuarter(Resource resource, String expectedIndexData) {
+        assertEquals(expectedIndexData, resource.getIndexData());
+        assertEquals(getQuarter(resource.getCreatedTimestamp()), resource.getQuarter());
     }
 
     private User getDepartmentAdministrator(Department department) {

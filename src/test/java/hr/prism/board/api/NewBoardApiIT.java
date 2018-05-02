@@ -43,7 +43,7 @@ public class NewBoardApiIT {
 
     @Inject
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    private ApiDataHelper apiDataHelper;
+    private ApiHelper apiHelper;
 
     @MockBean
     private BoardService boardService;
@@ -88,7 +88,7 @@ public class NewBoardApiIT {
 
     @Test
     public void createBoard_successWhenAuthenticated() throws Exception {
-        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
 
         mockMvc.perform(
             post("/api/departments/2/boards")
@@ -112,7 +112,7 @@ public class NewBoardApiIT {
 
     @Test
     public void getBoards_successWhenAuthenticated() throws Exception {
-        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
 
         mockMvc.perform(
             get("/api/boards?searchTerm=search&state=ACCEPTED")

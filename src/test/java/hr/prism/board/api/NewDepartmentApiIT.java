@@ -43,7 +43,7 @@ public class NewDepartmentApiIT {
 
     @Inject
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    private ApiDataHelper apiDataHelper;
+    private ApiHelper apiHelper;
 
     @MockBean
     private DepartmentService departmentService;
@@ -88,7 +88,7 @@ public class NewDepartmentApiIT {
 
     @Test
     public void createDepartment_successWhenAuthenticated() throws Exception {
-        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
 
         mockMvc.perform(
             post("/api/universities/1/departments")
@@ -112,7 +112,7 @@ public class NewDepartmentApiIT {
 
     @Test
     public void getDepartments_successWhenAuthenticated() throws Exception {
-        String authorization = apiDataHelper.login("alastair@prism.hr", "password");
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
 
         mockMvc.perform(
             get("/api/departments?searchTerm=search&state=ACCEPTED")

@@ -220,7 +220,8 @@ public class ResourceService {
         resourceOperationRepository.insertByResourceIdsActionAndCreatedTimestamp(resourceIds, action.name(), baseline);
     }
 
-    public void createResourceOperation(Resource resource, Action action, User user) {
+    @SuppressWarnings("UnusedReturnValue")
+    public ResourceOperation createResourceOperation(Resource resource, Action action, User user) {
         ResourceOperation resourceOperation =
             new ResourceOperation()
                 .setResource(resource)
@@ -240,8 +241,7 @@ public class ResourceService {
             resourceOperation.setComment(resource.getComment());
         }
 
-        resourceOperationRepository.save(resourceOperation);
-        resourceRepository.save(resource);
+        return resourceOperationRepository.save(resourceOperation);
     }
 
     public String createHandle(Resource parent, Scope scope, String name) {

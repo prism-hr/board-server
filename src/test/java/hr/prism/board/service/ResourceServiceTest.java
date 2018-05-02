@@ -1,16 +1,12 @@
 package hr.prism.board.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
-import hr.prism.board.exception.BoardNotFoundException;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
 import hr.prism.board.repository.ResourceRepository;
-import hr.prism.board.value.ResourceFilter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,8 +20,6 @@ import java.time.LocalDateTime;
 import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.DRAFT;
 import static hr.prism.board.enums.State.PREVIOUS;
-import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
-import static java.util.Collections.emptyList;
 import static org.apache.commons.lang3.StringUtils.right;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -78,102 +72,6 @@ public class ResourceServiceTest {
             resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
         reset(resourceRepository, resourceDAO, resourceRelationRepository,
             resourceCategoryRepository, resourceOperationRepository, entityManager, objectMapper);
-    }
-
-    @Test
-    public void createHandle_successWhenDepartment() {
-        when(resourceRepository.findHandleLikeSuggestedHandle(DEPARTMENT, "university/department"))
-            .thenReturn(emptyList());
-
-        University university = new University();
-        university.setId(1L);
-        university.setHandle("university");
-
-        String handle = resourceService.createHandle(university, DEPARTMENT, "department");
-        assertEquals("university/department", handle);
-
-        verify(resourceRepository, times(1))
-            .findHandleLikeSuggestedHandle(DEPARTMENT, "university/department");
-    }
-
-    @Test
-    public void createHandle_successWhenDepartmentAndSimilar() {
-        when(resourceRepository.findHandleLikeSuggestedHandle(DEPARTMENT, "university/department"))
-            .thenReturn(ImmutableList.of("university/department-2"));
-
-        University university = new University();
-        university.setId(1L);
-        university.setHandle("university");
-
-        String handle = resourceService.createHandle(university, DEPARTMENT, "department");
-        assertEquals("university/department", handle);
-
-        verify(resourceRepository, times(1))
-            .findHandleLikeSuggestedHandle(DEPARTMENT, "university/department");
-    }
-
-    @Test
-    public void createHandle_successWhenDepartmentAndDuplicate() {
-        when(resourceRepository.findHandleLikeSuggestedHandle(DEPARTMENT, "university/department"))
-            .thenReturn(ImmutableList.of("university/department"));
-
-        University university = new University();
-        university.setId(1L);
-        university.setHandle("university");
-
-        String handle = resourceService.createHandle(university, DEPARTMENT, "department");
-        assertEquals("university/department-2", handle);
-
-        verify(resourceRepository, times(1))
-            .findHandleLikeSuggestedHandle(DEPARTMENT, "university/department");
-    }
-
-    @Test
-    public void createHandle_successWhenBoard() {
-        when(resourceRepository.findHandleLikeSuggestedHandle(BOARD, "university/department/board"))
-            .thenReturn(emptyList());
-
-        Department department = new Department();
-        department.setId(1L);
-        department.setHandle("university/department");
-
-        String handle = resourceService.createHandle(department, BOARD, "board");
-        assertEquals("university/department/board", handle);
-
-        verify(resourceRepository, times(1))
-            .findHandleLikeSuggestedHandle(BOARD, "university/department/board");
-    }
-
-    @Test
-    public void createHandle_successWhenBoardAndSimilar() {
-        when(resourceRepository.findHandleLikeSuggestedHandle(BOARD, "university/department/board"))
-            .thenReturn(ImmutableList.of("university/department/board-2"));
-
-        Department department = new Department();
-        department.setId(1L);
-        department.setHandle("university/department");
-
-        String handle = resourceService.createHandle(department, BOARD, "board");
-        assertEquals("university/department/board", handle);
-
-        verify(resourceRepository, times(1))
-            .findHandleLikeSuggestedHandle(BOARD, "university/department/board");
-    }
-
-    @Test
-    public void createHandle_successWhenBoardAndDuplicate() {
-        when(resourceRepository.findHandleLikeSuggestedHandle(BOARD, "university/department/board"))
-            .thenReturn(ImmutableList.of("university/department/board"));
-
-        Department department = new Department();
-        department.setId(1L);
-        department.setHandle("university/department");
-
-        String handle = resourceService.createHandle(department, BOARD, "board");
-        assertEquals("university/department/board-2", handle);
-
-        verify(resourceRepository, times(1))
-            .findHandleLikeSuggestedHandle(BOARD, "university/department/board");
     }
 
     @Test
@@ -293,26 +191,6 @@ public class ResourceServiceTest {
         verify(resourceRelationRepository, times(1)).save(universityBoardRelation);
         verify(resourceRelationRepository, times(1)).save(departmentBoardRelation);
         verify(resourceRelationRepository, times(1)).save(boardRelation);
-    }
-
-    @Test
-    public void getResource_failureWhenResourceNotFound() {
-        User user = new User();
-        user.setId(1L);
-
-        ResourceFilter filter =
-            new ResourceFilter()
-                .setScope(DEPARTMENT)
-                .setId(1L);
-
-        assertThatThrownBy(() -> resourceService.getResource(user, DEPARTMENT, 1L))
-            .isExactlyInstanceOf(BoardNotFoundException.class)
-            .hasFieldOrPropertyWithValue("exceptionCode", MISSING_RESOURCE)
-            .hasFieldOrPropertyWithValue("properties",
-                ImmutableMap.of("scope", DEPARTMENT, "id", 1L));
-
-        verify(resourceDAO, times(1)).getResources(user, filter);
-        verify(resourceDAO, times(1)).getById(DEPARTMENT, 1L);
     }
 
 }

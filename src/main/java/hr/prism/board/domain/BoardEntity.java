@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hr.prism.board.authentication.AuthenticationToken;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.springframework.security.core.Authentication;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -56,6 +57,7 @@ public abstract class BoardEntity {
         return updatedTimestamp;
     }
 
+    @SuppressWarnings("unused")
     public void setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
         this.updatedTimestamp = updatedTimestamp;
     }
@@ -95,17 +97,13 @@ public abstract class BoardEntity {
     }
 
     private Long getUserId() {
-        AuthenticationToken authentication = (AuthenticationToken) getContext().getAuthentication();
-        if (authentication == null) {
-            return null;
+        Authentication authentication = getContext().getAuthentication();
+        if (authentication instanceof AuthenticationToken) {
+            User user = ((AuthenticationToken) authentication).getUser();
+            return user.getId();
         }
 
-        User user = authentication.getUser();
-        if (user == null) {
-            return null;
-        }
-
-        return user.getId();
+        return null;
     }
 
 }

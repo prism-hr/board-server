@@ -30,6 +30,7 @@ import java.util.*;
 import static hr.prism.board.enums.State.ACTIVE_USER_ROLE_STATE_STRINGS;
 import static hr.prism.board.enums.State.ARCHIVED;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE;
+import static hr.prism.board.utils.BoardUtils.firstOrNull;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
@@ -122,25 +123,31 @@ public class ResourceDAO {
     @SuppressWarnings("JpaQlInspection")
     public Resource getById(Scope scope, Long id) {
         EntityGraph entityGraph = getEntityGraph(scope);
-        return entityManager.createQuery(
-            "select resource " +
-                "from Resource resource " +
-                "where resource.id = :id", Resource.class)
-            .setParameter("id", id)
-            .setHint("javax.persistence.fetchgraph", entityGraph)
-            .getSingleResult();
+        List<Resource> resources =
+            entityManager.createQuery(
+                "select resource " +
+                    "from Resource resource " +
+                    "where resource.id = :id", Resource.class)
+                .setParameter("id", id)
+                .setHint("javax.persistence.fetchgraph", entityGraph)
+                .getResultList();
+
+        return firstOrNull(resources);
     }
 
     @SuppressWarnings("JpaQlInspection")
     public Resource getByHandle(Scope scope, String handle) {
         EntityGraph entityGraph = getEntityGraph(scope);
-        return entityManager.createQuery(
-            "select resource " +
-                "from Resource resource " +
-                "where resource.handle = :handle", Resource.class)
-            .setParameter("handle", handle)
-            .setHint("javax.persistence.fetchgraph", entityGraph)
-            .getSingleResult();
+        List<Resource> resources =
+            entityManager.createQuery(
+                "select resource " +
+                    "from Resource resource " +
+                    "where resource.handle = :handle", Resource.class)
+                .setParameter("handle", handle)
+                .setHint("javax.persistence.fetchgraph", entityGraph)
+                .getResultList();
+
+        return firstOrNull(resources);
     }
 
     public List<Resource> getResources(User user, ResourceFilter filter) {

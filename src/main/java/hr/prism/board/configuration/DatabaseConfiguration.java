@@ -6,14 +6,11 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.util.Properties;
 import java.util.TimeZone;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -83,18 +80,6 @@ public class DatabaseConfiguration {
 
         flyway.migrate();
         return flyway;
-    }
-
-    @Bean
-    public LocalSessionFactoryBean sessionFactory() {
-        LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
-        sessionFactoryBean.setDataSource(dataSource());
-        sessionFactoryBean.setPackagesToScan("hr.prism.board.domain");
-        Properties hibernateProperties = new Properties();
-        hibernateProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
-        hibernateProperties.put("hibernate.show_sql", true);
-        sessionFactoryBean.setHibernateProperties(hibernateProperties);
-        return sessionFactoryBean;
     }
 
 }

@@ -4,13 +4,13 @@ import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
-import hr.prism.board.domain.ResourceOperation;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.State;
 import hr.prism.board.repository.BoardRepository;
 import hr.prism.board.repository.UserRepository;
-import hr.prism.board.service.ServiceDataHelper.Scenarios;
+import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
@@ -35,6 +35,7 @@ import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.enums.State.REJECTED;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -60,10 +61,7 @@ public class BoardServiceIT {
     private UserRoleService userRoleService;
 
     @Inject
-    private ServiceDataHelper serviceDataHelper;
-
-    @Inject
-    private ServiceVerificationHelper serviceVerificationHelper;
+    private ServiceHelper serviceHelper;
 
     @SpyBean
     private ActionService actionService;
@@ -91,17 +89,17 @@ public class BoardServiceIT {
         departmentAdministrator = userRepository.findOne(1L);
         department2Administrator = userRepository.findOne(2L);
 
-        department = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department");
-        department2 = serviceDataHelper.setUpDepartment(departmentAdministrator, 1L, "department2");
+        department = serviceHelper.setUpDepartment(departmentAdministrator, 1L, "department");
+        department2 = serviceHelper.setUpDepartment(departmentAdministrator, 1L, "department2");
 
         Board departmentBoard =
-            serviceDataHelper.setUpBoard(departmentAdministrator, department.getId(), "Rejected Opportunities");
+            serviceHelper.setUpBoard(departmentAdministrator, department.getId(), "Rejected Opportunities");
         resourceService.updateState(departmentBoard, REJECTED);
         departmentBoards =
             boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(department.getId()));
 
         Board department2Board =
-            serviceDataHelper.setUpBoard(departmentAdministrator, department2.getId(), "Rejected Opportunities");
+            serviceHelper.setUpBoard(departmentAdministrator, department2.getId(), "Rejected Opportunities");
         resourceService.updateState(department2Board, REJECTED);
         department2Boards =
             boardService.getBoards(departmentAdministrator, new ResourceFilter().setParentId(department2.getId()));
@@ -124,7 +122,7 @@ public class BoardServiceIT {
 
         String[] postCategories = new String[]{"category1", "category2"};
         Stream.of(createdBoard, selectedBoard).forEach(board ->
-            serviceVerificationHelper.verifyBoard(
+            verifyBoard(
                 board,
                 department,
                 "board",
@@ -137,7 +135,6 @@ public class BoardServiceIT {
                 baseline));
 
         verifyInvocations(createdBoard, postCategories);
-        verifyResourceOperation(createdBoard);
     }
 
     @Test
@@ -169,7 +166,7 @@ public class BoardServiceIT {
         List<Board> boards = boardService.getBoards(department2Administrator, new ResourceFilter().setState(REJECTED));
         assertThat(boards).hasSize(1);
 
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(0),
             department2,
             "Rejected Opportunities",
@@ -241,7 +238,7 @@ public class BoardServiceIT {
         List<Scenarios> scenariosList =
             boardRepository.findAll()
                 .stream()
-                .map(serviceDataHelper::setUpUnprivilegedUsersForBoard)
+                .map(serviceHelper::setUpUnprivilegedUsersForBoard)
                 .collect(toList());
 
         scenariosList.forEach(scenarios ->
@@ -274,7 +271,7 @@ public class BoardServiceIT {
         List<Scenarios> scenariosList =
             boardRepository.findAll()
                 .stream()
-                .map(serviceDataHelper::setUpUnprivilegedUsersForBoard)
+                .map(serviceHelper::setUpUnprivilegedUsersForBoard)
                 .collect(toList());
 
         scenariosList.forEach(scenarios ->
@@ -297,7 +294,7 @@ public class BoardServiceIT {
         List<Scenarios> scenariosList =
             boardRepository.findAll()
                 .stream()
-                .map(serviceDataHelper::setUpUnprivilegedUsersForBoard)
+                .map(serviceHelper::setUpUnprivilegedUsersForBoard)
                 .collect(toList());
 
         scenariosList.forEach(scenarios ->
@@ -313,6 +310,23 @@ public class BoardServiceIT {
 
                 assertThat(departments).hasSize(0);
             }));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyBoard(Board board, Department expectedDepartment, String expectedName, State expectedState,
+                             State expectedPreviousState, String expectedHandle, String[] expectedPostCategories,
+                             Action[] expectedActions, String expectedIndexData, LocalDateTime baseline) {
+        serviceHelper.verifyIdentity(board, expectedDepartment, expectedName);
+
+        assertEquals(expectedState, board.getState());
+        assertEquals(expectedPreviousState, board.getPreviousState());
+        assertEquals(expectedHandle, board.getHandle());
+
+        assertThat(board.getPostCategoryStrings()).containsExactly(expectedPostCategories);
+        serviceHelper.verifyActions(board, expectedActions);
+
+        serviceHelper.verifyIndexDataAndQuarter(board, expectedIndexData);
+        serviceHelper.verifyTimestamps(board, baseline);
     }
 
     private void verifyInvocations(Board board, String[] postCategories) {
@@ -332,13 +346,8 @@ public class BoardServiceIT {
             .createResourceOperation(board, EXTEND, departmentAdministrator);
     }
 
-    private void verifyResourceOperation(Board board) {
-        serviceVerificationHelper.verifyResourceOperations(board,
-            new ResourceOperation().setResource(board).setAction(EXTEND).setUser(departmentAdministrator));
-    }
-
     private void verifyAdministratorBoards(Department department, List<Board> boards) {
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(0),
             department,
             "Career Opportunities",
@@ -350,7 +359,7 @@ public class BoardServiceIT {
             "D163 D163 S560 C660 O163",
             baseline);
 
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(1),
             department,
             "Rejected Opportunities",
@@ -362,7 +371,7 @@ public class BoardServiceIT {
             "D163 D163 S560 R223 O163",
             baseline);
 
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(2),
             department,
             "Research Opportunities",
@@ -376,7 +385,7 @@ public class BoardServiceIT {
     }
 
     private void verifyUnprivilegedUserBoards(Department department, List<Board> boards) {
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(0),
             department,
             "Career Opportunities",
@@ -388,7 +397,7 @@ public class BoardServiceIT {
             "D163 D163 S560 C660 O163",
             baseline);
 
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(1),
             department,
             "Research Opportunities",
@@ -402,7 +411,7 @@ public class BoardServiceIT {
     }
 
     private void verifyRejectedBoards(List<Board> boards) {
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(0),
             department,
             "Rejected Opportunities",
@@ -414,7 +423,7 @@ public class BoardServiceIT {
             "D163 D163 S560 R223 O163",
             baseline);
 
-        serviceVerificationHelper.verifyBoard(
+        verifyBoard(
             boards.get(1),
             department2,
             "Rejected Opportunities",

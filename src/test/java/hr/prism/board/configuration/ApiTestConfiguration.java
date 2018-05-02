@@ -1,7 +1,7 @@
 package hr.prism.board.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hr.prism.board.api.ApiDataHelper;
+import hr.prism.board.api.ApiHelper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,8 +21,8 @@ public class ApiTestConfiguration {
     }
 
     @Bean
-    public ApiDataHelper apiDataHelper() {
-        return new ApiDataHelper(mockMvc, objectMapper);
+    public ApiHelper apiDataHelper() {
+        return new ApiHelper(mockMvc, objectMapper);
     }
 
 }

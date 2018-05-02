@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 public class BoardUtils {
 
@@ -125,6 +126,10 @@ public class BoardUtils {
 
     public static String emptyToNull(String string) {
         return string == null ? null : Strings.emptyToNull(string.trim());
+    }
+
+    public static <T> T firstOrNull(List<T> objects) {
+        return isEmpty(objects) ? null : objects.get(0);
     }
 
     public static LocalDate getAcademicYearStart() {
