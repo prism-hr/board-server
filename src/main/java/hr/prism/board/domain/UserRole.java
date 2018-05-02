@@ -42,6 +42,7 @@ import static javax.persistence.EnumType.STRING;
             @ColumnResult(name = "countAllTime", type = Long.class),
             @ColumnResult(name = "mostRecent", type = LocalDateTime.class)}))
 @Table(name = "user_role", uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "user_id", "role"}))
+@SuppressWarnings("SqlResolve")
 public class UserRole extends BoardEntity {
 
     @Column(name = "uuid")
