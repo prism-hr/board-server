@@ -273,8 +273,8 @@ public class PostService {
         return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
     }
 
-    public List<Post> getPosts(User user, Long boardId) {
-        return getPosts(user, new ResourceFilter().setParentId(boardId));
+    public List<Post> getPosts(User user, Long parentId) {
+        return getPosts(user, new ResourceFilter().setParentId(parentId));
     }
 
     public PostStatistics getPostStatistics(Long departmentId) {

@@ -6,6 +6,7 @@ import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceRepository;
@@ -18,8 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
 import static hr.prism.board.enums.MemberCategory.fromStrings;
@@ -27,7 +27,6 @@ import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static java.math.BigDecimal.ONE;
-import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -127,13 +126,6 @@ public class ServiceHelper {
         return board;
     }
 
-    @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
-    Board setUpBoard(User user, Department department, String name, State state) {
-        Board board = setUpBoard(user, department, name);
-        resourceService.updateState(board, state);
-        return board;
-    }
-
     Post setUpPost(User user, Board board, String name) {
         State boardState = getStateThenSetState(board, ACCEPTED);
         Department department = (Department) resourceDAO.getById(DEPARTMENT, board.getParent().getId());
@@ -166,6 +158,13 @@ public class ServiceHelper {
         return post;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
+    Post setUpPost(User user, Board board, String name, State state) {
+        Post post = setUpPost(user, board, name);
+        setState(post, state);
+        return post;
+    }
+
     void setPostPending(Post post) {
         post.setLiveTimestamp(LocalDateTime.now());
         post.setDeadTimestamp(LocalDateTime.now().plusWeeks(1L));
@@ -188,9 +187,10 @@ public class ServiceHelper {
                 .setPassword("password"));
     }
 
-    Scenarios setUpUnprivilegedUsersForDepartment(Department department) {
-        University university = ofNullable((University) department.getParent())
-            .orElseThrow(() -> new Error("Department ID: " + department.getId() + " has no university"));
+    Scenarios setUpUnprivilegedUsers(University university) {
+        User departmentAdministrator = setUpUser();
+        Department department = setUpDepartment(departmentAdministrator, university, randomName());
+        Board board = setUpBoard(departmentAdministrator, department, randomName());
 
         User departmentAuthor = setUpUser();
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
@@ -198,149 +198,34 @@ public class ServiceHelper {
         User departmentMember = setUpUser();
         userRoleService.createUserRole(department, departmentMember, MEMBER);
 
-        State state = getStateThenSetState(department, ACCEPTED);
+        User postAdministrator = setUpUser();
+        setUpPost(postAdministrator, board, randomName());
 
+        User user = setUpUser();
+
+        return setUpUnprivilegedUsers(department, AUTHOR, MEMBER)
+            .scenario(departmentAdministrator, "department administrator")
+            .scenario(user, "no roles")
+            .scenario(null, "anonymous");
+    }
+
+    Scenarios setUpUnprivilegedUsers(Department department, Role... roles) {
         User departmentAdministrator = getDepartmentAdministrator(department);
         Board board = setUpBoard(departmentAdministrator, department, randomName());
 
         User postAdministrator = setUpUser();
         setUpPost(postAdministrator, board, randomName());
 
-        setState(department, state);
+        Scenarios scenarios = new Scenarios()
+            .scenario(postAdministrator, "post administrator");
 
-        User otherDepartmentAdministrator = setUpUser();
-        Department otherDepartment =
-            setUpDepartment(otherDepartmentAdministrator, university, randomName());
-        Board otherBoard = setUpBoard(otherDepartmentAdministrator, otherDepartment, randomName());
+        Stream.of(roles).forEach(role -> {
+            User user = setUpUser();
+            userRoleService.createUserRole(department, user, role);
+            scenarios.scenario(user, "department " + role.name().toLowerCase());
+        });
 
-        User otherDepartmentAuthor = setUpUser();
-        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
-
-        User otherDepartmentMember = setUpUser();
-        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
-
-        User otherPostAdministrator = setUpUser();
-        setUpPost(otherPostAdministrator, otherBoard, "other-post");
-
-        User userWithoutRoles = setUpUser();
-
-        return new Scenarios()
-            .scenario(departmentAuthor, "Department author")
-            .scenario(departmentMember, "Department member")
-            .scenario(postAdministrator, "Post administrator")
-            .scenario(otherDepartmentAdministrator, "Other department administrator")
-            .scenario(otherDepartmentAuthor, "Other department author")
-            .scenario(otherDepartmentMember, "Other department member")
-            .scenario(otherPostAdministrator, "Other post administrator")
-            .scenario(userWithoutRoles, "User without roles")
-            .scenario(null, "Public user");
-    }
-
-    Scenarios setUpUnprivilegedUsersForBoard(Board board) {
-        Department department = ofNullable((Department) board.getParent())
-            .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
-
-        University university = ofNullable((University) department.getParent())
-            .orElseThrow(() -> new Error("Department ID: " + department.getId() + " has no university"));
-
-        State departmentState = getStateThenSetState(department, ACCEPTED);
-
-        User departmentAdministrator = getDepartmentAdministrator(department);
-        Board otherBoard = setUpBoard(departmentAdministrator, department, randomName());
-
-        User otherBoardPostAdministrator = setUpUser();
-        setUpPost(otherBoardPostAdministrator, otherBoard, randomName());
-
-        setState(department, departmentState);
-
-        State boardState = getStateThenSetState(board, ACCEPTED);
-
-        User postAdministrator = setUpUser();
-        setUpPost(postAdministrator, board, randomName());
-
-        setState(board, boardState);
-
-        User departmentMember = setUpUser();
-        userRoleService.createUserRole(department, departmentMember, MEMBER);
-
-        User otherDepartmentAdministrator = setUpUser();
-        Department otherDepartment =
-            setUpDepartment(otherDepartmentAdministrator, university, randomName());
-        Board otherDepartmentBoard =
-            setUpBoard(otherDepartmentAdministrator, otherDepartment, randomName());
-
-        User otherDepartmentAuthor = setUpUser();
-        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
-
-        User otherDepartmentMember = setUpUser();
-        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
-
-        User otherDepartmentPostAdministrator = setUpUser();
-        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard, randomName());
-
-        User userWithoutRoles = setUpUser();
-
-        return new Scenarios()
-            .scenario(departmentMember, "Department member")
-            .scenario(postAdministrator, "Post administrator")
-            .scenario(otherDepartmentAdministrator, "Other department administrator")
-            .scenario(otherDepartmentAuthor, "Other department author")
-            .scenario(otherDepartmentMember, "Other department member")
-            .scenario(otherBoardPostAdministrator, "Other board post administrator")
-            .scenario(otherDepartmentAdministrator, "Other department post administrator")
-            .scenario(userWithoutRoles, "User without roles")
-            .scenario(null, "Public user");
-    }
-
-    Scenarios setUpUnprivilegedUsersForPost(Post post) {
-        Board board = ofNullable((Board) post.getParent())
-            .orElseThrow(() -> new Error("Post ID: " + post.getId() + " has no board"));
-
-        Department department = ofNullable((Department) board.getParent())
-            .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
-
-        University university = ofNullable((University) department.getParent())
-            .orElseThrow(() -> new Error("Department ID: " + department.getId() + " has no university"));
-
-        State departmentState = getStateThenSetState(department, ACCEPTED);
-
-        User departmentAdministrator = getDepartmentAdministrator(department);
-        Board otherBoard = setUpBoard(departmentAdministrator, department, randomName());
-
-        setState(department, departmentState);
-
-        User otherBoardPostAdministrator = setUpUser();
-        setUpPost(otherBoardPostAdministrator, otherBoard, randomName());
-
-        User departmentAuthor = setUpUser();
-        userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
-
-        User otherDepartmentAdministrator = setUpUser();
-        Department otherDepartment =
-            setUpDepartment(otherDepartmentAdministrator, university, randomName());
-        Board otherDepartmentBoard = setUpBoard(
-            otherDepartmentAdministrator, otherDepartment, randomName());
-
-        User otherDepartmentAuthor = setUpUser();
-        userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
-
-        User otherDepartmentMember = setUpUser();
-        userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
-
-        User otherDepartmentPostAdministrator = setUpUser();
-        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard, randomName());
-
-        User userWithoutRoles = setUpUser();
-
-        return new Scenarios()
-            .scenario(departmentAuthor, "Department author")
-            .scenario(otherDepartmentAdministrator, "Other department administrator")
-            .scenario(otherDepartmentAuthor, "Other department author")
-            .scenario(otherDepartmentMember, "Other department member")
-            .scenario(otherBoardPostAdministrator, "Other board post administrator")
-            .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
-            .scenario(userWithoutRoles, "User without roles")
-            .scenario(null, "Public user");
+        return scenarios;
     }
 
     void verifyIdentity(Resource resource, Resource expectedParentResource, String expectedName) {
@@ -387,17 +272,16 @@ public class ServiceHelper {
         return randomUUID().toString().replace("-", "");
     }
 
-    static class Scenarios {
-
-        private List<Scenario> scenarios = new ArrayList<>();
+    static class Scenarios extends ArrayList<Scenario> {
 
         Scenarios scenario(User user, String description) {
-            scenarios.add(new Scenario(user, description));
+            add(new Scenario(user, description));
             return this;
         }
 
-        void forEach(Consumer<Scenario> consumer) {
-            scenarios.forEach(consumer);
+        Scenarios scenarios(Scenarios scenarios) {
+            super.addAll(scenarios);
+            return this;
         }
 
     }

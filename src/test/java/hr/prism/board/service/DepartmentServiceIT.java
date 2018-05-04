@@ -11,8 +11,8 @@ import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
-import hr.prism.board.repository.DepartmentRepository;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
 import org.junit.After;
@@ -34,6 +34,7 @@ import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.MemberCategory.*;
 import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.State.*;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -50,9 +51,6 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 public class DepartmentServiceIT {
 
     private static final Logger LOGGER = getLogger(DepartmentServiceIT.class);
-
-    @Inject
-    private DepartmentRepository departmentRepository;
 
     @Inject
     private DepartmentService departmentService;
@@ -91,27 +89,8 @@ public class DepartmentServiceIT {
     @Before
     public void setUp() {
         baseline = LocalDateTime.now();
-
         administrator = serviceHelper.setUpUser();
-        otherAdministrator = serviceHelper.setUpUser();
-
         university = serviceHelper.setUpUniversity("university");
-
-        Department departmentDraft =
-            serviceHelper.setUpDepartment(administrator, university, "department DRAFT", DRAFT);
-
-        Department departmentPending =
-            serviceHelper.setUpDepartment(administrator, university, "department PENDING", PENDING);
-        userRoleService.createUserRole(departmentPending, otherAdministrator, ADMINISTRATOR);
-
-        Department departmentAccepted =
-            serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
-
-        Department departmentRejected =
-            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
-        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
-
-        departments = ImmutableList.of(departmentDraft, departmentPending, departmentAccepted, departmentRejected);
         reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
     }
 
@@ -180,11 +159,44 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    @SuppressWarnings("Duplicates")
-    public void getDepartments_successWhenAdministrator() {
-        List<Department> departments = departmentService.getDepartments(administrator, new ResourceFilter());
-        assertThat(departments).hasSize(4);
+    public void getDepartments_success() {
+        setUpDepartments();
+        getDepartments_successWhenAdministrator();
+        getDepartments_successWhenAdministratorAndState();
+        getDepartments_successWhenAdministratorAndAction();
+        getDepartments_successWhenAdministratorAndSearchTerm();
+        getDepartments_successWhenAdministratorAndSearchTermTypo();
+        getDepartments_successWhenAdministratorAndSearchTermWithoutResults();
+        getDepartments_successWhenOtherAdministrator();
+        getDepartments_successWhenUnprivileged();
+    }
 
+    private void setUpDepartments() {
+        otherAdministrator = serviceHelper.setUpUser();
+
+        Department departmentDraft =
+            serviceHelper.setUpDepartment(administrator, university, "department DRAFT", DRAFT);
+
+        Department departmentPending =
+            serviceHelper.setUpDepartment(administrator, university, "department PENDING", PENDING);
+        userRoleService.createUserRole(departmentPending, otherAdministrator, ADMINISTRATOR);
+
+        Department departmentAccepted =
+            serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
+
+        Department departmentRejected =
+            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
+        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
+
+        departments = ImmutableList.of(departmentDraft, departmentPending, departmentAccepted, departmentRejected);
+    }
+
+    @SuppressWarnings("Duplicates")
+    private void getDepartments_successWhenAdministrator() {
+        List<Department> departments =
+            departmentService.getDepartments(administrator, new ResourceFilter());
+
+        assertThat(departments).hasSize(4);
         verifyDepartment(
             departments.get(0),
             ACCEPTED,
@@ -206,51 +218,22 @@ public class DepartmentServiceIT {
             new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
-    @Test
-    @SuppressWarnings("Duplicates")
-    public void getDepartments_successWhenOtherAdministrator() {
-        List<Department> departments = departmentService.getDepartments(otherAdministrator, new ResourceFilter());
-        assertThat(departments).hasSize(4);
-
-        verifyDepartment(
-            departments.get(0),
-            ACCEPTED,
-            new Action[]{VIEW});
-
-        verifyDepartment(
-            departments.get(1),
-            DRAFT,
-            new Action[]{VIEW});
-
-        verifyDepartment(
-            departments.get(2),
-            PENDING,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-
-        verifyDepartment(
-            departments.get(3),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE});
-    }
-
-    @Test
-    public void getDepartments_successWhenAdministratorAndState() {
+    private void getDepartments_successWhenAdministratorAndState() {
         List<Department> departments =
             departmentService.getDepartments(administrator, new ResourceFilter().setState(ACCEPTED));
-        assertThat(departments).hasSize(1);
 
+        assertThat(departments).hasSize(1);
         verifyDepartment(
             departments.get(0),
             ACCEPTED,
             new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
     }
 
-    @Test
-    public void getDepartments_successWhenAdministratorAndAction() {
+    private void getDepartments_successWhenAdministratorAndAction() {
         List<Department> departments =
             departmentService.getDepartments(administrator, new ResourceFilter().setAction(EXTEND));
-        assertThat(departments).hasSize(3);
 
+        assertThat(departments).hasSize(3);
         verifyDepartment(
             departments.get(0),
             ACCEPTED,
@@ -267,120 +250,94 @@ public class DepartmentServiceIT {
             new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
     }
 
-
-    @Test
-    public void getDepartments_successWhenAdministratorAndSearchTerm() {
+    private void getDepartments_successWhenAdministratorAndSearchTerm() {
         List<Department> departments =
             departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("REJECTED"));
-        assertThat(departments).hasSize(1);
 
+        assertThat(departments).hasSize(1);
         verifyDepartment(
             departments.get(0),
             REJECTED,
             new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
-    @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermTypo() {
+    private void getDepartments_successWhenAdministratorAndSearchTermTypo() {
         List<Department> departments =
             departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("rIJECT"));
-        assertThat(departments).hasSize(1);
 
+        assertThat(departments).hasSize(1);
         verifyDepartment(
             departments.get(0),
             REJECTED,
             new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
-    @Test
-    public void getDepartments_failureWhenAdministratorAndSearchTerm() {
+    private void getDepartments_successWhenAdministratorAndSearchTermWithoutResults() {
         List<Department> departments =
             departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("xyz"));
         assertThat(departments).hasSize(0);
     }
 
-    @Test
-    public void getDepartments_successWhenUnprivilegedUser() {
-        List<Scenarios> scenariosList =
-            departmentRepository.findAll()
-                .stream()
-                .map(serviceHelper::setUpUnprivilegedUsersForDepartment)
-                .collect(toList());
+    @SuppressWarnings("Duplicates")
+    private void getDepartments_successWhenOtherAdministrator() {
+        List<Department> departments =
+            departmentService.getDepartments(otherAdministrator, new ResourceFilter());
 
-        scenariosList.forEach(scenarios ->
-            scenarios.forEach(scenario -> {
-                User user = scenario.user;
-                LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
+        assertThat(departments).hasSize(4);
+        verifyDepartment(
+            departments.get(0),
+            ACCEPTED,
+            new Action[]{VIEW});
 
-                List<Department> departments =
-                    departmentService.getDepartments(user, new ResourceFilter())
-                        .stream()
-                        .filter(this.departments::contains)
-                        .collect(toList());
+        verifyDepartment(
+            departments.get(1),
+            DRAFT,
+            new Action[]{VIEW});
 
-                assertThat(departments).hasSize(3);
+        verifyDepartment(
+            departments.get(2),
+            PENDING,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
 
-                verifyDepartment(
-                    departments.get(0),
-                    ACCEPTED,
-                    new Action[]{VIEW});
-
-                verifyDepartment(
-                    departments.get(1),
-                    DRAFT,
-                    new Action[]{VIEW});
-
-                verifyDepartment(
-                    departments.get(2),
-                    PENDING,
-                    new Action[]{VIEW});
-            }));
+        verifyDepartment(
+            departments.get(3),
+            REJECTED,
+            new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
-    @Test
-    public void getDepartments_failureWhenUnprivilegedUserAndForbiddenState() {
-        List<Scenarios> scenariosList =
-            departmentRepository.findAll()
-                .stream()
-                .map(serviceHelper::setUpUnprivilegedUsersForDepartment)
-                .collect(toList());
+    private void getDepartments_successWhenUnprivileged() {
+        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university);
+        departments.forEach(department -> {
+            Scenarios departmentScenarios = serviceHelper.setUpUnprivilegedUsers(department, AUTHOR, Role.MEMBER);
+            scenarios.scenarios(departmentScenarios);
+        });
 
-        scenariosList.forEach(scenarios ->
-            scenarios.forEach(scenario -> {
-                User user = scenario.user;
-                LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
+        scenarios.forEach(scenario -> {
+            User user = scenario.user;
+            LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
 
-                List<Department> departments =
-                    departmentService.getDepartments(user, new ResourceFilter().setState(REJECTED))
-                        .stream()
-                        .filter(this.departments::contains)
-                        .collect(toList());
+            List<Department> departments =
+                departmentService.getDepartments(user, new ResourceFilter())
+                    .stream()
+                    .filter(this.departments::contains)
+                    .collect(toList());
 
-                assertThat(departments).hasSize(0);
-            }));
-    }
+            assertThat(departments).hasSize(3);
+            verifyDepartment(
+                departments.get(0),
+                ACCEPTED,
+                new Action[]{VIEW});
 
-    @Test
-    public void getDepartments_failureWhenUnprivilegedUserAndForbiddenAction() {
-        List<Scenarios> scenariosList =
-            departmentRepository.findAll()
-                .stream()
-                .map(serviceHelper::setUpUnprivilegedUsersForDepartment)
-                .collect(toList());
+            verifyDepartment(
+                departments.get(1),
+                DRAFT,
+                new Action[]{VIEW});
 
-        scenariosList.forEach(scenarios ->
-            scenarios.forEach(scenario -> {
-                User user = scenario.user;
-                LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
-
-                List<Department> departments =
-                    departmentService.getDepartments(user, new ResourceFilter().setAction(EXTEND))
-                        .stream()
-                        .filter(this.departments::contains)
-                        .collect(toList());
-
-                assertThat(departments).hasSize(0);
-            }));
+            verifyDepartment(
+                departments.get(2),
+                PENDING,
+                new Action[]{VIEW});
+        });
     }
 
     private void verifyDepartment(Department department, State expectedState, Action[] expectedActions) {
