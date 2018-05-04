@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import freemarker.template.TemplateException;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.WidgetOptionsDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -46,11 +47,11 @@ public class DepartmentBadgeService {
     }
 
     // TODO test coverage
-    public String getBadge(Long id, WidgetOptionsDTO options) {
+    public String getBadge(User user, Long id, WidgetOptionsDTO options) {
         Resource resource = resourceService.getById(id);
         Map<String, Object> model = makeBadgeModel(resource, options);
 
-        List<Post> posts = postService.getPosts(resource.getId());
+        List<Post> posts = postService.getPosts(user , id);
         posts = posts.subList(0, min(posts.size(), options.getPostCount()));
         model.put("posts", posts);
 

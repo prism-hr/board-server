@@ -192,7 +192,7 @@ public class UserService {
     }
 
     public User updateUserIndex(User user) {
-        user.setIndexData(makeSoundex(user.getGivenName(), user.getSurname()));
+        user.setIndexData(makeSoundex(user.getIndexDataParts()));
         return userRepository.save(user);
     }
 
@@ -294,7 +294,7 @@ public class UserService {
         user.setSurname(userDTO.getSurname());
 
         user.setEmail(userDTO.getEmail());
-        user.setIndexData(makeSoundex(user.getGivenName(), user.getSurname()));
+        user.setIndexData(makeSoundex(user.getIndexDataParts()));
 
         user.setTestUser(user.getEmail().endsWith(TEST_USER_SUFFIX));
         updateUserMembership(user, userDTO);

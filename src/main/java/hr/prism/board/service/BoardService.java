@@ -19,7 +19,6 @@ import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
 @Service
 @Transactional
@@ -75,13 +74,11 @@ public class BoardService {
     public Board createBoard(User user, Long departmentId, BoardDTO boardDTO) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
         return (Board) actionService.executeAction(user, department, EXTEND, () -> {
-            String name = normalizeSpace(boardDTO.getName());
-            resourceService.checkUniqueName(BOARD, null, department, name);
-
             Board board = new Board();
-            board.setName(name);
+            board.setParent(department);
 
-            board.setHandle(resourceService.createHandle(department, BOARD, name));
+            resourceService.setName(board, boardDTO.getName());
+            resourceService.setHandle(board);
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, POST, boardDTO.getPostCategories());

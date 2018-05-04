@@ -53,10 +53,6 @@ public class Resource extends BoardEntity {
     @JoinColumn(name = "document_logo_id")
     private Document documentLogo;
 
-    @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
-    private Location location;
-
     @Column(name = "handle")
     private String handle;
 
@@ -104,16 +100,16 @@ public class Resource extends BoardEntity {
         return scope;
     }
 
+    public void setScope(Scope scope) {
+        this.scope = scope;
+    }
+
     public Resource getParent() {
         return parent;
     }
 
     public void setParent(Resource parent) {
         this.parent = parent;
-    }
-
-    public void setScope(Scope scope) {
-        this.scope = scope;
     }
 
     public State getState() {
@@ -162,14 +158,6 @@ public class Resource extends BoardEntity {
 
     public void setSummary(String summary) {
         this.summary = summary;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
     }
 
     public String getHandle() {
@@ -304,6 +292,13 @@ public class Resource extends BoardEntity {
             .stream()
             .filter(Objects::nonNull)
             .collect(toList());
+    }
+
+    public List<String> getIndexDataParts() {
+        List<String> parts = new ArrayList<>();
+        parts.add(name);
+        parts.add(summary);
+        return parts;
     }
 
     @Override

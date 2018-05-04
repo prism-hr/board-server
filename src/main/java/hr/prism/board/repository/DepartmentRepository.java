@@ -2,6 +2,7 @@ package hr.prism.board.repository;
 
 import hr.prism.board.domain.Department;
 import hr.prism.board.enums.State;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,10 @@ import java.util.List;
 
 @Transactional
 public interface DepartmentRepository extends JpaRepository<Department, Long> {
+
+    @Override
+    @EntityGraph("department.extended")
+    List<Department> findAll();
 
     @Query(value =
         "select department.id " +

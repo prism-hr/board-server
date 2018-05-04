@@ -1,12 +1,14 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.enums.*;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
@@ -414,6 +416,10 @@ public class User extends BoardEntity implements Comparable<User> {
 
     public boolean passwordMatches(String input) {
         return passwordHash.matches(input, password);
+    }
+
+    public List<String> getIndexDataParts() {
+        return ImmutableList.of(givenName, surname);
     }
 
     @Override

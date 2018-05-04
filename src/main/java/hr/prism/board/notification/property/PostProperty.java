@@ -19,7 +19,7 @@ public class PostProperty implements NotificationProperty {
     }
 
     public String getValue(NotificationRequest notificationRequest) {
-        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), POST).getName();
+        return resourceService.getByResourceAndEnclosingScope(notificationRequest.getResource(), POST).getName();
     }
 
 }

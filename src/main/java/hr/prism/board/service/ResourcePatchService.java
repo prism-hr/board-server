@@ -1,7 +1,6 @@
 package hr.prism.board.service;
 
 import hr.prism.board.domain.Resource;
-import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.enums.CategoryType;
 
 import java.util.List;
@@ -58,12 +57,6 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
                 patchHandle(resource, oldValue, null);
             }
         }
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    void patchLocation(T resource, Optional<LocationDTO> newValueOptional) {
-        super.patchLocation(resource, "location",
-            resource::getLocation, resource::setLocation, newValueOptional);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

@@ -2,14 +2,18 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
+import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRoleRepository;
 import hr.prism.board.representation.ActionRepresentation;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
@@ -20,8 +24,8 @@ import java.util.function.Consumer;
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
 import static hr.prism.board.enums.MemberCategory.fromStrings;
 import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACCEPTED;
-import static hr.prism.board.utils.ResourceUtils.getQuarter;
 import static java.math.BigDecimal.ONE;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
@@ -37,68 +41,129 @@ public class ServiceHelper {
 
     private final UserRoleRepository userRoleRepository;
 
+    private final DocumentRepository documentRepository;
+
+    private final ResourceDAO resourceDAO;
+
     private final DepartmentService departmentService;
 
     private final BoardService boardService;
 
     private final PostService postService;
 
+    private final ResourceService resourceService;
+
     private final UserService userService;
 
     private final UserRoleService userRoleService;
 
+    private final PlatformTransactionManager platformTransactionManager;
+
     @Inject
     public ServiceHelper(ResourceRepository resourceRepository, UserRoleRepository userRoleRepository,
+                         DocumentRepository documentRepository, ResourceDAO resourceDAO,
                          DepartmentService departmentService, BoardService boardService, PostService postService,
-                         UserService userService, UserRoleService userRoleService) {
+                         ResourceService resourceService, UserService userService, UserRoleService userRoleService,
+                         PlatformTransactionManager platformTransactionManager) {
         this.resourceRepository = resourceRepository;
         this.userRoleRepository = userRoleRepository;
+        this.documentRepository = documentRepository;
+        this.resourceDAO = resourceDAO;
         this.departmentService = departmentService;
         this.boardService = boardService;
         this.postService = postService;
+        this.resourceService = resourceService;
         this.userService = userService;
         this.userRoleService = userRoleService;
+        this.platformTransactionManager = platformTransactionManager;
     }
 
     @SuppressWarnings("SameParameterValue")
-    Department setUpDepartment(User user, Long universityId, String name) {
-        return departmentService.createDepartment(user, universityId,
+    University setUpUniversity(String name) {
+        return new TransactionTemplate(platformTransactionManager).execute(status -> {
+            Document documentLogo = new Document();
+            documentLogo.setCloudinaryId("cloudinary id");
+            documentLogo.setCloudinaryUrl("cloudinary url");
+            documentLogo.setFileName("file name");
+            documentLogo = documentRepository.save(documentLogo);
+
+            University university = new University();
+            university.setName(name);
+            university.setHandle(name);
+            university.setDocumentLogo(documentLogo);
+            university.setState(ACCEPTED);
+            university = resourceRepository.save(university);
+
+            resourceService.createResourceRelation(university, university);
+            return university;
+        });
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    Department setUpDepartment(User user, University university, String name) {
+        return departmentService.createDepartment(user, university.getId(),
             new DepartmentDTO()
                 .setName(name)
                 .setSummary(name + " summary"));
     }
 
-    Board setUpBoard(User user, Long departmentId, String name) {
-        return boardService.createBoard(user, departmentId,
-            new BoardDTO()
-                .setName(name)
-                .setPostCategories(ImmutableList.of("Employment", "Internship")));
+    @SuppressWarnings("SameParameterValue")
+    Department setUpDepartment(User user, University university, String name, State state) {
+        Department department = setUpDepartment(user, university, name);
+        resourceService.updateState(department, state);
+        return department;
     }
 
-    Post setUpPost(User user, Long boardId, String name) {
-        Board board = boardService.getById(user, boardId);
-        Department department = departmentService.getById(user, board.getParent().getId());
+    Board setUpBoard(User user, Department department, String name) {
+        State state = getStateThenSetState(department, ACCEPTED);
 
-        return postService.createPost(user, boardId,
-            new PostDTO()
-                .setName(name)
-                .setSummary(name + " summary")
-                .setOrganization(
-                    new OrganizationDTO()
-                        .setName("organization"))
-                .setLocation(new LocationDTO()
-                    .setName("london")
-                    .setDomicile("uk")
-                    .setGoogleId("google")
-                    .setLatitude(ONE)
-                    .setLongitude(ONE))
-                .setApplyWebsite("http://www.google.co.uk")
-                .setPostCategories(board.getPostCategoryStrings())
-                .setMemberCategories(fromStrings(department.getMemberCategoryStrings()))
-                .setExistingRelation(STUDENT)
-                .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
-                .setLiveTimestamp(LocalDateTime.now())
-                .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)));
+        Board board =
+            boardService.createBoard(user, department.getId(),
+                new BoardDTO()
+                    .setName(name)
+                    .setPostCategories(ImmutableList.of("Employment", "Internship")));
+
+        setState(department, state);
+        return board;
+    }
+
+    @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
+    Board setUpBoard(User user, Department department, String name, State state) {
+        Board board = setUpBoard(user, department, name);
+        resourceService.updateState(board, state);
+        return board;
+    }
+
+    Post setUpPost(User user, Board board, String name) {
+        State boardState = getStateThenSetState(board, ACCEPTED);
+        Department department = (Department) resourceDAO.getById(DEPARTMENT, board.getParent().getId());
+        State departmentState = getStateThenSetState(department, ACCEPTED);
+
+        Post post =
+            postService.createPost(user, board.getId(),
+                new PostDTO()
+                    .setName(name)
+                    .setSummary(name + " summary")
+                    .setOrganization(
+                        new OrganizationDTO()
+                            .setName("organization"))
+                    .setLocation(new LocationDTO()
+                        .setName("london")
+                        .setDomicile("uk")
+                        .setGoogleId("google")
+                        .setLatitude(ONE)
+                        .setLongitude(ONE))
+                    .setApplyWebsite("http://www.google.co.uk")
+                    .setPostCategories(board.getPostCategoryStrings())
+                    .setMemberCategories(fromStrings(department.getMemberCategoryStrings()))
+                    .setExistingRelation(STUDENT)
+                    .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
+                    .setLiveTimestamp(LocalDateTime.now())
+                    .setDeadTimestamp(LocalDateTime.now().plusWeeks(1L)));
+
+        setState(board, boardState);
+        setState(department, departmentState);
+        return post;
     }
 
     void setPostPending(Post post) {
@@ -114,7 +179,7 @@ public class ServiceHelper {
     }
 
     User setUpUser() {
-        String uuid = randomUUID().toString();
+        String uuid = randomName();
         return userService.createUser(
             new RegisterDTO()
                 .setGivenName(uuid)
@@ -124,6 +189,9 @@ public class ServiceHelper {
     }
 
     Scenarios setUpUnprivilegedUsersForDepartment(Department department) {
+        University university = ofNullable((University) department.getParent())
+            .orElseThrow(() -> new Error("Department ID: " + department.getId() + " has no university"));
+
         User departmentAuthor = setUpUser();
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
@@ -133,17 +201,17 @@ public class ServiceHelper {
         State state = getStateThenSetState(department, ACCEPTED);
 
         User departmentAdministrator = getDepartmentAdministrator(department);
-        Board board = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
+        Board board = setUpBoard(departmentAdministrator, department, randomName());
 
         User postAdministrator = setUpUser();
-        setUpPost(postAdministrator, board.getId(), randomUUID().toString());
+        setUpPost(postAdministrator, board, randomName());
 
         setState(department, state);
 
         User otherDepartmentAdministrator = setUpUser();
         Department otherDepartment =
-            setUpDepartment(otherDepartmentAdministrator, 1L, randomUUID().toString());
-        Board otherBoard = setUpBoard(otherDepartmentAdministrator, otherDepartment.getId(), randomUUID().toString());
+            setUpDepartment(otherDepartmentAdministrator, university, randomName());
+        Board otherBoard = setUpBoard(otherDepartmentAdministrator, otherDepartment, randomName());
 
         User otherDepartmentAuthor = setUpUser();
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
@@ -152,7 +220,7 @@ public class ServiceHelper {
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
         User otherPostAdministrator = setUpUser();
-        setUpPost(otherPostAdministrator, otherBoard.getId(), "other-post");
+        setUpPost(otherPostAdministrator, otherBoard, "other-post");
 
         User userWithoutRoles = setUpUser();
 
@@ -172,20 +240,23 @@ public class ServiceHelper {
         Department department = ofNullable((Department) board.getParent())
             .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
 
+        University university = ofNullable((University) department.getParent())
+            .orElseThrow(() -> new Error("Department ID: " + department.getId() + " has no university"));
+
         State departmentState = getStateThenSetState(department, ACCEPTED);
 
         User departmentAdministrator = getDepartmentAdministrator(department);
-        Board otherBoard = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
+        Board otherBoard = setUpBoard(departmentAdministrator, department, randomName());
 
         User otherBoardPostAdministrator = setUpUser();
-        setUpPost(otherBoardPostAdministrator, otherBoard.getId(), randomUUID().toString());
+        setUpPost(otherBoardPostAdministrator, otherBoard, randomName());
 
         setState(department, departmentState);
 
         State boardState = getStateThenSetState(board, ACCEPTED);
 
         User postAdministrator = setUpUser();
-        setUpPost(postAdministrator, board.getId(), randomUUID().toString());
+        setUpPost(postAdministrator, board, randomName());
 
         setState(board, boardState);
 
@@ -194,9 +265,9 @@ public class ServiceHelper {
 
         User otherDepartmentAdministrator = setUpUser();
         Department otherDepartment =
-            setUpDepartment(otherDepartmentAdministrator, 1L, randomUUID().toString());
+            setUpDepartment(otherDepartmentAdministrator, university, randomName());
         Board otherDepartmentBoard =
-            setUpBoard(otherDepartmentAdministrator, otherDepartment.getId(), randomUUID().toString());
+            setUpBoard(otherDepartmentAdministrator, otherDepartment, randomName());
 
         User otherDepartmentAuthor = setUpUser();
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
@@ -205,7 +276,7 @@ public class ServiceHelper {
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
         User otherDepartmentPostAdministrator = setUpUser();
-        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), randomUUID().toString());
+        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard, randomName());
 
         User userWithoutRoles = setUpUser();
 
@@ -228,24 +299,27 @@ public class ServiceHelper {
         Department department = ofNullable((Department) board.getParent())
             .orElseThrow(() -> new Error("Board ID: " + board.getId() + " has no department"));
 
+        University university = ofNullable((University) department.getParent())
+            .orElseThrow(() -> new Error("Department ID: " + department.getId() + " has no university"));
+
         State departmentState = getStateThenSetState(department, ACCEPTED);
 
         User departmentAdministrator = getDepartmentAdministrator(department);
-        Board otherBoard = setUpBoard(departmentAdministrator, department.getId(), randomUUID().toString());
+        Board otherBoard = setUpBoard(departmentAdministrator, department, randomName());
 
         setState(department, departmentState);
 
         User otherBoardPostAdministrator = setUpUser();
-        setUpPost(otherBoardPostAdministrator, otherBoard.getId(), randomUUID().toString());
+        setUpPost(otherBoardPostAdministrator, otherBoard, randomName());
 
         User departmentAuthor = setUpUser();
         userRoleService.createUserRole(department, departmentAuthor, AUTHOR);
 
         User otherDepartmentAdministrator = setUpUser();
         Department otherDepartment =
-            setUpDepartment(otherDepartmentAdministrator, 1L, randomUUID().toString());
+            setUpDepartment(otherDepartmentAdministrator, university, randomName());
         Board otherDepartmentBoard = setUpBoard(
-            otherDepartmentAdministrator, otherDepartment.getId(), randomUUID().toString());
+            otherDepartmentAdministrator, otherDepartment, randomName());
 
         User otherDepartmentAuthor = setUpUser();
         userRoleService.createUserRole(otherDepartment, otherDepartmentAuthor, AUTHOR);
@@ -254,7 +328,7 @@ public class ServiceHelper {
         userRoleService.createUserRole(otherDepartment, otherDepartmentMember, MEMBER);
 
         User otherDepartmentPostAdministrator = setUpUser();
-        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard.getId(), randomUUID().toString());
+        setUpPost(otherDepartmentPostAdministrator, otherDepartmentBoard, randomName());
 
         User userWithoutRoles = setUpUser();
 
@@ -267,11 +341,6 @@ public class ServiceHelper {
             .scenario(otherDepartmentPostAdministrator, "Other department post administrator")
             .scenario(userWithoutRoles, "User without roles")
             .scenario(null, "Public user");
-    }
-
-    void verifyTimestamps(BoardEntity entity, LocalDateTime baseline) {
-        assertThat(entity.getCreatedTimestamp()).isGreaterThanOrEqualTo(baseline);
-        assertThat(entity.getUpdatedTimestamp()).isGreaterThanOrEqualTo(baseline);
     }
 
     void verifyIdentity(Resource resource, Resource expectedParentResource, String expectedName) {
@@ -289,9 +358,9 @@ public class ServiceHelper {
             .containsExactly(expectedActions);
     }
 
-    void verifyIndexDataAndQuarter(Resource resource, String expectedIndexData) {
-        assertEquals(expectedIndexData, resource.getIndexData());
-        assertEquals(getQuarter(resource.getCreatedTimestamp()), resource.getQuarter());
+    void verifyTimestamps(BoardEntity entity, LocalDateTime baseline) {
+        assertThat(entity.getCreatedTimestamp()).isGreaterThanOrEqualTo(baseline);
+        assertThat(entity.getUpdatedTimestamp()).isGreaterThanOrEqualTo(baseline);
     }
 
     private User getDepartmentAdministrator(Department department) {
@@ -312,6 +381,10 @@ public class ServiceHelper {
     private void setState(Resource resource, State state) {
         resource.setState(state);
         resourceRepository.save(resource);
+    }
+
+    private String randomName() {
+        return randomUUID().toString().replace("-", "");
     }
 
     static class Scenarios {

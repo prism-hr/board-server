@@ -14,8 +14,8 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Stream;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
@@ -102,8 +102,12 @@ public class BoardUtils {
         return chain.split(", ")[0];
     }
 
-    public static String makeSoundex(String... strings) {
-        List<String> nullSafeStrings = Stream.of(strings).filter(Objects::nonNull).collect(toList());
+    public static String makeSoundex(String string) {
+        return makeSoundex(singletonList(string));
+    }
+
+    public static String makeSoundex(List<String> strings) {
+        List<String> nullSafeStrings = strings.stream().filter(Objects::nonNull).collect(toList());
         if (nullSafeStrings.isEmpty()) {
             return null;
         }

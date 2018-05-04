@@ -1,11 +1,14 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.*;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardNotFoundException;
+import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +23,8 @@ import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EXTEND;
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
@@ -40,6 +45,9 @@ public class ResourceServiceIT {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private ResourceRepository resourceRepository;
 
     @Inject
     private ResourceDAO resourceDAO;
@@ -88,55 +96,72 @@ public class ResourceServiceIT {
     }
 
     @Test
-    public void checkUniqueName_successWhenCreateDepartment() {
-        resourceService.checkUniqueName(DEPARTMENT, null, university, "new department");
+    public void setName_success() {
+        Department department = new Department();
+        department.setParent(university);
+
+        resourceService.setName(department, "new department");
+        assertEquals("new department", department.getName());
+
+        Board board = new Board();
+        board.setParent(this.department);
+
+        resourceService.setName(board, "new board");
+        assertEquals("new board", board.getName());
     }
 
     @Test
-    public void checkUniqueName_failureWhenCreateDepartmentDuplicate() {
-        assertThatThrownBy(() -> resourceService.checkUniqueName(DEPARTMENT, null, university, "department"))
+    public void setName_failureWhenDuplicate() {
+        Department department = new Department();
+        department.setParent(university);
+
+        assertThatThrownBy(() -> resourceService.setName(department, "department"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 2L));
-    }
 
-    @Test
-    public void checkUniqueName_successWhenCreateBoard() {
-        resourceService.checkUniqueName(DEPARTMENT, null, university, "new board");
-    }
+        Board board = new Board();
+        board.setParent(this.department);
 
-    @Test
-    public void checkUniqueName_failureWhenCreateBoardDuplicate() {
-        Department department = new Department();
-        department.setId(2L);
-        assertThatThrownBy(() -> resourceService.checkUniqueName(BOARD, null, department, "board"))
+        assertThatThrownBy(() -> resourceService.setName(board, "board"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 4L));
     }
 
     @Test
-    public void createHandle_successWhenDepartment() {
-        String handle = resourceService.createHandle(university, DEPARTMENT, "department2");
-        assertEquals("university/department2", handle);
+    public void setHandle_success() {
+        Department department = new Department();
+        department.setParent(university);
+        department.setName("department2");
+
+        resourceService.setHandle(department);
+        assertEquals("university/department2", department.getHandle());
+
+        Board board = new Board();
+        board.setParent(department);
+        board.setName("board2");
+
+        resourceService.setHandle(board);
+        assertEquals("university/department2/board2", board.getHandle());
     }
 
     @Test
-    public void createHandle_successWhenDepartmentAndDuplicate() {
-        String handle = resourceService.createHandle(university, DEPARTMENT, "department");
-        assertEquals("university/department-3", handle);
-    }
+    public void setHandle_successWhenDuplicate() {
+        Department department = new Department();
+        department.setParent(university);
+        department.setName("department");
 
-    @Test
-    public void createHandle_successWhenBoard() {
-        String handle = resourceService.createHandle(department, BOARD, "board2");
-        assertEquals("university/department/board2", handle);
-    }
+        resourceService.setHandle(department);
+        assertEquals("university/department-3", department.getHandle());
+        department.setHandle("university/department");
 
-    @Test
-    public void createHandle_successWhenBoardAndDuplicate() {
-        String handle = resourceService.createHandle(department, BOARD, "board");
-        assertEquals("university/department/board-3", handle);
+        Board board = new Board();
+        board.setName("board");
+        board.setParent(department);
+
+        resourceService.setHandle(board);
+        assertEquals("university/department/board-3", board.getHandle());
     }
 
     @Test
@@ -225,6 +250,58 @@ public class ResourceServiceIT {
 
         serviceHelper.verifyTimestamps(resourceOperation, baseline);
         assertThat(resourceDAO.getResourceOperations(department)).containsExactly(resourceOperation);
+    }
+
+    @Test
+    public void setIndexDataAndQuarter_success() {
+        resourceService.setIndexDataAndQuarter(university);
+        resourceRepository.save(university);
+
+        Department department = (Department) resourceService.getById(2L);
+        resourceService.setIndexDataAndQuarter(department);
+        resourceRepository.save(department);
+
+        Board board = (Board) resourceService.getById(4L);
+        resourceService.setIndexDataAndQuarter(board);
+        resourceRepository.save(board);
+
+        Post post = (Post) resourceService.getById(6L);
+        resourceService.setIndexDataAndQuarter(post);
+
+        assertEquals("U516", university.getIndexData());
+        assertEquals("U516 D163 D163 S560", department.getIndexData());
+        assertEquals("U516 D163 D163 S560 B630", board.getIndexData());
+        assertEquals("U516 D163 D163 S560 B630 P230 P230 S560 P230 D261 L535 O625 N500", post.getIndexData());
+
+        Stream.of(university, department, board, post).forEach(resource ->
+            resource.setCreatedTimestamp(LocalDateTime.of(2018, 5, 1, 0, 0, 0)));
+
+        assertEquals("20182", university.getQuarter());
+        assertEquals("20182", department.getQuarter());
+        assertEquals("20182", board.getQuarter());
+        assertEquals("20182", post.getQuarter());
+    }
+
+    @Test
+    public void updateCategories_success() {
+        resourceService.updateCategories(department, MEMBER, ImmutableList.of("UNDERGRADUATE_STUDENT"));
+
+        Department selectedDepartment = (Department) resourceDAO.getById(DEPARTMENT, 2L);
+        assertThat(selectedDepartment.getMemberCategoryStrings()).containsExactly("UNDERGRADUATE_STUDENT");
+
+        Board board = (Board) resourceService.getById(4L);
+        resourceService.updateCategories(board, POST, null);
+
+        Board selectedBoard = (Board) resourceDAO.getById(BOARD, 4L);
+        assertThat(selectedBoard.getPostCategoryStrings()).isEmpty();
+
+        Post post = (Post) resourceService.getById(6L);
+        resourceService.updateCategories(post, POST, ImmutableList.of("Internship", "Volunteering"));
+        resourceService.updateCategories(post, MEMBER, ImmutableList.of("MASTER_STUDENT", "RESEARCH_STUDENT"));
+
+        Post selectedPost = (Post) resourceDAO.getById(Scope.POST, 6L);
+        assertThat(selectedPost.getPostCategoryStrings()).containsExactly("Internship", "Volunteering");
+        assertThat(selectedPost.getMemberCategoryStrings()).containsExactly("MASTER_STUDENT", "RESEARCH_STUDENT");
     }
 
     private void createResourceRelation(Long resource1Id, Long resource2Id) {

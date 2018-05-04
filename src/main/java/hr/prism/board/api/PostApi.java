@@ -60,13 +60,15 @@ public class PostApi {
     }
 
     @RequestMapping(value = "/api/posts", method = GET)
-    public List<PostRepresentation> getPosts(@ModelAttribute ResourceFilter filter) {
-        return postService.getPosts(filter).stream().map(postMapper).collect(toList());
+    public List<PostRepresentation> getPosts(@AuthenticationPrincipal User user,
+                                             @ModelAttribute ResourceFilter filter) {
+        return postService.getPosts(user, filter).stream().map(postMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/posts/{postId}", method = GET)
-    public PostRepresentation getPost(@PathVariable Long postId, HttpServletRequest request) {
-        return postMapper.apply(postService.getById(postId, getClientIpAddress(request), true));
+    public PostRepresentation getPost(@AuthenticationPrincipal User user, @PathVariable Long postId,
+                                      HttpServletRequest request) {
+        return postMapper.apply(postService.getById(user, postId, getClientIpAddress(request), true));
     }
 
     @RequestMapping(value = "/api/posts/{postId}/operations", method = GET)

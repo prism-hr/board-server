@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.domain.Organization;
 import hr.prism.board.domain.Post;
+import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.OrganizationDTO;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,12 @@ public class PostPatchService extends ResourcePatchService<Post> {
     public void patchOrganization(Post post, Optional<OrganizationDTO> newValueOptional) {
         patchOrganization(post, "organization",
             post::getOrganization, post::setOrganization, newValueOptional);
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    void patchLocation(Post post, Optional<LocationDTO> newValueOptional) {
+        super.patchLocation(post, "location",
+            post::getLocation, post::setLocation, newValueOptional);
     }
 
     @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "SameParameterValue"})

@@ -19,7 +19,7 @@ public class BoardProperty implements NotificationProperty {
     }
 
     public String getValue(NotificationRequest notificationRequest) {
-        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), BOARD).getName();
+        return resourceService.getByResourceAndEnclosingScope(notificationRequest.getResource(), BOARD).getName();
     }
 
 }

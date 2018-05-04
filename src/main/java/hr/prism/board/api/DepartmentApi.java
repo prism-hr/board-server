@@ -114,10 +114,10 @@ public class DepartmentApi {
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/badge", method = GET)
-    public String getDepartmentBadge(@PathVariable Long departmentId, @RequestParam String options,
-                                     HttpServletResponse response) throws IOException {
+    public String getDepartmentBadge(@AuthenticationPrincipal User user, @PathVariable Long departmentId,
+                                     @RequestParam String options, HttpServletResponse response) throws IOException {
         response.setHeader("X-Frame-Options", "ALLOW");
-        return departmentBadgeService.getBadge(departmentId,
+        return departmentBadgeService.getBadge(user, departmentId,
             objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
             }));
     }

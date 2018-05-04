@@ -1,15 +1,18 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.enums.ExistingRelation;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static hr.prism.board.enums.Scope.Value.POST;
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
+import static java.util.Optional.ofNullable;
 
 @Entity
 @DiscriminatorValue(value = POST)
@@ -94,6 +97,10 @@ public class Post extends Resource {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
+    @ManyToOne
+    @JoinColumn(name = "location_id", nullable = false)
+    private Location location;
+
     @Column(name = "existing_relation")
     @Enumerated(EnumType.STRING)
     private ExistingRelation existingRelation;
@@ -151,6 +158,10 @@ public class Post extends Resource {
     @Transient
     private ResourceEvent response;
 
+    public Post() {
+        setScope(Scope.POST);
+    }
+
     @Override
     public void setDocumentLogo(Document documentLogo) {
     }
@@ -167,9 +178,16 @@ public class Post extends Resource {
         return organization;
     }
 
-    public Post setOrganization(Organization organization) {
+    public void setOrganization(Organization organization) {
         this.organization = organization;
-        return this;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
     public ExistingRelation getExistingRelation() {
@@ -316,6 +334,16 @@ public class Post extends Resource {
     @Override
     public String getHandle() {
         return getParent().getHandle() + "/" + getId();
+    }
+
+    @Override
+    public List<String> getIndexDataParts() {
+        List<String> parts = super.getIndexDataParts();
+        parts.add(description);
+
+        ofNullable(location).ifPresent(location -> parts.add(location.getName()));
+        ofNullable(organization).ifPresent(organization -> parts.add(organization.getName()));
+        return parts;
     }
 
 }

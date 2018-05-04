@@ -124,12 +124,11 @@ public class PostService {
         this.entityManager = entityManager;
     }
 
-    public Post getById(Long id) {
-        return getById(id, null, false);
+    public Post getById(User user, Long id) {
+        return getById(user, id, null, false);
     }
 
-    public Post getById(Long id, String ipAddress, boolean recordView) {
-        User user = userService.getUser();
+    public Post getById(User user, Long id, String ipAddress, boolean recordView) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
 
@@ -142,8 +141,7 @@ public class PostService {
         return post;
     }
 
-    public List<Post> getPosts(ResourceFilter filter) {
-        User user = userService.getUser();
+    public List<Post> getPosts(User user, ResourceFilter filter) {
         filter.setScope(POST);
         filter.setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC");
 
@@ -178,6 +176,7 @@ public class PostService {
         Board board = (Board) resourceService.getResource(user, BOARD, boardId);
         Post createdPost = (Post) actionService.executeAction(user, board, EXTEND, () -> {
             Post post = new Post();
+            post.setParent(board);
             Department department = (Department) board.getParent();
 
             post.setName(postDTO.getName());
@@ -206,7 +205,7 @@ public class PostService {
             resourceService.createResourceRelation(board, post);
             setPostCategories(post, postDTO.getPostCategories());
             setMemberCategories(post, toStrings(postDTO.getMemberCategories()));
-            setIndexDataAndQuarter(post);
+            resourceService.setIndexDataAndQuarter(post);
 
             userRoleService.createUserRole(post, user, ADMINISTRATOR);
             resourceTaskService.completeTasks(department, POST_TASKS);
@@ -274,15 +273,8 @@ public class PostService {
         return liveTimestamp.isBefore(baseline) ? baseline : liveTimestamp;
     }
 
-    public void setIndexDataAndQuarter(Post post) {
-        resourceService.setIndexDataAndQuarter(post, post.getName(), post.getSummary(), post.getDescription(),
-            post.getOrganization().getName(), post.getLocation().getName());
-    }
-
-    public List<Post> getPosts(Long boardId) {
-        return getPosts(
-            new ResourceFilter()
-                .setParentId(boardId));
+    public List<Post> getPosts(User user, Long boardId) {
+        return getPosts(user, new ResourceFilter().setParentId(boardId));
     }
 
     public PostStatistics getPostStatistics(Long departmentId) {
@@ -329,7 +321,7 @@ public class PostService {
         postPatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
             deadTimestamp != null ? deadTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
 
-        setIndexDataAndQuarter(post);
+        resourceService.setIndexDataAndQuarter(post);
     }
 
     public void archivePosts() {

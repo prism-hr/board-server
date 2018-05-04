@@ -2,7 +2,7 @@ package hr.prism.board.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.exception.BoardForbiddenException;
@@ -17,7 +17,6 @@ import org.springframework.context.ApplicationContext;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Action.VIEW;
-import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,11 +62,10 @@ public class ActionServiceTest {
         user.setSurname("knowles");
         user.setEmail("alastair@prism.hr");
 
-        Resource resource = new Resource();
-        resource.setScope(DEPARTMENT);
-        resource.setId(1L);
+        Department department = new Department();
+        department.setId(1L);
 
-        assertThatThrownBy(() -> actionService.executeAction(user, resource, VIEW, null))
+        assertThatThrownBy(() -> actionService.executeAction(user, department, VIEW, null))
             .isExactlyInstanceOf(BoardForbiddenException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
@@ -79,12 +77,11 @@ public class ActionServiceTest {
         user.setSurname("knowles");
         user.setEmail("alastair@prism.hr");
 
-        Resource resource = new Resource();
-        resource.setScope(DEPARTMENT);
-        resource.setId(1L);
-        resource.setActions(emptyList());
+        Department department = new Department();
+        department.setId(1L);
+        department.setActions(emptyList());
 
-        assertThatThrownBy(() -> actionService.executeAction(user, resource, VIEW, null))
+        assertThatThrownBy(() -> actionService.executeAction(user, department, VIEW, null))
             .isExactlyInstanceOf(BoardForbiddenException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }
@@ -96,12 +93,11 @@ public class ActionServiceTest {
         user.setSurname("knowles");
         user.setEmail("alastair@prism.hr");
 
-        Resource resource = new Resource();
-        resource.setScope(DEPARTMENT);
-        resource.setId(1L);
-        resource.setActions(ImmutableList.of(new ActionRepresentation().setAction(VIEW)));
+        Department department = new Department();
+        department.setId(1L);
+        department.setActions(ImmutableList.of(new ActionRepresentation().setAction(VIEW)));
 
-        assertThatThrownBy(() -> actionService.executeAction(user, resource, EDIT, null))
+        assertThatThrownBy(() -> actionService.executeAction(user, department, EDIT, null))
             .isExactlyInstanceOf(BoardForbiddenException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
     }

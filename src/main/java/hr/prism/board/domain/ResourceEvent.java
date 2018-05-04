@@ -5,15 +5,15 @@ import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.MemberCategory;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
-@SuppressWarnings("unused")
 @Table(name = "resource_event")
 public class ResourceEvent extends BoardEntity {
 
@@ -113,6 +113,7 @@ public class ResourceEvent extends BoardEntity {
         return ipAddress;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceEvent setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
         return this;
@@ -208,10 +209,12 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public String getIndexData() {
         return indexData;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceEvent setIndexData(String indexData) {
         this.indexData = indexData;
         return this;
@@ -226,6 +229,7 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public Set<ResourceEventSearch> getSearches() {
         return searches;
     }
@@ -248,9 +252,15 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
-    public boolean hasDemographicData() {
-        return Stream.of(gender, ageRange, locationNationality, memberCategory, memberProgram, memberYear)
-            .anyMatch(Objects::nonNull);
+    public List<String> getIndexDataParts() {
+        List<String> parts = new ArrayList<>();
+        ofNullable(gender).ifPresent(gender -> parts.add(gender.name()));
+        ofNullable(locationNationality).ifPresent(locationNationality -> parts.add(locationNationality.getName()));
+        ofNullable(memberCategory).ifPresent(memberCategory -> parts.add(memberCategory.name()));
+
+        parts.add(memberProgram);
+        ofNullable(memberYear).ifPresent(memberYear -> parts.add(memberYear.toString()));
+        return parts;
     }
 
 }

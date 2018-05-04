@@ -1,6 +1,7 @@
 package hr.prism.board.domain;
 
 import com.stripe.model.Customer;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.value.ResourceSearch;
 
 import javax.persistence.*;
@@ -90,6 +91,10 @@ public class Department extends Resource {
 
     @Transient
     private Customer customer;
+
+    public Department() {
+        setScope(Scope.DEPARTMENT);
+    }
 
     public Integer getNotifiedCount() {
         return notifiedCount;

@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.enums.Scope;
 import hr.prism.board.value.ResourceSearch;
 
 import javax.persistence.*;
@@ -38,6 +39,10 @@ import static hr.prism.board.enums.Scope.Value.UNIVERSITY;
             @ColumnResult(name = "documentLogoFileName", type = String.class)}))
 @SuppressWarnings("SqlResolve")
 public class University extends Resource {
+
+    public University() {
+        setScope(Scope.UNIVERSITY);
+    }
 
     @Column(name = "homepage")
     private String homepage;

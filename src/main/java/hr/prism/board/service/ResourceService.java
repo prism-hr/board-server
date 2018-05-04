@@ -37,6 +37,7 @@ import static hr.prism.board.utils.ResourceUtils.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Service
@@ -114,12 +115,8 @@ public class ResourceService {
         return resourceOperationRepository.findFirstByResourceAndActionOrderByIdDesc(resource, action);
     }
 
-    public Resource findByResourceAndEnclosingScope(Resource resource, Scope scope) {
+    public Resource getByResourceAndEnclosingScope(Resource resource, Scope scope) {
         return resourceRepository.findByResourceAndEnclosingScope(resource, scope);
-    }
-
-    public void setIndexDataAndQuarter(Resource resource) {
-        setIndexDataAndQuarter(resource, resource.getName(), resource.getSummary());
     }
 
     public List<Long> getResourcesToArchive(LocalDateTime baseline) {
@@ -128,6 +125,9 @@ public class ResourceService {
     }
 
     public void checkUniqueName(Scope scope, Long id, Resource parent, String name) {
+        requireNonNull(scope, "scope cannot be null");
+        requireNonNull(parent, "parent cannot be null");
+        requireNonNull(name, "name cannot be null");
         resourceDAO.checkUniqueName(scope, id, parent, name);
     }
 
@@ -140,18 +140,18 @@ public class ResourceService {
             scope, user, STAFF_ROLES, MEMBER, ACCEPTED_STATES);
     }
 
-    public void setIndexDataAndQuarter(Resource resource, String... parts) {
-        Resource parent = resource.getParent();
-        if (resource.equals(parent)) {
-            resource.setIndexData(makeSoundex(parts));
-        } else {
-            String soundex = makeSoundex(parts);
-            requireNonNull(soundex, "soundex cannot be null");
-            resource.setIndexData(Joiner.on(" ").skipNulls().join(parent.getIndexData(), soundex));
-        }
+    public void setName(Resource resource, String name) {
+        String normalizedName = normalizeSpace(name);
+        checkUniqueName(resource.getScope(), null, resource.getParent(), normalizedName);
+        resource.setName(normalizedName);
+    }
 
-        LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
-        resource.setQuarter(getQuarter(createdTimestamp));
+    public void setHandle(Resource resource) {
+        Resource parent = resource.getParent();
+        String suggestedHandle = parent.getHandle() + "/" + suggestHandle(resource.getName());
+        List<String> similarHandles = getHandlesLikeSuggesteHandle(resource.getScope(), suggestedHandle);
+        String confirmedHandle = confirmHandle(suggestedHandle, similarHandles);
+        resource.setHandle(confirmedHandle);
     }
 
     public void updateHandle(Resource resource, String newHandle) {
@@ -169,7 +169,6 @@ public class ResourceService {
         int resource2Ordinal = resource2.getScope().ordinal();
 
         if ((resource1Ordinal + resource2Ordinal) == 0 || resource1Ordinal == (resource2Ordinal - 1)) {
-            resource2.setParent(resource1);
             resource1.getParents()
                 .stream()
                 .map(ResourceRelation::getResource1)
@@ -244,10 +243,18 @@ public class ResourceService {
         return resourceOperationRepository.save(resourceOperation);
     }
 
-    public String createHandle(Resource parent, Scope scope, String name) {
-        String handle = parent.getHandle() + "/" + suggestHandle(name);
-        List<String> similarHandles = resourceRepository.findHandleLikeSuggestedHandle(scope, handle);
-        return confirmHandle(handle, similarHandles);
+    public void setIndexDataAndQuarter(Resource resource) {
+        Resource parent = resource.getParent();
+        if (resource.equals(parent)) {
+            resource.setIndexData(makeSoundex(resource.getIndexDataParts()));
+        } else {
+            String soundex = makeSoundex(resource.getIndexDataParts());
+            requireNonNull(soundex, "soundex cannot be null");
+            resource.setIndexData(Joiner.on(" ").skipNulls().join(parent.getIndexData(), soundex));
+        }
+
+        LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
+        resource.setQuarter(getQuarter(createdTimestamp));
     }
 
     private void saveResourceRelation(Resource resource1, Resource resource2) {
@@ -263,6 +270,12 @@ public class ResourceService {
 
     private void deleteResourceCategories(Resource resource, CategoryType type) {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
+    }
+
+    private List<String> getHandlesLikeSuggesteHandle(Scope scope, String suggestedHandle) {
+        requireNonNull(scope, "scope cannot be null");
+        requireNonNull(suggestedHandle, "suggested handle cannot be null");
+        return resourceRepository.findHandleLikeSuggestedHandle(scope, suggestedHandle);
     }
 
 }

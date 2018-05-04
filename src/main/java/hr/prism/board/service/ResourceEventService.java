@@ -1,11 +1,8 @@
 package hr.prism.board.service;
 
-import com.google.common.base.Joiner;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
-import hr.prism.board.enums.Gender;
-import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
@@ -34,7 +31,6 @@ import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
@@ -211,28 +207,8 @@ public class ResourceEventService {
     }
 
     public void setIndexData(ResourceEvent resourceEvent) {
-        String memberCategoryString = null;
-        MemberCategory memberCategory = resourceEvent.getMemberCategory();
-        if (memberCategory != null) {
-            memberCategoryString = memberCategory.name();
-        }
-
-        String genderString = null;
-        Gender gender = resourceEvent.getGender();
-        if (gender != null) {
-            genderString = gender.name();
-        }
-
-        String locationNationalityString = null;
-        Location locationNationality = resourceEvent.getLocationNationality();
-        if (locationNationality != null) {
-            locationNationalityString = locationNationality.getName();
-        }
-
-        String soundex = makeSoundex(genderString,
-            locationNationalityString, memberCategoryString, resourceEvent.getMemberProgram());
-        requireNonNull(soundex, "soundex cannot be null");
-        resourceEvent.setIndexData(Joiner.on(" ").skipNulls().join(soundex, resourceEvent.getMemberYear()));
+        String soundex = makeSoundex(resourceEvent.getIndexDataParts());
+        resourceEvent.setIndexData(soundex);
     }
 
     private void updateResourceEventSummary(Post post) {

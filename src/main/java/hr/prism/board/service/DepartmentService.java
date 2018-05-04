@@ -39,7 +39,6 @@ import static hr.prism.board.enums.State.*;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 
 import hr.prism.board.event.ActivityEvent;
 
@@ -152,11 +151,11 @@ public class DepartmentService {
 
     public Department createDepartment(User user, Long universityId, DepartmentDTO departmentDTO) {
         University university = universityService.getById(universityId);
-        resourceService.checkUniqueName(DEPARTMENT, null, university, departmentDTO.getName());
-        String name = normalizeSpace(departmentDTO.getName());
-
         Department department = new Department();
-        department.setName(name);
+        department.setParent(university);
+
+        resourceService.setName(department, departmentDTO.getName());
+        resourceService.setHandle(department);
         department.setSummary(departmentDTO.getSummary());
 
         DocumentDTO documentLogoDTO = departmentDTO.getDocumentLogo();
@@ -166,7 +165,6 @@ public class DepartmentService {
             department.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
         }
 
-        department.setHandle(resourceService.createHandle(university, DEPARTMENT, name));
         department = departmentRepository.save(department);
         resourceService.updateState(department, DRAFT);
 
@@ -182,6 +180,7 @@ public class DepartmentService {
         resourceService.updateCategories(department, CategoryType.MEMBER, memberCategoryStrings);
         resourceService.createResourceRelation(university, department);
         resourceService.setIndexDataAndQuarter(department);
+
         resourceService.createResourceOperation(department, EXTEND, user);
         userRoleService.createUserRole(department, user, ADMINISTRATOR);
 

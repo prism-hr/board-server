@@ -19,7 +19,7 @@ public class DepartmentProperty implements NotificationProperty {
     }
 
     public String getValue(NotificationRequest notificationRequest) {
-        return resourceService.findByResourceAndEnclosingScope(notificationRequest.getResource(), DEPARTMENT).getName();
+        return resourceService.getByResourceAndEnclosingScope(notificationRequest.getResource(), DEPARTMENT).getName();
     }
 
 }
