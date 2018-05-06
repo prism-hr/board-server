@@ -77,8 +77,12 @@ public class BoardService {
             Board board = new Board();
             board.setParent(department);
 
-            resourceService.setName(board, boardDTO.getName());
-            resourceService.setHandle(board);
+            String name = boardDTO.getName();
+            resourceService.checkUniqueName(board, name);
+            board.setName(name);
+
+            String handle = resourceService.createHandle(board);
+            board.setHandle(handle);
             board = boardRepository.save(board);
 
             resourceService.updateCategories(board, POST, boardDTO.getPostCategories());

@@ -257,8 +257,8 @@ public class ActionServiceIT {
             .expect(DRAFT, postPendingModifier,
                 new Expectation(VIEW, DRAFT),
                 new Expectation(EDIT, DRAFT),
-                new Expectation(SUSPEND, SUSPENDED),
                 new Expectation(ACCEPT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
                 new Expectation(REJECT, REJECTED))
             .expect(PENDING, postPendingModifier,
                 new Expectation(VIEW, PENDING),

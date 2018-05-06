@@ -154,8 +154,9 @@ public class DepartmentService {
         Department department = new Department();
         department.setParent(university);
 
-        resourceService.setName(department, departmentDTO.getName());
-        resourceService.setHandle(department);
+        String name = departmentDTO.getName();
+        resourceService.checkUniqueName(department, name);
+        department.setName(name);
         department.setSummary(departmentDTO.getSummary());
 
         DocumentDTO documentLogoDTO = departmentDTO.getDocumentLogo();
@@ -165,6 +166,8 @@ public class DepartmentService {
             department.setDocumentLogo(documentService.getOrCreateDocument(documentLogoDTO));
         }
 
+        String handle = resourceService.createHandle(department);
+        department.setHandle(handle);
         department = departmentRepository.save(department);
         resourceService.updateState(department, DRAFT);
 

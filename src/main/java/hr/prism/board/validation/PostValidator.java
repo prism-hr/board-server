@@ -36,10 +36,10 @@ public class PostValidator {
         checkApplyWebsite(post);
     }
 
-    public void checkCategories(List<String> categories, List<String> referenceCategories,
+    public void checkCategories(List<String> categories, List<String> permittedCategories,
                                  ExceptionCode exceptionCodeWhenForbidden, ExceptionCode exceptionCodeWhenMissing,
                                  ExceptionCode exceptionCodeWhenInvalid) {
-        if (referenceCategories.isEmpty()) {
+        if (permittedCategories.isEmpty()) {
             if (isNotEmpty(categories)) {
                 throw new BoardException(exceptionCodeWhenForbidden, "Categories must not be specified");
             }
@@ -48,7 +48,7 @@ public class PostValidator {
                 throw new BoardException(exceptionCodeWhenMissing, "Categories must be specified");
             }
 
-            if (!referenceCategories.containsAll(categories)) {
+            if (!permittedCategories.containsAll(categories)) {
                 throw new BoardException(exceptionCodeWhenInvalid,
                     "Valid categories must be specified - check parent categories");
             }

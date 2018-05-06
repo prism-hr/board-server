@@ -5,7 +5,6 @@ import java.util.List;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.ceil;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -14,8 +13,6 @@ public class ResourceUtils {
     private static final int MAX_HANDLE_LENGTH = 25;
 
     public static String suggestHandle(String name) {
-        requireNonNull(name, "name cannot be null");
-
         String suggestion = "";
         name = stripAccents(name.toLowerCase());
         String[] parts = name.split(" ");

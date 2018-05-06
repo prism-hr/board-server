@@ -10,7 +10,6 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardNotFoundException;
-import hr.prism.board.exception.ExceptionCode;
 import hr.prism.board.repository.ResourceCategoryRepository;
 import hr.prism.board.repository.ResourceOperationRepository;
 import hr.prism.board.repository.ResourceRelationRepository;
@@ -31,13 +30,13 @@ import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.State.*;
+import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE_HANDLE;
 import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.ResourceUtils.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
-import static org.apache.commons.lang3.StringUtils.normalizeSpace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Service
@@ -124,15 +123,12 @@ public class ResourceService {
             RESOURCE_STATES_TO_ARCHIVE_FROM, baseline.minusSeconds(resourceArchiveDurationSeconds));
     }
 
-    public void checkUniqueName(Scope scope, Long id, Resource parent, String name) {
-        requireNonNull(scope, "scope cannot be null");
-        requireNonNull(parent, "parent cannot be null");
-        requireNonNull(name, "name cannot be null");
-        resourceDAO.checkUniqueName(scope, id, parent, name);
+    public void checkUniqueName(Resource resource, String name) {
+        resourceDAO.checkUniqueName(resource.getScope(), resource.getId(), resource.getParent(), name);
     }
 
-    public void checkUniqueHandle(Resource resource, String handle, ExceptionCode exceptionCode) {
-        resourceDAO.checkUniqueHandle(resource, handle, exceptionCode);
+    public void checkUniqueHandle(Resource resource, String handle) {
+        resourceDAO.checkUniqueHandle(resource, handle, DUPLICATE_RESOURCE_HANDLE);
     }
 
     public List<Resource> getSuppressableResources(Scope scope, User user) {
@@ -140,18 +136,11 @@ public class ResourceService {
             scope, user, STAFF_ROLES, MEMBER, ACCEPTED_STATES);
     }
 
-    public void setName(Resource resource, String name) {
-        String normalizedName = normalizeSpace(name);
-        checkUniqueName(resource.getScope(), null, resource.getParent(), normalizedName);
-        resource.setName(normalizedName);
-    }
-
-    public void setHandle(Resource resource) {
-        Resource parent = resource.getParent();
-        String suggestedHandle = parent.getHandle() + "/" + suggestHandle(resource.getName());
-        List<String> similarHandles = getHandlesLikeSuggesteHandle(resource.getScope(), suggestedHandle);
-        String confirmedHandle = confirmHandle(suggestedHandle, similarHandles);
-        resource.setHandle(confirmedHandle);
+    public String createHandle(Resource resource) {
+        String suggestedHandle = resource.getParent().getHandle() + "/" + suggestHandle(resource.getName());
+        List<String> similarHandles =
+            resourceRepository.findHandleLikeSuggestedHandle(resource.getScope(), suggestedHandle);
+        return confirmHandle(suggestedHandle, similarHandles);
     }
 
     public void updateHandle(Resource resource, String newHandle) {
@@ -270,12 +259,6 @@ public class ResourceService {
 
     private void deleteResourceCategories(Resource resource, CategoryType type) {
         resourceCategoryRepository.deleteByResourceAndType(resource, type);
-    }
-
-    private List<String> getHandlesLikeSuggesteHandle(Scope scope, String suggestedHandle) {
-        requireNonNull(scope, "scope cannot be null");
-        requireNonNull(suggestedHandle, "suggested handle cannot be null");
-        return resourceRepository.findHandleLikeSuggestedHandle(scope, suggestedHandle);
     }
 
 }

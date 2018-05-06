@@ -96,26 +96,22 @@ public class ResourceServiceIT {
     }
 
     @Test
-    public void setName_success() {
+    public void checkUniqueName_success() {
         Department department = new Department();
         department.setParent(university);
-
-        resourceService.setName(department, "new department");
-        assertEquals("new department", department.getName());
+        resourceService.checkUniqueName(department, "new department");
 
         Board board = new Board();
         board.setParent(this.department);
-
-        resourceService.setName(board, "new board");
-        assertEquals("new board", board.getName());
+        resourceService.checkUniqueName(board, "new board");
     }
 
     @Test
-    public void setName_failureWhenDuplicate() {
+    public void checkUniqueName_failureWhenDuplicate() {
         Department department = new Department();
         department.setParent(university);
 
-        assertThatThrownBy(() -> resourceService.setName(department, "department"))
+        assertThatThrownBy(() -> resourceService.checkUniqueName(department, "department"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 2L));
@@ -123,45 +119,42 @@ public class ResourceServiceIT {
         Board board = new Board();
         board.setParent(this.department);
 
-        assertThatThrownBy(() -> resourceService.setName(board, "board"))
+        assertThatThrownBy(() -> resourceService.checkUniqueName(board, "board"))
             .isExactlyInstanceOf(BoardDuplicateException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE)
             .hasFieldOrPropertyWithValue("properties", singletonMap("id", 4L));
     }
 
     @Test
-    public void setHandle_success() {
+    public void createHandle_success() {
         Department department = new Department();
         department.setParent(university);
         department.setName("department2");
 
-        resourceService.setHandle(department);
-        assertEquals("university/department2", department.getHandle());
+        assertEquals("university/department2", resourceService.createHandle(department));
+        department.setHandle("university/department2");
 
         Board board = new Board();
         board.setParent(department);
         board.setName("board2");
 
-        resourceService.setHandle(board);
-        assertEquals("university/department2/board2", board.getHandle());
+        assertEquals("university/department2/board2", resourceService.createHandle(board));
     }
 
     @Test
-    public void setHandle_successWhenDuplicate() {
+    public void createHandle_successWhenDuplicate() {
         Department department = new Department();
         department.setParent(university);
         department.setName("department");
 
-        resourceService.setHandle(department);
-        assertEquals("university/department-3", department.getHandle());
+        assertEquals("university/department-3", resourceService.createHandle(department));
         department.setHandle("university/department");
 
         Board board = new Board();
         board.setName("board");
         board.setParent(department);
 
-        resourceService.setHandle(board);
-        assertEquals("university/department/board-3", board.getHandle());
+        assertEquals("university/department/board-3", resourceService.createHandle(board));
     }
 
     @Test

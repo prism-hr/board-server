@@ -185,11 +185,10 @@ public class PostService {
 
             Organization organization = organizationService.getOrCreateOrganization(postDTO.getOrganization());
             post.setOrganization(organization);
-            user.setDefaultOrganization(organization);
 
             Location location = locationService.getOrCreateLocation(postDTO.getLocation());
             post.setLocation(location);
-            user.setDefaultLocation(location);
+            userService.updateUserOrganizationAndLocation(user, organization, location);
 
             post.setExistingRelation(postDTO.getExistingRelation());
             post.setExistingRelationExplanation(
@@ -354,16 +353,16 @@ public class PostService {
 
     private void setPostCategories(Post post, List<String> categories) {
         Board board = (Board) post.getParent();
-        List<String> postCategories = board.getPostCategoryStrings();
-        postValidator.checkCategories(categories, postCategories,
+        List<String> permittedCategories = board.getPostCategoryStrings();
+        postValidator.checkCategories(categories, permittedCategories,
             FORBIDDEN_POST_CATEGORIES, MISSING_POST_CATEGORIES, INVALID_POST_CATEGORIES);
         resourceService.updateCategories(post, CategoryType.POST, categories);
     }
 
     private void setMemberCategories(Post post, List<String> categories) {
         Department department = (Department) post.getParent().getParent();
-        List<String> memberCategories = department.getMemberCategoryStrings();
-        postValidator.checkCategories(categories, memberCategories,
+        List<String> permittedCategories = department.getMemberCategoryStrings();
+        postValidator.checkCategories(categories, permittedCategories,
             FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
         resourceService.updateCategories(post, MEMBER, categories);
     }

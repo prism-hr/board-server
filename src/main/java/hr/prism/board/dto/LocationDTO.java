@@ -1,6 +1,8 @@
 package hr.prism.board.dto;
 
 import hr.prism.board.definition.LocationDefinition;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -67,4 +69,23 @@ public class LocationDTO implements LocationDefinition {
         this.longitude = longitude;
         return this;
     }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(googleId)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        LocationDTO that = (LocationDTO) other;
+        return new EqualsBuilder()
+            .append(googleId, that.googleId)
+            .isEquals();
+    }
+
 }

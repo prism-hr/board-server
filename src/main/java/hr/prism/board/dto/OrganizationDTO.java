@@ -1,5 +1,8 @@
 package hr.prism.board.dto;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.validation.constraints.Size;
 
 public class OrganizationDTO {
@@ -37,6 +40,24 @@ public class OrganizationDTO {
     public OrganizationDTO setLogo(String logo) {
         this.logo = logo;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(name)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        OrganizationDTO that = (OrganizationDTO) other;
+        return new EqualsBuilder()
+            .append(name, that.name)
+            .isEquals();
     }
 
 }

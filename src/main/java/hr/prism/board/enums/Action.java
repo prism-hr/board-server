@@ -3,12 +3,12 @@ package hr.prism.board.enums;
 public enum Action {
 
     VIEW,
-    PURSUE,
     EDIT,
-    SUSPEND, // Comment required
+    PURSUE,
     CORRECT, // Comment optional
     EXTEND,
     ACCEPT, // Comment optional
+    SUSPEND, // Comment required
     REJECT, // Comment required
     PUBLISH,
     RETIRE,

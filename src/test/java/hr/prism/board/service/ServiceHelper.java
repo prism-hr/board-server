@@ -92,8 +92,10 @@ public class ServiceHelper {
             university.setDocumentLogo(documentLogo);
             university.setState(ACCEPTED);
             university = resourceRepository.save(university);
+            university.setParent(university);
 
             resourceService.createResourceRelation(university, university);
+            resourceService.setIndexDataAndQuarter(university);
             return university;
         });
     }

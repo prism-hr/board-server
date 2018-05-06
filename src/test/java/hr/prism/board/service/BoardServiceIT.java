@@ -1,10 +1,13 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
+import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.University;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.service.ServiceHelper.Scenarios;
@@ -26,10 +29,9 @@ import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.CategoryType.POST;
-import static hr.prism.board.enums.Role.ADMINISTRATOR;
-import static hr.prism.board.enums.Role.MEMBER;
-import static hr.prism.board.enums.State.ACCEPTED;
-import static hr.prism.board.enums.State.REJECTED;
+import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.Scope.BOARD;
+import static hr.prism.board.enums.State.*;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -55,6 +57,9 @@ public class BoardServiceIT {
     private ServiceHelper serviceHelper;
 
     @SpyBean
+    private ResourceDAO resourceDAO;
+
+    @SpyBean
     private ActionService actionService;
 
     @SpyBean
@@ -65,6 +70,10 @@ public class BoardServiceIT {
     private User administrator;
 
     private User otherAdministrator;
+
+    private User author;
+
+    private User otherAuthor;
 
     private University university;
 
@@ -79,27 +88,10 @@ public class BoardServiceIT {
     @Before
     public void setUp() {
         baseline = LocalDateTime.now();
-
         administrator = serviceHelper.setUpUser();
-        otherAdministrator = serviceHelper.setUpUser();
-
         university = serviceHelper.setUpUniversity("university");
-
         departmentAccepted =
             serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
-
-        departmentRejected =
-            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
-        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
-
-        departmentAcceptedBoards =
-            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentAccepted.getId()));
-        resourceService.updateState(departmentAcceptedBoards.get(1), REJECTED);
-
-        departmentRejectedBoards =
-            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
-        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
-
         reset(actionService, resourceService);
     }
 
@@ -110,28 +102,31 @@ public class BoardServiceIT {
 
     @Test
     public void createBoard_success() {
-        Board createdBoard = serviceHelper.setUpBoard(administrator, departmentAccepted, "board");
-        Board selectedBoard = boardService.getById(administrator, createdBoard.getId());
+        Board createdBoard =
+            boardService.createBoard(administrator, departmentAccepted.getId(),
+                new BoardDTO()
+                    .setName("board")
+                    .setPostCategories(ImmutableList.of("Employment", "Internship")));
 
-        String[] postCategories = new String[]{"Employment", "Internship"};
-        Stream.of(createdBoard, selectedBoard).forEach(board ->
-            verifyBoard(
-                board,
-                departmentAccepted,
-                "board",
-                ACCEPTED,
-                ACCEPTED,
-                new Action[]{VIEW, EDIT, EXTEND, REJECT},
-                baseline));
+        Board selectedBoard = boardService.getById(administrator, createdBoard.getId());
+        Stream.of(createdBoard, selectedBoard).forEach(board -> {
+            verifyBoard(board, departmentAccepted, "board", new Action[]{VIEW, EDIT, EXTEND, REJECT});
+            assertEquals("university/department-accepted/board", board.getHandle());
+            assertEquals(ACCEPTED, board.getState());
+            assertEquals(ACCEPTED, board.getPreviousState());
+            assertEquals(ImmutableList.of("Employment", "Internship"), board.getPostCategoryStrings());
+        });
 
         verify(actionService, times(1))
             .executeAction(eq(administrator), eq(departmentAccepted), eq(EXTEND), any(Execution.class));
 
-        verify(resourceService, times(1)).setName(createdBoard, "board");
-        verify(resourceService, times(1)).setHandle(createdBoard);
+        verify(resourceDAO, times(1))
+            .checkUniqueName(BOARD, null, departmentAccepted, "board");
+
+        verify(resourceService, times(1)).createHandle(createdBoard);
 
         verify(resourceService, times(1))
-            .updateCategories(createdBoard, POST, Stream.of(postCategories).collect(toList()));
+            .updateCategories(createdBoard, POST, ImmutableList.of("Employment", "Internship"));
 
         verify(resourceService, times(1))
             .createResourceRelation(departmentAccepted, createdBoard);
@@ -144,6 +139,7 @@ public class BoardServiceIT {
 
     @Test
     public void getBoards_success() {
+        setUpBoards();
         getBoards_successWhenAdministrator();
         getBoards_successWhenAdministratorAndState();
         getBoards_successWhenAdministratorAndDepartment();
@@ -152,7 +148,31 @@ public class BoardServiceIT {
         getBoards_successWhenAdministratorAndSearchTermTypo();
         getBoards_successWhenAdministratorAndSearchTermWithoutResults();
         getBoards_successWhenOtherAdministrator();
+        getBoards_successWhenAuthor();
+        getBoards_successWhenOtherAuthor();
         getBoards_successWhenUnprivileged();
+    }
+
+    private void setUpBoards() {
+        otherAdministrator = serviceHelper.setUpUser();
+        author = serviceHelper.setUpUser();
+        otherAuthor = serviceHelper.setUpUser();
+
+        userRoleService.createUserRole(departmentAccepted, author, AUTHOR);
+
+        departmentRejected =
+            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
+        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
+        userRoleService.createUserRole(departmentRejected, author, AUTHOR);
+        userRoleService.createUserRole(departmentRejected, otherAuthor, AUTHOR);
+
+        departmentAcceptedBoards =
+            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentAccepted.getId()));
+        resourceService.updateState(departmentAcceptedBoards.get(1), REJECTED);
+
+        departmentRejectedBoards =
+            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
+        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
     }
 
     private void getBoards_successWhenAdministrator() {
@@ -172,23 +192,11 @@ public class BoardServiceIT {
         List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setState(REJECTED));
         assertThat(boards).hasSize(2);
 
-        verifyBoard(
-            boards.get(0),
-            departmentAccepted,
-            "Research Opportunities",
-            REJECTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, RESTORE},
-            baseline);
+        verifyBoard(boards.get(0), departmentAccepted,
+            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyBoard(
-            boards.get(1),
-            departmentRejected,
-            "Research Opportunities",
-            REJECTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, RESTORE},
-            baseline);
+        verifyBoard(boards.get(1), departmentRejected,
+            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
     }
 
     private void getBoards_successWhenAdministratorAndDepartment() {
@@ -203,23 +211,11 @@ public class BoardServiceIT {
             boardService.getBoards(administrator, new ResourceFilter().setAction(RESTORE));
 
         assertThat(boards).hasSize(2);
-        verifyBoard(
-            boards.get(0),
-            departmentAccepted,
-            "Research Opportunities",
-            REJECTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, RESTORE},
-            baseline);
+        verifyBoard(boards.get(0), departmentAccepted,
+            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyBoard(
-            boards.get(1),
-            departmentRejected,
-            "Research Opportunities",
-            REJECTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, RESTORE},
-            baseline);
+        verifyBoard(boards.get(1), departmentRejected,
+            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
     }
 
     private void getBoards_successWhenAdministratorAndSearchTerm() {
@@ -242,23 +238,49 @@ public class BoardServiceIT {
         assertThat(boards).hasSize(0);
     }
 
+    private void getBoards_successWhenAuthor() {
+        List<Board> boards = boardService.getBoards(author, new ResourceFilter());
+        assertThat(boards).hasSize(2);
+
+        verifyAuthorBoards(departmentAccepted,
+            boards.stream().filter(this.departmentAcceptedBoards::contains).collect(toList()),
+            new Action[]{VIEW, EXTEND}, ACCEPTED);
+
+        verifyUnprivilegedBoards(departmentRejected,
+            boards.stream().filter(this.departmentRejectedBoards::contains).collect(toList()),
+            new Action[]{VIEW});
+    }
+
     private void getBoards_successWhenOtherAdministrator() {
         List<Board> boards = boardService.getBoards(otherAdministrator, new ResourceFilter());
         assertThat(boards).hasSize(3);
 
-        verifyUnprivilegedUserBoards(departmentAccepted,
+        verifyAuthorBoards(departmentAccepted,
             boards.stream().filter(board -> board.getParent().equals(departmentAccepted)).collect(toList()),
-            new Action[]{VIEW, EXTEND});
+            new Action[]{VIEW, EXTEND}, DRAFT);
 
         verifyAdministratorBoards(departmentRejected,
             boards.stream().filter(board -> board.getParent().equals(departmentRejected)).collect(toList()),
             new Action[]{VIEW, EDIT, REJECT});
     }
 
+    private void getBoards_successWhenOtherAuthor() {
+        List<Board> boards = boardService.getBoards(otherAuthor, new ResourceFilter());
+        assertThat(boards).hasSize(2);
+
+        verifyAuthorBoards(departmentAccepted,
+            boards.stream().filter(board -> board.getParent().equals(departmentAccepted)).collect(toList()),
+            new Action[]{VIEW, EXTEND}, DRAFT);
+
+        verifyUnprivilegedBoards(departmentRejected,
+            boards.stream().filter(board -> board.getParent().equals(departmentRejected)).collect(toList()),
+            new Action[]{VIEW});
+    }
+
     private void getBoards_successWhenUnprivileged() {
         Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
             .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, MEMBER)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentRejected, MEMBER)));
+                .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentRejected, MEMBER)));
 
         scenarios.forEach(scenario -> {
             User user = scenario.user;
@@ -271,7 +293,7 @@ public class BoardServiceIT {
                     .collect(toList());
 
             assertThat(departmentBoards).hasSize(1);
-            verifyUnprivilegedUserBoards(departmentAccepted, departmentBoards, new Action[]{VIEW, EXTEND});
+            verifyAuthorBoards(departmentAccepted, departmentBoards, new Action[]{VIEW, EXTEND}, DRAFT);
 
             List<Board> department2Boards =
                 boardService.getBoards(user, new ResourceFilter())
@@ -280,71 +302,50 @@ public class BoardServiceIT {
                     .collect(toList());
 
             assertThat(department2Boards).hasSize(1);
-            verifyUnprivilegedUserBoards(departmentRejected, department2Boards, new Action[]{VIEW});
+            verifyUnprivilegedBoards(departmentRejected, department2Boards, new Action[]{VIEW});
         });
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void verifyBoard(Board board, Department expectedDepartment, String expectedName, State expectedState,
-                             State expectedPreviousState, Action[] expectedActions, LocalDateTime baseline) {
+    private void verifyBoard(Board board, Department expectedDepartment, String expectedName,
+                             Action[] expectedActions) {
         serviceHelper.verifyIdentity(board, expectedDepartment, expectedName);
-
-        assertEquals(expectedState, board.getState());
-        assertEquals(expectedPreviousState, board.getPreviousState());
-
         serviceHelper.verifyActions(board, expectedActions);
         serviceHelper.verifyTimestamps(board, baseline);
     }
 
     private void verifyAdministratorBoards(Department department, List<Board> boards, Action[] expectedActions) {
-        verifyBoard(
-            boards.get(0),
-            department,
-            "Career Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            expectedActions,
-            baseline);
-
-        verifyBoard(
-            boards.get(1),
-            department,
-            "Research Opportunities",
-            REJECTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, RESTORE},
-            baseline);
+        verifyBoard(boards.get(0), department, "Career Opportunities", expectedActions);
+        verifyBoard(boards.get(1), department,
+            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
     }
 
-    private void verifyUnprivilegedUserBoards(Department department, List<Board> boards, Action[] expectedActions) {
-        verifyBoard(
-            boards.get(0),
-            department,
-            "Career Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            expectedActions,
-            baseline);
+    private void verifyAuthorBoards(Department department, List<Board> boards, Action[] expectedActions,
+                                    State expectedExtendActionState) {
+        Board board = boards.get(0);
+        verifyBoard(board, department, "Career Opportunities", expectedActions);
+
+        board.getActions()
+            .stream()
+            .filter(action -> action.getAction() == EXTEND)
+            .findFirst()
+            .map(action -> {
+                assertEquals(expectedExtendActionState, action.getState());
+                return action;
+            })
+            .orElseThrow(() -> new Error("Extend action was not found"));
+    }
+
+    private void verifyUnprivilegedBoards(Department department, List<Board> boards, Action[] expectedActions) {
+        verifyBoard(boards.get(0), department, "Career Opportunities", expectedActions);
     }
 
     private void verifyCareerBoards(List<Board> boards) {
-        verifyBoard(
-            boards.get(0),
-            departmentAccepted,
-            "Career Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, EXTEND, REJECT},
-            baseline);
+        verifyBoard(boards.get(0), departmentAccepted,
+            "Career Opportunities", new Action[]{VIEW, EDIT, EXTEND, REJECT});
 
-        verifyBoard(
-            boards.get(1),
-            departmentRejected,
-            "Career Opportunities",
-            ACCEPTED,
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, REJECT},
-            baseline);
+        verifyBoard(boards.get(1), departmentRejected,
+            "Career Opportunities", new Action[]{VIEW, EDIT, REJECT});
     }
 
 }

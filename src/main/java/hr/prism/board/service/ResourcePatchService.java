@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE_HANDLE;
-
 public abstract class ResourcePatchService<T extends Resource> extends PatchService<T> {
 
     private final ResourceService resourceService;
@@ -26,9 +24,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
             if (newValueOptional.isPresent()) {
                 String newValue = newValueOptional.get();
                 if (!Objects.equals(oldValue, newValue)) {
-                    resourceService.checkUniqueName(
-                        resource.getScope(), resource.getId(), resource.getParent(), newValue);
-
+                    resourceService.checkUniqueName(resource, newValue);
                     patchProperty(resource, "name", resource::setName, oldValue, newValue);
                 }
             } else if (oldValue != null) {
@@ -48,8 +44,7 @@ public abstract class ResourcePatchService<T extends Resource> extends PatchServ
                     newValue = parent.getHandle() + "/" + newValue;
                 }
 
-                resourceService.checkUniqueHandle(resource, newValue, DUPLICATE_RESOURCE_HANDLE);
-
+                resourceService.checkUniqueHandle(resource, newValue);
                 if (!Objects.equals(oldValue, newValue)) {
                     patchHandle(resource, oldValue, newValue);
                 }

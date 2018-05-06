@@ -2,6 +2,7 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
+import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Document;
 import hr.prism.board.domain.University;
@@ -12,7 +13,6 @@ import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
-import hr.prism.board.enums.State;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
 import org.junit.After;
@@ -35,6 +35,7 @@ import static hr.prism.board.enums.MemberCategory.*;
 import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.AUTHOR;
+import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -57,6 +58,9 @@ public class DepartmentServiceIT {
 
     @Inject
     private ServiceHelper serviceHelper;
+
+    @SpyBean
+    private ResourceDAO resourceDAO;
 
     @SpyBean
     private UniversityService universityService;
@@ -102,23 +106,17 @@ public class DepartmentServiceIT {
     @Test
     public void createDepartment_successWhenDefaultData() {
         Department createdDepartment =
-            serviceHelper.setUpDepartment(administrator, university, "department");
+            departmentService.createDepartment(administrator, university.getId(),
+                new DepartmentDTO()
+                    .setName("department")
+                    .setSummary("department summary"));
+
         Department selectedDepartment = departmentService.getById(administrator, createdDepartment.getId());
-
-        MemberCategory[] memberCategories = MemberCategory.values();
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-            verifyDepartment(
-                department,
-                university,
-                "department",
-                "department summary",
-                DRAFT,
-                DRAFT,
-                university.getDocumentLogo(),
-                new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-                baseline));
+            verifyDepartment(department, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+                university.getDocumentLogo(), Stream.of(MemberCategory.values()).collect(toList())));
 
-        verifyCreateDepartmentInvocations(createdDepartment, memberCategories);
+        verifyInvocations(createdDepartment, MemberCategory.values());
     }
 
     @Test
@@ -141,20 +139,12 @@ public class DepartmentServiceIT {
         Document expectedDocumentLogo = new Document();
         expectedDocumentLogo.setCloudinaryId("new cloudinary id");
 
-        MemberCategory[] memberCategories = new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT};
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-            verifyDepartment(
-                createdDepartment,
-                university,
-                "department",
-                "department summary",
-                DRAFT,
-                DRAFT,
-                expectedDocumentLogo,
-                new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-                baseline));
+            verifyDepartment(department, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+                expectedDocumentLogo, ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
 
-        verifyCreateDepartmentInvocations(createdDepartment, memberCategories);
+        verifyInvocations(createdDepartment,
+            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT});
         verify(documentService, times(1)).getOrCreateDocument(documentLogoDTO);
     }
 
@@ -197,25 +187,16 @@ public class DepartmentServiceIT {
             departmentService.getDepartments(administrator, new ResourceFilter());
 
         assertThat(departments).hasSize(4);
-        verifyDepartment(
-            departments.get(0),
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+        verifyDepartment(departments.get(0),
+            "department ACCEPTED", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
 
-        verifyDepartment(
-            departments.get(1),
-            DRAFT,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+        verifyDepartment(departments.get(1),
+            "department DRAFT", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
 
-        verifyDepartment(
-            departments.get(2),
-            PENDING,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+        verifyDepartment(departments.get(2),
+            "department PENDING", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
 
-        verifyDepartment(
-            departments.get(3),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE});
+        verifyDepartment(departments.get(3), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
     private void getDepartments_successWhenAdministratorAndState() {
@@ -223,10 +204,8 @@ public class DepartmentServiceIT {
             departmentService.getDepartments(administrator, new ResourceFilter().setState(ACCEPTED));
 
         assertThat(departments).hasSize(1);
-        verifyDepartment(
-            departments.get(0),
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+        verifyDepartment(departments.get(0),
+            "department ACCEPTED", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
     }
 
     private void getDepartments_successWhenAdministratorAndAction() {
@@ -234,20 +213,14 @@ public class DepartmentServiceIT {
             departmentService.getDepartments(administrator, new ResourceFilter().setAction(EXTEND));
 
         assertThat(departments).hasSize(3);
-        verifyDepartment(
-            departments.get(0),
-            ACCEPTED,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+        verifyDepartment(departments.get(0),
+            "department ACCEPTED", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
 
-        verifyDepartment(
-            departments.get(1),
-            DRAFT,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+        verifyDepartment(departments.get(1),
+            "department DRAFT", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
 
-        verifyDepartment(
-            departments.get(2),
-            PENDING,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+        verifyDepartment(departments.get(2),
+            "department PENDING", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
     }
 
     private void getDepartments_successWhenAdministratorAndSearchTerm() {
@@ -255,10 +228,7 @@ public class DepartmentServiceIT {
             departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("REJECTED"));
 
         assertThat(departments).hasSize(1);
-        verifyDepartment(
-            departments.get(0),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE});
+        verifyDepartment(departments.get(0), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
     private void getDepartments_successWhenAdministratorAndSearchTermTypo() {
@@ -266,10 +236,7 @@ public class DepartmentServiceIT {
             departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("rIJECT"));
 
         assertThat(departments).hasSize(1);
-        verifyDepartment(
-            departments.get(0),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE});
+        verifyDepartment(departments.get(0), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
     private void getDepartments_successWhenAdministratorAndSearchTermWithoutResults() {
@@ -284,25 +251,12 @@ public class DepartmentServiceIT {
             departmentService.getDepartments(otherAdministrator, new ResourceFilter());
 
         assertThat(departments).hasSize(4);
-        verifyDepartment(
-            departments.get(0),
-            ACCEPTED,
-            new Action[]{VIEW});
+        verifyDepartment(departments.get(0), "department ACCEPTED", new Action[]{VIEW});
+        verifyDepartment(departments.get(1), "department DRAFT", new Action[]{VIEW});
+        verifyDepartment(departments.get(2),
+            "department PENDING", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
 
-        verifyDepartment(
-            departments.get(1),
-            DRAFT,
-            new Action[]{VIEW});
-
-        verifyDepartment(
-            departments.get(2),
-            PENDING,
-            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-
-        verifyDepartment(
-            departments.get(3),
-            REJECTED,
-            new Action[]{VIEW, EDIT, SUBSCRIBE});
+        verifyDepartment(departments.get(3), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
     private void getDepartments_successWhenUnprivileged() {
@@ -323,56 +277,36 @@ public class DepartmentServiceIT {
                     .collect(toList());
 
             assertThat(departments).hasSize(3);
-            verifyDepartment(
-                departments.get(0),
-                ACCEPTED,
-                new Action[]{VIEW});
-
-            verifyDepartment(
-                departments.get(1),
-                DRAFT,
-                new Action[]{VIEW});
-
-            verifyDepartment(
-                departments.get(2),
-                PENDING,
-                new Action[]{VIEW});
+            verifyDepartment(departments.get(0), "department ACCEPTED", new Action[]{VIEW});
+            verifyDepartment(departments.get(1), "department DRAFT", new Action[]{VIEW});
+            verifyDepartment(departments.get(2), "department PENDING", new Action[]{VIEW});
         });
     }
 
-    private void verifyDepartment(Department department, State expectedState, Action[] expectedActions) {
-        verifyDepartment(
-            department,
-            university,
-            "department " + expectedState,
-            "department " + expectedState + " summary",
-            expectedState,
-            DRAFT,
-            university.getDocumentLogo(),
-            expectedActions,
-            baseline);
-    }
-
     @SuppressWarnings("SameParameterValue")
-    private void verifyDepartment(Department department, University expectedUniversity, String expectedName,
-                                  String expectedSummary, State expectedState, State expectedPreviousState,
-                                  Document expectedDocumentLogo, Action[] expectedActions, LocalDateTime baseline) {
-        serviceHelper.verifyIdentity(department, expectedUniversity, expectedName);
-        assertEquals(expectedSummary, department.getSummary());
-        assertEquals(expectedDocumentLogo, department.getDocumentLogo());
-
-        assertEquals(expectedState, department.getState());
-        assertEquals(expectedPreviousState, department.getPreviousState());
+    private void verifyDepartment(Department department, String expectedName, Action[] expectedActions) {
+        serviceHelper.verifyIdentity(department, university, expectedName);
         serviceHelper.verifyActions(department, expectedActions);
 
         assertThat(department.getLastTaskCreationTimestamp()).isGreaterThanOrEqualTo(baseline);
         serviceHelper.verifyTimestamps(department, baseline);
     }
 
-    private void verifyCreateDepartmentInvocations(Department department, MemberCategory[] memberCategories) {
+    private void verifyDepartment(Department department, Action[] expectedActions, Document expectedDocumentLogo,
+                                  List<MemberCategory> expectedMemberCategories) {
+        verifyDepartment(department, "department", expectedActions);
+        assertEquals("department summary", department.getSummary());
+        assertEquals(expectedDocumentLogo, department.getDocumentLogo());
+        assertEquals("university/department", department.getHandle());
+        assertEquals(DRAFT, department.getState());
+        assertEquals(DRAFT, department.getPreviousState());
+        assertEquals(toStrings(expectedMemberCategories), department.getMemberCategoryStrings());
+    }
+
+    private void verifyInvocations(Department department, MemberCategory[] memberCategories) {
         verify(universityService, times(1)).getById(university.getId());
-        verify(resourceService, times(1)).setName(department, "department");
-        verify(resourceService, times(1)).setHandle(department);
+        verify(resourceDAO).checkUniqueName(DEPARTMENT, null, university, "department");
+        verify(resourceService, times(1)).createHandle(department);
 
         verify(resourceService, times(1))
             .updateCategories(department, MEMBER, toStrings(asList(memberCategories)));

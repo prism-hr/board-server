@@ -60,7 +60,7 @@ public class ResourceFilter {
         return scope;
     }
 
-    public hr.prism.board.value.ResourceFilter setScope(Scope scope) {
+    public ResourceFilter setScope(Scope scope) {
         this.scope = scope;
         return this;
     }
@@ -69,7 +69,7 @@ public class ResourceFilter {
         return id;
     }
 
-    public hr.prism.board.value.ResourceFilter setId(Long id) {
+    public ResourceFilter setId(Long id) {
         this.id = id;
         return this;
     }
@@ -78,7 +78,7 @@ public class ResourceFilter {
         return handle;
     }
 
-    public hr.prism.board.value.ResourceFilter setHandle(String handle) {
+    public ResourceFilter setHandle(String handle) {
         this.handle = handle;
         return this;
     }
@@ -88,7 +88,7 @@ public class ResourceFilter {
         return parentId;
     }
 
-    public hr.prism.board.value.ResourceFilter setParentId(Long parentId) {
+    public ResourceFilter setParentId(Long parentId) {
         this.parentId = parentId;
         return this;
     }
@@ -107,6 +107,7 @@ public class ResourceFilter {
         return negatedState;
     }
 
+    @SuppressWarnings("unused")
     public ResourceFilter setNegatedState(String negatedState) {
         this.negatedState = negatedState;
         return this;
@@ -116,7 +117,8 @@ public class ResourceFilter {
         return quarter;
     }
 
-    public hr.prism.board.value.ResourceFilter setQuarter(String quarter) {
+    @SuppressWarnings("unused")
+    public ResourceFilter setQuarter(String quarter) {
         this.quarter = quarter;
         return this;
     }
@@ -125,7 +127,7 @@ public class ResourceFilter {
         return searchTerm;
     }
 
-    public hr.prism.board.value.ResourceFilter setSearchTerm(String searchTerm) {
+    public ResourceFilter setSearchTerm(String searchTerm) {
         this.searchTerm = searchTerm;
         return this;
     }
@@ -143,7 +145,8 @@ public class ResourceFilter {
         return orderStatement;
     }
 
-    public hr.prism.board.value.ResourceFilter setOrderStatement(String orderStatement) {
+    @SuppressWarnings("UnusedReturnValue")
+    public ResourceFilter setOrderStatement(String orderStatement) {
         this.orderStatement = orderStatement;
         return this;
     }

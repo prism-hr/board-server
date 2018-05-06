@@ -1,6 +1,8 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.value.OrganizationSearch;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -64,6 +66,24 @@ public class Organization extends BoardEntity {
     public Organization setPosts(Set<Post> posts) {
         this.posts = posts;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(name)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        Organization that = (Organization) other;
+        return new EqualsBuilder()
+            .append(name, that.name)
+            .isEquals();
     }
 
 }

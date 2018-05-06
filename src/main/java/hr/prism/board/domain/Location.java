@@ -1,6 +1,8 @@
 package hr.prism.board.domain;
 
 import hr.prism.board.definition.LocationDefinition;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -64,6 +66,24 @@ public class Location extends BoardEntity implements LocationDefinition {
 
     public void setLongitude(BigDecimal longitude) {
         this.longitude = longitude;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(googleId)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        Location location = (Location) other;
+        return new EqualsBuilder()
+            .append(googleId, location.googleId)
+            .isEquals();
     }
 
 }

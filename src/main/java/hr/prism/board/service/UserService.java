@@ -2,10 +2,7 @@ package hr.prism.board.service;
 
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.dao.UserDAO;
-import hr.prism.board.domain.Document;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.*;
 import hr.prism.board.enums.*;
 import hr.prism.board.exception.BoardException;
@@ -255,6 +252,12 @@ public class UserService {
     public void updateUserResume(User user, Document documentResume, String websiteResume) {
         user.setDocumentResume(documentResume);
         user.setWebsiteResume(websiteResume);
+        userRepository.save(user);
+    }
+
+    public void updateUserOrganizationAndLocation(User user, Organization organization, Location location) {
+        user.setDefaultOrganization(organization);
+        user.setDefaultLocation(location);
         userRepository.save(user);
     }
 
