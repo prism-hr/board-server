@@ -33,4 +33,9 @@ public class ResourceTaskServiceIT {
             .containsExactly(CREATE_MEMBER, CREATE_POST, DEPLOY_BADGE);
     }
 
+    @Test
+    public void completeTasks_success() {
+        
+    }
+
 }
