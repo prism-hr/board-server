@@ -235,7 +235,26 @@ public class PostServiceIT {
     }
 
     private void getPosts_successWhenOtherAdministrator() {
+        List<Post> posts = postService.getPosts(otherAdministrator, new ResourceFilter());
+        assertThat(posts).hasSize(36);
 
+        verifyOtherAdministratorPosts(
+            posts.subList(0, 16),
+            departmentRejectedBoards.get(1));
+
+        verifyOtherAdministratorPosts(
+            posts.subList(16, 32),
+            departmentRejectedBoards.get(0));
+
+        verifyUnprivilegedPosts(
+            posts.subList(32, 34),
+            departmentAcceptedBoards.get(1),
+            new Action[]{VIEW});
+
+        verifyUnprivilegedPosts(
+            posts.subList(34, 36),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW});
     }
 
     private void getPosts_successWhenPostAdministrator() {
@@ -374,75 +393,158 @@ public class PostServiceIT {
         departmentRejectedPosts = postService.getPosts(administrator, departmentRejected.getId());
     }
 
-    private void verifyAdministratorPosts(List<Post> posts, Board board,
+    private void verifyAdministratorPosts(List<Post> posts, Board expectedBoard,
                                           Action[] expectedAdministratorAcceptedActions,
                                           Action[] expectedPostAdministratorAcceptedActions) {
         Long administratorId = administrator.getId();
         Long postAdministratorId = postAdministrator.getId();
 
-        verifyPost(posts.get(0), board,
+        verifyPost(posts.get(0), expectedBoard,
             "post ARCHIVED" + postAdministratorId,
             new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyPost(posts.get(1), board,
+        verifyPost(posts.get(1), expectedBoard,
             "post ARCHIVED" + administratorId,
             new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyPost(posts.get(2), board,
+        verifyPost(posts.get(2), expectedBoard,
             "post WITHDRAWN" + postAdministratorId,
             new Action[]{VIEW, EDIT});
 
-        verifyPost(posts.get(3), board,
+        verifyPost(posts.get(3), expectedBoard,
             "post WITHDRAWN" + administratorId,
             new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyPost(posts.get(4), board,
+        verifyPost(posts.get(4), expectedBoard,
             "post REJECTED" + postAdministratorId,
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE});
 
-        verifyPost(posts.get(5), board,
+        verifyPost(posts.get(5), expectedBoard,
             "post REJECTED" + administratorId,
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE, WITHDRAW});
 
-        verifyPost(posts.get(6), board,
+        verifyPost(posts.get(6), expectedBoard,
             "post SUSPENDED" + postAdministratorId,
             new Action[]{VIEW, EDIT, ACCEPT, REJECT});
 
-        verifyPost(posts.get(7), board,
+        verifyPost(posts.get(7), expectedBoard,
             "post SUSPENDED" + administratorId,
             new Action[]{VIEW, EDIT, CORRECT, ACCEPT, REJECT, WITHDRAW});
 
-        verifyPost(posts.get(8), board,
+        verifyPost(posts.get(8), expectedBoard,
             "post EXPIRED" + postAdministratorId,
             new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
-        verifyPost(posts.get(9), board,
+        verifyPost(posts.get(9), expectedBoard,
             "post EXPIRED" + administratorId,
             new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
 
-        verifyPost(posts.get(10), board,
+        verifyPost(posts.get(10), expectedBoard,
             "post ACCEPTED" + postAdministratorId,
             expectedAdministratorAcceptedActions);
 
-        verifyPost(posts.get(11), board,
+        verifyPost(posts.get(11), expectedBoard,
             "post ACCEPTED" + administratorId,
             expectedPostAdministratorAcceptedActions);
 
-        verifyPost(posts.get(12), board,
+        verifyPost(posts.get(12), expectedBoard,
             "post PENDING" + postAdministratorId,
             new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
-        verifyPost(posts.get(13), board,
+        verifyPost(posts.get(13), expectedBoard,
             "post PENDING" + administratorId,
             new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
 
-        verifyPost(posts.get(14), board,
+        verifyPost(posts.get(14), expectedBoard,
             "post DRAFT" + postAdministratorId,
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT});
 
-        verifyPost(posts.get(15), board,
+        verifyPost(posts.get(15), expectedBoard,
             "post DRAFT" + administratorId,
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT, WITHDRAW});
+    }
+
+    private void verifyOtherAdministratorPosts(List<Post> posts, Board expectedBoard) {
+        Long administratorId = administrator.getId();
+        Long postAdministratorId = postAdministrator.getId();
+
+        verifyPost(posts.get(0), expectedBoard,
+            "post ARCHIVED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, RESTORE});
+
+        verifyPost(posts.get(1), expectedBoard,
+            "post ARCHIVED" + administratorId,
+            new Action[]{VIEW, EDIT, RESTORE});
+
+        verifyPost(posts.get(2), expectedBoard,
+            "post WITHDRAWN" + postAdministratorId,
+            new Action[]{VIEW, EDIT});
+
+        verifyPost(posts.get(3), expectedBoard,
+            "post WITHDRAWN" + administratorId,
+            new Action[]{VIEW, EDIT});
+
+        verifyPost(posts.get(4), expectedBoard,
+            "post REJECTED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE});
+
+        verifyPost(posts.get(5), expectedBoard,
+            "post REJECTED" + administratorId,
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE});
+
+        verifyPost(posts.get(6), expectedBoard,
+            "post SUSPENDED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, ACCEPT, REJECT});
+
+        verifyPost(posts.get(7), expectedBoard,
+            "post SUSPENDED" + administratorId,
+            new Action[]{VIEW, EDIT, ACCEPT, REJECT});
+
+        verifyPost(posts.get(8), expectedBoard,
+            "post EXPIRED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(9), expectedBoard,
+            "post EXPIRED" + administratorId,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(10), expectedBoard,
+            "post ACCEPTED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(11), expectedBoard,
+            "post ACCEPTED" + administratorId,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(12), expectedBoard,
+            "post PENDING" + postAdministratorId,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(13), expectedBoard,
+            "post PENDING" + administratorId,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(14), expectedBoard,
+            "post DRAFT" + postAdministratorId,
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT});
+
+        verifyPost(posts.get(15), expectedBoard,
+            "post DRAFT" + administratorId,
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT});
+    }
+
+
+    private void verifyUnprivilegedPosts(List<Post> posts, Board expectedBoard, Action[] expectedActions) {
+        Long administratorId = administrator.getId();
+        Long postAdministratorId = postAdministrator.getId();
+
+        verifyPost(posts.get(0), expectedBoard,
+            "post ACCEPTED" + postAdministratorId,
+            expectedActions);
+
+        verifyPost(posts.get(1), expectedBoard,
+            "post ACCEPTED" + administratorId,
+            expectedActions);
     }
 
 }
