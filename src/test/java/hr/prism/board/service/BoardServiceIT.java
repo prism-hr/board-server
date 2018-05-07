@@ -286,23 +286,23 @@ public class BoardServiceIT {
             User user = scenario.user;
             LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
 
-            List<Board> departmentBoards =
+            List<Board> departmentAccepted =
                 boardService.getBoards(user, new ResourceFilter())
                     .stream()
                     .filter(this.departmentAcceptedBoards::contains)
                     .collect(toList());
 
-            assertThat(departmentBoards).hasSize(1);
-            verifyAuthorBoards(departmentAccepted, departmentBoards, new Action[]{VIEW, EXTEND}, DRAFT);
+            assertThat(departmentAccepted).hasSize(1);
+            verifyAuthorBoards(this.departmentAccepted, departmentAccepted, new Action[]{VIEW, EXTEND}, DRAFT);
 
-            List<Board> department2Boards =
+            List<Board> departmentRejected =
                 boardService.getBoards(user, new ResourceFilter())
                     .stream()
                     .filter(this.departmentRejectedBoards::contains)
                     .collect(toList());
 
-            assertThat(department2Boards).hasSize(1);
-            verifyUnprivilegedBoards(departmentRejected, department2Boards, new Action[]{VIEW});
+            assertThat(departmentRejected).hasSize(1);
+            verifyUnprivilegedBoards(this.departmentRejected, departmentRejected, new Action[]{VIEW});
         });
     }
 

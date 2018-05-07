@@ -9,6 +9,7 @@ import hr.prism.board.dto.LocationDTO;
 import hr.prism.board.dto.OrganizationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.validation.PostValidator;
@@ -18,6 +19,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -38,6 +41,7 @@ import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.math.BigDecimal.ONE;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -49,6 +53,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 @Sql(scripts = "classpath:data/boardService_setUp.sql")
 @Sql(scripts = "classpath:data/boardService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class PostServiceIT {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PostServiceIT.class);
 
     private static List<State> POST_STATES = ImmutableList.of(
         DRAFT, PENDING, ACCEPTED, EXPIRED, SUSPENDED, REJECTED, WITHDRAWN, ARCHIVED);
@@ -95,6 +101,10 @@ public class PostServiceIT {
 
     private User otherAdministrator;
 
+    private User member;
+
+    private User otherMember;
+
     private User postAdministrator;
 
     private University university;
@@ -114,27 +124,15 @@ public class PostServiceIT {
     @Before
     public void setUp() {
         baseline = LocalDateTime.now();
-
         administrator = serviceHelper.setUpUser();
-        otherAdministrator = serviceHelper.setUpUser();
-        postAdministrator = serviceHelper.setUpUser();
-
         university = serviceHelper.setUpUniversity("university");
 
         departmentAccepted =
             serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
 
-        departmentRejected =
-            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
-        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
-
         departmentAcceptedBoards =
             boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentAccepted.getId()));
         resourceService.updateState(departmentAcceptedBoards.get(1), REJECTED);
-
-        departmentRejectedBoards =
-            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
-        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
 
         reset(postValidator, actionService, resourceService);
     }
@@ -246,33 +244,97 @@ public class PostServiceIT {
             posts.subList(16, 32),
             departmentRejectedBoards.get(0));
 
-        verifyUnprivilegedPosts(
+        verifyPosts(
             posts.subList(32, 34),
             departmentAcceptedBoards.get(1),
             new Action[]{VIEW});
 
-        verifyUnprivilegedPosts(
+        verifyPosts(
             posts.subList(34, 36),
             departmentAcceptedBoards.get(0),
             new Action[]{VIEW});
     }
 
     private void getPosts_successWhenPostAdministrator() {
+        List<Post> posts = postService.getPosts(postAdministrator, new ResourceFilter());
+        assertThat(posts).hasSize(36);
 
+        verifyPostAdministratorPosts(
+            posts.subList(0, 9),
+            departmentRejectedBoards.get(1),
+            new Action[]{VIEW, EDIT, WITHDRAW},
+            new Action[]{VIEW});
+
+        verifyPostAdministratorPosts(
+            posts.subList(9, 18),
+            departmentRejectedBoards.get(0),
+            new Action[]{VIEW, EDIT, WITHDRAW},
+            new Action[]{VIEW});
+
+        verifyPostAdministratorPosts(
+            posts.subList(18, 27),
+            departmentAcceptedBoards.get(1),
+            new Action[]{VIEW, EDIT, WITHDRAW},
+            new Action[]{VIEW});
+
+        verifyPostAdministratorPosts(
+            posts.subList(27, 36),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW, EDIT, PURSUE, WITHDRAW},
+            new Action[]{VIEW});
     }
 
+    @SuppressWarnings("Duplicates")
     private void getPosts_successWhenMember() {
+        List<Post> posts = postService.getPosts(member, new ResourceFilter());
+        assertThat(posts).hasSize(8);
 
+        verifyPosts(
+            posts.subList(0, 2),
+            departmentRejectedBoards.get(1),
+            new Action[]{VIEW});
+
+        verifyPosts(
+            posts.subList(2, 4),
+            departmentRejectedBoards.get(0),
+            new Action[]{VIEW});
+
+        verifyPosts(
+            posts.subList(4, 6),
+            departmentAcceptedBoards.get(1),
+            new Action[]{VIEW});
+
+        verifyPosts(
+            posts.subList(6, 8),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW, PURSUE});
     }
 
+    @SuppressWarnings("Duplicates")
     private void getPosts_successWhenOtherMember() {
-
+        List<Post> posts = postService.getPosts(otherMember, new ResourceFilter());
+        assertThat(posts).hasSize(8);
+        verifyPosts(posts);
     }
 
     private void getPosts_successWhenUnprivileged() {
         Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
             .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR))
             .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentRejected, AUTHOR));
+
+        scenarios.forEach(scenario -> {
+            User user = scenario.user;
+            LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
+
+            List<Post> posts =
+                postService.getPosts(otherMember, new ResourceFilter())
+                    .stream()
+                    .filter(post -> departmentAcceptedPosts.contains(post) || departmentRejectedPosts.contains(post))
+                    .collect(toList());
+
+            assertThat(posts).hasSize(8);
+            verifyPosts(posts);
+        });
     }
 
     private Post setUpPost(Board board, String applyWebsite, DocumentDTO applyDocument, String applyEmail) {
@@ -380,6 +442,22 @@ public class PostServiceIT {
 
 
     private void setUpPosts() {
+        otherAdministrator = serviceHelper.setUpUser();
+        member = serviceHelper.setUpUser();
+        otherMember = serviceHelper.setUpUser();
+        postAdministrator = serviceHelper.setUpUser();
+
+        userRoleService.createUserRole(departmentAccepted, member, Role.MEMBER);
+
+        departmentRejected =
+            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
+        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
+        userRoleService.createUserRole(departmentRejected, otherMember, Role.MEMBER);
+
+        departmentRejectedBoards =
+            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
+        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
+
         Stream.of(departmentAcceptedBoards, departmentRejectedBoards).forEach(boards ->
             boards.forEach(board -> {
                 POST_STATES.forEach(state -> {
@@ -394,8 +472,8 @@ public class PostServiceIT {
     }
 
     private void verifyAdministratorPosts(List<Post> posts, Board expectedBoard,
-                                          Action[] expectedAdministratorAcceptedActions,
-                                          Action[] expectedPostAdministratorAcceptedActions) {
+                                          Action[] expectedPostAdministratorAcceptedActions,
+                                          Action[] expectedAdministratorAcceptedActions) {
         Long administratorId = administrator.getId();
         Long postAdministratorId = postAdministrator.getId();
 
@@ -441,11 +519,11 @@ public class PostServiceIT {
 
         verifyPost(posts.get(10), expectedBoard,
             "post ACCEPTED" + postAdministratorId,
-            expectedAdministratorAcceptedActions);
+            expectedPostAdministratorAcceptedActions);
 
         verifyPost(posts.get(11), expectedBoard,
             "post ACCEPTED" + administratorId,
-            expectedPostAdministratorAcceptedActions);
+            expectedAdministratorAcceptedActions);
 
         verifyPost(posts.get(12), expectedBoard,
             "post PENDING" + postAdministratorId,
@@ -533,8 +611,71 @@ public class PostServiceIT {
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT});
     }
 
+    private void verifyPostAdministratorPosts(List<Post> posts, Board expectedBoard,
+                                              Action[] expectedPostAdministratorAcceptedActions,
+                                              Action[] expectedAdministratorAcceptedActions) {
+        Long postAdministratorId = postAdministrator.getId();
 
-    private void verifyUnprivilegedPosts(List<Post> posts, Board expectedBoard, Action[] expectedActions) {
+        verifyPost(posts.get(0), expectedBoard,
+            "post ARCHIVED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, RESTORE});
+
+        verifyPost(posts.get(1), expectedBoard,
+            "post WITHDRAWN" + postAdministratorId,
+            new Action[]{VIEW, EDIT, RESTORE});
+
+        verifyPost(posts.get(2), expectedBoard,
+            "post REJECTED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, WITHDRAW});
+
+        verifyPost(posts.get(3), expectedBoard,
+            "post SUSPENDED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, CORRECT, WITHDRAW});
+
+        verifyPost(posts.get(4), expectedBoard,
+            "post EXPIRED" + postAdministratorId,
+            new Action[]{VIEW, EDIT, WITHDRAW});
+
+        verifyPost(posts.get(5), expectedBoard,
+            "post ACCEPTED" + postAdministratorId,
+            expectedPostAdministratorAcceptedActions);
+
+        verifyPost(posts.get(6), expectedBoard,
+            "post ACCEPTED" + administrator.getId(),
+            expectedAdministratorAcceptedActions);
+
+        verifyPost(posts.get(7), expectedBoard,
+            "post PENDING" + postAdministratorId,
+            new Action[]{VIEW, EDIT, WITHDRAW});
+
+        verifyPost(posts.get(8), expectedBoard,
+            "post DRAFT" + postAdministratorId,
+            new Action[]{VIEW, EDIT, WITHDRAW});
+    }
+
+    private void verifyPosts(List<Post> posts) {
+        verifyPosts(
+            posts.subList(0, 2),
+            departmentRejectedBoards.get(1),
+            new Action[]{VIEW});
+
+        verifyPosts(
+            posts.subList(2, 4),
+            departmentRejectedBoards.get(0),
+            new Action[]{VIEW});
+
+        verifyPosts(
+            posts.subList(4, 6),
+            departmentAcceptedBoards.get(1),
+            new Action[]{VIEW});
+
+        verifyPosts(
+            posts.subList(6, 8),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW});
+    }
+
+    private void verifyPosts(List<Post> posts, Board expectedBoard, Action[] expectedActions) {
         Long administratorId = administrator.getId();
         Long postAdministratorId = postAdministrator.getId();
 
