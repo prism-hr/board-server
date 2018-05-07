@@ -32,6 +32,7 @@ import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.*;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -180,11 +181,11 @@ public class BoardServiceIT {
 
         assertThat(boards).hasSize(4);
         verifyAdministratorBoards(departmentAccepted,
-            boards.stream().filter(board -> board.getParent().equals(departmentAccepted)).collect(toList()),
+            ImmutableList.of(boards.get(0), boards.get(2)),
             new Action[]{VIEW, EDIT, EXTEND, REJECT});
 
         verifyAdministratorBoards(departmentRejected,
-            boards.stream().filter(board -> board.getParent().equals(departmentRejected)).collect(toList()),
+            ImmutableList.of(boards.get(1), boards.get(3)),
             new Action[]{VIEW, EDIT, REJECT});
     }
 
@@ -209,8 +210,8 @@ public class BoardServiceIT {
     private void getBoards_successWhenAdministratorAndAction() {
         List<Board> boards =
             boardService.getBoards(administrator, new ResourceFilter().setAction(RESTORE));
-
         assertThat(boards).hasSize(2);
+
         verifyBoard(boards.get(0), departmentAccepted,
             "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
 
@@ -243,11 +244,11 @@ public class BoardServiceIT {
         assertThat(boards).hasSize(2);
 
         verifyAuthorBoards(departmentAccepted,
-            boards.stream().filter(this.departmentAcceptedBoards::contains).collect(toList()),
+            singletonList(boards.get(0)),
             new Action[]{VIEW, EXTEND}, ACCEPTED);
 
         verifyUnprivilegedBoards(departmentRejected,
-            boards.stream().filter(this.departmentRejectedBoards::contains).collect(toList()),
+            singletonList(boards.get(1)),
             new Action[]{VIEW});
     }
 
@@ -256,11 +257,11 @@ public class BoardServiceIT {
         assertThat(boards).hasSize(3);
 
         verifyAuthorBoards(departmentAccepted,
-            boards.stream().filter(board -> board.getParent().equals(departmentAccepted)).collect(toList()),
+            singletonList(boards.get(0)),
             new Action[]{VIEW, EXTEND}, DRAFT);
 
         verifyAdministratorBoards(departmentRejected,
-            boards.stream().filter(board -> board.getParent().equals(departmentRejected)).collect(toList()),
+            ImmutableList.of(boards.get(1), boards.get(2)),
             new Action[]{VIEW, EDIT, REJECT});
     }
 
@@ -269,11 +270,11 @@ public class BoardServiceIT {
         assertThat(boards).hasSize(2);
 
         verifyAuthorBoards(departmentAccepted,
-            boards.stream().filter(board -> board.getParent().equals(departmentAccepted)).collect(toList()),
+            singletonList(boards.get(0)),
             new Action[]{VIEW, EXTEND}, DRAFT);
 
         verifyUnprivilegedBoards(departmentRejected,
-            boards.stream().filter(board -> board.getParent().equals(departmentRejected)).collect(toList()),
+            singletonList(boards.get(1)),
             new Action[]{VIEW});
     }
 
@@ -286,23 +287,22 @@ public class BoardServiceIT {
             User user = scenario.user;
             LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
 
-            List<Board> departmentAccepted =
+            List<Board> boards =
                 boardService.getBoards(user, new ResourceFilter())
-                    .stream()
-                    .filter(this.departmentAcceptedBoards::contains)
-                    .collect(toList());
+                .stream()
+                .filter(board -> departmentAcceptedBoards.contains(board) || departmentRejectedBoards.contains(board))
+                .collect(toList());
+            assertThat(boards).hasSize(2);
 
-            assertThat(departmentAccepted).hasSize(1);
-            verifyAuthorBoards(this.departmentAccepted, departmentAccepted, new Action[]{VIEW, EXTEND}, DRAFT);
+            verifyAuthorBoards(
+                departmentAccepted,
+                singletonList(boards.get(0)),
+                new Action[]{VIEW, EXTEND}, DRAFT);
 
-            List<Board> departmentRejected =
-                boardService.getBoards(user, new ResourceFilter())
-                    .stream()
-                    .filter(this.departmentRejectedBoards::contains)
-                    .collect(toList());
-
-            assertThat(departmentRejected).hasSize(1);
-            verifyUnprivilegedBoards(this.departmentRejected, departmentRejected, new Action[]{VIEW});
+            verifyUnprivilegedBoards(
+                departmentRejected,
+                singletonList(boards.get(1)),
+                new Action[]{VIEW});
         });
     }
 
