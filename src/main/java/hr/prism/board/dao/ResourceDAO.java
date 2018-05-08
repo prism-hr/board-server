@@ -417,26 +417,26 @@ public class ResourceDAO {
 
     private void mergeResourcesWithActions(ResourceFilter filter, List<Resource> resources,
                                            LinkedHashMultimap<Long, ActionRepresentation> resourceActionIndex) {
-        Action action = filter.getAction();
+        Action filterAction = filter.getAction();
         Iterator<Resource> iterator = resources.iterator();
         while (iterator.hasNext()) {
             Resource resource = iterator.next();
             Set<ActionRepresentation> actions = resourceActionIndex.get(resource.getId());
 
-            // Apply action resource filter
-            if (action != null && !actions.contains(new ActionRepresentation().setAction(action))) {
-                iterator.remove();
-            }
-
             // Apply parent state action filter
             List<State> parentStates = resource.getParentStates();
-            Iterator<ActionRepresentation> actionRepresentationIterator = actions.iterator();
-            while (actionRepresentationIterator.hasNext()) {
-                ActionRepresentation actionRepresentation = actionRepresentationIterator.next();
-                State suppressedInOwnerState = actionRepresentation.getSuppressedInOwnerState();
+            Iterator<ActionRepresentation> actionsIterator = actions.iterator();
+            while (actionsIterator.hasNext()) {
+                ActionRepresentation action = actionsIterator.next();
+                State suppressedInOwnerState = action.getSuppressedInOwnerState();
                 if (parentStates.contains(suppressedInOwnerState)) {
-                    actionRepresentationIterator.remove();
+                    actionsIterator.remove();
                 }
+            }
+
+            // Apply action resource filter
+            if (filterAction != null && !actions.contains(new ActionRepresentation().setAction(filterAction))) {
+                iterator.remove();
             }
 
             resource.setActions(

@@ -196,6 +196,13 @@ public class PostServiceIT {
     public void getPosts_success() {
         setUpPosts();
         getPosts_successWhenAdministrator();
+        getPosts_successWhenAdministratorAndState();
+        getPosts_successWhenAdministratorAndDepartment();
+        getPosts_successWhenAdministratorAndBoard();
+        getPosts_successWhenAction();
+        getPosts_successWhenDepartmentAndSearchTerm();
+        getPosts_successWhenDepartmentAndSearchTermTypo();
+        getPosts_successWhenSearchTermWithoutResults();
         getPosts_successWhenOtherAdministrator();
         getPosts_successWhenPostAdministrator();
         getPosts_successWhenMember();
@@ -232,6 +239,95 @@ public class PostServiceIT {
             new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT, WITHDRAW});
     }
 
+    private void getPosts_successWhenAdministratorAndState() {
+        List<Post> posts = postService.getPosts(administrator, new ResourceFilter().setState(ACCEPTED));
+        assertThat(posts).hasSize(8);
+
+        verifyAcceptedPosts(
+            posts.subList(0, 2),
+            departmentRejectedBoards.get(1),
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
+
+        verifyAcceptedPosts(
+            posts.subList(2, 4),
+            departmentRejectedBoards.get(0),
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
+
+        verifyAcceptedPosts(
+            posts.subList(4, 6),
+            departmentAcceptedBoards.get(1),
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
+
+        verifyAcceptedPosts(
+            posts.subList(6, 8),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT, WITHDRAW});
+    }
+
+    private void getPosts_successWhenAdministratorAndDepartment() {
+        List<Post> posts = postService.getPosts(administrator,
+            new ResourceFilter().setParentId(departmentAccepted.getId()));
+        assertThat(posts).hasSize(32);
+
+        verifyAdministratorPosts(
+            posts.subList(0, 16),
+            departmentAcceptedBoards.get(1),
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
+
+        verifyAdministratorPosts(
+            posts.subList(16, 32),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT, WITHDRAW});
+    }
+
+    private void getPosts_successWhenAdministratorAndBoard() {
+        List<Post> posts = postService.getPosts(administrator,
+            new ResourceFilter().setParentId(departmentAcceptedBoards.get(0).getId()));
+        assertThat(posts).hasSize(16);
+
+        verifyAdministratorPosts(
+            posts.subList(0, 16),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT, WITHDRAW});
+    }
+
+    private void getPosts_successWhenAction() {
+        List<Post> posts = postService.getPosts(administrator, new ResourceFilter().setAction(PURSUE));
+        assertThat(posts).hasSize(2);
+
+        verifyAcceptedPosts(
+            posts.subList(0, 2),
+            departmentAcceptedBoards.get(0),
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT, WITHDRAW});
+    }
+
+    private void getPosts_successWhenDepartmentAndSearchTerm() {
+        List<Post> posts = postService.getPosts(administrator,
+            new ResourceFilter().setParentId(departmentRejected.getId()).setSearchTerm("ACCEPTED"));
+        assertThat(posts).hasSize(4);
+        verifyAdministratorAcceptedSearchPosts(posts);
+    }
+
+    private void getPosts_successWhenDepartmentAndSearchTermTypo() {
+        List<Post> posts = postService.getPosts(administrator,
+            new ResourceFilter().setParentId(departmentRejected.getId()).setSearchTerm("aCEPTED"));
+        assertThat(posts).hasSize(4);
+        verifyAdministratorAcceptedSearchPosts(posts);
+    }
+
+    private void getPosts_successWhenSearchTermWithoutResults() {
+        List<Post> posts = postService.getPosts(administrator, new ResourceFilter().setSearchTerm("xyz"));
+        assertThat(posts).hasSize(0);
+    }
+
     private void getPosts_successWhenOtherAdministrator() {
         List<Post> posts = postService.getPosts(otherAdministrator, new ResourceFilter());
         assertThat(posts).hasSize(36);
@@ -244,12 +340,12 @@ public class PostServiceIT {
             posts.subList(16, 32),
             departmentRejectedBoards.get(0));
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(32, 34),
             departmentAcceptedBoards.get(1),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(34, 36),
             departmentAcceptedBoards.get(0),
             new Action[]{VIEW});
@@ -289,22 +385,22 @@ public class PostServiceIT {
         List<Post> posts = postService.getPosts(member, new ResourceFilter());
         assertThat(posts).hasSize(8);
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(0, 2),
             departmentRejectedBoards.get(1),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(2, 4),
             departmentRejectedBoards.get(0),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(4, 6),
             departmentAcceptedBoards.get(1),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(6, 8),
             departmentAcceptedBoards.get(0),
             new Action[]{VIEW, PURSUE});
@@ -314,7 +410,7 @@ public class PostServiceIT {
     private void getPosts_successWhenOtherMember() {
         List<Post> posts = postService.getPosts(otherMember, new ResourceFilter());
         assertThat(posts).hasSize(8);
-        verifyPosts(posts);
+        verifyAcceptedPosts(posts);
     }
 
     private void getPosts_successWhenUnprivileged() {
@@ -333,7 +429,7 @@ public class PostServiceIT {
                     .collect(toList());
 
             assertThat(posts).hasSize(8);
-            verifyPosts(posts);
+            verifyAcceptedPosts(posts);
         });
     }
 
@@ -542,6 +638,21 @@ public class PostServiceIT {
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT, WITHDRAW});
     }
 
+    // TODO: fix sort order problem
+    private void verifyAdministratorAcceptedSearchPosts(List<Post> posts) {
+        verifyAcceptedPosts(
+            posts.subList(0, 2),
+            departmentRejectedBoards.get(1),
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
+
+        verifyAcceptedPosts(
+            posts.subList(2, 4),
+            departmentRejectedBoards.get(0),
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT},
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW});
+    }
+
     private void verifyOtherAdministratorPosts(List<Post> posts, Board expectedBoard) {
         Long administratorId = administrator.getId();
         Long postAdministratorId = postAdministrator.getId();
@@ -653,39 +764,44 @@ public class PostServiceIT {
             new Action[]{VIEW, EDIT, WITHDRAW});
     }
 
-    private void verifyPosts(List<Post> posts) {
-        verifyPosts(
+    private void verifyAcceptedPosts(List<Post> posts) {
+        verifyAcceptedPosts(
             posts.subList(0, 2),
             departmentRejectedBoards.get(1),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(2, 4),
             departmentRejectedBoards.get(0),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(4, 6),
             departmentAcceptedBoards.get(1),
             new Action[]{VIEW});
 
-        verifyPosts(
+        verifyAcceptedPosts(
             posts.subList(6, 8),
             departmentAcceptedBoards.get(0),
             new Action[]{VIEW});
     }
 
-    private void verifyPosts(List<Post> posts, Board expectedBoard, Action[] expectedActions) {
+    private void verifyAcceptedPosts(List<Post> posts, Board expectedBoard, Action[] expectedActions) {
+        verifyAcceptedPosts(posts, expectedBoard, expectedActions, expectedActions);
+    }
+
+    private void verifyAcceptedPosts(List<Post> posts, Board expectedBoard, Action[] expectedPostAdministratorActions,
+                                     Action[] expectedAdministratorActions) {
         Long administratorId = administrator.getId();
         Long postAdministratorId = postAdministrator.getId();
 
         verifyPost(posts.get(0), expectedBoard,
             "post ACCEPTED" + postAdministratorId,
-            expectedActions);
+            expectedPostAdministratorActions);
 
         verifyPost(posts.get(1), expectedBoard,
             "post ACCEPTED" + administratorId,
-            expectedActions);
+            expectedAdministratorActions);
     }
 
 }

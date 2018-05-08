@@ -35,7 +35,7 @@ public class ResourceTaskServiceIT {
 
     @Test
     public void completeTasks_success() {
-        
+
     }
 
 }

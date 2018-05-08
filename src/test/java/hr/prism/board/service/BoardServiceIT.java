@@ -208,8 +208,7 @@ public class BoardServiceIT {
     }
 
     private void getBoards_successWhenAdministratorAndAction() {
-        List<Board> boards =
-            boardService.getBoards(administrator, new ResourceFilter().setAction(RESTORE));
+        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setAction(RESTORE));
         assertThat(boards).hasSize(2);
 
         verifyBoard(boards.get(0), departmentAccepted,
@@ -220,22 +219,19 @@ public class BoardServiceIT {
     }
 
     private void getBoards_successWhenAdministratorAndSearchTerm() {
-        List<Board> boards =
-            boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("career"));
+        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("career"));
         assertThat(boards).hasSize(2);
         verifyCareerBoards(boards);
     }
 
     private void getBoards_successWhenAdministratorAndSearchTermTypo() {
-        List<Board> boards =
-            boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("cuREER"));
+        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("cuREER"));
         assertThat(boards).hasSize(2);
         verifyCareerBoards(boards);
     }
 
     private void getBoards_successWhenAdministratorAndSearchTermWithoutResults() {
-        List<Board> boards =
-            boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("xyz"));
+        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("xyz"));
         assertThat(boards).hasSize(0);
     }
 
