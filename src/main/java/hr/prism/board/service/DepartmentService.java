@@ -135,6 +135,7 @@ public class DepartmentService {
     public List<Department> getDepartments(User user, ResourceFilter filter) {
         filter.setScope(DEPARTMENT);
         filter.setOrderStatement("resource.name");
+        filter.setOrderStatementSql("resource.name");
 
         List<Resource> resources = resourceService.getResources(user, filter);
         return resources.stream()

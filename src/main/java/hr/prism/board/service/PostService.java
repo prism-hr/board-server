@@ -143,7 +143,8 @@ public class PostService {
 
     public List<Post> getPosts(User user, ResourceFilter filter) {
         filter.setScope(POST);
-        filter.setOrderStatement("resource.updatedTimestamp DESC, resource.id DESC");
+        filter.setOrderStatement("resource.updatedTimestamp desc, resource.id desc");
+        filter.setOrderStatementSql("resource.updated_timestamp DESC, resource.id DESC");
 
         State state = getFilterState(filter);
         filter.setState(state);

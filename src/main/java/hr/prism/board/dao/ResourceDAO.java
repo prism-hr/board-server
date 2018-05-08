@@ -112,11 +112,15 @@ public class ResourceDAO {
 
     private final ResourceSearchRepository resourceSearchRepository;
 
+    private final ResourceSearchDAO resourceSearchDAO;
+
     private final EntityManager entityManager;
 
     @Inject
-    public ResourceDAO(ResourceSearchRepository resourceSearchRepository, EntityManager entityManager) {
+    public ResourceDAO(ResourceSearchRepository resourceSearchRepository, ResourceSearchDAO resourceSearchDAO,
+                       EntityManager entityManager) {
         this.resourceSearchRepository = resourceSearchRepository;
+        this.resourceSearchDAO = resourceSearchDAO;
         this.entityManager = entityManager;
     }
 
@@ -379,7 +383,8 @@ public class ResourceDAO {
         boolean searchTermApplied = searchTerm != null;
         if (searchTermApplied) {
             // Apply the search query
-            resourceSearchRepository.insertBySearch(search, LocalDateTime.now(), makeSoundex(searchTerm), resourceIds);
+            resourceSearchDAO.insertBySearch(
+                search, LocalDateTime.now(), makeSoundex(searchTerm), resourceIds, filter.getOrderStatementSql());
             entityManager.flush();
         }
 

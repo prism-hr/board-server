@@ -57,6 +57,7 @@ public class BoardService {
     public List<Board> getBoards(User user, ResourceFilter filter) {
         filter.setScope(BOARD);
         filter.setOrderStatement("resource.name");
+        filter.setOrderStatementSql("resource.name");
 
         List<Resource> resources = resourceService.getResources(user, filter);
         return resources.stream()

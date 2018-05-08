@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.DbTestContext;
+import hr.prism.board.domain.Department;
 import hr.prism.board.domain.ResourceTask;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +36,11 @@ public class ResourceTaskServiceIT {
 
     @Test
     public void completeTasks_success() {
+        Department department = new Department();
+        department.setId(2L);
 
+        resourceTaskService.completeTasks(department, POST_TASKS);
+        assertThat(resourceTaskService.getByResource(department)).containsExactly(CREATE_MEMBER);
     }
 
 }

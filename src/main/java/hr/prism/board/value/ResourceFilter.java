@@ -56,6 +56,8 @@ public class ResourceFilter {
 
     private String orderStatement;
 
+    private String orderStatementSql;
+
     public Scope getScope() {
         return scope;
     }
@@ -148,6 +150,15 @@ public class ResourceFilter {
     @SuppressWarnings("UnusedReturnValue")
     public ResourceFilter setOrderStatement(String orderStatement) {
         this.orderStatement = orderStatement;
+        return this;
+    }
+
+    public String getOrderStatementSql() {
+        return orderStatementSql;
+    }
+
+    public ResourceFilter setOrderStatementSql(String orderStatementSql) {
+        this.orderStatementSql = orderStatementSql;
         return this;
     }
 
