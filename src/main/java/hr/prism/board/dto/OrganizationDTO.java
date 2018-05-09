@@ -3,12 +3,14 @@ package hr.prism.board.dto;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 public class OrganizationDTO {
 
     private Long id;
 
+    @NotNull
     @Size(min = 3, max = 255)
     private String name;
 

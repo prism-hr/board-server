@@ -10,12 +10,15 @@ import java.math.BigDecimal;
 
 public class LocationDTO implements LocationDefinition {
 
+    @NotNull
     @Size(max = 255)
     private String name;
 
+    @NotNull
     @Size(min = 1, max = 3)
     private String domicile;
 
+    @NotNull
     @Size(min = 1, max = 255)
     private String googleId;
 
