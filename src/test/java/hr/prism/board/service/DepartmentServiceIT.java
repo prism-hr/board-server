@@ -15,6 +15,7 @@ import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.workflow.Execution;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,6 +81,9 @@ public class DepartmentServiceIT {
     @SpyBean
     private DocumentService documentService;
 
+    @SpyBean
+    private ActionService actionService;
+
     private LocalDateTime baseline;
 
     private User administrator;
@@ -101,6 +105,35 @@ public class DepartmentServiceIT {
     @After
     public void tearDown() {
         reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
+    }
+
+    @Test
+    public void getById_success() {
+        Department createdDepartment = serviceHelper.setUpDepartment(administrator, university, "department");
+        Long createdDepartmentId = createdDepartment.getId();
+        reset(resourceService);
+
+        Department selectedDepartment = departmentService.getById(administrator, createdDepartmentId);
+        assertEquals(createdDepartment, selectedDepartment);
+
+        verify(resourceService, times(1))
+            .getResource(administrator, DEPARTMENT, createdDepartmentId);
+        verify(actionService, times(1))
+            .executeAction(eq(administrator), eq(selectedDepartment), eq(VIEW), any(Execution.class));
+    }
+
+    @Test
+    public void getByHandle_success() {
+        Department createdDepartment = serviceHelper.setUpDepartment(administrator, university, "department");
+        reset(resourceService);
+
+        Department selectedDepartment = departmentService.getByHandle(administrator, "university/department");
+        assertEquals(createdDepartment, selectedDepartment);
+
+        verify(resourceService, times(1))
+            .getResource(administrator, DEPARTMENT, "university/department");
+        verify(actionService, times(1))
+            .executeAction(eq(administrator), eq(selectedDepartment), eq(VIEW), any(Execution.class));
     }
 
     @Test

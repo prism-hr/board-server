@@ -102,6 +102,34 @@ public class BoardServiceIT {
     }
 
     @Test
+    public void getById_success() {
+        Board createdBoard = serviceHelper.setUpBoard(administrator, departmentAccepted, "board");
+        Long createdBoardId = createdBoard.getId();
+        reset(resourceService);
+
+        Board selectedBoard = boardService.getById(administrator, createdBoardId);
+        assertEquals(createdBoard, selectedBoard);
+
+        verify(resourceService, times(1)).getResource(administrator, BOARD, createdBoardId);
+        verify(actionService, times(1))
+            .executeAction(eq(administrator), eq(selectedBoard), eq(VIEW), any(Execution.class));
+    }
+
+    @Test
+    public void getByHandle_success() {
+        Board createdBoard = serviceHelper.setUpBoard(administrator, departmentAccepted, "board");
+        reset(resourceService);
+
+        Board selectedBoard = boardService.getByHandle(administrator, "university/department-accepted/board");
+        assertEquals(createdBoard, selectedBoard);
+
+        verify(resourceService, times(1))
+            .getResource(administrator, BOARD, "university/department-accepted/board");
+        verify(actionService, times(1))
+            .executeAction(eq(administrator), eq(selectedBoard), eq(VIEW), any(Execution.class));
+    }
+
+    @Test
     public void createBoard_success() {
         Board createdBoard =
             boardService.createBoard(administrator, departmentAccepted.getId(),
@@ -285,9 +313,9 @@ public class BoardServiceIT {
 
             List<Board> boards =
                 boardService.getBoards(user, new ResourceFilter())
-                .stream()
-                .filter(board -> departmentAcceptedBoards.contains(board) || departmentRejectedBoards.contains(board))
-                .collect(toList());
+                    .stream()
+                    .filter(board -> departmentAcceptedBoards.contains(board) || departmentRejectedBoards.contains(board))
+                    .collect(toList());
             assertThat(boards).hasSize(2);
 
             verifyAuthorBoards(

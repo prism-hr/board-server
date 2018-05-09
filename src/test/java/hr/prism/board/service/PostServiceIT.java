@@ -10,6 +10,7 @@ import hr.prism.board.dto.OrganizationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.validation.PostValidator;
@@ -140,6 +141,20 @@ public class PostServiceIT {
     @After
     public void tearDown() {
         reset(postValidator, actionService, resourceService);
+    }
+
+    @Test
+    public void getById_success() {
+        Post createdPost = serviceHelper.setUpPost(administrator, departmentAcceptedBoards.get(0), "post");
+        Long createdPostId = createdPost.getId();
+        reset(resourceService);
+
+        Post selectedPost = postService.getById(administrator, createdPostId, "ip", true);
+        assertEquals(createdPost, selectedPost);
+
+        verify(resourceService, times(1)).getResource(administrator, Scope.POST, createdPostId);
+        verify(actionService, times(1))
+            .executeAction(eq(administrator), eq(selectedPost), eq(VIEW), any(Execution.class));
     }
 
     @Test
@@ -638,7 +653,6 @@ public class PostServiceIT {
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT, WITHDRAW});
     }
 
-    // TODO: fix sort order problem
     private void verifyAdministratorAcceptedSearchPosts(List<Post> posts) {
         verifyAcceptedPosts(
             posts.subList(0, 2),
