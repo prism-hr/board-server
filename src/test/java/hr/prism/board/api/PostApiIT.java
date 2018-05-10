@@ -92,6 +92,7 @@ public class PostApiIT {
         when(postService.createPost(user, 3L, postDTO)).thenReturn(post);
         when(postService.getPosts(user, filter)).thenReturn(singletonList(post));
         when(postService.getPosts(null, new ResourceFilter())).thenReturn(emptyList());
+        when(postService.getById(any(User.class), eq(4L), any(String.class), eq(true))).thenReturn(post);
     }
 
     @After
@@ -145,6 +146,33 @@ public class PostApiIT {
             .andExpect(status().isOk());
 
         verify(postService, times(1)).getPosts(null, new ResourceFilter());
+    }
+
+    @Test
+    public void getPost_successWhenAuthenticated() throws Exception {
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
+
+        mockMvc.perform(
+            get("/api/posts/4")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
+
+        verify(postService, times(1))
+            .getById(eq(user), eq(4L), any(String.class), eq(true));
+        verify(postMapper, times(1)).apply(post);
+    }
+
+    @Test
+    public void getPost_successWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/posts/4")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        verify(postService, times(1))
+            .getById(eq(null), eq(4L), any(String.class), eq(true));
+        verify(postMapper, times(1)).apply(post);
     }
 
 }
