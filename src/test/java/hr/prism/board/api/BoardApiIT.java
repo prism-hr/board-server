@@ -79,6 +79,8 @@ public class BoardApiIT {
         when(boardService.createBoard(user, 2L, boardDTO)).thenReturn(board);
         when(boardService.getBoards(user, filter)).thenReturn(singletonList(board));
         when(boardService.getBoards(null, new ResourceFilter())).thenReturn(emptyList());
+        when(boardService.getById(any(User.class), eq(3L))).thenReturn(board);
+        when(boardService.getByHandle(any(User.class), eq("university/department/board"))).thenReturn(board);
     }
 
     @After
@@ -132,6 +134,57 @@ public class BoardApiIT {
             .andExpect(status().isOk());
 
         verify(boardService, times(1)).getBoards(null, new ResourceFilter());
+    }
+
+    @Test
+    public void getBoard_successWhenAuthenticated() throws Exception {
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
+
+        mockMvc.perform(
+            get("/api/boards/3")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
+
+        verify(boardService, times(1)).getById(user, 3L);
+        verify(boardMapper, times(1)).apply(board);
+    }
+
+    @Test
+    public void getBoard_successWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/boards/3")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        verify(boardService, times(1)).getById(null, 3L);
+        verify(boardMapper, times(1)).apply(board);
+    }
+
+    @Test
+    public void getBoard_successWhenHandleAndAuthenticated() throws Exception {
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
+
+        mockMvc.perform(
+            get("/api/boards?handle=university/department/board")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
+
+        verify(boardService, times(1)).getByHandle(user, "university/department/board");
+        verify(boardMapper, times(1)).apply(board);
+    }
+
+    @Test
+    public void getBoard_successWhenHandleAndUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/boards?handle=university/department/board")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        verify(boardService, times(1))
+            .getByHandle(null, "university/department/board");
+        verify(boardMapper, times(1)).apply(board);
     }
 
 }

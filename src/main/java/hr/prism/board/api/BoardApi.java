@@ -60,7 +60,7 @@ public class BoardApi {
     }
 
     @RequestMapping(value = "/api/boards", method = GET, params = "handle")
-    public BoardRepresentation getBoardByHandle(@AuthenticationPrincipal User user, @RequestParam String handle) {
+    public BoardRepresentation getBoard(@AuthenticationPrincipal User user, @RequestParam String handle) {
         return boardMapper.apply(boardService.getByHandle(user, handle));
     }
 

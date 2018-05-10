@@ -79,6 +79,8 @@ public class DepartmentApiIT {
         when(departmentService.createDepartment(user, 1L, departmentDTO)).thenReturn(department);
         when(departmentService.getDepartments(user, filter)).thenReturn(singletonList(department));
         when(departmentService.getDepartments(null, new ResourceFilter())).thenReturn(emptyList());
+        when(departmentService.getById(any(User.class), eq(2L))).thenReturn(department);
+        when(departmentService.getByHandle(any(User.class), eq("university/department"))).thenReturn(department);
     }
 
     @After
@@ -132,6 +134,57 @@ public class DepartmentApiIT {
             .andExpect(status().isOk());
 
         verify(departmentService, times(1)).getDepartments(null, new ResourceFilter());
+    }
+
+    @Test
+    public void getDepartment_successWhenAuthenticated() throws Exception {
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
+
+        mockMvc.perform(
+            get("/api/departments/2")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
+
+        verify(departmentService, times(1)).getById(user, 2L);
+        verify(departmentMapper, times(1)).apply(department);
+    }
+
+    @Test
+    public void getDepartment_successWhenUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/departments/2")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        verify(departmentService, times(1)).getById(null, 2L);
+        verify(departmentMapper, times(1)).apply(department);
+    }
+
+    @Test
+    public void getDepartment_successWhenHandleAndAuthenticated() throws Exception {
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
+
+        mockMvc.perform(
+            get("/api/departments?handle=university/department")
+                .contentType(APPLICATION_JSON_UTF8)
+                .header("Authorization", authorization))
+            .andExpect(status().isOk());
+
+        verify(departmentService, times(1)).getByHandle(user, "university/department");
+        verify(departmentMapper, times(1)).apply(department);
+    }
+
+    @Test
+    public void getDepartment_successWhenHandleAndUnauthenticated() throws Exception {
+        mockMvc.perform(
+            get("/api/departments?handle=university/department")
+                .contentType(APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        verify(departmentService, times(1))
+            .getByHandle(null, "university/department");
+        verify(departmentMapper, times(1)).apply(department);
     }
 
 }

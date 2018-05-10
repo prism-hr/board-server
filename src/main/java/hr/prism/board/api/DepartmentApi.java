@@ -76,16 +76,13 @@ public class DepartmentApi {
         return departmentService.getDepartments(user, filter).stream().map(departmentMapper).collect(toList());
     }
 
-    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}", method = GET)
     public DepartmentRepresentation getDepartment(@AuthenticationPrincipal User user, @PathVariable Long departmentId) {
         return departmentMapper.apply(departmentService.getById(user, departmentId));
     }
 
-    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments", method = GET, params = "handle")
-    public DepartmentRepresentation getDepartmentByHandle(@AuthenticationPrincipal User user,
-                                                          @RequestParam String handle) {
+    public DepartmentRepresentation getDepartment(@AuthenticationPrincipal User user, @RequestParam String handle) {
         return departmentMapper.apply(departmentService.getByHandle(user, handle));
     }
 
