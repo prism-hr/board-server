@@ -187,4 +187,14 @@ public class DepartmentApiIT {
         verify(departmentMapper, times(1)).apply(department);
     }
 
+    @Test
+    public void getDepartmentBadge_successWhenAuthenticated() {
+
+    }
+
+    @Test
+    public void getDepartmentBadge_successWhenUnauthenticated() {
+
+    }
+
 }

@@ -51,7 +51,7 @@ public class DepartmentBadgeService {
         Resource resource = resourceService.getById(id);
         Map<String, Object> model = makeBadgeModel(resource, options);
 
-        List<Post> posts = postService.getPosts(user , id);
+        List<Post> posts = postService.getPosts(user, id);
         posts = posts.subList(0, min(posts.size(), options.getPostCount()));
         model.put("posts", posts);
 
@@ -59,7 +59,7 @@ public class DepartmentBadgeService {
         try {
             freemarkerConfig.getConfiguration().getTemplate("badge.ftl").process(model, stringWriter);
         } catch (IOException | TemplateException e) {
-            throw new Error(e);
+            throw new Error("Could not get badge for department ID: " + id, e);
         }
 
         if (isFalse(options.getPreview())) {
