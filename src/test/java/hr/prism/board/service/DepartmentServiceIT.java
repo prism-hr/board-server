@@ -13,6 +13,9 @@ import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.service.ServiceHelper.Scenario;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Execution;
@@ -28,6 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
@@ -38,9 +42,11 @@ import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -110,30 +116,72 @@ public class DepartmentServiceIT {
     @Test
     public void getById_success() {
         Department createdDepartment = serviceHelper.setUpDepartment(administrator, university, "department");
+        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(createdDepartment, AUTHOR, Role.MEMBER);
+
         Long createdDepartmentId = createdDepartment.getId();
-        reset(resourceService);
+        Consumer<Scenario> unprivilegedScenario = scenario -> {
+            User user = scenario.user;
+            reset(resourceService, actionService);
 
-        Department selectedDepartment = departmentService.getById(administrator, createdDepartmentId);
-        assertEquals(createdDepartment, selectedDepartment);
+            Department selectedDepartment = departmentService.getById(user, createdDepartmentId);
+            assertEquals(createdDepartment, selectedDepartment);
 
-        verify(resourceService, times(1))
-            .getResource(administrator, DEPARTMENT, createdDepartmentId);
-        verify(actionService, times(1))
-            .executeAction(eq(administrator), eq(selectedDepartment), eq(VIEW), any(Execution.class));
+            verifyDepartment(selectedDepartment, "department", new Action[]{VIEW});
+            verifyInvocations(user, createdDepartmentId, selectedDepartment);
+        };
+
+        verifyGetById(createdDepartment, DRAFT, scenarios,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
+
+        verifyGetById(createdDepartment, PENDING, scenarios,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
+
+        verifyGetById(createdDepartment, ACCEPTED, scenarios,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE}, unprivilegedScenario);
+
+        verifyGetById(createdDepartment, REJECTED, scenarios,
+            new Action[]{VIEW, EDIT, SUBSCRIBE},
+            scenario -> {
+                User user = scenario.user;
+                assertThatThrownBy(() -> departmentService.getById(user, createdDepartmentId))
+                    .isExactlyInstanceOf(BoardForbiddenException.class)
+                    .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+            });
     }
 
     @Test
     public void getByHandle_success() {
         Department createdDepartment = serviceHelper.setUpDepartment(administrator, university, "department");
-        reset(resourceService);
+        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(createdDepartment, AUTHOR, Role.MEMBER);
 
-        Department selectedDepartment = departmentService.getByHandle(administrator, "university/department");
-        assertEquals(createdDepartment, selectedDepartment);
+        Consumer<Scenario> unprivilegedScenario = scenario -> {
+            User user = scenario.user;
+            reset(resourceService, actionService);
 
-        verify(resourceService, times(1))
-            .getResource(administrator, DEPARTMENT, "university/department");
-        verify(actionService, times(1))
-            .executeAction(eq(administrator), eq(selectedDepartment), eq(VIEW), any(Execution.class));
+            Department selectedDepartment = departmentService.getByHandle(user, "university/department");
+            assertEquals(createdDepartment, selectedDepartment);
+
+            verifyDepartment(selectedDepartment, "department", new Action[]{VIEW});
+            verifyInvocations(user, "university/department", selectedDepartment);
+        };
+
+        verifyGetByHandle(createdDepartment, DRAFT, scenarios,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
+
+        verifyGetByHandle(createdDepartment, PENDING, scenarios,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
+
+        verifyGetByHandle(createdDepartment, ACCEPTED, scenarios,
+            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE}, unprivilegedScenario);
+
+        verifyGetByHandle(createdDepartment, REJECTED, scenarios,
+            new Action[]{VIEW, EDIT, SUBSCRIBE},
+            scenario -> {
+                User user = scenario.user;
+                assertThatThrownBy(() -> departmentService.getByHandle(user, "university/department"))
+                    .isExactlyInstanceOf(BoardForbiddenException.class)
+                    .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+            });
     }
 
     @Test
@@ -314,6 +362,50 @@ public class DepartmentServiceIT {
             verifyDepartment(departments.get(1), "department DRAFT", new Action[]{VIEW});
             verifyDepartment(departments.get(2), "department PENDING", new Action[]{VIEW});
         });
+    }
+
+    private void verifyGetById(Department createdDepartment, State state, Scenarios scenarios,
+                               Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
+        resourceService.updateState(createdDepartment, state);
+        reset(resourceService, actionService);
+
+        Long createdDepartmentId = createdDepartment.getId();
+        Department selectedDepartment = departmentService.getById(administrator, createdDepartmentId);
+        assertEquals(createdDepartment, selectedDepartment);
+
+        verifyDepartment(selectedDepartment, "department", expectedAdministratorActions);
+        verifyInvocations(administrator, createdDepartmentId, selectedDepartment);
+        scenarios.forEach(unprivilegedScenario);
+    }
+
+    private void verifyInvocations(User user, Long createdDepartmentId, Department selectedDepartment) {
+        verify(resourceService, times(1))
+            .getResource(user, DEPARTMENT, createdDepartmentId);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(selectedDepartment), eq(VIEW), any(Execution.class));
+    }
+
+    private void verifyGetByHandle(Department createdDepartment, State state, Scenarios scenarios,
+                                   Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
+        resourceService.updateState(createdDepartment, state);
+        reset(resourceService, actionService);
+
+        Department selectedDepartment = departmentService.getByHandle(administrator, "university/department");
+        assertEquals(createdDepartment, selectedDepartment);
+
+        verifyDepartment(selectedDepartment, "department", expectedAdministratorActions);
+        verifyInvocations(administrator, "university/department", selectedDepartment);
+        scenarios.forEach(unprivilegedScenario);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyInvocations(User user, String createdDepartmentHandle, Department selectedDepartment) {
+        verify(resourceService, times(1))
+            .getResource(user, DEPARTMENT, createdDepartmentHandle);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(selectedDepartment), eq(VIEW), any(Execution.class));
     }
 
     @SuppressWarnings("SameParameterValue")
