@@ -6,7 +6,7 @@ import hr.prism.board.enums.BadgeType;
 import static hr.prism.board.enums.BadgeListType.STATIC;
 import static hr.prism.board.enums.BadgeType.SIMPLE;
 
-public class WidgetOptionsDTO extends ResourceDTO {
+public class DepartmentBadgeOptionsDTO {
 
     private BadgeType badgeType = SIMPLE;
 

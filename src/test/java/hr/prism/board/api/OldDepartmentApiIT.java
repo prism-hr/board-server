@@ -548,7 +548,7 @@
 //        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
 //        testNotificationService.verify();
 //
-//        WidgetOptionsDTO optionsDTO = new WidgetOptionsDTO();
+//        DepartmentBadgeOptionsDTO optionsDTO = new DepartmentBadgeOptionsDTO();
 //        try {
 //            departmentApi.getDepartmentBadge(departmentId, objectMapper.writeValueAsString(optionsDTO), mockHttpServletResponse());
 //        } catch (IOException e) {

@@ -1,11 +1,9 @@
 package hr.prism.board.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.DepartmentBadgeOptionsDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.dto.DepartmentPatchDTO;
-import hr.prism.board.dto.WidgetOptionsDTO;
 import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.mapper.ResourceOperationMapper;
 import hr.prism.board.representation.DepartmentDashboardRepresentation;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -41,18 +38,15 @@ public class DepartmentApi {
 
     private final ResourceOperationMapper resourceOperationMapper;
 
-    private final ObjectMapper objectMapper;
-
     @Inject
     public DepartmentApi(DepartmentService departmentService, DepartmentDashboardService departmentDashboardService,
                          DepartmentBadgeService departmentBadgeService, DepartmentMapper departmentMapper,
-                         ResourceOperationMapper resourceOperationMapper, ObjectMapper objectMapper) {
+                         ResourceOperationMapper resourceOperationMapper) {
         this.departmentService = departmentService;
         this.departmentDashboardService = departmentDashboardService;
         this.departmentBadgeService = departmentBadgeService;
         this.departmentMapper = departmentMapper;
         this.resourceOperationMapper = resourceOperationMapper;
-        this.objectMapper = objectMapper;
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -112,11 +106,9 @@ public class DepartmentApi {
 
     @RequestMapping(value = "/api/departments/{departmentId}/badge", method = GET)
     public String getDepartmentBadge(@AuthenticationPrincipal User user, @PathVariable Long departmentId,
-                                     @RequestParam String options, HttpServletResponse response) throws IOException {
+                                     @ModelAttribute DepartmentBadgeOptionsDTO options, HttpServletResponse response) {
         response.setHeader("X-Frame-Options", "ALLOW");
-        return departmentBadgeService.getBadge(user, departmentId,
-            objectMapper.readValue(options, new TypeReference<WidgetOptionsDTO>() {
-            }));
+        return departmentBadgeService.getBadge(user, departmentId, options);
     }
 
 }
