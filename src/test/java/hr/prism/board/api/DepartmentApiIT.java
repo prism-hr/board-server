@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.ApiTestContext;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.DepartmentBadgeOptionsDTO;
 import hr.prism.board.dto.DepartmentDTO;
 import hr.prism.board.mapper.DepartmentMapper;
+import hr.prism.board.service.DepartmentBadgeService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.value.ResourceFilter;
 import org.junit.After;
@@ -19,9 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import javax.inject.Inject;
 
+import static hr.prism.board.enums.BadgeListType.SLIDER;
+import static hr.prism.board.enums.BadgeType.LIST;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -49,6 +54,9 @@ public class DepartmentApiIT {
     private DepartmentService departmentService;
 
     @MockBean
+    private DepartmentBadgeService departmentBadgeService;
+
+    @MockBean
     private DepartmentMapper departmentMapper;
 
     private User user;
@@ -58,6 +66,8 @@ public class DepartmentApiIT {
     private Department department;
 
     private ResourceFilter filter;
+
+    private DepartmentBadgeOptionsDTO departmentBadgeOptions;
 
     @Before
     public void setUp() {
@@ -76,11 +86,21 @@ public class DepartmentApiIT {
                 .setSearchTerm("search")
                 .setState(ACCEPTED);
 
+        departmentBadgeOptions =
+            new DepartmentBadgeOptionsDTO()
+                .setBadgeType(LIST)
+                .setBadgeListType(SLIDER)
+                .setPostCount(1)
+                .setPreview(true);
+
         when(departmentService.createDepartment(user, 1L, departmentDTO)).thenReturn(department);
         when(departmentService.getDepartments(user, filter)).thenReturn(singletonList(department));
         when(departmentService.getDepartments(null, new ResourceFilter())).thenReturn(emptyList());
         when(departmentService.getById(any(User.class), eq(2L))).thenReturn(department);
         when(departmentService.getByHandle(any(User.class), eq("university/department"))).thenReturn(department);
+
+        when(departmentBadgeService.getBadge(any(User.class), eq(2L),
+            eq(departmentBadgeOptions))).thenReturn("department badge string");
     }
 
     @After
@@ -188,13 +208,35 @@ public class DepartmentApiIT {
     }
 
     @Test
-    public void getDepartmentBadge_successWhenAuthenticated() {
+    public void getDepartmentBadge_successWhenAuthenticated() throws Exception {
+        String authorization = apiHelper.login("alastair@prism.hr", "password");
 
+        String response =
+            mockMvc.perform(
+                get("/api/departments/2/badge" +
+                    "?badgeType=LIST&badgeListType=SLIDER&postCount=1&preview=true&callback=departmentBadge")
+                    .contentType(APPLICATION_JSON_UTF8)
+                    .header("Authorization", authorization))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals("/**/departmentBadge(\"department badge string\");", response);
+        verify(departmentBadgeService, times(1)).getBadge(user, 2L, departmentBadgeOptions);
     }
 
     @Test
-    public void getDepartmentBadge_successWhenUnauthenticated() {
+    public void getDepartmentBadge_successWhenUnauthenticated() throws Exception {
+        String response =
+            mockMvc.perform(
+                get("/api/departments/2/badge" +
+                    "?badgeType=LIST&badgeListType=SLIDER&postCount=1&preview=true&callback=departmentBadge")
+                    .contentType(APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
 
+        assertEquals("/**/departmentBadge(\"department badge string\");", response);
+        verify(departmentBadgeService, times(1))
+            .getBadge(null, 2L, departmentBadgeOptions);
     }
 
 }
