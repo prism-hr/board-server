@@ -9,6 +9,7 @@ import hr.prism.board.domain.University;
 import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.service.ServiceHelper.Scenario;
@@ -112,18 +113,28 @@ public class BoardServiceIT {
 
     @Test
     public void getById_success() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR, MEMBER);
-        verifyGetById(departmentAccepted, scenarios,
+        Scenarios departmentAcceptedScenarios = serviceHelper.setUpUnprivilegedUsers(university)
+            .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR, Role.MEMBER));
+        verifyGetById(departmentAccepted, departmentAcceptedScenarios,
             new Action[]{VIEW, EDIT, EXTEND, REJECT}, new Action[]{VIEW, EXTEND});
-        verifyGetById(departmentRejected, scenarios, new Action[]{VIEW, EDIT, REJECT}, new Action[]{VIEW});
+
+        Scenarios departmentRejectedScenarios = serviceHelper.setUpUnprivilegedUsers(university)
+            .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR, Role.MEMBER));
+        verifyGetById(departmentRejected, departmentRejectedScenarios,
+            new Action[]{VIEW, EDIT, REJECT}, new Action[]{VIEW});
     }
 
     @Test
     public void getByHandle_success() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR, MEMBER);
-        verifyGetByHandle(departmentAccepted, scenarios,
+        Scenarios departmentAcceptedScenarios = serviceHelper.setUpUnprivilegedUsers(university)
+            .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR, Role.MEMBER));
+        verifyGetByHandle(departmentAccepted, departmentAcceptedScenarios,
             new Action[]{VIEW, EDIT, EXTEND, REJECT}, new Action[]{VIEW, EXTEND});
-        verifyGetByHandle(departmentRejected, scenarios, new Action[]{VIEW, EDIT, REJECT}, new Action[]{VIEW});
+
+        Scenarios departmentRejectedScenarios = serviceHelper.setUpUnprivilegedUsers(university)
+            .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR, Role.MEMBER));
+        verifyGetByHandle(departmentRejected, departmentRejectedScenarios,
+            new Action[]{VIEW, EDIT, REJECT}, new Action[]{VIEW});
     }
 
     @Test
@@ -184,9 +195,8 @@ public class BoardServiceIT {
         author = serviceHelper.setUpUser();
         otherAuthor = serviceHelper.setUpUser();
 
-        userRoleService.createUserRole(departmentAccepted, author, AUTHOR);
-
         userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
+        userRoleService.createUserRole(departmentAccepted, author, AUTHOR);
         userRoleService.createUserRole(departmentRejected, author, AUTHOR);
         userRoleService.createUserRole(departmentRejected, otherAuthor, AUTHOR);
 
@@ -354,8 +364,8 @@ public class BoardServiceIT {
 
     private void verifyGetById(Board createdBoard, Department department, State state, Scenarios scenarios,
                                Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
-        resourceService.updateState(createdBoard, state);
         reset(resourceService, actionService);
+        resourceService.updateState(createdBoard, state);
 
         Long createdBoardId = createdBoard.getId();
         Board selectedBoard = boardService.getById(administrator, createdBoardId);
@@ -367,10 +377,10 @@ public class BoardServiceIT {
     }
 
     private void verifyInvocations(User user, Long createdBoardId, Board selectedBoard) {
-        verify(resourceService, times(1))
+        verify(resourceService, atLeastOnce())
             .getResource(user, BOARD, createdBoardId);
 
-        verify(actionService, times(1))
+        verify(actionService, atLeastOnce())
             .executeAction(eq(user), eq(selectedBoard), eq(VIEW), any(Execution.class));
     }
 
@@ -403,8 +413,8 @@ public class BoardServiceIT {
 
     private void verifyGetByHandle(Board createdBoard, Department department, State state, Scenarios scenarios,
                                    Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
-        resourceService.updateState(createdBoard, state);
         reset(resourceService, actionService);
+        resourceService.updateState(createdBoard, state);
 
         String createdBoardHandle = createdBoard.getHandle();
         Board selectedBoard = boardService.getByHandle(administrator, createdBoardHandle);
@@ -417,13 +427,12 @@ public class BoardServiceIT {
 
     @SuppressWarnings("SameParameterValue")
     private void verifyInvocations(User user, String createdBoardHandle, Board selectedBoard) {
-        verify(resourceService, times(1))
+        verify(resourceService, atLeastOnce())
             .getResource(user, BOARD, createdBoardHandle);
 
-        verify(actionService, times(1))
+        verify(actionService, atLeastOnce())
             .executeAction(eq(user), eq(selectedBoard), eq(VIEW), any(Execution.class));
     }
-
 
     @SuppressWarnings("SameParameterValue")
     private void verifyBoard(Board board, Department expectedDepartment, String expectedName,

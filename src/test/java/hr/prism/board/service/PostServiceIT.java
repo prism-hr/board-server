@@ -12,6 +12,8 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.service.ServiceHelper.Scenario;
 import hr.prism.board.service.ServiceHelper.Scenarios;
 import hr.prism.board.validation.PostValidator;
 import hr.prism.board.value.ResourceFilter;
@@ -29,6 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
@@ -44,6 +47,7 @@ import static hr.prism.board.exception.ExceptionCode.*;
 import static java.math.BigDecimal.ONE;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -124,16 +128,29 @@ public class PostServiceIT {
 
     @Before
     public void setUp() {
-        baseline = LocalDateTime.now();
         administrator = serviceHelper.setUpUser();
+
+        member = serviceHelper.setUpUser();
+        otherMember = serviceHelper.setUpUser();
+
+        baseline = LocalDateTime.now();
         university = serviceHelper.setUpUniversity("university");
 
         departmentAccepted =
             serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
+        userRoleService.createUserRole(departmentAccepted, member, Role.MEMBER);
+
+        departmentRejected =
+            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
+        userRoleService.createUserRole(departmentRejected, otherMember, Role.MEMBER);
 
         departmentAcceptedBoards =
             boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentAccepted.getId()));
         resourceService.updateState(departmentAcceptedBoards.get(1), REJECTED);
+
+        departmentRejectedBoards =
+            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
+        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
 
         reset(postValidator, actionService, resourceService);
     }
@@ -145,16 +162,18 @@ public class PostServiceIT {
 
     @Test
     public void getById_success() {
-        Post createdPost = serviceHelper.setUpPost(administrator, departmentAcceptedBoards.get(0), "post");
-        Long createdPostId = createdPost.getId();
-        reset(resourceService);
+        Scenarios departmentAcceptedScenarios = serviceHelper.setUpUnprivilegedUsers(departmentAccepted, AUTHOR);
+        verifyGetById(departmentAcceptedBoards.get(0), departmentAcceptedScenarios, member,
+            new Action[] {VIEW, EDIT, PURSUE, SUSPEND, REJECT, WITHDRAW},
+            new Action[] {VIEW, PURSUE}, new Action[] {VIEW});
+        verifyGetById(departmentAcceptedBoards.get(1), departmentAcceptedScenarios, member,
+            new Action[] {VIEW, EDIT, SUSPEND, REJECT, WITHDRAW}, new Action[] {VIEW}, new Action[] {VIEW});
 
-        Post selectedPost = postService.getById(administrator, createdPostId, "ip", true);
-        assertEquals(createdPost, selectedPost);
-
-        verify(resourceService, times(1)).getResource(administrator, Scope.POST, createdPostId);
-        verify(actionService, times(1))
-            .executeAction(eq(administrator), eq(selectedPost), eq(VIEW), any(Execution.class));
+        Scenarios departmentRejectedScenarios = serviceHelper.setUpUnprivilegedUsers(departmentRejected, AUTHOR);
+        verifyGetById(departmentRejectedBoards.get(0), departmentRejectedScenarios, otherMember,
+            new Action[] {VIEW, EDIT, SUSPEND, REJECT, WITHDRAW}, new Action[] {VIEW}, new Action[] {VIEW});
+        verifyGetById(departmentRejectedBoards.get(1), departmentRejectedScenarios, otherMember,
+            new Action[] {VIEW, EDIT, SUSPEND, REJECT, WITHDRAW}, new Action[] {VIEW}, new Action[] {VIEW});
     }
 
     @Test
@@ -162,7 +181,7 @@ public class PostServiceIT {
         Board board = departmentAcceptedBoards.get(0);
         Post createdPost = setUpPost(board, "http://www.google.co.uk", null, null);
 
-        Post selectedPost = postService.getById(administrator, createdPost.getId());
+        Post selectedPost = postService.getById(administrator, createdPost.getId(), "ip", true);
         Stream.of(createdPost, selectedPost).forEach(post ->
             verifyPost(post, board, "post", new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
                 "http://www.google.co.uk", null, null));
@@ -181,7 +200,7 @@ public class PostServiceIT {
         Board board = departmentAcceptedBoards.get(0);
         Post createdPost = setUpPost(board, null, documentDTO, null);
 
-        Post selectedPost = postService.getById(administrator, createdPost.getId());
+        Post selectedPost = postService.getById(administrator, createdPost.getId(), "ip", true);
 
         Document expectedDocument = new Document();
         expectedDocument.setCloudinaryId("cloudinary id");
@@ -198,7 +217,7 @@ public class PostServiceIT {
     public void createPost_successWhenApplyEmail() {
         Board board = departmentAcceptedBoards.get(0);
         Post createdPost = setUpPost(board, null, null, "author@prism.hr");
-        Post selectedPost = postService.getById(administrator, createdPost.getId());
+        Post selectedPost = postService.getById(administrator, createdPost.getId(), "ip", true);
 
         Stream.of(createdPost, selectedPost).forEach(post ->
             verifyPost(post, board, "post", new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
@@ -223,6 +242,24 @@ public class PostServiceIT {
         getPosts_successWhenMember();
         getPosts_successWhenOtherMember();
         getPosts_successWhenUnprivileged();
+    }
+
+    private void setUpPosts() {
+        otherAdministrator = serviceHelper.setUpUser();
+        postAdministrator = serviceHelper.setUpUser();
+        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
+
+        Stream.of(departmentAcceptedBoards, departmentRejectedBoards).forEach(boards ->
+            boards.forEach(board -> {
+                POST_STATES.forEach(state -> {
+                    String name = "post " + state;
+                    serviceHelper.setUpPost(administrator, board, name + administrator.getId(), state);
+                    serviceHelper.setUpPost(postAdministrator, board, name + postAdministrator.getId(), state);
+                });
+            }));
+
+        departmentAcceptedPosts = postService.getPosts(administrator, departmentAccepted.getId());
+        departmentRejectedPosts = postService.getPosts(administrator, departmentRejected.getId());
     }
 
     private void getPosts_successWhenAdministrator() {
@@ -493,6 +530,98 @@ public class PostServiceIT {
             .setLongitude(ONE);
     }
 
+    private void verifyGetById(Board board, Scenarios scenarios, User member, Action[] expectedAdministratorActions,
+                               Action[] expectedMemberActions, Action[] expectedUnprivilegedActions) {
+        Post createdPost = serviceHelper.setUpPost(administrator, board, "post");
+        Long createdPostId = createdPost.getId();
+
+        Runnable memberScenario =
+            () -> verifyGetById(member, createdPost, createdPostId);
+
+        Consumer<Scenario> unprivilegedScenario =
+            scenario -> {
+                User user = scenario.user;
+                verifyGetById(user, createdPost, createdPostId);
+            };
+
+        verifyGetById(createdPost, board, DRAFT, scenarios,
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT, WITHDRAW},
+            memberScenario, unprivilegedScenario);
+
+        verifyGetById(createdPost, board, PENDING, scenarios,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
+            memberScenario, unprivilegedScenario);
+
+        verifyGetById(createdPost, board, ACCEPTED, scenarios,
+            expectedAdministratorActions,
+            () -> {
+                Post selectedPost = postService.getById(member, createdPostId, "ip", true);
+                serviceHelper.verifyActions(selectedPost, expectedMemberActions);
+                verifyInvocations(member, createdPostId, selectedPost);
+            },
+            scenario -> {
+                User user = scenario.user;
+                Post selectedPost = postService.getById(user, createdPostId, "ip", true);
+                assertEquals(createdPost, selectedPost);
+
+                verifyPost(selectedPost, board, "post", expectedUnprivilegedActions);
+                verifyInvocations(user, createdPostId, selectedPost);
+            });
+
+        verifyGetById(createdPost, board, EXPIRED, scenarios,
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
+            memberScenario, unprivilegedScenario);
+
+        verifyGetById(createdPost, board, SUSPENDED, scenarios,
+            new Action[]{VIEW, EDIT, CORRECT, ACCEPT, REJECT, WITHDRAW},
+            memberScenario, unprivilegedScenario);
+
+        verifyGetById(createdPost, board, REJECTED, scenarios,
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE, WITHDRAW},
+            memberScenario, unprivilegedScenario);
+
+        verifyGetById(createdPost, board, WITHDRAWN, scenarios,
+            new Action[]{VIEW, EDIT, RESTORE},
+            memberScenario, unprivilegedScenario);
+
+        verifyGetById(createdPost, board, ARCHIVED, scenarios,
+            new Action[]{VIEW, EDIT, RESTORE},
+            memberScenario, unprivilegedScenario);
+    }
+
+    private void verifyGetById(Post createdPost, Board board, State state, Scenarios scenarios,
+                               Action[] expectedAdministratorActions, Runnable memberScenario,
+                               Consumer<Scenario> unprivilegedScenario) {
+        reset(resourceService, actionService);
+        resourceService.updateState(createdPost, state);
+
+        Long createdBoardId = createdPost.getId();
+        Post selectedPost = postService.getById(administrator, createdBoardId, "ip", true);
+        assertEquals(createdPost, selectedPost);
+
+        verifyPost(selectedPost, board, "post", expectedAdministratorActions);
+        verifyInvocations(administrator, createdBoardId, selectedPost);
+
+        memberScenario.run();
+        scenarios.forEach(unprivilegedScenario);
+    }
+
+    private void verifyGetById(User user, Post createdPost, Long createdPostId) {
+        assertThatThrownBy(() -> postService.getById(user, createdPostId, "ip", true))
+            .isExactlyInstanceOf(BoardForbiddenException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+
+        verifyInvocations(user, createdPostId, createdPost);
+    }
+
+    private void verifyInvocations(User user, Long createdPostId, Post selectedPost) {
+        verify(resourceService, atLeastOnce())
+            .getResource(user, Scope.POST, createdPostId);
+
+        verify(actionService, atLeastOnce())
+            .executeAction(eq(user), eq(selectedPost), eq(VIEW), any(Execution.class));
+    }
+
     private void verifyPost(Post post, Board expectedBoard, String expectedName, Action[] expectedActions) {
         serviceHelper.verifyIdentity(post, expectedBoard, expectedName);
         serviceHelper.verifyActions(post, expectedActions);
@@ -549,37 +678,6 @@ public class PostServiceIT {
         verify(userRoleService, times(1)).createUserRole(post, administrator, ADMINISTRATOR);
         verify(resourceTaskService, times(1)).completeTasks(departmentAccepted, POST_TASKS);
         verify(postValidator, times(1)).checkExistingRelation(post);
-    }
-
-
-    private void setUpPosts() {
-        otherAdministrator = serviceHelper.setUpUser();
-        member = serviceHelper.setUpUser();
-        otherMember = serviceHelper.setUpUser();
-        postAdministrator = serviceHelper.setUpUser();
-
-        userRoleService.createUserRole(departmentAccepted, member, Role.MEMBER);
-
-        departmentRejected =
-            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
-        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
-        userRoleService.createUserRole(departmentRejected, otherMember, Role.MEMBER);
-
-        departmentRejectedBoards =
-            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
-        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
-
-        Stream.of(departmentAcceptedBoards, departmentRejectedBoards).forEach(boards ->
-            boards.forEach(board -> {
-                POST_STATES.forEach(state -> {
-                    String name = "post " + state;
-                    serviceHelper.setUpPost(administrator, board, name + administrator.getId(), state);
-                    serviceHelper.setUpPost(postAdministrator, board, name + postAdministrator.getId(), state);
-                });
-            }));
-
-        departmentAcceptedPosts = postService.getPosts(administrator, departmentAccepted.getId());
-        departmentRejectedPosts = postService.getPosts(administrator, departmentRejected.getId());
     }
 
     private void verifyAdministratorPosts(List<Post> posts, Board expectedBoard,

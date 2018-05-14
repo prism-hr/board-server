@@ -284,8 +284,8 @@ public class ActionServiceIT {
             .expect(REJECTED, postPendingModifier,
                 new Expectation(VIEW, REJECTED),
                 new Expectation(EDIT, REJECTED),
-                new Expectation(SUSPEND, SUSPENDED),
                 new Expectation(ACCEPT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
                 new Expectation(RESTORE, PREVIOUS))
             .expect(WITHDRAWN, postPendingModifier,
                 new Expectation(VIEW, WITHDRAWN),
