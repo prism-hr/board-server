@@ -205,8 +205,10 @@ public class ServiceHelper {
 
         User user = setUpUser();
 
-        return setUpUnprivilegedUsers(department, AUTHOR, MEMBER)
+        return new Scenarios()
             .scenario(departmentAdministrator, "department administrator")
+            .scenario(departmentAuthor, "department author")
+            .scenario(departmentMember, "department member")
             .scenario(user, "no roles")
             .scenario(null, "anonymous");
     }
