@@ -4,22 +4,27 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.*;
 import hr.prism.board.enums.Role;
+import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static hr.prism.board.enums.Role.*;
+import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.*;
 
 @Service
-@Transactional
 public class FixtureBuilder {
+
+    private static final Map<Scope, String> INSERTS = new HashMap<>();
 
     private final ResourceService resourceService;
 
@@ -27,7 +32,12 @@ public class FixtureBuilder {
         this.resourceService = resourceService;
     }
 
-    public String makeResourceInserts() {
+    @PostConstruct
+    public void makeInserts() {
+        INSERTS.put(POST, makePostInserts());
+    }
+
+    private String makePostInserts() {
         LocalDateTime baseline = LocalDateTime.now();
         List<Resource> resources = new ArrayList<>();
 
@@ -62,12 +72,14 @@ public class FixtureBuilder {
                     ")");
         }
 
+        List<String> userInserts = makeUserInserts(baseline, resources);
         List<String> inserts = ImmutableList.of(
             "INSERT INTO resource (id, parent_id, name, handle, state, previous_state, index_data, quarter, " +
                 "created_timestamp\n" +
                 "VALUES \n\t" + Joiner.on(",\n\t").join(rows) + ";",
             makeResourceRelationInsert(baseline, resources),
-            makeUserInserts(baseline, resources));
+            userInserts.get(0),
+            userInserts.get(1));
 
         return Joiner.on("\n\n").join(inserts);
     }
@@ -183,6 +195,7 @@ public class FixtureBuilder {
             userRows.add(
                 "(" +
                     user.getId() + ", " +
+                    "UUID(), " +
                     "'" + user.getGivenName() + "', " +
                     "'" + user.getSurname() + "', " +
                     "'" + user.getEmail() + "', " +
@@ -198,8 +211,21 @@ public class FixtureBuilder {
 
             userRoleRows.add(
                 "(" +
+                    userRole.getId() + ", " +
+                    "UUID(), " +
+                    userRole.getResource().getId() + ", " +
+                    userRole.getUser().getId() + ", " +
+                    "'" + userRole.getRole() + ", " +
+                    "'" + userRole.getState() + "', " +
+                    "'" + Timestamp.valueOf(userRole.getCreatedTimestamp()) + "," +
                     ")");
         }
+
+        return ImmutableList.of(
+            "INSERT INTO user (id, uuid, given_name, surname, email, email_display, created_timestamp)\n" +
+                "VALUES\n\t" + Joiner.on(",\n\t").join(userRows) + ";",
+            "INSERT INTO user_role (id, uuid, resource_id, user_id, role, state, created_timestamp)\n" +
+                "VALUES\n\t" + Joiner.on("\n\t").join(userRoleRows) + ";");
     }
 
     private List<Resource> setUpDepartment(LocalDateTime baseline, University university, State state) {
