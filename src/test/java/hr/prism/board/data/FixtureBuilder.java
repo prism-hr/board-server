@@ -3,6 +3,7 @@ package hr.prism.board.data;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.domain.*;
+import hr.prism.board.enums.Role;
 import hr.prism.board.enums.State;
 import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
@@ -13,8 +14,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.State.*;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Service
 @Transactional
@@ -66,8 +67,7 @@ public class FixtureBuilder {
                 "created_timestamp\n" +
                 "VALUES \n\t" + Joiner.on(",\n\t").join(rows) + ";",
             makeResourceRelationInsert(baseline, resources),
-            makeUserInserts(baseline),
-            makeUserRoleInserts(baseline));
+            makeUserInserts(baseline, resources));
 
         return Joiner.on("\n\n").join(inserts);
     }
@@ -107,12 +107,99 @@ public class FixtureBuilder {
             "VALUES \n\t" + Joiner.on(",\n\t").join(rows) + ";";
     }
 
-    private String makeUserInserts(LocalDateTime baseline) {
-        return EMPTY;
-    }
+    private List<String> makeUserInserts(LocalDateTime baseline, List<Resource> resources) {
+        User departmentAdministrator = setUpUser(baseline, "department-administrator");
+        User otherDepartmentAdministrator = setUpUser(baseline, "other-department-administrator");
 
-    private String makeUserRoleInserts(LocalDateTime baseline) {
-        return EMPTY;
+        User departmentAuthor = setUpUser(baseline, "department-author");
+        User otherDepartmentAuthor = setUpUser(baseline, "other-department-author");
+
+        User pendingDepartmentMember = setUpUser(baseline, "pending-department-member");
+        User otherPendingDepartmentMember = setUpUser(baseline, "other-pending-department-member");
+
+        User acceptedDepartmentMember = setUpUser(baseline, "accepted-department-member");
+        User otherAcceptedDepartmentMember = setUpUser(baseline, "other-accepted-department-member");
+
+        User rejectedDepartmentMember = setUpUser(baseline, "rejected-department-member");
+        User otherRejectedDepartmentMember = setUpUser(baseline, "other-rejected-department-member");
+
+        User postAdministrator = setUpUser(baseline, "post-administrator");
+        User otherPostAdministrator = setUpUser(baseline, "other-post-administrator");
+
+        User unprivileged = setUpUser(baseline, "unprivileged");
+
+        List<User> users = ImmutableList.of(
+            departmentAdministrator,
+            otherDepartmentAdministrator,
+            departmentAuthor,
+            otherDepartmentAuthor,
+            pendingDepartmentMember,
+            otherPendingDepartmentMember,
+            acceptedDepartmentMember,
+            otherAcceptedDepartmentMember,
+            rejectedDepartmentMember,
+            otherRejectedDepartmentMember,
+            postAdministrator,
+            otherPostAdministrator,
+            unprivileged);
+
+        List<UserRole> userRoles = new ArrayList<>();
+        for (Resource resource : resources) {
+            switch (resource.getScope()) {
+                case DEPARTMENT:
+                    userRoles.add(setUpUserRole(baseline, resource, departmentAdministrator, ADMINISTRATOR, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, departmentAuthor, AUTHOR, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, pendingDepartmentMember, MEMBER, PENDING));
+                    userRoles.add(setUpUserRole(baseline, resource, acceptedDepartmentMember, MEMBER, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, rejectedDepartmentMember, MEMBER, REJECTED));
+                    if (resource.getState() == REJECTED) {
+                        userRoles.add(
+                            setUpUserRole(baseline, resource, otherDepartmentAdministrator, ADMINISTRATOR, REJECTED));
+                        userRoles.add(
+                            setUpUserRole(baseline, resource, otherDepartmentAuthor, AUTHOR, ACCEPTED));
+                        userRoles.add(
+                            setUpUserRole(baseline, resource, otherPendingDepartmentMember, MEMBER, PENDING));
+                        userRoles.add(
+                            setUpUserRole(baseline, resource, otherAcceptedDepartmentMember, MEMBER, ACCEPTED));
+                        userRoles.add(
+                            setUpUserRole(baseline, resource, otherRejectedDepartmentMember, MEMBER, REJECTED));
+                    }
+                    continue;
+                case POST:
+                    if (resource.getParent().getParent().getState() == ACCEPTED) {
+                        userRoles.add(setUpUserRole(baseline, resource, postAdministrator, ADMINISTRATOR, ACCEPTED));
+                    } else {
+                        userRoles.add(
+                            setUpUserRole(baseline, resource, otherPostAdministrator, ADMINISTRATOR, ACCEPTED));
+                    }
+            }
+        }
+
+        List<String> userRows = new ArrayList<>();
+        for (int i = 0; i < users.size(); i++) {
+            User user = users.get(i);
+            user.setId((long) (i + 1));
+
+            userRows.add(
+                "(" +
+                    user.getId() + ", " +
+                    "'" + user.getGivenName() + "', " +
+                    "'" + user.getSurname() + "', " +
+                    "'" + user.getEmail() + "', " +
+                    "'" + user.getEmailDisplay() + "', " +
+                    "'" + Timestamp.valueOf(user.getCreatedTimestamp()) + "'" +
+                    ")");
+        }
+
+        List<String> userRoleRows = new ArrayList<>();
+        for (int i = 0; i < userRoles.size(); i++) {
+            UserRole userRole = userRoles.get(i);
+            userRole.setId((long) (i + 1));
+
+            userRoleRows.add(
+                "(" +
+                    ")");
+        }
     }
 
     private List<Resource> setUpDepartment(LocalDateTime baseline, University university, State state) {
@@ -179,6 +266,26 @@ public class FixtureBuilder {
         resourceRelation.setResource2(resource2);
         resourceRelation.setCreatedTimestamp(baseline);
         return resourceRelation;
+    }
+
+
+    private User setUpUser(LocalDateTime baseline, String name) {
+        User user = new User();
+        user.setGivenName(name);
+        user.setSurname(name);
+        user.setEmail(name + "@prism.hr");
+        user.setCreatedTimestamp(baseline);
+        return user;
+    }
+
+    private UserRole setUpUserRole(LocalDateTime baseline, Resource resource, User user, Role role, State state) {
+        UserRole userRole = new UserRole();
+        userRole.setResource(resource);
+        userRole.setUser(user);
+        userRole.setRole(role);
+        userRole.setState(state);
+        userRole.setCreatedTimestamp(baseline);
+        return userRole;
     }
 
 }
