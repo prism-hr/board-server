@@ -30,4 +30,19 @@ public class ResourceUtilsTest {
         assertEquals("i-am-a-piece-of-text-with", suggestHandle("I am a piece of text with spaces"));
     }
 
+    @Test
+    public void suggestHandle_successWhenSmallHyphenatedText() {
+        assertEquals("i-am-a-piece", suggestHandle("I-am-a-piece"));
+    }
+
+    @Test
+    public void suggestHandle_successWhenLargeHyphenatedText() {
+        assertEquals("i-am-a-piece-of-text-with", suggestHandle("I-am-a-piece of text with spaces"));
+    }
+
+    @Test
+    public void suggestHandle_successWhenUnexpectedCharacter() {
+        assertEquals("i-am-a-piece", suggestHandle("I-am-a-piece@"));
+    }
+
 }
