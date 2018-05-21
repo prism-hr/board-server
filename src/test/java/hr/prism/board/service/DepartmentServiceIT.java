@@ -115,13 +115,13 @@ public class DepartmentServiceIT {
 
     @Test
     public void getById_successWhenAcceptedAndDepartmentAdministrator() {
-        User departmentAdministrator = userService.getByEmail("department-administrator@prism.hr");
+        User administrator = userService.getByEmail("department-administrator@prism.hr");
         University university = (University) resourceService.getByHandle("university");
-        Department department = departmentService.getById(departmentAdministrator, 2L);
+        Department department = departmentService.getById(administrator, 2L);
 
         serviceHelper.verifyIdentity(department, university, "department-accepted");
         serviceHelper.verifyActions(department, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
-        verifyInvocations(departmentAdministrator, 2L, department);
+        verifyInvocations(administrator, 2L, department);
     }
 
     @Test

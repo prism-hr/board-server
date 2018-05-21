@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static hr.prism.board.enums.Role.*;
-import static hr.prism.board.enums.Scope.*;
+import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.*;
 
 @Service
@@ -31,35 +31,42 @@ public class FixtureBuilder {
     }
 
     @PostConstruct
-    public Map<Scope, String> makeInserts() {
-        Map<Scope, String> inserts = new HashMap<>();
+    public Map<String, String> makeInserts() {
+        Map<String, String> inserts = new HashMap<>();
 
-        inserts.put(DEPARTMENT, makeResourceInserts(
-            DEPARTMENT,
+        inserts.put("ACTION",
+            makeResourceInserts(
+                new State[]{ACCEPTED, REJECTED},
+                new State[]{ACCEPTED, REJECTED},
+                new State[]{ACCEPTED}));
+
+        inserts.put("DEPARTMENT", makeResourceInserts(
+            new State[]{DRAFT, PENDING, ACCEPTED, REJECTED},
+            new State[]{ACCEPTED},
+            new State[]{ACCEPTED}));
+
+        inserts.put("BOARD", makeResourceInserts(
+            new State[]{ACCEPTED, REJECTED},
             new State[]{ACCEPTED, REJECTED},
             new State[]{ACCEPTED}));
 
-        inserts.put(BOARD, makeResourceInserts(
-            BOARD,
+        inserts.put("POST", makeResourceInserts(
             new State[]{ACCEPTED, REJECTED},
-            new State[]{ACCEPTED}));
-
-        inserts.put(POST, makeResourceInserts(
-            POST,
             new State[]{ACCEPTED, REJECTED},
             new State[]{DRAFT, PENDING, ACCEPTED, EXPIRED, SUSPENDED, REJECTED, WITHDRAWN, ARCHIVED}));
 
         return inserts;
     }
 
-    private String makeResourceInserts(Scope scope, State[] boardStates, State[] postStates) {
+    private String makeResourceInserts(State[] departmentStates, State[] boardStates, State[] postStates) {
         LocalDateTime baseline = LocalDateTime.now();
         List<Resource> resources = new ArrayList<>();
 
         University university = setUpUniversity(baseline);
         resources.add(university);
-        resources.addAll(setUpDepartment(baseline, university, ACCEPTED, boardStates, postStates));
-        resources.addAll(setUpDepartment(baseline, university, REJECTED, boardStates, postStates));
+        for (State departmentState : departmentStates) {
+            resources.addAll(setUpDepartment(baseline, university, departmentState, boardStates, postStates));
+        }
 
         List<String> rows = new ArrayList<>();
         for (int i = 0; i < resources.size(); i++) {
@@ -85,7 +92,7 @@ public class FixtureBuilder {
                     ")");
         }
 
-        List<String> userInserts = makeUserInserts(baseline, scope, resources);
+        List<String> userInserts = makeUserInserts(baseline, resources);
         List<String> inserts = ImmutableList.of(
             "INSERT INTO resource (id, scope, parent_id, name, handle, state, previous_state, index_data, quarter, " +
                 "created_timestamp)\n" +
@@ -132,94 +139,67 @@ public class FixtureBuilder {
             "VALUES \n\t" + Joiner.on(",\n\t").join(rows) + ";";
     }
 
-    private List<String> makeUserInserts(LocalDateTime baseline, Scope scope, List<Resource> resources) {
+    private List<String> makeUserInserts(LocalDateTime baseline, List<Resource> resources) {
         User departmentAdministrator = setUpUser(baseline, "department-administrator");
-        User otherDepartmentAdministrator = setUpUser(baseline, "other-department-administrator");
-
         User departmentAuthor = setUpUser(baseline, "department-author");
-        User otherDepartmentAuthor = setUpUser(baseline, "other-department-author");
+        User pendingDepartmentMember = setUpUser(baseline, "department-member-pending");
+        User acceptedDepartmentMember = setUpUser(baseline, "department-member-accepted");
+        User rejectedDepartmentMember = setUpUser(baseline, "department-member-rejected");
 
-        User acceptedDepartmentMember = setUpUser(baseline, "accepted-department-member");
-        User otherAcceptedDepartmentMember = setUpUser(baseline, "other-accepted-department-member");
-
-        User pendingDepartmentMember = null;
-        User otherPendingDepartmentMember = null;
-
-        User rejectedDepartmentMember = null;
-        User otherRejectedDepartmentMember = null;
-
-        if (scope == POST) {
-            pendingDepartmentMember = setUpUser(baseline, "pending-department-member");
-            otherPendingDepartmentMember = setUpUser(baseline, "other-pending-department-member");
-
-            rejectedDepartmentMember = setUpUser(baseline, "rejected-department-member");
-            otherRejectedDepartmentMember = setUpUser(baseline, "other-rejected-department-member");
-        }
-
-        User postAdministrator = setUpUser(baseline, "post-administrator");
-        User otherPostAdministrator = setUpUser(baseline, "other-post-administrator");
-
-        User unprivileged = setUpUser(baseline, "unprivileged");
-
-        List<User> users = ImmutableList.of(
-            departmentAdministrator,
-            otherDepartmentAdministrator,
-            departmentAuthor,
-            otherDepartmentAuthor,
-            acceptedDepartmentMember,
-            otherAcceptedDepartmentMember,
-            postAdministrator,
-            otherPostAdministrator,
-            unprivileged);
-        if (scope == POST) {
-            users = ImmutableList.of(
+        List<User> users = new ArrayList<>(
+            ImmutableList.of(
                 departmentAdministrator,
-                otherDepartmentAdministrator,
                 departmentAuthor,
-                otherDepartmentAuthor,
-                acceptedDepartmentMember,
-                otherAcceptedDepartmentMember,
                 pendingDepartmentMember,
-                otherPendingDepartmentMember,
-                rejectedDepartmentMember,
-                otherRejectedDepartmentMember,
-                postAdministrator,
-                otherPostAdministrator,
-                unprivileged);
-        }
+                acceptedDepartmentMember,
+                rejectedDepartmentMember));
 
         List<UserRole> userRoles = new ArrayList<>();
+        Map<Resource, User> departmentPostAdministrators = new HashMap<>();
         for (Resource resource : resources) {
+            String name = resource.getName();
             switch (resource.getScope()) {
                 case DEPARTMENT:
                     userRoles.add(setUpUserRole(baseline, resource, departmentAdministrator, ADMINISTRATOR, ACCEPTED));
                     userRoles.add(setUpUserRole(baseline, resource, departmentAuthor, AUTHOR, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, pendingDepartmentMember, MEMBER, PENDING));
                     userRoles.add(setUpUserRole(baseline, resource, acceptedDepartmentMember, MEMBER, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, rejectedDepartmentMember, MEMBER, REJECTED));
 
-                    if (scope == POST) {
-                        userRoles.add(setUpUserRole(baseline, resource, pendingDepartmentMember, MEMBER, PENDING));
-                        userRoles.add(setUpUserRole(baseline, resource, rejectedDepartmentMember, MEMBER, REJECTED));
-                    }
-                    if (resource.getState() == REJECTED) {
-                        userRoles.add(setUpUserRole(baseline, resource, otherDepartmentAdministrator, ADMINISTRATOR, REJECTED));
-                        userRoles.add(setUpUserRole(baseline, resource, otherDepartmentAuthor, AUTHOR, ACCEPTED));
-                        userRoles.add(setUpUserRole(baseline, resource, otherAcceptedDepartmentMember, MEMBER, ACCEPTED));
+                    User thisDepartmentAdministrator = setUpUser(baseline, name + "-administrator");
+                    User thisDepartmentAuthor = setUpUser(baseline, name + "-author");
+                    User thisPendingDepartmentMember = setUpUser(baseline, name + "-member-pending");
+                    User thisAcceptedDepartmentMember = setUpUser(baseline, name + "-member-accepted");
+                    User thisRejectedDepartmentMember = setUpUser(baseline, name + "-member-rejected");
+                    users.addAll(
+                        ImmutableList.of(
+                            thisDepartmentAdministrator,
+                            thisDepartmentAuthor,
+                            thisPendingDepartmentMember,
+                            thisAcceptedDepartmentMember,
+                            thisRejectedDepartmentMember));
 
-                        if (scope == POST) {
-                            userRoles.add(setUpUserRole(baseline, resource, otherPendingDepartmentMember, MEMBER, PENDING));
-                            userRoles.add(setUpUserRole(baseline, resource, otherRejectedDepartmentMember, MEMBER, REJECTED));
-                        }
-                    }
+                    userRoles.add(setUpUserRole(baseline, resource, thisDepartmentAdministrator, ADMINISTRATOR, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, thisDepartmentAuthor, AUTHOR, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, thisPendingDepartmentMember, MEMBER, PENDING));
+                    userRoles.add(setUpUserRole(baseline, resource, thisAcceptedDepartmentMember, MEMBER, ACCEPTED));
+                    userRoles.add(setUpUserRole(baseline, resource, thisRejectedDepartmentMember, MEMBER, REJECTED));
                     continue;
                 case POST:
-                    if (resource.getParent().getParent().getState() == ACCEPTED) {
-                        userRoles.add(setUpUserRole(baseline, resource, postAdministrator, ADMINISTRATOR, ACCEPTED));
-                    } else {
-                        userRoles.add(
-                            setUpUserRole(baseline, resource, otherPostAdministrator, ADMINISTRATOR, ACCEPTED));
+                    Resource department = resource.getParent().getParent();
+                    User thisPostAdministrator = departmentPostAdministrators.get(department);
+                    if (thisPostAdministrator == null) {
+                        thisPostAdministrator =
+                            setUpUser(baseline, department.getName() + "-post-administrator");
+                        users.add(thisPostAdministrator);
+                        departmentPostAdministrators.put(department, thisPostAdministrator);
                     }
+
+                    userRoles.add(setUpUserRole(baseline, resource, thisPostAdministrator, ADMINISTRATOR, ACCEPTED));
             }
         }
+
+        users.add(setUpUser(baseline, "no-roles"));
 
         List<String> userRows = new ArrayList<>();
         for (int i = 0; i < users.size(); i++) {
