@@ -82,6 +82,10 @@ public class ResourceService {
         return resourceRepository.findOne(id);
     }
 
+    public Resource getByHandle(String handle) {
+        return resourceRepository.findByHandle(handle);
+    }
+
     public Resource getResource(User user, Scope scope, Long id) {
         List<Resource> resources = resourceDAO.getResources(user,
             new ResourceFilter().setScope(scope).setId(id));

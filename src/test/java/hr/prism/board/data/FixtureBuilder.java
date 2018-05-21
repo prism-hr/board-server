@@ -35,7 +35,7 @@ public class FixtureBuilder {
         Map<Scope, String> inserts = new HashMap<>();
 
         inserts.put(DEPARTMENT, makeResourceInserts(
-            POST,
+            DEPARTMENT,
             new State[]{ACCEPTED, REJECTED},
             new State[]{ACCEPTED}));
 
@@ -74,7 +74,9 @@ public class FixtureBuilder {
                     "'" + resourceScope + "', " +
                     resource.getParent().getId() + ", " +
                     "'" + resource.getName() + "', " +
-                    (resourceScope == POST ? "NULL, " : "'" + resource.getHandle() + "', ") +
+                    "'" + (resourceScope == POST ?
+                    resource.getParent().getHandle() + "/post-" + resource.getState().name().toLowerCase() :
+                    resource.getHandle()) + "', " +
                     "'" + resource.getState() + "', " +
                     "'" + resource.getPreviousState() + "', " +
                     "'" + resource.getIndexData() + "', " +

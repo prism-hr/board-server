@@ -78,7 +78,7 @@
 //                .getResponse();
 //        UserRepresentation userRepresentation = objectMapper.readValue(userResponse.getContentAsString(), UserRepresentation.class);
 //
-//        User user = userService.getByHandle(userRepresentation.getId());
+//        User user = userService.findByHandle(userRepresentation.getId());
 //        Long userId = user.getId();
 //
 //        verifyAccessToken(loginAccessToken, userId);
@@ -158,7 +158,7 @@
 //            .andReturn();
 //
 //        Long userId = userR.getId();
-//        User user = userService.getByHandle(userId);
+//        User user = userService.findByHandle(userId);
 //        String passwordResetUuid = user.getPasswordResetUuid();
 //        Assert.assertNotNull(passwordResetUuid);
 //        Assert.assertNotNull(user.getPasswordResetTimestamp());
@@ -184,7 +184,7 @@
 //                    .setPassword("newpassword"))))
 //            .andExpect(MockMvcResultMatchers.status().isOk());
 //
-//        user = userService.getByHandle(userId);
+//        user = userService.findByHandle(userId);
 //        Assert.assertNull(user.getPasswordResetUuid());
 //        Assert.assertNull(user.getPasswordResetTimestamp());
 //    }
@@ -224,7 +224,7 @@
 //            .andReturn();
 //
 //        Long userId = userR.getId();
-//        User user = userService.getByHandle(userId);
+//        User user = userService.findByHandle(userId);
 //        String passwordResetUuid = user.getPasswordResetUuid();
 //        Assert.assertNotNull(passwordResetUuid);
 //        Assert.assertNotNull(user.getPasswordResetTimestamp());
@@ -275,7 +275,7 @@
 //                .getContentAsString(),
 //            UserRepresentation.class).getId();
 //
-//        User user = userService.getByHandle(userId);
+//        User user = userService.findByHandle(userId);
 //        Assert.assertEquals("alastair", user.getGivenName());
 //        Assert.assertEquals("knowles", user.getSurname());
 //        Assert.assertEquals("alastair@prism.hr", user.getEmail());
@@ -291,7 +291,7 @@
 //                        .setOauthData(new OAuthDataDTO().setCode("code")))))
 //            .andExpect(MockMvcResultMatchers.status().isOk());
 //
-//        user = userService.getByHandle(userId);
+//        user = userService.findByHandle(userId);
 //        Assert.assertEquals(OauthProvider.LINKEDIN, user.getOauthProvider());
 //        Assert.assertEquals("linkedinId", user.getOauthAccountId());
 //    }
@@ -349,8 +349,8 @@
 //        User member2 = userRepository.findByEmail("member2@member2.com");
 //        User member3 = userRepository.findByEmail("member3@member3.com");
 //
-//        Resource department1 = resourceService.getByHandle(departmentId1);
-//        Resource post1 = resourceService.getByHandle(postId1);
+//        Resource department1 = resourceService.findByHandle(departmentId1);
+//        Resource post1 = resourceService.findByHandle(postId1);
 //
 //        String post1AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post1, user1, Role.ADMINISTRATOR).getUuid();
 //        String department1MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department1, member1, Role.MEMBER).getUuid();
@@ -523,8 +523,8 @@
 //        String boardName2 = boardR2.getName();
 //        String departmentName2 = departmentR2.getName();
 //
-//        Resource department2 = resourceService.getByHandle(departmentId2);
-//        Resource post2 = resourceService.getByHandle(postId2);
+//        Resource department2 = resourceService.findByHandle(departmentId2);
+//        Resource post2 = resourceService.findByHandle(postId2);
 //        String post2AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post2, user2, Role.ADMINISTRATOR).getUuid();
 //        String department2MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department2, member1, Role.MEMBER).getUuid();
 //        String department2MemberRole3Uuid = userRoleService.getByResourceUserAndRole(department2, member3, Role.MEMBER).getUuid();
@@ -667,8 +667,8 @@
 //        User member6 = userRepository.findByEmail("member6@member6.com");
 //        User member7 = userRepository.findByEmail("member7@member7.com");
 //
-//        Resource department3 = resourceService.getByHandle(departmentId3);
-//        Resource post3 = resourceService.getByHandle(postId3);
+//        Resource department3 = resourceService.findByHandle(departmentId3);
+//        Resource post3 = resourceService.findByHandle(postId3);
 //        String post3AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post3, user3, Role.ADMINISTRATOR).getUuid();
 //        String department3MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department3, member5, Role.MEMBER).getUuid();
 //        String department3MemberRole2Uuid = userRoleService.getByResourceUserAndRole(department3, member6, Role.MEMBER).getUuid();
@@ -836,8 +836,8 @@
 //
 //        User member8 = userRepository.findByEmail("member8@member8.com");
 //
-//        Resource department4 = resourceService.getByHandle(departmentId4);
-//        Resource post4 = resourceService.getByHandle(postId4);
+//        Resource department4 = resourceService.findByHandle(departmentId4);
+//        Resource post4 = resourceService.findByHandle(postId4);
 //        String post4AdminRole1Uuid = userRoleService.getByResourceUserAndRole(post4, user4, Role.ADMINISTRATOR).getUuid();
 //        String department4MemberRole1Uuid = userRoleService.getByResourceUserAndRole(department4, member8, Role.MEMBER).getUuid();
 //

@@ -64,6 +64,9 @@ public class DepartmentServiceIT {
     private DepartmentService departmentService;
 
     @Inject
+    private UserService userService;
+
+    @Inject
     private ServiceHelper serviceHelper;
 
     @SpyBean
@@ -102,15 +105,23 @@ public class DepartmentServiceIT {
 
     @Before
     public void setUp() {
-        baseline = LocalDateTime.now();
-        administrator = serviceHelper.setUpUser();
-        university = serviceHelper.setUpUniversity("university");
         reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
     }
 
     @After
     public void tearDown() {
         reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
+    }
+
+    @Test
+    public void getById_successWhenAcceptedAndDepartmentAdministrator() {
+        User departmentAdministrator = userService.getByEmail("department-administrator@prism.hr");
+        University university = (University) resourceService.getByHandle("university");
+        Department department = departmentService.getById(departmentAdministrator, 2L);
+
+        serviceHelper.verifyIdentity(department, university, "department-accepted");
+        serviceHelper.verifyActions(department, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+        verifyInvocations(departmentAdministrator, 2L, department);
     }
 
     @Test
@@ -366,25 +377,24 @@ public class DepartmentServiceIT {
         });
     }
 
-    private void verifyGetById(Department createdDepartment, State state, Scenarios scenarios,
+    private void verifyGetById(Department department, State state, Scenarios scenarios,
                                Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
-        reset(resourceService, actionService);
-        resourceService.updateState(createdDepartment, state);
+        resourceService.updateState(department, state);
 
-        Long createdDepartmentId = createdDepartment.getId();
+        Long createdDepartmentId = department.getId();
         Department selectedDepartment = departmentService.getById(administrator, createdDepartmentId);
-        assertEquals(createdDepartment, selectedDepartment);
+        assertEquals(department, selectedDepartment);
 
         verifyDepartment(selectedDepartment, "department", expectedAdministratorActions);
-        verifyInvocations(administrator, createdDepartmentId, createdDepartment);
+        verifyInvocations(administrator, createdDepartmentId, department);
         scenarios.forEach(unprivilegedScenario);
     }
 
     private void verifyInvocations(User user, Long departmentId, Department department) {
-        verify(resourceService, atLeastOnce())
+        verify(resourceService, times(1))
             .getResource(user, DEPARTMENT, departmentId);
 
-        verify(actionService, atLeastOnce())
+        verify(actionService, times(1))
             .executeAction(eq(user), eq(department), eq(VIEW), any(Execution.class));
     }
 
@@ -410,8 +420,13 @@ public class DepartmentServiceIT {
             .executeAction(eq(user), eq(department), eq(VIEW), any(Execution.class));
     }
 
-    @SuppressWarnings("SameParameterValue")
     private void verifyDepartment(Department department, String expectedName, Action[] expectedActions) {
+
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyDepartment(Department department, University university, String expectedName,
+                                  Action[] expectedActions) {
         serviceHelper.verifyIdentity(department, university, expectedName);
         serviceHelper.verifyActions(department, expectedActions);
 
