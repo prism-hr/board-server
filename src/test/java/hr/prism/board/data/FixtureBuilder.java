@@ -35,8 +35,8 @@ public class FixtureBuilder {
         Map<Scope, String> inserts = new HashMap<>();
 
         inserts.put(DEPARTMENT, makeResourceInserts(
-            DEPARTMENT,
-            new State[]{ACCEPTED},
+            POST,
+            new State[]{ACCEPTED, REJECTED},
             new State[]{ACCEPTED}));
 
         inserts.put(BOARD, makeResourceInserts(
@@ -199,18 +199,13 @@ public class FixtureBuilder {
                         userRoles.add(setUpUserRole(baseline, resource, rejectedDepartmentMember, MEMBER, REJECTED));
                     }
                     if (resource.getState() == REJECTED) {
-                        userRoles.add(
-                            setUpUserRole(baseline, resource, otherDepartmentAdministrator, ADMINISTRATOR, REJECTED));
-                        userRoles.add(
-                            setUpUserRole(baseline, resource, otherDepartmentAuthor, AUTHOR, ACCEPTED));
-                        userRoles.add(
-                            setUpUserRole(baseline, resource, otherAcceptedDepartmentMember, MEMBER, ACCEPTED));
+                        userRoles.add(setUpUserRole(baseline, resource, otherDepartmentAdministrator, ADMINISTRATOR, REJECTED));
+                        userRoles.add(setUpUserRole(baseline, resource, otherDepartmentAuthor, AUTHOR, ACCEPTED));
+                        userRoles.add(setUpUserRole(baseline, resource, otherAcceptedDepartmentMember, MEMBER, ACCEPTED));
 
                         if (scope == POST) {
-                            userRoles.add(
-                                setUpUserRole(baseline, resource, otherPendingDepartmentMember, MEMBER, PENDING));
-                            userRoles.add(
-                                setUpUserRole(baseline, resource, otherRejectedDepartmentMember, MEMBER, REJECTED));
+                            userRoles.add(setUpUserRole(baseline, resource, otherPendingDepartmentMember, MEMBER, PENDING));
+                            userRoles.add(setUpUserRole(baseline, resource, otherRejectedDepartmentMember, MEMBER, REJECTED));
                         }
                     }
                     continue;

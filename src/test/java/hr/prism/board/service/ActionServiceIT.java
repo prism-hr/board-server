@@ -7,7 +7,6 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.service.ServiceHelper.ResourceModifier;
-import hr.prism.board.service.ServiceHelper.Scenarios;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
@@ -23,7 +22,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.Role.AUTHOR;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,7 +31,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql(scripts = "classpath:data/newActionService_setUp.sql")
+@Sql(scripts = "classpath:data/actionService_setUp.sql")
 @Sql(scripts = "classpath:data/actionService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class ActionServiceIT {
 
@@ -50,22 +48,6 @@ public class ActionServiceIT {
 
     @Inject
     private ServiceHelper serviceHelper;
-
-    private User administrator;
-
-    private User author;
-
-    private User member;
-
-    private User postAdministrator;
-
-    private University university;
-
-    private Department department;
-
-    private Board board;
-
-    private Post post;
 
     @Test
     public void executeAction_successWhenDepartmentAndDepartmentAdministrator() {
@@ -101,19 +83,19 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_successWhenDepartmentAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getById(2L),
+            userService.getById(3L),
+            userService.getById(4L),
+            userService.getById(5L),
+            userService.getById(6L),
+            userService.getById(11L),
+            userService.getById(12L),
+            userService.getById(13L),
+            null};
+
         Department department = (Department) resourceService.getById(2L);
         Board board = (Board) resourceService.getById(3L);
-
-        Scenarios scenarios = new Scenarios()
-            .scenario(userService.getById(2L), "other department administrator")
-            .scenario(userService.getById(3L), "department author")
-            .scenario(userService.getById(4L), "other department author")
-            .scenario(userService.getById(5L), "department member")
-            .scenario(userService.getById(6L), "other department member")
-            .scenario(userService.getById(11L), "department post administrator")
-            .scenario(userService.getById(12L), "other department post administrator")
-            .scenario(userService.getById(13L), "no roles")
-            .scenario(null, "anonymous");
 
         Expectations expectations =
             new Expectations()
@@ -124,7 +106,7 @@ public class ActionServiceIT {
                 .expect(ACCEPTED,
                     new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, department, board, expectations);
+        Stream.of(users).forEach(user -> verify(user, department, board, expectations));
     }
 
     @Test
@@ -137,7 +119,7 @@ public class ActionServiceIT {
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
                 new Expectation(EDIT, ACCEPTED),
-                new Expectation(EXTEND, PENDING),
+                new Expectation(EXTEND, ACCEPTED),
                 new Expectation(REJECT, REJECTED))
             .expect(REJECTED,
                 new Expectation(VIEW, REJECTED),
@@ -156,39 +138,39 @@ public class ActionServiceIT {
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
-                new Expectation(EXTEND, PENDING));
+                new Expectation(EXTEND, ACCEPTED));
 
         verify(author, board, post, expectations);
     }
 
     @Test
     public void executeAction_successWhenBoardAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getById(2L),
+            userService.getById(4L),
+            userService.getById(5L),
+            userService.getById(6L),
+            userService.getById(11L),
+            userService.getById(12L),
+            userService.getById(13L),
+            null};
+
         Board board = (Board) resourceService.getById(3L);
         Post post = (Post) resourceService.getById(4L);
-
-        Scenarios scenarios = new Scenarios()
-            .scenario(userService.getById(2L), "other department administrator")
-            .scenario(userService.getById(4L), "other department author")
-            .scenario(userService.getById(5L), "department member")
-            .scenario(userService.getById(6L), "other department member")
-            .scenario(userService.getById(11L), "department post administrator")
-            .scenario(userService.getById(12L), "other department post administrator")
-            .scenario(userService.getById(13L), "no roles")
-            .scenario(null, "anonymous");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
                 new Expectation(EXTEND, DRAFT));
 
-        verify(scenarios, board, post, expectations);
+        Stream.of(users).forEach(user -> verify(user, board, post, expectations));
     }
 
     @Test
     public void executeAction_successWhenBoardDepartmentAdministratorAndDepartmentRejected() {
         User administrator = userService.getById(1L);
-        Board board = (Board) resourceService.getById(22L);
-        Post post = (Post) resourceService.getById(23L);
+        Board board = (Board) resourceService.getById(8L);
+        Post post = (Post) resourceService.getById(9L);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -206,8 +188,8 @@ public class ActionServiceIT {
     @Test
     public void executeAction_successWhenBoardDepartmentAuthorAndDepartmentRejected() {
         User author = userService.getById(4L);
-        Board board = (Board) resourceService.getById(22L);
-        Post post = (Post) resourceService.getById(23L);
+        Board board = (Board) resourceService.getById(8L);
+        Post post = (Post) resourceService.getById(9L);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
@@ -218,23 +200,23 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_successWhenBoardUnprivilegedAndDepartmentRejected() {
-        Board board = (Board) resourceService.getById(22L);
-        Post post = (Post) resourceService.getById(23L);
+        User[] users = new User[]{
+            userService.getById(4L),
+            userService.getById(5L),
+            userService.getById(6L),
+            userService.getById(11L),
+            userService.getById(12L),
+            userService.getById(13L),
+            null};
 
-        Scenarios scenarios = new Scenarios()
-            .scenario(userService.getById(4L), "other department author")
-            .scenario(userService.getById(5L), "department member")
-            .scenario(userService.getById(6L), "other department member")
-            .scenario(userService.getById(11L), "department post administrator")
-            .scenario(userService.getById(12L), "other department post administrator")
-            .scenario(userService.getById(13L), "no roles")
-            .scenario(null, "anonymous");
+        Board board = (Board) resourceService.getById(8L);
+        Post post = (Post) resourceService.getById(9L);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, board, post, expectations);
+        Stream.of(users).forEach(user -> verify(user, board, post, expectations));
     }
 
     @Test
@@ -292,44 +274,25 @@ public class ActionServiceIT {
 
     @Test
     public void executeAction_successWhenPostAndDepartmentMember() {
-        Post post = (Post) resourceService.getById(4L);
+        User[] users = new User[]{
+            userService.getById(5L),
+            userService.getById(7L)};
 
-        Scenarios scenarios = new Scenarios()
-            .scenario(userService.getById(5L), "accepted department member")
-            .scenario(userService.getById(7L), "pending department member");
+        Post post = (Post) resourceService.getById(4L);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
                 new Expectation(PURSUE, ACCEPTED));
 
-        verify(scenarios, post, null, expectations);
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
     }
 
     @Test
-    public void executeAction_successWhenPost() {
-        executeAction_successWhenPostAndDepartmentMember();
-        executeAction_successWhenPostAndPostAdministrator();
-        executeAction_successWhenPostAndUnprivileged();
+    public void executeAction_successWhenPostAndPostAdministrator() {
+        User postAdministrator = userService.getById(11L);
+        Post post = (Post) resourceService.getById(4L);
 
-        resourceService.updateState(department, REJECTED);
-        executeAction_successWhenPostAndParentRejected();
-
-        resourceService.updateState(board, REJECTED);
-        executeAction_successWhenPostAndParentRejected();
-
-        resourceService.updateState(department, ACCEPTED);
-        executeAction_successWhenPostAndParentRejected();
-    }
-
-    private void executeAction_successWhenPostAndParentRejected() {
-        executeAction_successWhenPostDepartmentAdministratorAndParentRejected();
-        executeAction_successWhenPostDepartmentMemberAndParentRejected();
-        executeAction_successWhenPostPostAdministratorAndParentRejected();
-        executeAction_successWhenPostUnprivilegedAndParentRejected();
-    }
-
-    private void executeAction_successWhenPostAndPostAdministrator() {
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -372,18 +335,32 @@ public class ActionServiceIT {
         verify(postAdministrator, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostAndUnprivileged() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, AUTHOR));
+    @Test
+    public void executeAction_successWhenPostAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getById(2L),
+            userService.getById(3L),
+            userService.getById(4L),
+            userService.getById(6L),
+            userService.getById(9L),
+            userService.getById(12L),
+            userService.getById(13L),
+            null};
+
+        Post post = (Post) resourceService.getById(4L);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, post, null, expectations);
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
     }
 
-    private void executeAction_successWhenPostDepartmentAdministratorAndParentRejected() {
+    @Test
+    public void executeAction_successWhenPostDepartmentAdministratorAndDepartmentRejected() {
+        User administrator = userService.getById(1L);
+        Post post = (Post) resourceService.getById(9L);
+
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -431,15 +408,26 @@ public class ActionServiceIT {
         verify(administrator, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostDepartmentMemberAndParentRejected() {
+    @Test
+    public void executeAction_successWhenPostDepartmentMemberAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getById(6L),
+            userService.getById(8L)};
+
+        Post post = (Post) resourceService.getById(9L);
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(member, post, null, expectations);
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
     }
 
-    private void executeAction_successWhenPostPostAdministratorAndParentRejected() {
+    @Test
+    public void executeAction_successWhenPostPostAdministratorAndDepartmentRejected() {
+        User postAdministrator = userService.getById(12L);
+        Post post = (Post) resourceService.getById(9L);
+
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -481,26 +469,298 @@ public class ActionServiceIT {
         verify(postAdministrator, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostUnprivilegedAndParentRejected() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, AUTHOR));
+    @Test
+    public void executeAction_successWhenPostUnprivilegedAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getById(3L),
+            userService.getById(4L),
+            userService.getById(10L),
+            userService.getById(11L),
+            userService.getById(13L),
+            null};
+
+        Post post = (Post) resourceService.getById(9L);
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, post, null, expectations);
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
     }
 
-    private void verify(Scenarios scenarios, Resource resource, Resource extendResource,
-                        Expectations expectations) {
-        scenarios.forEach(scenario -> {
-            LOGGER.info("Verifying actions: " + scenario.description);
-            verify(scenario.user, resource, extendResource, expectations);
-        });
+    @Test
+    public void executeAction_successWhenPostDepartmentAdministratorAndBoardRejected() {
+        User administrator = userService.getById(1L);
+        Post post = (Post) resourceService.getById(6L);
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(administrator, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostDepartmentMemberAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getById(5L),
+            userService.getById(7L)};
+
+        Post post = (Post) resourceService.getById(6L);
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
+    }
+
+    @Test
+    public void executeAction_successWhenPostPostAdministratorAndBoardRejected() {
+        User postAdministrator = userService.getById(11L);
+        Post post = (Post) resourceService.getById(6L);
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(CORRECT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(postAdministrator, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostUnprivilegedAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getById(2L),
+            userService.getById(3L),
+            userService.getById(4L),
+            userService.getById(6L),
+            userService.getById(9L),
+            userService.getById(12L),
+            userService.getById(13L),
+            null};
+
+        Post post = (Post) resourceService.getById(6L);
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
+    }
+
+    @Test
+    public void executeAction_successWhenPostDepartmentAdministratorAndDepartmentAndBoardRejected() {
+        User administrator = userService.getById(1L);
+        Post post = (Post) resourceService.getById(11L);
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(administrator, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostDepartmentMemberAndDepartmentAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getById(6L),
+            userService.getById(8L)};
+
+        Post post = (Post) resourceService.getById(11L);
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
+    }
+
+    @Test
+    public void executeAction_successWhenPostPostAdministratorAndDepartmentAndBoardRejected() {
+        User postAdministrator = userService.getById(12L);
+        Post post = (Post) resourceService.getById(11L);
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(CORRECT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(postAdministrator, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostUnprivilegedAndDepartmentAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getById(3L),
+            userService.getById(4L),
+            userService.getById(10L),
+            userService.getById(11L),
+            userService.getById(13L),
+            null};
+
+        Post post = (Post) resourceService.getById(11L);
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        Stream.of(users).forEach(user -> verify(user, post, null, expectations));
     }
 
     private void verify(User user, Resource resource, Resource extendResource, Expectations expectations) {
+        String userGivenName =
+            Optional.ofNullable(user)
+                .map(User::getGivenName)
+                .orElse("anonymous");
+
+        LOGGER.info("Verifying actions: " + userGivenName);
         for (State state : new State[]{DRAFT, SUSPENDED, PENDING, ACCEPTED, EXPIRED, REJECTED, WITHDRAWN, ARCHIVED}) {
             resourceService.updateState(resource, state);
             Optional.ofNullable(expectations.getModifier(state))
@@ -508,8 +768,7 @@ public class ActionServiceIT {
 
             Resource testResource = resourceService.getResource(user, resource.getScope(), resource.getId());
             for (Action action : Action.values()) {
-                String userString = user == null ? "Anonymous" : user.toString();
-                LOGGER.info(action + " on " + testResource.getScope() + " in " + state + " as " + userString);
+                LOGGER.info(action + " on " + testResource.getScope() + " in " + state + " as " + userGivenName);
                 Resource executeResource = action == EXTEND ? extendResource : testResource;
 
                 Expectation expectation = expectations.expected(state, action);
