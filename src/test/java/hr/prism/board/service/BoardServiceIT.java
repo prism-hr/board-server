@@ -48,7 +48,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql(scripts = "classpath:data/boardService_setUp.sql")
+@Sql(scripts = "classpath:data/newBoardService_setUp.sql")
 @Sql(scripts = "classpath:data/boardService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class BoardServiceIT {
 
