@@ -146,3 +146,11 @@ VALUES
   (42, UUID(), 11, 27, 'MEMBER', 'ACCEPTED', '2018-05-21 21:04:54.155'),
   (43, UUID(), 11, 28, 'MEMBER', 'REJECTED', '2018-05-21 21:04:54.155'),
   (44, UUID(), 13, 29, 'ADMINISTRATOR', 'ACCEPTED', '2018-05-21 21:04:54.155');
+
+INSERT INTO document(id, cloudinary_id, cloudinary_url, file_name, created_timestamp)
+VALUES
+  (1, 'cloudinary id', 'cloudinary url', 'file name', NOW());
+
+UPDATE resource
+SET document_logo_id = 1
+WHERE id = 1;

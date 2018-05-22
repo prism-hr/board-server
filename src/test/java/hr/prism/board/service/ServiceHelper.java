@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
@@ -250,6 +251,12 @@ public class ServiceHelper {
     void verifyTimestamps(BoardEntity entity, LocalDateTime baseline) {
         assertThat(entity.getCreatedTimestamp()).isGreaterThanOrEqualTo(baseline);
         assertThat(entity.getUpdatedTimestamp()).isGreaterThanOrEqualTo(baseline);
+    }
+
+    String getUserGivenName(User user) {
+        return Optional.ofNullable(user)
+            .map(User::getGivenName)
+            .orElse("anonymous");
     }
 
     private User getDepartmentAdministrator(Department department) {

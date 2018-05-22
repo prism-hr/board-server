@@ -1,29 +1,51 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.dao.ResourceDAO;
 import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Document;
 import hr.prism.board.domain.University;
 import hr.prism.board.domain.User;
+import hr.prism.board.dto.BoardDTO;
+import hr.prism.board.dto.DepartmentDTO;
+import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Execution;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.MemberCategory.*;
+import static hr.prism.board.enums.ResourceTask.DEPARTMENT_TASKS;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
+import static hr.prism.board.enums.State.ACCEPTED;
+import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DbTestContext
@@ -32,7 +54,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 @Sql(scripts = "classpath:data/departmentService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class DepartmentServiceIT {
 
-    private static final Logger LOGGER = getLogger(DepartmentServiceIT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentServiceIT.class);
 
     @Inject
     private DepartmentService departmentService;
@@ -83,8 +105,9 @@ public class DepartmentServiceIT {
             userService.getByEmail("department-administrator@prism.hr"),
             userService.getByEmail("department-draft-administrator@prism.hr")};
 
+        University university = (University) resourceService.getByHandle("university");
         verifyGetById(users, 2L,
-            "department-draft", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+            university, "department-draft", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
     }
 
     @Test
@@ -93,10 +116,37 @@ public class DepartmentServiceIT {
             userService.getByEmail("department-author@prism.hr"),
             userService.getByEmail("department-member-pending@prism.hr"),
             userService.getByEmail("department-member-accepted@prism.hr"),
-            userService.getByEmail("department-member-rejected@prism.hr")};
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
 
+        University university = (University) resourceService.getByHandle("university");
         verifyGetById(users, 2L,
-            "department-draft", new Action[]{VIEW});
+            university, "department-draft", new Action[]{VIEW});
+        verifyGetById((User) null, 2L,
+            university, "department-draft", new Action[]{VIEW});
     }
 
     @Test
@@ -105,8 +155,48 @@ public class DepartmentServiceIT {
             userService.getByEmail("department-administrator@prism.hr"),
             userService.getByEmail("department-pending-administrator@prism.hr")};
 
+        University university = (University) resourceService.getByHandle("university");
         verifyGetById(users, 5L,
-            "department-pending", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+            university, "department-pending", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+    }
+
+    @Test
+    public void getById_successWhenPendingAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetById(users, 5L,
+            university, "department-pending", new Action[]{VIEW});
+        verifyGetById((User) null, 5L,
+            university, "department-pending", new Action[]{VIEW});
     }
 
     @Test
@@ -115,8 +205,48 @@ public class DepartmentServiceIT {
             userService.getByEmail("department-administrator@prism.hr"),
             userService.getByEmail("department-accepted-administrator@prism.hr")};
 
+        University university = (University) resourceService.getByHandle("university");
         verifyGetById(users, 8L,
-            "department-accepted", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+            university, "department-accepted", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+    }
+
+    @Test
+    public void getById_successWhenAcceptedAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetById(users, 8L,
+            university, "department-accepted", new Action[]{VIEW});
+        verifyGetById((User) null, 8L,
+            university, "department-accepted", new Action[]{VIEW});
     }
 
     @Test
@@ -125,370 +255,637 @@ public class DepartmentServiceIT {
             userService.getByEmail("department-administrator@prism.hr"),
             userService.getByEmail("department-rejected-administrator@prism.hr")};
 
+        University university = (University) resourceService.getByHandle("university");
         verifyGetById(users, 11L,
+            university, "department-rejected", new Action[]{VIEW, EDIT, SUBSCRIBE});
+    }
+
+    @Test
+    public void getById_successWhenRejectedAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Department department = new Department();
+        department.setId(11L);
+
+        verifyGetByIdFailure(users, 11L, department);
+        verifyGetByIdFailure((User) null, 11L, department);
+    }
+
+    @Test
+    public void getByHandle_successWhenDraftAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-draft",
+            university, "department-draft", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+    }
+
+    @Test
+    public void getByHandle_successWhenDraftAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-draft",
+            university, "department-draft", new Action[]{VIEW});
+        verifyGetByHandle((User) null, "university/department-draft",
+            university, "department-draft", new Action[]{VIEW});
+    }
+
+    @Test
+    public void getByHandle_successWhenPendingAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-pending",
+            university, "department-pending", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+    }
+
+    @Test
+    public void getByHandle_successWhenPendingAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-pending",
+            university, "department-pending", new Action[]{VIEW});
+        verifyGetByHandle((User) null, "university/department-pending",
+            university, "department-pending", new Action[]{VIEW});
+    }
+
+    @Test
+    public void getByHandle_successWhenAcceptedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-accepted",
+            university, "department-accepted", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+    }
+
+    @Test
+    public void getByHandle_successWhenAcceptedAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-accepted",
+            university, "department-accepted", new Action[]{VIEW});
+        verifyGetByHandle((User) null, "university/department-accepted",
+            university, "department-accepted", new Action[]{VIEW});
+    }
+
+    @Test
+    public void getByHandle_successWhenRejectedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr")};
+
+        University university = (University) resourceService.getByHandle("university");
+        verifyGetByHandle(users, "university/department-rejected",
+            university, "department-rejected", new Action[]{VIEW, EDIT, SUBSCRIBE});
+    }
+
+    @Test
+    public void getByHandle_successWhenRejectedAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-administrator@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Department department = new Department();
+        department.setId(11L);
+
+        verifyGetByHandleFailure(users, department, "university/department-rejected");
+        verifyGetByHandleFailure((User) null, department, "university/department-rejected");
+    }
+
+    @Test
+    public void createDepartment_successWhenDefaultData() {
+        LocalDateTime baseline = LocalDateTime.now();
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        Department createdDepartment =
+            departmentService.createDepartment(user, 1L,
+                new DepartmentDTO()
+                    .setName("department")
+                    .setSummary("department summary"));
+
+        Document expectedDocumentLogo = new Document();
+        expectedDocumentLogo.setCloudinaryId("cloudinary id");
+
+        Department selectedDepartment = departmentService.getById(user, createdDepartment.getId());
+        Stream.of(createdDepartment, selectedDepartment).forEach(department ->
+            verifyCreateDepartment(department, 1L, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+                expectedDocumentLogo, Stream.of(MemberCategory.values()).collect(toList()), baseline));
+
+        verifyInvocations(user, 1L, createdDepartment, MemberCategory.values());
+    }
+
+    @Test
+    public void createDepartment_successWhenCustomData() {
+        LocalDateTime baseline = LocalDateTime.now();
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        DocumentDTO documentLogoDTO =
+            new DocumentDTO()
+                .setCloudinaryId("new cloudinary id")
+                .setCloudinaryUrl("new cloudinary url")
+                .setFileName("new file name");
+
+        Department createdDepartment = departmentService.createDepartment(user, 1L,
+            new DepartmentDTO()
+                .setName("department")
+                .setSummary("department summary")
+                .setDocumentLogo(documentLogoDTO)
+                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
+
+        Department selectedDepartment = departmentService.getById(user, createdDepartment.getId());
+
+        Document expectedDocumentLogo = new Document();
+        expectedDocumentLogo.setCloudinaryId("new cloudinary id");
+
+        Stream.of(createdDepartment, selectedDepartment).forEach(department ->
+            verifyCreateDepartment(department, 1L, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
+                expectedDocumentLogo, ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT), baseline));
+
+        verifyInvocations(user, 1L, createdDepartment,
+            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT});
+        verify(documentService, times(1)).getOrCreateDocument(documentLogoDTO);
+    }
+
+    @Test
+    @SuppressWarnings("Duplicates")
+    public void getDepartments_successWhenAdministrator() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter());
+
+        assertThat(departments).hasSize(4);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university,
+            "department-accepted", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+
+        verifyDepartment(departments.get(1), university,
+            "department-draft", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+
+        verifyDepartment(departments.get(2), university,
+            "department-pending", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+
+        verifyDepartment(departments.get(3), university,
             "department-rejected", new Action[]{VIEW, EDIT, SUBSCRIBE});
     }
 
-    private void verifyGetById(User[] users, Long departmentId, String expectedName, Action[] expectedActions) {
-        University university = (University) resourceService.getByHandle("university");
+    @Test
+    public void getDepartments_successWhenAdministratorAndState() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter().setState(ACCEPTED));
+
+        assertThat(departments).hasSize(1);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university,
+            "department-accepted", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndAction() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter().setAction(EXTEND));
+
+        assertThat(departments).hasSize(3);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university,
+            "department-accepted", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
+
+        verifyDepartment(departments.get(1), university,
+            "department-draft", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+
+        verifyDepartment(departments.get(2), university,
+            "department-pending", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTerm() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter().setSearchTerm("rejected"));
+
+        assertThat(departments).hasSize(1);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university,
+            "department-rejected", new Action[]{VIEW, EDIT, SUBSCRIBE});
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermTypo() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter().setSearchTerm("rIJECT"));
+
+        assertThat(departments).hasSize(1);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university,
+            "department-rejected", new Action[]{VIEW, EDIT, SUBSCRIBE});
+    }
+
+    @Test
+    public void getDepartments_successWhenAdministratorAndSearchTermWithoutResults() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter().setSearchTerm("xyz"));
+        assertThat(departments).hasSize(0);
+    }
+
+    @Test
+    @SuppressWarnings("Duplicates")
+    public void getDepartments_successWhenOtherAdministrator() {
+        User user = userService.getByEmail("department-rejected-administrator@prism.hr");
+
+        List<Department> departments =
+            departmentService.getDepartments(user, new ResourceFilter());
+
+        assertThat(departments).hasSize(4);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university, "department-accepted", new Action[]{VIEW});
+        verifyDepartment(departments.get(1), university, "department-draft", new Action[]{VIEW});
+        verifyDepartment(departments.get(2), university, "department-pending", new Action[]{VIEW});
+        verifyDepartment(departments.get(3), university,
+            "department-rejected", new Action[]{VIEW, EDIT, SUBSCRIBE});
+    }
+
+    @Test
+    public void getDepartments_successWhenUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-author@prism.hr"),
+            userService.getByEmail("department-draft-member-pending@prism.hr"),
+            userService.getByEmail("department-draft-member-accepted@prism.hr"),
+            userService.getByEmail("department-draft-member-rejected@prism.hr"),
+            userService.getByEmail("department-draft-post-administrator@prism.hr"),
+            userService.getByEmail("department-pending-author@prism.hr"),
+            userService.getByEmail("department-pending-member-pending@prism.hr"),
+            userService.getByEmail("department-pending-member-accepted@prism.hr"),
+            userService.getByEmail("department-pending-member-rejected@prism.hr"),
+            userService.getByEmail("department-pending-post-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        verifyGetDepartments(users);
+        verifyGetDepartments((User) null);
+    }
+
+    private void verifyGetById(User[] users, Long id, University expectedUniversity, String expectedName,
+                               Action[] expectedActions) {
         Stream.of(users).forEach(user -> {
             assertNotNull(user);
-            Department department = departmentService.getById(user, departmentId);
-
-            serviceHelper.verifyIdentity(department, university, expectedName);
-            serviceHelper.verifyActions(department, expectedActions);
-
-            verify(resourceService, times(1))
-                .getResource(user, DEPARTMENT, departmentId);
-
-            verify(actionService, times(1))
-                .executeAction(eq(user), eq(department), eq(VIEW), any(Execution.class));
+            verifyGetById(user, id, expectedUniversity, expectedName, expectedActions);
         });
     }
 
-//    @Test
-//    public void getById_success() {
-//        Department createdDepartment = serviceHelper.setUpDepartment(administrator, university, "department");
-//        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-//            .scenarios(serviceHelper.setUpUnprivilegedUsers(createdDepartment, AUTHOR, Role.MEMBER));
-//
-//        Long createdDepartmentId = createdDepartment.getId();
-//        Consumer<Scenario> unprivilegedScenario = scenario -> {
-//            User user = scenario.user;
-//            Department selectedDepartment = departmentService.getById(user, createdDepartmentId);
-//            assertEquals(createdDepartment, selectedDepartment);
-//
-//            verifyDepartment(selectedDepartment, "department", new Action[]{VIEW});
-//            verifyInvocations(user, createdDepartmentId, createdDepartment);
-//        };
-//
-//        verifyGetById(createdDepartment, DRAFT, scenarios,
-//            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
-//
-//        verifyGetById(createdDepartment, PENDING, scenarios,
-//            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
-//
-//        verifyGetById(createdDepartment, ACCEPTED, scenarios,
-//            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE}, unprivilegedScenario);
-//
-//        verifyGetById(createdDepartment, REJECTED, scenarios,
-//            new Action[]{VIEW, EDIT, SUBSCRIBE},
-//            scenario -> {
-//                User user = scenario.user;
-//                assertThatThrownBy(() -> departmentService.getById(user, createdDepartmentId))
-//                    .isExactlyInstanceOf(BoardForbiddenException.class)
-//                    .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
-//
-//                verifyInvocations(user, createdDepartmentId, createdDepartment);
-//            });
-//    }
-//
-//    @Test
-//    public void getByHandle_success() {
-//        Department createdDepartment = serviceHelper.setUpDepartment(administrator, university, "department");
-//        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-//            .scenarios(serviceHelper.setUpUnprivilegedUsers(createdDepartment, AUTHOR, Role.MEMBER));
-//
-//        Consumer<Scenario> unprivilegedScenario = scenario -> {
-//            User user = scenario.user;
-//            Department selectedDepartment = departmentService.getByHandle(user, "university/department");
-//            assertEquals(createdDepartment, selectedDepartment);
-//
-//            verifyDepartment(selectedDepartment, "department", new Action[]{VIEW});
-//            verifyInvocations(user, "university/department", selectedDepartment);
-//        };
-//
-//        verifyGetByHandle(createdDepartment, DRAFT, scenarios,
-//            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
-//
-//        verifyGetByHandle(createdDepartment, PENDING, scenarios,
-//            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE}, unprivilegedScenario);
-//
-//        verifyGetByHandle(createdDepartment, ACCEPTED, scenarios,
-//            new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE}, unprivilegedScenario);
-//
-//        verifyGetByHandle(createdDepartment, REJECTED, scenarios,
-//            new Action[]{VIEW, EDIT, SUBSCRIBE},
-//            scenario -> {
-//                User user = scenario.user;
-//                assertThatThrownBy(() -> departmentService.getByHandle(user, "university/department"))
-//                    .isExactlyInstanceOf(BoardForbiddenException.class)
-//                    .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
-//
-//                verifyInvocations(user, "university/department", createdDepartment);
-//            });
-//    }
-//
-//    @Test
-//    public void createDepartment_successWhenDefaultData() {
-//        Department createdDepartment =
-//            departmentService.createDepartment(administrator, university.getId(),
-//                new DepartmentDTO()
-//                    .setName("department")
-//                    .setSummary("department summary"));
-//
-//        Department selectedDepartment = departmentService.getById(administrator, createdDepartment.getId());
-//        Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-//            verifyDepartment(department, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-//                university.getDocumentLogo(), Stream.of(MemberCategory.values()).collect(toList())));
-//
-//        verifyInvocations(createdDepartment, MemberCategory.values());
-//    }
-//
-//    @Test
-//    public void createDepartment_successWhenCustomData() {
-//        DocumentDTO documentLogoDTO =
-//            new DocumentDTO()
-//                .setCloudinaryId("new cloudinary id")
-//                .setCloudinaryUrl("new cloudinary url")
-//                .setFileName("new file name");
-//
-//        Department createdDepartment = departmentService.createDepartment(administrator, university.getId(),
-//            new DepartmentDTO()
-//                .setName("department")
-//                .setSummary("department summary")
-//                .setDocumentLogo(documentLogoDTO)
-//                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
-//
-//        Department selectedDepartment = departmentService.getById(administrator, createdDepartment.getId());
-//
-//        Document expectedDocumentLogo = new Document();
-//        expectedDocumentLogo.setCloudinaryId("new cloudinary id");
-//
-//        Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-//            verifyDepartment(department, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-//                expectedDocumentLogo, ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)));
-//
-//        verifyInvocations(createdDepartment,
-//            new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT});
-//        verify(documentService, times(1)).getOrCreateDocument(documentLogoDTO);
-//    }
-//
-//    @Test
-//    public void getDepartments_success() {
-//        setUpDepartments();
-//        getDepartments_successWhenAdministrator();
-//        getDepartments_successWhenAdministratorAndState();
-//        getDepartments_successWhenAdministratorAndAction();
-//        getDepartments_successWhenAdministratorAndSearchTerm();
-//        getDepartments_successWhenAdministratorAndSearchTermTypo();
-//        getDepartments_successWhenAdministratorAndSearchTermWithoutResults();
-//        getDepartments_successWhenOtherAdministrator();
-//        getDepartments_successWhenUnprivileged();
-//    }
-//
-//    private void setUpDepartments() {
-//        otherAdministrator = serviceHelper.setUpUser();
-//
-//        Department departmentDraft =
-//            serviceHelper.setUpDepartment(administrator, university, "department DRAFT", DRAFT);
-//
-//        Department departmentPending =
-//            serviceHelper.setUpDepartment(administrator, university, "department PENDING", PENDING);
-//        userRoleService.createUserRole(departmentPending, otherAdministrator, ADMINISTRATOR);
-//
-//        Department departmentAccepted =
-//            serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
-//
-//        Department departmentRejected =
-//            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
-//        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
-//
-//        departments = ImmutableList.of(departmentDraft, departmentPending, departmentAccepted, departmentRejected);
-//    }
-//
-//    @SuppressWarnings("Duplicates")
-//    private void getDepartments_successWhenAdministrator() {
-//        List<Department> departments =
-//            departmentService.getDepartments(administrator, new ResourceFilter());
-//
-//        assertThat(departments).hasSize(4);
-//        verifyDepartment(departments.get(0),
-//            "department ACCEPTED", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
-//
-//        verifyDepartment(departments.get(1),
-//            "department DRAFT", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-//
-//        verifyDepartment(departments.get(2),
-//            "department PENDING", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-//
-//        verifyDepartment(departments.get(3), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
-//    }
-//
-//    private void getDepartments_successWhenAdministratorAndState() {
-//        List<Department> departments =
-//            departmentService.getDepartments(administrator, new ResourceFilter().setState(ACCEPTED));
-//
-//        assertThat(departments).hasSize(1);
-//        verifyDepartment(departments.get(0),
-//            "department ACCEPTED", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
-//    }
-//
-//    private void getDepartments_successWhenAdministratorAndAction() {
-//        List<Department> departments =
-//            departmentService.getDepartments(administrator, new ResourceFilter().setAction(EXTEND));
-//
-//        assertThat(departments).hasSize(3);
-//        verifyDepartment(departments.get(0),
-//            "department ACCEPTED", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE, UNSUBSCRIBE});
-//
-//        verifyDepartment(departments.get(1),
-//            "department DRAFT", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-//
-//        verifyDepartment(departments.get(2),
-//            "department PENDING", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-//    }
-//
-//    private void getDepartments_successWhenAdministratorAndSearchTerm() {
-//        List<Department> departments =
-//            departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("REJECTED"));
-//
-//        assertThat(departments).hasSize(1);
-//        verifyDepartment(departments.get(0), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
-//    }
-//
-//    private void getDepartments_successWhenAdministratorAndSearchTermTypo() {
-//        List<Department> departments =
-//            departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("rIJECT"));
-//
-//        assertThat(departments).hasSize(1);
-//        verifyDepartment(departments.get(0), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
-//    }
-//
-//    private void getDepartments_successWhenAdministratorAndSearchTermWithoutResults() {
-//        List<Department> departments =
-//            departmentService.getDepartments(administrator, new ResourceFilter().setSearchTerm("xyz"));
-//        assertThat(departments).hasSize(0);
-//    }
-//
-//    @SuppressWarnings("Duplicates")
-//    private void getDepartments_successWhenOtherAdministrator() {
-//        List<Department> departments =
-//            departmentService.getDepartments(otherAdministrator, new ResourceFilter());
-//
-//        assertThat(departments).hasSize(4);
-//        verifyDepartment(departments.get(0), "department ACCEPTED", new Action[]{VIEW});
-//        verifyDepartment(departments.get(1), "department DRAFT", new Action[]{VIEW});
-//        verifyDepartment(departments.get(2),
-//            "department PENDING", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
-//
-//        verifyDepartment(departments.get(3), "department REJECTED", new Action[]{VIEW, EDIT, SUBSCRIBE});
-//    }
-//
-//    private void getDepartments_successWhenUnprivileged() {
-//        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university);
-//        departments.forEach(department -> {
-//            Scenarios departmentScenarios = serviceHelper.setUpUnprivilegedUsers(department, AUTHOR, Role.MEMBER);
-//            scenarios.scenarios(departmentScenarios);
-//        });
-//
-//        scenarios.forEach(scenario -> {
-//            User user = scenario.user;
-//            LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
-//
-//            List<Department> departments =
-//                departmentService.getDepartments(user, new ResourceFilter())
-//                    .stream()
-//                    .filter(this.departments::contains)
-//                    .collect(toList());
-//
-//            assertThat(departments).hasSize(3);
-//            verifyDepartment(departments.get(0), "department ACCEPTED", new Action[]{VIEW});
-//            verifyDepartment(departments.get(1), "department DRAFT", new Action[]{VIEW});
-//            verifyDepartment(departments.get(2), "department PENDING", new Action[]{VIEW});
-//        });
-//    }
-//
-//    private void verifyGetById(Department department, State state, Scenarios scenarios,
-//                               Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
-//        resourceService.updateState(department, state);
-//
-//        Long createdDepartmentId = department.getId();
-//        Department selectedDepartment = departmentService.getById(administrator, createdDepartmentId);
-//        assertEquals(department, selectedDepartment);
-//
-//        verifyDepartment(selectedDepartment, "department", expectedAdministratorActions);
-//        verifyInvocations(administrator, createdDepartmentId, department);
-//        scenarios.forEach(unprivilegedScenario);
-//    }
-//
-//    private void verifyGetByHandle(Department createdDepartment, State state, Scenarios scenarios,
-//                                   Action[] expectedAdministratorActions, Consumer<Scenario> unprivilegedScenario) {
-//        reset(resourceService, actionService);
-//        resourceService.updateState(createdDepartment, state);
-//
-//        Department selectedDepartment = departmentService.getByHandle(administrator, "university/department");
-//        assertEquals(createdDepartment, selectedDepartment);
-//
-//        verifyDepartment(selectedDepartment, "department", expectedAdministratorActions);
-//        verifyInvocations(administrator, "university/department", selectedDepartment);
-//        scenarios.forEach(unprivilegedScenario);
-//    }
-//
-//    @SuppressWarnings("SameParameterValue")
-//    private void verifyInvocations(User user, String departmentHandle, Department department) {
-//        verify(resourceService, atLeastOnce())
-//            .getResource(user, DEPARTMENT, departmentHandle);
-//
-//        verify(actionService, atLeastOnce())
-//            .executeAction(eq(user), eq(department), eq(VIEW), any(Execution.class));
-//    }
-//
-//    private void verifyDepartment(Department department, String expectedName, Action[] expectedActions) {
-//
-//    }
-//
-//    @SuppressWarnings("SameParameterValue")
-//    private void verifyDepartment(Department department, University university, String expectedName,
-//                                  Action[] expectedActions) {
-//        serviceHelper.verifyIdentity(department, university, expectedName);
-//        serviceHelper.verifyActions(department, expectedActions);
-//
-//        assertThat(department.getLastTaskCreationTimestamp()).isGreaterThanOrEqualTo(baseline);
-//        serviceHelper.verifyTimestamps(department, baseline);
-//    }
-//
-//    private void verifyDepartment(Department department, Action[] expectedActions, Document expectedDocumentLogo,
-//                                  List<MemberCategory> expectedMemberCategories) {
-//        verifyDepartment(department, "department", expectedActions);
-//        assertEquals("department summary", department.getSummary());
-//        assertEquals(expectedDocumentLogo, department.getDocumentLogo());
-//        assertEquals("university/department", department.getHandle());
-//        assertEquals(DRAFT, department.getState());
-//        assertEquals(DRAFT, department.getPreviousState());
-//        assertEquals(toStrings(expectedMemberCategories), department.getMemberCategoryStrings());
-//    }
-//
-//    private void verifyInvocations(Department department, MemberCategory[] memberCategories) {
-//        verify(universityService, times(1)).getById(university.getId());
-//        verify(resourceDAO).checkUniqueName(DEPARTMENT, null, university, "department");
-//        verify(resourceService, times(1)).createHandle(department);
-//
-//        verify(resourceService, times(1))
-//            .updateCategories(department, MEMBER, toStrings(asList(memberCategories)));
-//
-//        verify(resourceService, times(1)).createResourceRelation(university, department);
-//        verify(resourceService, times(1)).setIndexDataAndQuarter(department);
-//
-//        verify(resourceService, times(1))
-//            .createResourceOperation(department, EXTEND, administrator);
-//
-//        verify(userRoleService, times(1))
-//            .createUserRole(department, administrator, ADMINISTRATOR);
-//
-//        Long departmentId = department.getId();
-//        verify(boardService).createBoard(administrator, departmentId,
-//            new BoardDTO()
-//                .setName("Career Opportunities")
-//                .setPostCategories(ImmutableList.of("Employment", "Internship", "Volunteering")));
-//
-//        verify(boardService).createBoard(administrator, departmentId,
-//            new BoardDTO()
-//                .setName("Research Opportunities")
-//                .setPostCategories(ImmutableList.of("MRes", "PhD", "Postdoc")));
-//
-//        verify(resourceTaskService, times(1))
-//            .createForNewResource(departmentId, administrator.getId(), DEPARTMENT_TASKS);
-//    }
+    private void verifyGetById(User user, Long id, University expectedUniversity, String expectedName,
+                               Action[] expectedActions) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Get by id: " + id + ": " + userGivenName);
+
+        Department department = departmentService.getById(user, id);
+
+        verifyDepartment(department, expectedUniversity, expectedName, expectedActions);
+        verifyInvocations(user, id, department);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyGetByIdFailure(User[] users, Long id, Department department) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetByIdFailure(user, id, department);
+        });
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyGetByIdFailure(User user, Long id, Department department) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Get by id: " + id + ": " + userGivenName);
+
+        Assertions.assertThatThrownBy(() -> departmentService.getById(user, id))
+            .isExactlyInstanceOf(BoardForbiddenException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+
+        verifyInvocations(user, id, department);
+    }
+
+    private void verifyGetByHandle(User[] users, String handle, University expectedUniversity, String expectedName,
+                                   Action[] expectedActions) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetByHandle(user, handle, expectedUniversity, expectedName, expectedActions);
+        });
+    }
+
+    private void verifyGetByHandle(User user, String handle, University expectedUniversity, String expectedName,
+                                   Action[] expectedActions) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Get by handle: " + handle + ": " + userGivenName);
+
+        Department department = departmentService.getByHandle(user, handle);
+
+        verifyDepartment(department, expectedUniversity, expectedName, expectedActions);
+        verifyInvocations(user, handle, department);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyGetByHandleFailure(User[] users, Department department, String handle) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetByHandleFailure(user, department, handle);
+        });
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyGetByHandleFailure(User user, Department department, String handle) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Get by handle: " + handle + ": " + userGivenName);
+
+        Assertions.assertThatThrownBy(() -> departmentService.getByHandle(user, handle))
+            .isExactlyInstanceOf(BoardForbiddenException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+
+        verifyInvocations(user, handle, department);
+    }
+
+    private void verifyDepartment(Department department, University expectedUniversity, String expectedName, Action[] expectedActions) {
+        serviceHelper.verifyIdentity(department, expectedUniversity, expectedName);
+        serviceHelper.verifyActions(department, expectedActions);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyCreateDepartment(Department department, Long expectedUniversityId, Action[] expectedActions,
+                                        Document expectedDocumentLogo, List<MemberCategory> expectedMemberCategories,
+                                        LocalDateTime baseline) {
+        University expectedUniversity = new University();
+        expectedUniversity.setId(expectedUniversityId);
+
+        verifyDepartment(department, expectedUniversity, "department", expectedActions);
+        assertEquals("department summary", department.getSummary());
+        assertEquals(expectedDocumentLogo, department.getDocumentLogo());
+        assertEquals("university/department", department.getHandle());
+        assertEquals(DRAFT, department.getState());
+        assertEquals(DRAFT, department.getPreviousState());
+        assertEquals(toStrings(expectedMemberCategories), department.getMemberCategoryStrings());
+
+        assertThat(department.getLastTaskCreationTimestamp()).isGreaterThanOrEqualTo(baseline);
+        serviceHelper.verifyTimestamps(department, baseline);
+    }
+
+    private void verifyGetDepartments(User[] users) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetDepartments(user);
+        });
+    }
+
+    private void verifyGetDepartments(User user) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Getting departments: " + userGivenName);
+        List<Department> departments = departmentService.getDepartments(user, new ResourceFilter());
+
+        assertThat(departments).hasSize(3);
+
+        University university = new University();
+        university.setId(1L);
+
+        verifyDepartment(departments.get(0), university, "department-accepted", new Action[]{VIEW});
+        verifyDepartment(departments.get(1), university, "department-draft", new Action[]{VIEW});
+        verifyDepartment(departments.get(2), university, "department-pending", new Action[]{VIEW});
+    }
+
+    private void verifyInvocations(User user, Long id, Department department) {
+        verify(resourceService, times(1))
+            .getResource(user, DEPARTMENT, id);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(department), eq(VIEW), any(Execution.class));
+    }
+
+    private void verifyInvocations(User user, String handle, Department department) {
+        verify(resourceService, atLeastOnce())
+            .getResource(user, DEPARTMENT, handle);
+
+        verify(actionService, atLeastOnce())
+            .executeAction(eq(user), eq(department), eq(VIEW), any(Execution.class));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void verifyInvocations(User user, Long universityId, Department department,
+                                   MemberCategory[] memberCategories) {
+        University university = new University();
+        university.setId(universityId);
+
+        verify(universityService, times(1)).getById(universityId);
+        verify(resourceDAO).checkUniqueName(DEPARTMENT, null, university, "department");
+        verify(resourceService, times(1)).createHandle(department);
+
+        verify(resourceService, times(1))
+            .updateCategories(department, MEMBER, toStrings(asList(memberCategories)));
+
+        verify(resourceService, times(1)).createResourceRelation(university, department);
+        verify(resourceService, times(1)).setIndexDataAndQuarter(department);
+
+        verify(resourceService, times(1))
+            .createResourceOperation(department, EXTEND, user);
+
+        verify(userRoleService, times(1))
+            .createUserRole(department, user, ADMINISTRATOR);
+
+        Long departmentId = department.getId();
+        verify(boardService).createBoard(user, departmentId,
+            new BoardDTO()
+                .setName("Career Opportunities")
+                .setPostCategories(ImmutableList.of("Employment", "Internship", "Volunteering")));
+
+        verify(boardService).createBoard(user, departmentId,
+            new BoardDTO()
+                .setName("Research Opportunities")
+                .setPostCategories(ImmutableList.of("MRes", "PhD", "Postdoc")));
+
+        verify(resourceTaskService, times(1))
+            .createForNewResource(departmentId, user.getId(), DEPARTMENT_TASKS);
+    }
 
 }

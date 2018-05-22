@@ -845,12 +845,9 @@ public class ActionServiceIT {
     }
 
     private void verify(User user, Resource resource, Resource extendResource, Expectations expectations) {
-        String userGivenName =
-            Optional.ofNullable(user)
-                .map(User::getGivenName)
-                .orElse("anonymous");
-
+        String userGivenName = serviceHelper.getUserGivenName(user);
         LOGGER.info("Verifying actions: " + userGivenName);
+
         for (State state : new State[]{DRAFT, SUSPENDED, PENDING, ACCEPTED, EXPIRED, REJECTED, WITHDRAWN, ARCHIVED}) {
             resourceService.updateState(resource, state);
             Optional.ofNullable(expectations.getModifier(state))
