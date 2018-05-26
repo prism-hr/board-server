@@ -655,6 +655,7 @@ public class DepartmentServiceIT {
 
         List<Department> departments =
             departmentService.getDepartments(user, new ResourceFilter().setSearchTerm("xyz"));
+
         assertThat(departments).hasSize(0);
     }
 

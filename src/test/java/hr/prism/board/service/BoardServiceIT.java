@@ -9,6 +9,7 @@ import hr.prism.board.domain.User;
 import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
 import org.junit.Before;
@@ -21,14 +22,17 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.Scope.BOARD;
 import static hr.prism.board.enums.State.ACCEPTED;
+import static hr.prism.board.enums.State.REJECTED;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -420,6 +424,197 @@ public class BoardServiceIT {
             .createResourceOperation(createdBoard, EXTEND, user);
     }
 
+    @Test
+    public void getBoards_successWhenAdministrator() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter());
+
+        assertThat(boards).hasSize(4);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-accepted", new Action[]{VIEW, EDIT, EXTEND, REJECT});
+
+        verifyBoard(boards.get(1), departmentAccepted,
+            "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(2), departmentRejected,
+            "department-rejected-board-accepted", new Action[]{VIEW, EDIT, REJECT});
+
+        verifyBoard(boards.get(3), departmentRejected,
+            "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_successWhenAdministratorAndState() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setState(REJECTED));
+
+        assertThat(boards).hasSize(2);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(1), departmentRejected,
+            "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_successWhenAdministratorAndDepartment() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setParentId(2L));
+
+        assertThat(boards).hasSize(2);
+
+        Department department = new Department();
+        department.setId(2L);
+
+        verifyBoard(boards.get(0), department,
+            "department-accepted-board-accepted", new Action[]{VIEW, EDIT, EXTEND, REJECT});
+
+        verifyBoard(boards.get(1), department,
+            "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_successWhenAdministratorAndAction() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setAction(RESTORE));
+
+        assertThat(boards).hasSize(2);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(1), departmentRejected,
+            "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_successWhenAdministratorAndSearchTerm() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("rejected"));
+
+        assertThat(boards).hasSize(3);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(1), departmentRejected,
+            "department-rejected-board-accepted", new Action[]{VIEW, EDIT, REJECT});
+
+        verifyBoard(boards.get(2), departmentRejected,
+            "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_successWhenAdministratorAndSearchTermTypo() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("rIJECT"));
+
+        assertThat(boards).hasSize(3);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(1), departmentRejected,
+            "department-rejected-board-accepted", new Action[]{VIEW, EDIT, REJECT});
+
+        verifyBoard(boards.get(2), departmentRejected,
+            "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_failureWhenAdministratorAndSearchWithoutResults() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("xyz"));
+
+        assertThat(boards).hasSize(0);
+    }
+
+    @Test
+    public void getBoards_successWhenOtherAdministrator() {
+        User user = userService.getByEmail("department-rejected-administrator@prism.hr");
+
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter());
+
+        assertThat(boards).hasSize(3);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-accepted", new Action[]{VIEW, EXTEND});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(1), departmentRejected,
+            "department-rejected-board-accepted", new Action[]{VIEW, EDIT, REJECT});
+
+        verifyBoard(boards.get(2), departmentRejected,
+            "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getBoards_successWhenUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        verifyGetBoards(users);
+        verifyGetBoards((User) null);
+    }
+
     private void verifyGetById(User[] users, Long id, Department expectedDepartment, String expectedName,
                                Action[] expectedActions) {
         Stream.of(users).forEach(user -> {
@@ -504,6 +699,33 @@ public class BoardServiceIT {
         serviceHelper.verifyActions(board, expectedActions);
     }
 
+    private void verifyGetBoards(User[] users) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetBoards(user);
+        });
+    }
+
+    private void verifyGetBoards(User user) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Getting boards: " + userGivenName);
+        List<Board> boards = boardService.getBoards(user, new ResourceFilter());
+
+        assertThat(boards).hasSize(2);
+
+        Department departmentAccepted = new Department();
+        departmentAccepted.setId(2L);
+
+        verifyBoard(boards.get(0), departmentAccepted,
+            "department-accepted-board-accepted", new Action[]{VIEW, EXTEND});
+
+        Department departmentRejected = new Department();
+        departmentRejected.setId(7L);
+
+        verifyBoard(boards.get(1), departmentRejected,
+            "department-rejected-board-accepted", new Action[]{VIEW});
+    }
+
     private void verifyInvocations(User user, Long id, Board board) {
         verify(resourceService, times(1))
             .getResource(user, BOARD, id);
@@ -519,201 +741,5 @@ public class BoardServiceIT {
         verify(actionService, times(1))
             .executeAction(eq(user), eq(board), eq(VIEW), any(Execution.class));
     }
-
-//    @Test
-//    public void getBoards_success() {
-//        setUpBoards();
-//        getBoards_successWhenAdministrator();
-//        getBoards_successWhenAdministratorAndState();
-//        getBoards_successWhenAdministratorAndDepartment();
-//        getBoards_successWhenAdministratorAndAction();
-//        getBoards_successWhenAdministratorAndSearchTerm();
-//        getBoards_successWhenAdministratorAndSearchTermTypo();
-//        getBoards_successWhenAdministratorAndSearchTermWithoutResults();
-//        getBoards_successWhenOtherAdministrator();
-//        getBoards_successWhenAuthor();
-//        getBoards_successWhenOtherAuthor();
-//        getBoards_successWhenUnprivileged();
-//    }
-//
-//    private void setUpBoards() {
-//        otherAdministrator = serviceHelper.setUpUser();
-//        author = serviceHelper.setUpUser();
-//        otherAuthor = serviceHelper.setUpUser();
-//
-//        userRoleService.createUserRole(departmentRejected, otherAdministrator, ADMINISTRATOR);
-//        userRoleService.createUserRole(departmentAccepted, author, AUTHOR);
-//        userRoleService.createUserRole(departmentRejected, author, AUTHOR);
-//        userRoleService.createUserRole(departmentRejected, otherAuthor, AUTHOR);
-//
-//        departmentAcceptedBoards =
-//            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentAccepted.getId()));
-//        resourceService.updateState(departmentAcceptedBoards.get(1), REJECTED);
-//
-//        departmentRejectedBoards =
-//            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentRejected.getId()));
-//        resourceService.updateState(departmentRejectedBoards.get(1), REJECTED);
-//    }
-//
-//    private void getBoards_successWhenAdministrator() {
-//        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter());
-//
-//        assertThat(boards).hasSize(4);
-//        verifyAdministratorBoards(departmentAccepted,
-//            ImmutableList.of(boards.get(0), boards.get(2)),
-//            new Action[]{VIEW, EDIT, EXTEND, REJECT});
-//
-//        verifyAdministratorBoards(departmentRejected,
-//            ImmutableList.of(boards.get(1), boards.get(3)),
-//            new Action[]{VIEW, EDIT, REJECT});
-//    }
-//
-//    private void getBoards_successWhenAdministratorAndState() {
-//        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setState(REJECTED));
-//        assertThat(boards).hasSize(2);
-//
-//        verifyBoard(boards.get(0), departmentAccepted,
-//            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
-//
-//        verifyBoard(boards.get(1), departmentRejected,
-//            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
-//    }
-//
-//    private void getBoards_successWhenAdministratorAndDepartment() {
-//        List<Board> boards =
-//            boardService.getBoards(administrator, new ResourceFilter().setParentId(departmentAccepted.getId()));
-//        assertThat(boards).hasSize(2);
-//        verifyAdministratorBoards(departmentAccepted, boards, new Action[]{VIEW, EDIT, EXTEND, REJECT});
-//    }
-//
-//    private void getBoards_successWhenAdministratorAndAction() {
-//        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setAction(RESTORE));
-//        assertThat(boards).hasSize(2);
-//
-//        verifyBoard(boards.get(0), departmentAccepted,
-//            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
-//
-//        verifyBoard(boards.get(1), departmentRejected,
-//            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
-//    }
-//
-//    private void getBoards_successWhenAdministratorAndSearchTerm() {
-//        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("career"));
-//        assertThat(boards).hasSize(2);
-//        verifyCareerBoards(boards);
-//    }
-//
-//    private void getBoards_successWhenAdministratorAndSearchTermTypo() {
-//        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("cuREER"));
-//        assertThat(boards).hasSize(2);
-//        verifyCareerBoards(boards);
-//    }
-//
-//    private void getBoards_successWhenAdministratorAndSearchTermWithoutResults() {
-//        List<Board> boards = boardService.getBoards(administrator, new ResourceFilter().setSearchTerm("xyz"));
-//        assertThat(boards).hasSize(0);
-//    }
-//
-//    private void getBoards_successWhenAuthor() {
-//        List<Board> boards = boardService.getBoards(author, new ResourceFilter());
-//        assertThat(boards).hasSize(2);
-//
-//        verifyAuthorBoards(departmentAccepted,
-//            singletonList(boards.get(0)),
-//            new Action[]{VIEW, EXTEND}, ACCEPTED);
-//
-//        verifyUnprivilegedBoards(departmentRejected,
-//            singletonList(boards.get(1)),
-//            new Action[]{VIEW});
-//    }
-//
-//    private void getBoards_successWhenOtherAdministrator() {
-//        List<Board> boards = boardService.getBoards(otherAdministrator, new ResourceFilter());
-//        assertThat(boards).hasSize(3);
-//
-//        verifyAuthorBoards(departmentAccepted,
-//            singletonList(boards.get(0)),
-//            new Action[]{VIEW, EXTEND}, DRAFT);
-//
-//        verifyAdministratorBoards(departmentRejected,
-//            ImmutableList.of(boards.get(1), boards.get(2)),
-//            new Action[]{VIEW, EDIT, REJECT});
-//    }
-//
-//    private void getBoards_successWhenOtherAuthor() {
-//        List<Board> boards = boardService.getBoards(otherAuthor, new ResourceFilter());
-//        assertThat(boards).hasSize(2);
-//
-//        verifyAuthorBoards(departmentAccepted,
-//            singletonList(boards.get(0)),
-//            new Action[]{VIEW, EXTEND}, DRAFT);
-//
-//        verifyUnprivilegedBoards(departmentRejected,
-//            singletonList(boards.get(1)),
-//            new Action[]{VIEW});
-//    }
-//
-//    private void getBoards_successWhenUnprivileged() {
-//        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-//            .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentAccepted, MEMBER)
-//                .scenarios(serviceHelper.setUpUnprivilegedUsers(departmentRejected, MEMBER)));
-//
-//        scenarios.forEach(scenario -> {
-//            User user = scenario.user;
-//            LOGGER.info("Verifying resources: " + scenario.description + " (" + user + ")");
-//
-//            List<Board> boards =
-//                boardService.getBoards(user, new ResourceFilter())
-//                    .stream()
-//                    .filter(board -> departmentAcceptedBoards.contains(board) || departmentRejectedBoards.contains(board))
-//                    .collect(toList());
-//            assertThat(boards).hasSize(2);
-//
-//            verifyAuthorBoards(
-//                departmentAccepted,
-//                singletonList(boards.get(0)),
-//                new Action[]{VIEW, EXTEND}, DRAFT);
-//
-//            verifyUnprivilegedBoards(
-//                departmentRejected,
-//                singletonList(boards.get(1)),
-//                new Action[]{VIEW});
-//        });
-//    }
-//
-//    @SuppressWarnings("SameParameterValue")
-//    private void verifyAdministratorBoards(Department department, List<Board> boards, Action[] expectedActions) {
-//        verifyBoard(boards.get(0), department, "Career Opportunities", expectedActions);
-//        verifyBoard(boards.get(1), department,
-//            "Research Opportunities", new Action[]{VIEW, EDIT, RESTORE});
-//    }
-//
-//    private void verifyAuthorBoards(Department department, List<Board> boards, Action[] expectedActions,
-//                                    State expectedExtendActionState) {
-//        Board board = boards.get(0);
-//        verifyBoard(board, department, "Career Opportunities", expectedActions);
-//
-//        board.getActions()
-//            .stream()
-//            .filter(action -> action.getAction() == EXTEND)
-//            .findFirst()
-//            .map(action -> {
-//                assertEquals(expectedExtendActionState, action.getState());
-//                return action;
-//            })
-//            .orElseThrow(() -> new Error("Extend action was not found"));
-//    }
-//
-//    private void verifyUnprivilegedBoards(Department department, List<Board> boards, Action[] expectedActions) {
-//        verifyBoard(boards.get(0), department, "Career Opportunities", expectedActions);
-//    }
-//
-//    private void verifyCareerBoards(List<Board> boards) {
-//        verifyBoard(boards.get(0), departmentAccepted,
-//            "Career Opportunities", new Action[]{VIEW, EDIT, EXTEND, REJECT});
-//
-//        verifyBoard(boards.get(1), departmentRejected,
-//            "Career Opportunities", new Action[]{VIEW, EDIT, REJECT});
-//    }
 
 }
