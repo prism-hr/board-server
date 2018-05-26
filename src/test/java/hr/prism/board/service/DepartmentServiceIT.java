@@ -495,8 +495,8 @@ public class DepartmentServiceIT {
         Department department = new Department();
         department.setId(11L);
 
-        verifyGetByHandleFailure(users, department, "university/department-rejected");
-        verifyGetByHandleFailure((User) null, department, "university/department-rejected");
+        verifyGetByHandleFailure(users, "university/department-rejected", department);
+        verifyGetByHandleFailure((User) null, "university/department-rejected", department);
     }
 
     @Test
@@ -770,15 +770,15 @@ public class DepartmentServiceIT {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void verifyGetByHandleFailure(User[] users, Department department, String handle) {
+    private void verifyGetByHandleFailure(User[] users, String handle, Department department) {
         Stream.of(users).forEach(user -> {
             assertNotNull(user);
-            verifyGetByHandleFailure(user, department, handle);
+            verifyGetByHandleFailure(user, handle, department);
         });
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void verifyGetByHandleFailure(User user, Department department, String handle) {
+    private void verifyGetByHandleFailure(User user, String handle, Department department) {
         String userGivenName = serviceHelper.getUserGivenName(user);
         LOGGER.info("Get by handle: " + handle + ": " + userGivenName);
 
