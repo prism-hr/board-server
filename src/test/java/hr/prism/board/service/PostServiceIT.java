@@ -3,7 +3,6 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
