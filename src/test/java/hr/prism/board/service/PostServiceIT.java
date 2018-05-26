@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
@@ -23,7 +24,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static hr.prism.board.enums.Action.VIEW;
+import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.*;
 import static org.junit.Assert.assertNotNull;
@@ -89,10 +90,27 @@ public class PostServiceIT {
     }
 
     @Test
-    public void getById_successWhenDepartmentAcceptedAndPostDraftAndDepartmentAdministrator() {
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostDraftAndDepartmentAdministrator() {
         User[] users = new User[]{
             userService.getByEmail("department-administrator@prism.hr"),
             userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(users, 4L, board,
+            "department-accepted-board-accepted-post-draft",
+            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostPendingAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(users, 5L, board,
+            "department-accepted-board-accepted-post-pending",
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
     }
 
     private void verifyGetById(User[] users, Long id, Board expectedBoard, String expectedName,
