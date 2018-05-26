@@ -42,13 +42,14 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql(scripts = "classpath:data/newBoardService_setUp.sql")
+@Sql(scripts = "classpath:data/boardService_setUp.sql")
 @Sql(scripts = "classpath:data/boardService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
 public class BoardServiceIT {
 
@@ -56,6 +57,9 @@ public class BoardServiceIT {
 
     @Inject
     private BoardService boardService;
+
+    @Inject
+    private UserService userService;
 
     @Inject
     private UserRoleService userRoleService;
@@ -94,21 +98,89 @@ public class BoardServiceIT {
 
     @Before
     public void setUp() {
-        baseline = LocalDateTime.now();
-        administrator = serviceHelper.setUpUser();
-        university = serviceHelper.setUpUniversity("university");
-
-        departmentAccepted =
-            serviceHelper.setUpDepartment(administrator, university, "department ACCEPTED", ACCEPTED);
-        departmentRejected =
-            serviceHelper.setUpDepartment(administrator, university, "department REJECTED", REJECTED);
-
         reset(actionService, resourceService);
     }
 
     @After
     public void tearDown() {
         reset(actionService, resourceService);
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAndBoardAcceptedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        verifyGetById(users, 3L,
+            department, "department-accepted-board-accepted", new Action[]{VIEW, EDIT, EXTEND, REJECT});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardRejectedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        verifyGetById(users, 5L,
+            department, "department-accepted-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentRejectedBoardAcceptedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr")};
+
+        Department department = (Department) resourceService.getByHandle("university/department-rejected");
+        verifyGetById(users, 8L,
+            department, "department-rejected-board-accepted", new Action[]{VIEW, EDIT, REJECT});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAndBoardRejectedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr")};
+
+        Department department = (Department) resourceService.getByHandle("university/department-rejected");
+        verifyGetById(users, 10L,
+            department, "department-rejected-board-rejected", new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    private void verifyGetById(User[] users, Long id, Department expectedDepartment, String expectedName,
+                               Action[] expectedActions) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetById(user, id, expectedDepartment, expectedName, expectedActions);
+        });
+    }
+
+    private void verifyGetById(User user, Long id, Department expectedDepartment, String expectedName,
+                               Action[] expectedActions) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Get by id: " + id + ": " + userGivenName);
+
+        Board board = boardService.getById(user, id);
+
+        verifyBoard(board, expectedDepartment, expectedName, expectedActions);
+        verifyInvocations(user, id, board);
+    }
+
+    private void verifyBoard(Board board, Department expectedDepartment, String expectedName,
+                             Action[] expectedActions) {
+        serviceHelper.verifyIdentity(board, expectedDepartment, expectedName);
+        serviceHelper.verifyActions(board, expectedActions);
+    }
+
+    private void verifyInvocations(User user, Long id, Board board) {
+        verify(resourceService, times(1))
+            .getResource(user, BOARD, id);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(board), eq(VIEW), any(Execution.class));
     }
 
     @Test
@@ -376,14 +448,6 @@ public class BoardServiceIT {
         scenarios.forEach(unprivilegedScenario);
     }
 
-    private void verifyInvocations(User user, Long createdBoardId, Board selectedBoard) {
-        verify(resourceService, atLeastOnce())
-            .getResource(user, BOARD, createdBoardId);
-
-        verify(actionService, atLeastOnce())
-            .executeAction(eq(user), eq(selectedBoard), eq(VIEW), any(Execution.class));
-    }
-
     private void verifyGetByHandle(Department department, Scenarios scenarios, Action[] expectedAdministratorActions,
                                    Action[] expectedUnprivilegedActions) {
         Board createdBoard = serviceHelper.setUpBoard(administrator, department, "board");
@@ -435,12 +499,6 @@ public class BoardServiceIT {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void verifyBoard(Board board, Department expectedDepartment, String expectedName,
-                             Action[] expectedActions) {
-        serviceHelper.verifyIdentity(board, expectedDepartment, expectedName);
-        serviceHelper.verifyActions(board, expectedActions);
-        serviceHelper.verifyTimestamps(board, baseline);
-    }
 
     private void verifyAdministratorBoards(Department department, List<Board> boards, Action[] expectedActions) {
         verifyBoard(boards.get(0), department, "Career Opportunities", expectedActions);

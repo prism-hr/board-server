@@ -261,7 +261,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getById_successWhenRejectedAndUnprivileged() {
+    public void getById_failureWhenRejectedAndUnprivileged() {
         User[] users = new User[]{
             userService.getByEmail("department-author@prism.hr"),
             userService.getByEmail("department-member-pending@prism.hr"),
@@ -461,7 +461,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getByHandle_successWhenRejectedAndUnprivileged() {
+    public void getByHandle_failureWhenRejectedAndUnprivileged() {
         User[] users = new User[]{
             userService.getByEmail("department-author@prism.hr"),
             userService.getByEmail("department-member-pending@prism.hr"),
@@ -650,7 +650,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermWithoutResults() {
+    public void getDepartments_failureWhenAdministratorAndSearchTermWithoutResults() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
