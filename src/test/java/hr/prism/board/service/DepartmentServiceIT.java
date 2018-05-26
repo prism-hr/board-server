@@ -15,7 +15,6 @@ import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.workflow.Execution;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +41,7 @@ import static hr.prism.board.enums.State.DRAFT;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -743,7 +743,7 @@ public class DepartmentServiceIT {
         String userGivenName = serviceHelper.getUserGivenName(user);
         LOGGER.info("Get by id: " + id + ": " + userGivenName);
 
-        Assertions.assertThatThrownBy(() -> departmentService.getById(user, id))
+        assertThatThrownBy(() -> departmentService.getById(user, id))
             .isExactlyInstanceOf(BoardForbiddenException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
 
@@ -782,7 +782,7 @@ public class DepartmentServiceIT {
         String userGivenName = serviceHelper.getUserGivenName(user);
         LOGGER.info("Get by handle: " + handle + ": " + userGivenName);
 
-        Assertions.assertThatThrownBy(() -> departmentService.getByHandle(user, handle))
+        assertThatThrownBy(() -> departmentService.getByHandle(user, handle))
             .isExactlyInstanceOf(BoardForbiddenException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
 
