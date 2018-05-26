@@ -6,7 +6,6 @@ import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.service.ServiceHelper.ResourceModifier;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.junit.Test;
@@ -950,6 +949,12 @@ public class ActionServiceIT {
                 .append(action, that.action)
                 .isEquals();
         }
+
+    }
+
+    interface ResourceModifier {
+
+        void modify(Resource resource);
 
     }
 
