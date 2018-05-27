@@ -180,6 +180,111 @@ public class PostServiceIT {
         verifyGetByIdFailure((User) null, 5L, post);
     }
 
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostAcceptedAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(users, 6L, board,
+            "department-accepted-board-accepted-post-accepted",
+            new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostAcceptedAndPostAdministrator() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(user, 6L, board,
+            "department-accepted-board-accepted-post-accepted",
+            new Action[]{VIEW, EDIT, PURSUE, WITHDRAW});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostAcceptedAndDepartmentMember() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(users, 6L, board,
+            "department-accepted-board-accepted-post-accepted", new Action[]{VIEW, PURSUE});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostAcceptedAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(users, 6L, board,
+            "department-accepted-board-accepted-post-accepted", new Action[]{VIEW});
+        verifyGetById((User) null, 6L, board,
+            "department-accepted-board-accepted-post-accepted", new Action[]{VIEW});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostExpiredAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(users, 7L, board,
+            "department-accepted-board-accepted-post-expired",
+            new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostExpiredAndPostAdministrator() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(user, 7L, board,
+            "department-accepted-board-accepted-post-expired",
+            new Action[]{VIEW, EDIT, WITHDRAW});
+    }
+
+    @Test
+    public void getById_failureWhenDepartmentAcceptedBoardAcceptedAndPostExpiredAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = new Post();
+        post.setId(7L);
+
+        verifyGetByIdFailure(users, 7L, post);
+        verifyGetByIdFailure((User) null, 7L, post);
+    }
+
     private void verifyGetById(User[] users, Long id, Board expectedBoard, String expectedName,
                                Action[] expectedActions) {
         Stream.of(users).forEach(user -> {
