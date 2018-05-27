@@ -634,7 +634,6 @@ public class BoardServiceIT {
         verifyInvocations(user, id, board);
     }
 
-    @SuppressWarnings("SameParameterValue")
     private void verifyGetByIdFailure(User[] users, Long id, Board board) {
         Stream.of(users).forEach(user -> {
             assertNotNull(user);
@@ -642,7 +641,6 @@ public class BoardServiceIT {
         });
     }
 
-    @SuppressWarnings("SameParameterValue")
     private void verifyGetByIdFailure(User user, Long id, Board board) {
         String userGivenName = serviceHelper.getUserGivenName(user);
         LOGGER.info("Get by id: " + id + ": " + userGivenName);

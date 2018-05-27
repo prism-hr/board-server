@@ -1,12 +1,11 @@
 package hr.prism.board.service;
 
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Board;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
-import hr.prism.board.enums.State;
+import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.validation.PostValidator;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
@@ -20,12 +19,12 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.Scope.POST;
-import static hr.prism.board.enums.State.*;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -38,9 +37,6 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 public class PostServiceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PostServiceIT.class);
-
-    private static List<State> POST_STATES = ImmutableList.of(
-        DRAFT, PENDING, ACCEPTED, EXPIRED, SUSPENDED, REJECTED, WITHDRAWN, ARCHIVED);
 
     @Inject
     private PostService postService;
@@ -101,6 +97,42 @@ public class PostServiceIT {
     }
 
     @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostDraftAndPostAdministrator() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(user, 4L, board,
+            "department-accepted-board-accepted-post-draft",
+            new Action[]{VIEW, EDIT, WITHDRAW});
+    }
+
+    @Test
+    public void getById_failureWhenDepartmentAcceptedBoardAcceptedAndPostDraftAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = new Post();
+        post.setId(4L);
+
+        verifyGetByIdFailure(users, 4L, post);
+        verifyGetByIdFailure((User) null, 4L, post);
+    }
+
+    @Test
     public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostPendingAndDepartmentAdministrator() {
         User[] users = new User[]{
             userService.getByEmail("department-administrator@prism.hr"),
@@ -110,6 +142,42 @@ public class PostServiceIT {
         verifyGetById(users, 5L, board,
             "department-accepted-board-accepted-post-pending",
             new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+    }
+
+    @Test
+    public void getById_successWhenDepartmentAcceptedBoardAcceptedAndPostPendingAndPostAdministrator() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        verifyGetById(user, 5L, board,
+            "department-accepted-board-accepted-post-pending",
+            new Action[]{VIEW, EDIT, WITHDRAW});
+    }
+
+    @Test
+    public void getById_failureWhenDepartmentAcceptedBoardAcceptedAndPostPendingAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = new Post();
+        post.setId(5L);
+
+        verifyGetByIdFailure(users, 5L, post);
+        verifyGetByIdFailure((User) null, 5L, post);
     }
 
     private void verifyGetById(User[] users, Long id, Board expectedBoard, String expectedName,
@@ -125,9 +193,27 @@ public class PostServiceIT {
         String userGivenName = serviceHelper.getUserGivenName(user);
         LOGGER.info("Get by id: " + id + ": " + userGivenName);
 
-        Post post = postService.getById(user, id);
+        Post post = postService.getById(user, id, "ip", true);
 
         verifyPost(post, expectedBoard, expectedName, expectedActions);
+        verifyInvocations(user, id, post);
+    }
+
+    private void verifyGetByIdFailure(User[] users, Long id, Post post) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verifyGetByIdFailure(user, id, post);
+        });
+    }
+
+    private void verifyGetByIdFailure(User user, Long id, Post post) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Get by id: " + id + ": " + userGivenName);
+
+        assertThatThrownBy(() -> postService.getById(user, id, "ip", true))
+            .isExactlyInstanceOf(BoardForbiddenException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
+
         verifyInvocations(user, id, post);
     }
 
