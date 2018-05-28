@@ -21,12 +21,17 @@ import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.*;
 
+/**
+ * Convenience class go generate SQL fixtures to support testing the workflow.
+ * Not used during normal test operation - to get the fixtures run a test and debug the return from makeInserts.
+ */
+
 @Service
-public class FixtureBuilder {
+public class WorkflowFixtureBuilder {
 
     private final ResourceService resourceService;
 
-    public FixtureBuilder(ResourceService resourceService) {
+    public WorkflowFixtureBuilder(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
 
@@ -75,6 +80,7 @@ public class FixtureBuilder {
             resourceService.setIndexDataAndQuarter(resource);
 
             Scope resourceScope = resource.getScope();
+            State resourceState = resource.getState();
             rows.add(
                 "(" +
                     resource.getId() + ", " +
@@ -84,6 +90,7 @@ public class FixtureBuilder {
                     "'" + (resourceScope == POST ?
                     resource.getParent().getHandle() + "/post-" + resource.getState().name().toLowerCase() :
                     resource.getHandle()) + "', " +
+                    (resourceScope == POST && resourceState == EXPIRED ? "NOW() - INTERVAL 1 DAY" : "NULL") + ", " +
                     "'" + resource.getState() + "', " +
                     "'" + resource.getPreviousState() + "', " +
                     "'" + resource.getIndexData() + "', " +
@@ -94,8 +101,8 @@ public class FixtureBuilder {
 
         List<String> userInserts = makeUserInserts(baseline, resources);
         List<String> inserts = ImmutableList.of(
-            "INSERT INTO resource (id, scope, parent_id, name, handle, state, previous_state, index_data, quarter, " +
-                "created_timestamp)\n" +
+            "INSERT INTO resource (id, scope, parent_id, name, handle, dead_timestamp, state, previous_state, " +
+                "index_data, quarter, created_timestamp)\n" +
                 "VALUES \n\t" + Joiner.on(",\n\t").join(rows) + ";",
             makeResourceRelationInsert(baseline, resources),
             userInserts.get(0),
@@ -179,7 +186,8 @@ public class FixtureBuilder {
                             thisAcceptedDepartmentMember,
                             thisRejectedDepartmentMember));
 
-                    userRoles.add(setUpUserRole(baseline, resource, thisDepartmentAdministrator, ADMINISTRATOR, ACCEPTED));
+                    userRoles.add(
+                        setUpUserRole(baseline, resource, thisDepartmentAdministrator, ADMINISTRATOR, ACCEPTED));
                     userRoles.add(setUpUserRole(baseline, resource, thisDepartmentAuthor, AUTHOR, ACCEPTED));
                     userRoles.add(setUpUserRole(baseline, resource, thisPendingDepartmentMember, MEMBER, PENDING));
                     userRoles.add(setUpUserRole(baseline, resource, thisAcceptedDepartmentMember, MEMBER, ACCEPTED));
