@@ -1,10 +1,15 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DbTestContext;
-import hr.prism.board.domain.Board;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
+import hr.prism.board.dto.DocumentDTO;
+import hr.prism.board.dto.LocationDTO;
+import hr.prism.board.dto.OrganizationDTO;
+import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.validation.PostValidator;
 import hr.prism.board.workflow.Execution;
@@ -19,12 +24,23 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.ExistingRelation.STUDENT;
+import static hr.prism.board.enums.MemberCategory.*;
+import static hr.prism.board.enums.ResourceTask.POST_TASKS;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.POST;
-import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
+import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.exception.ExceptionCode.*;
+import static java.math.BigDecimal.ONE;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -40,9 +56,6 @@ public class PostServiceIT {
 
     @Inject
     private PostService postService;
-
-    @Inject
-    private BoardService boardService;
 
     @Inject
     private PostValidator postValidator;
@@ -1629,6 +1642,86 @@ public class PostServiceIT {
         verifyGetByIdFailure((User) null, 39L, post);
     }
 
+    @Test
+    public void createPost_successWhenApplyWebsite() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+
+        OrganizationDTO organizationDTO = makeOrganizationDTO();
+        LocationDTO locationDTO = makeLocationDTO();
+
+        Post createdPost = setUpPost(user, board.getId(),
+            organizationDTO, locationDTO, "http://www.google.co.uk", null, null);
+
+        Organization organization = makeOrganization();
+        Location location = makeLocation();
+
+        Post selectedPost = postService.getById(user, createdPost.getId(), "ip", true);
+        Stream.of(createdPost, selectedPost).forEach(post ->
+            verifyCreatePost(post, board, organization, location,
+                "http://www.google.co.uk", null, null));
+
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        verifyInvocations(user, createdPost, board, department, organizationDTO, organization, locationDTO, location);
+    }
+
+    @Test
+    public void createPost_successWhenApplyDocument() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+
+        OrganizationDTO organizationDTO = makeOrganizationDTO();
+        LocationDTO locationDTO = makeLocationDTO();
+
+        DocumentDTO documentApplyDTO =
+            new DocumentDTO()
+                .setCloudinaryId("cloudinary id")
+                .setCloudinaryUrl("cloudinary url")
+                .setFileName("file name");
+
+        Post createdPost = setUpPost(user, board.getId(),
+            organizationDTO, locationDTO, null, documentApplyDTO, null);
+
+        Post selectedPost = postService.getById(user, createdPost.getId(), "ip", true);
+
+        Organization organization = makeOrganization();
+        Location location = makeLocation();
+
+        Document documentApply = new Document();
+        documentApply.setCloudinaryId("cloudinary id");
+
+        Stream.of(createdPost, selectedPost).forEach(post ->
+            verifyCreatePost(post, board, organization, location,
+                null, documentApply, null));
+
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        verifyInvocations(user, createdPost, board, department, organizationDTO, organization, locationDTO, location);
+        verify(documentService, times(1)).getOrCreateDocument(documentApplyDTO);
+    }
+
+    @Test
+    public void createPost_successWhenApplyEmail() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+
+        OrganizationDTO organizationDTO = makeOrganizationDTO();
+        LocationDTO locationDTO = makeLocationDTO();
+
+        Post createdPost = setUpPost(user, board.getId(),
+            organizationDTO, locationDTO, null, null, "author@prism.hr");
+
+        Organization organization = makeOrganization();
+        Location location = makeLocation();
+
+        Post selectedPost = postService.getById(user, createdPost.getId(), "ip", true);
+        Stream.of(createdPost, selectedPost).forEach(post ->
+            verifyCreatePost(post, board, organization, location,
+                null, null, "author@prism.hr"));
+
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        verifyInvocations(user, createdPost, board, department, organizationDTO, organization, locationDTO, location);
+    }
+
     private void verifyGetById(User[] users, Long id, Board expectedBoard, String expectedName,
                                Action[] expectedActions) {
         Stream.of(users).forEach(user -> {
@@ -1672,6 +1765,38 @@ public class PostServiceIT {
         serviceHelper.verifyActions(post, expectedActions);
     }
 
+    @SuppressWarnings("SameParameterValue")
+    private void verifyCreatePost(Post post, Board expectedBoard, Organization expectedOrganization,
+                                  Location expectedLocation, String expectedApplyWebsite,
+                                  Document expectedApplyDocument, String expectApplyEmail) {
+        verifyPost(post, expectedBoard,
+            "department-accepted-board-accepted-post", new Action[]{VIEW, EDIT, WITHDRAW});
+
+        assertEquals("summary", post.getSummary());
+        assertEquals("description", post.getDescription());
+        assertEquals(expectedOrganization, post.getOrganization());
+        assertEquals(expectedLocation, post.getLocation());
+        assertEquals(expectedApplyWebsite, post.getApplyWebsite());
+        assertEquals(expectedApplyDocument, post.getApplyDocument());
+        assertEquals(expectApplyEmail, post.getApplyEmail());
+        assertEquals(STUDENT, post.getExistingRelation());
+        assertEquals("{\n  \"studyLevel\" : \"MASTER\"\n}", post.getExistingRelationExplanation());
+        assertEquals(DRAFT, post.getState());
+        assertEquals(DRAFT, post.getPreviousState());
+
+        assertEquals(
+            LocalDateTime.of(2050, 5, 1, 0, 0, 0),
+            post.getLiveTimestamp());
+
+        assertEquals(
+            LocalDateTime.of(2050, 5, 30, 0, 0, 0),
+            post.getDeadTimestamp());
+
+        assertEquals(ImmutableList.of("Employment", "Internship"), post.getPostCategoryStrings());
+        assertEquals(
+            toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)), post.getMemberCategoryStrings());
+    }
+
     private void verifyInvocations(User user, Long id, Post post) {
         verify(resourceService, times(1))
             .getResource(user, POST, id);
@@ -1680,56 +1805,87 @@ public class PostServiceIT {
             .executeAction(eq(user), eq(post), eq(VIEW), any(Execution.class));
     }
 
-//    @Test
-//    public void createPost_successWhenApplyWebsite() {
-//        Board board = departmentAcceptedBoards.get(0);
-//        Post createdPost = setUpPost(board, "http://www.google.co.uk", null, null);
-//
-//        Post selectedPost = postService.getById(administrator, createdPost.getId(), "ip", true);
-//        Stream.of(createdPost, selectedPost).forEach(post ->
-//            verifyPost(post, board, "post", new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
-//                "http://www.google.co.uk", null, null));
-//
-//        verifyInvocations(createdPost, board);
-//    }
-//
-//    @Test
-//    public void createPost_successWhenApplyDocument() {
-//        DocumentDTO documentDTO =
-//            new DocumentDTO()
-//                .setCloudinaryId("cloudinary id")
-//                .setCloudinaryUrl("cloudinary url")
-//                .setFileName("file name");
-//
-//        Board board = departmentAcceptedBoards.get(0);
-//        Post createdPost = setUpPost(board, null, documentDTO, null);
-//
-//        Post selectedPost = postService.getById(administrator, createdPost.getId(), "ip", true);
-//
-//        Document expectedDocument = new Document();
-//        expectedDocument.setCloudinaryId("cloudinary id");
-//
-//        Stream.of(createdPost, selectedPost).forEach(post ->
-//            verifyPost(post, board, "post", new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
-//                null, expectedDocument, null));
-//
-//        verifyInvocations(createdPost, board);
-//        verify(documentService, times(1)).getOrCreateDocument(documentDTO);
-//    }
-//
-//    @Test
-//    public void createPost_successWhenApplyEmail() {
-//        Board board = departmentAcceptedBoards.get(0);
-//        Post createdPost = setUpPost(board, null, null, "author@prism.hr");
-//        Post selectedPost = postService.getById(administrator, createdPost.getId(), "ip", true);
-//
-//        Stream.of(createdPost, selectedPost).forEach(post ->
-//            verifyPost(post, board, "post", new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
-//                null, null, "author@prism.hr"));
-//
-//        verifyInvocations(createdPost, board);
-//    }
-//
+    private void verifyInvocations(User user, Post post, Board board, Department department,
+                                   OrganizationDTO organizationDTO, Organization organization, LocationDTO locationDTO,
+                                   Location location) {
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(board), eq(EXTEND), any(Execution.class));
+
+        verify(organizationService, times(1)).getOrCreateOrganization(organizationDTO);
+        verify(locationService, times(1)).getOrCreateLocation(locationDTO);
+
+        verify(userService, times(1))
+            .updateUserOrganizationAndLocation(user, organization, location);
+
+        verify(postValidator, times(1)).checkApply(post);
+        verify(resourceService, times(1)).createResourceRelation(board, post);
+
+        List<String> postCategories = ImmutableList.of("Employment", "Internship");
+        verify(postValidator, times(1)).checkCategories(
+            postCategories, emptyList(),
+            FORBIDDEN_POST_CATEGORIES, MISSING_POST_CATEGORIES, INVALID_POST_CATEGORIES);
+
+        verify(resourceService, times(1))
+            .updateCategories(post, CategoryType.POST, postCategories);
+
+        List<String> memberCategories = toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT));
+        verify(postValidator, times(1)).checkCategories(
+            memberCategories, emptyList(),
+            FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
+        verify(resourceService, times(1)).updateCategories(post, MEMBER, memberCategories);
+
+        verify(resourceService, times(1)).setIndexDataAndQuarter(post);
+        verify(userRoleService, times(1)).createUserRole(post, user, ADMINISTRATOR);
+        verify(resourceTaskService, times(1)).completeTasks(department, POST_TASKS);
+        verify(postValidator, times(1)).checkExistingRelation(post);
+    }
+
+    private Post setUpPost(User user, Long boardId, OrganizationDTO organizationDTO, LocationDTO locationDTO,
+                           String applyWebsite, DocumentDTO applyDocument, String applyEmail) {
+        return postService.createPost(user, boardId,
+            new PostDTO()
+                .setName("department-accepted-board-accepted-post")
+                .setSummary("summary")
+                .setDescription("description")
+                .setOrganization(organizationDTO)
+                .setLocation(locationDTO)
+                .setApplyWebsite(applyWebsite)
+                .setApplyDocument(applyDocument)
+                .setApplyEmail(applyEmail)
+                .setPostCategories(ImmutableList.of("Employment", "Internship"))
+                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))
+                .setExistingRelation(STUDENT)
+                .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
+                .setLiveTimestamp(LocalDateTime.of(2050, 5, 1, 0, 0, 0))
+                .setDeadTimestamp(LocalDateTime.of(2050, 5, 30, 0, 0, 0)));
+    }
+
+    private Organization makeOrganization() {
+        Organization expectedOrganization = new Organization();
+        expectedOrganization.setName("organization");
+        return expectedOrganization;
+    }
+
+    private OrganizationDTO makeOrganizationDTO() {
+        return new OrganizationDTO()
+            .setName("organization");
+    }
+
+    private Location makeLocation() {
+        Location expectedLocation = new Location();
+        expectedLocation.setGoogleId("google");
+        return expectedLocation;
+    }
+
+    private LocationDTO makeLocationDTO() {
+        return new LocationDTO()
+            .setName("london")
+            .setDomicile("uk")
+            .setGoogleId("google")
+            .setLatitude(ONE)
+            .setLongitude(ONE);
+    }
+
 //    @Test
 //    public void getPosts_success() {
 //        getPosts_successWhenAdministrator();
@@ -1968,201 +2124,6 @@ public class PostServiceIT {
 //            assertThat(posts).hasSize(8);
 //            verifyAcceptedPosts(posts);
 //        });
-//    }
-//
-//    private Post setUpPost(Board board, String applyWebsite, DocumentDTO applyDocument, String applyEmail) {
-//        return postService.createPost(administrator, board.getId(),
-//            new PostDTO()
-//                .setName("post")
-//                .setSummary("post summary")
-//                .setDescription("post description")
-//                .setOrganization(makeOrganizationDTO())
-//                .setLocation(makeLocationDTO())
-//                .setApplyWebsite(applyWebsite)
-//                .setApplyDocument(applyDocument)
-//                .setApplyEmail(applyEmail)
-//                .setPostCategories(ImmutableList.of("Employment", "Internship"))
-//                .setMemberCategories(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT))
-//                .setExistingRelation(STUDENT)
-//                .setExistingRelationExplanation(ImmutableMap.of("studyLevel", "MASTER"))
-//                .setLiveTimestamp(LocalDateTime.of(2050, 5, 1, 0, 0, 0))
-//                .setDeadTimestamp(LocalDateTime.of(2050, 5, 30, 0, 0, 0)));
-//    }
-//
-//    private Organization makeOrganization() {
-//        Organization expectedOrganization = new Organization();
-//        expectedOrganization.setName("organization");
-//        return expectedOrganization;
-//    }
-//
-//    private OrganizationDTO makeOrganizationDTO() {
-//        return new OrganizationDTO()
-//            .setName("organization");
-//    }
-//
-//    private Location makeLocation() {
-//        Location expectedLocation = new Location();
-//        expectedLocation.setGoogleId("google");
-//        return expectedLocation;
-//    }
-//
-//    private LocationDTO makeLocationDTO() {
-//        return new LocationDTO()
-//            .setName("london")
-//            .setDomicile("uk")
-//            .setGoogleId("google")
-//            .setLatitude(ONE)
-//            .setLongitude(ONE);
-//    }
-//
-//    private void verifyGetById(Board board, Scenarios scenarios, User member, Action[] expectedAdministratorActions,
-//                               Action[] expectedMemberActions, Action[] expectedUnprivilegedActions) {
-//        Post createdPost = serviceHelper.setUpPost(administrator, board, "post");
-//        Long createdPostId = createdPost.getId();
-//
-//        Runnable memberScenario =
-//            () -> verifyGetById(member, createdPost, createdPostId);
-//
-//        Consumer<Scenario> unprivilegedScenario =
-//            scenario -> {
-//                User user = scenario.user;
-//                verifyGetById(user, createdPost, createdPostId);
-//            };
-//
-//        verifyGetById(createdPost, board, DRAFT, scenarios,
-//            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT, WITHDRAW},
-//            memberScenario, unprivilegedScenario);
-//
-//        verifyGetById(createdPost, board, PENDING, scenarios,
-//            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
-//            memberScenario, unprivilegedScenario);
-//
-//        verifyGetById(createdPost, board, ACCEPTED, scenarios,
-//            expectedAdministratorActions,
-//            () -> {
-//                Post selectedPost = postService.getById(member, createdPostId, "ip", true);
-//                serviceHelper.verifyActions(selectedPost, expectedMemberActions);
-//                verifyInvocations(member, createdPostId, selectedPost);
-//            },
-//            scenario -> {
-//                User user = scenario.user;
-//                Post selectedPost = postService.getById(user, createdPostId, "ip", true);
-//                assertEquals(createdPost, selectedPost);
-//
-//                verifyPost(selectedPost, board, "post", expectedUnprivilegedActions);
-//                verifyInvocations(user, createdPostId, selectedPost);
-//            });
-//
-//        verifyGetById(createdPost, board, EXPIRED, scenarios,
-//            new Action[]{VIEW, EDIT, SUSPEND, REJECT, WITHDRAW},
-//            memberScenario, unprivilegedScenario);
-//
-//        verifyGetById(createdPost, board, SUSPENDED, scenarios,
-//            new Action[]{VIEW, EDIT, CORRECT, ACCEPT, REJECT, WITHDRAW},
-//            memberScenario, unprivilegedScenario);
-//
-//        verifyGetById(createdPost, board, REJECTED, scenarios,
-//            new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE, WITHDRAW},
-//            memberScenario, unprivilegedScenario);
-//
-//        verifyGetById(createdPost, board, WITHDRAWN, scenarios,
-//            new Action[]{VIEW, EDIT, RESTORE},
-//            memberScenario, unprivilegedScenario);
-//
-//        verifyGetById(createdPost, board, ARCHIVED, scenarios,
-//            new Action[]{VIEW, EDIT, RESTORE},
-//            memberScenario, unprivilegedScenario);
-//    }
-//
-//    private void verifyGetById(Post createdPost, Board board, State state, Scenarios scenarios,
-//                               Action[] expectedAdministratorActions, Runnable memberScenario,
-//                               Consumer<Scenario> unprivilegedScenario) {
-//        reset(resourceService, actionService);
-//        resourceService.updateState(createdPost, state);
-//
-//        Long createdBoardId = createdPost.getId();
-//        Post selectedPost = postService.getById(administrator, createdBoardId, "ip", true);
-//        assertEquals(createdPost, selectedPost);
-//
-//        verifyPost(selectedPost, board, "post", expectedAdministratorActions);
-//        verifyInvocations(administrator, createdBoardId, selectedPost);
-//
-//        memberScenario.run();
-//        scenarios.forEach(unprivilegedScenario);
-//    }
-//
-//    private void verifyGetById(User user, Post createdPost, Long createdPostId) {
-//        assertThatThrownBy(() -> postService.getById(user, createdPostId, "ip", true))
-//            .isExactlyInstanceOf(BoardForbiddenException.class)
-//            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_ACTION);
-//
-//        verifyInvocations(user, createdPostId, createdPost);
-//    }
-//
-//    private void verifyInvocations(User user, Long createdPostId, Post selectedPost) {
-//        verify(resourceService, atLeastOnce())
-//            .getResource(user, Scope.POST, createdPostId);
-//
-//        verify(actionService, atLeastOnce())
-//            .executeAction(eq(user), eq(selectedPost), eq(VIEW), any(Execution.class));
-//    }
-//
-//    private void verifyPost(Post post, Board expectedBoard, String expectedName, Action[] expectedActions) {
-//        serviceHelper.verifyIdentity(post, expectedBoard, expectedName);
-//        serviceHelper.verifyActions(post, expectedActions);
-//        serviceHelper.verifyTimestamps(post, baseline);
-//    }
-//
-//    @SuppressWarnings("SameParameterValue")
-//    private void verifyPost(Post post, Board expectedBoard, String expectedName, Action[] expectedActions,
-//                            String expectedApplyWebsite, Document expectedApplyDocument, String expectApplyEmail) {
-//        verifyPost(post, expectedBoard, expectedName, expectedActions);
-//        assertEquals("post summary", post.getSummary());
-//        assertEquals("post description", post.getDescription());
-//        assertEquals(makeOrganization(), post.getOrganization());
-//        assertEquals(makeLocation(), post.getLocation());
-//        assertEquals(expectedApplyWebsite, post.getApplyWebsite());
-//        assertEquals(expectedApplyDocument, post.getApplyDocument());
-//        assertEquals(expectApplyEmail, post.getApplyEmail());
-//        assertEquals(STUDENT, post.getExistingRelation());
-//        assertEquals("{\n  \"studyLevel\" : \"MASTER\"\n}", post.getExistingRelationExplanation());
-//        assertEquals(PENDING, post.getState());
-//        assertEquals(PENDING, post.getPreviousState());
-//        assertEquals(LocalDateTime.of(2050, 5, 1, 0, 0, 0), post.getLiveTimestamp());
-//        assertEquals(LocalDateTime.of(2050, 5, 30, 0, 0, 0), post.getDeadTimestamp());
-//        assertEquals(ImmutableList.of("Employment", "Internship"), post.getPostCategoryStrings());
-//        assertEquals(
-//            toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)), post.getMemberCategoryStrings());
-//    }
-//
-//    private void verifyInvocations(Post post, Board board) {
-//        verify(actionService, times(1))
-//            .executeAction(eq(administrator), eq(board), eq(EXTEND), any(Execution.class));
-//
-//        verify(organizationService, times(1)).getOrCreateOrganization(makeOrganizationDTO());
-//        verify(locationService, times(1)).getOrCreateLocation(makeLocationDTO());
-//        verify(userService, times(1))
-//            .updateUserOrganizationAndLocation(administrator, makeOrganization(), makeLocation());
-//
-//        verify(postValidator, times(1)).checkApply(post);
-//        verify(resourceService, times(1)).createResourceRelation(board, post);
-//
-//        List<String> postCategories = ImmutableList.of("Employment", "Internship");
-//        verify(postValidator, times(1)).checkCategories(
-//            postCategories, board.getPostCategoryStrings(),
-//            FORBIDDEN_POST_CATEGORIES, MISSING_POST_CATEGORIES, INVALID_POST_CATEGORIES);
-//        verify(resourceService, times(1)).updateCategories(post, POST, postCategories);
-//
-//        List<String> memberCategories = toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT));
-//        verify(postValidator, times(1)).checkCategories(
-//            memberCategories, departmentAccepted.getMemberCategoryStrings(),
-//            FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
-//        verify(resourceService, times(1)).updateCategories(post, MEMBER, memberCategories);
-//
-//        verify(resourceService, times(1)).setIndexDataAndQuarter(post);
-//        verify(userRoleService, times(1)).createUserRole(post, administrator, ADMINISTRATOR);
-//        verify(resourceTaskService, times(1)).completeTasks(departmentAccepted, POST_TASKS);
-//        verify(postValidator, times(1)).checkExistingRelation(post);
 //    }
 //
 //    private void verifyAdministratorPosts(List<Post> posts, Board expectedBoard,

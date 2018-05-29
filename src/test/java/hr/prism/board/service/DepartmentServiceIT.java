@@ -515,8 +515,8 @@ public class DepartmentServiceIT {
 
         Department selectedDepartment = departmentService.getById(user, createdDepartment.getId());
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-            verifyCreateDepartment(department, 1L, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-                expectedDocumentLogo, Stream.of(MemberCategory.values()).collect(toList()), baseline));
+            verifyCreateDepartment(department, expectedDocumentLogo,
+                Stream.of(MemberCategory.values()).collect(toList()), baseline));
 
         verifyInvocations(user, 1L, createdDepartment, MemberCategory.values());
     }
@@ -545,8 +545,8 @@ public class DepartmentServiceIT {
         expectedDocumentLogo.setCloudinaryId("new cloudinary id");
 
         Stream.of(createdDepartment, selectedDepartment).forEach(department ->
-            verifyCreateDepartment(department, 1L, new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE},
-                expectedDocumentLogo, ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT), baseline));
+            verifyCreateDepartment(department, expectedDocumentLogo,
+                ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT), baseline));
 
         verifyInvocations(user, 1L, createdDepartment,
             new MemberCategory[]{UNDERGRADUATE_STUDENT, MASTER_STUDENT});
@@ -795,14 +795,14 @@ public class DepartmentServiceIT {
         serviceHelper.verifyActions(department, expectedActions);
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private void verifyCreateDepartment(Department department, Long expectedUniversityId, Action[] expectedActions,
-                                        Document expectedDocumentLogo, List<MemberCategory> expectedMemberCategories,
-                                        LocalDateTime baseline) {
+    private void verifyCreateDepartment(Department department, Document expectedDocumentLogo,
+                                        List<MemberCategory> expectedMemberCategories, LocalDateTime baseline) {
         University expectedUniversity = new University();
-        expectedUniversity.setId(expectedUniversityId);
+        expectedUniversity.setId(1L);
 
-        verifyDepartment(department, expectedUniversity, "department", expectedActions);
+        verifyDepartment(department, expectedUniversity,
+            "department", new Action[]{VIEW, EDIT, EXTEND, SUBSCRIBE});
+
         assertEquals("department summary", department.getSummary());
         assertEquals(expectedDocumentLogo, department.getDocumentLogo());
         assertEquals("university/department", department.getHandle());
