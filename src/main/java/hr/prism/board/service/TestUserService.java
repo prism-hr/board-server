@@ -3,6 +3,7 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -10,6 +11,7 @@ import javax.persistence.Query;
 import java.util.List;
 
 @Service
+@Transactional
 public class TestUserService {
 
     private static final ImmutableList<String> FRAMEWORK_TABLES = ImmutableList.of("flyway_schema_history", "workflow");
