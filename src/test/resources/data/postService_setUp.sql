@@ -7,7 +7,6 @@ DELETE FROM user;
 DELETE FROM user_role;
 DELETE FROM resource_category;
 DELETE FROM document;
-DELETE FROM resource_task;
 DELETE FROM organization;
 DELETE FROM location;
 
