@@ -6,11 +6,8 @@ import hr.prism.board.domain.*;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.State;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.service.ServiceHelper.ResourceModifier;
-import hr.prism.board.service.ServiceHelper.Scenarios;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -19,19 +16,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
-import static hr.prism.board.enums.Role.AUTHOR;
-import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
@@ -43,11 +37,6 @@ public class ActionServiceIT {
 
     private static final Logger LOGGER = getLogger(ActionServiceIT.class);
 
-    private static final List<State> ASSIGNABLE_STATES =
-        Stream.of(State.values())
-            .filter(state -> !state.equals(PREVIOUS))
-            .collect(toList());
-
     @Inject
     private ResourceService resourceService;
 
@@ -55,79 +44,20 @@ public class ActionServiceIT {
     private ActionService actionService;
 
     @Inject
-    private UserRoleService userRoleService;
+    private UserService userService;
 
     @Inject
     private ServiceHelper serviceHelper;
 
-    private User administrator;
-
-    private User author;
-
-    private User member;
-
-    private User postAdministrator;
-
-    private University university;
-
-    private Department department;
-
-    private Board board;
-
-    private Post post;
-
-    @Before
-    public void setUp() {
-        administrator = serviceHelper.setUpUser();
-        author = serviceHelper.setUpUser();
-        member = serviceHelper.setUpUser();
-        postAdministrator = serviceHelper.setUpUser();
-
-        university = serviceHelper.setUpUniversity("university");
-        department = serviceHelper.setUpDepartment(administrator, university, "department");
-        userRoleService.createUserRole(department, author, AUTHOR);
-        userRoleService.createUserRole(department, member, MEMBER);
-
-        board = serviceHelper.setUpBoard(administrator, department, "board");
-        post = serviceHelper.setUpPost(postAdministrator, board, "post");
-    }
-
     @Test
-    public void executeAction_successWhenDepartment() {
-        executeAction_successWhenDepartmentAndDepartmentAdministrator();
-        executeAction_successWhenDepartmentAndUnprivileged();
-    }
+    public void executeAction_successWhenDepartmentAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
 
-    @Test
-    public void executeAction_successWhenBoard() {
-        executeAction_successWhenBoardAndDepartmentAdministrator();
-        executeAction_successWhenBoardAndDepartmentAuthor();
-        executeAction_successWhenBoardAndUnprivileged();
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
-        resourceService.updateState(department, REJECTED);
-        executeAction_successWhenBoardDepartmentAdministratorAndDepartmentRejected();
-        executeAction_successWhenBoardDepartmentAuthorAndDepartmentRejected();
-        executeAction_successWhenBoardUnprivilegedAndDepartmentRejected();
-    }
-
-    @Test
-    public void executeAction_successWhenPost() {
-        executeAction_successWhenPostAndDepartmentAdministrator();
-        executeAction_successWhenPostAndDepartmentMember();
-        executeAction_successWhenPostAndPostAdministrator();
-        executeAction_successWhenPostAndUnprivileged();
-
-        resourceService.updateState(department, REJECTED);
-        executeAction_successWhenPostAndParentRejected();
-
-        resourceService.updateState(board, REJECTED);
-        executeAction_successWhenPostAndParentRejected();
-
-        resourceService.updateState(department, ACCEPTED);
-        executeAction_successWhenPostAndParentRejected();
-    }
-
-    private void executeAction_successWhenDepartmentAndDepartmentAdministrator() {
         Expectations expectations =
             new Expectations()
                 .expect(DRAFT,
@@ -151,12 +81,31 @@ public class ActionServiceIT {
                     new Expectation(EDIT, REJECTED),
                     new Expectation(SUBSCRIBE, ACCEPTED));
 
-        verify(administrator, department, board, expectations);
+        verify(users, department, board, expectations);
     }
 
-    private void executeAction_successWhenDepartmentAndUnprivileged() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, AUTHOR, MEMBER));
+    @Test
+    public void executeAction_successWhenDepartmentAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Department department = (Department) resourceService.getByHandle("university/department-accepted");
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
         Expectations expectations =
             new Expectations()
@@ -167,47 +116,89 @@ public class ActionServiceIT {
                 .expect(ACCEPTED,
                     new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, department, board, expectations);
+        verify(users, department, board, expectations);
+        verify((User) null, department, board, expectations);
     }
 
-    private void executeAction_successWhenBoardAndDepartmentAdministrator() {
+    @Test
+    public void executeAction_successWhenBoardAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
                 new Expectation(EDIT, ACCEPTED),
-                new Expectation(EXTEND, PENDING),
+                new Expectation(EXTEND, ACCEPTED),
                 new Expectation(REJECT, REJECTED))
             .expect(REJECTED,
                 new Expectation(VIEW, REJECTED),
                 new Expectation(EDIT, REJECTED),
                 new Expectation(RESTORE, ACCEPTED));
 
-        verify(administrator, board, post, expectations);
+        verify(users, board, post, expectations);
     }
 
-    private void executeAction_successWhenBoardAndDepartmentAuthor() {
+    @Test
+    public void executeAction_successWhenBoardAndDepartmentAuthor() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
-                new Expectation(EXTEND, PENDING));
+                new Expectation(EXTEND, ACCEPTED));
 
-        verify(author, board, post, expectations);
+        verify(users, board, post, expectations);
     }
 
-    private void executeAction_successWhenBoardAndUnprivileged() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, MEMBER));
+    @Test
+    public void executeAction_successWhenBoardAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
                 new Expectation(EXTEND, DRAFT));
 
-        Post post = serviceHelper.setUpPost(administrator, board, "post");
-        verify(scenarios, board, post, expectations);
+        verify(users, board, post, expectations);
+        verify((User) null, board, post, expectations);
     }
 
-    private void executeAction_successWhenBoardDepartmentAdministratorAndDepartmentRejected() {
+    @Test
+    public void executeAction_successWhenBoardDepartmentAdministratorAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
@@ -218,38 +209,62 @@ public class ActionServiceIT {
                 new Expectation(EDIT, REJECTED),
                 new Expectation(RESTORE, ACCEPTED));
 
-        verify(administrator, board, post, expectations);
+        verify(users, board, post, expectations);
     }
 
-    private void executeAction_successWhenBoardDepartmentAuthorAndDepartmentRejected() {
+    @Test
+    public void executeAction_successWhenBoardDepartmentAuthorAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(author, board, post, expectations);
+        verify(users, board, post, expectations);
     }
 
-    private void executeAction_successWhenBoardUnprivilegedAndDepartmentRejected() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, MEMBER));
+    @Test
+    public void executeAction_successWhenBoardUnprivilegedAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Board board = (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        resourceService.updateState(department, REJECTED);
-        Post post = serviceHelper.setUpPost(administrator, board, "post");
-        verify(scenarios, board, post, expectations);
+        verify(users, board, post, expectations);
+        verify((User) null, board, post, expectations);
     }
 
-    private void executeAction_successWhenPostAndParentRejected() {
-        executeAction_successWhenPostDepartmentAdministratorAndParentRejected();
-        executeAction_successWhenPostDepartmentMemberAndParentRejected();
-        executeAction_successWhenPostPostAdministratorAndParemtnRejected();
-        executeAction_successWhenPostUnprivilegedAndParentRejected();
-    }
+    @Test
+    public void executeAction_successWhenPostAndDepartmentAdministrator() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
 
-    private void executeAction_successWhenPostAndDepartmentAdministrator() {
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
+
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -284,8 +299,8 @@ public class ActionServiceIT {
             .expect(REJECTED, postPendingModifier,
                 new Expectation(VIEW, REJECTED),
                 new Expectation(EDIT, REJECTED),
-                new Expectation(SUSPEND, SUSPENDED),
                 new Expectation(ACCEPT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
                 new Expectation(RESTORE, PREVIOUS))
             .expect(WITHDRAWN, postPendingModifier,
                 new Expectation(VIEW, WITHDRAWN),
@@ -295,19 +310,32 @@ public class ActionServiceIT {
                 new Expectation(EDIT, ARCHIVED),
                 new Expectation(RESTORE, PREVIOUS));
 
-        verify(administrator, post, null, expectations);
+        verify(users, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostAndDepartmentMember() {
+    @Test
+    public void executeAction_successWhenPostAndDepartmentMember() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED),
                 new Expectation(PURSUE, ACCEPTED));
 
-        verify(member, post, null, expectations);
+        verify(users, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostAndPostAdministrator() {
+    @Test
+    public void executeAction_successWhenPostAndPostAdministrator() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
+
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -347,21 +375,43 @@ public class ActionServiceIT {
                 new Expectation(EDIT, ARCHIVED),
                 new Expectation(RESTORE, PREVIOUS));
 
-        verify(postAdministrator, post, null, expectations);
+        assertNotNull(user);
+        verify(user, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostAndUnprivileged() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, AUTHOR));
+    @Test
+    public void executeAction_successWhenPostAndUnprivileged() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-accepted/post-accepted");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, post, null, expectations);
+        verify(users, post, null, expectations);
+        verify((User) null, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostDepartmentAdministratorAndParentRejected() {
+    @Test
+    public void executeAction_successWhenPostDepartmentAdministratorAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
+
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -406,18 +456,31 @@ public class ActionServiceIT {
                 new Expectation(EDIT, ARCHIVED),
                 new Expectation(RESTORE, PREVIOUS));
 
-        verify(administrator, post, null, expectations);
+        verify(users, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostDepartmentMemberAndParentRejected() {
+    @Test
+    public void executeAction_successWhenPostDepartmentMemberAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
+
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(member, post, null, expectations);
+        verify(users, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostPostAdministratorAndParemtnRejected() {
+    @Test
+    public void executeAction_successWhenPostPostAdministratorAndDepartmentRejected() {
+        User user = userService.getByEmail("department-rejected-post-administrator@prism.hr");
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
+
         ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
         ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
 
@@ -456,38 +519,342 @@ public class ActionServiceIT {
                 new Expectation(EDIT, ARCHIVED),
                 new Expectation(RESTORE, PREVIOUS));
 
-        verify(postAdministrator, post, null, expectations);
+        assertNotNull(user);
+        verify(user, post, null, expectations);
     }
 
-    private void executeAction_successWhenPostUnprivilegedAndParentRejected() {
-        Scenarios scenarios = serviceHelper.setUpUnprivilegedUsers(university)
-            .scenarios(serviceHelper.setUpUnprivilegedUsers(department, AUTHOR));
+    @Test
+    public void executeAction_successWhenPostUnprivilegedAndDepartmentRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-accepted/post-accepted");
 
         Expectations expectations = new Expectations()
             .expect(ACCEPTED,
                 new Expectation(VIEW, ACCEPTED));
 
-        verify(scenarios, post, null, expectations);
+        verify(users, post, null, expectations);
+        verify((User) null, post, null, expectations);
     }
 
-    private void verify(Scenarios scenarios, Resource resource, Resource extendResource,
-                        Expectations expectations) {
-        scenarios.forEach(scenario -> {
-            LOGGER.info("Verifying actions: " + scenario.description);
-            verify(scenario.user, resource, extendResource, expectations);
+    @Test
+    public void executeAction_successWhenPostDepartmentAdministratorAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-rejected/post-accepted");
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(users, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostDepartmentMemberAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-rejected/post-accepted");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        verify(users, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostPostAdministratorAndBoardRejected() {
+        User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-rejected/post-accepted");
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(CORRECT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        assertNotNull(user);
+        verify(user, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostUnprivilegedAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("department-rejected-post-administrator@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-accepted/board-rejected/post-accepted");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        verify(users, post, null, expectations);
+        verify((User) null, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostDepartmentAdministratorAndDepartmentAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-administrator@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-rejected/post-accepted");
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(REJECT, REJECTED))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(REJECT, REJECTED))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(SUSPEND, SUSPENDED),
+                new Expectation(ACCEPT, PENDING),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        verify(users, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostDepartmentMemberAndDepartmentAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-member-pending@prism.hr"),
+            userService.getByEmail("department-member-accepted@prism.hr"),
+            userService.getByEmail("department-rejected-member-pending@prism.hr"),
+            userService.getByEmail("department-rejected-member-accepted@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-rejected/post-accepted");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        verify(users, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostPostAdministratorAndDepartmentAndBoardRejected() {
+        User user = userService.getByEmail("department-rejected-post-administrator@prism.hr");
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-rejected/post-accepted");
+
+        ResourceModifier postPendingModifier = (resource) -> serviceHelper.setPostPending((Post) resource);
+        ResourceModifier postExpiredModifier = (resource) -> serviceHelper.setPostExpired((Post) resource);
+
+        Expectations expectations = new Expectations()
+            .expect(DRAFT, postPendingModifier,
+                new Expectation(VIEW, DRAFT),
+                new Expectation(EDIT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(PENDING, postPendingModifier,
+                new Expectation(VIEW, PENDING),
+                new Expectation(EDIT, PENDING),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(ACCEPTED, postPendingModifier,
+                new Expectation(VIEW, ACCEPTED),
+                new Expectation(EDIT, ACCEPTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(EXPIRED, postExpiredModifier,
+                new Expectation(VIEW, EXPIRED),
+                new Expectation(EDIT, EXPIRED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(SUSPENDED, postPendingModifier,
+                new Expectation(VIEW, SUSPENDED),
+                new Expectation(EDIT, SUSPENDED),
+                new Expectation(CORRECT, DRAFT),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(REJECTED, postPendingModifier,
+                new Expectation(VIEW, REJECTED),
+                new Expectation(EDIT, REJECTED),
+                new Expectation(WITHDRAW, WITHDRAWN))
+            .expect(WITHDRAWN, postPendingModifier,
+                new Expectation(VIEW, WITHDRAWN),
+                new Expectation(EDIT, WITHDRAWN),
+                new Expectation(RESTORE, PREVIOUS))
+            .expect(ARCHIVED, postPendingModifier,
+                new Expectation(VIEW, ARCHIVED),
+                new Expectation(EDIT, ARCHIVED),
+                new Expectation(RESTORE, PREVIOUS));
+
+        assertNotNull(user);
+        verify(user, post, null, expectations);
+    }
+
+    @Test
+    public void executeAction_successWhenPostUnprivilegedAndDepartmentAndBoardRejected() {
+        User[] users = new User[]{
+            userService.getByEmail("department-author@prism.hr"),
+            userService.getByEmail("department-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-administrator@prism.hr"),
+            userService.getByEmail("department-accepted-author@prism.hr"),
+            userService.getByEmail("department-accepted-member-pending@prism.hr"),
+            userService.getByEmail("department-accepted-member-accepted@prism.hr"),
+            userService.getByEmail("department-accepted-member-rejected@prism.hr"),
+            userService.getByEmail("department-accepted-post-administrator@prism.hr"),
+            userService.getByEmail("department-rejected-author@prism.hr"),
+            userService.getByEmail("department-rejected-member-rejected@prism.hr"),
+            userService.getByEmail("no-roles@prism.hr")};
+
+        Post post = (Post) resourceService.getByHandle("university/department-rejected/board-rejected/post-accepted");
+
+        Expectations expectations = new Expectations()
+            .expect(ACCEPTED,
+                new Expectation(VIEW, ACCEPTED));
+
+        verify(users, post, null, expectations);
+        verify((User) null, post, null, expectations);
+    }
+
+    private void verify(User[] users, Resource resource, Resource extendResource, Expectations expectations) {
+        Stream.of(users).forEach(user -> {
+            assertNotNull(user);
+            verify(user, resource, extendResource, expectations);
         });
     }
 
     private void verify(User user, Resource resource, Resource extendResource, Expectations expectations) {
-        for (State state : ASSIGNABLE_STATES) {
+        String userGivenName = serviceHelper.getUserGivenName(user);
+        LOGGER.info("Verifying actions: " + userGivenName);
+
+        for (State state : new State[]{DRAFT, SUSPENDED, PENDING, ACCEPTED, EXPIRED, REJECTED, WITHDRAWN, ARCHIVED}) {
             resourceService.updateState(resource, state);
             Optional.ofNullable(expectations.getModifier(state))
                 .ifPresent((modifier) -> modifier.modify(resource));
 
             Resource testResource = resourceService.getResource(user, resource.getScope(), resource.getId());
             for (Action action : Action.values()) {
-                String userString = user == null ? "Anonymous" : user.toString();
-                LOGGER.info(action + " on " + testResource.getScope() + " in " + state + " as " + userString);
+                LOGGER.info(action + " on " + testResource.getScope() + " in " + state + " as " + userGivenName);
                 Resource executeResource = action == EXTEND ? extendResource : testResource;
 
                 Expectation expectation = expectations.expected(state, action);
@@ -582,6 +949,12 @@ public class ActionServiceIT {
                 .append(action, that.action)
                 .isEquals();
         }
+
+    }
+
+    interface ResourceModifier {
+
+        void modify(Resource resource);
 
     }
 

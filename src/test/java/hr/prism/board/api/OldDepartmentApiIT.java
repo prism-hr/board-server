@@ -369,8 +369,8 @@
 //                        .setEmail("admin1@admin1.com"))
 //                    .setRoles(singletonList(ADMINISTRATOR))).getUser().getId();
 //
-//        User departmentUser2 = userService.getByHandle(departmentUser2Id);
-//        UserRole department2UserRole = userRoleService.getByResourceUserAndRole(resourceService.getByHandle(departmentId), departmentUser2, ADMINISTRATOR);
+//        User departmentUser2 = userService.findByHandle(departmentUser2Id);
+//        UserRole department2UserRole = userRoleService.getByResourceUserAndRole(resourceService.findByHandle(departmentId), departmentUser2, ADMINISTRATOR);
 //        verifyDepartmentActions(departmentUser, unprivilegedUsers, departmentId, operations);
 //        testNotificationService.verify(new NotificationInstance(JOIN_DEPARTMENT_NOTIFICATION, departmentUser2,
 //            ImmutableMap.<String, String>builder()
@@ -452,7 +452,7 @@
 //        testActivityService.verify(departmentUserId,
 //            new ActivityInstance(departmentId, Activity.CREATE_TASK_ACTIVITY));
 //
-//        Department department0 = (Department) resourceService.getByHandle(departmentId);
+//        Department department0 = (Department) resourceService.findByHandle(departmentId);
 //        String departmentAdminRole1Uuid = userRoleService.getByResourceUserAndRole(department0, departmentUser, ADMINISTRATOR).getUuid();
 //
 //        testNotificationService.verify(
@@ -548,7 +548,7 @@
 //        scheduledService.notifyDepartmentTasks(LocalDateTime.now());
 //        testNotificationService.verify();
 //
-//        WidgetOptionsDTO optionsDTO = new WidgetOptionsDTO();
+//        DepartmentBadgeOptionsDTO optionsDTO = new DepartmentBadgeOptionsDTO();
 //        try {
 //            departmentApi.getDepartmentBadge(departmentId, objectMapper.writeValueAsString(optionsDTO), mockHttpServletResponse());
 //        } catch (IOException e) {
@@ -563,7 +563,7 @@
 //
 //        LocalDateTime baseline = LocalDateTime.of(2017, 9, 1, 9, 0, 0);
 //        LocalDateTime baseline1 = baseline.minusMonths(1).minusDays(1);
-//        Department department1 = departmentService.getByHandle(departmentId);
+//        Department department1 = departmentService.findByHandle(departmentId);
 //        department1.setCreatedTimestamp(baseline1);
 //        department1.setLastMemberTimestamp(baseline1);
 //        department1.setLastTaskCreationTimestamp(baseline.minusYears(1));
@@ -621,7 +621,7 @@
 //        listenForActivities(departmentUser);
 //
 //        String recipient = departmentUser.getGivenName();
-//        department = (Department) resourceService.getByHandle(departmentId);
+//        department = (Department) resourceService.findByHandle(departmentId);
 //        Assert.assertNull(department.getNotifiedCount());
 //
 //        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
@@ -644,14 +644,14 @@
 //                .put("invitationUuid", departmentAdminRoleUuid)
 //                .build()));
 //
-//        department = (Department) resourceService.getByHandle(departmentId);
+//        department = (Department) resourceService.findByHandle(departmentId);
 //        Assert.assertEquals(new Integer(1), department.getNotifiedCount());
 //        LocalDateTime pendingCommencedTimestamp = department.getStateChangeTimestamp();
 //
 //        // Simulate end of first notification period
 //        resourceRepository.updateStateChangeTimestampById(departmentId, pendingCommencedTimestamp.minusSeconds(departmentPendingNotificationInterval1Seconds + 1));
 //        departmentService.updateSubscriptions(LocalDateTime.now());
-//        department = (Department) resourceService.getByHandle(departmentId);
+//        department = (Department) resourceService.findByHandle(departmentId);
 //
 //        pendingExpiryDeadline = department.getStateChangeTimestamp()
 //            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(DATETIME_FORMATTER);
@@ -673,7 +673,7 @@
 //        // Simulate end of second notification period
 //        resourceRepository.updateStateChangeTimestampById(departmentId, pendingCommencedTimestamp.minusSeconds(departmentPendingNotificationInterval2Seconds + 1));
 //        departmentService.updateSubscriptions(LocalDateTime.now());
-//        department = (Department) resourceService.getByHandle(departmentId);
+//        department = (Department) resourceService.findByHandle(departmentId);
 //
 //        pendingExpiryDeadline = department.getStateChangeTimestamp()
 //            .plusSeconds(departmentPendingExpirySeconds).toLocalDate().format(DATETIME_FORMATTER);
@@ -825,7 +825,7 @@
 //        listenForActivities(departmentUser);
 //
 //        String recipient = departmentUser.getGivenName();
-//        Department department = (Department) resourceService.getByHandle(departmentId);
+//        Department department = (Department) resourceService.findByHandle(departmentId);
 //        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 //        String accountRedirect = serverUrl + "/redirect?resource=" + departmentId + "&view=account";
 //
@@ -1070,7 +1070,7 @@
 //        testActivityService.verify(departmentUserId,
 //            new ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 //
-//        Resource department = resourceService.getByHandle(departmentId);
+//        Resource department = resourceService.findByHandle(departmentId);
 //        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 //
 //        testNotificationService.verify(new NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
@@ -1140,7 +1140,7 @@
 //        testActivityService.verify(departmentUserId,
 //            new ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 //
-//        Resource department = resourceService.getByHandle(departmentId);
+//        Resource department = resourceService.findByHandle(departmentId);
 //        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 //
 //        testNotificationService.verify(new NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
@@ -1202,7 +1202,7 @@
 //        testActivityService.verify(departmentUserId,
 //            new ActivityInstance(departmentId, boardMemberId, Role.MEMBER, Activity.JOIN_DEPARTMENT_REQUEST_ACTIVITY));
 //
-//        Resource department = resourceService.getByHandle(departmentId);
+//        Resource department = resourceService.findByHandle(departmentId);
 //        String departmentAdminRoleUuid = userRoleService.getByResourceUserAndRole(department, departmentUser, ADMINISTRATOR).getUuid();
 //
 //        testNotificationService.verify(new NotificationInstance(Notification.JOIN_DEPARTMENT_REQUEST_NOTIFICATION, departmentUser,
@@ -1276,7 +1276,7 @@
 //                .setCountLive(1L)
 //                .setCountThisYear(1L)
 //                .setCountAllTime(1L)
-//                .setMostRecent(userService.getByHandle(member1.getUser().getId()).getCreatedTimestamp()),
+//                .setMostRecent(userService.findByHandle(member1.getUser().getId()).getCreatedTimestamp()),
 //            department1Dashboard2.getMemberStatistics());
 //        Assert.assertEquals(emptyPostStatistics, department1Dashboard2.getPostStatistics());
 //
@@ -1294,7 +1294,7 @@
 //                .setCountLive(2L)
 //                .setCountThisYear(2L)
 //                .setCountAllTime(2L)
-//                .setMostRecent(userService.getByHandle(member2.getUser().getId()).getCreatedTimestamp()),
+//                .setMostRecent(userService.findByHandle(member2.getUser().getId()).getCreatedTimestamp()),
 //            department1Dashboard3.getMemberStatistics());
 //        Assert.assertEquals(emptyPostStatistics, department1Dashboard3.getPostStatistics());
 //
@@ -1341,7 +1341,7 @@
 //        testUserService.setAuthentication(departmentUser);
 //        UserRolesRepresentation userRoles = departmentUserApi.getUserRoles(departmentId1, null);
 //        LocalDateTime member3CreatedTimestamp =
-//            userService.getByHandle(
+//            userService.findByHandle(
 //                userRoles.getMemberRequests()
 //                    .stream()
 //                    .filter(userRole -> userRole.getUser().getId().equals(memberId3))
@@ -1350,7 +1350,7 @@
 //                    .getUser().getId()).getCreatedTimestamp();
 //
 //        LocalDateTime member4CreatedTimestamp =
-//            userService.getByHandle(
+//            userService.findByHandle(
 //                userRoles.getMemberRequests()
 //                    .stream()
 //                    .filter(userRole -> userRole.getUser().getId().equals(memberId4))
@@ -1583,7 +1583,7 @@
 //        departmentUserApi.deleteUserRoles(departmentId, creator.getId(), STAFF);
 //
 //        // authenticate as another administrator
-//        User newUser = userService.getByHandle(departmentAdmin.getUser().getId());
+//        User newUser = userService.findByHandle(departmentAdmin.getUser().getId());
 //        testUserService.setAuthentication(newUser);
 //
 //        // try to remove yourself as administrator
@@ -1807,7 +1807,7 @@
 //        verifyContains(postNames, "Database Engineer");
 //
 //        testUserService.unauthenticate();
-//        Long boardId = boardService.getByHandle("ed/cs/opportunities").getId();
+//        Long boardId = boardService.findByHandle("ed/cs/opportunities").getId();
 //
 //        postRs = postApi.getPosts(boardId, true, null, null, null);
 //        Assert.assertEquals(3, postRs.size());
@@ -1948,8 +1948,8 @@
 //        Assert.assertEquals(Optional.ofNullable(departmentDTO.getMemberCategories())
 //            .orElse(Stream.of(MemberCategory.values()).collect(toList())), departmentR.getMemberCategories());
 //
-//        Department department = departmentService.getByHandle(departmentR.getId());
-//        University university = universityService.getByHandle(departmentR.getUniversity().getId());
+//        Department department = departmentService.findByHandle(departmentR.getId());
+//        University university = universityService.findByHandle(departmentR.getUniversity().getId());
 //
 //        List<ResourceRelation> parents = resourceRelationRepository.findByResource2(department);
 //        Assert.assertThat(parents.stream()
@@ -1959,7 +1959,7 @@
 //
 //    private void verifyPatchDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO) {
 //        testUserService.setAuthentication(user);
-//        Department department = departmentService.getByHandle(departmentId);
+//        Department department = departmentService.findByHandle(departmentId);
 //        DepartmentRepresentation departmentR = departmentApi.updateDepartment(departmentId, departmentDTO);
 //
 //        Optional<String> nameOptional = departmentDTO.getName();

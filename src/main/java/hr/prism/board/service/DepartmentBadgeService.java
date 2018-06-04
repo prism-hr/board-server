@@ -4,7 +4,7 @@ import freemarker.template.TemplateException;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
-import hr.prism.board.dto.WidgetOptionsDTO;
+import hr.prism.board.dto.DepartmentBadgeOptionsDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,11 +47,11 @@ public class DepartmentBadgeService {
     }
 
     // TODO test coverage
-    public String getBadge(User user, Long id, WidgetOptionsDTO options) {
+    public String getBadge(User user, Long id, DepartmentBadgeOptionsDTO options) {
         Resource resource = resourceService.getById(id);
         Map<String, Object> model = makeBadgeModel(resource, options);
 
-        List<Post> posts = postService.getPosts(user , id);
+        List<Post> posts = postService.getPosts(user, id);
         posts = posts.subList(0, min(posts.size(), options.getPostCount()));
         model.put("posts", posts);
 
@@ -59,7 +59,7 @@ public class DepartmentBadgeService {
         try {
             freemarkerConfig.getConfiguration().getTemplate("badge.ftl").process(model, stringWriter);
         } catch (IOException | TemplateException e) {
-            throw new Error(e);
+            throw new Error("Could not get badge for department ID: " + id, e);
         }
 
         if (isFalse(options.getPreview())) {
@@ -69,7 +69,7 @@ public class DepartmentBadgeService {
         return stringWriter.toString();
     }
 
-    private Map<String, Object> makeBadgeModel(Resource resource, WidgetOptionsDTO options) {
+    private Map<String, Object> makeBadgeModel(Resource resource, DepartmentBadgeOptionsDTO options) {
         Map<String, Object> model = new HashMap<>();
         model.put("options", options);
         model.put("resource", resource);

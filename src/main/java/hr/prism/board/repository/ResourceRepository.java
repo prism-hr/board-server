@@ -19,6 +19,8 @@ import java.util.List;
 @Transactional
 public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
+    Resource findByHandle(String handle);
+
     @Query(value =
         "select resource.handle " +
             "from Resource resource " +
