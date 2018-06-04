@@ -2,7 +2,6 @@ package hr.prism.board.service;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
@@ -28,7 +27,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.*;
@@ -39,11 +37,10 @@ import static hr.prism.board.enums.ResourceTask.POST_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.DRAFT;
+import static hr.prism.board.enums.State.PENDING;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.math.BigDecimal.ONE;
 import static java.util.Collections.emptyList;
-import static hr.prism.board.enums.State.PENDING;
-import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_ACTION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
@@ -2164,49 +2161,6 @@ public class PostServiceIT {
             "department-accepted-board-accepted-post-accepted", expectedAcceptedActions);
     }
 
-    private void verifyInvocations(User user, Long id, Post post) {
-        verify(resourceService, times(1))
-            .getResource(user, POST, id);
-
-        verify(actionService, times(1))
-            .executeAction(eq(user), eq(post), eq(VIEW), any(Execution.class));
-    }
-
-    private void verifyInvocations(User user, Post post, Board board, Department department,
-                                   OrganizationDTO organizationDTO, Organization organization, LocationDTO locationDTO,
-                                   Location location) {
-        verify(actionService, times(1))
-            .executeAction(eq(user), eq(board), eq(EXTEND), any(Execution.class));
-
-        verify(organizationService, times(1)).getOrCreateOrganization(organizationDTO);
-        verify(locationService, times(1)).getOrCreateLocation(locationDTO);
-
-        verify(userService, times(1))
-            .updateUserOrganizationAndLocation(user, organization, location);
-
-        verify(postValidator, times(1)).checkApply(post);
-        verify(resourceService, times(1)).createResourceRelation(board, post);
-
-        List<String> postCategories = ImmutableList.of("Employment", "Internship");
-        verify(postValidator, times(1)).checkCategories(
-            postCategories, emptyList(),
-            FORBIDDEN_POST_CATEGORIES, MISSING_POST_CATEGORIES, INVALID_POST_CATEGORIES);
-
-        verify(resourceService, times(1))
-            .updateCategories(post, CategoryType.POST, postCategories);
-
-        List<String> memberCategories = toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT));
-        verify(postValidator, times(1)).checkCategories(
-            memberCategories, emptyList(),
-            FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
-        verify(resourceService, times(1)).updateCategories(post, MEMBER, memberCategories);
-
-        verify(resourceService, times(1)).setIndexDataAndQuarter(post);
-        verify(userRoleService, times(1)).createUserRole(post, user, ADMINISTRATOR);
-        verify(resourceTaskService, times(1)).completeTasks(department, POST_TASKS);
-        verify(postValidator, times(1)).checkExistingRelation(post);
-    }
-
     private Post setUpPost(User user, Long boardId, OrganizationDTO organizationDTO, LocationDTO locationDTO,
                            String applyWebsite, DocumentDTO applyDocument, String applyEmail) {
         return postService.createPost(user, boardId,
@@ -2251,6 +2205,49 @@ public class PostServiceIT {
             .setGoogleId("google")
             .setLatitude(ONE)
             .setLongitude(ONE);
+    }
+
+    private void verifyInvocations(User user, Long id, Post post) {
+        verify(resourceService, times(1))
+            .getResource(user, POST, id);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(post), eq(VIEW), any(Execution.class));
+    }
+
+    private void verifyInvocations(User user, Post post, Board board, Department department,
+                                   OrganizationDTO organizationDTO, Organization organization, LocationDTO locationDTO,
+                                   Location location) {
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(board), eq(EXTEND), any(Execution.class));
+
+        verify(organizationService, times(1)).getOrCreateOrganization(organizationDTO);
+        verify(locationService, times(1)).getOrCreateLocation(locationDTO);
+
+        verify(userService, times(1))
+            .updateUserOrganizationAndLocation(user, organization, location);
+
+        verify(postValidator, times(1)).checkApply(post);
+        verify(resourceService, times(1)).createResourceRelation(board, post);
+
+        List<String> postCategories = ImmutableList.of("Employment", "Internship");
+        verify(postValidator, times(1)).checkCategories(
+            postCategories, emptyList(),
+            FORBIDDEN_POST_CATEGORIES, MISSING_POST_CATEGORIES, INVALID_POST_CATEGORIES);
+
+        verify(resourceService, times(1))
+            .updateCategories(post, CategoryType.POST, postCategories);
+
+        List<String> memberCategories = toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT));
+        verify(postValidator, times(1)).checkCategories(
+            memberCategories, emptyList(),
+            FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
+        verify(resourceService, times(1)).updateCategories(post, MEMBER, memberCategories);
+
+        verify(resourceService, times(1)).setIndexDataAndQuarter(post);
+        verify(userRoleService, times(1)).createUserRole(post, user, ADMINISTRATOR);
+        verify(resourceTaskService, times(1)).completeTasks(department, POST_TASKS);
+        verify(postValidator, times(1)).checkExistingRelation(post);
     }
 
 }
