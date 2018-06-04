@@ -555,7 +555,7 @@ public class DepartmentServiceIT {
 
     @Test
     @SuppressWarnings("Duplicates")
-    public void getDepartments_successWhenAdministrator() {
+    public void getDepartments_successWhenDepartmentAdministrator() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
@@ -580,7 +580,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndState() {
+    public void getDepartments_successWhenDepartmentAdministratorAndState() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
@@ -596,7 +596,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndAction() {
+    public void getDepartments_successWhenDepartmentAdministratorAndAction() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
@@ -618,7 +618,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndSearchTerm() {
+    public void getDepartments_successWhenDepartmentAdministratorAndSearchTerm() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
@@ -634,7 +634,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_successWhenAdministratorAndSearchTermTypo() {
+    public void getDepartments_successWhenDepartmentAdministratorAndSearchTermTypo() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
@@ -650,7 +650,7 @@ public class DepartmentServiceIT {
     }
 
     @Test
-    public void getDepartments_failureWhenAdministratorAndSearchTermWithoutResults() {
+    public void getDepartments_failureWhenDepartmentAdministratorAndSearchTermWithoutResults() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
@@ -661,7 +661,7 @@ public class DepartmentServiceIT {
 
     @Test
     @SuppressWarnings("Duplicates")
-    public void getDepartments_successWhenOtherAdministrator() {
+    public void getDepartments_successWhenOtherDepartmentAdministrator() {
         User user = userService.getByEmail("department-rejected-administrator@prism.hr");
 
         List<Department> departments =

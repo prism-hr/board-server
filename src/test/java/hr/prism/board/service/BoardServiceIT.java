@@ -425,7 +425,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenAdministrator() {
+    public void getBoards_successWhenDepartmentAdministrator() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter());
@@ -452,7 +452,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenAdministratorAndState() {
+    public void getBoards_successWhenDepartmentAdministratorAndState() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter().setState(REJECTED));
@@ -473,7 +473,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenAdministratorAndDepartment() {
+    public void getBoards_successWhenDepartmentAdministratorAndDepartment() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter().setParentId(2L));
@@ -491,7 +491,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenAdministratorAndAction() {
+    public void getBoards_successWhenDepartmentAdministratorAndAction() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter().setAction(RESTORE));
@@ -512,7 +512,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenAdministratorAndSearchTerm() {
+    public void getBoards_successWhenDepartmentAdministratorAndSearchTerm() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("rejected"));
@@ -536,7 +536,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenAdministratorAndSearchTermTypo() {
+    public void getBoards_successWhenDepartmentAdministratorAndSearchTermTypo() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("rIJECT"));
@@ -560,7 +560,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_failureWhenAdministratorAndSearchWithoutResults() {
+    public void getBoards_failureWhenDepartmentAdministratorAndSearchTermWithoutResults() {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter().setSearchTerm("xyz"));
@@ -569,7 +569,7 @@ public class BoardServiceIT {
     }
 
     @Test
-    public void getBoards_successWhenOtherAdministrator() {
+    public void getBoards_successWhenOtherDepartmentAdministrator() {
         User user = userService.getByEmail("department-rejected-administrator@prism.hr");
 
         List<Board> boards = boardService.getBoards(user, new ResourceFilter());
