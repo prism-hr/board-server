@@ -1,15 +1,3 @@
-SET FOREIGN_KEY_CHECKS = 0;
-
-DELETE FROM resource;
-DELETE FROM resource_relation;
-DELETE FROM resource_operation;
-DELETE FROM resource_category;
-DELETE FROM user;
-DELETE FROM organization;
-DELETE FROM location;
-
-SET FOREIGN_KEY_CHECKS = 1;
-
 INSERT INTO resource (id, parent_id, scope, name, handle, state, index_data, created_timestamp)
 VALUES (1, 1, 'UNIVERSITY', 'university', 'university', 'ACCEPTED', 'U516', NOW());
 

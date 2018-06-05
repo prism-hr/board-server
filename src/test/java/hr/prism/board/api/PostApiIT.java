@@ -34,8 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ApiTestContext
 @RunWith(SpringRunner.class)
-@Sql("classpath:data/postApi_setUp.sql")
-@Sql(value = "classpath:data/postApi_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
+@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/api_setUp.sql"})
+@Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class PostApiIT {
 
     @Inject
@@ -75,11 +75,11 @@ public class PostApiIT {
                         .setName("organization"))
                 .setLocation(
                     new LocationDTO()
-                .setName("london")
-                .setDomicile("uk")
-                .setGoogleId("google")
-                .setLatitude(ONE)
-                .setLongitude(ONE));
+                        .setName("london")
+                        .setDomicile("uk")
+                        .setGoogleId("google")
+                        .setLatitude(ONE)
+                        .setLongitude(ONE));
 
         post = new Post();
         post.setId(4L);

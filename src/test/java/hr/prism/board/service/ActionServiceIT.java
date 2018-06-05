@@ -31,8 +31,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql(scripts = "classpath:data/actionService_setUp.sql")
-@Sql(scripts = "classpath:data/actionService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
+@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/actionService_setUp.sql"})
+@Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class ActionServiceIT {
 
     private static final Logger LOGGER = getLogger(ActionServiceIT.class);

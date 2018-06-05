@@ -1,11 +1,3 @@
-SET FOREIGN_KEY_CHECKS = 0;
-
-DELETE FROM resource;
-DELETE FROM resource_task;
-DELETE FROM user;
-
-SET FOREIGN_KEY_CHECKS = 1;
-
 INSERT INTO resource (id, scope, name, state, created_timestamp)
 VALUES (1, 'DEPARTMENT', 'department1', 'DRAFT', NOW()),
   (2, 'DEPARTMENT', 'department2', 'DRAFT', NOW());

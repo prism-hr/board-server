@@ -39,8 +39,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql("classpath:data/resourceService_setUp.sql")
-@Sql(value = "classpath:data/resourceService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
+@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/resourceService_setUp.sql"})
+@Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class ResourceServiceIT {
 
     @Inject

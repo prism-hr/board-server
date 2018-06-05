@@ -50,8 +50,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql(scripts = "classpath:data/departmentService_setUp.sql")
-@Sql(scripts = "classpath:data/departmentService_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
+@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/departmentService_setUp.sql"})
+@Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class DepartmentServiceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentServiceIT.class);

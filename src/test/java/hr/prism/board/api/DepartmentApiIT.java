@@ -36,8 +36,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ApiTestContext
 @RunWith(SpringRunner.class)
-@Sql("classpath:data/departmentApi_setUp.sql")
-@Sql(value = "classpath:data/departmentApi_tearDown.sql", executionPhase = AFTER_TEST_METHOD)
+@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/api_setUp.sql"})
+@Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class DepartmentApiIT {
 
     @Inject

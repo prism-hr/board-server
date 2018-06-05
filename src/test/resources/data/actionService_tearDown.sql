@@ -1,8 +1,0 @@
-SET FOREIGN_KEY_CHECKS = 0;
-
-DELETE FROM resource;
-DELETE FROM resource_relation;
-DELETE FROM user;
-DELETE FROM user_role;
-
-SET FOREIGN_KEY_CHECKS = 1;
