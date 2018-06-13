@@ -52,6 +52,7 @@ import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.springframework.transaction.annotation.Isolation.SERIALIZABLE;
 
 @Service
 @Transactional
@@ -95,6 +96,7 @@ public class DepartmentUserService {
         return userService.findUsers(searchTerm);
     }
 
+    @Transactional(isolation = SERIALIZABLE)
     public Department createMembers(Long id, List<MemberDTO> memberDTOs) {
         User currentUser = userService.getUserSecured();
         Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, id);
@@ -263,7 +265,7 @@ public class DepartmentUserService {
         ((Department) resourceService.getById(id)).decrementMemberToBeUploadedCount();
     }
 
-    public DemographicDataStatus makeDemographicDataStatus(User user, Department department) {
+    DemographicDataStatus makeDemographicDataStatus(User user, Department department) {
         DemographicDataStatus responseReadiness = new DemographicDataStatus();
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
             // User data incomplete
