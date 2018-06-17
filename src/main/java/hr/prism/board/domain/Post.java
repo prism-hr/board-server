@@ -28,12 +28,14 @@ import static java.util.Optional.ofNullable;
         @NamedSubgraph(
             name = "board",
             attributeNodes = {
-                @NamedAttributeNode(value = "parent", subgraph = "department")}),
+                @NamedAttributeNode(value = "parent", subgraph = "department"),
+                @NamedAttributeNode(value = "categories")}),
         @NamedSubgraph(
             name = "department",
             attributeNodes = {
                 @NamedAttributeNode(value = "parent", subgraph = "university"),
-                @NamedAttributeNode(value = "documentLogo")}),
+                @NamedAttributeNode(value = "documentLogo"),
+                @NamedAttributeNode(value = "categories")}),
         @NamedSubgraph(
             name = "university",
             attributeNodes = {

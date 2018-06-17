@@ -1,8 +1,11 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Board;
+import hr.prism.board.domain.Department;
 import hr.prism.board.domain.Post;
+import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
+import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.PostRepresentation;
 import hr.prism.board.service.PostService;
 import hr.prism.board.value.DemographicDataStatus;
@@ -70,7 +73,16 @@ public class PostMapper implements Function<Post, PostRepresentation> {
             representation.setApplyEmail(post.getApplyEmailDisplay());
         }
 
-        return representation.setBoard(boardMapper.applySmall((Board) post.getParent()))
+        Board board = (Board) post.getParent();
+        BoardRepresentation boardRepresentation = boardMapper.applySmall(board);
+        boardRepresentation.setPostCategories(board.getPostCategoryStrings());
+
+        Department department = (Department) board.getParent();
+        DepartmentRepresentation departmentRepresentation = boardRepresentation.getDepartment();
+        departmentRepresentation.setMemberCategories(fromStrings(department.getMemberCategoryStrings()));
+
+        return representation
+            .setBoard(boardRepresentation)
             .setLiveTimestamp(post.getLiveTimestamp())
             .setDeadTimestamp(post.getDeadTimestamp())
             .setViewCount(post.getViewCount())

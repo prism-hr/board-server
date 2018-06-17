@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -47,6 +46,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DbTestContext
@@ -55,7 +55,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class DepartmentServiceIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentServiceIT.class);
+    private static final Logger LOGGER = getLogger(DepartmentServiceIT.class);
 
     @Inject
     private DepartmentService departmentService;
