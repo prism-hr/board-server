@@ -8,6 +8,7 @@ public class OrganizationSearch {
 
     private String logo;
 
+    @SuppressWarnings("WeakerAccess")
     public OrganizationSearch(Long id, String name, String logo) {
         this.id = id;
         this.name = name;
