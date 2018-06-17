@@ -11,6 +11,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 
 @JsonIgnoreProperties({"includePublicResources", "orderStatement"})
 public class ResourceFilter {
@@ -37,13 +42,8 @@ public class ResourceFilter {
 
     @ResourceFilterProperty(
         parameter = "state",
-        statement = "resource.state = :state")
-    private State state;
-
-    @ResourceFilterProperty(
-        parameter = "negatedState",
-        statement = "resource.state <> :negatedState")
-    private String negatedState;
+        statement = "resource.state in (:state)")
+    private ResourceFilterList<State> state;
 
     @ResourceFilterProperty(
         parameter = "quarter",
@@ -95,23 +95,12 @@ public class ResourceFilter {
         return this;
     }
 
-    public State getState() {
+    public ResourceFilterList<State> getState() {
         return state;
     }
 
-    public ResourceFilter setState(State state) {
+    public ResourceFilter setState(ResourceFilterList<State> state) {
         this.state = state;
-        return this;
-    }
-
-    @SuppressWarnings("unused")
-    public String getNegatedState() {
-        return negatedState;
-    }
-
-    @SuppressWarnings("unused")
-    public ResourceFilter setNegatedState(String negatedState) {
-        this.negatedState = negatedState;
         return this;
     }
 
@@ -157,6 +146,7 @@ public class ResourceFilter {
         return orderStatementSql;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ResourceFilter setOrderStatementSql(String orderStatementSql) {
         this.orderStatementSql = orderStatementSql;
         return this;
@@ -170,7 +160,6 @@ public class ResourceFilter {
             .append(handle)
             .append(parentId)
             .append(state)
-            .append(negatedState)
             .append(quarter)
             .append(searchTerm)
             .append(action)
@@ -190,7 +179,6 @@ public class ResourceFilter {
             .append(handle, that.handle)
             .append(parentId, that.parentId)
             .append(state, that.state)
-            .append(negatedState, that.negatedState)
             .append(quarter, that.quarter)
             .append(searchTerm, that.searchTerm)
             .append(action, that.action)
@@ -205,6 +193,27 @@ public class ResourceFilter {
         String parameter();
 
         String statement();
+
+    }
+
+    public static class ResourceFilterList<T> extends ArrayList<T> {
+
+        @Override
+        public String toString() {
+            return stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+        }
+
+        @SafeVarargs
+        public static <T> ResourceFilterList<T> of(T... items) {
+            ResourceFilterList<T> resourceFilterList = new ResourceFilterList<>();
+            if (isNotEmpty(items)) {
+                resourceFilterList.addAll(Arrays.asList(items));
+            }
+
+            return resourceFilterList;
+        }
 
     }
 

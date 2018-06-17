@@ -21,6 +21,7 @@ import hr.prism.board.validation.PostValidator;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import hr.prism.board.workflow.Activity;
 import hr.prism.board.workflow.Notification;
 import org.springframework.stereotype.Service;
@@ -146,7 +147,7 @@ public class PostService {
         filter.setOrderStatement("resource.updatedTimestamp desc, resource.id desc");
         filter.setOrderStatementSql("resource.updated_timestamp DESC, resource.id DESC");
 
-        State state = getFilterState(filter);
+        ResourceFilterList<State> state = getFilterState(filter);
         filter.setState(state);
 
         List<Post> posts =
@@ -541,14 +542,24 @@ public class PostService {
         }
     }
 
-    private State getFilterState(ResourceFilter filter) {
-        State state = filter.getState();
-        String quarter = filter.getQuarter();
-        if (state == ARCHIVED && quarter == null) {
-            throw new BoardException(INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
+    private ResourceFilterList<State> getFilterState(ResourceFilter filter) {
+        ResourceFilterList<State> state = filter.getState();
+        if (isNotEmpty(state)) {
+            if (state.contains(ARCHIVED)) {
+                if (state.size() > 1) {
+                    throw new BoardException(
+                        INVALID_RESOURCE_FILTER, "Cannot search archive and other states");
+                }
+
+                String quarter = filter.getQuarter();
+                if (quarter == null) {
+                    throw new BoardException(
+                        INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
+                }
+            }
         }
 
-        return quarter == null ? state : ARCHIVED;
+        return state;
     }
 
 }

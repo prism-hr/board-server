@@ -8,6 +8,7 @@ import hr.prism.board.dto.BoardDTO;
 import hr.prism.board.mapper.BoardMapper;
 import hr.prism.board.service.BoardService;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,7 +75,7 @@ public class BoardApiIT {
         filter =
             new ResourceFilter()
                 .setSearchTerm("search")
-                .setState(ACCEPTED);
+                .setState(ResourceFilterList.of(ACCEPTED));
 
         when(boardService.createBoard(user, 2L, boardDTO)).thenReturn(board);
         when(boardService.getBoards(user, filter)).thenReturn(singletonList(board));

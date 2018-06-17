@@ -10,6 +10,7 @@ import hr.prism.board.mapper.DepartmentMapper;
 import hr.prism.board.service.DepartmentBadgeService;
 import hr.prism.board.service.DepartmentService;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class DepartmentApiIT {
         filter =
             new ResourceFilter()
                 .setSearchTerm("search")
-                .setState(ACCEPTED);
+                .setState(ResourceFilterList.of(ACCEPTED));
 
         departmentBadgeOptions =
             new DepartmentBadgeOptionsDTO()

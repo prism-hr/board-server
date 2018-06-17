@@ -14,6 +14,7 @@ import hr.prism.board.enums.Action;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
 import org.junit.Before;
@@ -584,7 +585,7 @@ public class DepartmentServiceIT {
         User user = userService.getByEmail("department-administrator@prism.hr");
 
         List<Department> departments =
-            departmentService.getDepartments(user, new ResourceFilter().setState(ACCEPTED));
+            departmentService.getDepartments(user, new ResourceFilter().setState(ResourceFilterList.of(ACCEPTED)));
 
         assertThat(departments).hasSize(1);
 

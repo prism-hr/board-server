@@ -13,6 +13,7 @@ import hr.prism.board.enums.CategoryType;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.validation.PostValidator;
 import hr.prism.board.value.ResourceFilter;
+import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
 import org.junit.Before;
@@ -1759,7 +1760,7 @@ public class PostServiceIT {
     @Test
     public void getPosts_successWhenDepartmentAdministratorAndState() {
         User user = userService.getByEmail("department-administrator@prism.hr");
-        List<Post> posts = postService.getPosts(user, new ResourceFilter().setState(PENDING));
+        List<Post> posts = postService.getPosts(user, new ResourceFilter().setState(ResourceFilterList.of(PENDING)));
         assertThat(posts).hasSize(4);
 
         Board departmentRejectedBoardRejected =
@@ -1815,7 +1816,8 @@ public class PostServiceIT {
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts, departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
+        verifyGetBoardPostsDepartmentAdministrator(
+            posts, departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
     }
 
     @Test
