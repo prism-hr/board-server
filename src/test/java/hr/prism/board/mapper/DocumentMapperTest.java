@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DocumentMapperTest {
@@ -27,5 +28,11 @@ public class DocumentMapperTest {
         assertEquals("cloudinaryUrl", documentRepresentation.getCloudinaryUrl());
         assertEquals("fileName", documentRepresentation.getFileName());
     }
+
+    @Test
+    public void apply_successWhenNull() {
+        assertNull(documentMapper.apply((Document) null));
+    }
+
 
 }

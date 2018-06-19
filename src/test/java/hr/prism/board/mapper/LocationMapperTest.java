@@ -10,6 +10,7 @@ import static java.math.BigDecimal.ONE;
 import static java.math.BigDecimal.ZERO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LocationMapperTest {
@@ -31,6 +32,11 @@ public class LocationMapperTest {
         assertEquals("googleId", locationRepresentation.getGoogleId());
         assertThat(locationRepresentation.getLatitude()).isEqualByComparingTo("0.00");
         assertThat(locationRepresentation.getLongitude()).isEqualByComparingTo("1.00");
+    }
+
+    @Test
+    public void apply_successWhenNull() {
+        assertNull(locationMapper.apply(null));
     }
 
 }

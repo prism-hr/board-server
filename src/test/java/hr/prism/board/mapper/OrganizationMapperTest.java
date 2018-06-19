@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationMapperTest {
@@ -24,6 +25,11 @@ public class OrganizationMapperTest {
         assertEquals(1, organizationRepresentation.getId().longValue());
         assertEquals("name", organizationRepresentation.getName());
         assertEquals("logo", organizationRepresentation.getLogo());
+    }
+
+    @Test
+    public void apply_successWhenNull() {
+        assertNull(organizationMapper.apply((Organization) null));
     }
 
 }
