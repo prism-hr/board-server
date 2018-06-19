@@ -7,7 +7,6 @@ import hr.prism.board.representation.BoardRepresentation;
 import hr.prism.board.representation.DemographicDataStatusRepresentation;
 import hr.prism.board.representation.DepartmentRepresentation;
 import hr.prism.board.representation.PostRepresentation;
-import hr.prism.board.service.PostService;
 import hr.prism.board.value.DemographicDataStatus;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +17,6 @@ import static hr.prism.board.enums.MemberCategory.fromStrings;
 
 @Component
 public class PostMapper implements Function<Post, PostRepresentation> {
-
-    private final PostService postService;
 
     private final LocationMapper locationMapper;
 
@@ -34,10 +31,9 @@ public class PostMapper implements Function<Post, PostRepresentation> {
     private final ResourceEventMapper resourceEventMapper;
 
     @Inject
-    public PostMapper(PostService postService, LocationMapper locationMapper, OrganizationMapper organizationMapper,
+    public PostMapper(LocationMapper locationMapper, OrganizationMapper organizationMapper,
                       DocumentMapper documentMapper, BoardMapper boardMapper, ResourceMapper resourceMapper,
                       ResourceEventMapper resourceEventMapper) {
-        this.postService = postService;
         this.locationMapper = locationMapper;
         this.organizationMapper = organizationMapper;
         this.documentMapper = documentMapper;
@@ -59,8 +55,7 @@ public class PostMapper implements Function<Post, PostRepresentation> {
                 .setOrganization(organizationMapper.apply(post.getOrganization()))
                 .setLocation(locationMapper.apply(post.getLocation()))
                 .setExistingRelation(post.getExistingRelation())
-                .setExistingRelationExplanation(
-                    postService.mapExistingRelationExplanation(post.getExistingRelationExplanation()))
+                .setExistingRelationExplanation(post.getExistingRelationExplanation())
                 .setPostCategories(post.getPostCategoryStrings())
                 .setMemberCategories(fromStrings(post.getMemberCategoryStrings()));
 

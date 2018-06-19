@@ -1,5 +1,6 @@
 package hr.prism.board.domain;
 
+import hr.prism.board.domain.converter.ExistingRelationConverter;
 import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.value.DemographicDataStatus;
@@ -9,6 +10,7 @@ import org.hibernate.validator.constraints.Email;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static hr.prism.board.enums.Scope.Value.POST;
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
@@ -108,7 +110,8 @@ public class Post extends Resource {
     private ExistingRelation existingRelation;
 
     @Column(name = "existing_relation_explanation")
-    private String existingRelationExplanation;
+    @Convert(converter = ExistingRelationConverter.class)
+    private Map<String, Object> existingRelationExplanation;
 
     @Column(name = "apply_website")
     private String applyWebsite;
@@ -200,11 +203,11 @@ public class Post extends Resource {
         this.existingRelation = existingRelation;
     }
 
-    public String getExistingRelationExplanation() {
+    public Map<String, Object> getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
 
-    public void setExistingRelationExplanation(String existingRelationExplanation) {
+    public void setExistingRelationExplanation(Map<String, Object> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
     }
 

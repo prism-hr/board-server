@@ -6,8 +6,8 @@ import org.hibernate.validator.constraints.Email;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
@@ -30,7 +30,7 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
     private Optional<ExistingRelation> existingRelation;
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<LinkedHashMap<String, Object>> existingRelationExplanation;
+    private Optional<Map<String, Object>> existingRelationExplanation;
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<List<String>> postCategories;
@@ -105,12 +105,12 @@ public class PostPatchDTO extends ResourcePatchDTO<PostPatchDTO> {
         return this;
     }
 
-    public Optional<LinkedHashMap<String, Object>> getExistingRelationExplanation() {
+    public Optional<Map<String, Object>> getExistingRelationExplanation() {
         return existingRelationExplanation;
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public PostPatchDTO setExistingRelationExplanation(Optional<LinkedHashMap<String, Object>> existingRelationExplanation) {
+    public PostPatchDTO setExistingRelationExplanation(Optional<Map<String, Object>> existingRelationExplanation) {
         this.existingRelationExplanation = existingRelationExplanation;
         return this;
     }

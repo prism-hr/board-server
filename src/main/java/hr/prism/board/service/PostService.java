@@ -1,8 +1,5 @@
 package hr.prism.board.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.PostDAO;
 import hr.prism.board.domain.*;
@@ -29,10 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static hr.prism.board.enums.Action.*;
@@ -94,8 +93,6 @@ public class PostService {
 
     private final EventProducer eventProducer;
 
-    private final ObjectMapper objectMapper;
-
     private final EntityManager entityManager;
 
     @Inject
@@ -104,8 +101,8 @@ public class PostService {
                        ResourceService resourceService, PostPatchService postPatchService,
                        UserRoleService userRoleService, UserService userService, ActionService actionService,
                        ResourceEventService resourceEventService, DepartmentUserService departmentUserService,
-                       ResourceTaskService resourceTaskService, PostValidator postValidator, EventProducer eventProducer,
-                       ObjectMapper objectMapper, EntityManager entityManager) {
+                       ResourceTaskService resourceTaskService, PostValidator postValidator,
+                       EventProducer eventProducer, EntityManager entityManager) {
         this.postRepository = postRepository;
         this.postDAO = postDAO;
         this.documentService = documentService;
@@ -121,7 +118,6 @@ public class PostService {
         this.resourceTaskService = resourceTaskService;
         this.postValidator = postValidator;
         this.eventProducer = eventProducer;
-        this.objectMapper = objectMapper;
         this.entityManager = entityManager;
     }
 
@@ -193,8 +189,7 @@ public class PostService {
             userService.updateUserOrganizationAndLocation(user, organization, location);
 
             post.setExistingRelation(postDTO.getExistingRelation());
-            post.setExistingRelationExplanation(
-                mapExistingRelationExplanation(postDTO.getExistingRelationExplanation()));
+            post.setExistingRelationExplanation(postDTO.getExistingRelationExplanation());
             setPostApply(post, postDTO);
 
             LocalDateTime liveTimestamp = postDTO.getLiveTimestamp();
@@ -253,21 +248,6 @@ public class PostService {
         publishPosts(postToPublishIds, baseline);
     }
 
-    public Map<String, Object> mapExistingRelationExplanation(String existingRelationExplanation) {
-        if (existingRelationExplanation == null) {
-            return null;
-        }
-
-        try {
-            return objectMapper.readValue(existingRelationExplanation,
-                new TypeReference<LinkedHashMap<String, Object>>() {
-                });
-        } catch (IOException e) {
-            throw new BoardException(
-                CORRUPTED_EXISTING_RELATION_EXPLANATION, "Unable to deserialize existing relation explanation", e);
-        }
-    }
-
     public LocalDateTime getEffectiveLiveTimestamp(Post post) {
         LocalDateTime baseline = LocalDateTime.now();
         LocalDateTime liveTimestamp = post.getLiveTimestamp();
@@ -313,7 +293,10 @@ public class PostService {
 
         postPatchService.patchProperty(post, "existingRelation",
             post::getExistingRelation, post::setExistingRelation, postDTO.getExistingRelation());
-        patchExistingRelationExplanation(post, postDTO.getExistingRelationExplanation());
+
+        postPatchService.patchProperty(post, "existingRelationExplanation",
+            post::getExistingRelationExplanation, post::setExistingRelationExplanation,
+            postDTO.getExistingRelationExplanation());
 
         Optional<LocalDateTime> liveTimestamp = postDTO.getLiveTimestamp();
         Optional<LocalDateTime> deadTimestamp = postDTO.getDeadTimestamp();
@@ -413,25 +396,6 @@ public class PostService {
         }
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private void patchExistingRelationExplanation(Post post,
-                                                  Optional<LinkedHashMap<String, Object>> existingRelationExplanation) {
-        if (existingRelationExplanation != null) {
-            String newValue = null;
-            LinkedHashMap<String, Object> newValueMap = existingRelationExplanation.orElse(null);
-            if (newValueMap != null) {
-                newValue = mapExistingRelationExplanation(newValueMap);
-            }
-
-            String oldValue = post.getExistingRelationExplanation();
-            if (!Objects.equals(oldValue, newValue)) {
-                post.setExistingRelationExplanation(newValue);
-                Map<String, Object> oldValueMap = oldValue == null ? null : mapExistingRelationExplanation(oldValue);
-                post.getChangeList().put("existingRelationExplanation", oldValueMap, newValueMap);
-            }
-        }
-    }
-
     private void retirePosts(List<Long> postIds, LocalDateTime baseline) {
         if (!postIds.isEmpty()) {
             actionService.executeAnonymously(postIds, RETIRE, EXPIRED, baseline);
@@ -479,19 +443,6 @@ public class PostService {
                                 .setScope(DEPARTMENT)
                                 .setRole(Role.MEMBER)
                                 .setNotification(PUBLISH_POST_MEMBER_NOTIFICATION)))));
-        }
-    }
-
-    private String mapExistingRelationExplanation(Map<String, Object> existingRelationExplanation) {
-        if (existingRelationExplanation == null) {
-            return null;
-        }
-
-        try {
-            return objectMapper.writeValueAsString(existingRelationExplanation);
-        } catch (JsonProcessingException e) {
-            throw new BoardException(
-                CORRUPTED_EXISTING_RELATION_EXPLANATION, "Unable to serialize existing relation explanation", e);
         }
     }
 

@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Bean;
 
 import javax.inject.Inject;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
-import static hr.prism.board.utils.JacksonUtils.getObjectMapper;
+import static hr.prism.board.utils.JacksonUtils.OBJECT_MAPPER;
+import static hr.prism.board.utils.JacksonUtils.PRETTY_PRINT_OBJECT_MAPPER;
 
 public class JacksonConfiguration {
 
@@ -20,12 +20,7 @@ public class JacksonConfiguration {
 
     @Bean
     public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = getObjectMapper().copy();
-        if (jacksonPretty) {
-            objectMapper.enable(INDENT_OUTPUT);
-        }
-
-        return objectMapper;
+        return jacksonPretty ? PRETTY_PRINT_OBJECT_MAPPER : OBJECT_MAPPER;
     }
 
 }

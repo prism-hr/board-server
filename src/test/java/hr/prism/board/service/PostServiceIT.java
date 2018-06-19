@@ -15,6 +15,7 @@ import hr.prism.board.validation.PostValidator;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import hr.prism.board.workflow.Execution;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -2049,7 +2050,7 @@ public class PostServiceIT {
         assertEquals(expectedApplyDocument, post.getApplyDocument());
         assertEquals(expectApplyEmail, post.getApplyEmail());
         assertEquals(STUDENT, post.getExistingRelation());
-        assertEquals("{\n  \"studyLevel\" : \"MASTER\"\n}", post.getExistingRelationExplanation());
+        assertThat(post.getExistingRelationExplanation()).containsExactly(Pair.of("studyLevel", "MASTER"));
         assertEquals(DRAFT, post.getState());
         assertEquals(DRAFT, post.getPreviousState());
 

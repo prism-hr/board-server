@@ -15,7 +15,7 @@ import static hr.prism.board.enums.Notification.*;
 import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.*;
 import static hr.prism.board.enums.State.*;
-import static hr.prism.board.utils.JacksonUtils.getObjectMapper;
+import static hr.prism.board.utils.JacksonUtils.OBJECT_MAPPER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Component
@@ -24,7 +24,7 @@ public class Installer {
     private static final Logger LOGGER = getLogger(Installer.class);
 
     private static final Workflow DEPARTMENT_WORKFLOW =
-        new Workflow(getObjectMapper())
+        new Workflow(OBJECT_MAPPER)
             // Department draft state
             .permitThatAnybody().can(VIEW, DEPARTMENT).inState(DRAFT)
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(EDIT, DEPARTMENT).inState(DRAFT)
@@ -56,7 +56,7 @@ public class Installer {
             .transitioningTo(ACCEPTED);
 
     private static final Workflow BOARD_WORKFLOW =
-        new Workflow(getObjectMapper())
+        new Workflow(OBJECT_MAPPER)
             // Board accepted state
             .permitThatAnybody().can(VIEW, BOARD).inState(ACCEPTED)
             .permitThatAnybody().can(EXTEND, BOARD).inState(ACCEPTED).andParentStateNot(REJECTED).creating(POST)
@@ -80,7 +80,7 @@ public class Installer {
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(RESTORE, BOARD).inState(REJECTED).transitioningTo(ACCEPTED);
 
     private static final Workflow POST_WORKFLOW =
-        new Workflow(getObjectMapper())
+        new Workflow(OBJECT_MAPPER)
             // Post draft state
             .permitThat(DEPARTMENT, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
             .permitThat(POST, ADMINISTRATOR).can(VIEW, POST).inState(DRAFT)
