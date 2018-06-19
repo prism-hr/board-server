@@ -48,7 +48,7 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
 @SqlResultSetMapping(
     name = "userSearch",
     classes = @ConstructorResult(
-        targetClass = UserSearch.class,
+        targetClass = hr.prism.board.value.UserSearch.class,
         columns = {
             @ColumnResult(name = "id", type = Long.class),
             @ColumnResult(name = "givenName", type = String.class),

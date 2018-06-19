@@ -20,7 +20,7 @@ public interface UserNotificationSuppressionRepository extends JpaRepository<Use
             "from UserNotificationSuppression userNotificationSuppression " +
             "where userNotificationSuppression.user = :user")
     @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
-    List<Resource> findByUser(User user);
+    List<Resource> findByUser(@Param("user") User user);
 
     UserNotificationSuppression findByUserAndResource(User user, Resource resource);
 
