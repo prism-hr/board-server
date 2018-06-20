@@ -23,7 +23,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
             "where userRole.resource = :resource " +
             "and userRole.user = :user")
     @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
-    List<Role> findByResourceAndUser(Resource resource, User user);
+    List<Role> findByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
 
     List<UserRole> findByResourceAndRole(Resource resource, Role role);
 

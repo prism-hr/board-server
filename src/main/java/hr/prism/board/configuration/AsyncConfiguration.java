@@ -23,6 +23,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(10);
         executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.initialize();
         return executor;
     }
 
