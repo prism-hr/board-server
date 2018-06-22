@@ -2,6 +2,7 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Document;
 import hr.prism.board.representation.DocumentRepresentation;
+import hr.prism.board.value.ResourceSearch;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -23,6 +24,7 @@ public class DocumentMapperTest {
         document.setFileName("fileName");
 
         DocumentRepresentation documentRepresentation = documentMapper.apply(document);
+
         assertEquals(1L, documentRepresentation.getId().longValue());
         assertEquals("cloudinaryId", documentRepresentation.getCloudinaryId());
         assertEquals("cloudinaryUrl", documentRepresentation.getCloudinaryUrl());
@@ -34,5 +36,27 @@ public class DocumentMapperTest {
         assertNull(documentMapper.apply((Document) null));
     }
 
+    @Test
+    public void apply_resourceSearch_success() {
+        ResourceSearch resourceSearch = new ResourceSearch(1L, "resource",
+            "cloudinaryId", "cloudinaryUrl", "fileName");
+
+        DocumentRepresentation documentRepresentation = documentMapper.apply(resourceSearch);
+
+        assertEquals("cloudinaryId", documentRepresentation.getCloudinaryId());
+        assertEquals("cloudinaryUrl", documentRepresentation.getCloudinaryUrl());
+        assertEquals("fileName", documentRepresentation.getFileName());
+    }
+
+    @Test
+    public void apply_resourceSearch_successWhenNull() {
+        assertNull(documentMapper.apply((ResourceSearch) null));
+    }
+
+    @Test
+    public void apply_resourceSearch_successWhenCloudinaryIdNull() {
+        assertNull(documentMapper.apply(new ResourceSearch(1L,
+            "resource", null, null, null)));
+    }
 
 }

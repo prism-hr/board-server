@@ -43,8 +43,8 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
 
         University university = (University) department.getParent();
         return resourceMapper.apply(department, DepartmentRepresentation.class)
-            .setSummary(department.getSummary())
             .setUniversity(universityMapper.apply(university))
+            .setSummary(department.getSummary())
             .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
             .setHandle(resourceMapper.getHandle(department, university))
             .setCustomerId(department.getCustomerId())

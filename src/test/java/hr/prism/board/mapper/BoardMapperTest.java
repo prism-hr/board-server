@@ -1,5 +1,6 @@
 package hr.prism.board.mapper;
 
+import hr.prism.board.domain.Board;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class BoardMapperTest {
 
     @Test
     public void apply_success() {
-
+        Board board = new Board();
     }
 
     @Test

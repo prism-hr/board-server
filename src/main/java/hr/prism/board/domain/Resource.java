@@ -188,6 +188,10 @@ public class Resource extends BoardEntity {
         return categories;
     }
 
+    public void setCategories(Set<ResourceCategory> categories) {
+        this.categories = categories;
+    }
+
     public List<ResourceCategory> getMemberCategories() {
         return getCategories(MEMBER);
     }
