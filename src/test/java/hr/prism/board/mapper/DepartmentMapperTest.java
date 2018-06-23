@@ -62,12 +62,12 @@ public class DepartmentMapperTest {
         documentLogo.setCloudinaryId("cloudinaryId");
 
         department = new Department();
-        department.setId(1L);
+        department.setId(2L);
         department.setParent(university);
         department.setDocumentLogo(documentLogo);
         department.setHandle("university/department");
 
-        resourceSearch = new ResourceSearch(1L, "department",
+        resourceSearch = new ResourceSearch(2L, "department",
             "cloudinaryId", "cloudinaryUrl", "fileName");
 
         universityRepresentation =
@@ -129,7 +129,7 @@ public class DepartmentMapperTest {
     public void apply_resourceSearch_success() {
         DepartmentRepresentation departmentRepresentation = departmentMapper.apply(resourceSearch);
 
-        assertEquals(1L, departmentRepresentation.getId().longValue());
+        assertEquals(2L, departmentRepresentation.getId().longValue());
         assertEquals("department", departmentRepresentation.getName());
         assertEquals(documentLogoRepresentation, departmentRepresentation.getDocumentLogo());
 
@@ -158,6 +158,29 @@ public class DepartmentMapperTest {
     @Test
     public void applySmall_successWhenNull() {
         assertNull(departmentMapper.applySmall(null));
+    }
+
+    @Test
+    public void applyMedium_success() {
+        department.setCategories(ImmutableSet.of(
+            new ResourceCategory().setType(MEMBER).setName("UNDERGRADUATE_STUDENT")));
+
+        DepartmentRepresentation departmentRepresentation = departmentMapper.apply(department);
+
+        assertEquals(universityRepresentation, departmentRepresentation.getUniversity());
+        assertEquals(documentLogoRepresentation, departmentRepresentation.getDocumentLogo());
+        assertEquals("department", departmentRepresentation.getHandle());
+        assertThat(departmentRepresentation.getMemberCategories()).containsExactly(UNDERGRADUATE_STUDENT);
+
+        verify(resourceMapper, times(1)).apply(department, DepartmentRepresentation.class);
+        verify(universityMapper, times(1)).apply(university);
+        verify(documentMapper, times(1)).apply(documentLogo);
+        verify(resourceMapper, times(1)).getHandle(department, university);
+    }
+
+    @Test
+    public void applyMedium_successWhenNull() {
+        assertNull(departmentMapper.applyMedium(null));
     }
 
 }

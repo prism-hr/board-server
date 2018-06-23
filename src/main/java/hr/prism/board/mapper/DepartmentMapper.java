@@ -88,6 +88,19 @@ public class DepartmentMapper implements Function<Department, DepartmentRepresen
             .setHandle(resourceMapper.getHandle(department, university));
     }
 
+    DepartmentRepresentation applyMedium(Department department) {
+        if (department == null) {
+            return null;
+        }
+
+        University university = (University) department.getParent();
+        return resourceMapper.applySmall(department, DepartmentRepresentation.class)
+            .setUniversity(universityMapper.apply(university))
+            .setDocumentLogo(documentMapper.apply(department.getDocumentLogo()))
+            .setHandle(resourceMapper.getHandle(department, university))
+            .setMemberCategories(fromStrings(department.getMemberCategoryStrings()));
+    }
+
     private List<ResourceTaskRepresentation> applyTasks(List<ResourceTask> tasks) {
         if (tasks == null) {
             return null;
