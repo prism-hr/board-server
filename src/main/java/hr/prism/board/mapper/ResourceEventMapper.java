@@ -2,7 +2,6 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.representation.ResourceEventRepresentation;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
@@ -10,17 +9,13 @@ import java.util.function.Function;
 @Component
 public class ResourceEventMapper implements Function<ResourceEvent, ResourceEventRepresentation> {
 
-    private final boolean exposeResponseData;
-
     private final UserMapper userMapper;
 
     private final DocumentMapper documentMapper;
 
     private final LocationMapper locationMapper;
 
-    public ResourceEventMapper(@Value("${expose.response.data}") boolean exposeResponseData, UserMapper userMapper,
-                               DocumentMapper documentMapper, LocationMapper locationMapper) {
-        this.exposeResponseData = exposeResponseData;
+    public ResourceEventMapper(UserMapper userMapper, DocumentMapper documentMapper, LocationMapper locationMapper) {
         this.userMapper = userMapper;
         this.documentMapper = documentMapper;
         this.locationMapper = locationMapper;
@@ -46,7 +41,7 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
         representation.setMemberProgram(resourceEvent.getMemberProgram());
         representation.setMemberYear(resourceEvent.getMemberYear());
 
-        if (exposeResponseData || resourceEvent.isExposeResponseData()) {
+        if (resourceEvent.isExposeResponseData()) {
             representation.setUser(userMapper.apply(resourceEvent.getUser()));
             representation.setIpAddress(resourceEvent.getIpAddress());
             representation.setDocumentResume(documentMapper.apply(resourceEvent.getDocumentResume()));

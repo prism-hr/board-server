@@ -24,6 +24,8 @@ public class DatabaseConfiguration {
 
     private final String databaseSchema;
 
+    private final String databasePassword;
+
     private final boolean cleanDbOnStartup;
 
     private final boolean databaseMigrationOn;
@@ -31,10 +33,12 @@ public class DatabaseConfiguration {
     @Inject
     public DatabaseConfiguration(@Value("${database.host}") String databaseHost,
                                  @Value("${database.schema}") String databaseSchema,
+                                 @Value("${database.password}") String databasePassword,
                                  @Value("${clean.db.on.startup}") boolean cleanDbOnStartup,
                                  @Value("${database.migration.on}") boolean databaseMigrationOn) {
         this.databaseHost = databaseHost;
         this.databaseSchema = databaseSchema;
+        this.databasePassword = databasePassword;
         this.cleanDbOnStartup = cleanDbOnStartup;
         this.databaseMigrationOn = databaseMigrationOn;
     }
@@ -51,7 +55,7 @@ public class DatabaseConfiguration {
             "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci" +
             "&useLegacyDatetimeCode=false&serverTimezone=" + timezone + "&useSSL=false");
         hikariConfig.setUsername("prism");
-        hikariConfig.setPassword("pgadmissions");
+        hikariConfig.setPassword(databasePassword);
 
         hikariConfig.setPoolName("database-connection-pool");
         hikariConfig.setMaxLifetime(600000);
