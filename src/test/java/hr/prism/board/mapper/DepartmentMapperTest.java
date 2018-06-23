@@ -44,6 +44,8 @@ public class DepartmentMapperTest {
 
     private Department department;
 
+    private ResourceSearch resourceSearch;
+
     private Document documentLogo;
 
     private UniversityRepresentation universityRepresentation;
@@ -65,6 +67,9 @@ public class DepartmentMapperTest {
         department.setDocumentLogo(documentLogo);
         department.setHandle("university/department");
 
+        resourceSearch = new ResourceSearch(1L, "department",
+            "cloudinaryId", "cloudinaryUrl", "fileName");
+
         universityRepresentation =
             new UniversityRepresentation()
                 .setId(1L);
@@ -76,8 +81,12 @@ public class DepartmentMapperTest {
         when(resourceMapper.apply(department, DepartmentRepresentation.class))
             .thenReturn(new DepartmentRepresentation());
 
+        when(resourceMapper.applySmall(department, DepartmentRepresentation.class))
+            .thenReturn(new DepartmentRepresentation());
+
         when(universityMapper.apply(university)).thenReturn(universityRepresentation);
         when(documentMapper.apply(documentLogo)).thenReturn(documentLogoRepresentation);
+        when(documentMapper.apply(resourceSearch)).thenReturn(documentLogoRepresentation);
         when(resourceMapper.getHandle(department, university)).thenReturn("department");
 
         departmentMapper = new DepartmentMapper(documentMapper, resourceMapper, universityMapper, organizationMapper);
@@ -118,7 +127,13 @@ public class DepartmentMapperTest {
 
     @Test
     public void apply_resourceSearch_success() {
+        DepartmentRepresentation departmentRepresentation = departmentMapper.apply(resourceSearch);
 
+        assertEquals(1L, departmentRepresentation.getId().longValue());
+        assertEquals("department", departmentRepresentation.getName());
+        assertEquals(documentLogoRepresentation, departmentRepresentation.getDocumentLogo());
+
+        verify(documentMapper, times(1)).apply(resourceSearch);
     }
 
     @Test
@@ -128,12 +143,21 @@ public class DepartmentMapperTest {
 
     @Test
     public void applySmall_success() {
+        DepartmentRepresentation departmentRepresentation = departmentMapper.applySmall(department);
 
+        assertEquals(universityRepresentation, departmentRepresentation.getUniversity());
+        assertEquals(documentLogoRepresentation, departmentRepresentation.getDocumentLogo());
+        assertEquals("department", departmentRepresentation.getHandle());
+
+        verify(resourceMapper, times(1)).applySmall(department, DepartmentRepresentation.class);
+        verify(universityMapper, times(1)).apply(university);
+        verify(documentMapper, times(1)).apply(documentLogo);
+        verify(resourceMapper, times(1)).getHandle(department, university);
     }
 
     @Test
     public void applySmall_successWhenNull() {
-
+        assertNull(departmentMapper.applySmall(null));
     }
 
 }
