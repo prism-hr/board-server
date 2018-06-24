@@ -2,7 +2,7 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Document;
 import hr.prism.board.representation.DocumentRepresentation;
-import hr.prism.board.value.ResourceSearch;
+import hr.prism.board.value.DocumentSearch;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
@@ -23,20 +23,20 @@ public class DocumentMapper implements Function<Document, DocumentRepresentation
             .setFileName(document.getFileName());
     }
 
-    public DocumentRepresentation apply(ResourceSearch document) {
+    public DocumentRepresentation apply(DocumentSearch document) {
         if (document == null) {
             return null;
         }
 
-        String documentImageCloudinaryId = document.getDocumentLogoCloudinaryId();
+        String documentImageCloudinaryId = document.getDocumentCloudinaryId();
         if (documentImageCloudinaryId == null) {
             return null;
         }
 
         return new DocumentRepresentation()
             .setCloudinaryId(documentImageCloudinaryId)
-            .setCloudinaryUrl(document.getDocumentLogoCloudinaryUrl())
-            .setFileName(document.getDocumentLogoFileName());
+            .setCloudinaryUrl(document.getDocumentCloudinaryUrl())
+            .setFileName(document.getDocumentFileName());
     }
 
 }

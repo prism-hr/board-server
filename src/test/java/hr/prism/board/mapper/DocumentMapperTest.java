@@ -2,6 +2,7 @@ package hr.prism.board.mapper;
 
 import hr.prism.board.domain.Document;
 import hr.prism.board.representation.DocumentRepresentation;
+import hr.prism.board.value.DocumentSearch;
 import hr.prism.board.value.ResourceSearch;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +39,7 @@ public class DocumentMapperTest {
 
     @Test
     public void apply_resourceSearch_success() {
-        ResourceSearch resourceSearch = new ResourceSearch(1L, "resource",
+        DocumentSearch resourceSearch = new DocumentSearch(
             "cloudinaryId", "cloudinaryUrl", "fileName");
 
         DocumentRepresentation documentRepresentation = documentMapper.apply(resourceSearch);

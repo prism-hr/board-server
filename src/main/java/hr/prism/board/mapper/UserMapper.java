@@ -1,7 +1,6 @@
 package hr.prism.board.mapper;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.representation.DocumentRepresentation;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.value.UserSearch;
 import org.springframework.stereotype.Component;
@@ -57,22 +56,12 @@ public class UserMapper implements Function<User, UserRepresentation> {
             return null;
         }
 
-        DocumentRepresentation documentImage = null;
-        String documentImageCloudinaryId = user.getDocumentImageCloudinaryId();
-        if (documentImageCloudinaryId != null) {
-            documentImage =
-                new DocumentRepresentation()
-                    .setCloudinaryId(documentImageCloudinaryId)
-                    .setCloudinaryUrl(user.getDocumentImageCloudinaryUrl())
-                    .setFileName(user.getDocumentImageFileName());
-        }
-
         return new UserRepresentation()
             .setId(user.getId())
             .setGivenName(user.getGivenName())
             .setSurname(user.getSurname())
             .setEmail(user.getEmailDisplay())
-            .setDocumentImage(documentImage);
+            .setDocumentImage(documentMapper.apply(user));
     }
 
 }

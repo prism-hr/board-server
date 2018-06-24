@@ -1,6 +1,6 @@
 package hr.prism.board.value;
 
-public class UserSearch {
+public class UserSearch extends DocumentSearch {
 
     private Long id;
 
@@ -10,21 +10,13 @@ public class UserSearch {
 
     private String emailDisplay;
 
-    private String documentImageCloudinaryId;
-
-    private String documentImageCloudinaryUrl;
-
-    private String documentImageFileName;
-
-    public UserSearch(Long id, String givenName, String surname, String emailDisplay, String documentImageCloudinaryId,
-                      String documentImageCloudinaryUrl, String documentImageFileName) {
+    public UserSearch(Long id, String givenName, String surname, String emailDisplay, String documentCloudinaryId,
+                      String documentCloudinaryUrl, String documentFileName) {
+        super(documentCloudinaryId, documentCloudinaryUrl, documentFileName);
         this.id = id;
         this.givenName = givenName;
         this.surname = surname;
         this.emailDisplay = emailDisplay;
-        this.documentImageCloudinaryId = documentImageCloudinaryId;
-        this.documentImageCloudinaryUrl = documentImageCloudinaryUrl;
-        this.documentImageFileName = documentImageFileName;
     }
 
     public Long getId() {
@@ -41,18 +33,6 @@ public class UserSearch {
 
     public String getEmailDisplay() {
         return emailDisplay;
-    }
-
-    public String getDocumentImageCloudinaryId() {
-        return documentImageCloudinaryId;
-    }
-
-    public String getDocumentImageCloudinaryUrl() {
-        return documentImageCloudinaryUrl;
-    }
-
-    public String getDocumentImageFileName() {
-        return documentImageFileName;
     }
 
 }

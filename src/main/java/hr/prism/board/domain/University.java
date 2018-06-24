@@ -12,10 +12,8 @@ import static hr.prism.board.enums.Scope.Value.UNIVERSITY;
 @NamedNativeQuery(
     name = "universitySearch",
     query =
-        "SELECT resource.id as id, resource.name as name, " +
-            "document_logo.cloudinary_id as documentLogoCloudinaryId, " +
-            "document_logo.cloudinary_url as documentLogoCloudinaryUrl, " +
-            "document_logo.file_name as documentLogoFileName, " +
+        "SELECT resource.id as id, resource.name as name, document_logo.cloudinary_id as documentCloudinaryId, " +
+            "document_logo.cloudinary_url as documentCloudinaryUrl, document_logo.file_name as documentFileName, " +
             "IF(resource.name LIKE :searchTermHard, 1, 0) AS similarityHard, " +
             "MATCH (resource.name) AGAINST(:searchTermSoft IN BOOLEAN MODE) AS similaritySoft " +
             "FROM resource " +
@@ -34,9 +32,9 @@ import static hr.prism.board.enums.Scope.Value.UNIVERSITY;
         columns = {
             @ColumnResult(name = "id", type = Long.class),
             @ColumnResult(name = "name", type = String.class),
-            @ColumnResult(name = "documentLogoCloudinaryId", type = String.class),
-            @ColumnResult(name = "documentLogoCloudinaryUrl", type = String.class),
-            @ColumnResult(name = "documentLogoFileName", type = String.class)}))
+            @ColumnResult(name = "documentCloudinaryId", type = String.class),
+            @ColumnResult(name = "documentCloudinaryUrl", type = String.class),
+            @ColumnResult(name = "documentFileName", type = String.class)}))
 @SuppressWarnings("SqlResolve")
 public class University extends Resource {
 

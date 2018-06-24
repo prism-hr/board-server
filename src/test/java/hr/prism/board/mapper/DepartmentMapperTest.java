@@ -42,11 +42,11 @@ public class DepartmentMapperTest {
 
     private University university;
 
+    private Document documentLogo;
+
     private Department department;
 
     private ResourceSearch resourceSearch;
-
-    private Document documentLogo;
 
     private UniversityRepresentation universityRepresentation;
 

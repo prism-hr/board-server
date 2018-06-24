@@ -32,9 +32,8 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
     name = "userSearch",
     query =
         "SELECT user.id AS id, user.given_name  AS givenName, user.surname AS surname, " +
-            "user.email_display AS emailDisplay, document_image.cloudinary_id AS documentImageCloudinaryId, " +
-            "document_image.cloudinary_url AS documentImageCloudinaryUrl, " +
-            "document_image.file_name AS documentImageFileName " +
+            "user.email_display AS emailDisplay, document_image.cloudinary_id AS documentCloudinaryId, " +
+            "document_image.cloudinary_url AS documentCloudinaryUrl, document_image.file_name AS documentFileName " +
             "FROM user " +
             "LEFT JOIN document AS document_image " +
             "ON user.document_image_id = document_image.id " +
@@ -54,9 +53,9 @@ import static org.apache.commons.lang3.ObjectUtils.compare;
             @ColumnResult(name = "givenName", type = String.class),
             @ColumnResult(name = "surname", type = String.class),
             @ColumnResult(name = "emailDisplay", type = String.class),
-            @ColumnResult(name = "documentImageCloudinaryId", type = String.class),
-            @ColumnResult(name = "documentImageCloudinaryUrl", type = String.class),
-            @ColumnResult(name = "documentImageFileName", type = String.class)}))
+            @ColumnResult(name = "documentCloudinaryId", type = String.class),
+            @ColumnResult(name = "documentCloudinaryUrl", type = String.class),
+            @ColumnResult(name = "documentFileName", type = String.class)}))
 @SuppressWarnings("SqlResolve")
 public class User extends BoardEntity implements Comparable<User> {
 

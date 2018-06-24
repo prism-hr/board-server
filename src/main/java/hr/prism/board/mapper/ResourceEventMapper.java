@@ -32,14 +32,13 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
                 .setId(resourceEvent.getId())
                 .setEvent(resourceEvent.getEvent())
                 .setReferral(resourceEvent.getReferral())
-                .setViewed(resourceEvent.isViewed());
-
-        representation.setGender(resourceEvent.getGender());
-        representation.setAgeRange(resourceEvent.getAgeRange());
-        representation.setLocationNationality(locationMapper.apply(resourceEvent.getLocationNationality()));
-        representation.setMemberCategory(resourceEvent.getMemberCategory());
-        representation.setMemberProgram(resourceEvent.getMemberProgram());
-        representation.setMemberYear(resourceEvent.getMemberYear());
+                .setViewed(resourceEvent.isViewed())
+                .setGender(resourceEvent.getGender())
+                .setAgeRange(resourceEvent.getAgeRange())
+                .setLocationNationality(locationMapper.apply(resourceEvent.getLocationNationality()))
+                .setMemberCategory(resourceEvent.getMemberCategory())
+                .setMemberProgram(resourceEvent.getMemberProgram())
+                .setMemberYear(resourceEvent.getMemberYear());
 
         if (resourceEvent.isExposeResponseData()) {
             representation.setUser(userMapper.apply(resourceEvent.getUser()));
@@ -49,8 +48,8 @@ public class ResourceEventMapper implements Function<ResourceEvent, ResourceEven
             representation.setCoveringNote(resourceEvent.getCoveringNote());
         }
 
-        representation.setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
-        return representation;
+        return representation
+            .setCreatedTimestamp(resourceEvent.getCreatedTimestamp());
     }
 
 }

@@ -43,6 +43,10 @@ public class PostMapperTest {
 
     private Document applyDocument;
 
+    private ResourceEvent resourceEventReferral;
+
+    private ResourceEvent resourceEventResponse;
+
     private Post post;
 
     private BoardRepresentation boardRepresentation;
@@ -52,6 +56,10 @@ public class PostMapperTest {
     private LocationRepresentation locationRepresentation;
 
     private DocumentRepresentation applyDocumentRepresentation;
+
+    private ResourceEventRepresentation resourceEventReferralRepresentation;
+
+    private ResourceEventRepresentation resourceEventResponseRepresentation;
 
     @Before
     public void setUp() {
@@ -67,29 +75,51 @@ public class PostMapperTest {
         applyDocument = new Document();
         applyDocument.setCloudinaryId("cloudinaryId");
 
+        resourceEventReferral = new ResourceEvent();
+        resourceEventReferral.setId(1L);
+
+        resourceEventResponse = new ResourceEvent();
+        resourceEventResponse.setId(2L);
+
         post = new Post();
         post.setId(1L);
         post.setParent(board);
         post.setOrganization(organization);
         post.setLocation(location);
         post.setApplyDocument(applyDocument);
+        post.setReferral(resourceEventReferral);
+        post.setResponse(resourceEventResponse);
 
-        boardRepresentation = new BoardRepresentation();
-        boardRepresentation.setId(1L);
+        boardRepresentation =
+            new BoardRepresentation()
+                .setId(1L);
 
-        organizationRepresentation = new OrganizationRepresentation();
-        organizationRepresentation.setId(1L);
+        organizationRepresentation =
+            new OrganizationRepresentation()
+                .setId(1L);
 
-        locationRepresentation = new LocationRepresentation();
-        locationRepresentation.setGoogleId("googleId");
+        locationRepresentation =
+            new LocationRepresentation()
+                .setGoogleId("googleId");
 
-        applyDocumentRepresentation = new DocumentRepresentation();
-        applyDocumentRepresentation.setCloudinaryId("cloudinaryId");
+        applyDocumentRepresentation =
+            new DocumentRepresentation()
+                .setCloudinaryId("cloudinaryId");
+
+        resourceEventReferralRepresentation =
+            new ResourceEventRepresentation()
+                .setId(1L);
+
+        resourceEventResponseRepresentation =
+            new ResourceEventRepresentation()
+                .setId(2L);
 
         when(resourceMapper.apply(post, PostRepresentation.class)).thenReturn(new PostRepresentation());
         when(organizationMapper.apply(organization)).thenReturn(organizationRepresentation);
         when(locationMapper.apply(location)).thenReturn(locationRepresentation);
         when(documentMapper.apply(applyDocument)).thenReturn(applyDocumentRepresentation);
+        when(resourceEventMapper.apply(resourceEventReferral)).thenReturn(resourceEventReferralRepresentation);
+        when(resourceEventMapper.apply(resourceEventResponse)).thenReturn(resourceEventResponseRepresentation);
 
         postMapper = new PostMapper(
             locationMapper, organizationMapper, documentMapper, boardMapper, resourceMapper, resourceEventMapper);
@@ -104,6 +134,11 @@ public class PostMapperTest {
 
     @Test
     public void apply_success() {
+
+    }
+
+    @Test
+    public void apply_successWhenExposeApplyData() {
 
     }
 
