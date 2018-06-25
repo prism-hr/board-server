@@ -1,7 +1,10 @@
 package hr.prism.board.mapper;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import hr.prism.board.domain.*;
 import hr.prism.board.representation.*;
+import hr.prism.board.value.DemographicDataStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,6 +12,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import static hr.prism.board.enums.CategoryType.MEMBER;
+import static hr.prism.board.enums.CategoryType.POST;
+import static hr.prism.board.enums.ExistingRelation.STUDENT;
+import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;
 
@@ -42,6 +52,18 @@ public class PostMapperTest {
     private Location location;
 
     private Document applyDocument;
+
+    private LocalDateTime liveTimestamp = LocalDateTime.of(2018, 6, 1, 9, 0, 0);
+
+    private LocalDateTime deadTimestamp = LocalDateTime.of(2018, 6, 2, 9, 0, 0);
+
+    private LocalDateTime lastViewTimestamp = LocalDateTime.of(2018, 6, 1, 10, 0, 0);
+
+    private LocalDateTime lastReferralTimestamp = LocalDateTime.of(2018, 6, 1, 11, 0, 0);
+
+    private LocalDateTime lastResponseTimestamp = LocalDateTime.of(2018, 6, 1, 12, 0, 0);
+
+    private LocalDate expiryDate = LocalDate.of(2020, 6, 1);
 
     private ResourceEvent resourceEventReferral;
 
@@ -84,9 +106,50 @@ public class PostMapperTest {
         post = new Post();
         post.setId(1L);
         post.setParent(board);
+        post.setSummary("summary");
+        post.setDescription("description");
         post.setOrganization(organization);
         post.setLocation(location);
+        post.setExistingRelation(STUDENT);
+        post.setExistingRelationExplanation(
+            ImmutableMap.of("explanation", "explanation"));
+
+        post.setCategories(
+            ImmutableSet.of(
+                new ResourceCategory()
+                    .setType(MEMBER)
+                    .setName("UNDERGRADUATE_STUDENT"),
+                new ResourceCategory()
+                    .setType(MEMBER)
+                    .setName("MASTER_STUDENT"),
+                new ResourceCategory()
+                    .setType(POST)
+                    .setName("Employment"),
+                new ResourceCategory()
+                    .setType(POST)
+                    .setName("Internship")));
+
+        post.setApplyWebsite("applyWebsite");
         post.setApplyDocument(applyDocument);
+        post.setApplyEmail("email@prism.hr");
+        post.setLiveTimestamp(liveTimestamp);
+        post.setDeadTimestamp(deadTimestamp);
+        post.setViewCount(1L);
+        post.setReferralCount(2L);
+        post.setResponseCount(3L);
+        post.setLastViewTimestamp(lastViewTimestamp);
+        post.setLastReferralTimestamp(lastReferralTimestamp);
+        post.setLastResponseTimestamp(lastResponseTimestamp);
+
+        post.setDemographicDataStatus(
+            new DemographicDataStatus()
+                .setRequireUserData(true)
+                .setRequireMemberData(true)
+                .setMemberCategory(UNDERGRADUATE_STUDENT)
+                .setMemberProgram("memberProgram")
+                .setMemberYear(2018)
+                .setExpiryDate(expiryDate));
+
         post.setReferral(resourceEventReferral);
         post.setResponse(resourceEventResponse);
 

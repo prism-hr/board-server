@@ -35,6 +35,8 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
+import static org.springframework.transaction.annotation.Isolation.SERIALIZABLE;
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 @Service
 @Transactional
@@ -69,6 +71,7 @@ public class ResourceEventService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
+    @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
     public ResourceEvent createPostView(Post post, User user, String ipAddress) {
         if (user == null && ipAddress == null) {
             throw new BoardException(UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
@@ -90,6 +93,7 @@ public class ResourceEventService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
+    @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
     public ResourceEvent createPostReferral(Post post, User user) {
         String referral = sha256Hex(randomUUID().toString());
         return saveResourceEvent(post,
@@ -100,6 +104,7 @@ public class ResourceEventService {
                 .setReferral(referral));
     }
 
+    @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
     public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
         if (post.getApplyEmail() == null) {
             throw new BoardException(INVALID_RESOURCE_EVENT, "Post no longer accepting applications");
@@ -161,20 +166,20 @@ public class ResourceEventService {
         return response;
     }
 
-    public ResourceEvent findByResourceAndEventAndUser(Resource resource, hr.prism.board.enums.ResourceEvent event,
-                                                       User user) {
+    ResourceEvent findByResourceAndEventAndUser(Resource resource, hr.prism.board.enums.ResourceEvent event,
+                                                User user) {
         List<Long> ids =
             resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(singletonList(resource), event, user);
         return ids.isEmpty() ? null : resourceEventRepository.findOne(ids.get(0));
     }
 
-    public <T extends Resource> List<ResourceEvent> findByResourceIdsAndEventAndUser(
+    <T extends Resource> List<ResourceEvent> findByResourceIdsAndEventAndUser(
         List<T> resources, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(resources, event, user);
         return ids.isEmpty() ? emptyList() : resourceEventRepository.findOnes(ids);
     }
 
-    public ResourceEvent getAndConsumeReferral(String referral) {
+    ResourceEvent getAndConsumeReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
         if (resourceEvent == null) {
             // Bad referral, or referral consumed already - client should request a new one
@@ -206,7 +211,7 @@ public class ResourceEventService {
         return resourceEvent;
     }
 
-    public void setIndexData(ResourceEvent resourceEvent) {
+    private void setIndexData(ResourceEvent resourceEvent) {
         String soundex = makeSoundex(resourceEvent.getIndexDataParts());
         resourceEvent.setIndexData(soundex);
     }

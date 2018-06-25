@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +48,7 @@ import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
+import static java.time.LocalDateTime.now;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -103,7 +103,7 @@ public class DepartmentUserService {
         return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) memberDTOs.size());
             eventProducer.produce(new DepartmentMemberEvent(this, id, memberDTOs));
-            department.setLastMemberTimestamp(LocalDateTime.now());
+            department.setLastMemberTimestamp(now());
             return department;
         });
     }
@@ -261,6 +261,7 @@ public class DepartmentUserService {
         resourceTaskService.completeTasks(department, MEMBER_TASKS);
     }
 
+    @Transactional(isolation = SERIALIZABLE)
     public void decrementMemberCountPending(Long id) {
         ((Department) resourceService.getById(id)).decrementMemberToBeUploadedCount();
     }
