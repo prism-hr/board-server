@@ -3,6 +3,7 @@ package hr.prism.board.mapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import hr.prism.board.domain.*;
+import hr.prism.board.enums.CategoryType;
 import hr.prism.board.representation.*;
 import hr.prism.board.value.DemographicDataStatus;
 import org.junit.After;
@@ -18,7 +19,10 @@ import java.time.LocalDateTime;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.CategoryType.POST;
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
+import static hr.prism.board.enums.MemberCategory.MASTER_STUDENT;
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;
 
@@ -116,18 +120,10 @@ public class PostMapperTest {
 
         post.setCategories(
             ImmutableSet.of(
-                new ResourceCategory()
-                    .setType(MEMBER)
-                    .setName("UNDERGRADUATE_STUDENT"),
-                new ResourceCategory()
-                    .setType(MEMBER)
-                    .setName("MASTER_STUDENT"),
-                new ResourceCategory()
-                    .setType(POST)
-                    .setName("Employment"),
-                new ResourceCategory()
-                    .setType(POST)
-                    .setName("Internship")));
+                makeResourceCategory(1L, MEMBER, "UNDERGRADUATE_STUDENT"),
+                makeResourceCategory(2L, MEMBER, "MASTER_STUDENT"),
+                makeResourceCategory(3L, POST, "Employment"),
+                makeResourceCategory(4L, POST, "Internship")));
 
         post.setApplyWebsite("applyWebsite");
         post.setApplyDocument(applyDocument);
@@ -178,6 +174,7 @@ public class PostMapperTest {
                 .setId(2L);
 
         when(resourceMapper.apply(post, PostRepresentation.class)).thenReturn(new PostRepresentation());
+        when(boardMapper.applyMedium(board)).thenReturn(boardRepresentation);
         when(organizationMapper.apply(organization)).thenReturn(organizationRepresentation);
         when(locationMapper.apply(location)).thenReturn(locationRepresentation);
         when(documentMapper.apply(applyDocument)).thenReturn(applyDocumentRepresentation);
@@ -197,7 +194,28 @@ public class PostMapperTest {
 
     @Test
     public void apply_success() {
+        PostRepresentation postRepresentation = postMapper.apply(post);
 
+        assertEquals(boardRepresentation, postRepresentation.getBoard());
+        assertEquals("summary", postRepresentation.getSummary());
+        assertEquals("description", postRepresentation.getDescription());
+        assertEquals(organizationRepresentation, postRepresentation.getOrganization());
+        assertEquals(locationRepresentation, postRepresentation.getLocation());
+        assertEquals(STUDENT, postRepresentation.getExistingRelation());
+
+        assertThat(postRepresentation.getExistingRelationExplanation())
+            .containsKeys("explanation").containsValues("explanation");
+
+        assertThat(postRepresentation.getMemberCategories()).containsExactly(UNDERGRADUATE_STUDENT, MASTER_STUDENT);
+        assertThat(postRepresentation.getPostCategories()).containsExactly("Employment", "Internship");
+        assertEquals("e...l@prism.hr", postRepresentation.getApplyEmail());
+
+        verify(resourceMapper, times(1)).apply(post, PostRepresentation.class);
+        verify(boardMapper, times(1)).applyMedium(board);
+        verify(organizationMapper, times(1)).apply(organization);
+        verify(locationMapper, times(1)).apply(location);
+        verify(resourceEventMapper, times(1)).apply(resourceEventReferral);
+        verify(resourceEventMapper, times(1)).apply(resourceEventResponse);
     }
 
     @Test
@@ -218,6 +236,14 @@ public class PostMapperTest {
     @Test
     public void applySmall_successWhenNull() {
         assertNull(postMapper.applySmall(null));
+    }
+
+    private static ResourceCategory makeResourceCategory(Long id, CategoryType type, String name) {
+        ResourceCategory resourceCategory = new ResourceCategory();
+        resourceCategory.setId(id);
+        resourceCategory.setType(type);
+        resourceCategory.setName(name);
+        return resourceCategory;
     }
 
 }
