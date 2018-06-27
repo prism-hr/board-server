@@ -46,6 +46,11 @@ public class ResourceFilter {
     private ResourceFilterList<State> state;
 
     @ResourceFilterProperty(
+        parameter = "negatedState",
+        statement = "resource.state not in (:negatedState)")
+    private ResourceFilterList<State> negatedState;
+
+    @ResourceFilterProperty(
         parameter = "quarter",
         statement = "resource.quarter = :quarter")
     private String quarter;
@@ -101,6 +106,15 @@ public class ResourceFilter {
 
     public ResourceFilter setState(ResourceFilterList<State> state) {
         this.state = state;
+        return this;
+    }
+
+    public ResourceFilterList<State> getNegatedState() {
+        return negatedState;
+    }
+
+    public ResourceFilter setNegatedState(ResourceFilterList<State> negatedState) {
+        this.negatedState = negatedState;
         return this;
     }
 

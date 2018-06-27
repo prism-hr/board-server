@@ -29,7 +29,7 @@ VALUES
   (27, 'POST', 22, 'department-rejected-board-accepted-post-suspended', 'university/department-rejected/board-accepted/post-suspended', NULL, 'SUSPENDED', 'SUSPENDED', 'U516 D163 R223 D163 R223 B630 A213 D163 R223 B630 A213 P230 S215', '20182', '2018-05-21 21:04:54.185'),
   (28, 'POST', 22, 'department-rejected-board-accepted-post-rejected', 'university/department-rejected/board-accepted/post-rejected', NULL, 'REJECTED', 'REJECTED', 'U516 D163 R223 D163 R223 B630 A213 D163 R223 B630 A213 P230 R223', '20182', '2018-05-21 21:04:54.185'),
   (29, 'POST', 22, 'department-rejected-board-accepted-post-withdrawn', 'university/department-rejected/board-accepted/post-withdrawn', NULL, 'WITHDRAWN', 'WITHDRAWN', 'U516 D163 R223 D163 R223 B630 A213 D163 R223 B630 A213 P230 W365', '20182', '2018-05-21 21:04:54.185'),
-  (30, 'POST', 22, 'department-rejected-board-accepted-post-archived', 'university/department-rejected/board-accepted/post-archived', NULL, 'ARCHIVED', 'ARCHIVED', 'U516 D163 R223 D163 R223 B630 A213 D163 R223 B630 A213 P230 A621', '20182', '2018-05-21 21:04:54.185'),
+  (30, 'POST', 22, 'department-rejected-board-accepted-post-archived', 'university/department-rejected/board-accepted/post-archived', NULL, 'ARCHIVED', 'ARCHIVED', 'U516 D163 R223 D163 R223 B630 A213 D163 R223 B630 A213 P230 A621', '20183', '2018-08-21 21:04:54.185'),
   (31, 'BOARD', 21, 'department-rejected-board-rejected', 'university/department-rejected/board-rejected', NULL, 'REJECTED', 'REJECTED', 'U516 D163 R223 D163 R223 B630 R223', '20182', '2018-05-21 21:04:54.185'),
   (32, 'POST', 31, 'department-rejected-board-rejected-post-draft', 'university/department-rejected/board-rejected/post-draft', NULL, 'DRAFT', 'DRAFT', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 D613', '20182', '2018-05-21 21:04:54.185'),
   (33, 'POST', 31, 'department-rejected-board-rejected-post-pending', 'university/department-rejected/board-rejected/post-pending', NULL, 'PENDING', 'PENDING', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 P535', '20182', '2018-05-21 21:04:54.185'),
@@ -38,7 +38,7 @@ VALUES
   (36, 'POST', 31, 'department-rejected-board-rejected-post-suspended', 'university/department-rejected/board-rejected/post-suspended', NULL, 'SUSPENDED', 'SUSPENDED', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 S215', '20182', '2018-05-21 21:04:54.185'),
   (37, 'POST', 31, 'department-rejected-board-rejected-post-rejected', 'university/department-rejected/board-rejected/post-rejected', NULL, 'REJECTED', 'REJECTED', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 R223', '20182', '2018-05-21 21:04:54.185'),
   (38, 'POST', 31, 'department-rejected-board-rejected-post-withdrawn', 'university/department-rejected/board-rejected/post-withdrawn', NULL, 'WITHDRAWN', 'WITHDRAWN', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 W365', '20182', '2018-05-21 21:04:54.185'),
-  (39, 'POST', 31, 'department-rejected-board-rejected-post-archived', 'university/department-rejected/board-rejected/post-archived', NULL, 'ARCHIVED', 'ARCHIVED', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 A621', '20182', '2018-05-21 21:04:54.185');
+  (39, 'POST', 31, 'department-rejected-board-rejected-post-archived', 'university/department-rejected/board-rejected/post-archived', NULL, 'ARCHIVED', 'ARCHIVED', 'U516 D163 R223 D163 R223 B630 R223 D163 R223 B630 R223 P230 A621', '20183', '2018-08-21 21:04:54.185');
 
 INSERT INTO resource_relation (id, resource1_id, resource2_id, created_timestamp)
 VALUES

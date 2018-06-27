@@ -10,6 +10,7 @@ import hr.prism.board.dto.OrganizationDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.CategoryType;
+import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.validation.PostValidator;
 import hr.prism.board.value.ResourceFilter;
@@ -37,8 +38,7 @@ import static hr.prism.board.enums.MemberCategory.*;
 import static hr.prism.board.enums.ResourceTask.POST_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.POST;
-import static hr.prism.board.enums.State.DRAFT;
-import static hr.prism.board.enums.State.PENDING;
+import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.math.BigDecimal.ONE;
 import static java.util.Collections.emptyList;
@@ -1731,30 +1731,30 @@ public class PostServiceIT {
     public void getPosts_successWhenDepartmentAdministrator() {
         User user = userService.getByEmail("department-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter());
-        assertThat(posts).hasSize(32);
+        assertThat(posts).hasSize(28);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 8),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 7),
             departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentRejectedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(8, 16),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(7, 14),
             departmentRejectedBoardAccepted, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardRejected =
             (Board) resourceService.getByHandle("university/department-accepted/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(16, 24),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(14, 21),
             departmentAcceptedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(24, 32),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(21, 28),
             departmentAcceptedBoardAccepted, new Action[]{VIEW, EDIT, PURSUE, SUSPEND, REJECT});
     }
 
@@ -1793,18 +1793,18 @@ public class PostServiceIT {
     public void getPosts_successWhenDepartmentAdministratorAndDepartment() {
         User user = userService.getByEmail("department-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter().setParentId(21L));
-        assertThat(posts).hasSize(16);
+        assertThat(posts).hasSize(14);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 8),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 7),
             departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentRejectedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(8, 16),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(7, 14),
             departmentRejectedBoardAccepted, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
     }
 
@@ -1812,7 +1812,7 @@ public class PostServiceIT {
     public void getPosts_successWhenDepartmentAdministratorAndBoard() {
         User user = userService.getByEmail("department-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter().setParentId(31L));
-        assertThat(posts).hasSize(8);
+        assertThat(posts).hasSize(7);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
@@ -1839,30 +1839,30 @@ public class PostServiceIT {
     public void getPosts_successWhenDepartmentAdministratorAndSearchTerm() {
         User user = userService.getByEmail("department-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter().setSearchTerm("rejected"));
-        assertThat(posts).hasSize(25);
+        assertThat(posts).hasSize(22);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 8),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 7),
             departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentRejectedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(8, 16),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(7, 14),
             departmentRejectedBoardAccepted, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardRejected =
             (Board) resourceService.getByHandle("university/department-accepted/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(16, 24),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(14, 21),
             departmentAcceptedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
-        verifyPost(posts.get(24), departmentAcceptedBoardAccepted,
+        verifyPost(posts.get(21), departmentAcceptedBoardAccepted,
             "department-accepted-board-accepted-post-rejected",
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE});
     }
@@ -1871,30 +1871,30 @@ public class PostServiceIT {
     public void getPosts_successWhenDepartmentAdministratorAndSearchTermTypo() {
         User user = userService.getByEmail("department-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter().setSearchTerm("rIJECT"));
-        assertThat(posts).hasSize(25);
+        assertThat(posts).hasSize(22);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 8),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 7),
             departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentRejectedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(8, 16),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(7, 14),
             departmentRejectedBoardAccepted, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardRejected =
             (Board) resourceService.getByHandle("university/department-accepted/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(16, 24),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(14, 21),
             departmentAcceptedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
-        verifyPost(posts.get(24), departmentAcceptedBoardAccepted,
+        verifyPost(posts.get(21), departmentAcceptedBoardAccepted,
             "department-accepted-board-accepted-post-rejected",
             new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE});
     }
@@ -1907,33 +1907,75 @@ public class PostServiceIT {
     }
 
     @Test
+    public void getPosts_successWhenDepartmentAdministratorAndArchived() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+        List<Post> posts = postService.getPosts(user,
+            new ResourceFilter().setState(ResourceFilterList.of(ARCHIVED)).setQuarter("20182"));
+        assertThat(posts).hasSize(2);
+
+        Board departmentAcceptedBoardRejected =
+            (Board) resourceService.getByHandle("university/department-accepted/board-rejected");
+
+        verifyPost(posts.get(0), departmentAcceptedBoardRejected,
+            "department-accepted-board-rejected-post-archived",
+            new Action[]{VIEW, EDIT, RESTORE});
+
+        Board departmentAcceptedBoardAccepted =
+            (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
+
+        verifyPost(posts.get(1), departmentAcceptedBoardAccepted,
+            "department-accepted-board-accepted-post-archived",
+            new Action[]{VIEW, EDIT, RESTORE});
+    }
+
+    @Test
+    public void getPosts_failureWhenDepartmentAdministratorAndArchiveWithOtherStates() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+        assertThatThrownBy(() -> postService.getPosts(user,
+            new ResourceFilter().setState(ResourceFilterList.of(ACCEPTED, ARCHIVED))))
+            .isExactlyInstanceOf(BoardException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", INVALID_RESOURCE_FILTER)
+            .hasMessage("INVALID_RESOURCE_FILTER: Cannot search archive and other states");
+    }
+
+    @Test
+    public void getPosts_failureWhenDepartmentAdministratorAndArchiveWithoutQuarter() {
+        User user = userService.getByEmail("department-administrator@prism.hr");
+        assertThatThrownBy(() -> postService.getPosts(user,
+            new ResourceFilter().setState(ResourceFilterList.of(ARCHIVED))))
+            .isExactlyInstanceOf(BoardException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", INVALID_RESOURCE_FILTER)
+            .hasMessage("INVALID_RESOURCE_FILTER: Cannot search archive without specifying quarter");
+    }
+
+    @Test
     public void getPosts_successWhenOtherDepartmentAdministrator() {
         User user = userService.getByEmail("department-rejected-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter());
-        assertThat(posts).hasSize(18);
+        assertThat(posts).hasSize(16);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 8),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(0, 7),
             departmentRejectedBoardRejected, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentRejectedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-rejected/board-accepted");
 
-        verifyGetBoardPostsDepartmentAdministrator(posts.subList(8, 16),
+        verifyGetBoardPostsDepartmentAdministrator(posts.subList(7, 14),
             departmentRejectedBoardAccepted, new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
         Board departmentAcceptedBoardRejected =
             (Board) resourceService.getByHandle("university/department-accepted/board-rejected");
 
-        verifyPost(posts.get(16), departmentAcceptedBoardRejected,
+        verifyPost(posts.get(14), departmentAcceptedBoardRejected,
             "department-accepted-board-rejected-post-accepted", new Action[]{VIEW});
 
         Board departmentAcceptedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
-        verifyPost(posts.get(17), departmentAcceptedBoardAccepted,
+        verifyPost(posts.get(15), departmentAcceptedBoardAccepted,
             "department-accepted-board-accepted-post-accepted", new Action[]{VIEW});
     }
 
@@ -1941,7 +1983,7 @@ public class PostServiceIT {
     public void getPosts_successWhenPostAdministrator() {
         User user = userService.getByEmail("department-accepted-post-administrator@prism.hr");
         List<Post> posts = postService.getPosts(user, new ResourceFilter());
-        assertThat(posts).hasSize(18);
+        assertThat(posts).hasSize(16);
 
         Board departmentRejectedBoardRejected =
             (Board) resourceService.getByHandle("university/department-rejected/board-rejected");
@@ -1958,13 +2000,13 @@ public class PostServiceIT {
         Board departmentAcceptedBoardRejected =
             (Board) resourceService.getByHandle("university/department-accepted/board-rejected");
 
-        verifyGetBoardPostsPostAdministrator(posts.subList(2, 10),
+        verifyGetBoardPostsPostAdministrator(posts.subList(2, 9),
             departmentAcceptedBoardRejected, new Action[]{VIEW, EDIT, WITHDRAW});
 
         Board departmentAcceptedBoardAccepted =
             (Board) resourceService.getByHandle("university/department-accepted/board-accepted");
 
-        verifyGetBoardPostsPostAdministrator(posts.subList(10, 18),
+        verifyGetBoardPostsPostAdministrator(posts.subList(9, 16),
             departmentAcceptedBoardAccepted, new Action[]{VIEW, EDIT, PURSUE, WITHDRAW});
     }
 
@@ -2071,28 +2113,26 @@ public class PostServiceIT {
     private void verifyGetBoardPostsDepartmentAdministrator(List<Post> posts, Board expectedBoard,
                                                             Action[] expectedAcceptedActions) {
         String expectedBoardName = expectedBoard.getName();
-        verifyPost(posts.get(0), expectedBoard,
-            expectedBoardName + "-post-archived", new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyPost(posts.get(1), expectedBoard,
+        verifyPost(posts.get(0), expectedBoard,
             expectedBoardName + "-post-withdrawn", new Action[]{VIEW, EDIT});
 
-        verifyPost(posts.get(2), expectedBoard,
+        verifyPost(posts.get(1), expectedBoard,
             expectedBoardName + "-post-rejected", new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, RESTORE});
 
-        verifyPost(posts.get(3), expectedBoard,
+        verifyPost(posts.get(2), expectedBoard,
             expectedBoardName + "-post-suspended", new Action[]{VIEW, EDIT, ACCEPT, REJECT});
 
-        verifyPost(posts.get(4), expectedBoard,
+        verifyPost(posts.get(3), expectedBoard,
             expectedBoardName + "-post-expired", new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
-        verifyPost(posts.get(5), expectedBoard,
+        verifyPost(posts.get(4), expectedBoard,
             expectedBoardName + "-post-accepted", expectedAcceptedActions);
 
-        verifyPost(posts.get(6), expectedBoard,
+        verifyPost(posts.get(5), expectedBoard,
             expectedBoardName + "-post-pending", new Action[]{VIEW, EDIT, SUSPEND, REJECT});
 
-        verifyPost(posts.get(7), expectedBoard,
+        verifyPost(posts.get(6), expectedBoard,
             expectedBoardName + "-post-draft", new Action[]{VIEW, EDIT, ACCEPT, SUSPEND, REJECT});
     }
 
@@ -2101,27 +2141,24 @@ public class PostServiceIT {
                                                       Action[] expectedAcceptedActions) {
         String expectedBoardName = expectedBoard.getName();
         verifyPost(posts.get(0), expectedBoard,
-            expectedBoardName + "-post-archived", new Action[]{VIEW, EDIT, RESTORE});
-
-        verifyPost(posts.get(1), expectedBoard,
             expectedBoardName + "-post-withdrawn", new Action[]{VIEW, EDIT, RESTORE});
 
-        verifyPost(posts.get(2), expectedBoard,
+        verifyPost(posts.get(1), expectedBoard,
             expectedBoardName + "-post-rejected", new Action[]{VIEW, EDIT, WITHDRAW});
 
-        verifyPost(posts.get(3), expectedBoard,
+        verifyPost(posts.get(2), expectedBoard,
             expectedBoardName + "-post-suspended", new Action[]{VIEW, EDIT, CORRECT, WITHDRAW});
 
-        verifyPost(posts.get(4), expectedBoard,
+        verifyPost(posts.get(3), expectedBoard,
             expectedBoardName + "-post-expired", new Action[]{VIEW, EDIT, WITHDRAW});
 
-        verifyPost(posts.get(5), expectedBoard,
+        verifyPost(posts.get(4), expectedBoard,
             expectedBoardName + "-post-accepted", expectedAcceptedActions);
 
-        verifyPost(posts.get(6), expectedBoard,
+        verifyPost(posts.get(5), expectedBoard,
             expectedBoardName + "-post-pending", new Action[]{VIEW, EDIT, WITHDRAW});
 
-        verifyPost(posts.get(7), expectedBoard,
+        verifyPost(posts.get(6), expectedBoard,
             expectedBoardName + "-post-draft", new Action[]{VIEW, EDIT, WITHDRAW});
     }
 

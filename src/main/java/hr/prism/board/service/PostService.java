@@ -55,6 +55,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import hr.prism.board.event.ActivityEvent;
@@ -142,9 +143,7 @@ public class PostService {
         filter.setScope(POST);
         filter.setOrderStatement("resource.updatedTimestamp desc, resource.id desc");
         filter.setOrderStatementSql("resource.updated_timestamp DESC, resource.id DESC");
-
-        ResourceFilterList<State> state = getFilterState(filter);
-        filter.setState(state);
+        prepareStateFilter(filter);
 
         List<Post> posts =
             resourceService.getResources(user, filter)
@@ -493,24 +492,22 @@ public class PostService {
         }
     }
 
-    private ResourceFilterList<State> getFilterState(ResourceFilter filter) {
+    private void prepareStateFilter(ResourceFilter filter) {
         ResourceFilterList<State> state = filter.getState();
-        if (isNotEmpty(state)) {
-            if (state.contains(ARCHIVED)) {
-                if (state.size() > 1) {
-                    throw new BoardException(
-                        INVALID_RESOURCE_FILTER, "Cannot search archive and other states");
-                }
-
-                String quarter = filter.getQuarter();
-                if (quarter == null) {
-                    throw new BoardException(
-                        INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
-                }
-            }
+        if (isEmpty(state) || !state.contains(ARCHIVED)) {
+            filter.setNegatedState(ResourceFilterList.of(ARCHIVED));
+            return;
         }
 
-        return state;
+        if (state.size() > 1) {
+            throw new BoardException(
+                INVALID_RESOURCE_FILTER, "Cannot search archive and other states");
+        }
+
+        if (filter.getQuarter() == null) {
+            throw new BoardException(
+                INVALID_RESOURCE_FILTER, "Cannot search archive without specifying quarter");
+        }
     }
 
 }
