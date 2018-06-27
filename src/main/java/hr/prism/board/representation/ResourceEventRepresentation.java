@@ -4,6 +4,8 @@ import hr.prism.board.enums.AgeRange;
 import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.MemberCategory;
 import hr.prism.board.enums.ResourceEvent;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.time.LocalDateTime;
 
@@ -189,6 +191,24 @@ public class ResourceEventRepresentation {
     public ResourceEventRepresentation setViewed(boolean viewed) {
         this.viewed = viewed;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(id)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        ResourceEventRepresentation that = (ResourceEventRepresentation) other;
+        return new EqualsBuilder()
+            .append(id, that.id)
+            .isEquals();
     }
 
 }

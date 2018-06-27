@@ -174,7 +174,9 @@ public class PostMapperTest {
                 .setId(2L);
 
         when(resourceMapper.apply(post, PostRepresentation.class)).thenReturn(new PostRepresentation());
+        when(resourceMapper.applySmall(post, PostRepresentation.class)).thenReturn(new PostRepresentation());
         when(boardMapper.applyMedium(board)).thenReturn(boardRepresentation);
+        when(boardMapper.applySmall(board)).thenReturn(boardRepresentation);
         when(organizationMapper.apply(organization)).thenReturn(organizationRepresentation);
         when(locationMapper.apply(location)).thenReturn(locationRepresentation);
         when(documentMapper.apply(applyDocument)).thenReturn(applyDocumentRepresentation);
@@ -195,20 +197,8 @@ public class PostMapperTest {
     @Test
     public void apply_success() {
         PostRepresentation postRepresentation = postMapper.apply(post);
-
-        assertEquals(boardRepresentation, postRepresentation.getBoard());
-        assertEquals("summary", postRepresentation.getSummary());
-        assertEquals("description", postRepresentation.getDescription());
-        assertEquals(organizationRepresentation, postRepresentation.getOrganization());
-        assertEquals(locationRepresentation, postRepresentation.getLocation());
-        assertEquals(STUDENT, postRepresentation.getExistingRelation());
-
-        assertThat(postRepresentation.getExistingRelationExplanation())
-            .containsKeys("explanation").containsValues("explanation");
-
-        assertThat(postRepresentation.getMemberCategories()).containsExactly(UNDERGRADUATE_STUDENT, MASTER_STUDENT);
-        assertThat(postRepresentation.getPostCategories()).containsExactly("Employment", "Internship");
-        assertEquals("e...l@prism.hr", postRepresentation.getApplyEmail());
+        verifyPostRepresentation(postRepresentation,
+            null, null, "e...l@prism.hr");
 
         verify(resourceMapper, times(1)).apply(post, PostRepresentation.class);
         verify(boardMapper, times(1)).applyMedium(board);
@@ -220,7 +210,18 @@ public class PostMapperTest {
 
     @Test
     public void apply_successWhenExposeApplyData() {
+        post.setExposeApplyData(true);
+        PostRepresentation postRepresentation = postMapper.apply(post);
+        verifyPostRepresentation(postRepresentation,
+            "applyWebsite", applyDocumentRepresentation, "email@prism.hr");
 
+        verify(resourceMapper, times(1)).apply(post, PostRepresentation.class);
+        verify(boardMapper, times(1)).applyMedium(board);
+        verify(organizationMapper, times(1)).apply(organization);
+        verify(locationMapper, times(1)).apply(location);
+        verify(documentMapper, times(1)).apply(applyDocument);
+        verify(resourceEventMapper, times(1)).apply(resourceEventReferral);
+        verify(resourceEventMapper, times(1)).apply(resourceEventResponse);
     }
 
     @Test
@@ -230,7 +231,16 @@ public class PostMapperTest {
 
     @Test
     public void applySmall_success() {
+        PostRepresentation postRepresentation = postMapper.applySmall(post);
 
+        assertEquals(boardRepresentation, postRepresentation.getBoard());
+        assertEquals(organizationRepresentation, postRepresentation.getOrganization());
+        assertEquals(locationRepresentation, postRepresentation.getLocation());
+
+        verify(resourceMapper, times(1)).applySmall(post, PostRepresentation.class);
+        verify(boardMapper, times(1)).applySmall(board);
+        verify(organizationMapper, times(1)).apply(organization);
+        verify(locationMapper, times(1)).apply(location);
     }
 
     @Test
@@ -244,6 +254,35 @@ public class PostMapperTest {
         resourceCategory.setType(type);
         resourceCategory.setName(name);
         return resourceCategory;
+    }
+
+    private void verifyPostRepresentation(PostRepresentation postRepresentation, String expectedApplyWebsite,
+                                          DocumentRepresentation expectedApplyDocument, String expectedApplyEmail) {
+        assertEquals(boardRepresentation, postRepresentation.getBoard());
+        assertEquals("summary", postRepresentation.getSummary());
+        assertEquals("description", postRepresentation.getDescription());
+        assertEquals(organizationRepresentation, postRepresentation.getOrganization());
+        assertEquals(locationRepresentation, postRepresentation.getLocation());
+        assertEquals(STUDENT, postRepresentation.getExistingRelation());
+
+        assertThat(postRepresentation.getExistingRelationExplanation())
+            .containsKeys("explanation").containsValues("explanation");
+
+        assertThat(postRepresentation.getMemberCategories()).containsExactly(UNDERGRADUATE_STUDENT, MASTER_STUDENT);
+        assertThat(postRepresentation.getPostCategories()).containsExactly("Employment", "Internship");
+        assertEquals(expectedApplyWebsite, postRepresentation.getApplyWebsite());
+        assertEquals(expectedApplyDocument, postRepresentation.getApplyDocument());
+        assertEquals(expectedApplyEmail, postRepresentation.getApplyEmail());
+        assertEquals(liveTimestamp, postRepresentation.getLiveTimestamp());
+        assertEquals(deadTimestamp, postRepresentation.getDeadTimestamp());
+        assertEquals(1L, postRepresentation.getViewCount().longValue());
+        assertEquals(2L, postRepresentation.getReferralCount().longValue());
+        assertEquals(3L, postRepresentation.getResponseCount().longValue());
+        assertEquals(lastViewTimestamp, postRepresentation.getLastViewTimestamp());
+        assertEquals(lastReferralTimestamp, postRepresentation.getLastReferralTimestamp());
+        assertEquals(lastResponseTimestamp, postRepresentation.getLastResponseTimestamp());
+        assertEquals(resourceEventReferralRepresentation, postRepresentation.getReferral());
+        assertEquals(resourceEventResponseRepresentation, postRepresentation.getResponse());
     }
 
 }

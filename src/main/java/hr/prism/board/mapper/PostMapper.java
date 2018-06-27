@@ -86,9 +86,9 @@ public class PostMapper implements Function<Post, PostRepresentation> {
         }
 
         return resourceMapper.applySmall(post, PostRepresentation.class)
+            .setBoard(boardMapper.applySmall((Board) post.getParent()))
             .setOrganization(organizationMapper.apply(post.getOrganization()))
-            .setLocation(locationMapper.apply(post.getLocation()))
-            .setBoard(boardMapper.applySmall((Board) post.getParent()));
+            .setLocation(locationMapper.apply(post.getLocation()));
     }
 
     private DemographicDataStatusRepresentation applyDemographicDataStatus(
