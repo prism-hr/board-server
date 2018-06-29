@@ -76,6 +76,39 @@ public class ResourceEventServiceIT {
     }
 
     @Test
+    public void createPostView_successWhenIpAddress() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            LocalDateTime runTime = now().minusSeconds(1L);
+            Post post = (Post) resourceService.getById(1L);
+
+            ResourceEvent resourceEvent = resourceEventService.createPostView(post, null, "ipAddress");
+            Post updatedPost = (Post) resourceService.getById(1L);
+            Post otherPost = (Post) resourceService.getById(2L);
+
+            assertNotNull(resourceEvent.getId());
+            assertEquals(post, resourceEvent.getResource());
+            assertNull(resourceEvent.getUser());
+            assertEquals("ipAddress", resourceEvent.getIpAddress());
+            assertEquals(VIEW, resourceEvent.getEvent());
+
+            assertEquals(1L, updatedPost.getViewCount().longValue());
+            assertThat(updatedPost.getLastViewTimestamp()).isGreaterThan(runTime);
+            assertNull(updatedPost.getReferralCount());
+            assertNull(updatedPost.getLastReferralTimestamp());
+            assertNull(updatedPost.getResponseCount());
+            assertNull(updatedPost.getLastResponseTimestamp());
+
+            assertNull(otherPost.getViewCount());
+            assertNull(otherPost.getLiveTimestamp());
+            assertNull(otherPost.getReferralCount());
+            assertNull(otherPost.getLastReferralTimestamp());
+            assertNull(otherPost.getResponseCount());
+            assertNull(otherPost.getLastResponseTimestamp());
+            return null;
+        });
+    }
+
+    @Test
     public void createPostView_failureWhenUserAndIpAddressNull() {
         assertThatThrownBy(() -> resourceEventService.createPostView(new Post(), null, null))
             .isExactlyInstanceOf(BoardException.class)
