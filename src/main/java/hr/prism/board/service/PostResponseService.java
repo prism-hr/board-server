@@ -85,12 +85,9 @@ public class PostResponseService {
     public ResourceEvent createPostResponse(Long id, ResourceEventDTO resourceEvent) {
         User user = userService.getUserSecured();
         Post post = (Post) resourceService.getResource(user, POST, id);
-        actionService.executeAction(user, post, PURSUE, () -> {
-            checkValidDemographicData(user, (Department) post.getParent().getParent());
-            return post;
-        });
-
         actionService.executeAction(user, post, PURSUE, () -> post);
+        checkValidDemographicData(user, (Department) post.getParent().getParent());
+
         return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent)
             .setExposeResponseData(true);
     }
