@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.VIEW;
 import static hr.prism.board.exception.ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT;
 import static java.time.LocalDateTime.now;
@@ -65,12 +66,7 @@ public class ResourceEventServiceIT {
             assertNull(updatedPost.getResponseCount());
             assertNull(updatedPost.getLastResponseTimestamp());
 
-            assertNull(otherPost.getViewCount());
-            assertNull(otherPost.getLiveTimestamp());
-            assertNull(otherPost.getReferralCount());
-            assertNull(otherPost.getLastReferralTimestamp());
-            assertNull(otherPost.getResponseCount());
-            assertNull(otherPost.getLastResponseTimestamp());
+            verifyOther(otherPost);
             return null;
         });
     }
@@ -98,12 +94,7 @@ public class ResourceEventServiceIT {
             assertNull(updatedPost.getResponseCount());
             assertNull(updatedPost.getLastResponseTimestamp());
 
-            assertNull(otherPost.getViewCount());
-            assertNull(otherPost.getLiveTimestamp());
-            assertNull(otherPost.getReferralCount());
-            assertNull(otherPost.getLastReferralTimestamp());
-            assertNull(otherPost.getResponseCount());
-            assertNull(otherPost.getLastResponseTimestamp());
+            verifyOther(otherPost);
             return null;
         });
     }
@@ -113,6 +104,54 @@ public class ResourceEventServiceIT {
         assertThatThrownBy(() -> resourceEventService.createPostView(new Post(), null, null))
             .isExactlyInstanceOf(BoardException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", UNIDENTIFIABLE_RESOURCE_EVENT);
+    }
+
+    @Test
+    public void createPostReferral_success() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            Post post = (Post) resourceService.getById(1L);
+            User user = userService.getById(1L);
+
+            ResourceEvent resourceEvent = resourceEventService.createPostReferral(post, user);
+            Post updatedPost = (Post) resourceService.getById(1L);
+            Post otherPost = (Post) resourceService.getById(2L);
+
+            assertNotNull(resourceEvent.getId());
+            assertEquals(post, resourceEvent.getResource());
+            assertEquals(user, resourceEvent.getUser());
+            assertNull(resourceEvent.getIpAddress());
+            assertEquals(REFERRAL, resourceEvent.getEvent());
+            assertNotNull(resourceEvent.getReferral());
+
+            assertNull(updatedPost.getViewCount());
+            assertNull(updatedPost.getLastViewTimestamp());
+            assertNull(updatedPost.getReferralCount());
+            assertNull(updatedPost.getLastReferralTimestamp());
+            assertNull(updatedPost.getResponseCount());
+            assertNull(updatedPost.getLastResponseTimestamp());
+
+            verifyOther(otherPost);
+            return null;
+        });
+    }
+
+    @Test
+    public void getAndConsumeReferral_success() {
+
+    }
+
+    @Test
+    public void getAndConsumeReferral_failureWhenConsumedOrNotPresent() {
+
+    }
+
+    private void verifyOther(Post otherPost) {
+        assertNull(otherPost.getViewCount());
+        assertNull(otherPost.getLiveTimestamp());
+        assertNull(otherPost.getReferralCount());
+        assertNull(otherPost.getLastReferralTimestamp());
+        assertNull(otherPost.getResponseCount());
+        assertNull(otherPost.getLastResponseTimestamp());
     }
 
 }

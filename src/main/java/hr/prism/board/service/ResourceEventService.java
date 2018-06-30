@@ -182,7 +182,6 @@ public class ResourceEventService {
     ResourceEvent getAndConsumeReferral(String referral) {
         ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
         if (resourceEvent == null) {
-            // Bad referral, or referral consumed already - client should request a new one
             throw new BoardForbiddenException(FORBIDDEN_REFERRAL, "Referral does not exist or has been consumed");
         }
 
