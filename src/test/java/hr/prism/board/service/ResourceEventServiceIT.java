@@ -141,6 +141,9 @@ public class ResourceEventServiceIT {
     }
 
     @Test
+    @Sql(scripts = {"classpath:data/tearDown.sql",
+        "classpath:data/resourceEvent_setUp.sql", "classpath:data/resourceEvent_referral_setUp.sql"})
+    @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
     public void getAndConsumeReferral_failureWhenConsumedOrNotPresent() {
 
     }
