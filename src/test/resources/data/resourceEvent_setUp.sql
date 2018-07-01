@@ -1,9 +1,9 @@
-INSERT INTO resource (id, scope, parent_id, name, state, created_timestamp)
+INSERT INTO resource (id, scope, parent_id, name, apply_email, state, created_timestamp)
 VALUES
-  (1, 'DEPARTMENT', null, 'department1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
-  (2, 'BOARD', 1, 'board1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
-  (3, 'POST', 2, 'post1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
-  (4, 'POST', 2, 'post2', 'ACCEPTED', '2018-05-21 21:04:54.185');
+  (1, 'DEPARTMENT', null, 'department1', null, 'ACCEPTED', '2018-05-21 21:04:54.185'),
+  (2, 'BOARD', 1, 'board1', null, 'ACCEPTED', '2018-05-21 21:04:54.185'),
+  (3, 'POST', 2, 'post1', 'apply@prism.hr', 'ACCEPTED', '2018-05-21 21:04:54.185'),
+  (4, 'POST', 2, 'post2', null, 'ACCEPTED', '2018-05-21 21:04:54.185');
 
 INSERT INTO resource_relation (id, resource1_id, resource2_id, created_timestamp)
 VALUES

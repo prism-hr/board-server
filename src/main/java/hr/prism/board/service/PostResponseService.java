@@ -88,7 +88,7 @@ public class PostResponseService {
         actionService.executeAction(user, post, PURSUE, () -> post);
         checkValidDemographicData(user, (Department) post.getParent().getParent());
 
-        return resourceEventService.getOrCreatePostResponse(post, user, resourceEvent)
+        return resourceEventService.createPostResponse(post, user, resourceEvent)
             .setExposeResponseData(true);
     }
 

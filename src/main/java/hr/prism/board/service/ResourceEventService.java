@@ -105,7 +105,7 @@ public class ResourceEventService {
     }
 
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public ResourceEvent getOrCreatePostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
+    public ResourceEvent createPostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
         if (post.getApplyEmail() == null) {
             throw new BoardException(INVALID_RESOURCE_EVENT, "Post no longer accepting applications");
         }
