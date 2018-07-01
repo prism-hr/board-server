@@ -116,7 +116,7 @@ public class BoardUtils {
             .map(String::toLowerCase)
             .map(TOKENIZER::tokenize)
             .flatMap(Arrays::stream)
-            .filter(string -> string.length() > 1)
+            .filter(StringUtils::isNotEmpty)
             .map(StringUtils::stripAccents)
             .map(str -> {
                 try {
@@ -125,6 +125,7 @@ public class BoardUtils {
                     throw new Error("Could not encode string: " + str, e);
                 }
             })
+            .filter(StringUtils::isNotEmpty)
             .collect(joining(" "));
     }
 

@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 
 import static hr.prism.board.enums.AgeRange.THIRTY_THIRTYNINE;
 import static hr.prism.board.enums.Gender.MALE;
+import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
 import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.VIEW;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_REFERRAL;
@@ -150,6 +151,12 @@ public class ResourceEventServiceIT {
             assertEquals(MALE, resourceEvent.getGender());
             assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
             assertEquals(expectedLocation, resourceEvent.getLocationNationality());
+
+            assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
+            assertEquals("memberProgram", resourceEvent.getMemberProgram());
+            assertEquals(2018, resourceEvent.getMemberYear().intValue());
+
+            assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
             assertNull(resourceEvent.getReferral());
 
             return null;
