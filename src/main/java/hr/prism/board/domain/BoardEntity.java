@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import static java.time.LocalDateTime.now;
 import static javax.persistence.GenerationType.IDENTITY;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
@@ -68,14 +69,14 @@ public abstract class BoardEntity {
             this.creatorId = getUserId();
         }
 
-        LocalDateTime baseline = LocalDateTime.now();
+        LocalDateTime baseline = now();
         this.createdTimestamp = baseline;
         this.updatedTimestamp = baseline;
     }
 
     @PreUpdate
     public void onUpdate() {
-        this.updatedTimestamp = LocalDateTime.now();
+        this.updatedTimestamp = now();
     }
 
     @Override

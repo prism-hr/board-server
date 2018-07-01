@@ -107,7 +107,11 @@ public class BoardUtils {
     }
 
     public static String makeSoundex(List<String> strings) {
-        List<String> nullSafeStrings = strings.stream().filter(Objects::nonNull).collect(toList());
+        List<String> nullSafeStrings =
+            strings.stream()
+                .filter(Objects::nonNull)
+                .collect(toList());
+
         if (nullSafeStrings.isEmpty()) {
             return null;
         }

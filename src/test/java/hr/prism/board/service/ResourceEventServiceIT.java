@@ -141,15 +141,17 @@ public class ResourceEventServiceIT {
     @Test
     public void getAndConsumeReferral_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
+            LocalDateTime runTime = now().minusSeconds(1L);
+
             resourceEventService.getAndConsumeReferral("referral");
-
-            Location expectedLocation = new Location();
-            expectedLocation.setGoogleId("googleId");
-
             ResourceEvent resourceEvent = resourceEventService.getById(1L);
+            Post updatedPost = (Post) resourceService.getById(3L);
 
             assertEquals(MALE, resourceEvent.getGender());
             assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
+
+            Location expectedLocation = new Location();
+            expectedLocation.setGoogleId("googleId");
             assertEquals(expectedLocation, resourceEvent.getLocationNationality());
 
             assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
@@ -158,6 +160,13 @@ public class ResourceEventServiceIT {
 
             assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
             assertNull(resourceEvent.getReferral());
+
+            assertNull(updatedPost.getViewCount());
+            assertNull(updatedPost.getLastViewTimestamp());
+            assertEquals(1, updatedPost.getReferralCount().longValue());
+            assertThat(updatedPost.getLastReferralTimestamp()).isGreaterThan(runTime);
+            assertNull(updatedPost.getResponseCount());
+            assertNull(updatedPost.getLastResponseTimestamp());
 
             return null;
         });

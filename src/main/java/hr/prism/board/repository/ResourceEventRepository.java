@@ -35,7 +35,7 @@ public interface ResourceEventRepository extends JpaRepository<ResourceEvent, Lo
 
     @Query(value =
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, " +
-            "count(distinct resourceEvent.user), max(resourceEvent.createdTimestamp)) " +
+            "count(distinct resourceEvent.user), max(resourceEvent.updatedTimestamp)) " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.user is not null " +
@@ -45,7 +45,7 @@ public interface ResourceEventRepository extends JpaRepository<ResourceEvent, Lo
 
     @Query(value =
         "select new hr.prism.board.value.ResourceEventSummary(resourceEvent.event, " +
-            "count(distinct resourceEvent.ipAddress), max(resourceEvent.createdTimestamp)) " +
+            "count(distinct resourceEvent.ipAddress), max(resourceEvent.updatedTimestamp)) " +
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.ipAddress is not null " +
