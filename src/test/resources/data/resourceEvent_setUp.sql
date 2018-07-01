@@ -1,20 +1,38 @@
-INSERT INTO resource (id, scope, name, state, created_timestamp)
+INSERT INTO resource (id, scope, parent_id, name, state, created_timestamp)
 VALUES
-  (1, 'POST', 'post1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
-  (2, 'POST', 'post2', 'ACCEPTED', '2018-05-21 21:04:54.185');
+  (1, 'DEPARTMENT', null, 'department1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
+  (2, 'BOARD', 1, 'board1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
+  (3, 'POST', 2, 'post1', 'ACCEPTED', '2018-05-21 21:04:54.185'),
+  (4, 'POST', 2, 'post2', 'ACCEPTED', '2018-05-21 21:04:54.185');
 
-INSERT INTO user (id, uuid, given_name, surname, email, email_display, created_timestamp)
+INSERT INTO resource_relation (id, resource1_id, resource2_id, created_timestamp)
 VALUES
-  (1, UUID(), 'alastair', 'alastair', 'alastair@prism.hr', 'alastair@prism.hr', '2018-05-21 21:04:54.185');
+  (1, 1, 1, '2018-05-21 21:04:54.185'),
+  (2, 1, 2, '2018-05-21 21:04:54.185'),
+  (3, 1, 3, '2018-05-21 21:04:54.185'),
+  (4, 1, 4, '2018-05-21 21:04:54.185'),
+  (5, 2, 2, '2018-05-21 21:04:54.185'),
+  (6, 2, 3, '2018-05-21 21:04:54.185'),
+  (7, 2, 4, '2018-05-21 21:04:54.185'),
+  (8, 3, 3, '2018-05-21 21:04:54.185'),
+  (9, 4, 4, '2018-05-21 21:04:54.185');
 
 INSERT INTO location (id, name, domicile, google_id, latitude, longitude, created_timestamp)
 VALUES
   (1, 'london', 'GB', 'googleId', 1.00, 1.00, '2018-05-21 21:04:54.185');
 
+INSERT INTO user (id, uuid, given_name, surname, email, email_display, gender, age_range, location_nationality_id, created_timestamp)
+VALUES
+  (1, UUID(), 'alastair', 'alastair', 'alastair@prism.hr', 'alastair@prism.hr', 'MALE', 'THIRTY_THIRTYNINE', 1, '2018-05-21 21:04:54.185');
+
+INSERT INTO user_role (id, uuid, resource_id, user_id, role, state, member_category, member_program, member_year, created_timestamp)
+VALUES (
+  1, UUID(), 1, 1, 'MEMBER', 'ACCEPTED', 'UNDERGRADUATE_STUDENT', 'memberProgram', 2018, '2018-05-21 21:04:54.185');
+
 INSERT INTO document (id, cloudinary_id, cloudinary_url, file_name, created_timestamp)
 VALUES
   (1, 'cloudinaryId', 'cloudinaryUrl', 'fileName', '2018-05-21 21:04:54.185');
 
-INSERT INTO resource_event (id, resource_id, event, user_id, referral, gender, age_range, location_nationality_id, member_category, member_program, member_year, document_resume_id, website_resume, covering_note, created_timestamp)
+INSERT INTO resource_event (id, resource_id, event, user_id, referral, created_timestamp)
 VALUES
-  (1, 1, 'REFERRAL', 1, 'referral', 'FEMALE', 'NINETEEN_TWENTYFOUR', 1, 'UNDERGRADUATE_STUDENT', 'program', 2018, null, null, null, '2018-05-21 21:04:54.185');
+  (1, 3, 'REFERRAL', 1, 'referral', '2018-05-21 21:04:54.185');

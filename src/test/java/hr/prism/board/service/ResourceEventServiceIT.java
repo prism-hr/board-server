@@ -1,10 +1,12 @@
 package hr.prism.board.service;
 
 import hr.prism.board.DbTestContext;
+import hr.prism.board.domain.Location;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.User;
 import hr.prism.board.exception.BoardException;
+import hr.prism.board.exception.BoardForbiddenException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.jdbc.Sql;
@@ -15,8 +17,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.AgeRange.THIRTY_THIRTYNINE;
+import static hr.prism.board.enums.Gender.MALE;
 import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.VIEW;
+import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_REFERRAL;
 import static hr.prism.board.exception.ExceptionCode.UNIDENTIFIABLE_RESOURCE_EVENT;
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,12 +51,11 @@ public class ResourceEventServiceIT {
     public void createPostView_successWhenUser() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
-            Post post = (Post) resourceService.getById(1L);
+            Post post = (Post) resourceService.getById(3L);
             User user = userService.getById(1L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostView(post, user, "ipAddress");
-            Post updatedPost = (Post) resourceService.getById(1L);
-            Post otherPost = (Post) resourceService.getById(2L);
+            Post updatedPost = (Post) resourceService.getById(3L);
 
             assertNotNull(resourceEvent.getId());
             assertEquals(post, resourceEvent.getResource());
@@ -66,7 +70,7 @@ public class ResourceEventServiceIT {
             assertNull(updatedPost.getResponseCount());
             assertNull(updatedPost.getLastResponseTimestamp());
 
-            verifyOther(otherPost);
+            verifyOtherPost();
             return null;
         });
     }
@@ -75,11 +79,10 @@ public class ResourceEventServiceIT {
     public void createPostView_successWhenIpAddress() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
-            Post post = (Post) resourceService.getById(1L);
+            Post post = (Post) resourceService.getById(3L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostView(post, null, "ipAddress");
-            Post updatedPost = (Post) resourceService.getById(1L);
-            Post otherPost = (Post) resourceService.getById(2L);
+            Post updatedPost = (Post) resourceService.getById(3L);
 
             assertNotNull(resourceEvent.getId());
             assertEquals(post, resourceEvent.getResource());
@@ -94,7 +97,7 @@ public class ResourceEventServiceIT {
             assertNull(updatedPost.getResponseCount());
             assertNull(updatedPost.getLastResponseTimestamp());
 
-            verifyOther(otherPost);
+            verifyOtherPost();
             return null;
         });
     }
@@ -109,12 +112,11 @@ public class ResourceEventServiceIT {
     @Test
     public void createPostReferral_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
-            Post post = (Post) resourceService.getById(1L);
+            Post post = (Post) resourceService.getById(3L);
             User user = userService.getById(1L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostReferral(post, user);
-            Post updatedPost = (Post) resourceService.getById(1L);
-            Post otherPost = (Post) resourceService.getById(2L);
+            Post updatedPost = (Post) resourceService.getById(3L);
 
             assertNotNull(resourceEvent.getId());
             assertEquals(post, resourceEvent.getResource());
@@ -130,25 +132,42 @@ public class ResourceEventServiceIT {
             assertNull(updatedPost.getResponseCount());
             assertNull(updatedPost.getLastResponseTimestamp());
 
-            verifyOther(otherPost);
+            verifyOtherPost();
             return null;
         });
     }
 
     @Test
     public void getAndConsumeReferral_success() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            resourceEventService.getAndConsumeReferral("referral");
 
+            Location expectedLocation = new Location();
+            expectedLocation.setGoogleId("googleId");
+
+            ResourceEvent resourceEvent = resourceEventService.getById(1L);
+
+            assertEquals(MALE, resourceEvent.getGender());
+            assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
+            assertEquals(expectedLocation, resourceEvent.getLocationNationality());
+            assertNull(resourceEvent.getReferral());
+
+            return null;
+        });
     }
 
     @Test
     @Sql(scripts = {"classpath:data/tearDown.sql",
-        "classpath:data/resourceEvent_setUp.sql", "classpath:data/resourceEvent_referral_setUp.sql"})
+        "classpath:data/resourceEvent_setUp.sql", "classpath:data/resourceEvent_setUp_referral.sql"})
     @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
     public void getAndConsumeReferral_failureWhenConsumedOrNotPresent() {
-
+        assertThatThrownBy(() -> resourceEventService.getAndConsumeReferral("consumedOrNotPresent"))
+            .isExactlyInstanceOf(BoardForbiddenException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", FORBIDDEN_REFERRAL);
     }
 
-    private void verifyOther(Post otherPost) {
+    private void verifyOtherPost() {
+        Post otherPost = (Post) resourceService.getById(4L);
         assertNull(otherPost.getViewCount());
         assertNull(otherPost.getLiveTimestamp());
         assertNull(otherPost.getReferralCount());
