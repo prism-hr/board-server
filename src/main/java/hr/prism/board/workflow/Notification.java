@@ -1,6 +1,8 @@
 package hr.prism.board.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,10 +11,10 @@ public class Notification extends Update<Notification> {
 
     private hr.prism.board.enums.Notification notification;
 
-    private List<Attachment> attachments = new ArrayList<>();
-
     @JsonIgnore
     private String invitation;
+
+    private List<Attachment> attachments = new ArrayList<>();
 
     public Notification() {
         setType(NOTIFICATION);
@@ -32,6 +34,15 @@ public class Notification extends Update<Notification> {
         return getWorkflow();
     }
 
+    public String getInvitation() {
+        return invitation;
+    }
+
+    public Notification setInvitation(String invitation) {
+        this.invitation = invitation;
+        return this;
+    }
+
     public List<Attachment> getAttachments() {
         return attachments;
     }
@@ -41,13 +52,28 @@ public class Notification extends Update<Notification> {
         return this;
     }
 
-    public String getInvitation() {
-        return invitation;
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .appendSuper(super.hashCode())
+            .append(notification)
+            .append(invitation)
+            .append(attachments)
+            .toHashCode();
     }
 
-    public Notification setInvitation(String invitation) {
-        this.invitation = invitation;
-        return this;
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+
+        Notification that = (Notification) object;
+        return new EqualsBuilder()
+            .appendSuper(super.equals(object))
+            .append(notification, that.notification)
+            .append(invitation, that.invitation)
+            .append(attachments, that.attachments)
+            .isEquals();
     }
 
     public static class Attachment {
@@ -83,6 +109,26 @@ public class Notification extends Update<Notification> {
         public Attachment setLabel(String label) {
             this.label = label;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37)
+                .append(url)
+                .toHashCode();
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+
+            Attachment that = (Attachment) object;
+            return new EqualsBuilder()
+                .append(name, that.name)
+                .append(url, that.url)
+                .append(label, that.label)
+                .isEquals();
         }
 
     }

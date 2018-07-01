@@ -23,15 +23,12 @@ VALUES
 
 INSERT INTO user (id, uuid, given_name, surname, email, email_display, gender, age_range, location_nationality_id, created_timestamp)
 VALUES
-  (1, UUID(), 'alastair', 'alastair', 'alastair@prism.hr', 'alastair@prism.hr', 'MALE', 'THIRTY_THIRTYNINE', 1, '2018-05-21 21:04:54.185');
+  (1, UUID(), 'alastair', 'alastair', 'alastair@prism.hr', 'alastair@prism.hr', 'MALE', 'THIRTY_THIRTYNINE', 1, '2018-05-21 21:04:54.185'),
+  (2, UUID(), 'jakub', 'fibinger', 'jakub@prism.hr', 'jakub@prism.hr', 'MALE', 'THIRTY_THIRTYNINE', 1, '2018-05-21 21:04:54.185');
 
 INSERT INTO user_role (id, uuid, resource_id, user_id, role, state, member_category, member_program, member_year, created_timestamp)
 VALUES (
   1, UUID(), 1, 1, 'MEMBER', 'ACCEPTED', 'UNDERGRADUATE_STUDENT', 'memberProgram', 2018, '2018-05-21 21:04:54.185');
-
-INSERT INTO document (id, cloudinary_id, cloudinary_url, file_name, created_timestamp)
-VALUES
-  (1, 'cloudinaryId', 'cloudinaryUrl', 'fileName', '2018-05-21 21:04:54.185');
 
 INSERT INTO resource_event (id, resource_id, event, user_id, referral, created_timestamp)
 VALUES

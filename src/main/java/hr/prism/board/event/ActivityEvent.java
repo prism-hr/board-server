@@ -2,12 +2,11 @@ package hr.prism.board.event;
 
 import hr.prism.board.domain.BoardEntity;
 import hr.prism.board.workflow.Activity;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
-
-import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
-import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 
 public class ActivityEvent extends ApplicationEvent {
 
@@ -64,13 +63,26 @@ public class ActivityEvent extends ApplicationEvent {
 
     @Override
     public int hashCode() {
-        return reflectionHashCode(this);
+        return new HashCodeBuilder(17, 37)
+            .append(resourceId)
+            .append(entityClass)
+            .append(entityId)
+            .append(activities)
+            .toHashCode();
     }
 
     @Override
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    public boolean equals(Object other) {
-        return reflectionEquals(this, other);
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+
+        ActivityEvent that = (ActivityEvent) object;
+        return new EqualsBuilder()
+            .append(resourceId, that.resourceId)
+            .append(entityClass, that.entityClass)
+            .append(entityId, that.entityId)
+            .append(activities, that.activities)
+            .isEquals();
     }
 
 }

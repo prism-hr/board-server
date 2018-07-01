@@ -3,12 +3,11 @@ package hr.prism.board.event;
 import hr.prism.board.enums.Action;
 import hr.prism.board.enums.ResourceTask;
 import hr.prism.board.workflow.Notification;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
-
-import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
-import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 
 public class NotificationEvent extends ApplicationEvent {
 
@@ -77,12 +76,28 @@ public class NotificationEvent extends ApplicationEvent {
 
     @Override
     public int hashCode() {
-        return reflectionHashCode(this);
+        return new HashCodeBuilder(17, 37)
+            .append(resourceId)
+            .append(resourceEventId)
+            .append(action)
+            .append(tasks)
+            .append(notifications)
+            .toHashCode();
     }
 
     @Override
-    public boolean equals(Object other) {
-        return reflectionEquals(this, other);
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+
+        NotificationEvent that = (NotificationEvent) object;
+        return new EqualsBuilder()
+            .append(resourceId, that.resourceId)
+            .append(resourceEventId, that.resourceEventId)
+            .append(action, that.action)
+            .append(tasks, that.tasks)
+            .append(notifications, that.notifications)
+            .isEquals();
     }
 
 }

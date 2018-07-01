@@ -1,9 +1,11 @@
 package hr.prism.board.service;
 
 import hr.prism.board.DbTestContext;
+import hr.prism.board.domain.Document;
 import hr.prism.board.domain.Location;
 import hr.prism.board.domain.Organization;
 import hr.prism.board.domain.User;
+import hr.prism.board.repository.DocumentRepository;
 import hr.prism.board.repository.LocationRepository;
 import hr.prism.board.repository.OrganizationRepository;
 import org.junit.Test;
@@ -29,6 +31,9 @@ public class UserServiceIT {
     private LocationRepository locationRepository;
 
     @Inject
+    private DocumentRepository documentRepository;
+
+    @Inject
     private UserService userService;
 
     @Test
@@ -42,6 +47,18 @@ public class UserServiceIT {
 
         assertEquals(organization, updatedUser.getDefaultOrganization());
         assertEquals(location, updatedUser.getDefaultLocation());
+    }
+
+    @Test
+    public void updateUserResume_success() {
+        User user = userService.getById(1L);
+        Document documentResume = documentRepository.findOne(1L);
+
+        userService.updateUserResume(user, documentResume, "websiteResume");
+        User updatedUser = userService.getById(1L);
+
+        assertEquals(documentResume, updatedUser.getDocumentResume());
+        assertEquals("websiteResume", updatedUser.getWebsiteResume());
     }
 
 }

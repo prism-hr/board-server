@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXISTING_PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
@@ -108,6 +110,30 @@ public abstract class Update<T extends Update> {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not serialize " + this.getClass().getSimpleName().toLowerCase());
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(type)
+            .append(scope)
+            .append(role)
+            .append(userId)
+            .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+
+        Update<?> update = (Update<?>) object;
+        return new EqualsBuilder()
+            .append(type, update.type)
+            .append(scope, update.scope)
+            .append(role, update.role)
+            .append(userId, update.userId)
+            .isEquals();
     }
 
 }

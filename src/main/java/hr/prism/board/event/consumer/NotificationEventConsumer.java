@@ -6,34 +6,22 @@ import hr.prism.board.domain.Resource;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.Action;
 import hr.prism.board.event.NotificationEvent;
-import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardNotificationException;
-import hr.prism.board.notification.BoardAttachments;
 import hr.prism.board.service.NotificationService;
 import hr.prism.board.service.NotificationService.NotificationRequest;
 import hr.prism.board.service.ResourceEventService;
 import hr.prism.board.service.ResourceService;
 import hr.prism.board.value.UserNotification;
 import hr.prism.board.workflow.Notification;
-import hr.prism.board.workflow.Notification.Attachment;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 
-import static hr.prism.board.exception.ExceptionCode.CONNECTION_ERROR;
-import static java.util.Base64.getEncoder;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Component
@@ -41,23 +29,24 @@ public class NotificationEventConsumer {
 
     private static Logger LOGGER = getLogger(NotificationEventConsumer.class);
 
-    @Inject
     private final ResourceService resourceService;
 
-    @Inject
     private final NotificationService notificationService;
 
-    @Inject
     private final ResourceEventService resourceEventService;
 
-    @Inject
+    private final NotificationAttachmentMapper notificationAttachmentMapper;
+
     private final ApplicationContext applicationContext;
 
     public NotificationEventConsumer(ResourceService resourceService, NotificationService notificationService,
-                                     ResourceEventService resourceEventService, ApplicationContext applicationContext) {
+                                     ResourceEventService resourceEventService,
+                                     NotificationAttachmentMapper notificationAttachmentMapper,
+                                     ApplicationContext applicationContext) {
         this.resourceService = resourceService;
         this.notificationService = notificationService;
         this.resourceEventService = resourceEventService;
+        this.notificationAttachmentMapper = notificationAttachmentMapper;
         this.applicationContext = applicationContext;
     }
 
@@ -81,7 +70,9 @@ public class NotificationEventConsumer {
                     try {
                         notificationService.sendNotification(
                             new NotificationRequest(template, user, recipient.getInvitation(), resource, action,
-                                mapAttachments(notification.getAttachments())));
+                                notification.getAttachments().stream()
+                                    .map(notificationAttachmentMapper)
+                                    .collect(toList())));
                         sent.put(user, template);
                     } catch (BoardNotificationException e) {
                         LOGGER.info("Aborted sending notification: " +
@@ -109,32 +100,6 @@ public class NotificationEventConsumer {
         }
 
         return resource;
-    }
-
-    private List<BoardAttachments> mapAttachments(List<Attachment> attachments) {
-        return attachments.isEmpty() ? emptyList() : attachments.stream().map(this::mapAttachment).collect(toList());
-    }
-
-    private BoardAttachments mapAttachment(Attachment attachment) {
-        try {
-            String urlPath = attachment.getUrl();
-            URL url = new URL(urlPath);
-            URLConnection connection = url.openConnection();
-            try (InputStream inputStream = connection.getInputStream()) {
-                BoardAttachments attachments = new BoardAttachments();
-                attachments.setContent(getEncoder().encodeToString(toByteArray(inputStream)));
-                attachments.setType(connection.getContentType());
-                attachments.setFilename(attachment.getName());
-                attachments.setDisposition("attachment");
-                attachments.setContentId(attachment.getLabel());
-                attachment.setUrl(urlPath);
-                return attachments;
-            } catch (IOException e) {
-                throw new BoardException(CONNECTION_ERROR, "Could not retrieve attachment data");
-            }
-        } catch (IOException e) {
-            throw new BoardException(CONNECTION_ERROR, "Could not access attachment data");
-        }
     }
 
 }

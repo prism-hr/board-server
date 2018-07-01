@@ -110,15 +110,15 @@ public class ResourceEventService {
             throw new BoardException(INVALID_RESOURCE_EVENT, "Post no longer accepting applications");
         }
 
-        DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
-        String websiteResume = resourceEventDTO.getWebsiteResume();
-        String coveringNote = resourceEventDTO.getCoveringNote();
-
         ResourceEvent previousResponse = findByResourceAndEventAndUser(post, RESPONSE, user);
         if (previousResponse != null) {
             throw new BoardDuplicateException(
                 DUPLICATE_RESOURCE_EVENT, "User already responded", previousResponse.getId());
         }
+
+        DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
+        String websiteResume = resourceEventDTO.getWebsiteResume();
+        String coveringNote = resourceEventDTO.getCoveringNote();
 
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
         UserRole userRole = userRoleService.getByResourceUserAndRole(post.getParent().getParent(), user, MEMBER);

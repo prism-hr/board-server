@@ -1,15 +1,22 @@
 package hr.prism.board.service;
 
+import com.google.common.collect.ImmutableMap;
 import hr.prism.board.DbTestContext;
-import hr.prism.board.domain.Location;
-import hr.prism.board.domain.Post;
-import hr.prism.board.domain.ResourceEvent;
-import hr.prism.board.domain.User;
+import hr.prism.board.domain.*;
+import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
+import hr.prism.board.event.ActivityEvent;
+import hr.prism.board.event.EventProducer;
+import hr.prism.board.event.NotificationEvent;
+import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.repository.UserRepository;
+import hr.prism.board.workflow.Notification;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -18,16 +25,22 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 
+import static hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY;
 import static hr.prism.board.enums.AgeRange.THIRTY_THIRTYNINE;
 import static hr.prism.board.enums.Gender.MALE;
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.enums.Notification.RESPOND_POST_NOTIFICATION;
 import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.VIEW;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.time.LocalDateTime.now;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 @DbTestContext
@@ -37,23 +50,35 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 public class ResourceEventServiceIT {
 
     @Inject
+    private UserRepository userRepository;
+
+    @Inject
     private ResourceEventService resourceEventService;
 
     @Inject
     private ResourceService resourceService;
 
     @Inject
+    private PlatformTransactionManager platformTransactionManager;
+
+    @MockBean
     private UserService userService;
 
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
+    @MockBean
+    private EventProducer eventProducer;
+
+    @After
+    public void tearDown() {
+        verifyNoMoreInteractions(userService, eventProducer);
+        reset(userService, eventProducer);
+    }
 
     @Test
     public void createPostView_successWhenUser() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
             Post post = (Post) resourceService.getById(3L);
-            User user = userService.getById(1L);
+            User user = userRepository.findOne(1L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostView(post, user, "ipAddress");
             Post updatedPost = (Post) resourceService.getById(3L);
@@ -114,7 +139,7 @@ public class ResourceEventServiceIT {
     public void createPostReferral_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             Post post = (Post) resourceService.getById(3L);
-            User user = userService.getById(1L);
+            User user = userRepository.findOne(1L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostReferral(post, user);
             Post updatedPost = (Post) resourceService.getById(3L);
@@ -182,9 +207,140 @@ public class ResourceEventServiceIT {
     }
 
     @Test
+    public void createPostResponse() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            LocalDateTime runTime = now().minusSeconds(1L);
+            ResourceEventDTO resourceEventDTO =
+                new ResourceEventDTO()
+                    .setDocumentResume(
+                        new DocumentDTO()
+                            .setCloudinaryId("cloudinaryId")
+                            .setCloudinaryUrl("cloudinaryUrl")
+                            .setFileName("fileName"))
+                    .setWebsiteResume("websiteResume")
+                    .setCoveringNote("coveringNote");
+
+            Post post = (Post) resourceService.getById(3L);
+            User user = userRepository.findOne(1L);
+
+            ResourceEvent resourceEvent = resourceEventService.createPostResponse(post, user, resourceEventDTO);
+            Post updatedPost = (Post) resourceService.getById(3L);
+
+            assertEquals(MALE, resourceEvent.getGender());
+            assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
+
+            Location expectedLocation = new Location();
+            expectedLocation.setGoogleId("googleId");
+            assertEquals(expectedLocation, resourceEvent.getLocationNationality());
+
+            assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
+            assertEquals("memberProgram", resourceEvent.getMemberProgram());
+            assertEquals(2018, resourceEvent.getMemberYear().intValue());
+
+            assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
+
+            assertNull(updatedPost.getViewCount());
+            assertNull(updatedPost.getLastViewTimestamp());
+            assertNull(updatedPost.getReferralCount());
+            assertNull(updatedPost.getLastReferralTimestamp());
+            assertEquals(1, updatedPost.getResponseCount().longValue());
+            assertThat(updatedPost.getLastResponseTimestamp()).isGreaterThan(runTime);
+
+            Long responseId = resourceEvent.getId();
+            verify(eventProducer, times(1)).produce(
+                new ActivityEvent(this, 3L, ResourceEvent.class, responseId,
+                    singletonList(
+                        new hr.prism.board.workflow.Activity()
+                            .setScope(POST)
+                            .setRole(ADMINISTRATOR)
+                            .setActivity(RESPOND_POST_ACTIVITY))),
+                new NotificationEvent(this, 3L, responseId,
+                    singletonList(
+                        new Notification()
+                            .setNotification(RESPOND_POST_NOTIFICATION)
+                            .addAttachment(
+                                new Notification.Attachment()
+                                    .setName("fileName")
+                                    .setUrl("cloudinaryUrl")
+                                    .setLabel("Application")))));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void createPostResponse_successWhenDefaultResume() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            LocalDateTime runTime = now().minusSeconds(1L);
+
+            ResourceEventDTO resourceEventDTO =
+                new ResourceEventDTO()
+                    .setDocumentResume(
+                        new DocumentDTO()
+                            .setCloudinaryId("cloudinaryId")
+                            .setCloudinaryUrl("cloudinaryUrl")
+                            .setFileName("fileName"))
+                    .setWebsiteResume("websiteResume")
+                    .setCoveringNote("coveringNote")
+                    .setDefaultResume(true);
+
+            Post post = (Post) resourceService.getById(3L);
+            User user = userRepository.findOne(1L);
+
+            ResourceEvent resourceEvent = resourceEventService.createPostResponse(post, user, resourceEventDTO);
+            Post updatedPost = (Post) resourceService.getById(3L);
+
+            assertEquals(MALE, resourceEvent.getGender());
+            assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
+
+            Location expectedLocation = new Location();
+            expectedLocation.setGoogleId("googleId");
+            assertEquals(expectedLocation, resourceEvent.getLocationNationality());
+
+            assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
+            assertEquals("memberProgram", resourceEvent.getMemberProgram());
+            assertEquals(2018, resourceEvent.getMemberYear().intValue());
+
+            assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
+
+            assertNull(updatedPost.getViewCount());
+            assertNull(updatedPost.getLastViewTimestamp());
+            assertNull(updatedPost.getReferralCount());
+            assertNull(updatedPost.getLastReferralTimestamp());
+            assertEquals(1, updatedPost.getResponseCount().longValue());
+            assertThat(updatedPost.getLastResponseTimestamp()).isGreaterThan(runTime);
+
+            Long responseId = resourceEvent.getId();
+            verify(eventProducer, times(1)).produce(
+                new ActivityEvent(this, 3L, ResourceEvent.class, responseId,
+                    singletonList(
+                        new hr.prism.board.workflow.Activity()
+                            .setScope(POST)
+                            .setRole(ADMINISTRATOR)
+                            .setActivity(RESPOND_POST_ACTIVITY))),
+                new NotificationEvent(this, 3L, responseId,
+                    singletonList(
+                        new Notification()
+                            .setNotification(RESPOND_POST_NOTIFICATION)
+                            .addAttachment(
+                                new Notification.Attachment()
+                                    .setName("fileName")
+                                    .setUrl("cloudinaryUrl")
+                                    .setLabel("Application")))));
+
+            Document documentResume = new Document();
+            documentResume.setCloudinaryId("cloudinaryId");
+
+            verify(userService, times(1))
+                .updateUserResume(user, documentResume, "websiteResume");
+            return null;
+        });
+    }
+
+    @Test
     public void createPostResponse_failureWhenNoApplyEmail() {
         Post post = (Post) resourceService.getById(4L);
-        User user = userService.getById(1L);
+        User user = userRepository.findOne(1L);
 
         assertThatThrownBy(() -> resourceEventService.createPostResponse(post, user, new ResourceEventDTO()))
             .isExactlyInstanceOf(BoardException.class)
@@ -192,8 +348,17 @@ public class ResourceEventServiceIT {
     }
 
     @Test
+    @Sql(scripts = {"classpath:data/tearDown.sql",
+        "classpath:data/resourceEvent_setUp.sql", "classpath:data/resourceEvent_setUp_response.sql"})
+    @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
     public void createPostResponse_failureWhenAlreadyResponded() {
+        Post post = (Post) resourceService.getById(3L);
+        User user = userRepository.findOne(2L);
 
+        assertThatThrownBy(() -> resourceEventService.createPostResponse(post, user, new ResourceEventDTO()))
+            .isExactlyInstanceOf(BoardDuplicateException.class)
+            .hasFieldOrPropertyWithValue("exceptionCode", DUPLICATE_RESOURCE_EVENT)
+            .hasFieldOrPropertyWithValue("properties", ImmutableMap.of("id", 3L));
     }
 
     private void verifyOtherPost() {
