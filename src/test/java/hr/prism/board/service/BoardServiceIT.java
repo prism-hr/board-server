@@ -13,7 +13,6 @@ import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -65,11 +64,6 @@ public class BoardServiceIT {
 
     @SpyBean
     private ResourceService resourceService;
-
-    @Before
-    public void setUp() {
-        reset(actionService, resourceService);
-    }
 
     @After
     public void tearDown() {

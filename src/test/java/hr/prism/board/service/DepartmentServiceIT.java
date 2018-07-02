@@ -17,7 +17,6 @@ import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceFilter.ResourceFilterList;
 import hr.prism.board.workflow.Execution;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -89,11 +88,6 @@ public class DepartmentServiceIT {
 
     @SpyBean
     private ActionService actionService;
-
-    @Before
-    public void setUp() {
-        reset(universityService, boardService, resourceService, resourceTaskService, userRoleService, documentService);
-    }
 
     @After
     public void tearDown() {

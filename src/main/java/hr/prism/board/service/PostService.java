@@ -153,7 +153,7 @@ public class PostService {
             return posts;
         }
 
-        addPostResponsesAndReadinesses(user, posts);
+        addPostResponses(user, posts);
         return posts;
     }
 
@@ -446,12 +446,11 @@ public class PostService {
     }
 
     private void addPostResponseReadiness(Post post, User user) {
-        if (user != null) {
-            boolean canPursue = actionService.canExecuteAction(post, PURSUE);
+        if (user != null && actionService.canExecuteAction(post, PURSUE)) {
             DemographicDataStatus responseReadiness =
                 departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
             post.setDemographicDataStatus(responseReadiness);
-            if (canPursue && responseReadiness.isReady() && post.getApplyEmail() == null) {
+            if (responseReadiness.isReady() && post.getApplyEmail() == null) {
                 resourceEventService.createPostReferral(post, user);
             }
         }
@@ -466,7 +465,7 @@ public class PostService {
         }
     }
 
-    private void addPostResponsesAndReadinesses(User user, List<Post> posts) {
+    private void addPostResponses(User user, List<Post> posts) {
         if (user != null) {
             entityManager.flush();
             Map<Post, Post> postIndex =

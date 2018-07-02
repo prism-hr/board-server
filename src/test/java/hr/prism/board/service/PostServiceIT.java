@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -35,6 +36,8 @@ import static hr.prism.board.enums.Action.*;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.ExistingRelation.STUDENT;
 import static hr.prism.board.enums.MemberCategory.*;
+import static hr.prism.board.enums.ResourceEvent.REFERRAL;
+import static hr.prism.board.enums.ResourceEvent.RESPONSE;
 import static hr.prism.board.enums.ResourceTask.POST_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Scope.POST;
@@ -92,9 +95,32 @@ public class PostServiceIT {
     @SpyBean
     private DocumentService documentService;
 
+    @MockBean
+    private ResourceEventService resourceEventService;
+
+    private hr.prism.board.domain.ResourceEvent referral;
+
+    private hr.prism.board.domain.ResourceEvent response;
+
     @Before
     public void setUp() {
-        reset(postValidator, actionService, resourceService);
+        referral = new hr.prism.board.domain.ResourceEvent();
+        referral.setId(1L);
+
+        response = new hr.prism.board.domain.ResourceEvent();
+        response.setId(2L);
+
+        when(resourceEventService.getResourceEvent(any(Post.class), eq(REFERRAL), any(User.class)))
+            .thenAnswer(invocation -> {
+                User user = invocation.getArgumentAt(2, User.class);
+                return user == null ? null : referral;
+            });
+
+        when (resourceEventService.getResourceEvent(any(Post.class), eq(RESPONSE), any(User.class)))
+            .thenAnswer(invocation -> {
+                User user = invocation.getArgumentAt(2, User.class);
+                return user == null ? null : response;
+            });
     }
 
     @After
