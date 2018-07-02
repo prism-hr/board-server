@@ -461,8 +461,8 @@ public class PostService {
         if (user != null) {
             entityManager.flush();
             post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
-            post.setReferral(resourceEventService.findByResourceAndEventAndUser(post, REFERRAL, user));
-            post.setResponse(resourceEventService.findByResourceAndEventAndUser(post, RESPONSE, user));
+            post.setReferral(resourceEventService.getResourceEvent(post, REFERRAL, user));
+            post.setResponse(resourceEventService.getResourceEvent(post, RESPONSE, user));
         }
     }
 
@@ -474,12 +474,12 @@ public class PostService {
                     .collect(toMap(post -> post, post -> post));
 
             Map<Resource, ResourceEvent> referrals =
-                resourceEventService.findByResourceIdsAndEventAndUser(posts, REFERRAL, user)
+                resourceEventService.getResourceEvents(posts, REFERRAL, user)
                     .stream()
                     .collect(toMap(ResourceEvent::getResource, identity()));
 
             Map<Resource, ResourceEvent> responses =
-                resourceEventService.findByResourceIdsAndEventAndUser(posts, RESPONSE, user)
+                resourceEventService.getResourceEvents(posts, RESPONSE, user)
                     .stream()
                     .collect(toMap(ResourceEvent::getResource, identity()));
 

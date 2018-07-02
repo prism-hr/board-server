@@ -207,63 +207,10 @@ public class ResourceEventServiceIT {
     }
 
     @Test
-    public void createPostResponse() {
+    public void createPostResponse_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
-            LocalDateTime runTime = now().minusSeconds(1L);
-            ResourceEventDTO resourceEventDTO =
-                new ResourceEventDTO()
-                    .setDocumentResume(
-                        new DocumentDTO()
-                            .setCloudinaryId("cloudinaryId")
-                            .setCloudinaryUrl("cloudinaryUrl")
-                            .setFileName("fileName"))
-                    .setWebsiteResume("websiteResume")
-                    .setCoveringNote("coveringNote");
-
-            Post post = (Post) resourceService.getById(3L);
             User user = userRepository.findOne(1L);
-
-            ResourceEvent resourceEvent = resourceEventService.createPostResponse(post, user, resourceEventDTO);
-            Post updatedPost = (Post) resourceService.getById(3L);
-
-            assertEquals(MALE, resourceEvent.getGender());
-            assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
-
-            Location expectedLocation = new Location();
-            expectedLocation.setGoogleId("googleId");
-            assertEquals(expectedLocation, resourceEvent.getLocationNationality());
-
-            assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
-            assertEquals("memberProgram", resourceEvent.getMemberProgram());
-            assertEquals(2018, resourceEvent.getMemberYear().intValue());
-
-            assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
-
-            assertNull(updatedPost.getViewCount());
-            assertNull(updatedPost.getLastViewTimestamp());
-            assertNull(updatedPost.getReferralCount());
-            assertNull(updatedPost.getLastReferralTimestamp());
-            assertEquals(1, updatedPost.getResponseCount().longValue());
-            assertThat(updatedPost.getLastResponseTimestamp()).isGreaterThan(runTime);
-
-            Long responseId = resourceEvent.getId();
-            verify(eventProducer, times(1)).produce(
-                new ActivityEvent(this, 3L, ResourceEvent.class, responseId,
-                    singletonList(
-                        new hr.prism.board.workflow.Activity()
-                            .setScope(POST)
-                            .setRole(ADMINISTRATOR)
-                            .setActivity(RESPOND_POST_ACTIVITY))),
-                new NotificationEvent(this, 3L, responseId,
-                    singletonList(
-                        new Notification()
-                            .setNotification(RESPOND_POST_NOTIFICATION)
-                            .addAttachment(
-                                new Notification.Attachment()
-                                    .setName("fileName")
-                                    .setUrl("cloudinaryUrl")
-                                    .setLabel("Application")))));
-
+            verifyCreatePostResponse(user, false);
             return null;
         });
     }
@@ -271,62 +218,8 @@ public class ResourceEventServiceIT {
     @Test
     public void createPostResponse_successWhenDefaultResume() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
-            LocalDateTime runTime = now().minusSeconds(1L);
-
-            ResourceEventDTO resourceEventDTO =
-                new ResourceEventDTO()
-                    .setDocumentResume(
-                        new DocumentDTO()
-                            .setCloudinaryId("cloudinaryId")
-                            .setCloudinaryUrl("cloudinaryUrl")
-                            .setFileName("fileName"))
-                    .setWebsiteResume("websiteResume")
-                    .setCoveringNote("coveringNote")
-                    .setDefaultResume(true);
-
-            Post post = (Post) resourceService.getById(3L);
             User user = userRepository.findOne(1L);
-
-            ResourceEvent resourceEvent = resourceEventService.createPostResponse(post, user, resourceEventDTO);
-            Post updatedPost = (Post) resourceService.getById(3L);
-
-            assertEquals(MALE, resourceEvent.getGender());
-            assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
-
-            Location expectedLocation = new Location();
-            expectedLocation.setGoogleId("googleId");
-            assertEquals(expectedLocation, resourceEvent.getLocationNationality());
-
-            assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
-            assertEquals("memberProgram", resourceEvent.getMemberProgram());
-            assertEquals(2018, resourceEvent.getMemberYear().intValue());
-
-            assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
-
-            assertNull(updatedPost.getViewCount());
-            assertNull(updatedPost.getLastViewTimestamp());
-            assertNull(updatedPost.getReferralCount());
-            assertNull(updatedPost.getLastReferralTimestamp());
-            assertEquals(1, updatedPost.getResponseCount().longValue());
-            assertThat(updatedPost.getLastResponseTimestamp()).isGreaterThan(runTime);
-
-            Long responseId = resourceEvent.getId();
-            verify(eventProducer, times(1)).produce(
-                new ActivityEvent(this, 3L, ResourceEvent.class, responseId,
-                    singletonList(
-                        new hr.prism.board.workflow.Activity()
-                            .setScope(POST)
-                            .setRole(ADMINISTRATOR)
-                            .setActivity(RESPOND_POST_ACTIVITY))),
-                new NotificationEvent(this, 3L, responseId,
-                    singletonList(
-                        new Notification()
-                            .setNotification(RESPOND_POST_NOTIFICATION)
-                            .addAttachment(
-                                new Notification.Attachment()
-                                    .setName("fileName")
-                                    .setUrl("cloudinaryUrl")
-                                    .setLabel("Application")))));
+            verifyCreatePostResponse(user, true);
 
             Document documentResume = new Document();
             documentResume.setCloudinaryId("cloudinaryId");
@@ -361,6 +254,33 @@ public class ResourceEventServiceIT {
             .hasFieldOrPropertyWithValue("properties", ImmutableMap.of("id", 3L));
     }
 
+    @Test
+    public void getResourceEvent_success() {
+        Post post = (Post) resourceService.getById(3L);
+        User user = userRepository.findOne(1L);
+
+        ResourceEvent resourceEvent = resourceEventService.getResourceEvent(post, REFERRAL, user);
+        assertEquals(1L, resourceEvent.getId().longValue());
+    }
+
+    @Test
+    public void getResourceEvent_successWhenEmpty() {
+        Post post = (Post) resourceService.getById(4L);
+        User user = userRepository.findOne(1L);
+
+        assertNull(resourceEventService.getResourceEvent(post, REFERRAL, user));
+    }
+
+    @Test
+    public void getResourceEvents() {
+        Post post = (Post) resourceService.getById(3L);
+        User user = userRepository.findOne(1L);
+        ResourceEvent resourceEvent = resourceEventService.getById(1L);
+
+        assertThat(resourceEventService
+            .getResourceEvents(singletonList(post), REFERRAL, user)).containsExactly(resourceEvent);
+    }
+
     private void verifyOtherPost() {
         Post otherPost = (Post) resourceService.getById(4L);
         assertNull(otherPost.getViewCount());
@@ -369,6 +289,62 @@ public class ResourceEventServiceIT {
         assertNull(otherPost.getLastReferralTimestamp());
         assertNull(otherPost.getResponseCount());
         assertNull(otherPost.getLastResponseTimestamp());
+    }
+
+    private void verifyCreatePostResponse(User user, Boolean defaultResume) {
+        LocalDateTime runTime = now().minusSeconds(1L);
+        Post post = (Post) resourceService.getById(3L);
+
+        ResourceEvent resourceEvent = resourceEventService.createPostResponse(post, user,
+            new ResourceEventDTO()
+                .setDocumentResume(
+                    new DocumentDTO()
+                        .setCloudinaryId("cloudinaryId")
+                        .setCloudinaryUrl("cloudinaryUrl")
+                        .setFileName("fileName"))
+                .setWebsiteResume("websiteResume")
+                .setCoveringNote("coveringNote")
+                .setDefaultResume(defaultResume));
+
+        Post updatedPost = (Post) resourceService.getById(3L);
+
+        assertEquals(MALE, resourceEvent.getGender());
+        assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
+
+        Location expectedLocation = new Location();
+        expectedLocation.setGoogleId("googleId");
+        assertEquals(expectedLocation, resourceEvent.getLocationNationality());
+
+        assertEquals(UNDERGRADUATE_STUDENT, resourceEvent.getMemberCategory());
+        assertEquals("memberProgram", resourceEvent.getMemberProgram());
+        assertEquals(2018, resourceEvent.getMemberYear().intValue());
+
+        assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
+
+        assertNull(updatedPost.getViewCount());
+        assertNull(updatedPost.getLastViewTimestamp());
+        assertNull(updatedPost.getReferralCount());
+        assertNull(updatedPost.getLastReferralTimestamp());
+        assertEquals(1, updatedPost.getResponseCount().longValue());
+        assertThat(updatedPost.getLastResponseTimestamp()).isGreaterThan(runTime);
+
+        Long responseId = resourceEvent.getId();
+        verify(eventProducer, times(1)).produce(
+            new ActivityEvent(this, 3L, ResourceEvent.class, responseId,
+                singletonList(
+                    new hr.prism.board.workflow.Activity()
+                        .setScope(POST)
+                        .setRole(ADMINISTRATOR)
+                        .setActivity(RESPOND_POST_ACTIVITY))),
+            new NotificationEvent(this, 3L, responseId,
+                singletonList(
+                    new Notification()
+                        .setNotification(RESPOND_POST_NOTIFICATION)
+                        .addAttachment(
+                            new Notification.Attachment()
+                                .setName("fileName")
+                                .setUrl("cloudinaryUrl")
+                                .setLabel("Application")))));
     }
 
 }

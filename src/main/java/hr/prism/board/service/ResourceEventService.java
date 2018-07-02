@@ -110,7 +110,7 @@ public class ResourceEventService {
             throw new BoardException(INVALID_RESOURCE_EVENT, "Post no longer accepting applications");
         }
 
-        ResourceEvent previousResponse = findByResourceAndEventAndUser(post, RESPONSE, user);
+        ResourceEvent previousResponse = getResourceEvent(post, RESPONSE, user);
         if (previousResponse != null) {
             throw new BoardDuplicateException(
                 DUPLICATE_RESOURCE_EVENT, "User already responded", previousResponse.getId());
@@ -166,14 +166,14 @@ public class ResourceEventService {
         return response;
     }
 
-    ResourceEvent findByResourceAndEventAndUser(Resource resource, hr.prism.board.enums.ResourceEvent event,
-                                                User user) {
+    ResourceEvent getResourceEvent(Resource resource, hr.prism.board.enums.ResourceEvent event,
+                                   User user) {
         List<Long> ids =
             resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(singletonList(resource), event, user);
         return ids.isEmpty() ? null : resourceEventRepository.findOne(ids.get(0));
     }
 
-    <T extends Resource> List<ResourceEvent> findByResourceIdsAndEventAndUser(
+    <T extends Resource> List<ResourceEvent> getResourceEvents(
         List<T> resources, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(resources, event, user);
         return ids.isEmpty() ? emptyList() : resourceEventRepository.findOnes(ids);

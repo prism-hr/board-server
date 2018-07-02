@@ -7,7 +7,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-public class EventProducer {
+public class EventProducerIT {
 
     @Test
     public void produce_success() {
