@@ -28,8 +28,6 @@ public class PostResponseService {
 
     private final ResourceService resourceService;
 
-    private final UserService userService;
-
     private final ActionService actionService;
 
     private final ResourceEventService resourceEventService;
@@ -42,12 +40,11 @@ public class PostResponseService {
 
     @Inject
     public PostResponseService(PostResponseDAO postResponseDAO, ResourceService resourceService,
-                               UserService userService, ActionService actionService,
-                               ResourceEventService resourceEventService, ActivityService activityService,
-                               DepartmentUserService departmentUserService, EntityManager entityManager) {
+                               ActionService actionService, ResourceEventService resourceEventService,
+                               ActivityService activityService, DepartmentUserService departmentUserService,
+                               EntityManager entityManager) {
         this.postResponseDAO = postResponseDAO;
         this.resourceService = resourceService;
-        this.userService = userService;
         this.actionService = actionService;
         this.resourceEventService = resourceEventService;
         this.activityService = activityService;
@@ -56,12 +53,15 @@ public class PostResponseService {
     }
 
 
-    public ResourceEvent getPostResponse(Long postId, Long responseId) {
-        return getPostResponse(userService.getUserSecured(), postId, responseId);
+    public ResourceEvent getPostResponse(User user, Long id, Long responseId) {
+        Post post = (Post) resourceService.getResource(user, POST, id);
+        actionService.executeAction(user, post, EDIT, () -> post);
+        ResourceEvent resourceEvent = resourceEventService.getById(responseId);
+        resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
+        return resourceEvent;
     }
 
-    public List<ResourceEvent> getPostResponses(Long id, String searchTerm) {
-        User user = userService.getUserSecured();
+    public List<ResourceEvent> getPostResponses(User user, Long id, String searchTerm) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return postResponseDAO.getPostResponses(user, post, searchTerm);
@@ -82,8 +82,7 @@ public class PostResponseService {
         return redirect;
     }
 
-    public ResourceEvent createPostResponse(Long id, ResourceEventDTO resourceEvent) {
-        User user = userService.getUserSecured();
+    public ResourceEvent createPostResponse(User user, Long id, ResourceEventDTO resourceEvent) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, PURSUE, () -> post);
         checkValidDemographicData(user, (Department) post.getParent().getParent());
@@ -92,19 +91,10 @@ public class PostResponseService {
             .setExposeResponseData(true);
     }
 
-    public ResourceEvent createPostResponseView(Long postId, Long responseId) {
-        User user = userService.getUserSecured();
+    public ResourceEvent createPostResponseView(User user, Long postId, Long responseId) {
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
         return resourceEvent.setViewed(true);
-    }
-
-    private ResourceEvent getPostResponse(User user, Long id, Long responseId) {
-        Post post = (Post) resourceService.getResource(user, POST, id);
-        actionService.executeAction(user, post, EDIT, () -> post);
-        ResourceEvent resourceEvent = resourceEventService.getById(responseId);
-        resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
-        return resourceEvent;
     }
 
     private void checkValidDemographicData(User user, Department department) {

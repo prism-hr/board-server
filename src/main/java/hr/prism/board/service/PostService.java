@@ -157,15 +157,13 @@ public class PostService {
         return posts;
     }
 
-    public List<ResourceOperation> getPostOperations(Long id) {
-        User user = userService.getUserSecured();
+    public List<ResourceOperation> getPostOperations(User user, Long id) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
         return resourceService.getResourceOperations(post);
     }
 
-    public List<String> getPostArchiveQuarters(Long parentId) {
-        User user = userService.getUserSecured();
+    public List<String> getPostArchiveQuarters(User user, Long parentId) {
         return resourceService.getResourceArchiveQuarters(user, POST, parentId);
     }
 
@@ -212,8 +210,7 @@ public class PostService {
         return createdPost;
     }
 
-    public Post executeAction(Long id, Action action, PostPatchDTO postDTO) {
-        User user = userService.getUserSecured();
+    public Post executeAction(User user, Long id, Action action, PostPatchDTO postDTO) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         post.setComment(postDTO.getComment());
         return (Post) actionService.executeAction(user, post, action, () -> {

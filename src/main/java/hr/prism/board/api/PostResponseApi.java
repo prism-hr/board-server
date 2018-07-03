@@ -1,9 +1,12 @@
 package hr.prism.board.api;
 
+import hr.prism.board.domain.User;
 import hr.prism.board.dto.ResourceEventDTO;
 import hr.prism.board.mapper.ResourceEventMapper;
 import hr.prism.board.representation.ResourceEventRepresentation;
 import hr.prism.board.service.PostResponseService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -33,27 +36,34 @@ public class PostResponseApi {
         response.sendRedirect(postResponseService.consumePostReferral(referral));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}/respond", method = POST)
-    public ResourceEventRepresentation createPostResponse(@PathVariable Long postId,
+    public ResourceEventRepresentation createPostResponse(@AuthenticationPrincipal User user, @PathVariable Long postId,
                                                           @RequestBody @Valid ResourceEventDTO resourceEvent) {
-        return resourceEventMapper.apply(postResponseService.createPostResponse(postId, resourceEvent));
+        return resourceEventMapper.apply(postResponseService.createPostResponse(user, postId, resourceEvent));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}/responses", method = GET)
-    public List<ResourceEventRepresentation> getPostResponses(@PathVariable Long postId,
+    public List<ResourceEventRepresentation> getPostResponses(@AuthenticationPrincipal User user,
+                                                              @PathVariable Long postId,
                                                               @RequestParam(required = false) String searchTerm) {
-        return postResponseService.getPostResponses(postId, searchTerm)
+        return postResponseService.getPostResponses(user, postId, searchTerm)
             .stream().map(resourceEventMapper).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}/responses/{responseId}", method = GET)
-    public ResourceEventRepresentation getPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
-        return resourceEventMapper.apply(postResponseService.getPostResponse(postId, responseId));
+    public ResourceEventRepresentation getPostResponse(@AuthenticationPrincipal User user,
+                                                       @PathVariable Long postId, @PathVariable Long responseId) {
+        return resourceEventMapper.apply(postResponseService.getPostResponse(user, postId, responseId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}/responses/{responseId}/view", method = PUT)
-    public ResourceEventRepresentation viewPostResponse(@PathVariable Long postId, @PathVariable Long responseId) {
-        return resourceEventMapper.apply(postResponseService.createPostResponseView(postId, responseId));
+    public ResourceEventRepresentation viewPostResponse(@AuthenticationPrincipal User user, @PathVariable Long postId,
+                                                        @PathVariable Long responseId) {
+        return resourceEventMapper.apply(postResponseService.createPostResponseView(user, postId, responseId));
     }
 
 }

@@ -32,16 +32,13 @@ public class BoardService {
 
     private final BoardPatchService boardPatchService;
 
-    private final UserService userService;
-
     @Inject
     public BoardService(BoardRepository boardRepository, ActionService actionService, ResourceService resourceService,
-                        BoardPatchService boardPatchService, UserService userService) {
+                        BoardPatchService boardPatchService) {
         this.boardRepository = boardRepository;
         this.actionService = actionService;
         this.resourceService = resourceService;
         this.boardPatchService = boardPatchService;
-        this.userService = userService;
     }
 
     public Board getById(User user, Long id) {
@@ -65,8 +62,7 @@ public class BoardService {
             .collect(toList());
     }
 
-    public List<ResourceOperation> getBoardOperations(Long id) {
-        User user = userService.getUserSecured();
+    public List<ResourceOperation> getBoardOperations(User user, Long id) {
         Board board = (Board) resourceService.getResource(user, BOARD, id);
         actionService.executeAction(user, board, EDIT, () -> board);
         return resourceService.getResourceOperations(board);
@@ -93,15 +89,14 @@ public class BoardService {
         });
     }
 
-    public Board executeAction(Long id, Action action, BoardPatchDTO boardDTO) {
-        User currentUser = userService.getUserSecured();
-        Board board = (Board) resourceService.getResource(currentUser, BOARD, id);
+    public Board executeAction(User user, Long id, Action action, BoardPatchDTO boardDTO) {
+        Board board = (Board) resourceService.getResource(user, BOARD, id);
         board.setComment(boardDTO.getComment());
-        return (Board) actionService.executeAction(currentUser, board, action, () -> {
+        return (Board) actionService.executeAction(user, board, action, () -> {
             if (action == EDIT) {
                 updateBoard(board, boardDTO);
             } else if (BoardUtils.hasUpdates(boardDTO)) {
-                actionService.executeAction(currentUser, board, EDIT, () -> {
+                actionService.executeAction(user, board, EDIT, () -> {
                     updateBoard(board, boardDTO);
                     return board;
                 });

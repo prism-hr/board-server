@@ -40,8 +40,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
-import hr.prism.board.event.ActivityEvent;
-
 @Service
 @Transactional
 public class DepartmentService {
@@ -65,8 +63,6 @@ public class DepartmentService {
     private final DepartmentRepository departmentRepository;
 
     private final DepartmentDAO departmentDAO;
-
-    private final UserService userService;
 
     private final DocumentService documentService;
 
@@ -96,7 +92,7 @@ public class DepartmentService {
                              @Value("${department.pending.notification.interval1.seconds}") Long departmentPendingNotificationInterval1Seconds,
                              @Value("${department.pending.notification.interval2.seconds}") Long departmentPendingNotificationInterval2Seconds,
                              DepartmentRepository departmentRepository, DepartmentDAO departmentDAO,
-                             UserService userService, DocumentService documentService, ResourceService resourceService,
+                             DocumentService documentService, ResourceService resourceService,
                              DepartmentPatchService departmentPatchService, UserRoleService userRoleService,
                              ActionService actionService, ActivityService activityService,
                              UniversityService universityService, BoardService boardService,
@@ -108,7 +104,6 @@ public class DepartmentService {
         this.departmentPendingNotificationInterval2Seconds = departmentPendingNotificationInterval2Seconds;
         this.departmentRepository = departmentRepository;
         this.departmentDAO = departmentDAO;
-        this.userService = userService;
         this.documentService = documentService;
         this.resourceService = resourceService;
         this.resourcePatchService = departmentPatchService;
@@ -143,8 +138,7 @@ public class DepartmentService {
             .collect(toList());
     }
 
-    public List<ResourceOperation> getDepartmentOperations(Long id) {
-        User user = userService.getUserSecured();
+    public List<ResourceOperation> getDepartmentOperations(User user, Long id) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return resourceService.getResourceOperations(department);
@@ -208,10 +202,9 @@ public class DepartmentService {
         return (Department) resourceService.getResource(user, DEPARTMENT, id);
     }
 
-    public Department updateDepartment(Long departmentId, DepartmentPatchDTO departmentDTO) {
-        User currentUser = userService.getUserSecured();
-        Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, departmentId);
-        return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
+    public Department updateDepartment(User user, Long departmentId, DepartmentPatchDTO departmentDTO) {
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, departmentId);
+        return (Department) actionService.executeAction(user, department, EDIT, () -> {
             department.setChangeList(new ChangeListRepresentation());
             resourcePatchService.patchName(department, departmentDTO.getName());
             resourcePatchService.patchProperty(department, "summary",

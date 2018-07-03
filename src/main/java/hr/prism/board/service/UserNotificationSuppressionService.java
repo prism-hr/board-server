@@ -44,13 +44,15 @@ public class UserNotificationSuppressionService {
         this.entityManager = entityManager;
     }
 
-    public List<Resource> getSuppressions() {
-        User user = userService.getUserSecured();
-        return getSuppressions(user);
+    public List<Resource> getSuppressions(User user) {
+        List<Resource> resources = resourceService.getSuppressableResources(BOARD, user);
+        List<Resource> suppressedResources = userNotificationSuppressionRepository.findByUser(user);
+        resources.forEach(resource ->
+            resource.setNotificationSuppressedForUser(suppressedResources.contains(resource)));
+        return resources;
     }
 
-    public Resource createSuppression(String uuid, Long resourceId) {
-        User user = userService.getUser();
+    public Resource createSuppression(User user, String uuid, Long resourceId) {
         if (user == null && uuid != null) {
             user = userService.getByUuid(uuid);
         }
@@ -82,30 +84,19 @@ public class UserNotificationSuppressionService {
         return resource;
     }
 
-    public List<Resource> createSuppressionsForAllResources() {
-        User user = userService.getUserSecured();
+    public List<Resource> createSuppressionsForAllResources(User user) {
         userNotificationSuppressionRepository.insertByUserId(
             user.getId(), LocalDateTime.now(), BOARD.name(), ACTIVE_USER_ROLE_STATE_STRINGS);
         entityManager.flush();
         return getSuppressions(user);
     }
 
-    public void deleteSuppressions() {
-        User user = userService.getUserSecured();
+    public void deleteSuppressions(User user) {
         userNotificationSuppressionRepository.deleteByUser(user);
     }
 
-    public void deleteSuppression(Long resourceId) {
-        User user = userService.getUserSecured();
+    public void deleteSuppression(User user, Long resourceId) {
         userNotificationSuppressionRepository.deleteByUserAndResourceId(user, resourceId);
-    }
-
-    private List<Resource> getSuppressions(User user) {
-        List<Resource> resources = resourceService.getSuppressableResources(BOARD, user);
-        List<Resource> suppressedResources = userNotificationSuppressionRepository.findByUser(user);
-        resources.forEach(resource ->
-            resource.setNotificationSuppressedForUser(suppressedResources.contains(resource)));
-        return resources;
     }
 
 }

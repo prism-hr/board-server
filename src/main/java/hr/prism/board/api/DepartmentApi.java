@@ -87,16 +87,20 @@ public class DepartmentApi {
         return departmentMapper.apply(departmentDashboardService.getDepartmentDashboard(user, departmentId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/operations", method = GET)
-    public List<ResourceOperationRepresentation> getDepartmentOperations(@PathVariable Long departmentId) {
-        return departmentService.getDepartmentOperations(departmentId)
+    public List<ResourceOperationRepresentation> getDepartmentOperations(@AuthenticationPrincipal User user,
+                                                                         @PathVariable Long departmentId) {
+        return departmentService.getDepartmentOperations(user, departmentId)
             .stream().map(resourceOperationMapper).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}", method = PATCH)
-    public DepartmentRepresentation updateDepartment(@PathVariable Long departmentId,
+    public DepartmentRepresentation updateDepartment(@AuthenticationPrincipal User user,
+                                                     @PathVariable Long departmentId,
                                                      @RequestBody @Valid DepartmentPatchDTO departmentDTO) {
-        return departmentMapper.apply(departmentService.updateDepartment(departmentId, departmentDTO));
+        return departmentMapper.apply(departmentService.updateDepartment(user, departmentId, departmentDTO));
     }
 
     @RequestMapping(value = "/api/departments/{departmentId}/programs", method = GET)

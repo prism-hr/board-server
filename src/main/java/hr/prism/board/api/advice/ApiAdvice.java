@@ -85,7 +85,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
-        LOGGER.error(getCurrentUsername() + ": 422 - " +
+        LOGGER.error(getUserString() + ": 422 - " +
             ((ServletWebRequest) request).getRequest().getServletPath(), exception);
         List<String> errors = new ArrayList<>();
         for (FieldError error : exception.getBindingResult().getFieldErrors()) {
@@ -103,7 +103,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException exception,
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
-        LOGGER.error(getCurrentUsername() + ": 500 - " +
+        LOGGER.error(getUserString() + ": 500 - " +
             ((ServletWebRequest) request).getRequest().getServletPath(), exception);
         return super.handleExceptionInternal(exception, exception.getMessage(), headers, status, request);
     }
@@ -112,7 +112,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception,
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
-        LOGGER.error(getCurrentUsername() + ": 400 - " +
+        LOGGER.error(getUserString() + ": 400 - " +
             ((ServletWebRequest) request).getRequest().getServletPath(), exception);
         return super.handleExceptionInternal(exception, exception.getMessage(), headers, status, request);
     }
@@ -120,7 +120,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     private ResponseEntity<Object> handleExceptionLoggingInfo(BoardException exception, WebRequest request,
                                                               HttpStatus responseStatus) {
         ExceptionCode exceptionCode = exception.getExceptionCode();
-        String userName = getCurrentUsername();
+        String userName = getUserString();
         LOGGER.info(userName + ": " + responseStatus + " - " + exception.getMessage());
 
         Map<String, Object> response =
@@ -131,7 +131,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
     private ResponseEntity<Object> handleExceptionLoggingError(Exception exception, ExceptionCode exceptionCode,
                                                                WebRequest request) {
         HttpStatus responseStatus = INTERNAL_SERVER_ERROR;
-        String userName = getCurrentUsername();
+        String userName = getUserString();
         LOGGER.error(userName + ": " + responseStatus + " - " + exception.getMessage(), exception);
 
         Map<String, Object> response =
@@ -139,7 +139,7 @@ public class ApiAdvice extends ResponseEntityExceptionHandler {
         return handleExceptionInternal(exception, response, new HttpHeaders(), responseStatus, request);
     }
 
-    private String getCurrentUsername() {
+    private String getUserString() {
         User user = userService.getUser();
         return user == null ? "Anonymous" : user.toString();
     }

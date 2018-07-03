@@ -1,8 +1,11 @@
 package hr.prism.board.api;
 
+import hr.prism.board.domain.User;
 import hr.prism.board.mapper.UserNotificationSuppressionMapper;
 import hr.prism.board.representation.UserNotificationSuppressionRepresentation;
 import hr.prism.board.service.UserNotificationSuppressionService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,33 +31,38 @@ public class UserNotificationSuppressionApi {
         this.userNotificationSuppressionMapper = userNotificationSuppressionMapper;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/user/suppressions", method = GET)
-    public List<UserNotificationSuppressionRepresentation> getSuppressions() {
-        return userNotificationSuppressionService.getSuppressions()
+    public List<UserNotificationSuppressionRepresentation> getSuppressions(@AuthenticationPrincipal User user) {
+        return userNotificationSuppressionService.getSuppressions(user)
             .stream().map(userNotificationSuppressionMapper).collect(toList());
     }
 
     @RequestMapping(value = "/api/user/suppressions/{resourceId}", method = POST)
-    public UserNotificationSuppressionRepresentation postSuppression(@PathVariable Long resourceId,
+    public UserNotificationSuppressionRepresentation postSuppression(@AuthenticationPrincipal User user,
+                                                                     @PathVariable Long resourceId,
                                                                      @RequestParam(required = false) String uuid) {
         return userNotificationSuppressionMapper.apply(
-            userNotificationSuppressionService.createSuppression(uuid, resourceId));
+            userNotificationSuppressionService.createSuppression(user, uuid, resourceId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/user/suppressions", method = POST)
-    public List<UserNotificationSuppressionRepresentation> postSuppressions() {
-        return userNotificationSuppressionService.createSuppressionsForAllResources()
+    public List<UserNotificationSuppressionRepresentation> postSuppressions(@AuthenticationPrincipal User user) {
+        return userNotificationSuppressionService.createSuppressionsForAllResources(user)
             .stream().map(userNotificationSuppressionMapper).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/user/suppressions/{resourceId}", method = DELETE)
-    public void deleteSuppression(@PathVariable Long resourceId) {
-        userNotificationSuppressionService.deleteSuppression(resourceId);
+    public void deleteSuppression(@AuthenticationPrincipal User user, @PathVariable Long resourceId) {
+        userNotificationSuppressionService.deleteSuppression(user, resourceId);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/user/suppressions", method = DELETE)
-    public void deleteSuppressions() {
-        userNotificationSuppressionService.deleteSuppressions();
+    public void deleteSuppressions(@AuthenticationPrincipal User user) {
+        userNotificationSuppressionService.deleteSuppressions(user);
     }
 
 }

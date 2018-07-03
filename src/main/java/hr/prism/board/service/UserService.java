@@ -68,15 +68,6 @@ public class UserService {
         return authentication instanceof AuthenticationToken ? ((AuthenticationToken) authentication).getUser() : null;
     }
 
-    public User getUserSecured() {
-        User user = getUser();
-        if (user == null) {
-            throw new BoardForbiddenException(UNAUTHENTICATED_USER, "User cannot be authenticated");
-        }
-
-        return user;
-    }
-
     public User getById(Long id) {
         User user = userRepository.findOne(id);
         if (user == null) {
@@ -193,8 +184,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateUser(UserPatchDTO userDTO) {
-        User user = getUserSecured();
+    public User updateUser(User user, UserPatchDTO userDTO) {
         userPatchService.patchProperty(user, user::getGivenName, user::setGivenName, userDTO.getGivenName());
         userPatchService.patchProperty(user, user::getSurname, user::setSurname, userDTO.getSurname());
 

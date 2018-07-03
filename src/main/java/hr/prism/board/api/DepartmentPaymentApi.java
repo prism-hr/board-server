@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.model.Customer;
 import com.stripe.model.StripeObject;
+import hr.prism.board.domain.User;
 import hr.prism.board.service.DepartmentPaymentService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,43 +30,54 @@ public class DepartmentPaymentApi {
         this.objectMapper = objectMapper;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources", method = GET)
-    public JsonNode getPaymentSources(@PathVariable Long departmentId) throws IOException {
-        Customer customer = departmentPaymentService.getPaymentSources(departmentId);
+    public JsonNode getPaymentSources(@AuthenticationPrincipal User user, @PathVariable Long departmentId)
+        throws IOException {
+        Customer customer = departmentPaymentService.getPaymentSources(user, departmentId);
         return readTree(customer);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = POST)
-    public JsonNode addPaymentSourceAndSubscription(@PathVariable Long departmentId, @PathVariable String source)
-        throws IOException {
-        return readTree(departmentPaymentService.addPaymentSourceAndSubscription(departmentId, source));
+    public JsonNode addPaymentSourceAndSubscription(@AuthenticationPrincipal User user, @PathVariable Long departmentId,
+                                                    @PathVariable String source) throws IOException {
+        return readTree(departmentPaymentService.addPaymentSourceAndSubscription(user, departmentId, source));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}/setDefault", method = POST)
-    public JsonNode setPaymentSourceAsDefault(@PathVariable Long departmentId, @PathVariable String source)
-        throws IOException {
-        return readTree(departmentPaymentService.setPaymentSourceAsDefault(departmentId, source));
+    public JsonNode setPaymentSourceAsDefault(@AuthenticationPrincipal User user, @PathVariable Long departmentId,
+                                              @PathVariable String source) throws IOException {
+        return readTree(departmentPaymentService.setPaymentSourceAsDefault(user, departmentId, source));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/paymentSources/{source}", method = DELETE)
-    public JsonNode deletePaymentSource(@PathVariable Long departmentId, @PathVariable String source)
-        throws IOException {
-        return readTree(departmentPaymentService.deletePaymentSource(departmentId, source));
+    public JsonNode deletePaymentSource(@AuthenticationPrincipal User user, @PathVariable Long departmentId,
+                                        @PathVariable String source) throws IOException {
+        return readTree(departmentPaymentService.deletePaymentSource(user, departmentId, source));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/cancelSubscription", method = POST)
-    public JsonNode cancelSubscription(@PathVariable Long departmentId) throws IOException {
-        return readTree(departmentPaymentService.cancelSubscription(departmentId));
+    public JsonNode cancelSubscription(@AuthenticationPrincipal User user, @PathVariable Long departmentId)
+        throws IOException {
+        return readTree(departmentPaymentService.cancelSubscription(user, departmentId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/reactivateSubscription", method = POST)
-    public JsonNode reactivateSubscription(@PathVariable Long departmentId) throws IOException {
-        return readTree(departmentPaymentService.reactivateSubscription(departmentId));
+    public JsonNode reactivateSubscription(@AuthenticationPrincipal User user, @PathVariable Long departmentId)
+        throws IOException {
+        return readTree(departmentPaymentService.reactivateSubscription(user, departmentId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/departments/{departmentId}/invoices", method = GET)
-    public JsonNode getInvoices(@PathVariable Long departmentId) throws IOException {
-        return readTree(departmentPaymentService.getInvoices(departmentId));
+    public JsonNode getInvoices(@AuthenticationPrincipal User user, @PathVariable Long departmentId)
+        throws IOException {
+        return readTree(departmentPaymentService.getInvoices(user, departmentId));
     }
 
     private JsonNode readTree(StripeObject object) throws IOException {

@@ -6,6 +6,8 @@ import hr.prism.board.dto.UserPatchDTO;
 import hr.prism.board.mapper.UserMapper;
 import hr.prism.board.representation.UserRepresentation;
 import hr.prism.board.service.UserService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,15 +31,17 @@ public class UserApi {
         this.userMapper = userMapper;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/user", method = GET)
-    public UserRepresentation getUser() {
-        return userMapper.apply(userService.getUserSecured());
+    public UserRepresentation getUser(@AuthenticationPrincipal User user) {
+        return userMapper.apply(user);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/user", method = PATCH)
-    public UserRepresentation updateUser(@RequestBody @Valid UserPatchDTO userDTO) {
-        User currentUser = userService.updateUser(userDTO);
-        return userMapper.apply(currentUser);
+    public UserRepresentation updateUser(@AuthenticationPrincipal User user, @RequestBody @Valid UserPatchDTO userDTO) {
+        User updatedUser = userService.updateUser(user, userDTO);
+        return userMapper.apply(updatedUser);
     }
 
     @RequestMapping(value = "/api/user/password", method = PATCH)

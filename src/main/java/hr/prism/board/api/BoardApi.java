@@ -64,20 +64,26 @@ public class BoardApi {
         return boardMapper.apply(boardService.getByHandle(user, handle));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/boards/{boardId}/operations", method = GET)
-    public List<ResourceOperationRepresentation> getBoardOperations(@PathVariable Long boardId) {
-        return boardService.getBoardOperations(boardId).stream().map(resourceOperationMapper).collect(toList());
+    public List<ResourceOperationRepresentation> getBoardOperations(@AuthenticationPrincipal User user,
+                                                                    @PathVariable Long boardId) {
+        return boardService.getBoardOperations(user, boardId).stream().map(resourceOperationMapper).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/boards/{boardId}", method = PATCH)
-    public BoardRepresentation updateBoard(@PathVariable Long boardId, @RequestBody @Valid BoardPatchDTO boardDTO) {
-        return boardMapper.apply(boardService.executeAction(boardId, EDIT, boardDTO));
+    public BoardRepresentation updateBoard(@AuthenticationPrincipal User user,
+                                           @PathVariable Long boardId, @RequestBody @Valid BoardPatchDTO boardDTO) {
+        return boardMapper.apply(boardService.executeAction(user, boardId, EDIT, boardDTO));
     }
 
     @RequestMapping(value = "/api/boards/{boardId}/actions/{action:reject|restore}", method = POST)
-    public BoardRepresentation performActionOnBoard(@PathVariable Long boardId, @PathVariable String action,
+    public BoardRepresentation performActionOnBoard(@AuthenticationPrincipal User user, @PathVariable Long boardId,
+                                                    @PathVariable String action,
                                                     @RequestBody @Valid BoardPatchDTO boardDTO) {
-        return boardMapper.apply(boardService.executeAction(boardId, Action.valueOf(action.toUpperCase()), boardDTO));
+        return boardMapper.apply(boardService.executeAction(
+            user, boardId, Action.valueOf(action.toUpperCase()), boardDTO));
     }
 
 }

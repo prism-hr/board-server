@@ -3,7 +3,6 @@ package hr.prism.board.service;
 import hr.prism.board.authentication.AuthenticationToken;
 import hr.prism.board.dao.UserDAO;
 import hr.prism.board.domain.User;
-import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.UserRepository;
 import org.junit.After;
 import org.junit.Before;
@@ -12,10 +11,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static hr.prism.board.exception.ExceptionCode.UNAUTHENTICATED_USER;
 import static io.jsonwebtoken.lang.Assert.isNull;
 import static io.jsonwebtoken.lang.Assert.notNull;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
@@ -62,22 +59,6 @@ public class UserServiceTest {
     @Test
     public void getUser_successWhenNotAuthenticated() {
         isNull(userService.getUser());
-    }
-
-    @Test
-    public void getUserSecured_success() {
-        getContext().setAuthentication(
-            new AuthenticationToken(
-                new User()));
-
-        notNull(userService.getUserSecured());
-    }
-
-    @Test
-    public void getUserSecured_failureWhenNotAuthenticated() {
-        assertThatThrownBy(() -> userService.getUserSecured())
-            .isExactlyInstanceOf(BoardForbiddenException.class)
-            .hasFieldOrPropertyWithValue("exceptionCode", UNAUTHENTICATED_USER);
     }
 
 }

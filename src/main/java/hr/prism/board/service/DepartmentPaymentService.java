@@ -41,8 +41,6 @@ public class DepartmentPaymentService {
 
     private final ResourceService resourceService;
 
-    private final UserService userService;
-
     private final ActivityService activityService;
 
     private final EventProducer eventProducer;
@@ -52,30 +50,28 @@ public class DepartmentPaymentService {
     @Inject
     public DepartmentPaymentService(DepartmentRepository departmentRepository, ActionService actionService,
                                     PaymentService paymentService, ResourceService resourceService,
-                                    UserService userService, ActivityService activityService,
-                                    EventProducer eventProducer, EntityManager entityManager) {
+                                    ActivityService activityService, EventProducer eventProducer,
+                                    EntityManager entityManager) {
         this.departmentRepository = departmentRepository;
         this.actionService = actionService;
         this.paymentService = paymentService;
         this.resourceService = resourceService;
-        this.userService = userService;
         this.activityService = activityService;
         this.eventProducer = eventProducer;
         this.entityManager = entityManager;
     }
 
-    public Customer getPaymentSources(Long id) {
-        String customerId = getCustomerIdSecured(id);
+    public Customer getPaymentSources(User user, Long id) {
+        String customerId = getCustomerIdSecured(user, id);
         return customerId == null ? null : paymentService.getCustomer(customerId);
     }
 
-    public InvoiceCollection getInvoices(Long id) {
-        String customerId = getCustomerIdSecured(id);
+    public InvoiceCollection getInvoices(User user, Long id) {
+        String customerId = getCustomerIdSecured(user, id);
         return customerId == null ? null : paymentService.getInvoices(customerId);
     }
 
-    public Customer addPaymentSourceAndSubscription(Long id, String source) {
-        User user = userService.getUserSecured();
+    public Customer addPaymentSourceAndSubscription(User user, Long id, String source) {
         Department department = getDepartment(id, user);
         actionService.executeAction(user, department, SUBSCRIBE, () -> {
             Customer customer;
@@ -103,8 +99,7 @@ public class DepartmentPaymentService {
         return department.getCustomer();
     }
 
-    public Customer setPaymentSourceAsDefault(Long id, String defaultSource) {
-        User user = userService.getUserSecured();
+    public Customer setPaymentSourceAsDefault(User user, Long id, String defaultSource) {
         Department department = getDepartment(id, user);
         actionService.executeAction(user, department, SUBSCRIBE, () -> {
             String customerId = department.getCustomerId();
@@ -119,8 +114,7 @@ public class DepartmentPaymentService {
         return department.getCustomer();
     }
 
-    public Customer deletePaymentSource(Long id, String source) {
-        User user = userService.getUserSecured();
+    public Customer deletePaymentSource(User user, Long id, String source) {
         Department department = getDepartment(id, user);
         actionService.executeAction(user, department, EDIT, () -> {
             String customerId = department.getCustomerId();
@@ -140,8 +134,7 @@ public class DepartmentPaymentService {
         return department.getCustomer();
     }
 
-    public Customer cancelSubscription(Long id) {
-        User user = userService.getUserSecured();
+    public Customer cancelSubscription(User user, Long id) {
         Department department = getDepartment(id, user);
         actionService.executeAction(user, department, UNSUBSCRIBE, () -> {
             String customerId = department.getCustomerId();
@@ -156,8 +149,7 @@ public class DepartmentPaymentService {
         return department.getCustomer();
     }
 
-    public Customer reactivateSubscription(Long id) {
-        User user = userService.getUserSecured();
+    public Customer reactivateSubscription(User user, Long id) {
         Department department = getDepartment(id, user);
         actionService.executeAction(user, department, SUBSCRIBE, () -> {
             String customerId = department.getCustomerId();
@@ -211,8 +203,7 @@ public class DepartmentPaymentService {
         return (Department) resourceService.getResource(user, DEPARTMENT, id);
     }
 
-    private String getCustomerIdSecured(Long id) {
-        User user = userService.getUserSecured();
+    private String getCustomerIdSecured(User user, Long id) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return department.getCustomerId();

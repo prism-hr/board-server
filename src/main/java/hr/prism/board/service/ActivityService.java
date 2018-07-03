@@ -44,9 +44,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Transactional
 public class ActivityService {
 
-    volatile Set<Long> userIds = ConcurrentHashMap.newKeySet();
-
     private static final Logger LOGGER = getLogger(ActivityService.class);
+
+    private volatile Set<Long> userIds = ConcurrentHashMap.newKeySet();
 
     private final boolean pusherOn;
 
@@ -95,13 +95,8 @@ public class ActivityService {
         return activityRepository.findByResourceAndActivityAndRole(resource, activity, scope, role);
     }
 
-    public Activity getByUserRoleAndActivity(UserRole userRole, hr.prism.board.enums.Activity activity) {
-        return activityRepository.findByUserRoleAndActivity(userRole, activity);
-    }
-
-    public List<ActivityRepresentation> getActivities() {
-        Long userId = userService.getUserSecured().getId();
-        return getActivities(userId);
+    public List<ActivityRepresentation> getActivities(User user) {
+        return getActivities(user.getId());
     }
 
     public List<ActivityRepresentation> getActivities(Long userId) {
@@ -170,14 +165,12 @@ public class ActivityService {
         return activityUser;
     }
 
-    public void viewActivity(Long activityId) {
-        User user = userService.getUserSecured();
+    public void viewActivity(User user, Long activityId) {
         Activity activity = activityRepository.findOne(activityId);
         viewActivity(activity, user);
     }
 
-    public void dismissActivity(Long activityId) {
-        User user = userService.getUserSecured();
+    public void dismissActivity(User user, Long activityId) {
         hr.prism.board.domain.Activity activity = activityRepository.findOne(activityId);
         if (activity != null) {
             ActivityEvent activityEvent =
@@ -238,13 +231,11 @@ public class ActivityService {
         activityUserRepository.deleteByUser(user);
     }
 
-    public String authenticatePusher(PusherAuthenticationDTO pusherAuthentication) {
+    public String authenticatePusher(User user, PusherAuthenticationDTO pusherAuthentication) {
         String channel = pusherAuthentication.getChannelName();
         String channelUserId = channel.split("-")[2];
 
-        User user = userService.getUserSecured();
         Long userId = user.getId();
-
         if (channelUserId.equals(userId.toString())) {
             LOGGER.info("Connecting user ID: " + userId + " to channel: " + channel);
             return pusher.authenticate(pusherAuthentication.getSocketId(), channel,

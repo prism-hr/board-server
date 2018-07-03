@@ -71,20 +71,26 @@ public class PostApi {
         return postMapper.apply(postService.getById(user, postId, getClientIpAddress(request), true));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}/operations", method = GET)
-    public List<ResourceOperationRepresentation> getPostOperations(@PathVariable Long postId) {
-        return postService.getPostOperations(postId).stream().map(resourceOperationMapper).collect(toList());
+    public List<ResourceOperationRepresentation> getPostOperations(@AuthenticationPrincipal User user,
+                                                                   @PathVariable Long postId) {
+        return postService.getPostOperations(user, postId).stream().map(resourceOperationMapper).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}", method = PATCH)
-    public PostRepresentation updatePost(@PathVariable Long postId, @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(postId, Action.EDIT, postDTO));
+    public PostRepresentation updatePost(@AuthenticationPrincipal User user, @PathVariable Long postId,
+                                         @RequestBody @Valid PostPatchDTO postDTO) {
+        return postMapper.apply(postService.executeAction(user, postId, Action.EDIT, postDTO));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/{postId}/actions/{action}", method = RequestMethod.POST)
-    public PostRepresentation executeActionOnPost(@PathVariable Long postId, @PathVariable String action,
+    public PostRepresentation executeActionOnPost(@AuthenticationPrincipal User user, @PathVariable Long postId,
+                                                  @PathVariable String action,
                                                   @RequestBody @Valid PostPatchDTO postDTO) {
-        return postMapper.apply(postService.executeAction(postId, Action.valueOf(action.toUpperCase()), postDTO));
+        return postMapper.apply(postService.executeAction(user, postId, Action.valueOf(action.toUpperCase()), postDTO));
     }
 
     @RequestMapping(value = "/api/posts/organizations", method = GET)
@@ -92,9 +98,11 @@ public class PostApi {
         return organizationService.findOrganizations(query).stream().map(organizationMapper::apply).collect(toList());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/api/posts/archiveQuarters", method = GET)
-    public List<String> getPostArchiveQuarters(@RequestParam(required = false) Long parentId) {
-        return postService.getPostArchiveQuarters(parentId);
+    public List<String> getPostArchiveQuarters(@AuthenticationPrincipal User user,
+                                               @RequestParam(required = false) Long parentId) {
+        return postService.getPostArchiveQuarters(user, parentId);
     }
 
 }

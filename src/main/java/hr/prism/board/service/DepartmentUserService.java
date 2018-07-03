@@ -89,18 +89,16 @@ public class DepartmentUserService {
         this.entityManager = entityManager;
     }
 
-    public List<UserSearch> findUsers(Long id, String searchTerm) {
-        User user = userService.getUserSecured();
+    public List<UserSearch> findUsers(User user, Long id, String searchTerm) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         return userService.findUsers(searchTerm);
     }
 
     @Transactional(isolation = SERIALIZABLE)
-    public Department createMembers(Long id, List<MemberDTO> memberDTOs) {
-        User currentUser = userService.getUserSecured();
-        Department department = (Department) resourceService.getResource(currentUser, DEPARTMENT, id);
-        return (Department) actionService.executeAction(currentUser, department, EDIT, () -> {
+    public Department createMembers(User user, Long id, List<MemberDTO> memberDTOs) {
+        Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
+        return (Department) actionService.executeAction(user, department, EDIT, () -> {
             department.increaseMemberTobeUploadedCount((long) memberDTOs.size());
             eventProducer.produce(new DepartmentMemberEvent(this, id, memberDTOs));
             department.setLastMemberTimestamp(now());
@@ -108,8 +106,7 @@ public class DepartmentUserService {
         });
     }
 
-    public User createMembershipRequest(Long id, MemberDTO memberDTO) {
-        User user = userService.getUserSecured();
+    public User createMembershipRequest(User user, Long id, MemberDTO memberDTO) {
         Department department = (Department) resourceService.getById(id);
         checkExistingMemberRequest(department, user);
         checkValidMemberCategory(department, memberDTO.getMemberCategory());
@@ -138,8 +135,7 @@ public class DepartmentUserService {
         return user;
     }
 
-    public UserRole viewMembershipRequest(Long id, Long userId) {
-        User user = userService.getUserSecured();
+    public UserRole viewMembershipRequest(User user, Long id, Long userId) {
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
         UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
@@ -147,8 +143,7 @@ public class DepartmentUserService {
         return userRole.setViewed(true);
     }
 
-    public void reviewMembershipRequest(Long id, Long userId, State state) {
-        User user = userService.getUserSecured();
+    public void reviewMembershipRequest(User user, Long id, Long userId, State state) {
         Resource department = resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> {
             UserRole userRole = userRoleService.getByResourceAndUserIdAndRole(department, userId, MEMBER);
@@ -163,8 +158,7 @@ public class DepartmentUserService {
         });
     }
 
-    public User updateMembership(Long id, MemberDTO memberDTO) {
-        User user = userService.getUserSecured();
+    public User updateMembership(User user, Long id, MemberDTO memberDTO) {
         Department department = (Department) resourceService.getById(id);
 
         UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
@@ -179,8 +173,7 @@ public class DepartmentUserService {
         return user;
     }
 
-    public UserRoles getUserRoles(Long id, String searchTerm) {
-        User user = userService.getUserSecured();
+    public UserRoles getUserRoles(User user, Long id, String searchTerm) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -208,8 +201,7 @@ public class DepartmentUserService {
             .setMemberToBeUploadedCount(department.getMemberToBeUploadedCount());
     }
 
-    public List<UserRole> createUserRoles(Long id, UserRoleDTO userRoleDTO) {
-        User user = userService.getUserSecured();
+    public List<UserRole> createUserRoles(User user, Long id, UserRoleDTO userRoleDTO) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -229,20 +221,18 @@ public class DepartmentUserService {
                 throw new IllegalStateException("Unexpected user role type: " + type);
         }
 
-        return createOrUpdateUserRoles(id, userCreateUpdate, userRoleDTO);
+        return createOrUpdateUserRoles(user, id, userCreateUpdate, userRoleDTO);
     }
 
-    public List<UserRole> updateUserRoles(Long id, Long userCreateUpdateId, UserRoleDTO userRoleDTO) {
-        User user = userService.getUserSecured();
+    public List<UserRole> updateUserRoles(User user, Long id, Long userCreateUpdateId, UserRoleDTO userRoleDTO) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
         User userCreateUpdate = userService.getById(userCreateUpdateId);
-        return createOrUpdateUserRoles(id, userCreateUpdate, userRoleDTO);
+        return createOrUpdateUserRoles(user, id, userCreateUpdate, userRoleDTO);
     }
 
-    public void deleteUserRoles(Long id, Long userDeleteId, RoleType roleType) {
-        User user = userService.getUserSecured();
+    public void deleteUserRoles(User user, Long id, Long userDeleteId, RoleType roleType) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
@@ -310,8 +300,7 @@ public class DepartmentUserService {
         return responseReadiness;
     }
 
-    private List<UserRole> createOrUpdateUserRoles(Long id, User userCreateUpdate, UserRoleDTO userRoleDTO) {
-        User user = userService.getUserSecured();
+    private List<UserRole> createOrUpdateUserRoles(User user, Long id, User userCreateUpdate, UserRoleDTO userRoleDTO) {
         Department department = (Department) resourceService.getResource(user, DEPARTMENT, id);
         actionService.executeAction(user, department, EDIT, () -> department);
 
