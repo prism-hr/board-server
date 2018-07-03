@@ -24,6 +24,14 @@ public class DatabaseConfiguration {
 
     private final String databaseSchema;
 
+    private final Integer databaseCpMaxLifetime;
+
+    private final Integer databaseCpMaximumPoolSize;
+
+    private final Integer databaseCpConnectionTimeout;
+
+    private final Integer databaseCpLeakDetectionThreshold;
+
     private final String databasePassword;
 
     private final boolean cleanDbOnStartup;
@@ -31,13 +39,20 @@ public class DatabaseConfiguration {
     private final boolean databaseMigrationOn;
 
     @Inject
-    public DatabaseConfiguration(@Value("${database.host}") String databaseHost,
-                                 @Value("${database.schema}") String databaseSchema,
-                                 @Value("${database.password}") String databasePassword,
-                                 @Value("${clean.db.on.startup}") boolean cleanDbOnStartup,
-                                 @Value("${database.migration.on}") boolean databaseMigrationOn) {
+    public DatabaseConfiguration(
+        @Value("${database.host}") String databaseHost, @Value("${database.schema}") String databaseSchema,
+        @Value("${database.connection.pool.maxLifetime}") Integer databaseCpMaxLifetime,
+        @Value("${database.connection.pool.maximumPoolSize}") Integer databaseCpMaximumPoolSize,
+        @Value("${database.connection.pool.connectionTimeout}") Integer databaseCpConnectionTimeout,
+        @Value("${database.connection.pool.leakDetectionThreshold}") Integer databaseCpLeakDetectionThreshold,
+        @Value("${database.password}") String databasePassword, @Value("${clean.db.on.startup}") boolean cleanDbOnStartup,
+        @Value("${database.migration.on}") boolean databaseMigrationOn) {
         this.databaseHost = databaseHost;
         this.databaseSchema = databaseSchema;
+        this.databaseCpMaxLifetime = databaseCpMaxLifetime;
+        this.databaseCpMaximumPoolSize = databaseCpMaximumPoolSize;
+        this.databaseCpConnectionTimeout = databaseCpConnectionTimeout;
+        this.databaseCpLeakDetectionThreshold = databaseCpLeakDetectionThreshold;
         this.databasePassword = databasePassword;
         this.cleanDbOnStartup = cleanDbOnStartup;
         this.databaseMigrationOn = databaseMigrationOn;
@@ -58,11 +73,11 @@ public class DatabaseConfiguration {
         hikariConfig.setPassword(databasePassword);
 
         hikariConfig.setPoolName("database-connection-pool");
-        hikariConfig.setMaxLifetime(600000);
-        hikariConfig.setMaximumPoolSize(20);
-        hikariConfig.setConnectionTimeout(12000);
+        hikariConfig.setMaxLifetime(databaseCpMaxLifetime);
+        hikariConfig.setMaximumPoolSize(databaseCpMaximumPoolSize);
+        hikariConfig.setConnectionTimeout(databaseCpConnectionTimeout);
         hikariConfig.setAutoCommit(false);
-        hikariConfig.setLeakDetectionThreshold(360000);
+        hikariConfig.setLeakDetectionThreshold(databaseCpLeakDetectionThreshold);
         return new HikariDataSource(hikariConfig);
     }
 
