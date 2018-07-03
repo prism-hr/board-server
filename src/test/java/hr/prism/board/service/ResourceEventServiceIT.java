@@ -11,12 +11,12 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
-import hr.prism.board.repository.UserRepository;
 import hr.prism.board.workflow.Notification;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -50,9 +50,6 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 public class ResourceEventServiceIT {
 
     @Inject
-    private UserRepository userRepository;
-
-    @Inject
     private ResourceEventService resourceEventService;
 
     @Inject
@@ -61,7 +58,7 @@ public class ResourceEventServiceIT {
     @Inject
     private PlatformTransactionManager platformTransactionManager;
 
-    @MockBean
+    @SpyBean
     private UserService userService;
 
     @MockBean
@@ -69,7 +66,6 @@ public class ResourceEventServiceIT {
 
     @After
     public void tearDown() {
-        verifyNoMoreInteractions(userService, eventProducer);
         reset(userService, eventProducer);
     }
 
@@ -78,7 +74,7 @@ public class ResourceEventServiceIT {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
             Post post = (Post) resourceService.getById(3L);
-            User user = userRepository.findOne(1L);
+            User user = userService.getById(1L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostView(post, user, "ipAddress");
             Post updatedPost = (Post) resourceService.getById(3L);
@@ -139,7 +135,7 @@ public class ResourceEventServiceIT {
     public void createPostReferral_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             Post post = (Post) resourceService.getById(3L);
-            User user = userRepository.findOne(1L);
+            User user = userService.getById(1L);
 
             ResourceEvent resourceEvent = resourceEventService.createPostReferral(post, user);
             Post updatedPost = (Post) resourceService.getById(3L);
@@ -209,8 +205,11 @@ public class ResourceEventServiceIT {
     @Test
     public void createPostResponse_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
-            User user = userRepository.findOne(1L);
+            User user = userService.getById(1L);
             verifyCreatePostResponse(user, false);
+
+            verify(userService, times(0))
+                .updateUserResume(eq(user), any(Document.class), any(String.class));
             return null;
         });
     }
@@ -218,7 +217,7 @@ public class ResourceEventServiceIT {
     @Test
     public void createPostResponse_successWhenDefaultResume() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
-            User user = userRepository.findOne(1L);
+            User user = userService.getById(1L);
             verifyCreatePostResponse(user, true);
 
             Document documentResume = new Document();
@@ -233,7 +232,7 @@ public class ResourceEventServiceIT {
     @Test
     public void createPostResponse_failureWhenNoApplyEmail() {
         Post post = (Post) resourceService.getById(4L);
-        User user = userRepository.findOne(1L);
+        User user = userService.getById(1L);
 
         assertThatThrownBy(() -> resourceEventService.createPostResponse(post, user, new ResourceEventDTO()))
             .isExactlyInstanceOf(BoardException.class)
@@ -246,7 +245,7 @@ public class ResourceEventServiceIT {
     @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
     public void createPostResponse_failureWhenAlreadyResponded() {
         Post post = (Post) resourceService.getById(3L);
-        User user = userRepository.findOne(2L);
+        User user = userService.getById(2L);
 
         assertThatThrownBy(() -> resourceEventService.createPostResponse(post, user, new ResourceEventDTO()))
             .isExactlyInstanceOf(BoardDuplicateException.class)
@@ -257,7 +256,7 @@ public class ResourceEventServiceIT {
     @Test
     public void getResourceEvent_success() {
         Post post = (Post) resourceService.getById(3L);
-        User user = userRepository.findOne(1L);
+        User user = userService.getById(1L);
 
         ResourceEvent resourceEvent = resourceEventService.getResourceEvent(post, REFERRAL, user);
         assertEquals(1L, resourceEvent.getId().longValue());
@@ -266,7 +265,7 @@ public class ResourceEventServiceIT {
     @Test
     public void getResourceEvent_successWhenEmpty() {
         Post post = (Post) resourceService.getById(4L);
-        User user = userRepository.findOne(1L);
+        User user = userService.getById(1L);
 
         assertNull(resourceEventService.getResourceEvent(post, REFERRAL, user));
     }
@@ -274,7 +273,7 @@ public class ResourceEventServiceIT {
     @Test
     public void getResourceEvents() {
         Post post = (Post) resourceService.getById(3L);
-        User user = userRepository.findOne(1L);
+        User user = userService.getById(1L);
         ResourceEvent resourceEvent = resourceEventService.getById(1L);
 
         assertThat(resourceEventService
