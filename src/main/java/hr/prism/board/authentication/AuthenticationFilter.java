@@ -1,7 +1,6 @@
 package hr.prism.board.authentication;
 
 import hr.prism.board.domain.User;
-import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.service.AuthenticationService;
 import hr.prism.board.service.UserService;
 import io.jsonwebtoken.Claims;
@@ -21,7 +20,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static java.lang.Long.parseLong;
 import static java.time.LocalDateTime.now;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -55,11 +53,6 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             String accessToken = authorization.replaceFirst("Bearer ", "");
             try {
                 Claims claims = authenticationService.decodeAccessToken(accessToken);
-                String subject = claims.getSubject();
-                if (subject == null) {
-                    throw new BoardForbiddenException(UNKNOWN, "Malformed JWT");
-                }
-
                 Long userId = parseLong(claims.getSubject());
                 User user = userService.getById(userId).setRevealEmail(true);
 
