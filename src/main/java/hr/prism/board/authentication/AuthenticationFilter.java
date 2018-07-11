@@ -23,6 +23,7 @@ import java.time.ZoneId;
 
 import static hr.prism.board.exception.ExceptionCode.UNKNOWN;
 import static java.lang.Long.parseLong;
+import static java.time.LocalDateTime.now;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
@@ -66,7 +67,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 LocalDateTime expiration = LocalDateTime.ofInstant(
                     claims.getExpiration().toInstant(), ZoneId.systemDefault());
 
-                if (expiration.minusSeconds(sessionRefreshBeforeExpirationSeconds).isBefore(LocalDateTime.now())) {
+                if (expiration.minusSeconds(sessionRefreshBeforeExpirationSeconds).isBefore(now())) {
                     response.setHeader("Authorization",
                         "Bearer " + authenticationService.makeAccessToken(userId, true));
                 }
