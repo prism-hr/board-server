@@ -271,7 +271,7 @@ public class ResourceEventServiceIT {
     }
 
     @Test
-    public void getResourceEvents() {
+    public void getResourceEvents_success() {
         Post post = (Post) resourceService.getById(3L);
         User user = userService.getById(1L);
         ResourceEvent resourceEvent = resourceEventService.getById(1L);

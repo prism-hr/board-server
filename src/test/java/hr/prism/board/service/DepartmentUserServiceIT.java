@@ -38,7 +38,7 @@ public class DepartmentUserServiceIT {
     private PlatformTransactionManager platformTransactionManager;
 
     @Test
-    public void makeDemographicDataStatus_successWhenComplete() {
+    public void makeDemographicDataStatus_successWhenUserAndMemberComplete() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             User user = userService.getById(1L);
             Department department = (Department) resourceService.getById(1L);
@@ -54,7 +54,7 @@ public class DepartmentUserServiceIT {
     }
 
     @Test
-    public void makeDemographicDataStatus_successWhenIncomplete() {
+    public void makeDemographicDataStatus_successWhenUserAndMemberIncomplete() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             User user = userService.getById(2L);
             Department department = (Department) resourceService.getById(1L);
@@ -69,7 +69,7 @@ public class DepartmentUserServiceIT {
     }
 
     @Test
-    public void makeDemographicDataStatus_successWhenUserComplete() {
+    public void makeDemographicDataStatus_successWhenUserCompleteAndMemberIncomplete() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             User user = userService.getById(3L);
             Department department = (Department) resourceService.getById(1L);
@@ -84,7 +84,7 @@ public class DepartmentUserServiceIT {
     }
 
     @Test
-    public void makeDemographicDataStatus_successWhenMemberComplete() {
+    public void makeDemographicDataStatus_successWhenUserIncompleteAndMemberComplete() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             User user = userService.getById(4L);
             Department department = (Department) resourceService.getById(1L);
@@ -187,6 +187,118 @@ public class DepartmentUserServiceIT {
 
             verifyDemographicData(dataStatus, true, true,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
+                LocalDate.of(2020, 6, 1));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserLocationIncompleteMemberComplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(9L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, true, false,
+                UNDERGRADUATE_STUDENT, "memberProgram", 2018,
+                LocalDate.of(2020, 6, 1));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserAgeRangeIncompleteAndMemberComplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(10L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, true, false,
+                UNDERGRADUATE_STUDENT, "memberProgram", 2018,
+                LocalDate.of(2020, 6, 1));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserGenderIncompleteAndMemberComplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(11L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, true, false,
+                UNDERGRADUATE_STUDENT, "memberProgram", 2018,
+                LocalDate.of(2020, 6, 1));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserCompleteAndExpiryDateIncomplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(12L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, false, true,
+                UNDERGRADUATE_STUDENT, "memberProgram", 2018,
+                null);
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserCompleteAndMemberYearIncomplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(13L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, false, true,
+                UNDERGRADUATE_STUDENT, "memberProgram", null,
+                LocalDate.of(2020, 6, 1));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserCompleteAndMemberProgramIncomplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(14L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, false, true,
+                UNDERGRADUATE_STUDENT, null, 2018,
+                LocalDate.of(2020, 6, 1));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void makeDemographicDataStatus_successWhenUserCompleteAndMemberCategoryIncomplete() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            User user = userService.getById(15L);
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
+
+            verifyDemographicData(dataStatus, false, true,
+                null, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
             return null;
