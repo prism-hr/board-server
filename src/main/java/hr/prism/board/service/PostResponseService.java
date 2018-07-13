@@ -15,6 +15,8 @@ import java.util.List;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Action.PURSUE;
+import static hr.prism.board.enums.ResourceEvent.REFERRAL;
+import static hr.prism.board.enums.ResourceEvent.RESPONSE;
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.exception.ExceptionCode.FORBIDDEN_REFERRAL;
@@ -95,6 +97,26 @@ public class PostResponseService {
         ResourceEvent resourceEvent = getPostResponse(user, postId, responseId);
         activityService.viewActivity(resourceEvent.getActivity(), user);
         return resourceEvent.setViewed(true);
+    }
+
+    public void addPostResponseReadiness(Post post, User user) {
+        if (user != null && actionService.canExecuteAction(post, PURSUE)) {
+            DemographicDataStatus responseReadiness =
+                departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
+            post.setDemographicDataStatus(responseReadiness);
+            if (responseReadiness.isReady() && post.getApplyEmail() == null) {
+                resourceEventService.createPostReferral(post, user);
+            }
+        }
+    }
+
+    public void addPostResponse(Post post, User user) {
+        if (user != null) {
+            entityManager.flush();
+            post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
+            post.setReferral(resourceEventService.getResourceEvent(post, REFERRAL, user));
+            post.setResponse(resourceEventService.getResourceEvent(post, RESPONSE, user));
+        }
     }
 
     private void checkValidDemographicData(User user, Department department) {

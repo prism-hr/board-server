@@ -1681,7 +1681,7 @@ public class PostServiceIT {
         OrganizationDTO organizationDTO = makeOrganizationDTO();
         LocationDTO locationDTO = makeLocationDTO();
 
-        Post createdPost = setUpPost(user, board.getId(),
+        Post createdPost = createPost(user, board.getId(),
             organizationDTO, locationDTO, "http://www.google.co.uk", null, null);
 
         Organization organization = makeOrganization();
@@ -1710,7 +1710,7 @@ public class PostServiceIT {
                 .setCloudinaryUrl("cloudinary url")
                 .setFileName("file name");
 
-        Post createdPost = setUpPost(user, board.getId(),
+        Post createdPost = createPost(user, board.getId(),
             organizationDTO, locationDTO, null, documentApplyDTO, null);
 
         Post selectedPost = postService.getById(user, createdPost.getId(), "ip", true);
@@ -1738,7 +1738,7 @@ public class PostServiceIT {
         OrganizationDTO organizationDTO = makeOrganizationDTO();
         LocationDTO locationDTO = makeLocationDTO();
 
-        Post createdPost = setUpPost(user, board.getId(),
+        Post createdPost = createPost(user, board.getId(),
             organizationDTO, locationDTO, null, null, "author@prism.hr");
 
         Organization organization = makeOrganization();
@@ -2227,8 +2227,8 @@ public class PostServiceIT {
             "department-accepted-board-accepted-post-accepted", expectedAcceptedActions);
     }
 
-    private Post setUpPost(User user, Long boardId, OrganizationDTO organizationDTO, LocationDTO locationDTO,
-                           String applyWebsite, DocumentDTO applyDocument, String applyEmail) {
+    private Post createPost(User user, Long boardId, OrganizationDTO organizationDTO, LocationDTO locationDTO,
+                            String applyWebsite, DocumentDTO applyDocument, String applyEmail) {
         return postService.createPost(user, boardId,
             new PostDTO()
                 .setName("department-accepted-board-accepted-post")

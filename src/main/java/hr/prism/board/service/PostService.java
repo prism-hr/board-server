@@ -15,7 +15,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.validation.PostValidator;
-import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceFilter.ResourceFilterList;
@@ -58,8 +57,6 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
-import hr.prism.board.event.ActivityEvent;
-
 @Service
 @Transactional
 public class PostService {
@@ -86,7 +83,7 @@ public class PostService {
 
     private final ResourceEventService resourceEventService;
 
-    private final DepartmentUserService departmentUserService;
+    private final PostResponseService postResponseService;
 
     private final ResourceTaskService resourceTaskService;
 
@@ -101,7 +98,7 @@ public class PostService {
                        LocationService locationService, OrganizationService organizationService,
                        ResourceService resourceService, PostPatchService postPatchService,
                        UserRoleService userRoleService, UserService userService, ActionService actionService,
-                       ResourceEventService resourceEventService, DepartmentUserService departmentUserService,
+                       ResourceEventService resourceEventService, PostResponseService postResponseService,
                        ResourceTaskService resourceTaskService, PostValidator postValidator,
                        EventProducer eventProducer, EntityManager entityManager) {
         this.postRepository = postRepository;
@@ -115,7 +112,7 @@ public class PostService {
         this.userService = userService;
         this.actionService = actionService;
         this.resourceEventService = resourceEventService;
-        this.departmentUserService = departmentUserService;
+        this.postResponseService = postResponseService;
         this.resourceTaskService = resourceTaskService;
         this.postValidator = postValidator;
         this.eventProducer = eventProducer;
@@ -134,8 +131,8 @@ public class PostService {
             resourceEventService.createPostView(post, user, ipAddress);
         }
 
-        addPostResponseReadiness(post, user);
-        addPostResponse(post, user);
+        postResponseService.addPostResponseReadiness(post, user);
+        postResponseService.addPostResponse(post, user);
         return post;
     }
 
@@ -206,7 +203,7 @@ public class PostService {
         });
 
         postValidator.checkExistingRelation(createdPost);
-        addPostResponseReadiness(createdPost, user);
+        postResponseService.addPostResponseReadiness(createdPost, user);
         return createdPost;
     }
 
@@ -231,8 +228,8 @@ public class PostService {
                 }
             }
 
-            addPostResponseReadiness(post, user);
-            addPostResponse(post, user);
+            postResponseService.addPostResponseReadiness(post, user);
+            postResponseService.addPostResponse(post, user);
             return post;
         });
     }
@@ -439,26 +436,6 @@ public class PostService {
                                 .setScope(DEPARTMENT)
                                 .setRole(Role.MEMBER)
                                 .setNotification(PUBLISH_POST_MEMBER_NOTIFICATION)))));
-        }
-    }
-
-    private void addPostResponseReadiness(Post post, User user) {
-        if (user != null && actionService.canExecuteAction(post, PURSUE)) {
-            DemographicDataStatus responseReadiness =
-                departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
-            post.setDemographicDataStatus(responseReadiness);
-            if (responseReadiness.isReady() && post.getApplyEmail() == null) {
-                resourceEventService.createPostReferral(post, user);
-            }
-        }
-    }
-
-    private void addPostResponse(Post post, User user) {
-        if (user != null) {
-            entityManager.flush();
-            post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
-            post.setReferral(resourceEventService.getResourceEvent(post, REFERRAL, user));
-            post.setResponse(resourceEventService.getResourceEvent(post, RESPONSE, user));
         }
     }
 
