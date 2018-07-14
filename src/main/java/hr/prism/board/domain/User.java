@@ -1,16 +1,16 @@
 package hr.prism.board.domain;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import hr.prism.board.enums.*;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
 import static javax.persistence.EnumType.STRING;
 import static org.apache.commons.lang3.ObjectUtils.compare;
@@ -360,12 +360,6 @@ public class User extends BoardEntity implements Comparable<User> {
         return indexData;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public User setIndexData(String indexData) {
-        this.indexData = indexData;
-        return this;
-    }
-
     public Set<UserRole> getUserRoles() {
         return userRoles;
     }
@@ -417,8 +411,10 @@ public class User extends BoardEntity implements Comparable<User> {
         return passwordHash.matches(input, password);
     }
 
-    public List<String> getIndexDataParts() {
-        return ImmutableList.of(givenName, surname);
+    public User setIndexData() {
+        this.indexData = makeSoundex(
+            newArrayList(givenName, surname, email));
+        return this;
     }
 
     @Override

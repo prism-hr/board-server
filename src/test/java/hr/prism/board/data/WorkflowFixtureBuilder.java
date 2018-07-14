@@ -6,7 +6,6 @@ import hr.prism.board.domain.*;
 import hr.prism.board.enums.Role;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
-import hr.prism.board.service.ResourceService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -28,12 +27,6 @@ import static hr.prism.board.enums.State.*;
 
 @Service
 public class WorkflowFixtureBuilder {
-
-    private final ResourceService resourceService;
-
-    public WorkflowFixtureBuilder(ResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
 
     @PostConstruct
     public Map<String, String> makeInserts() {
@@ -77,7 +70,7 @@ public class WorkflowFixtureBuilder {
         for (int i = 0; i < resources.size(); i++) {
             Resource resource = resources.get(i);
             resource.setId((long) (i + 1));
-            resourceService.setIndexDataAndQuarter(resource);
+            resource.setIndexDataAndQuarter();
 
             Scope resourceScope = resource.getScope();
             State resourceState = resource.getState();

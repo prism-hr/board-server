@@ -81,7 +81,7 @@ public class ResourceUtils {
         return suggestedHandle;
     }
 
-    public static String getQuarter(LocalDateTime createdTimestamp) {
+    public static String makeQuarter(LocalDateTime createdTimestamp) {
         return Integer.toString(createdTimestamp.getYear()) + (int) ceil((double) createdTimestamp.getMonthValue() / 3);
     }
 

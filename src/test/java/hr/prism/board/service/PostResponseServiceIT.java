@@ -65,4 +65,19 @@ public class PostResponseServiceIT {
             .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
     }
 
+    @Test
+    public void getPostResponses_successWhenAllTokensMatch() {
+
+    }
+
+    @Test
+    public void getPostResponses_successWhenSomeTokensMatch() {
+
+    }
+
+    @Test
+    public void getPostResponses_failureWhenNoTokensMatch() {
+
+    }
+
 }

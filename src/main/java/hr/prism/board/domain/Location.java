@@ -86,4 +86,9 @@ public class Location extends BoardEntity implements LocationDefinition {
             .isEquals();
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+
 }

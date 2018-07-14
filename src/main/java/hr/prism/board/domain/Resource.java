@@ -10,10 +10,16 @@ import hr.prism.board.representation.ChangeListRepresentation;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.CategoryType.POST;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
+import static hr.prism.board.utils.ResourceUtils.makeQuarter;
 import static java.util.Comparator.comparingLong;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static javax.persistence.DiscriminatorType.STRING;
 import static javax.persistence.InheritanceType.SINGLE_TABLE;
@@ -172,6 +178,7 @@ public class Resource extends BoardEntity {
         return indexData;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void setIndexData(String indexData) {
         this.indexData = indexData;
     }
@@ -298,11 +305,22 @@ public class Resource extends BoardEntity {
             .collect(toList());
     }
 
-    public List<String> getIndexDataParts() {
-        List<String> parts = new ArrayList<>();
-        parts.add(name);
-        parts.add(summary);
-        return parts;
+    public void setIndexDataAndQuarter() {
+        String parentIndexData =
+            ofNullable(getParent())
+                .filter(parent -> !this.equals(parent))
+                .map(Resource::getIndexData)
+                .orElse(null);
+
+        String indexData = makeSoundex(
+            newArrayList(name, summary));
+
+        setIndexData(
+            Stream.of(parentIndexData, indexData)
+                .filter(Objects::nonNull)
+                .collect(joining(" ")));
+
+        this.quarter = makeQuarter(getCreatedTimestamp());
     }
 
     @Override

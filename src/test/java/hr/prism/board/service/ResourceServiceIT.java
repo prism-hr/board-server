@@ -8,7 +8,6 @@ import hr.prism.board.domain.*;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardNotFoundException;
-import hr.prism.board.repository.ResourceRepository;
 import hr.prism.board.repository.UserRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,9 +44,6 @@ public class ResourceServiceIT {
 
     @Inject
     private UserRepository userRepository;
-
-    @Inject
-    private ResourceRepository resourceRepository;
 
     @Inject
     private ResourceDAO resourceDAO;
@@ -243,36 +239,6 @@ public class ResourceServiceIT {
 
         serviceHelper.verifyTimestamps(resourceOperation, baseline);
         assertThat(resourceDAO.getResourceOperations(department)).containsExactly(resourceOperation);
-    }
-
-    @Test
-    public void setIndexDataAndQuarter_success() {
-        resourceService.setIndexDataAndQuarter(university);
-        resourceRepository.save(university);
-
-        Department department = (Department) resourceService.getById(2L);
-        resourceService.setIndexDataAndQuarter(department);
-        resourceRepository.save(department);
-
-        Board board = (Board) resourceService.getById(4L);
-        resourceService.setIndexDataAndQuarter(board);
-        resourceRepository.save(board);
-
-        Post post = (Post) resourceService.getById(6L);
-        resourceService.setIndexDataAndQuarter(post);
-
-        assertEquals("U516", university.getIndexData());
-        assertEquals("U516 D163 D163 S560", department.getIndexData());
-        assertEquals("U516 D163 D163 S560 B630", board.getIndexData());
-        assertEquals("U516 D163 D163 S560 B630 P230 P230 S560 P230 D261 L535 O625 N500", post.getIndexData());
-
-        Stream.of(university, department, board, post).forEach(resource ->
-            resource.setCreatedTimestamp(LocalDateTime.of(2018, 5, 1, 0, 0, 0)));
-
-        assertEquals("20182", university.getQuarter());
-        assertEquals("20182", department.getQuarter());
-        assertEquals("20182", board.getQuarter());
-        assertEquals("20182", post.getQuarter());
     }
 
     @Test

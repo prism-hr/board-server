@@ -413,8 +413,6 @@ public class BoardServiceIT {
         verify(resourceService, times(1))
             .createResourceRelation(department, createdBoard);
 
-        verify(resourceService, times(1)).setIndexDataAndQuarter(createdBoard);
-
         verify(resourceService, times(1))
             .createResourceOperation(createdBoard, EXTEND, user);
     }

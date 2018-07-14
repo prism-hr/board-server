@@ -128,7 +128,8 @@ public class AuthenticationService {
                     user.setOauthProvider(oauth.getOauthProvider());
                     user.setOauthAccountId(oauth.getOauthAccountId());
                     user.setDocumentImageRequestState(oauth.getDocumentImageRequestState());
-                    user = userService.updateUserIndex(user);
+                    user.setIndexData();
+                    userService.updateUser(user);
                 }
             } else {
                 user.setOauthProvider(provider);

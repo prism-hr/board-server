@@ -86,4 +86,9 @@ public class Organization extends BoardEntity {
             .isEquals();
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+
 }

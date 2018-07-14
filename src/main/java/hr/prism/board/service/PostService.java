@@ -195,7 +195,7 @@ public class PostService {
             resourceService.createResourceRelation(board, post);
             setPostCategories(post, postDTO.getPostCategories());
             setMemberCategories(post, toStrings(postDTO.getMemberCategories()));
-            resourceService.setIndexDataAndQuarter(post);
+            post.setIndexDataAndQuarter();
 
             userRoleService.createUserRole(post, user, ADMINISTRATOR);
             resourceTaskService.completeTasks(department, POST_TASKS);
@@ -297,8 +297,7 @@ public class PostService {
             liveTimestamp != null ? liveTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
         postPatchService.patchProperty(post, "deadTimestamp", post::getDeadTimestamp, post::setDeadTimestamp,
             deadTimestamp != null ? deadTimestamp.map(t -> t.truncatedTo(ChronoUnit.SECONDS)) : null);
-
-        resourceService.setIndexDataAndQuarter(post);
+        post.setIndexDataAndQuarter();
     }
 
     public void archivePosts() {

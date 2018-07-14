@@ -107,17 +107,18 @@ public class BoardUtils {
         return makeSoundex(singletonList(string));
     }
 
-    public static String makeSoundex(List<String> strings) {
-        List<String> nullSafeStrings =
-            strings.stream()
+    public static String makeSoundex(List<Object> parts) {
+        List<Object> nonNullParts =
+            parts.stream()
                 .filter(Objects::nonNull)
                 .collect(toList());
 
-        if (nullSafeStrings.isEmpty()) {
+        if (nonNullParts.isEmpty()) {
             return null;
         }
 
-        return nullSafeStrings.stream()
+        return nonNullParts.stream()
+            .map(Objects::toString)
             .map(String::toLowerCase)
             .map(TOKENIZER::tokenize)
             .flatMap(Arrays::stream)

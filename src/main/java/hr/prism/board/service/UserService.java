@@ -32,7 +32,6 @@ import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.ACCEPTED_STATES;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static hr.prism.board.utils.BoardUtils.isPresent;
-import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
@@ -179,11 +178,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateUserIndex(User user) {
-        user.setIndexData(makeSoundex(user.getIndexDataParts()));
-        return userRepository.save(user);
-    }
-
     public User updateUser(User user, UserPatchDTO userDTO) {
         userPatchService.patchProperty(user, user::getGivenName, user::setGivenName, userDTO.getGivenName());
         userPatchService.patchProperty(user, user::getSurname, user::setSurname, userDTO.getSurname());
@@ -217,7 +211,9 @@ public class UserService {
             user::getDocumentResume, user::setDocumentResume, userDTO.getDocumentResume());
         userPatchService.patchProperty(user,
             user::getWebsiteResume, user::setWebsiteResume, userDTO.getWebsiteResume());
-        return updateUserIndex(user);
+
+        user.setIndexData();
+        return user;
     }
 
     public User updateUserMembership(User user, UserDTO userDTO) {
@@ -287,7 +283,7 @@ public class UserService {
         user.setSurname(userDTO.getSurname());
 
         user.setEmail(userDTO.getEmail());
-        user.setIndexData(makeSoundex(user.getIndexDataParts()));
+        user.setIndexData();
 
         user.setTestUser(user.getEmail().endsWith(TEST_USER_SUFFIX));
         updateUserMembership(user, userDTO);

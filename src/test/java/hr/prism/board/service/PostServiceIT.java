@@ -2278,7 +2278,6 @@ public class PostServiceIT {
             FORBIDDEN_MEMBER_CATEGORIES, MISSING_MEMBER_CATEGORIES, INVALID_MEMBER_CATEGORIES);
         verify(resourceService, times(1)).updateCategories(post, MEMBER, memberCategories);
 
-        verify(resourceService, times(1)).setIndexDataAndQuarter(post);
         verify(userRoleService, times(1)).createUserRole(post, user, ADMINISTRATOR);
         verify(resourceTaskService, times(1)).completeTasks(department, POST_TASKS);
         verify(postValidator, times(1)).checkExistingRelation(post);

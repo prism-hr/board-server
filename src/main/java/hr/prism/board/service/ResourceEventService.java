@@ -28,7 +28,6 @@ import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.exception.ExceptionCode.*;
-import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
@@ -136,9 +135,9 @@ public class ResourceEventService {
                 .setMemberYear(userRole.getMemberYear())
                 .setDocumentResume(documentResume)
                 .setWebsiteResume(websiteResume)
-                .setCoveringNote(coveringNote));
+                .setCoveringNote(coveringNote)
+                .setIndexData());
 
-        setIndexData(response);
         if (isTrue(resourceEventDTO.getDefaultResume())) {
             userService.updateUserResume(user, documentResume, websiteResume);
         }
@@ -198,7 +197,7 @@ public class ResourceEventService {
         resourceEvent.setMemberProgram(userRole.getMemberProgram());
         resourceEvent.setMemberYear(userRole.getMemberYear());
 
-        setIndexData(resourceEvent);
+        resourceEvent.setIndexData();
         resourceEvent.setReferral(null);
 
         updateResourceEventSummary((Post) resourceEvent.getResource());
@@ -209,11 +208,6 @@ public class ResourceEventService {
         resourceEvent = resourceEventRepository.save(resourceEvent);
         updateResourceEventSummary(post);
         return resourceEvent;
-    }
-
-    private void setIndexData(ResourceEvent resourceEvent) {
-        String soundex = makeSoundex(resourceEvent.getIndexDataParts());
-        resourceEvent.setIndexData(soundex);
     }
 
     private void updateResourceEventSummary(Post post) {

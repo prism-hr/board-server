@@ -9,12 +9,17 @@ import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static hr.prism.board.enums.Scope.Value.POST;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
+import static hr.prism.board.utils.ResourceUtils.makeQuarter;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 
 @Entity
 @DiscriminatorValue(value = POST)
@@ -342,13 +347,22 @@ public class Post extends Resource {
     }
 
     @Override
-    public List<String> getIndexDataParts() {
-        List<String> parts = super.getIndexDataParts();
-        parts.add(description);
+    public void setIndexDataAndQuarter() {
+        String parentIndexData =
+            ofNullable(getParent())
+                .filter(parent -> !this.equals(parent))
+                .map(Resource::getIndexData)
+                .orElse(null);
 
-        ofNullable(location).ifPresent(location -> parts.add(location.getName()));
-        ofNullable(organization).ifPresent(organization -> parts.add(organization.getName()));
-        return parts;
+        String indexData = makeSoundex(
+            newArrayList(getName(), getSummary(), description, location, organization));
+
+        setIndexData(
+            Stream.of(parentIndexData, indexData)
+                .filter(Objects::nonNull)
+                .collect(joining(" ")));
+
+        setQuarter(makeQuarter(getCreatedTimestamp()));
     }
 
 }

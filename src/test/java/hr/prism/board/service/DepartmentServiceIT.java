@@ -861,7 +861,6 @@ public class DepartmentServiceIT {
             .updateCategories(department, MEMBER, toStrings(asList(memberCategories)));
 
         verify(resourceService, times(1)).createResourceRelation(university, department);
-        verify(resourceService, times(1)).setIndexDataAndQuarter(department);
 
         verify(resourceService, times(1))
             .createResourceOperation(department, EXTEND, user);

@@ -32,9 +32,8 @@ import static hr.prism.board.enums.Role.STAFF_ROLES;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.DUPLICATE_RESOURCE_HANDLE;
 import static hr.prism.board.exception.ExceptionCode.MISSING_RESOURCE;
-import static hr.prism.board.utils.BoardUtils.makeSoundex;
-import static hr.prism.board.utils.ResourceUtils.*;
-import static java.util.Objects.requireNonNull;
+import static hr.prism.board.utils.ResourceUtils.confirmHandle;
+import static hr.prism.board.utils.ResourceUtils.suggestHandle;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -234,20 +233,6 @@ public class ResourceService {
         }
 
         return resourceOperationRepository.save(resourceOperation);
-    }
-
-    public void setIndexDataAndQuarter(Resource resource) {
-        Resource parent = resource.getParent();
-        if (resource.equals(parent)) {
-            resource.setIndexData(makeSoundex(resource.getIndexDataParts()));
-        } else {
-            String soundex = makeSoundex(resource.getIndexDataParts());
-            requireNonNull(soundex, "soundex cannot be null");
-            resource.setIndexData(Joiner.on(" ").skipNulls().join(parent.getIndexData(), soundex));
-        }
-
-        LocalDateTime createdTimestamp = resource.getCreatedTimestamp();
-        resource.setQuarter(getQuarter(createdTimestamp));
     }
 
     private void saveResourceRelation(Resource resource1, Resource resource2) {

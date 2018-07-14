@@ -5,12 +5,11 @@ import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.MemberCategory;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import static java.util.Optional.ofNullable;
+import static com.google.common.collect.Lists.newArrayList;
+import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
@@ -214,12 +213,6 @@ public class ResourceEvent extends BoardEntity {
         return indexData;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public ResourceEvent setIndexData(String indexData) {
-        this.indexData = indexData;
-        return this;
-    }
-
     public Activity getActivity() {
         return activity;
     }
@@ -252,15 +245,10 @@ public class ResourceEvent extends BoardEntity {
         return this;
     }
 
-    public List<String> getIndexDataParts() {
-        List<String> parts = new ArrayList<>();
-        ofNullable(gender).ifPresent(gender -> parts.add(gender.name()));
-        ofNullable(locationNationality).ifPresent(locationNationality -> parts.add(locationNationality.getName()));
-        ofNullable(memberCategory).ifPresent(memberCategory -> parts.add(memberCategory.name()));
-
-        parts.add(memberProgram);
-        ofNullable(memberYear).ifPresent(memberYear -> parts.add(memberYear.toString()));
-        return parts;
+    public ResourceEvent setIndexData() {
+        this.indexData = makeSoundex(
+            newArrayList(gender, ageRange, locationNationality, memberCategory, memberProgram, memberYear));
+        return this;
     }
 
 }

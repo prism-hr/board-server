@@ -23,6 +23,6 @@ VALUES
   (1, UUID(), 1, 1, 'ADMINISTRATOR', 'ACCEPTED', '2018-05-21 21:04:54.185'),
   (2, UUID(), 1, 2, 'ADMINISTRATOR', 'ACCEPTED', '2018-05-21 21:04:54.185');
 
-INSERT INTO resource_event (id, resource_id, event, user_id, referral, created_timestamp)
+INSERT INTO resource_event (id, resource_id, event, user_id, index_data, created_timestamp)
 VALUES
   (1, 3, 'RESPONSE', 1, null, '2018-05-21 21:04:54.185');

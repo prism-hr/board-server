@@ -84,7 +84,7 @@ public class BoardService {
 
             resourceService.updateCategories(board, POST, boardDTO.getPostCategories());
             resourceService.createResourceRelation(department, board);
-            resourceService.setIndexDataAndQuarter(board);
+            board.setIndexDataAndQuarter();
             return board;
         });
     }
@@ -111,7 +111,7 @@ public class BoardService {
         boardPatchService.patchName(board, boardDTO.getName());
         boardPatchService.patchHandle(board, boardDTO.getHandle());
         boardPatchService.patchPostCategories(board, boardDTO.getPostCategories());
-        resourceService.setIndexDataAndQuarter(board);
+        board.setIndexDataAndQuarter();
     }
 
 }

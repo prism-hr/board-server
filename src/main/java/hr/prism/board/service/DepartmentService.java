@@ -40,6 +40,8 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class DepartmentService {
@@ -177,7 +179,7 @@ public class DepartmentService {
         // Create the resource metadata
         resourceService.updateCategories(department, CategoryType.MEMBER, memberCategoryStrings);
         resourceService.createResourceRelation(university, department);
-        resourceService.setIndexDataAndQuarter(department);
+        department.setIndexDataAndQuarter();
 
         resourceService.createResourceOperation(department, EXTEND, user);
         userRoleService.createUserRole(department, user, ADMINISTRATOR);
@@ -214,7 +216,7 @@ public class DepartmentService {
                 department::getDocumentLogo, department::setDocumentLogo, departmentDTO.getDocumentLogo());
             resourcePatchService.patchMemberCategories(department, departmentDTO.getMemberCategories());
 
-            resourceService.setIndexDataAndQuarter(department);
+            department.setIndexDataAndQuarter();
             return department;
         });
     }
