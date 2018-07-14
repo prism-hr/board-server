@@ -179,7 +179,7 @@ public class ResourceEventServiceIT {
             assertEquals("memberProgram", resourceEvent.getMemberProgram());
             assertEquals(2018, resourceEvent.getMemberYear().intValue());
 
-            assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
+            assertEquals("M400 30 39 L535 U536 S335 M516 2018", resourceEvent.getIndexData());
             assertNull(resourceEvent.getReferral());
 
             assertNull(updatedPost.getViewCount());
@@ -318,7 +318,7 @@ public class ResourceEventServiceIT {
         assertEquals("memberProgram", resourceEvent.getMemberProgram());
         assertEquals(2018, resourceEvent.getMemberYear().intValue());
 
-        assertEquals("M400 L535 U536 S335 M516", resourceEvent.getIndexData());
+        assertEquals("M400 30 39 L535 U536 S335 M516 2018", resourceEvent.getIndexData());
 
         assertNull(updatedPost.getViewCount());
         assertNull(updatedPost.getLastViewTimestamp());
